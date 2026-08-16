@@ -1,0 +1,6 @@
+1. Copy your working .env into THIS folder, next to package.json.
+2. Run: npm install
+3. Run: npm run dev
+4. Open: http://localhost:5173/
+5. Apply supabase/migration_7.sql in the correct Supabase project.
+Never put a Supabase secret/service_role key in .env for the browser app.

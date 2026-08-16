@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* Base (dark) design tokens — also the default when no data-theme is set */
+@theme {
+  --color-ink: #10161f;
+  --color-panel: #1a2431;
+  --color-panel-2: #202c3b;
+  --color-line: #2c3a4c;
+  --color-paper: #f4efe4;
+  --color-paper-dim: #e7e0cf;
+  --color-brass: #c9a24b;
+  --color-brass-dim: #9c7d38;
+  --color-sage: #6f9c82;
+  --color-coral: #c1573d;
+  --color-mist: #93a1b3;
+  /* Fixed regardless of theme — used for text sitting on top of brass/sage
+     accent colors, which are themselves the same brightness in both themes. */
+  --color-onbrass: #10161f;
+
+  --font-display: 'Source Serif 4', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* Light theme override — same token names, different values.
+   The attribute selector out-specifies the plain :root theme block above,
+   so this wins whenever <html data-theme="light"> is set. */
+:root[data-theme='light'] {
+  --color-ink: #f3efe6;
+  --color-panel: #fdfbf6;
+  --color-panel-2: #eee7d5;
+  --color-line: #ddd3ba;
+  --color-paper: #1b2431;
+  --color-paper-dim: #333f4f;
+  --color-brass: #b3872f;
+  --color-brass-dim: #8f6a24;
+  --color-sage: #3f7a5c;
+  --color-coral: #a8402a;
+  --color-mist: #5c6a7c;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* Examiner stamp - signature element for homework status */
+.stamp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 9999px;
+  transform: rotate(-8deg);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.stamp.stamp-done { color: var(--color-sage); }
+.stamp.stamp-pending { color: var(--color-brass); }
+.stamp.stamp-overdue { color: var(--color-coral); }
+
+.ticket {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  position: relative;
+}
+.ticket::before, .ticket::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--color-ink);
+  border-radius: 9999px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ticket::before { left: -8px; }
+.ticket::after { right: -8px; }
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-brass);
+  color: var(--color-onbrass);
+}
