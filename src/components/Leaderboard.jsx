@@ -30,34 +30,58 @@ export default function Leaderboard({
     setSelectedStudent(null)
     setDailyProgress([])
 
-    supabase
-      .rpc('group_leaderboard', {
-        p_group_id: groupId,
-      })
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message)
-        } else {
-          setRows(data || [])
-        }
-      })
+    const loadLeaderboard = async () => {
+      const rpcName =
+        groupId === 'all'
+          ? 'all_students_leaderboard'
+          : 'group_leaderboard'
+
+      const params =
+        groupId === 'all'
+          ? {}
+          : {
+              p_group_id: groupId,
+            }
+
+      const { data, error } =
+        await supabase.rpc(
+          rpcName,
+          params
+        )
+
+      if (error) {
+        console.error(
+          'Leaderboard error:',
+          error
+        )
+
+        setError(error.message)
+      } else {
+        setRows(data || [])
+      }
+    }
+
+    loadLeaderboard()
   }, [groupId])
 
   const loadDailyProgress = async (student) => {
-    if (!student?.student_id || !groupId) return
+    if (!student?.student_id || !groupId) {
+      return
+    }
 
     setLoadingDaily(true)
     setDailyError('')
     setDailyProgress([])
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('submissions')
         .select(`
           id,
           homework_id,
           status,
           submitted_at,
+          group_id,
           homeworks (
             id,
             title,
@@ -65,11 +89,34 @@ export default function Leaderboard({
             due_date
           )
         `)
-        .eq('student_id', student.student_id)
-        .eq('group_id', groupId)
-        .order('submitted_at', {
+        .eq(
+          'student_id',
+          student.student_id
+        )
+
+      /*
+       * In a normal group leaderboard,
+       * only show submissions from that group.
+       *
+       * In All Students mode, show submissions
+       * from all groups.
+       */
+      if (groupId !== 'all') {
+        query = query.eq(
+          'group_id',
+          groupId
+        )
+      }
+
+      const {
+        data,
+        error,
+      } = await query.order(
+        'submitted_at',
+        {
           ascending: false,
-        })
+        }
+      )
 
       if (error) throw error
 
@@ -77,13 +124,21 @@ export default function Leaderboard({
       const grouped = {}
 
       submissions.forEach((submission) => {
-        if (!submission.submitted_at) return
+        if (!submission.submitted_at) {
+          return
+        }
 
         const date = new Date(
           submission.submitted_at
         )
 
-        if (Number.isNaN(date.getTime())) return
+        if (
+          Number.isNaN(
+            date.getTime()
+          )
+        ) {
+          return
+        }
 
         const dateKey =
           `${date.getFullYear()}-${String(
@@ -105,15 +160,17 @@ export default function Leaderboard({
             submission.homeworks?.title ||
             'Homework',
           status:
-            submission.status || 'pending',
+            submission.status ||
+            'pending',
           submittedAt:
             submission.submitted_at,
         })
       })
 
-      const days = Object.values(grouped).sort(
-        (a, b) =>
-          b.date.localeCompare(a.date)
+      const days = Object.values(
+        grouped
+      ).sort((a, b) =>
+        b.date.localeCompare(a.date)
       )
 
       setDailyProgress(days)
@@ -122,7 +179,11 @@ export default function Leaderboard({
         'Daily progress error:',
         err
       )
-      setDailyError(err.message)
+
+      setDailyError(
+        err.message
+      )
+
       setDailyProgress([])
     } finally {
       setLoadingDaily(false)
@@ -136,9 +197,6 @@ export default function Leaderboard({
 
   /*
    * CHAT WITH STUDENT
-   *
-   * Uses the same navigation event that
-   * TeacherDashboard already listens for.
    */
   const handleChat = (student) => {
     if (!student?.student_id) {
@@ -146,10 +204,14 @@ export default function Leaderboard({
         'No student ID available:',
         student
       )
+
       return
     }
 
-    if (typeof onOpenChat === 'function') {
+    if (
+      typeof onOpenChat ===
+      'function'
+    ) {
       onOpenChat(student)
       return
     }
@@ -166,7 +228,12 @@ export default function Leaderboard({
     )
   }
 
-  const openManageGroups = async (student) => {
+  /*
+   * OPEN MANAGE GROUPS
+   */
+  const openManageGroups = async (
+    student
+  ) => {
     setManageStudent(student)
     setGroups([])
     setMemberGroupIds([])
@@ -182,11 +249,16 @@ export default function Leaderboard({
         .select(
           'id, name, created_at'
         )
-        .order('created_at', {
-          ascending: true,
-        })
+        .order(
+          'created_at',
+          {
+            ascending: true,
+          }
+        )
 
-      if (groupsError) throw groupsError
+      if (groupsError) {
+        throw groupsError
+      }
 
       const {
         data: memberships,
@@ -203,7 +275,9 @@ export default function Leaderboard({
         throw membershipError
       }
 
-      setGroups(allGroups || [])
+      setGroups(
+        allGroups || []
+      )
 
       setMemberGroupIds(
         (memberships || []).map(
@@ -213,7 +287,9 @@ export default function Leaderboard({
       )
     } catch (err) {
       console.error(err)
-      setGroupError(err.message)
+      setGroupError(
+        err.message
+      )
     } finally {
       setLoadingGroups(false)
     }
@@ -227,11 +303,16 @@ export default function Leaderboard({
     setSavingGroup('')
   }
 
+  /*
+   * ADD / REMOVE GROUP MEMBERSHIP
+   */
   const toggleGroupMembership = async (
     group,
     isMember
   ) => {
-    if (!manageStudent) return
+    if (!manageStudent) {
+      return
+    }
 
     setSavingGroup(group.id)
     setGroupError('')
@@ -242,18 +323,25 @@ export default function Leaderboard({
           await supabase
             .from('group_members')
             .delete()
-            .eq('group_id', group.id)
+            .eq(
+              'group_id',
+              group.id
+            )
             .eq(
               'student_id',
               manageStudent.student_id
             )
 
-        if (error) throw error
+        if (error) {
+          throw error
+        }
 
-        setMemberGroupIds((prev) =>
-          prev.filter(
-            (id) => id !== group.id
-          )
+        setMemberGroupIds(
+          (prev) =>
+            prev.filter(
+              (id) =>
+                id !== group.id
+            )
         )
       } else {
         const { error } =
@@ -266,32 +354,60 @@ export default function Leaderboard({
             })
 
         if (error) {
-          if (error.code === '23505') {
-            setMemberGroupIds((prev) =>
-              prev.includes(group.id)
-                ? prev
-                : [...prev, group.id]
+          if (
+            error.code ===
+            '23505'
+          ) {
+            setMemberGroupIds(
+              (prev) =>
+                prev.includes(
+                  group.id
+                )
+                  ? prev
+                  : [
+                      ...prev,
+                      group.id,
+                    ]
             )
           } else {
             throw error
           }
         } else {
-          setMemberGroupIds((prev) =>
-            prev.includes(group.id)
-              ? prev
-              : [...prev, group.id]
+          setMemberGroupIds(
+            (prev) =>
+              prev.includes(
+                group.id
+              )
+                ? prev
+                : [
+                    ...prev,
+                    group.id,
+                  ]
           )
         }
       }
+
+      /*
+       * Refresh the currently visible leaderboard.
+       */
+      const rpcName =
+        groupId === 'all'
+          ? 'all_students_leaderboard'
+          : 'group_leaderboard'
+
+      const params =
+        groupId === 'all'
+          ? {}
+          : {
+              p_group_id: groupId,
+            }
 
       const {
         data,
         error,
       } = await supabase.rpc(
-        'group_leaderboard',
-        {
-          p_group_id: groupId,
-        }
+        rpcName,
+        params
       )
 
       if (!error) {
@@ -299,7 +415,9 @@ export default function Leaderboard({
       }
     } catch (err) {
       console.error(err)
-      setGroupError(err.message)
+      setGroupError(
+        err.message
+      )
     } finally {
       setSavingGroup('')
     }
@@ -395,6 +513,7 @@ export default function Leaderboard({
               <div className="text-xs text-mist font-mono">
                 Progress
               </div>
+
               <div className="text-xl font-display text-brass mt-1">
                 {selectedStudent.percentage}%
               </div>
@@ -404,6 +523,7 @@ export default function Leaderboard({
               <div className="text-xs text-mist font-mono">
                 Completed
               </div>
+
               <div className="text-xl font-display mt-1">
                 {selectedStudent.completed}
               </div>
@@ -413,6 +533,7 @@ export default function Leaderboard({
               <div className="text-xs text-mist font-mono">
                 Total tasks
               </div>
+
               <div className="text-xl font-display mt-1">
                 {selectedStudent.total}
               </div>
@@ -422,6 +543,7 @@ export default function Leaderboard({
               <div className="text-xs text-mist font-mono">
                 Streak
               </div>
+
               <div className="text-xl font-display mt-1">
                 🔥 {selectedStudent.streak || 0}
               </div>
@@ -432,6 +554,7 @@ export default function Leaderboard({
           <div className="mt-5">
 
             <div className="flex justify-between text-xs font-mono mb-2">
+
               <span className="text-mist">
                 Overall progress
               </span>
@@ -439,6 +562,7 @@ export default function Leaderboard({
               <span className="text-brass">
                 {selectedStudent.percentage}%
               </span>
+
             </div>
 
             <div className="h-2 bg-panel-2 rounded-full overflow-hidden">
@@ -467,7 +591,9 @@ export default function Leaderboard({
             <button
               type="button"
               onClick={() =>
-                handleChat(selectedStudent)
+                handleChat(
+                  selectedStudent
+                )
               }
               className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
             >
@@ -491,6 +617,7 @@ export default function Leaderboard({
           <div className="mt-5 border-t border-line pt-4">
 
             <div>
+
               <h4 className="font-medium">
                 Daily progress
               </h4>
@@ -498,21 +625,26 @@ export default function Leaderboard({
               <p className="text-xs text-mist mt-1">
                 Homework submitted by this student, grouped by day.
               </p>
+
             </div>
 
             {loadingDaily && (
               <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
+
                 <p className="text-sm text-mist">
                   Loading daily progress…
                 </p>
+
               </div>
             )}
 
             {dailyError && (
               <div className="mt-3 bg-panel-2 border border-coral rounded-lg p-4">
+
                 <p className="text-sm text-coral">
                   Couldn't load daily progress: {dailyError}
                 </p>
+
               </div>
             )}
 
@@ -520,9 +652,11 @@ export default function Leaderboard({
               !dailyError &&
               dailyProgress.length === 0 && (
                 <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
+
                   <p className="text-sm text-mist">
                     No submitted homework yet.
                   </p>
+
                 </div>
               )}
 
@@ -531,101 +665,117 @@ export default function Leaderboard({
               dailyProgress.length > 0 && (
                 <div className="mt-3 flex flex-col gap-3">
 
-                  {dailyProgress.map((day) => {
+                  {dailyProgress.map(
+                    (day) => {
 
-                    const date =
-                      new Date(
-                        `${day.date}T00:00:00`
-                      )
+                      const date =
+                        new Date(
+                          `${day.date}T00:00:00`
+                        )
 
-                    const formattedDate =
-                      date.toLocaleDateString(
-                        [],
-                        {
-                          weekday: 'long',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        }
-                      )
+                      const formattedDate =
+                        date.toLocaleDateString(
+                          [],
+                          {
+                            weekday:
+                              'long',
+                            month:
+                              'short',
+                            day:
+                              'numeric',
+                            year:
+                              'numeric',
+                          }
+                        )
 
-                    return (
-                      <div
-                        key={day.date}
-                        className="bg-panel-2 border border-line rounded-lg p-4"
-                      >
+                      return (
+                        <div
+                          key={
+                            day.date
+                          }
+                          className="bg-panel-2 border border-line rounded-lg p-4"
+                        >
 
-                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div className="flex items-center justify-between gap-3 mb-3">
 
-                          <div className="font-medium">
-                            {formattedDate}
+                            <div className="font-medium">
+                              {formattedDate}
+                            </div>
+
+                            <div className="text-xs font-mono text-brass">
+                              {
+                                day
+                                  .tasks
+                                  .length
+                              }{' '}
+                              task
+                              {day.tasks
+                                .length ===
+                              1
+                                ? ''
+                                : 's'}
+                            </div>
+
                           </div>
 
-                          <div className="text-xs font-mono text-brass">
-                            {day.tasks.length}{' '}
-                            task
-                            {day.tasks.length === 1
-                              ? ''
-                              : 's'}
-                          </div>
+                          <div className="flex flex-col gap-2">
 
-                        </div>
+                            {day.tasks.map(
+                              (task) => (
+                                <div
+                                  key={
+                                    task.id
+                                  }
+                                  className="flex items-center justify-between gap-3 border-t border-line pt-2"
+                                >
 
-                        <div className="flex flex-col gap-2">
+                                  <div className="min-w-0">
 
-                          {day.tasks.map(
-                            (task) => (
-
-                              <div
-                                key={task.id}
-                                className="flex items-center justify-between gap-3 border-t border-line pt-2"
-                              >
-
-                                <div className="min-w-0">
-
-                                  <div className="text-sm truncate">
-                                    {task.title}
-                                  </div>
-
-                                  <div className="text-xs text-mist font-mono mt-0.5">
-                                    Submitted{' '}
-                                    {new Date(
-                                      task.submittedAt
-                                    ).toLocaleTimeString(
-                                      [],
+                                    <div className="text-sm truncate">
                                       {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
+                                        task.title
                                       }
-                                    )}
+                                    </div>
+
+                                    <div className="text-xs text-mist font-mono mt-0.5">
+                                      Submitted{' '}
+                                      {new Date(
+                                        task.submittedAt
+                                      ).toLocaleTimeString(
+                                        [],
+                                        {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        }
+                                      )}
+                                    </div>
+
                                   </div>
+
+                                  <span
+                                    className={`text-xs font-mono ${
+                                      task.status ===
+                                      'done'
+                                        ? 'text-brass'
+                                        : 'text-mist'
+                                    }`}
+                                  >
+                                    {task.status ===
+                                    'done'
+                                      ? 'DONE'
+                                      : 'SUBMITTED'}
+                                  </span>
 
                                 </div>
+                              )
+                            )}
 
-                                <span
-                                  className={`text-xs font-mono ${
-                                    task.status ===
-                                    'done'
-                                      ? 'text-brass'
-                                      : 'text-mist'
-                                  }`}
-                                >
-                                  {task.status ===
-                                  'done'
-                                    ? 'DONE'
-                                    : 'SUBMITTED'}
-                                </span>
-
-                              </div>
-
-                            )
-                          )}
+                          </div>
 
                         </div>
-
-                      </div>
-                    )
-                  })}
+                      )
+                    }
+                  )}
 
                 </div>
               )}
@@ -647,7 +797,8 @@ export default function Leaderboard({
               selectStudent(r)
             }
             className={`ticket rounded-lg p-3 flex items-center gap-3 text-left w-full transition-colors hover:border-brass ${
-              r.student_id === highlightStudentId
+              r.student_id ===
+              highlightStudentId
                 ? 'border-brass'
                 : ''
             }`}
@@ -673,6 +824,10 @@ export default function Leaderboard({
                   {r.percentage}%
                 </span>
 
+              </div>
+
+              <div className="text-xs text-mist font-mono mt-0.5">
+                @{r.username || 'student'}
               </div>
 
               <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
@@ -792,78 +947,86 @@ export default function Leaderboard({
               ) : (
                 <div className="flex flex-col gap-2">
 
-                  {groups.map((group) => {
+                  {groups.map(
+                    (group) => {
 
-                    const isMember =
-                      memberGroupIds.includes(
+                      const isMember =
+                        memberGroupIds.includes(
+                          group.id
+                        )
+
+                      const saving =
+                        savingGroup ===
                         group.id
-                      )
 
-                    const saving =
-                      savingGroup ===
-                      group.id
-
-                    return (
-                      <div
-                        key={group.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                          isMember
-                            ? 'border-brass bg-brass/5'
-                            : 'border-line bg-panel-2'
-                        }`}
-                      >
-
+                      return (
                         <div
-                          className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                            isMember
-                              ? 'bg-brass text-onbrass'
-                              : 'bg-panel border border-line text-mist'
-                          }`}
-                        >
-                          {isMember
-                            ? '✓'
-                            : '○'}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-
-                          <div className="font-medium truncate">
-                            {group.name}
-                          </div>
-
-                          <div className="text-xs text-mist mt-0.5">
-                            {isMember
-                              ? 'Student is a member'
-                              : 'Student is not a member'}
-                          </div>
-
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() =>
-                            toggleGroupMembership(
-                              group,
-                              isMember
-                            )
+                          key={
+                            group.id
                           }
-                          className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-40 ${
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                             isMember
-                              ? 'border border-coral text-coral hover:bg-coral/10'
-                              : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
+                              ? 'border-brass bg-brass/5'
+                              : 'border-line bg-panel-2'
                           }`}
                         >
-                          {saving
-                            ? 'Saving…'
-                            : isMember
-                            ? 'Remove'
-                            : 'Add'}
-                        </button>
 
-                      </div>
-                    )
-                  })}
+                          <div
+                            className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
+                              isMember
+                                ? 'bg-brass text-onbrass'
+                                : 'bg-panel border border-line text-mist'
+                            }`}
+                          >
+                            {isMember
+                              ? '✓'
+                              : '○'}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+
+                            <div className="font-medium truncate">
+                              {
+                                group.name
+                              }
+                            </div>
+
+                            <div className="text-xs text-mist mt-0.5">
+                              {isMember
+                                ? 'Student is a member'
+                                : 'Student is not a member'}
+                            </div>
+
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={
+                              saving
+                            }
+                            onClick={() =>
+                              toggleGroupMembership(
+                                group,
+                                isMember
+                              )
+                            }
+                            className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-40 ${
+                              isMember
+                                ? 'border border-coral text-coral hover:bg-coral/10'
+                                : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
+                            }`}
+                          >
+                            {saving
+                              ? 'Saving…'
+                              : isMember
+                              ? 'Remove'
+                              : 'Add'}
+                          </button>
+
+                        </div>
+                      )
+                    }
+                  )}
 
                 </div>
               )}
@@ -871,14 +1034,18 @@ export default function Leaderboard({
               <div className="mt-5 pt-4 border-t border-line">
 
                 <p className="text-xs text-mist">
+
                   Removing a student from a
                   group does{' '}
+
                   <strong className="text-paper">
                     not
                   </strong>{' '}
+
                   delete their account. It only
                   removes their membership from
                   that group.
+
                 </p>
 
               </div>

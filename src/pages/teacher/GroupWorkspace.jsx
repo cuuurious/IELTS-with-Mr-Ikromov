@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
 import SubmissionPanel from './SubmissionPanel'
@@ -20,6 +20,8 @@ export default function GroupWorkspace({ teacherId }) {
   const [viewing, setViewing] = useState(null)
   const [editingHomework, setEditingHomework] = useState(null)
   const [busyAction, setBusyAction] = useState('')
+
+  const [studentSearch, setStudentSearch] = useState('')
 
   const loadGroups = async () => {
     const { data } = await supabase
@@ -103,7 +105,7 @@ export default function GroupWorkspace({ teacherId }) {
     const { data: members } = await supabase
       .from('group_members')
       .select(
-        'student_id, profiles!inner(id, full_name, username, status)'
+        'student_id, profiles!inner(id, full_name, username, status, contact_email)'
       )
       .eq('group_id', activeGroup)
       .eq('profiles.status', 'approved')
@@ -138,14 +140,12 @@ export default function GroupWorkspace({ teacherId }) {
 
   useEffect(() => {
     loadGroupData()
+    setStudentSearch('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup])
 
   /*
-   * IMPORTANT:
-   * This removes the student ONLY from the current group.
-   * It does NOT delete their profile/account, submissions,
-   * private chats, or membership in other groups.
+   * Remove student ONLY from current group.
    */
   const removeStudent = async (student) => {
     if (
@@ -187,6 +187,10 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
+  /*
+   * Convert a public Supabase Storage URL into the actual
+   * Storage object path.
+   */
   const storagePathFromPublicUrl = (url, bucket) => {
     if (!url) return null
 
@@ -198,6 +202,17 @@ export default function GroupWorkspace({ teacherId }) {
       : null
   }
 
+  /*
+   * Completely delete homework.
+   *
+   * This removes:
+   * - all student submission files
+   * - screenshots
+   * - audio
+   * - submitted files
+   * - homework attachment
+   * - homework database row
+   */
   const deleteHomework = async (hw) => {
     if (
       !window.confirm(
@@ -210,19 +225,23 @@ export default function GroupWorkspace({ teacherId }) {
     setBusyAction(`delete-${hw.id}`)
 
     try {
-      const { data: subs } = await supabase
+      const { data: subs, error: subsError } = await supabase
         .from('submissions')
         .select(
           'screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
         )
         .eq('homework_id', hw.id)
 
+      if (subsError) throw subsError
+
       const submissionPaths = []
 
       for (const sub of subs || []) {
         for (const url of [
           ...(sub.screenshot_urls || []),
-          ...(sub.submission_files || []).map((f) => f.url),
+          ...(sub.submission_files || [])
+            .map((f) => f?.url)
+            .filter(Boolean),
           sub.audio_part1_url,
           sub.audio_part2_url,
           sub.audio_part3_url,
@@ -236,11 +255,17 @@ export default function GroupWorkspace({ teacherId }) {
         }
       }
 
-      if (submissionPaths.length) {
-        await supabase
+      const uniqueSubmissionPaths = [
+        ...new Set(submissionPaths),
+      ]
+
+      if (uniqueSubmissionPaths.length) {
+        const { error: storageError } = await supabase
           .storage
           .from('submissions')
-          .remove(submissionPaths)
+          .remove(uniqueSubmissionPaths)
+
+        if (storageError) throw storageError
       }
 
       const homeworkPath = storagePathFromPublicUrl(
@@ -249,10 +274,15 @@ export default function GroupWorkspace({ teacherId }) {
       )
 
       if (homeworkPath) {
-        await supabase
-          .storage
-          .from('homework-files')
-          .remove([homeworkPath])
+        const { error: homeworkStorageError } =
+          await supabase
+            .storage
+            .from('homework-files')
+            .remove([homeworkPath])
+
+        if (homeworkStorageError) {
+          throw homeworkStorageError
+        }
       }
 
       const { error } = await supabase
@@ -274,16 +304,37 @@ export default function GroupWorkspace({ teacherId }) {
         )
       )
     } catch (err) {
-      alert(`Couldn't delete this homework: ${err.message}`)
+      console.error('Homework deletion failed:', err)
+
+      alert(
+        `Couldn't delete this homework: ${
+          err?.message || 'Unknown error'
+        }`
+      )
     } finally {
       setBusyAction('')
     }
   }
 
+  /*
+   * RESET HOMEWORK
+   *
+   * Important:
+   * We first collect the exact Storage paths from the
+   * existing submission rows.
+   *
+   * Then we delete those Storage objects.
+   *
+   * Only AFTER successful Storage deletion do we clear
+   * the submission fields.
+   *
+   * This prevents the database from forgetting the files
+   * while the actual files remain in Storage.
+   */
   const clearHomeworkContent = async (hw) => {
     if (
       !window.confirm(
-        `Reset "${hw.title}" for every student? This clears their uploaded screenshots, recordings, and comments, and sets it back to "Not yet" so they can redo it. Their completion is already banked for the leaderboard, so their percentage and streak won't drop.`
+        `Reset "${hw.title}" for every student?\n\nAll uploaded screenshots, recordings and files for this homework will be permanently deleted. Students will see "Not yet" and can submit again.`
       )
     ) {
       return
@@ -291,30 +342,136 @@ export default function GroupWorkspace({ teacherId }) {
 
     setBusyAction(`clear-${hw.id}`)
 
-    const { error } = await supabase
-      .from('submissions')
-      .update({
-        screenshot_urls: [],
-        submission_files: [],
-        audio_part1_url: null,
-        audio_part2_url: null,
-        audio_part3_url: null,
-        comment: null,
-        status: 'pending',
-        submitted_at: null,
-      })
-      .eq('homework_id', hw.id)
-      .select()
+    try {
+      /*
+       * 1. Get existing submissions BEFORE clearing them.
+       */
+      const { data: subs, error: subsError } = await supabase
+        .from('submissions')
+        .select(
+          'id, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
+        )
+        .eq('homework_id', hw.id)
 
-    setBusyAction('')
+      if (subsError) throw subsError
 
-    if (error) {
-      alert(`Couldn't reset this homework: ${error.message}`)
-      return
+      /*
+       * 2. Extract every Storage path.
+       */
+      const submissionPaths = []
+
+      for (const sub of subs || []) {
+        const urls = [
+          ...(sub.screenshot_urls || []),
+
+          ...(sub.submission_files || [])
+            .map((file) => file?.url)
+            .filter(Boolean),
+
+          sub.audio_part1_url,
+          sub.audio_part2_url,
+          sub.audio_part3_url,
+        ].filter(Boolean)
+
+        for (const url of urls) {
+          const path = storagePathFromPublicUrl(
+            url,
+            'submissions'
+          )
+
+          if (path) {
+            submissionPaths.push(path)
+          }
+        }
+      }
+
+      /*
+       * 3. Remove duplicates.
+       */
+      const uniqueSubmissionPaths = [
+        ...new Set(submissionPaths),
+      ]
+
+      /*
+       * 4. DELETE THE ACTUAL FILES FROM STORAGE.
+       */
+      if (uniqueSubmissionPaths.length) {
+        const { error: storageError } =
+          await supabase
+            .storage
+            .from('submissions')
+            .remove(uniqueSubmissionPaths)
+
+        if (storageError) {
+          throw storageError
+        }
+      }
+
+      /*
+       * 5. Only after Storage cleanup succeeds,
+       * reset the database submission state.
+       */
+      const { error: updateError } = await supabase
+        .from('submissions')
+        .update({
+          screenshot_urls: [],
+          submission_files: [],
+          audio_part1_url: null,
+          audio_part2_url: null,
+          audio_part3_url: null,
+          comment: null,
+          status: 'pending',
+          submitted_at: null,
+        })
+        .eq('homework_id', hw.id)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      /*
+       * 6. Refresh the teacher workspace.
+       */
+      await loadGroupData()
+
+    } catch (err) {
+      console.error(
+        'Homework reset failed:',
+        err
+      )
+
+      alert(
+        `Couldn't reset this homework: ${
+          err?.message || 'Unknown error'
+        }`
+      )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  /*
+   * Filter current group roster.
+   */
+  const filteredRoster = useMemo(() => {
+    const query = studentSearch.trim().toLowerCase()
+
+    if (!query) {
+      return roster
     }
 
-    await loadGroupData()
-  }
+    return roster.filter((student) => {
+      return [
+        student.full_name,
+        student.username,
+        student.contact_email,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value.toLowerCase().includes(query)
+        )
+    })
+  }, [roster, studentSearch])
 
   const activeGroupObj = groups.find(
     (g) => g.id === activeGroup
@@ -446,6 +603,50 @@ export default function GroupWorkspace({ teacherId }) {
               </p>
             )}
 
+            {roster.length > 0 && (
+              <div className="flex flex-col gap-2">
+
+                <input
+                  value={studentSearch}
+                  onChange={(e) =>
+                    setStudentSearch(e.target.value)
+                  }
+                  placeholder="Search students in this group..."
+                  className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                />
+
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+
+                  <span className="text-mist text-xs font-mono">
+                    {studentSearch.trim()
+                      ? `Showing ${filteredRoster.length} of ${roster.length} students`
+                      : `${roster.length} student${
+                          roster.length === 1 ? '' : 's'
+                        }`}
+                  </span>
+
+                  {studentSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setStudentSearch('')}
+                      className="focus-ring text-xs text-brass hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+            {roster.length > 0 &&
+              filteredRoster.length === 0 && (
+                <p className="text-mist text-sm">
+                  No students match your search.
+                </p>
+              )}
+
             {homeworks.length === 0 &&
               roster.length > 0 && (
                 <p className="text-mist text-sm">
@@ -454,7 +655,7 @@ export default function GroupWorkspace({ teacherId }) {
               )}
 
             {homeworks.length > 0 &&
-              roster.length > 0 && (
+              filteredRoster.length > 0 && (
 
                 <div className="overflow-x-auto">
 
@@ -501,8 +702,8 @@ export default function GroupWorkspace({ teacherId }) {
                                   `clear-${hw.id}`
                                 }
                                 className="focus-ring text-mist hover:text-brass normal-case disabled:opacity-40"
-                                title="Reset student submissions (keeps homework)"
-                                aria-label="Reset student submissions"
+                                title="Reset student submissions and delete uploaded files"
+                                aria-label="Reset student submissions and delete uploaded files"
                               >
                                 ↻
                               </button>
@@ -543,7 +744,7 @@ export default function GroupWorkspace({ teacherId }) {
 
                     <tbody>
 
-                      {roster.map((student) => (
+                      {filteredRoster.map((student) => (
 
                         <tr
                           key={student.id}

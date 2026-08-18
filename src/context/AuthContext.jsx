@@ -1,5 +1,14 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase, usernameToEmail } from '../lib/supabaseClient'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react'
+import {
+  supabase,
+  usernameToEmail,
+} from '../lib/supabaseClient'
 
 const AuthContext = createContext(null)
 
@@ -13,73 +22,201 @@ export function AuthProvider({ children }) {
       setProfile(null)
       return
     }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle()
-    if (error) console.error(error)
+
+    if (error) {
+      console.error(error)
+    }
+
     setProfile(data || null)
   }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-      loadProfile(data.session?.user?.id).finally(() => setLoading(false))
+
+      loadProfile(
+        data.session?.user?.id
+      ).finally(() => {
+        setLoading(false)
+      })
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess)
-      loadProfile(sess?.user?.id)
-    })
-    return () => sub.subscription.unsubscribe()
+    const {
+      data: sub,
+    } = supabase.auth.onAuthStateChange(
+      (_event, sess) => {
+        setSession(sess)
+        loadProfile(sess?.user?.id)
+      }
+    )
+
+    return () =>
+      sub.subscription.unsubscribe()
   }, [loadProfile])
 
-  const signUp = async ({ username, password, fullName, role, groupIds, contactEmail }) => {
-    const email = contactEmail?.trim().toLowerCase() || usernameToEmail(username)
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) throw error
-    const userId = data.user?.id
-    if (!userId) throw new Error('Sign up did not return a user. Please try logging in.')
+  const signUp = async ({
+    username,
+    password,
+    fullName,
+    role,
+    groupIds,
+    contactEmail,
+  }) => {
+    const email =
+      contactEmail?.trim().toLowerCase() ||
+      usernameToEmail(username)
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: userId,
-      full_name: fullName,
-      username: username.trim().toLowerCase(),
-      role,
-      status: role === 'teacher' ? 'pending' : 'pending',
-      contact_email: contactEmail?.trim() || null,
+    const {
+      data,
+      error,
+    } = await supabase.auth.signUp({
+      email,
+      password,
     })
-    if (profileError) throw profileError
 
-    if (role === 'student' && groupIds?.length) {
-      const rows = groupIds.map((group_id) => ({ group_id, student_id: userId }))
-      const { error: gmError } = await supabase.from('group_members').insert(rows)
-      if (gmError) throw gmError
+    if (error) {
+      throw error
+    }
+
+    const userId = data.user?.id
+
+    if (!userId) {
+      throw new Error(
+        'Sign up did not return a user. Please try logging in.'
+      )
+    }
+
+    const {
+      error: profileError,
+    } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        full_name: fullName,
+        username: username
+          .trim()
+          .toLowerCase(),
+        role,
+        status:
+          role === 'teacher'
+            ? 'pending'
+            : 'pending',
+        contact_email:
+          contactEmail?.trim() || null,
+      })
+
+    if (profileError) {
+      throw profileError
+    }
+
+    if (
+      role === 'student' &&
+      groupIds?.length
+    ) {
+      const rows =
+        groupIds.map(
+          (group_id) => ({
+            group_id,
+            student_id: userId,
+          })
+        )
+
+      const {
+        error: gmError,
+      } = await supabase
+        .from('group_members')
+        .insert(rows)
+
+      if (gmError) {
+        throw gmError
+      }
     }
 
     await loadProfile(userId)
+
     return data
   }
 
-  const signIn = async ({ username, password }) => {
-    const { data: emailData, error: lookupError } = await supabase.rpc('auth_email_for_username', { p_username: username })
-    if (lookupError) throw lookupError
-    const email = emailData || usernameToEmail(username)
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    await loadProfile(data.user.id)
+  const signIn = async ({
+    username,
+    password,
+  }) => {
+    const {
+      data: emailData,
+      error: lookupError,
+    } = await supabase.rpc(
+      'auth_email_for_username',
+      {
+        p_username: username,
+      }
+    )
+
+    if (lookupError) {
+      throw lookupError
+    }
+
+    const email =
+      emailData ||
+      usernameToEmail(username)
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+    if (error) {
+      throw error
+    }
+
+    await loadProfile(
+      data.user.id
+    )
+
     return data
   }
 
-  const sendPasswordReset = async (username) => {
-    const { data: emailData, error: lookupError } = await supabase.rpc('auth_email_for_username', { p_username: username })
-    if (lookupError) throw lookupError
-    const email = emailData || usernameToEmail(username)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    if (error) throw error
+  /*
+   * Password recovery uses the REAL recovery email.
+   *
+   * Normal login still uses username.
+   * Forgot-password uses the email address directly.
+   */
+  const sendPasswordReset = async (
+    email
+  ) => {
+    const cleanEmail =
+      email?.trim().toLowerCase()
+
+    if (!cleanEmail) {
+      throw new Error(
+        'Please enter your recovery email.'
+      )
+    }
+
+    const {
+      error,
+    } =
+      await supabase.auth.resetPasswordForEmail(
+        cleanEmail,
+        {
+          redirectTo:
+            `${window.location.origin}/reset-password`,
+        }
+      )
+
+    if (error) {
+      throw error
+    }
   }
 
   const signOut = async () => {
@@ -87,15 +224,28 @@ export function AuthProvider({ children }) {
     setProfile(null)
   }
 
-  const refreshProfile = () => loadProfile(session?.user?.id)
+  const refreshProfile = () =>
+    loadProfile(
+      session?.user?.id
+    )
 
   return (
     <AuthContext.Provider
-      value={{ session, profile, loading, signUp, signIn, signOut, refreshProfile, sendPasswordReset }}
+      value={{
+        session,
+        profile,
+        loading,
+        signUp,
+        signIn,
+        signOut,
+        refreshProfile,
+        sendPasswordReset,
+      }}
     >
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () =>
+  useContext(AuthContext)

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import Layout from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
+import TeacherStudents from './TeacherStudents'
 import PendingApprovals from './PendingApprovals'
 import TeacherChat from './TeacherChat'
 import TeacherGroupChats from './TeacherGroupChats'
@@ -93,8 +94,7 @@ export default function TeacherDashboard() {
         setNotificationChat({
           studentId: student.id,
           studentName: student.full_name,
-          messageId:
-            messageId || null,
+          messageId: messageId || null,
         })
 
         setNotificationGroup(null)
@@ -135,8 +135,7 @@ export default function TeacherDashboard() {
         setNotificationGroup({
           groupId: group.id,
           groupName: group.name,
-          messageId:
-            messageId || null,
+          messageId: messageId || null,
         })
 
         setNotificationChat(null)
@@ -172,6 +171,10 @@ export default function TeacherDashboard() {
       label: 'Groups & homework',
     },
     {
+      key: 'students',
+      label: 'Students',
+    },
+    {
       key: 'wordlists',
       label: 'Word lists',
     },
@@ -197,9 +200,7 @@ export default function TeacherDashboard() {
     },
   ]
 
-  const handleTabChange = (
-    nextTab
-  ) => {
+  const handleTabChange = (nextTab) => {
     setTab(nextTab)
 
     if (nextTab !== 'chat') {
@@ -221,6 +222,10 @@ export default function TeacherDashboard() {
         <GroupWorkspace
           teacherId={profile.id}
         />
+      )}
+
+      {tab === 'students' && (
+        <TeacherStudents />
       )}
 
       {tab === 'wordlists' && (

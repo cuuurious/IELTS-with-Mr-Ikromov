@@ -4,24 +4,32 @@ import { useAuth } from '../context/AuthContext'
 
 export default function ForgotPassword() {
   const { sendPasswordReset } = useAuth()
-  const [username, setUsername] = useState('')
+
+  const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const submit = async (e) => {
     e.preventDefault()
+
     setLoading(true)
     setError('')
     setMessage('')
 
     try {
-      await sendPasswordReset(username)
+      await sendPasswordReset(email)
+
       setMessage(
-        'If that account has a recovery email, a password reset link has been sent to it.'
+        'If this email belongs to an account, a password reset link has been sent. Please check your inbox and spam folder.'
       )
     } catch (err) {
-      setError(err.message)
+      console.error('Password reset request failed:', err)
+
+      setError(
+        err?.message ||
+          'Could not send the password reset email.'
+      )
     } finally {
       setLoading(false)
     }
@@ -30,6 +38,7 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen bg-ink text-paper flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
+
         <div className="text-center mb-8">
           <img
             src="/ielts.png"
@@ -42,7 +51,8 @@ export default function ForgotPassword() {
           </h1>
 
           <p className="text-mist text-sm mt-1">
-            Enter your username and we’ll send the reset link to the recovery email on your account.
+            Enter the recovery email connected to your account.
+            We&apos;ll send you a secure password reset link.
           </p>
         </div>
 
@@ -50,30 +60,43 @@ export default function ForgotPassword() {
           onSubmit={submit}
           className="ticket rounded-lg p-6 flex flex-col gap-4"
         >
-          <input
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2"
-            required
-          />
+          <div>
+            <label className="text-xs uppercase tracking-wide text-mist font-mono">
+              Recovery email
+            </label>
+
+            <input
+              autoFocus
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              autoComplete="email"
+              className="focus-ring w-full mt-1 bg-panel-2 border border-line rounded-md px-3 py-2"
+              required
+            />
+          </div>
 
           {message && (
-            <p className="text-sage text-sm">
-              {message}
-            </p>
+            <div className="rounded-md border border-sage/40 bg-sage/10 px-3 py-2">
+              <p className="text-sage text-sm">
+                {message}
+              </p>
+            </div>
           )}
 
           {error && (
-            <p className="text-coral text-sm">
-              {error}
-            </p>
+            <div className="rounded-md border border-coral/40 bg-coral/10 px-3 py-2">
+              <p className="text-coral text-sm">
+                {error}
+              </p>
+            </div>
           )}
 
           <button
+            type="submit"
             disabled={loading}
-            className="focus-ring bg-brass text-onbrass font-medium rounded-md py-2.5 disabled:opacity-50"
+            className="focus-ring bg-brass text-onbrass font-medium rounded-md py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Sending…' : 'Send reset link'}
           </button>
@@ -87,6 +110,7 @@ export default function ForgotPassword() {
             Back to sign in
           </Link>
         </p>
+
       </div>
     </div>
   )

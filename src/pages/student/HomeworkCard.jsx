@@ -26,6 +26,220 @@ const PARTS = [
   },
 ]
 
+/*
+ * =========================================================
+ * IMAGE COMPRESSION
+ *
+ * Phone photos can be 5–15+ MB.
+ * We resize them before uploading so mobile browsers
+ * don't have to send huge camera images to Supabase.
+ *
+ * PDFs, DOCX, MP3, WAV, etc. are NOT changed.
+ * =========================================================
+ */
+
+const MAX_IMAGE_DIMENSION = 1600
+const IMAGE_QUALITY = 0.82
+
+const isImageFile = (file) => {
+  if (!file) return false
+
+  if (file.type?.startsWith('image/')) {
+    return true
+  }
+
+  return [
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'svg',
+  ].includes(extensionOf(file.name))
+}
+
+const compressImage = async (file) => {
+  if (!isImageFile(file)) {
+    return file
+  }
+
+  /*
+   * SVG should stay SVG because rasterising it can change
+   * how it looks.
+   */
+  if (
+    file.type === 'image/svg+xml' ||
+    extensionOf(file.name) === 'svg'
+  ) {
+    return file
+  }
+
+  /*
+   * Very small images don't need compression.
+   * This also avoids unnecessary processing.
+   */
+  if (file.size <= 1.5 * 1024 * 1024) {
+    return file
+  }
+
+  let bitmap = null
+  let objectUrl = null
+
+  try {
+    /*
+     * createImageBitmap is usually faster and more memory
+     * efficient on modern mobile browsers.
+     */
+    if (typeof createImageBitmap === 'function') {
+      try {
+        bitmap = await createImageBitmap(file, {
+          imageOrientation: 'from-image',
+        })
+      } catch {
+        bitmap = await createImageBitmap(file)
+      }
+    }
+
+    /*
+     * Fallback for browsers without createImageBitmap.
+     */
+    if (!bitmap) {
+      objectUrl = URL.createObjectURL(file)
+
+      bitmap = await new Promise(
+        (resolve, reject) => {
+          const img = new Image()
+
+          img.onload = () => resolve(img)
+          img.onerror = () =>
+            reject(
+              new Error(
+                'Could not read this image.'
+              )
+            )
+
+          img.src = objectUrl
+        }
+      )
+    }
+
+    const originalWidth = bitmap.width
+    const originalHeight = bitmap.height
+
+    const largestSide = Math.max(
+      originalWidth,
+      originalHeight
+    )
+
+    const scale =
+      largestSide > MAX_IMAGE_DIMENSION
+        ? MAX_IMAGE_DIMENSION /
+          largestSide
+        : 1
+
+    const width = Math.max(
+      1,
+      Math.round(
+        originalWidth * scale
+      )
+    )
+
+    const height = Math.max(
+      1,
+      Math.round(
+        originalHeight * scale
+      )
+    )
+
+    const canvas =
+      document.createElement('canvas')
+
+    canvas.width = width
+    canvas.height = height
+
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) {
+      return file
+    }
+
+    /*
+     * Better quality when shrinking phone photos.
+     */
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+
+    ctx.drawImage(
+      bitmap,
+      0,
+      0,
+      width,
+      height
+    )
+
+    const blob =
+      await new Promise(
+        (resolve) => {
+          canvas.toBlob(
+            resolve,
+            'image/jpeg',
+            IMAGE_QUALITY
+          )
+        }
+      )
+
+    if (!blob) {
+      return file
+    }
+
+    /*
+     * If compression somehow produces a larger file,
+     * keep the original instead.
+     */
+    if (blob.size >= file.size) {
+      return file
+    }
+
+    return new File(
+      [blob],
+      `${file.name.replace(
+        /\.[^/.]+$/,
+        ''
+      )}.jpg`,
+      {
+        type: 'image/jpeg',
+        lastModified:
+          Date.now(),
+      }
+    )
+  } catch (err) {
+    console.warn(
+      'Image compression failed; uploading original file:',
+      err
+    )
+
+    /*
+     * Never make a student lose the upload just because
+     * compression failed.
+     */
+    return file
+  } finally {
+    if (
+      bitmap &&
+      typeof bitmap.close ===
+        'function'
+    ) {
+      bitmap.close()
+    }
+
+    if (objectUrl) {
+      URL.revokeObjectURL(
+        objectUrl
+      )
+    }
+  }
+}
+
 export default function HomeworkCard({
   homework,
   submission,
@@ -78,24 +292,27 @@ export default function HomeworkCard({
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
 
-  const upsertSubmission = async (patch) => {
-    const { data, error } = await supabase
-      .from('submissions')
-      .upsert(
-        {
-          id: submission?.id,
-          homework_id: homework.id,
-          student_id: studentId,
-          group_id: homework.group_id,
-          ...patch,
-        },
-        {
-          onConflict:
-            'homework_id,student_id',
-        }
-      )
-      .select()
-      .single()
+  const upsertSubmission = async (
+    patch
+  ) => {
+    const { data, error } =
+      await supabase
+        .from('submissions')
+        .upsert(
+          {
+            id: submission?.id,
+            homework_id: homework.id,
+            student_id: studentId,
+            group_id: homework.group_id,
+            ...patch,
+          },
+          {
+            onConflict:
+              'homework_id,student_id',
+          }
+        )
+        .select()
+        .single()
 
     if (error) throw error
 
@@ -104,22 +321,57 @@ export default function HomeworkCard({
     return data
   }
 
+  /*
+   * Upload a file to Supabase.
+   *
+   * Images are compressed before upload.
+   * Everything else is uploaded unchanged.
+   */
   const uploadFile = async (
     file,
     name
   ) => {
-    const path = `${studentId}/${homework.id}/${name}`
+    let uploadFileValue = file
+    let uploadName = name
+
+    if (isImageFile(file)) {
+      uploadFileValue =
+        await compressImage(file)
+
+      /*
+       * If compression changed the file into JPEG,
+       * update the filename too.
+       */
+      if (
+        uploadFileValue !== file &&
+        uploadFileValue.type ===
+          'image/jpeg'
+      ) {
+        uploadName =
+          `${name.replace(
+            /\.[^/.]+$/,
+            ''
+          )}.jpg`
+      }
+    }
+
+    const path = `${studentId}/${homework.id}/${uploadName}`
 
     const { error: upErr } =
       await supabase.storage
         .from('submissions')
-        .upload(path, file, {
-          upsert: true,
-          contentType: guessMimeType(
-            name,
-            file.type
-          ),
-        })
+        .upload(
+          path,
+          uploadFileValue,
+          {
+            upsert: true,
+            contentType:
+              guessMimeType(
+                uploadName,
+                uploadFileValue.type
+              ),
+          }
+        )
 
     if (upErr) throw upErr
 
@@ -129,25 +381,31 @@ export default function HomeworkCard({
       .data.publicUrl
   }
 
-  const validateFiles = (files) => {
+  const validateFiles = (
+    files
+  ) => {
     if (
-      existingCount + files.length >
+      existingCount +
+        files.length >
       maxFiles
     ) {
       throw new Error(
         `This homework allows a maximum of ${maxFiles} file${
-          maxFiles === 1 ? '' : 's'
+          maxFiles === 1
+            ? ''
+            : 's'
         }.`
       )
     }
 
     for (const file of files) {
       if (
-        !allowedTypes.some((type) =>
-          matchesSubmissionType(
-            file,
-            type
-          )
+        !allowedTypes.some(
+          (type) =>
+            matchesSubmissionType(
+              file,
+              type
+            )
         )
       ) {
         throw new Error(
@@ -158,11 +416,16 @@ export default function HomeworkCard({
   }
 
   /*
+   * =========================================================
    * UPLOAD FILES
    *
    * Uploading files NEVER submits the homework.
+   * =========================================================
    */
-  const saveFiles = async (files) => {
+
+  const saveFiles = async (
+    files
+  ) => {
     if (!files.length) return
 
     if (taskAlreadySubmitted) {
@@ -181,20 +444,36 @@ export default function HomeworkCard({
       const newImages = []
       const newFiles = []
 
-      for (const [
-        i,
-        file,
-      ] of files.entries()) {
+      /*
+       * Process one file at a time.
+       *
+       * This is especially important on phones because
+       * processing several large camera photos simultaneously
+       * can cause browser memory problems.
+       */
+      for (
+        const [
+          i,
+          file,
+        ] of files.entries()
+      ) {
         const safeName =
           `${Date.now()}-${i}-${file.name}`
 
-        const url = await uploadFile(
-          file,
-          safeName
-        )
+        const url =
+          await uploadFile(
+            file,
+            safeName
+          )
 
+        /*
+         * Use the original file to determine whether
+         * this is an image submission.
+         */
         if (
-          file.type.startsWith('image/') ||
+          file.type.startsWith(
+            'image/'
+          ) ||
           [
             'png',
             'jpg',
@@ -203,7 +482,9 @@ export default function HomeworkCard({
             'webp',
             'svg',
           ].includes(
-            extensionOf(file.name)
+            extensionOf(
+              file.name
+            )
           )
         ) {
           newImages.push(url)
@@ -213,7 +494,9 @@ export default function HomeworkCard({
             name: file.name,
             type:
               file.type ||
-              extensionOf(file.name),
+              extensionOf(
+                file.name
+              ),
           })
         }
       }
@@ -237,13 +520,23 @@ export default function HomeworkCard({
         submitted_at: null,
       })
     } catch (err) {
-      setError(err.message)
+      console.error(
+        'File upload failed:',
+        err
+      )
+
+      setError(
+        err?.message ||
+          'Could not upload the file. Please try again.'
+      )
     } finally {
       setUploading(false)
     }
   }
 
-  const handleFiles = async (e) => {
+  const handleFiles = async (
+    e
+  ) => {
     const files = Array.from(
       e.target.files || []
     )
@@ -257,14 +550,17 @@ export default function HomeworkCard({
     if (!open) return undefined
 
     const onPaste = (e) => {
-      if (taskAlreadySubmitted) return
+      if (taskAlreadySubmitted)
+        return
 
       const images = Array.from(
-        e.clipboardData?.items || []
+        e.clipboardData?.items ||
+          []
       )
         .filter(
           (item) =>
-            item.kind === 'file' &&
+            item.kind ===
+              'file' &&
             item.type.startsWith(
               'image/'
             )
@@ -318,10 +614,11 @@ export default function HomeworkCard({
     setError('')
 
     try {
-      const url = await uploadFile(
-        blob,
-        `${fileName}.webm`
-      )
+      const url =
+        await uploadFile(
+          blob,
+          `${fileName}.webm`
+        )
 
       await upsertSubmission({
         [fieldKey]: url,
@@ -329,7 +626,10 @@ export default function HomeworkCard({
         submitted_at: null,
       })
     } catch (err) {
-      setError(err.message)
+      setError(
+        err?.message ||
+          'Could not upload the recording.'
+      )
     } finally {
       setUploading(false)
     }
@@ -339,71 +639,78 @@ export default function HomeworkCard({
    * SPEAKING MP3 / WAV UPLOAD
    */
 
-  const handleAudioUpload = async (
-    file,
-    fieldKey,
-    fileName
-  ) => {
-    if (
-      !matchesSubmissionType(
-        file,
-        'mp3'
-      ) &&
-      !matchesSubmissionType(
-        file,
-        'wav'
-      ) &&
-      !matchesSubmissionType(
-        file,
-        'other'
-      )
-    ) {
-      setError(
-        'Please upload an MP3 or WAV file.'
-      )
-      return
+  const handleAudioUpload =
+    async (
+      file,
+      fieldKey,
+      fileName
+    ) => {
+      if (
+        !matchesSubmissionType(
+          file,
+          'mp3'
+        ) &&
+        !matchesSubmissionType(
+          file,
+          'wav'
+        ) &&
+        !matchesSubmissionType(
+          file,
+          'other'
+        )
+      ) {
+        setError(
+          'Please upload an MP3 or WAV file.'
+        )
+        return
+      }
+
+      setUploading(true)
+      setError('')
+
+      try {
+        const url =
+          await uploadFile(
+            file,
+            `${fileName}-${Date.now()}-${file.name}`
+          )
+
+        await upsertSubmission({
+          [fieldKey]: url,
+          status: 'pending',
+          submitted_at: null,
+        })
+      } catch (err) {
+        setError(
+          err?.message ||
+            'Could not upload the audio.'
+        )
+      } finally {
+        setUploading(false)
+      }
     }
-
-    setUploading(true)
-    setError('')
-
-    try {
-      const url = await uploadFile(
-        file,
-        `${fileName}-${Date.now()}-${file.name}`
-      )
-
-      await upsertSubmission({
-        [fieldKey]: url,
-        status: 'pending',
-        submitted_at: null,
-      })
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setUploading(false)
-    }
-  }
 
   /*
    * DELETE SPEAKING PART
    */
 
-  const handleAudioDelete = async (
-    fieldKey
-  ) => {
-    setError('')
+  const handleAudioDelete =
+    async (fieldKey) => {
+      setError('')
 
-    try {
-      await upsertSubmission({
-        [fieldKey]: null,
-        status: 'pending',
-        submitted_at: null,
-      })
-    } catch (err) {
-      setError(err.message)
+      try {
+        await upsertSubmission({
+          [fieldKey]: null,
+          status: 'pending',
+          submitted_at: null,
+        })
+      } catch (err) {
+        setError(
+          err?.message ||
+            'Could not delete the recording.'
+        )
+      }
     }
-  }
 
   /*
    * SUBMIT SPEAKING TASK
@@ -440,7 +747,10 @@ export default function HomeworkCard({
             new Date().toISOString(),
         })
       } catch (err) {
-        setError(err.message)
+        setError(
+          err?.message ||
+            'Could not submit the speaking task.'
+        )
       } finally {
         setUploading(false)
       }
@@ -457,16 +767,21 @@ export default function HomeworkCard({
       try {
         const remaining =
           existingImages.filter(
-            (u) => u !== urlToRemove
+            (u) =>
+              u !== urlToRemove
           )
 
         await upsertSubmission({
-          screenshot_urls: remaining,
+          screenshot_urls:
+            remaining,
           status: 'pending',
           submitted_at: null,
         })
       } catch (err) {
-        setError(err.message)
+        setError(
+          err?.message ||
+            'Could not delete the image.'
+        )
       }
     }
 
@@ -487,12 +802,16 @@ export default function HomeworkCard({
           )
 
         await upsertSubmission({
-          submission_files: remaining,
+          submission_files:
+            remaining,
           status: 'pending',
           submitted_at: null,
         })
       } catch (err) {
-        setError(err.message)
+        setError(
+          err?.message ||
+            'Could not delete the file.'
+        )
       }
     }
 
@@ -500,7 +819,7 @@ export default function HomeworkCard({
    * =========================================================
    * SUBMIT NORMAL HOMEWORK
    *
-   * This is the new explicit Submit button.
+   * This is the explicit Submit button.
    * =========================================================
    */
 
@@ -508,10 +827,6 @@ export default function HomeworkCard({
     async () => {
       setError('')
 
-      /*
-       * If this homework requires files,
-       * make sure the minimum is satisfied.
-       */
       if (
         existingCount <
         minFiles
@@ -539,7 +854,10 @@ export default function HomeworkCard({
             new Date().toISOString(),
         })
       } catch (err) {
-        setError(err.message)
+        setError(
+          err?.message ||
+            'Could not submit the homework.'
+        )
       } finally {
         setUploading(false)
       }
@@ -558,7 +876,10 @@ export default function HomeworkCard({
         comment,
       })
     } catch (err) {
-      setError(err.message)
+      setError(
+        err?.message ||
+          'Could not save your comment.'
+      )
     } finally {
       setSavingComment(false)
     }
@@ -645,9 +966,7 @@ export default function HomeworkCard({
       {open && (
         <div className="border-t border-line p-4 flex flex-col gap-4">
 
-          {/* =================================================
-              DESCRIPTION
-          ================================================= */}
+          {/* DESCRIPTION */}
 
           {homework.description && (
             <p className="text-sm text-paper-dim whitespace-pre-wrap">
@@ -655,9 +974,7 @@ export default function HomeworkCard({
             </p>
           )}
 
-          {/* =================================================
-              TEACHER ATTACHMENT
-          ================================================= */}
+          {/* TEACHER ATTACHMENT */}
 
           {homework.attachment_url && (
             <a
@@ -674,9 +991,7 @@ export default function HomeworkCard({
             </a>
           )}
 
-          {/* =================================================
-              FILES / PICTURES
-          ================================================= */}
+          {/* FILES / PICTURES */}
 
           <div className="rounded-lg border border-line bg-panel-2 p-3">
 
@@ -828,9 +1143,7 @@ export default function HomeworkCard({
 
           </div>
 
-          {/* =================================================
-              NORMAL TASK SUBMIT BUTTON
-          ================================================= */}
+          {/* NORMAL TASK SUBMIT */}
 
           {!homework.enable_speaking && (
             <div className="rounded-lg border border-line bg-panel-2 p-4">
@@ -910,9 +1223,7 @@ export default function HomeworkCard({
             </div>
           )}
 
-          {/* =================================================
-              SPEAKING
-          ================================================= */}
+          {/* SPEAKING */}
 
           {homework.enable_speaking && (
             <div className="flex flex-col gap-4">
@@ -964,9 +1275,7 @@ export default function HomeworkCard({
 
               </div>
 
-              {/* =================================================
-                  SPEAKING SUBMIT BUTTON
-              ================================================= */}
+              {/* SPEAKING SUBMIT */}
 
               <div className="rounded-lg border border-line bg-panel-2 p-4">
 
@@ -1033,9 +1342,7 @@ export default function HomeworkCard({
             </div>
           )}
 
-          {/* =================================================
-              COMMENT
-          ================================================= */}
+          {/* COMMENT */}
 
           <div>
 

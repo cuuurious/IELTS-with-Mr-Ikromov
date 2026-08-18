@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function PendingApprovals() {
@@ -6,6 +6,7 @@ export default function PendingApprovals() {
   const [loading, setLoading] = useState(true)
   const [actionId, setActionId] = useState(null)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -27,7 +28,11 @@ export default function PendingApprovals() {
     })
 
     if (error) {
-      console.error('Failed to load pending approvals:', error)
+      console.error(
+        'Failed to load pending approvals:',
+        error
+      )
+
       setError(error.message)
       setPending([])
     } else {
@@ -76,7 +81,10 @@ export default function PendingApprovals() {
       .eq('id', id)
 
     if (error) {
-      console.error(`Failed to ${status} student:`, error)
+      console.error(
+        `Failed to ${status} student:`,
+        error
+      )
 
       setError(
         `Could not ${
@@ -91,11 +99,36 @@ export default function PendingApprovals() {
     }
 
     setPending((prev) =>
-      prev.filter((student) => student.id !== id)
+      prev.filter(
+        (student) => student.id !== id
+      )
     )
 
     setActionId(null)
   }
+
+  const filteredPending = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) {
+      return pending
+    }
+
+    return pending.filter((student) => {
+      return [
+        student.full_name,
+        student.username,
+        student.contact_email,
+        student.role,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value
+            .toLowerCase()
+            .includes(query)
+        )
+    })
+  }, [pending, search])
 
   if (loading) {
     return (
@@ -114,19 +147,90 @@ export default function PendingApprovals() {
         </div>
       )}
 
+      {pending.length > 0 && (
+        <div className="ticket rounded-lg p-4">
+
+          <div className="flex flex-col gap-3">
+
+            <input
+              type="text"
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search by name, username, or email..."
+              className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+            />
+
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+
+              <span className="text-mist text-xs font-mono">
+                {search.trim()
+                  ? `Showing ${filteredPending.length} of ${pending.length} pending requests`
+                  : `${pending.length} pending request${
+                      pending.length === 1
+                        ? ''
+                        : 's'
+                    }`}
+              </span>
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch('')
+                  }
+                  className="focus-ring text-xs text-brass hover:underline"
+                >
+                  Clear search
+                </button>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
       {pending.length === 0 ? (
         <div className="ticket rounded-lg p-5">
+
           <div className="font-medium text-paper">
             No pending sign-ups
           </div>
 
           <p className="text-mist text-sm mt-1">
-            New student registration requests will appear
-            here automatically.
+            New student registration requests
+            will appear here automatically.
           </p>
+
+        </div>
+      ) : filteredPending.length === 0 ? (
+        <div className="ticket rounded-lg p-5">
+
+          <div className="font-medium text-paper">
+            No matching students
+          </div>
+
+          <p className="text-mist text-sm mt-1">
+            No pending registration matches
+            your search.
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              setSearch('')
+            }
+            className="focus-ring mt-3 text-sm text-brass hover:underline"
+          >
+            Clear search
+          </button>
+
         </div>
       ) : (
-        pending.map((student) => (
+        filteredPending.map((student) => (
           <div
             key={student.id}
             className="ticket rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap"
@@ -135,13 +239,16 @@ export default function PendingApprovals() {
             <div className="min-w-0">
 
               <div className="font-display text-lg text-paper">
-                {student.full_name || 'Unnamed student'}
+                {student.full_name ||
+                  'Unnamed student'}
               </div>
 
               <div className="text-mist text-sm font-mono mt-1">
-                @{student.username || 'no username'}
+                @{student.username ||
+                  'no username'}
                 {' · '}
-                {student.role || 'student'}
+                {student.role ||
+                  'student'}
               </div>
 
               {student.contact_email && (
@@ -165,9 +272,14 @@ export default function PendingApprovals() {
 
               <button
                 type="button"
-                disabled={actionId === student.id}
+                disabled={
+                  actionId === student.id
+                }
                 onClick={() =>
-                  decide(student.id, 'approved')
+                  decide(
+                    student.id,
+                    'approved'
+                  )
                 }
                 className="focus-ring px-4 py-2 rounded-md bg-sage text-onbrass text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -178,9 +290,14 @@ export default function PendingApprovals() {
 
               <button
                 type="button"
-                disabled={actionId === student.id}
+                disabled={
+                  actionId === student.id
+                }
                 onClick={() =>
-                  decide(student.id, 'rejected')
+                  decide(
+                    student.id,
+                    'rejected'
+                  )
                 }
                 className="focus-ring px-4 py-2 rounded-md border border-coral text-coral text-sm hover:bg-coral hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >

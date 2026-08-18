@@ -1,0 +1,1131 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+
+export default function TeacherWordlists({ teacherId }) {
+  const [groups, setGroups] = useState([])
+  const [activeGroup, setActiveGroup] = useState(null)
+  const [lists, setLists] = useState([])
+  const [creating, setCreating] = useState(false)
+  const [viewingResults, setViewingResults] = useState(null)
+
+  useEffect(() => {
+    supabase
+      .from('groups')
+      .select('*')
+      .order('created_at')
+      .then(({ data }) => {
+        setGroups(data || [])
+        if (data?.length) setActiveGroup(data[0].id)
+      })
+  }, [])
+
+  const loadLists = async () => {
+    if (!activeGroup) return
+    const { data } = await supabase
+      .from('wordlists')
+      .select('*, wordlist_items(count)')
+      .eq('group_id', activeGroup)
+      .order('created_at', { ascending: false })
+    setLists(data || [])
+  }
+
+  useEffect(() => {
+    loadLists()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroup])
+
+  return (
+    <div className="flex flex-col gap-5">
+      {groups.length === 0 && <p className="text-mist">Create a group first.</p>}
+      {groups.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {groups.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => setActiveGroup(g.id)}
+              className={`focus-ring px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                activeGroup === g.id
+                  ? 'bg-brass text-onbrass border-brass font-medium'
+                  : 'border-line text-mist hover:text-paper'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeGroup && (
+        <>
+          {creating ? (
+            <NewWordlistForm
+              groupId={activeGroup}
+              teacherId={teacherId}
+              onDone={() => {
+                setCreating(false)
+                loadLists()
+              }}
+              onCancel={() => setCreating(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setCreating(true)}
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors w-fit"
+            >
+              + New word list
+            </button>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {lists.map((list) => (
+              <div key={list.id} className="ticket rounded-lg p-4 flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-display text-lg">{list.title}</div>
+                  <div className="text-mist text-xs font-mono">
+                    {list.wordlist_items?.[0]?.count ?? 0} words · posted{' '}
+                    {new Date(list.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewingResults(list)}
+                  className="focus-ring px-3 py-1.5 rounded-md border border-line text-sm hover:border-brass hover:text-brass transition-colors"
+                >
+                  View results
+                </button>
+              </div>
+            ))}
+            {lists.length === 0 && (
+              <p className="text-mist text-sm">No word lists for this group yet.</p>
+            )}
+          </div>
+        </>
+      )}
+
+      {viewingResults && (
+        <ResultsModal wordlist={viewingResults} onClose={() => setViewingResults(null)} />
+      )}
+    </div>
+  )
+}
+
+function NewWordlistForm({ groupId, teacherId, onDone, onCancel }) {
+  const [title, setTitle] = useState('')
+  const [rawWords, setRawWords] = useState('')
+  const [items, setItems] = useState(null) // after AI generation, editable
+  const [generating, setGenerating] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const generate = async () => {
+    const words = rawWords
+      .split('\n')
+      .map((w) => w.trim())
+      .filter(Boolean)
+    if (!words.length) {
+      setError('Paste at least one word first.')
+      return
+    }
+    setGenerating(true)
+    setError('')
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData?.session?.access_token
+      const resp = await fetch('/.netlify/functions/define-words', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ words }),
+      })
+      const data = await resp.json()
+      if (!resp.ok) throw new Error(data.error || 'Failed to generate definitions.')
+      setItems(data.results)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const updateItem = (i, field, value) => {
+    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [field]: value } : it)))
+  }
+
+  const publish = async () => {
+    if (!title.trim() || !items?.length) return
+    setSaving(true)
+    setError('')
+    try {
+      const { data: wl, error: wlErr } = await supabase
+        .from('wordlists')
+        .insert({ group_id: groupId, title: title.trim(), created_by: teacherId })
+        .select()
+        .single()
+      if (wlErr) throw wlErr
+
+      const rows = items.map((it, i) => ({
+        wordlist_id: wl.id,
+        word: it.word,
+        definition: it.definition,
+        uzbek_translation: it.uzbek_translation,
+        example_sentence: it.example_sentence,
+        position: i,
+      }))
+      const { error: itemsErr } = await supabase.from('wordlist_items').insert(rows)
+      if (itemsErr) throw itemsErr
+
+      onDone()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="ticket rounded-lg p-4 flex flex-col gap-3">
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Title (e.g. Passage 3 vocabulary — Lesson 5)"
+        className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2"
+      />
+
+      {!items && (
+        <>
+          <textarea
+            value={rawWords}
+            onChange={(e) => setRawWords(e.target.value)}
+            rows={6}
+            placeholder={'One word or collocation per line, e.g.\nimitate\nsubconscious\ntrial and error'}
+            className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 font-mono text-sm"
+          />
+          {error && <p className="text-coral text-sm">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+            >
+              {generating ? 'Generating…' : 'Generate definitions with AI'}
+            </button>
+            <button
+              onClick={onCancel}
+              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+
+      {items && (
+        <>
+          <p className="text-mist text-xs">
+            Review and edit before publishing — students will see exactly this.
+          </p>
+          <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
+            {items.map((it, i) => (
+              <div key={i} className="bg-panel-2 border border-line rounded-md p-3 flex flex-col gap-2">
+                <div className="font-medium">{it.word}</div>
+                <input
+                  value={it.definition}
+                  onChange={(e) => updateItem(i, 'definition', e.target.value)}
+                  placeholder="Definition"
+                  className="focus-ring bg-panel border border-line rounded-md px-2 py-1.5 text-sm"
+                />
+                <input
+                  value={it.uzbek_translation}
+                  onChange={(e) => updateItem(i, 'uzbek_translation', e.target.value)}
+                  placeholder="Uzbek translation"
+                  className="focus-ring bg-panel border border-line rounded-md px-2 py-1.5 text-sm"
+                />
+                <input
+                  value={it.example_sentence}
+                  onChange={(e) => updateItem(i, 'example_sentence', e.target.value)}
+                  placeholder="Example sentence"
+                  className="focus-ring bg-panel border border-line rounded-md px-2 py-1.5 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+          {error && <p className="text-coral text-sm">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={publish}
+              disabled={saving || !title.trim()}
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+            >
+              {saving ? 'Publishing…' : 'Publish to group'}
+            </button>
+            <button
+              onClick={() => setItems(null)}
+              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+            >
+              Back
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function ResultsModal({ wordlist, onClose }) {
+  const [attempts, setAttempts] = useState(null)
+
+  useEffect(() => {
+    supabase
+      .from('wordlist_attempts')
+      .select('*, profiles(full_name, username)')
+      .eq('wordlist_id', wordlist.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setAttempts(data || []))
+  }, [wordlist.id])
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div
+        className="ticket rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto flex flex-col gap-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <h2 className="font-display text-xl">{wordlist.title}</h2>
+          <button onClick={onClose} className="focus-ring text-mist hover:text-paper text-xl leading-none">
+            ×
+          </button>
+        </div>
+        {attempts === null && <p className="text-mist text-sm">Loading…</p>}
+        {attempts?.length === 0 && <p className="text-mist text-sm">No attempts yet.</p>}
+        {attempts?.map((a) => (
+          <div key={a.id} className="bg-panel-2 border border-line rounded-md p-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{a.profiles?.full_name}</span>
+              <span className="font-mono text-sm text-brass">{a.percentage}%</span>
+            </div>
+            <div className="text-mist text-xs font-mono mt-1">
+              {a.score}/{a.total} correct · {new Date(a.created_at).toLocaleString()}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+import WordlistPlayer from './WordlistPlayer'
+
+export default function StudentWordlists({ studentId }) {
+  const [myGroups, setMyGroups] = useState([])
+  const [lists, setLists] = useState([])
+  const [myAttempts, setMyAttempts] = useState({})
+  const [playing, setPlaying] = useState(null)
+
+  const load = async () => {
+    const { data: gm } = await supabase
+      .from('group_members')
+      .select('group_id')
+      .eq('student_id', studentId)
+    const groupIds = (gm || []).map((r) => r.group_id)
+    setMyGroups(groupIds)
+    if (!groupIds.length) return
+
+    const { data: wl } = await supabase
+      .from('wordlists')
+      .select('*, wordlist_items(count)')
+      .in('group_id', groupIds)
+      .order('created_at', { ascending: false })
+    setLists(wl || [])
+
+    const { data: attempts } = await supabase
+      .from('wordlist_attempts')
+      .select('wordlist_id, percentage, created_at')
+      .eq('student_id', studentId)
+    const map = {}
+    ;(attempts || []).forEach((a) => {
+      if (!map[a.wordlist_id] || a.created_at > map[a.wordlist_id].created_at) {
+        map[a.wordlist_id] = a
+      }
+    })
+    setMyAttempts(map)
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentId])
+
+  if (playing) {
+    return (
+      <WordlistPlayer
+        wordlist={playing}
+        studentId={studentId}
+        onExit={() => {
+          setPlaying(null)
+          load()
+        }}
+      />
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {myGroups.length === 0 && <p className="text-mist">You're not in a group yet.</p>}
+      {myGroups.length > 0 && lists.length === 0 && (
+        <p className="text-mist">No word lists posted yet.</p>
+      )}
+      {lists.map((list) => {
+        const attempt = myAttempts[list.id]
+        return (
+          <button
+            key={list.id}
+            onClick={() => setPlaying(list)}
+            className="focus-ring ticket rounded-lg p-4 flex items-center justify-between gap-3 text-left"
+          >
+            <div>
+              <div className="font-display text-lg">{list.title}</div>
+              <div className="text-mist text-xs font-mono mt-1">
+                {list.wordlist_items?.[0]?.count ?? 0} words
+              </div>
+            </div>
+            {attempt ? (
+              <span className="stamp stamp-done w-16 h-16 text-[11px]">{attempt.percentage}%</span>
+            ) : (
+              <span className="stamp stamp-pending w-16 h-16 text-[10px]">Play</span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function buildQuestions(items) {
+  return shuffle(items).map((item) => {
+    const distractorPool = items.filter((it) => it.id !== item.id)
+    const distractors = shuffle(distractorPool)
+      .slice(0, 3)
+      .map((it) => it.definition)
+    const options = shuffle([item.definition, ...distractors])
+    return { word: item.word, correctAnswer: item.definition, options }
+  })
+}
+
+function categoryFor(percentage) {
+  if (percentage >= 90) return { label: 'Excellent!', tone: 'sage', note: 'Outstanding recall — these words are locked in.' }
+  if (percentage >= 70) return { label: 'Good job', tone: 'brass', note: 'Solid work. A quick review of the missed ones will make it perfect.' }
+  return { label: 'Keep practicing', tone: 'coral', note: "Don't worry — review the list again and try once more." }
+}
+
+export default function WordlistPlayer({ wordlist, studentId, onExit }) {
+  const [items, setItems] = useState(null)
+  const [mode, setMode] = useState('study') // 'study' | 'quiz' | 'results'
+  const [cardIndex, setCardIndex] = useState(0)
+  const [flipped, setFlipped] = useState(false)
+
+  const [questions, setQuestions] = useState([])
+  const [qIndex, setQIndex] = useState(0)
+  const [selected, setSelected] = useState(null)
+  const [detail, setDetail] = useState([])
+  const [saving, setSaving] = useState(false)
+  const [result, setResult] = useState(null)
+
+  useEffect(() => {
+    supabase
+      .from('wordlist_items')
+      .select('*')
+      .eq('wordlist_id', wordlist.id)
+      .order('position')
+      .then(({ data }) => setItems(data || []))
+  }, [wordlist.id])
+
+  const startQuiz = () => {
+    setQuestions(buildQuestions(items))
+    setQIndex(0)
+    setDetail([])
+    setSelected(null)
+    setMode('quiz')
+  }
+
+  const answer = (option) => {
+    if (selected) return
+    setSelected(option)
+    const q = questions[qIndex]
+    const isCorrect = option === q.correctAnswer
+    const newDetail = [...detail, { word: q.word, correct: q.correctAnswer, chosen: option, isCorrect }]
+    setDetail(newDetail)
+
+    setTimeout(async () => {
+      if (qIndex + 1 < questions.length) {
+        setQIndex((i) => i + 1)
+        setSelected(null)
+      } else {
+        const score = newDetail.filter((d) => d.isCorrect).length
+        const total = newDetail.length
+        const percentage = Math.round((score / total) * 100)
+        setSaving(true)
+        await supabase.from('wordlist_attempts').insert({
+          wordlist_id: wordlist.id,
+          student_id: studentId,
+          score,
+          total,
+          percentage,
+          detail: newDetail,
+        })
+        setSaving(false)
+        setResult({ score, total, percentage, detail: newDetail })
+        setMode('results')
+      }
+    }, 600)
+  }
+
+  const category = result ? categoryFor(result.percentage) : null
+
+  if (!items) return <p className="text-mist">Loading…</p>
+
+  if (mode === 'study') {
+    const item = items[cardIndex]
+    return (
+      <div className="flex flex-col gap-4 items-center">
+        <div className="w-full flex items-center justify-between">
+          <button onClick={onExit} className="focus-ring text-mist hover:text-paper text-sm">
+            ← Back
+          </button>
+          <span className="text-mist text-xs font-mono">
+            {cardIndex + 1} / {items.length}
+          </span>
+        </div>
+
+        <button
+          onClick={() => setFlipped((f) => !f)}
+          className="focus-ring ticket rounded-xl w-full max-w-sm h-64 flex flex-col items-center justify-center gap-3 p-6 text-center"
+        >
+          {!flipped ? (
+            <span className="font-display text-3xl">{item.word}</span>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-paper">{item.definition}</p>
+              <p className="text-brass font-medium">{item.uzbek_translation}</p>
+              <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
+            </div>
+          )}
+          <span className="text-mist text-xs font-mono mt-2">tap to {flipped ? 'see word' : 'reveal'}</span>
+        </button>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              setCardIndex((i) => Math.max(0, i - 1))
+              setFlipped(false)
+            }}
+            disabled={cardIndex === 0}
+            className="focus-ring px-4 py-2 rounded-md border border-line text-sm disabled:opacity-30"
+          >
+            Previous
+          </button>
+          {cardIndex + 1 < items.length ? (
+            <button
+              onClick={() => {
+                setCardIndex((i) => i + 1)
+                setFlipped(false)
+              }}
+              className="focus-ring px-4 py-2 rounded-md border border-line text-sm hover:border-brass hover:text-brass"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              onClick={startQuiz}
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium"
+            >
+              I'm ready — start the test
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'quiz') {
+    const q = questions[qIndex]
+    return (
+      <div className="flex flex-col gap-4 items-center">
+        <span className="text-mist text-xs font-mono">
+          Question {qIndex + 1} / {questions.length}
+        </span>
+        <div className="ticket rounded-xl w-full max-w-sm p-6 flex flex-col gap-4">
+          <p className="text-mist text-sm">What does this mean?</p>
+          <p className="font-display text-2xl text-center">{q.word}</p>
+          <div className="flex flex-col gap-2">
+            {q.options.map((opt, i) => {
+              const isCorrect = opt === q.correctAnswer
+              const isChosen = opt === selected
+              let style = 'border-line hover:border-brass'
+              if (selected) {
+                if (isCorrect) style = 'border-sage text-sage'
+                else if (isChosen) style = 'border-coral text-coral'
+                else style = 'border-line opacity-50'
+              }
+              return (
+                <button
+                  key={i}
+                  onClick={() => answer(opt)}
+                  disabled={!!selected}
+                  className={`focus-ring text-left px-3 py-2 rounded-md border text-sm transition-colors ${style}`}
+                >
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        {saving && <p className="text-mist text-xs font-mono">saving result…</p>}
+      </div>
+    )
+  }
+
+  // results
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+      <div className="ticket rounded-lg p-6 max-w-sm w-full flex flex-col gap-4 text-center">
+        <span className={`stamp stamp-${category.tone === 'sage' ? 'done' : category.tone === 'coral' ? 'overdue' : 'pending'} w-20 h-20 mx-auto text-xs`}>
+          {result.percentage}%
+        </span>
+        <h2 className="font-display text-2xl">{category.label}</h2>
+        <p className="text-mist text-sm">{category.note}</p>
+        <p className="text-sm">
+          {result.score} / {result.total} correct
+        </p>
+
+        {result.detail.some((d) => !d.isCorrect) && (
+          <div className="text-left bg-panel-2 border border-line rounded-md p-3 max-h-40 overflow-y-auto">
+            <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
+              Words to review
+            </div>
+            {result.detail
+              .filter((d) => !d.isCorrect)
+              .map((d, i) => (
+                <div key={i} className="text-sm mb-1">
+                  <span className="font-medium">{d.word}</span>
+                  <span className="text-mist"> — {d.correct}</span>
+                </div>
+              ))}
+          </div>
+        )}
+
+        <button
+          onClick={onExit}
+          className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )
+}
+
+import { useEffect, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabaseClient'
+import Layout from '../../components/Layout'
+import GroupWorkspace from './GroupWorkspace'
+import TeacherStudents from './TeacherStudents'
+import PendingApprovals from './PendingApprovals'
+import TeacherChat from './TeacherChat'
+import TeacherGroupChats from './TeacherGroupChats'
+import TeacherLeaderboards from './TeacherLeaderboards'
+import TeacherWordlists from './TeacherWordlists'
+
+export default function TeacherDashboard() {
+  const { profile } = useAuth()
+
+  const [tab, setTab] = useState('groups')
+  const [pendingCount, setPendingCount] = useState(0)
+
+  const [notificationChat, setNotificationChat] = useState(null)
+  const [notificationGroup, setNotificationGroup] = useState(null)
+
+  useEffect(() => {
+    const refresh = () =>
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .then(({ count }) => {
+          setPendingCount(count || 0)
+        })
+
+    refresh()
+
+    const channel = supabase
+      .channel('profiles-pending')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+        },
+        refresh
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleNotificationNavigation = async (event) => {
+      const notification = event.detail?.notification
+
+      const link =
+        event.detail?.link ||
+        notification?.link ||
+        ''
+
+      if (!link) return
+
+      /*
+       * PRIVATE CHAT
+       *
+       * private-chat:STUDENT_ID:MESSAGE_ID
+       */
+      if (link.startsWith('private-chat:')) {
+        const parts = link.split(':')
+
+        const studentId = parts[1]
+        const messageId = parts[2]
+
+        if (!studentId) return
+
+        const { data: student, error } =
+          await supabase
+            .from('profiles')
+            .select(
+              'id, full_name, username'
+            )
+            .eq('id', studentId)
+            .single()
+
+        if (error || !student) {
+          console.error(
+            'Could not find private-chat student:',
+            studentId,
+            error
+          )
+          return
+        }
+
+        setNotificationChat({
+          studentId: student.id,
+          studentName: student.full_name,
+          messageId: messageId || null,
+        })
+
+        setNotificationGroup(null)
+        setTab('chat')
+
+        return
+      }
+
+      /*
+       * GROUP CHAT
+       *
+       * group-chat:GROUP_ID:MESSAGE_ID
+       */
+      if (link.startsWith('group-chat:')) {
+        const parts = link.split(':')
+
+        const groupId = parts[1]
+        const messageId = parts[2]
+
+        if (!groupId) return
+
+        const { data: group, error } =
+          await supabase
+            .from('groups')
+            .select('id, name')
+            .eq('id', groupId)
+            .single()
+
+        if (error || !group) {
+          console.error(
+            'Could not find notification group:',
+            groupId,
+            error
+          )
+          return
+        }
+
+        setNotificationGroup({
+          groupId: group.id,
+          groupName: group.name,
+          messageId: messageId || null,
+        })
+
+        setNotificationChat(null)
+        setTab('group-chat')
+
+        return
+      }
+
+      /*
+       * Existing generic app links.
+       */
+      if (link === '/app') {
+        setTab('groups')
+      }
+    }
+
+    window.addEventListener(
+      'notification-navigate',
+      handleNotificationNavigation
+    )
+
+    return () => {
+      window.removeEventListener(
+        'notification-navigate',
+        handleNotificationNavigation
+      )
+    }
+  }, [])
+
+  const tabs = [
+    {
+      key: 'groups',
+      label: 'Groups & homework',
+    },
+    {
+      key: 'students',
+      label: 'Students',
+    },
+    {
+      key: 'wordlists',
+      label: 'Word lists',
+    },
+    {
+      key: 'leaderboards',
+      label: 'Leaderboards',
+    },
+    {
+      key: 'approvals',
+      label: `Approvals${
+        pendingCount
+          ? ` (${pendingCount})`
+          : ''
+      }`,
+    },
+    {
+      key: 'group-chat',
+      label: 'Group chats',
+    },
+    {
+      key: 'chat',
+      label: 'Chat',
+    },
+  ]
+
+  const handleTabChange = (nextTab) => {
+    setTab(nextTab)
+
+    if (nextTab !== 'chat') {
+      setNotificationChat(null)
+    }
+
+    if (nextTab !== 'group-chat') {
+      setNotificationGroup(null)
+    }
+  }
+
+  return (
+    <Layout
+      tabs={tabs}
+      activeTab={tab}
+      onTabChange={handleTabChange}
+    >
+      {tab === 'groups' && (
+        <GroupWorkspace
+          teacherId={profile.id}
+        />
+      )}
+
+      {tab === 'students' && (
+        <TeacherStudents />
+      )}
+
+      {tab === 'wordlists' && (
+        <TeacherWordlists
+          teacherId={profile.id}
+        />
+      )}
+
+      {tab === 'leaderboards' && (
+        <TeacherLeaderboards />
+      )}
+
+      {tab === 'approvals' && (
+        <PendingApprovals />
+      )}
+
+      {tab === 'group-chat' && (
+        <TeacherGroupChats
+          teacherId={profile.id}
+          initialGroupId={
+            notificationGroup?.groupId
+          }
+          initialGroupName={
+            notificationGroup?.groupName
+          }
+          initialMessageId={
+            notificationGroup?.messageId
+          }
+        />
+      )}
+
+      {tab === 'chat' && (
+        <TeacherChat
+          teacherId={profile.id}
+          initialStudentId={
+            notificationChat?.studentId
+          }
+          initialStudentName={
+            notificationChat?.studentName
+          }
+          initialMessageId={
+            notificationChat?.messageId
+          }
+        />
+      )}
+    </Layout>
+  )
+}
+import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import ThemeToggle from './ThemeToggle'
+import NotificationBell from './NotificationBell'
+import AccountSettingsModal from './AccountSettingsModal'
+
+export default function Layout({
+  tabs,
+  activeTab,
+  onTabChange,
+  children,
+}) {
+  const { profile, signOut } = useAuth()
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-ink text-paper flex flex-col">
+
+      <header className="border-b border-line px-5 py-4 flex items-center justify-between">
+
+        <div className="flex items-center gap-3">
+          <img
+            src="/ielts.png"
+            alt="IELTS with Mr Ikromov"
+            className="w-10 h-10 rounded-xl object-cover"
+          />
+
+          <div>
+            <div className="font-display text-lg leading-none">
+              IELTS with Mr Ikromov
+            </div>
+
+            <div className="text-xs text-mist font-mono">
+              {profile?.role === 'teacher'
+                ? 'Examiner desk'
+                : 'Candidate portal'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+
+          <span className="text-sm text-mist hidden sm:inline">
+            {profile?.full_name}
+          </span>
+
+          <ThemeToggle />
+
+          <NotificationBell profile={profile} />
+
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="focus-ring w-9 h-9 rounded-full border border-line flex items-center justify-center text-mist hover:text-brass hover:border-brass transition-colors"
+            title="Account settings"
+            aria-label="Account settings"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 001-1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l-.06-.06a2 2 0 112.83 2.83l.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={signOut}
+            className="focus-ring text-sm px-3 py-1.5 rounded-md border border-line hover:border-brass hover:text-brass transition-colors"
+          >
+            Log out
+          </button>
+
+        </div>
+      </header>
+
+      {tabs && (
+        <nav className="flex gap-1 px-5 pt-4 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              type="button"
+              key={t.key}
+              onClick={() => onTabChange(t.key)}
+              className={`focus-ring px-4 py-2 text-sm rounded-t-md whitespace-nowrap transition-colors ${
+                activeTab === t.key
+                  ? 'bg-panel text-brass border border-line border-b-0'
+                  : 'text-mist hover:text-paper'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      <main className="flex-1 bg-panel border-t border-line px-5 py-6">
+        <div className="max-w-5xl mx-auto">
+          {children}
+        </div>
+      </main>
+
+      {settingsOpen && (
+        <AccountSettingsModal
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
+
+    </div>
+  )
+}
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* Base (dark) design tokens — also the default when no data-theme is set */
+@theme {
+  --color-ink: #10161f;
+  --color-panel: #1a2431;
+  --color-panel-2: #202c3b;
+  --color-line: #2c3a4c;
+  --color-paper: #f4efe4;
+  --color-paper-dim: #e7e0cf;
+  --color-brass: #c9a24b;
+  --color-brass-dim: #9c7d38;
+  --color-sage: #6f9c82;
+  --color-coral: #c1573d;
+  --color-mist: #93a1b3;
+  /* Fixed regardless of theme — used for text sitting on top of brass/sage
+     accent colors, which are themselves the same brightness in both themes. */
+  --color-onbrass: #10161f;
+
+  --font-display: 'Source Serif 4', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* Light theme override — same token names, different values.
+   The attribute selector out-specifies the plain :root theme block above,
+   so this wins whenever <html data-theme="light"> is set. */
+:root[data-theme='light'] {
+  --color-ink: #f3efe6;
+  --color-panel: #fdfbf6;
+  --color-panel-2: #eee7d5;
+  --color-line: #ddd3ba;
+  --color-paper: #1b2431;
+  --color-paper-dim: #333f4f;
+  --color-brass: #b3872f;
+  --color-brass-dim: #8f6a24;
+  --color-sage: #3f7a5c;
+  --color-coral: #a8402a;
+  --color-mist: #5c6a7c;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* Examiner stamp - signature element for homework status */
+.stamp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 9999px;
+  transform: rotate(-8deg);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.stamp.stamp-done { color: var(--color-sage); }
+.stamp.stamp-pending { color: var(--color-brass); }
+.stamp.stamp-overdue { color: var(--color-coral); }
+
+.ticket {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  position: relative;
+}
+.ticket::before, .ticket::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--color-ink);
+  border-radius: 9999px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ticket::before { left: -8px; }
+.ticket::after { right: -8px; }
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-brass);
+  color: var(--color-onbrass);
+}
+

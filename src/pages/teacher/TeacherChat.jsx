@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Chat from '../../components/Chat'
 
@@ -10,6 +10,7 @@ export default function TeacherChat({
 }) {
   const [students, setStudents] = useState([])
   const [selected, setSelected] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     let active = true
@@ -17,7 +18,7 @@ export default function TeacherChat({
     const loadStudents = async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, username')
+        .select('id, full_name, username, contact_email')
         .eq('role', 'student')
         .eq('status', 'approved')
         .order('full_name')
@@ -59,6 +60,32 @@ export default function TeacherChat({
     students,
   ])
 
+  /*
+   * Search students by:
+   * - full name
+   * - username
+   * - email
+   */
+  const filteredStudents = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) {
+      return students
+    }
+
+    return students.filter((student) => {
+      return [
+        student.full_name,
+        student.username,
+        student.contact_email,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          value.toLowerCase().includes(query)
+        )
+    })
+  }, [students, search])
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
 
@@ -68,20 +95,75 @@ export default function TeacherChat({
           Students
         </div>
 
+        {/* Student search */}
+        <div className="mb-3">
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search students..."
+            className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+          />
+
+        </div>
+
+        <div className="flex items-center justify-between mb-2">
+
+          <span className="text-mist text-xs font-mono">
+            {search.trim()
+              ? `${filteredStudents.length} of ${students.length}`
+              : `${students.length} student${
+                  students.length === 1
+                    ? ''
+                    : 's'
+                }`}
+          </span>
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="focus-ring text-xs text-brass hover:underline"
+            >
+              Clear
+            </button>
+          )}
+
+        </div>
+
         <div className="flex md:flex-col gap-2 overflow-x-auto">
 
-          {students.map((student) => (
+          {filteredStudents.map((student) => (
             <button
               type="button"
               key={student.id}
-              onClick={() => setSelected(student)}
+              onClick={() =>
+                setSelected(student)
+              }
               className={`focus-ring text-left px-3 py-2 rounded-md text-sm whitespace-nowrap transition-colors ${
                 selected?.id === student.id
                   ? 'bg-brass text-onbrass font-medium'
                   : 'bg-panel-2 text-mist hover:text-paper'
               }`}
             >
-              {student.full_name}
+              <div>
+                {student.full_name}
+              </div>
+
+              {student.username && (
+                <div
+                  className={`text-xs font-mono ${
+                    selected?.id === student.id
+                      ? 'opacity-80'
+                      : 'text-mist'
+                  }`}
+                >
+                  @{student.username}
+                </div>
+              )}
             </button>
           ))}
 
@@ -90,6 +172,13 @@ export default function TeacherChat({
               No approved students yet.
             </p>
           )}
+
+          {students.length > 0 &&
+            filteredStudents.length === 0 && (
+              <p className="text-mist text-sm">
+                No students match your search.
+              </p>
+            )}
 
         </div>
       </aside>
