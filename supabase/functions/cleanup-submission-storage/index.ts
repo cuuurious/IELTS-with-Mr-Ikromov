@@ -16,8 +16,18 @@ const supabase = createClient(
 )
 
 const BUCKET = 'submissions'
-const PAGE_SIZE = 1000
-const REMOVE_BATCH_SIZE = 1000
+
+/*
+ * IMPORTANT:
+ *
+ * We intentionally process only a SMALL number of files
+ * per invocation.
+ *
+ * This prevents the Edge Function from timing out while
+ * cleaning thousands of orphaned files.
+ */
+const DEFAULT_BATCH_SIZE = 100
+const MAX_BATCH_SIZE = 200
 
 function collectStrings(
   value: unknown,
@@ -40,9 +50,11 @@ function collectStrings(
     value &&
     typeof value === 'object'
   ) {
-    for (const item of Object.values(
-      value as Record<string, unknown>
-    )) {
+    for (
+      const item of Object.values(
+        value as Record<string, unknown>
+      )
+    ) {
       collectStrings(item, output)
     }
   }
@@ -75,11 +87,7 @@ function storagePathFromValue(
   }
 
   /*
-   * Also accept raw Storage paths.
-   *
-   * Our submission paths normally contain
-   * multiple folders, so a single filename
-   * is intentionally ignored.
+   * Also support raw Storage paths.
    */
   if (
     value.split('/').length >= 3 &&
@@ -92,11 +100,16 @@ function storagePathFromValue(
   return null
 }
 
+/*
+ * Build a Set containing every file path that is STILL
+ * referenced by an existing submission.
+ */
 async function loadReferencedPaths() {
   const referenced =
     new Set<string>()
 
   let from = 0
+  const PAGE_SIZE = 500
 
   while (true) {
     const {
@@ -154,96 +167,105 @@ async function loadReferencedPaths() {
   return referenced
 }
 
-async function listAllFiles(
-  path = ''
-): Promise<string[]> {
-  const files: string[] = []
-  let offset = 0
+/*
+ * Recursively find orphan files, BUT STOP as soon as
+ * we have enough candidates for this invocation.
+ *
+ * We do NOT scan the entire bucket every time.
+ */
+async function findOrphanBatch(
+  referenced: Set<string>,
+  limit: number
+) {
+  const orphaned: string[] = []
 
-  while (true) {
-    const {
-      data,
-      error,
-    } = await supabase.storage
-      .from(BUCKET)
-      .list(path, {
-        limit: PAGE_SIZE,
-        offset,
-        sortBy: {
-          column: 'name',
-          order: 'asc',
-        },
-      })
+  async function scan(
+    path = ''
+  ): Promise<boolean> {
 
-    if (error) {
-      throw new Error(
-        `Failed to list Storage path "${path}": ${error.message}`
-      )
-    }
+    let offset = 0
+    const PAGE_SIZE = 100
 
-    if (!data?.length) {
-      break
-    }
+    while (true) {
+      const {
+        data,
+        error,
+      } = await supabase.storage
+        .from(BUCKET)
+        .list(path, {
+          limit: PAGE_SIZE,
+          offset,
+          sortBy: {
+            column: 'name',
+            order: 'asc',
+          },
+        })
 
-    for (const item of data) {
-      /*
-       * Folders have id === null.
-       * Actual files have a non-null id.
-       */
-      if (item.id === null) {
-        const childPath =
-          path
-            ? `${path}/${item.name}`
-            : item.name
+      if (error) {
+        throw new Error(
+          `Failed to list Storage path "${path}": ${error.message}`
+        )
+      }
 
-        const nested =
-          await listAllFiles(
-            childPath
-          )
+      if (!data?.length) {
+        return false
+      }
 
-        files.push(...nested)
-      } else {
+      for (const item of data) {
+
+        /*
+         * Folder.
+         */
+        if (item.id === null) {
+          const childPath =
+            path
+              ? `${path}/${item.name}`
+              : item.name
+
+          const shouldStop =
+            await scan(childPath)
+
+          if (shouldStop) {
+            return true
+          }
+
+          continue
+        }
+
+        /*
+         * Actual file.
+         */
         const fullPath =
           path
             ? `${path}/${item.name}`
             : item.name
 
-        files.push(fullPath)
+        if (
+          !referenced.has(fullPath)
+        ) {
+          orphaned.push(fullPath)
+
+          if (
+            orphaned.length >= limit
+          ) {
+            return true
+          }
+        }
       }
-    }
 
-    if (
-      data.length < PAGE_SIZE
-    ) {
-      break
-    }
+      if (
+        data.length < PAGE_SIZE
+      ) {
+        return false
+      }
 
-    offset += PAGE_SIZE
+      offset += PAGE_SIZE
+    }
   }
 
-  return files
-}
+  await scan()
 
-function chunk<T>(
-  array: T[],
-  size: number
-): T[][] {
-  const result: T[][] = []
-
-  for (
-    let i = 0;
-    i < array.length;
-    i += size
-  ) {
-    result.push(
-      array.slice(
-        i,
-        i + size
-      )
-    )
-  }
-
-  return result
+  return orphaned
 }
 
 function jsonResponse(
@@ -265,10 +287,11 @@ function jsonResponse(
 Deno.serve(
   async (req) => {
     try {
+
       /*
-       * ------------------------------------------------
-       * PRIVATE TOKEN CHECK
-       * ------------------------------------------------
+       * ---------------------------------------------
+       * TOKEN CHECK
+       * ---------------------------------------------
        */
 
       const suppliedToken =
@@ -310,22 +333,42 @@ Deno.serve(
           .catch(() => ({}))
 
       /*
-       * SAFETY DEFAULT:
+       * Default is STILL dry-run.
        *
-       * If dry_run is omitted,
-       * NOTHING is deleted.
+       * Deletion only happens when:
+       *
+       * { "dry_run": false }
        */
       const dryRun =
         body?.dry_run !== false
 
+      const requestedLimit =
+        Number(
+          body?.limit ??
+          DEFAULT_BATCH_SIZE
+        )
+
+      const limit =
+        Math.min(
+          Math.max(
+            Number.isFinite(
+              requestedLimit
+            )
+              ? requestedLimit
+              : DEFAULT_BATCH_SIZE,
+            1
+          ),
+          MAX_BATCH_SIZE
+        )
+
       console.log(
-        `Storage cleanup started. dry_run=${dryRun}`
+        `Cleanup started. dry_run=${dryRun}, limit=${limit}`
       )
 
       /*
-       * ------------------------------------------------
-       * 1. Find files referenced by submissions
-       * ------------------------------------------------
+       * ---------------------------------------------
+       * 1. LOAD CURRENTLY REFERENCED FILES
+       * ---------------------------------------------
        */
 
       const referenced =
@@ -336,49 +379,35 @@ Deno.serve(
       )
 
       /*
-       * ------------------------------------------------
-       * 2. List physical Storage files
-       * ------------------------------------------------
-       */
-
-      const allFiles =
-        await listAllFiles()
-
-      console.log(
-        `Physical Storage files: ${allFiles.length}`
-      )
-
-      /*
-       * ------------------------------------------------
-       * 3. Find orphaned files
-       * ------------------------------------------------
+       * ---------------------------------------------
+       * 2. FIND ONLY A SMALL ORPHAN BATCH
+       * ---------------------------------------------
        */
 
       const orphaned =
-        allFiles.filter(
-          (path) =>
-            !referenced.has(path)
+        await findOrphanBatch(
+          referenced,
+          limit
         )
 
       console.log(
-        `Orphaned files: ${orphaned.length}`
+        `Orphan candidates found: ${orphaned.length}`
       )
 
       /*
-       * ------------------------------------------------
-       * 4. DRY RUN
-       * ------------------------------------------------
+       * ---------------------------------------------
+       * 3. DRY RUN
+       * ---------------------------------------------
        */
 
       if (dryRun) {
         return jsonResponse({
           ok: true,
           dry_run: true,
-          total_storage_files:
-            allFiles.length,
+          batch_size: limit,
           referenced_files:
             referenced.size,
-          orphaned_files:
+          orphan_candidates:
             orphaned.length,
           sample:
             orphaned.slice(0, 20),
@@ -388,76 +417,55 @@ Deno.serve(
       }
 
       /*
-       * ------------------------------------------------
-       * 5. REAL DELETION
-       * ------------------------------------------------
+       * ---------------------------------------------
+       * 4. DELETE ONLY THIS SMALL BATCH
+       * ---------------------------------------------
        */
 
-      let deleted = 0
+      if (!orphaned.length) {
+        return jsonResponse({
+          ok: true,
+          dry_run: false,
+          deleted_files: 0,
+          remaining_candidates: 0,
+          message:
+            'No orphaned files were found in this scan.',
+        })
+      }
 
-      const batches =
-        chunk(
-          orphaned,
-          REMOVE_BATCH_SIZE
-        )
+      const {
+        data,
+        error,
+      } =
+        await supabase.storage
+          .from(BUCKET)
+          .remove(orphaned)
 
-      for (
-        let i = 0;
-        i < batches.length;
-        i++
-      ) {
-        const batch =
-          batches[i]
-
-        const {
-          data,
-          error,
-        } =
-          await supabase.storage
-            .from(BUCKET)
-            .remove(batch)
-
-        if (error) {
-          throw new Error(
-            `Deletion failed on batch ${
-              i + 1
-            }/${batches.length}: ${
-              error.message
-            }`
-          )
-        }
-
-        deleted +=
-          data?.length ??
-          batch.length
-
-        console.log(
-          `Deleted batch ${
-            i + 1
-          }/${batches.length}: ${
-            batch.length
-          } files`
+      if (error) {
+        throw new Error(
+          `Storage deletion failed: ${error.message}`
         )
       }
+
+      const deleted =
+        data?.length ??
+        orphaned.length
 
       return jsonResponse({
         ok: true,
         dry_run: false,
-        total_storage_files:
-          allFiles.length,
-        referenced_files:
-          referenced.size,
-        orphaned_files:
+        batch_requested:
           orphaned.length,
         deleted_files:
           deleted,
-        remaining_expected:
-          allFiles.length -
-          deleted,
+        sample_deleted:
+          orphaned.slice(0, 20),
         message:
-          'Orphaned submission files deleted successfully.',
+          `Deleted ${deleted} orphaned submission files. Run again to continue.`,
       })
+
     } catch (error) {
+
       console.error(
         'Cleanup failed:',
         error
