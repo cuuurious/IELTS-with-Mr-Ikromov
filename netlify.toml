@@ -1,10 +1,5 @@
-[build]
-  command = "npm run build"
+﻿[build]
   publish = "dist"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/*"
