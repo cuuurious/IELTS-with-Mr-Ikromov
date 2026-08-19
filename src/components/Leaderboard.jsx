@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Leaderboard({
@@ -22,6 +22,46 @@ export default function Leaderboard({
   const [savingGroup, setSavingGroup] = useState('')
   const [groupError, setGroupError] = useState('')
 
+  /*
+   * ----------------------------------------------------
+   * LOAD LEADERBOARD
+   * ----------------------------------------------------
+   */
+
+  const loadLeaderboard = async () => {
+    if (!groupId) return
+
+    const rpcName =
+      groupId === 'all'
+        ? 'all_students_leaderboard'
+        : 'group_leaderboard'
+
+    const params =
+      groupId === 'all'
+        ? {}
+        : {
+            p_group_id: groupId,
+          }
+
+    const { data, error } =
+      await supabase.rpc(
+        rpcName,
+        params
+      )
+
+    if (error) {
+      console.error(
+        'Leaderboard error:',
+        error
+      )
+
+      setError(error.message)
+      return
+    }
+
+    setRows(data || [])
+  }
+
   useEffect(() => {
     if (!groupId) return
 
@@ -30,42 +70,188 @@ export default function Leaderboard({
     setSelectedStudent(null)
     setDailyProgress([])
 
-    const loadLeaderboard = async () => {
-      const rpcName =
-        groupId === 'all'
-          ? 'all_students_leaderboard'
-          : 'group_leaderboard'
-
-      const params =
-        groupId === 'all'
-          ? {}
-          : {
-              p_group_id: groupId,
-            }
-
-      const { data, error } =
-        await supabase.rpc(
-          rpcName,
-          params
-        )
-
-      if (error) {
-        console.error(
-          'Leaderboard error:',
-          error
-        )
-
-        setError(error.message)
-      } else {
-        setRows(data || [])
-      }
-    }
-
     loadLeaderboard()
   }, [groupId])
 
-  const loadDailyProgress = async (student) => {
-    if (!student?.student_id || !groupId) {
+  /*
+   * ----------------------------------------------------
+   * DATE HELPERS
+   * ----------------------------------------------------
+   */
+
+  const getDateKey = (value) => {
+    if (!value) return null
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return null
+    }
+
+    return `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, '0')}-${String(
+      date.getDate()
+    ).padStart(2, '0')}`
+  }
+
+  const dateFromKey = (key) => {
+    if (!key) return null
+
+    const date = new Date(
+      `${key}T00:00:00`
+    )
+
+    return Number.isNaN(date.getTime())
+      ? null
+      : date
+  }
+
+  const formatDate = (key) => {
+    const date = dateFromKey(key)
+
+    if (!date) return key
+
+    return date.toLocaleDateString(
+      [],
+      {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }
+    )
+  }
+
+  /*
+   * ----------------------------------------------------
+   * CALCULATE STREAK FROM REAL SUBMISSION HISTORY
+   * ----------------------------------------------------
+   *
+   * We do NOT trust the RPC streak here.
+   *
+   * A day counts when the student submitted at least
+   * one homework task on that day.
+   *
+   * Today counts if there is a submission today.
+   * Otherwise the streak starts from yesterday.
+   */
+
+  const calculateStreak = (days) => {
+    if (!days?.length) {
+      return 0
+    }
+
+    const completedDates = new Set(
+      days
+        .filter(
+          (day) =>
+            day.completed > 0
+        )
+        .map(
+          (day) => day.date
+        )
+    )
+
+    if (!completedDates.size) {
+      return 0
+    }
+
+    const today = new Date()
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    )
+
+    const todayKey =
+      getDateKey(today)
+
+    const yesterday =
+      new Date(today)
+
+    yesterday.setDate(
+      yesterday.getDate() - 1
+    )
+
+    const yesterdayKey =
+      getDateKey(yesterday)
+
+    /*
+     * If neither today nor yesterday has work,
+     * the active streak is zero.
+     */
+    let currentDate
+
+    if (
+      completedDates.has(
+        todayKey
+      )
+    ) {
+      currentDate = today
+    } else if (
+      completedDates.has(
+        yesterdayKey
+      )
+    ) {
+      currentDate = yesterday
+    } else {
+      return 0
+    }
+
+    let streak = 0
+
+    while (true) {
+      const key =
+        getDateKey(
+          currentDate
+        )
+
+      if (
+        !completedDates.has(key)
+      ) {
+        break
+      }
+
+      streak += 1
+
+      currentDate =
+        new Date(
+          currentDate
+        )
+
+      currentDate.setDate(
+        currentDate.getDate() - 1
+      )
+    }
+
+    return streak
+  }
+
+  /*
+   * ----------------------------------------------------
+   * LOAD COMPLETE DAILY HISTORY
+   * ----------------------------------------------------
+   *
+   * IMPORTANT:
+   * We load BOTH:
+   *
+   * 1. homeworks assigned to the group
+   * 2. student's submissions
+   *
+   * This means previous days remain visible even when
+   * the student submitted nothing on that day.
+   */
+
+  const loadDailyProgress = async (
+    student
+  ) => {
+    if (
+      !student?.student_id ||
+      !groupId
+    ) {
       return
     }
 
@@ -74,106 +260,248 @@ export default function Leaderboard({
     setDailyProgress([])
 
     try {
-      let query = supabase
-        .from('submissions')
-        .select(`
-          id,
-          homework_id,
-          status,
-          submitted_at,
-          group_id,
-          homeworks (
+      /*
+       * ------------------------------------------------
+       * LOAD HOMEWORKS
+       * ------------------------------------------------
+       */
+
+      let homeworkQuery =
+        supabase
+          .from('homeworks')
+          .select(`
             id,
             title,
             created_at,
-            due_date
-          )
-        `)
-        .eq(
-          'student_id',
-          student.student_id
-        )
+            due_date,
+            group_id
+          `)
 
-      /*
-       * In a normal group leaderboard,
-       * only show submissions from that group.
-       *
-       * In All Students mode, show submissions
-       * from all groups.
-       */
       if (groupId !== 'all') {
-        query = query.eq(
-          'group_id',
-          groupId
-        )
+        homeworkQuery =
+          homeworkQuery.eq(
+            'group_id',
+            groupId
+          )
       }
 
       const {
-        data,
-        error,
-      } = await query.order(
-        'submitted_at',
-        {
-          ascending: false,
-        }
-      )
-
-      if (error) throw error
-
-      const submissions = data || []
-      const grouped = {}
-
-      submissions.forEach((submission) => {
-        if (!submission.submitted_at) {
-          return
-        }
-
-        const date = new Date(
-          submission.submitted_at
+        data: homeworks,
+        error: homeworkError,
+      } =
+        await homeworkQuery.order(
+          'created_at',
+          {
+            ascending: false,
+          }
         )
 
-        if (
-          Number.isNaN(
-            date.getTime()
+      if (homeworkError) {
+        throw homeworkError
+      }
+
+      /*
+       * ------------------------------------------------
+       * LOAD STUDENT SUBMISSIONS
+       * ------------------------------------------------
+       */
+
+      let submissionQuery =
+        supabase
+          .from('submissions')
+          .select(`
+            id,
+            homework_id,
+            status,
+            submitted_at,
+            group_id
+          `)
+          .eq(
+            'student_id',
+            student.student_id
           )
-        ) {
-          return
-        }
 
-        const dateKey =
-          `${date.getFullYear()}-${String(
-            date.getMonth() + 1
-          ).padStart(2, '0')}-${String(
-            date.getDate()
-          ).padStart(2, '0')}`
+      if (groupId !== 'all') {
+        submissionQuery =
+          submissionQuery.eq(
+            'group_id',
+            groupId
+          )
+      }
 
-        if (!grouped[dateKey]) {
-          grouped[dateKey] = {
-            date: dateKey,
-            tasks: [],
+      const {
+        data: submissions,
+        error: submissionError,
+      } =
+        await submissionQuery.order(
+          'submitted_at',
+          {
+            ascending: false,
+          }
+        )
+
+      if (submissionError) {
+        throw submissionError
+      }
+
+      const submissionByHomework =
+        new Map()
+
+      ;(submissions || []).forEach(
+        (submission) => {
+          /*
+           * Keep the latest submission
+           * for each homework.
+           */
+          const existing =
+            submissionByHomework.get(
+              submission.homework_id
+            )
+
+          if (
+            !existing ||
+            new Date(
+              submission.submitted_at ||
+                0
+            ) >
+              new Date(
+                existing.submitted_at ||
+                  0
+              )
+          ) {
+            submissionByHomework.set(
+              submission.homework_id,
+              submission
+            )
           }
         }
-
-        grouped[dateKey].tasks.push({
-          id: submission.id,
-          title:
-            submission.homeworks?.title ||
-            'Homework',
-          status:
-            submission.status ||
-            'pending',
-          submittedAt:
-            submission.submitted_at,
-        })
-      })
-
-      const days = Object.values(
-        grouped
-      ).sort((a, b) =>
-        b.date.localeCompare(a.date)
       )
 
-      setDailyProgress(days)
+      /*
+       * ------------------------------------------------
+       * GROUP HOMEWORK BY ASSIGNMENT DATE
+       * ------------------------------------------------
+       *
+       * We use created_at as the homework day.
+       *
+       * If due_date exists, it is displayed as extra
+       * information but does not move the homework
+       * into another day.
+       */
+
+      const grouped = {}
+
+      ;(homeworks || []).forEach(
+        (homework) => {
+          const dateKey =
+            getDateKey(
+              homework.created_at
+            )
+
+          if (!dateKey) {
+            return
+          }
+
+          if (!grouped[dateKey]) {
+            grouped[dateKey] = {
+              date: dateKey,
+              tasks: [],
+              completed: 0,
+              total: 0,
+            }
+          }
+
+          const submission =
+            submissionByHomework.get(
+              homework.id
+            )
+
+          const submitted =
+            Boolean(
+              submission?.submitted_at
+            )
+
+          const status =
+            submission?.status ||
+            'not_submitted'
+
+          const completed =
+            submitted ||
+            status === 'done' ||
+            status === 'submitted'
+
+          if (completed) {
+            grouped[dateKey].completed +=
+              1
+          }
+
+          grouped[dateKey].total += 1
+
+          grouped[dateKey].tasks.push({
+            id: homework.id,
+            title:
+              homework.title ||
+              'Homework',
+            status,
+            completed,
+            submittedAt:
+              submission?.submitted_at ||
+              null,
+            dueDate:
+              homework.due_date ||
+              null,
+          })
+        }
+      )
+
+      /*
+       * Sort tasks inside every day.
+       */
+      Object.values(
+        grouped
+      ).forEach((day) => {
+        day.tasks.sort(
+          (a, b) =>
+            a.title.localeCompare(
+              b.title
+            )
+        )
+      })
+
+      const days =
+        Object.values(
+          grouped
+        ).sort((a, b) =>
+          b.date.localeCompare(
+            a.date
+          )
+        )
+
+      /*
+       * Calculate streak from the ACTUAL history.
+       */
+      const streak =
+        calculateStreak(days)
+
+      setDailyProgress(
+        days.map((day) => ({
+          ...day,
+          percentage:
+            day.total > 0
+              ? Math.round(
+                  (day.completed /
+                    day.total) *
+                    100
+                )
+              : 0,
+        }))
+      )
+
+      /*
+       * Return calculated streak so the selected
+       * student can display the real value.
+       */
+      return streak
     } catch (err) {
       console.error(
         'Daily progress error:',
@@ -181,25 +509,86 @@ export default function Leaderboard({
       )
 
       setDailyError(
-        err.message
+        err.message ||
+          'Failed to load daily progress.'
       )
 
       setDailyProgress([])
+
+      return null
     } finally {
       setLoadingDaily(false)
     }
   }
 
-  const selectStudent = (student) => {
-    setSelectedStudent(student)
-    loadDailyProgress(student)
+  /*
+   * ----------------------------------------------------
+   * SELECT STUDENT
+   * ----------------------------------------------------
+   */
+
+  const selectStudent = async (
+    student
+  ) => {
+    /*
+     * Keep the rank permanently attached to
+     * the selected student.
+     */
+    const index =
+      (rows || []).findIndex(
+        (row) =>
+          row.student_id ===
+          student.student_id
+      )
+
+    const selectedWithRank = {
+      ...student,
+      rank:
+        index >= 0
+          ? index + 1
+          : null,
+    }
+
+    setSelectedStudent(
+      selectedWithRank
+    )
+
+    const streak =
+      await loadDailyProgress(
+        selectedWithRank
+      )
+
+    /*
+     * Update the selected profile with the
+     * freshly calculated streak.
+     */
+    if (
+      streak !== null
+    ) {
+      setSelectedStudent(
+        (previous) =>
+          previous
+            ? {
+                ...previous,
+                streak,
+              }
+            : previous
+      )
+    }
   }
 
   /*
+   * ----------------------------------------------------
    * CHAT WITH STUDENT
+   * ----------------------------------------------------
    */
-  const handleChat = (student) => {
-    if (!student?.student_id) {
+
+  const handleChat = (
+    student
+  ) => {
+    if (
+      !student?.student_id
+    ) {
       console.error(
         'No student ID available:',
         student
@@ -229,135 +618,186 @@ export default function Leaderboard({
   }
 
   /*
+   * ----------------------------------------------------
    * OPEN MANAGE GROUPS
+   * ----------------------------------------------------
    */
-  const openManageGroups = async (
-    student
-  ) => {
-    setManageStudent(student)
-    setGroups([])
-    setMemberGroupIds([])
-    setGroupError('')
-    setLoadingGroups(true)
 
-    try {
-      const {
-        data: allGroups,
-        error: groupsError,
-      } = await supabase
-        .from('groups')
-        .select(
-          'id, name, created_at'
-        )
-        .order(
-          'created_at',
-          {
-            ascending: true,
-          }
-        )
+  const openManageGroups =
+    async (
+      student
+    ) => {
+      setManageStudent(student)
+      setGroups([])
+      setMemberGroupIds([])
+      setGroupError('')
+      setLoadingGroups(true)
 
-      if (groupsError) {
-        throw groupsError
-      }
-
-      const {
-        data: memberships,
-        error: membershipError,
-      } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq(
-          'student_id',
-          student.student_id
-        )
-
-      if (membershipError) {
-        throw membershipError
-      }
-
-      setGroups(
-        allGroups || []
-      )
-
-      setMemberGroupIds(
-        (memberships || []).map(
-          (membership) =>
-            membership.group_id
-        )
-      )
-    } catch (err) {
-      console.error(err)
-      setGroupError(
-        err.message
-      )
-    } finally {
-      setLoadingGroups(false)
-    }
-  }
-
-  const closeManageGroups = () => {
-    setManageStudent(null)
-    setGroups([])
-    setMemberGroupIds([])
-    setGroupError('')
-    setSavingGroup('')
-  }
-
-  /*
-   * ADD / REMOVE GROUP MEMBERSHIP
-   */
-  const toggleGroupMembership = async (
-    group,
-    isMember
-  ) => {
-    if (!manageStudent) {
-      return
-    }
-
-    setSavingGroup(group.id)
-    setGroupError('')
-
-    try {
-      if (isMember) {
-        const { error } =
+      try {
+        const {
+          data: allGroups,
+          error: groupsError,
+        } =
           await supabase
-            .from('group_members')
-            .delete()
-            .eq(
-              'group_id',
-              group.id
+            .from('groups')
+            .select(
+              'id, name, created_at'
+            )
+            .order(
+              'created_at',
+              {
+                ascending: true,
+              }
+            )
+
+        if (groupsError) {
+          throw groupsError
+        }
+
+        const {
+          data: memberships,
+          error:
+            membershipError,
+        } =
+          await supabase
+            .from(
+              'group_members'
+            )
+            .select(
+              'group_id'
             )
             .eq(
               'student_id',
-              manageStudent.student_id
+              student.student_id
             )
 
-        if (error) {
-          throw error
+        if (membershipError) {
+          throw membershipError
         }
 
-        setMemberGroupIds(
-          (prev) =>
-            prev.filter(
-              (id) =>
-                id !== group.id
-            )
+        setGroups(
+          allGroups || []
         )
-      } else {
-        const { error } =
-          await supabase
-            .from('group_members')
-            .insert({
-              group_id: group.id,
-              student_id:
-                manageStudent.student_id,
-            })
 
-        if (error) {
-          if (
-            error.code ===
-            '23505'
-          ) {
+        setMemberGroupIds(
+          (
+            memberships || []
+          ).map(
+            (membership) =>
+              membership.group_id
+          )
+        )
+      } catch (err) {
+        console.error(err)
+
+        setGroupError(
+          err.message
+        )
+      } finally {
+        setLoadingGroups(
+          false
+        )
+      }
+    }
+
+  const closeManageGroups =
+    () => {
+      setManageStudent(null)
+      setGroups([])
+      setMemberGroupIds([])
+      setGroupError('')
+      setSavingGroup('')
+    }
+
+  /*
+   * ----------------------------------------------------
+   * ADD / REMOVE GROUP MEMBERSHIP
+   * ----------------------------------------------------
+   */
+
+  const toggleGroupMembership =
+    async (
+      group,
+      isMember
+    ) => {
+      if (
+        !manageStudent
+      ) {
+        return
+      }
+
+      setSavingGroup(
+        group.id
+      )
+
+      setGroupError('')
+
+      try {
+        if (isMember) {
+          const {
+            error,
+          } =
+            await supabase
+              .from(
+                'group_members'
+              )
+              .delete()
+              .eq(
+                'group_id',
+                group.id
+              )
+              .eq(
+                'student_id',
+                manageStudent.student_id
+              )
+
+          if (error) {
+            throw error
+          }
+
+          setMemberGroupIds(
+            (prev) =>
+              prev.filter(
+                (id) =>
+                  id !==
+                  group.id
+              )
+          )
+        } else {
+          const {
+            error,
+          } =
+            await supabase
+              .from(
+                'group_members'
+              )
+              .insert({
+                group_id:
+                  group.id,
+                student_id:
+                  manageStudent.student_id,
+              })
+
+          if (error) {
+            if (
+              error.code ===
+              '23505'
+            ) {
+              setMemberGroupIds(
+                (prev) =>
+                  prev.includes(
+                    group.id
+                  )
+                    ? prev
+                    : [
+                        ...prev,
+                        group.id,
+                      ]
+              )
+            } else {
+              throw error
+            }
+          } else {
             setMemberGroupIds(
               (prev) =>
                 prev.includes(
@@ -369,59 +809,47 @@ export default function Leaderboard({
                       group.id,
                     ]
             )
-          } else {
-            throw error
           }
-        } else {
-          setMemberGroupIds(
-            (prev) =>
-              prev.includes(
-                group.id
-              )
-                ? prev
-                : [
-                    ...prev,
-                    group.id,
-                  ]
-          )
         }
+
+        await loadLeaderboard()
+      } catch (err) {
+        console.error(err)
+
+        setGroupError(
+          err.message
+        )
+      } finally {
+        setSavingGroup('')
       }
-
-      /*
-       * Refresh the currently visible leaderboard.
-       */
-      const rpcName =
-        groupId === 'all'
-          ? 'all_students_leaderboard'
-          : 'group_leaderboard'
-
-      const params =
-        groupId === 'all'
-          ? {}
-          : {
-              p_group_id: groupId,
-            }
-
-      const {
-        data,
-        error,
-      } = await supabase.rpc(
-        rpcName,
-        params
-      )
-
-      if (!error) {
-        setRows(data || [])
-      }
-    } catch (err) {
-      console.error(err)
-      setGroupError(
-        err.message
-      )
-    } finally {
-      setSavingGroup('')
     }
-  }
+
+  /*
+   * ----------------------------------------------------
+   * DERIVED VALUES
+   * ----------------------------------------------------
+   */
+
+  const selectedStreak =
+    useMemo(() => {
+      if (
+        !dailyProgress.length
+      ) {
+        return 0
+      }
+
+      return calculateStreak(
+        dailyProgress
+      )
+    }, [
+      dailyProgress,
+    ])
+
+  /*
+   * ----------------------------------------------------
+   * EARLY STATES
+   * ----------------------------------------------------
+   */
 
   if (error) {
     return (
@@ -447,440 +875,599 @@ export default function Leaderboard({
     )
   }
 
-  const rankStyle = (rank) => {
-    if (rank === 1) {
-      return 'bg-brass text-onbrass border-brass'
+  const rankStyle =
+    (rank) => {
+      if (rank === 1) {
+        return 'bg-brass text-onbrass border-brass'
+      }
+
+      if (rank === 2) {
+        return 'bg-panel-2 text-paper border-mist'
+      }
+
+      if (rank === 3) {
+        return 'bg-panel-2 text-paper border-brass-dim'
+      }
+
+      return 'bg-panel-2 text-mist border-line'
     }
 
-    if (rank === 2) {
-      return 'bg-panel-2 text-paper border-mist'
-    }
-
-    if (rank === 3) {
-      return 'bg-panel-2 text-paper border-brass-dim'
-    }
-
-    return 'bg-panel-2 text-mist border-line'
-  }
+  /*
+   * ----------------------------------------------------
+   * MAIN UI
+   * ----------------------------------------------------
+   */
 
   return (
     <div className="flex flex-col gap-3">
 
-      {selectedStudent && (
-        <div className="ticket rounded-lg border-brass p-5">
+      {/* ---------------------------------------------
+          LEADERBOARD
+         --------------------------------------------- */}
 
-          <div className="flex items-start justify-between gap-4">
+      {rows.map(
+        (r, i) => {
+          const rank =
+            i + 1
 
-            <div className="flex items-center gap-3 min-w-0">
-
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brass text-onbrass flex items-center justify-center font-display font-bold text-lg">
-                {(selectedStudent.full_name || '?')
-                  .charAt(0)
-                  .toUpperCase()}
-              </div>
-
-              <div className="min-w-0">
-
-                <h3 className="font-display text-xl truncate">
-                  {selectedStudent.full_name}
-                </h3>
-
-                <p className="text-mist text-xs font-mono mt-1">
-                  @{selectedStudent.username || 'student'}
-                </p>
-
-              </div>
-
-            </div>
-
+          return (
             <button
               type="button"
-              onClick={() => {
-                setSelectedStudent(null)
-                setDailyProgress([])
-              }}
-              className="focus-ring text-mist hover:text-paper text-xl"
-              aria-label="Close student profile"
+              key={
+                r.student_id
+              }
+              onClick={() =>
+                selectStudent(r)
+              }
+              className={`ticket rounded-lg p-3 flex items-center gap-3 text-left w-full transition-colors hover:border-brass ${
+                r.student_id ===
+                highlightStudentId
+                  ? 'border-brass'
+                  : ''
+              }`}
             >
-              ×
-            </button>
-
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
-
-            <div className="bg-panel-2 border border-line rounded-lg p-3">
-              <div className="text-xs text-mist font-mono">
-                Progress
-              </div>
-
-              <div className="text-xl font-display text-brass mt-1">
-                {selectedStudent.percentage}%
-              </div>
-            </div>
-
-            <div className="bg-panel-2 border border-line rounded-lg p-3">
-              <div className="text-xs text-mist font-mono">
-                Completed
-              </div>
-
-              <div className="text-xl font-display mt-1">
-                {selectedStudent.completed}
-              </div>
-            </div>
-
-            <div className="bg-panel-2 border border-line rounded-lg p-3">
-              <div className="text-xs text-mist font-mono">
-                Total tasks
-              </div>
-
-              <div className="text-xl font-display mt-1">
-                {selectedStudent.total}
-              </div>
-            </div>
-
-            <div className="bg-panel-2 border border-line rounded-lg p-3">
-              <div className="text-xs text-mist font-mono">
-                Streak
-              </div>
-
-              <div className="text-xl font-display mt-1">
-                🔥 {selectedStudent.streak || 0}
-              </div>
-            </div>
-
-          </div>
-
-          <div className="mt-5">
-
-            <div className="flex justify-between text-xs font-mono mb-2">
-
-              <span className="text-mist">
-                Overall progress
-              </span>
-
-              <span className="text-brass">
-                {selectedStudent.percentage}%
-              </span>
-
-            </div>
-
-            <div className="h-2 bg-panel-2 rounded-full overflow-hidden">
 
               <div
-                className="h-full bg-brass rounded-full transition-all"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    Math.max(
-                      0,
-                      Number(
-                        selectedStudent.percentage
-                      ) || 0
-                    )
-                  )}%`,
-                }}
-              />
-
-            </div>
-
-          </div>
-
-          <div className="flex flex-wrap gap-2 mt-5">
-
-            <button
-              type="button"
-              onClick={() =>
-                handleChat(
-                  selectedStudent
-                )
-              }
-              className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-            >
-              💬 Chat with student
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                openManageGroups(
-                  selectedStudent
-                )
-              }
-              className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-            >
-              👥 Manage groups
-            </button>
-
-          </div>
-
-          <div className="mt-5 border-t border-line pt-4">
-
-            <div>
-
-              <h4 className="font-medium">
-                Daily progress
-              </h4>
-
-              <p className="text-xs text-mist mt-1">
-                Homework submitted by this student, grouped by day.
-              </p>
-
-            </div>
-
-            {loadingDaily && (
-              <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-
-                <p className="text-sm text-mist">
-                  Loading daily progress…
-                </p>
-
+                className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
+                  rank
+                )}`}
+              >
+                {rank}
               </div>
-            )}
 
-            {dailyError && (
-              <div className="mt-3 bg-panel-2 border border-coral rounded-lg p-4">
+              <div className="flex-1 min-w-0">
 
-                <p className="text-sm text-coral">
-                  Couldn't load daily progress: {dailyError}
-                </p>
+                <div className="flex items-center justify-between gap-2">
 
-              </div>
-            )}
+                  <span className="font-medium truncate">
+                    {r.full_name}
+                  </span>
 
-            {!loadingDaily &&
-              !dailyError &&
-              dailyProgress.length === 0 && (
-                <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-
-                  <p className="text-sm text-mist">
-                    No submitted homework yet.
-                  </p>
+                  <span className="font-mono text-sm text-brass">
+                    {r.percentage}%
+                  </span>
 
                 </div>
-              )}
 
-            {!loadingDaily &&
-              !dailyError &&
-              dailyProgress.length > 0 && (
-                <div className="mt-3 flex flex-col gap-3">
+                <div className="text-xs text-mist font-mono mt-0.5">
+                  @{r.username ||
+                    'student'}
+                </div>
 
-                  {dailyProgress.map(
-                    (day) => {
+                <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
 
-                      const date =
-                        new Date(
-                          `${day.date}T00:00:00`
+                  <div
+                    className="h-full bg-brass rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          Number(
+                            r.percentage
+                          ) ||
+                            0
                         )
+                      )}%`,
+                    }}
+                  />
 
-                      const formattedDate =
-                        date.toLocaleDateString(
-                          [],
-                          {
-                            weekday:
-                              'long',
-                            month:
-                              'short',
-                            day:
-                              'numeric',
-                            year:
-                              'numeric',
-                          }
-                        )
+                </div>
 
-                      return (
-                        <div
-                          key={
-                            day.date
-                          }
-                          className="bg-panel-2 border border-line rounded-lg p-4"
-                        >
+                <div className="text-mist text-xs font-mono mt-1 flex gap-3">
 
-                          <div className="flex items-center justify-between gap-3 mb-3">
+                  <span>
+                    {r.completed}/
+                    {r.total}{' '}
+                    tasks
+                  </span>
 
-                            <div className="font-medium">
-                              {formattedDate}
-                            </div>
-
-                            <div className="text-xs font-mono text-brass">
-                              {
-                                day
-                                  .tasks
-                                  .length
-                              }{' '}
-                              task
-                              {day.tasks
-                                .length ===
-                              1
-                                ? ''
-                                : 's'}
-                            </div>
-
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-
-                            {day.tasks.map(
-                              (task) => (
-                                <div
-                                  key={
-                                    task.id
-                                  }
-                                  className="flex items-center justify-between gap-3 border-t border-line pt-2"
-                                >
-
-                                  <div className="min-w-0">
-
-                                    <div className="text-sm truncate">
-                                      {
-                                        task.title
-                                      }
-                                    </div>
-
-                                    <div className="text-xs text-mist font-mono mt-0.5">
-                                      Submitted{' '}
-                                      {new Date(
-                                        task.submittedAt
-                                      ).toLocaleTimeString(
-                                        [],
-                                        {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                        }
-                                      )}
-                                    </div>
-
-                                  </div>
-
-                                  <span
-                                    className={`text-xs font-mono ${
-                                      task.status ===
-                                      'done'
-                                        ? 'text-brass'
-                                        : 'text-mist'
-                                    }`}
-                                  >
-                                    {task.status ===
-                                    'done'
-                                      ? 'DONE'
-                                      : 'SUBMITTED'}
-                                  </span>
-
-                                </div>
-                              )
-                            )}
-
-                          </div>
-
-                        </div>
-                      )
-                    }
+                  {r.streak >
+                    0 && (
+                    <span>
+                      🔥{' '}
+                      {r.streak}{' '}
+                      day
+                      {r.streak ===
+                      1
+                        ? ''
+                        : 's'}{' '}
+                      in a row
+                    </span>
                   )}
 
                 </div>
-              )}
+
+              </div>
+
+              <div className="text-mist text-lg">
+                ›
+              </div>
+
+            </button>
+          )
+        }
+      )}
+
+      {/* ---------------------------------------------
+          STUDENT DETAIL MODAL
+          
+          IMPORTANT:
+          It is fixed instead of being inserted above
+          the leaderboard. Therefore:
+          - no page jump
+          - rank numbers stay visible
+          - clicking a student does not move the list
+         --------------------------------------------- */}
+
+      {selectedStudent && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onMouseDown={(e) => {
+            if (
+              e.target ===
+              e.currentTarget
+            ) {
+              setSelectedStudent(
+                null
+              )
+              setDailyProgress(
+                []
+              )
+              setDailyError('')
+            }
+          }}
+        >
+
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-panel border border-line rounded-xl shadow-2xl">
+
+            {/* HEADER */}
+
+            <div className="sticky top-0 z-10 bg-panel border-b border-line px-5 py-4 flex items-start justify-between gap-4">
+
+              <div className="flex items-center gap-3 min-w-0">
+
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brass text-onbrass flex items-center justify-center font-display font-bold text-lg">
+                  {(
+                    selectedStudent.full_name ||
+                    '?'
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+
+                <div className="min-w-0">
+
+                  <div className="flex items-center gap-2 flex-wrap">
+
+                    <span
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
+                        selectedStudent.rank
+                      )}`}
+                    >
+                      {
+                        selectedStudent.rank
+                      }
+                    </span>
+
+                    <h3 className="font-display text-xl truncate">
+                      {
+                        selectedStudent.full_name
+                      }
+                    </h3>
+
+                  </div>
+
+                  <p className="text-mist text-xs font-mono mt-1">
+                    @
+                    {selectedStudent.username ||
+                      'student'}
+                  </p>
+
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedStudent(
+                    null
+                  )
+                  setDailyProgress(
+                    []
+                  )
+                  setDailyError(
+                    ''
+                  )
+                }}
+                className="focus-ring flex-shrink-0 text-mist hover:text-paper text-xl"
+                aria-label="Close student profile"
+              >
+                ×
+              </button>
+
+            </div>
+
+            <div className="p-5">
+
+              {/* STATS */}
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                <div className="bg-panel-2 border border-line rounded-lg p-3">
+
+                  <div className="text-xs text-mist font-mono">
+                    Rank
+                  </div>
+
+                  <div className="text-xl font-display text-brass mt-1">
+                    #
+                    {
+                      selectedStudent.rank
+                    }
+                  </div>
+
+                </div>
+
+                <div className="bg-panel-2 border border-line rounded-lg p-3">
+
+                  <div className="text-xs text-mist font-mono">
+                    Progress
+                  </div>
+
+                  <div className="text-xl font-display text-brass mt-1">
+                    {
+                      selectedStudent.percentage
+                    }
+                    %
+                  </div>
+
+                </div>
+
+                <div className="bg-panel-2 border border-line rounded-lg p-3">
+
+                  <div className="text-xs text-mist font-mono">
+                    Completed
+                  </div>
+
+                  <div className="text-xl font-display mt-1">
+                    {
+                      selectedStudent.completed
+                    }
+                  </div>
+
+                </div>
+
+                <div className="bg-panel-2 border border-line rounded-lg p-3">
+
+                  <div className="text-xs text-mist font-mono">
+                    Streak
+                  </div>
+
+                  <div className="text-xl font-display mt-1">
+                    🔥{' '}
+                    {selectedStreak}
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* OVERALL PROGRESS */}
+
+              <div className="mt-5">
+
+                <div className="flex justify-between text-xs font-mono mb-2">
+
+                  <span className="text-mist">
+                    Overall progress
+                  </span>
+
+                  <span className="text-brass">
+                    {
+                      selectedStudent.percentage
+                    }
+                    %
+                  </span>
+
+                </div>
+
+                <div className="h-2 bg-panel-2 rounded-full overflow-hidden">
+
+                  <div
+                    className="h-full bg-brass rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          Number(
+                            selectedStudent.percentage
+                          ) ||
+                            0
+                        )
+                      )}%`,
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="flex flex-wrap gap-2 mt-5">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleChat(
+                      selectedStudent
+                    )
+                  }
+                  className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
+                >
+                  💬 Chat with
+                  student
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    openManageGroups(
+                      selectedStudent
+                    )
+                  }
+                  className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
+                >
+                  👥 Manage
+                  groups
+                </button>
+
+              </div>
+
+              {/* DAILY HISTORY */}
+
+              <div className="mt-6 border-t border-line pt-5">
+
+                <div>
+
+                  <h4 className="font-medium text-lg">
+                    Homework history
+                  </h4>
+
+                  <p className="text-xs text-mist mt-1">
+                    Previous days are shown even when the
+                    student did not submit anything.
+                  </p>
+
+                </div>
+
+                {loadingDaily && (
+                  <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
+
+                    <p className="text-sm text-mist">
+                      Loading homework
+                      history…
+                    </p>
+
+                  </div>
+                )}
+
+                {dailyError && (
+                  <div className="mt-3 bg-panel-2 border border-coral rounded-lg p-4">
+
+                    <p className="text-sm text-coral">
+                      Couldn't load
+                      homework
+                      history:{' '}
+                      {
+                        dailyError
+                      }
+                    </p>
+
+                  </div>
+                )}
+
+                {!loadingDaily &&
+                  !dailyError &&
+                  dailyProgress.length ===
+                    0 && (
+                    <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
+
+                      <p className="text-sm text-mist">
+                        No homework
+                        history yet.
+                      </p>
+
+                    </div>
+                  )}
+
+                {!loadingDaily &&
+                  !dailyError &&
+                  dailyProgress.length >
+                    0 && (
+                    <div className="mt-3 flex flex-col gap-3">
+
+                      {dailyProgress.map(
+                        (
+                          day
+                        ) => (
+                          <div
+                            key={
+                              day.date
+                            }
+                            className="bg-panel-2 border border-line rounded-lg p-4"
+                          >
+
+                            {/* DAY HEADER */}
+
+                            <div className="flex items-start justify-between gap-3 mb-3">
+
+                              <div>
+
+                                <div className="font-medium">
+                                  {formatDate(
+                                    day.date
+                                  )}
+                                </div>
+
+                                <div className="text-xs text-mist font-mono mt-1">
+                                  {
+                                    day.completed
+                                  }
+                                  /
+                                  {
+                                    day.total
+                                  }{' '}
+                                  completed
+                                </div>
+
+                              </div>
+
+                              <div className="text-right">
+
+                                <div className="text-sm font-mono text-brass">
+                                  {
+                                    day.percentage
+                                  }
+                                  %
+                                </div>
+
+                                <div className="text-xs text-mist">
+                                  daily
+                                  progress
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                            {/* DAILY PROGRESS BAR */}
+
+                            <div className="h-1.5 bg-panel rounded-full overflow-hidden mb-3">
+
+                              <div
+                                className="h-full bg-brass rounded-full"
+                                style={{
+                                  width: `${day.percentage}%`,
+                                }}
+                              />
+
+                            </div>
+
+                            {/* HOMEWORK TASKS */}
+
+                            <div className="flex flex-col gap-2">
+
+                              {day.tasks.map(
+                                (
+                                  task
+                                ) => (
+                                  <div
+                                    key={
+                                      task.id
+                                    }
+                                    className="flex items-center justify-between gap-3 border-t border-line pt-2"
+                                  >
+
+                                    <div className="min-w-0">
+
+                                      <div className="text-sm truncate">
+                                        {
+                                          task.title
+                                        }
+                                      </div>
+
+                                      {task.submittedAt && (
+                                        <div className="text-xs text-mist font-mono mt-0.5">
+                                          Submitted{' '}
+                                          {new Date(
+                                            task.submittedAt
+                                          ).toLocaleTimeString(
+                                            [],
+                                            {
+                                              hour: '2-digit',
+                                              minute:
+                                                '2-digit',
+                                            }
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {!task.submittedAt && (
+                                        <div className="text-xs text-mist font-mono mt-0.5">
+                                          No submission
+                                        </div>
+                                      )}
+
+                                    </div>
+
+                                    <span
+                                      className={`flex-shrink-0 text-xs font-mono ${
+                                        task.completed
+                                          ? 'text-brass'
+                                          : 'text-coral'
+                                      }`}
+                                    >
+                                      {task.completed
+                                        ? 'DONE'
+                                        : 'NOT DONE'}
+                                    </span>
+
+                                  </div>
+                                )
+                              )}
+
+                            </div>
+
+                          </div>
+                        )
+                      )}
+
+                    </div>
+                  )}
+
+              </div>
+
+            </div>
 
           </div>
 
         </div>
       )}
 
-      {rows.map((r, i) => {
-
-        const rank = i + 1
-
-        return (
-          <button
-            type="button"
-            key={r.student_id}
-            onClick={() =>
-              selectStudent(r)
-            }
-            className={`ticket rounded-lg p-3 flex items-center gap-3 text-left w-full transition-colors hover:border-brass ${
-              r.student_id ===
-              highlightStudentId
-                ? 'border-brass'
-                : ''
-            }`}
-          >
-
-            <div
-              className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
-                rank
-              )}`}
-            >
-              {rank}
-            </div>
-
-            <div className="flex-1 min-w-0">
-
-              <div className="flex items-center justify-between gap-2">
-
-                <span className="font-medium truncate">
-                  {r.full_name}
-                </span>
-
-                <span className="font-mono text-sm text-brass">
-                  {r.percentage}%
-                </span>
-
-              </div>
-
-              <div className="text-xs text-mist font-mono mt-0.5">
-                @{r.username || 'student'}
-              </div>
-
-              <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
-
-                <div
-                  className="h-full bg-brass rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      Math.max(
-                        0,
-                        Number(
-                          r.percentage
-                        ) || 0
-                      )
-                    )}%`,
-                  }}
-                />
-
-              </div>
-
-              <div className="text-mist text-xs font-mono mt-1 flex gap-3">
-
-                <span>
-                  {r.completed}/{r.total}{' '}
-                  tasks
-                </span>
-
-                {r.streak > 0 && (
-                  <span>
-                    🔥 {r.streak} day
-                    {r.streak === 1
-                      ? ''
-                      : 's'} in a row
-                  </span>
-                )}
-
-              </div>
-
-            </div>
-
-            <div className="text-mist text-lg">
-              ›
-            </div>
-
-          </button>
-        )
-      })}
+      {/* ---------------------------------------------
+          MANAGE GROUPS MODAL
+         --------------------------------------------- */}
 
       {manageStudent && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-          onMouseDown={(e) => {
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
+          onMouseDown={(
+            e
+          ) => {
             if (
               e.target ===
               e.currentTarget
@@ -901,7 +1488,9 @@ export default function Leaderboard({
                 </h3>
 
                 <p className="text-sm text-mist mt-1">
-                  {manageStudent.full_name}
+                  {
+                    manageStudent.full_name
+                  }
                 </p>
 
               </div>
@@ -923,7 +1512,9 @@ export default function Leaderboard({
 
               {groupError && (
                 <div className="mb-4 rounded-lg border border-coral/40 bg-coral/10 p-3 text-sm text-coral">
-                  {groupError}
+                  {
+                    groupError
+                  }
                 </div>
               )}
 
@@ -931,16 +1522,19 @@ export default function Leaderboard({
                 <div className="py-8 text-center text-mist">
                   Loading groups…
                 </div>
-              ) : groups.length === 0 ? (
+              ) : groups.length ===
+                0 ? (
                 <div className="py-8 text-center">
 
                   <p className="text-mist">
-                    No groups exist yet.
+                    No groups exist
+                    yet.
                   </p>
 
                   <p className="text-xs text-mist mt-1">
-                    Create a group first from
-                    Groups & homework.
+                    Create a group
+                    first from Groups
+                    & homework.
                   </p>
 
                 </div>
@@ -948,8 +1542,9 @@ export default function Leaderboard({
                 <div className="flex flex-col gap-2">
 
                   {groups.map(
-                    (group) => {
-
+                    (
+                      group
+                    ) => {
                       const isMember =
                         memberGroupIds.includes(
                           group.id
@@ -1035,16 +1630,19 @@ export default function Leaderboard({
 
                 <p className="text-xs text-mist">
 
-                  Removing a student from a
+                  Removing a
+                  student from a
                   group does{' '}
 
                   <strong className="text-paper">
                     not
                   </strong>{' '}
 
-                  delete their account. It only
-                  removes their membership from
-                  that group.
+                  delete their
+                  account. It only
+                  removes their
+                  membership from that
+                  group.
 
                 </p>
 
