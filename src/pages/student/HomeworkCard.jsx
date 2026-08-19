@@ -26,220 +26,6 @@ const PARTS = [
   },
 ]
 
-/*
- * =========================================================
- * IMAGE COMPRESSION
- *
- * Phone photos can be 5–15+ MB.
- * We resize them before uploading so mobile browsers
- * don't have to send huge camera images to Supabase.
- *
- * PDFs, DOCX, MP3, WAV, etc. are NOT changed.
- * =========================================================
- */
-
-const MAX_IMAGE_DIMENSION = 1600
-const IMAGE_QUALITY = 0.82
-
-const isImageFile = (file) => {
-  if (!file) return false
-
-  if (file.type?.startsWith('image/')) {
-    return true
-  }
-
-  return [
-    'png',
-    'jpg',
-    'jpeg',
-    'gif',
-    'webp',
-    'svg',
-  ].includes(extensionOf(file.name))
-}
-
-const compressImage = async (file) => {
-  if (!isImageFile(file)) {
-    return file
-  }
-
-  /*
-   * SVG should stay SVG because rasterising it can change
-   * how it looks.
-   */
-  if (
-    file.type === 'image/svg+xml' ||
-    extensionOf(file.name) === 'svg'
-  ) {
-    return file
-  }
-
-  /*
-   * Very small images don't need compression.
-   * This also avoids unnecessary processing.
-   */
-  if (file.size <= 1.5 * 1024 * 1024) {
-    return file
-  }
-
-  let bitmap = null
-  let objectUrl = null
-
-  try {
-    /*
-     * createImageBitmap is usually faster and more memory
-     * efficient on modern mobile browsers.
-     */
-    if (typeof createImageBitmap === 'function') {
-      try {
-        bitmap = await createImageBitmap(file, {
-          imageOrientation: 'from-image',
-        })
-      } catch {
-        bitmap = await createImageBitmap(file)
-      }
-    }
-
-    /*
-     * Fallback for browsers without createImageBitmap.
-     */
-    if (!bitmap) {
-      objectUrl = URL.createObjectURL(file)
-
-      bitmap = await new Promise(
-        (resolve, reject) => {
-          const img = new Image()
-
-          img.onload = () => resolve(img)
-          img.onerror = () =>
-            reject(
-              new Error(
-                'Could not read this image.'
-              )
-            )
-
-          img.src = objectUrl
-        }
-      )
-    }
-
-    const originalWidth = bitmap.width
-    const originalHeight = bitmap.height
-
-    const largestSide = Math.max(
-      originalWidth,
-      originalHeight
-    )
-
-    const scale =
-      largestSide > MAX_IMAGE_DIMENSION
-        ? MAX_IMAGE_DIMENSION /
-          largestSide
-        : 1
-
-    const width = Math.max(
-      1,
-      Math.round(
-        originalWidth * scale
-      )
-    )
-
-    const height = Math.max(
-      1,
-      Math.round(
-        originalHeight * scale
-      )
-    )
-
-    const canvas =
-      document.createElement('canvas')
-
-    canvas.width = width
-    canvas.height = height
-
-    const ctx = canvas.getContext('2d')
-
-    if (!ctx) {
-      return file
-    }
-
-    /*
-     * Better quality when shrinking phone photos.
-     */
-    ctx.imageSmoothingEnabled = true
-    ctx.imageSmoothingQuality = 'high'
-
-    ctx.drawImage(
-      bitmap,
-      0,
-      0,
-      width,
-      height
-    )
-
-    const blob =
-      await new Promise(
-        (resolve) => {
-          canvas.toBlob(
-            resolve,
-            'image/jpeg',
-            IMAGE_QUALITY
-          )
-        }
-      )
-
-    if (!blob) {
-      return file
-    }
-
-    /*
-     * If compression somehow produces a larger file,
-     * keep the original instead.
-     */
-    if (blob.size >= file.size) {
-      return file
-    }
-
-    return new File(
-      [blob],
-      `${file.name.replace(
-        /\.[^/.]+$/,
-        ''
-      )}.jpg`,
-      {
-        type: 'image/jpeg',
-        lastModified:
-          Date.now(),
-      }
-    )
-  } catch (err) {
-    console.warn(
-      'Image compression failed; uploading original file:',
-      err
-    )
-
-    /*
-     * Never make a student lose the upload just because
-     * compression failed.
-     */
-    return file
-  } finally {
-    if (
-      bitmap &&
-      typeof bitmap.close ===
-        'function'
-    ) {
-      bitmap.close()
-    }
-
-    if (objectUrl) {
-      URL.revokeObjectURL(
-        objectUrl
-      )
-    }
-  }
-}
-
 export default function HomeworkCard({
   homework,
   submission,
@@ -254,6 +40,23 @@ export default function HomeworkCard({
   )
   const [savingComment, setSavingComment] =
     useState(false)
+
+  /*
+   * IMPORTANT:
+   * Keep a local copy of the three speaking URLs.
+   *
+   * This prevents the Submit Speaking button from being
+   * one render behind the AudioRecorder components.
+   */
+  const [speakingParts, setSpeakingParts] =
+    useState({
+      audio_part1_url:
+        submission?.audio_part1_url || null,
+      audio_part2_url:
+        submission?.audio_part2_url || null,
+      audio_part3_url:
+        submission?.audio_part3_url || null,
+    })
 
   const fileInputRef = useRef(null)
 
@@ -284,17 +87,52 @@ export default function HomeworkCard({
   )
 
   /*
-   * A normal task is considered submitted ONLY when
-   * the student explicitly presses Submit Task.
+   * Keep local speaking state synchronized whenever the
+   * parent receives fresh submission data.
+   */
+  useEffect(() => {
+    setSpeakingParts({
+      audio_part1_url:
+        submission?.audio_part1_url || null,
+      audio_part2_url:
+        submission?.audio_part2_url || null,
+      audio_part3_url:
+        submission?.audio_part3_url || null,
+    })
+
+    if (
+      submission &&
+      typeof submission.comment === 'string'
+    ) {
+      setComment(submission.comment)
+    }
+  }, [
+    submission?.id,
+    submission?.audio_part1_url,
+    submission?.audio_part2_url,
+    submission?.audio_part3_url,
+    submission?.comment,
+  ])
+
+  /*
+   * ============================================================
+   * NORMAL TASK STATUS
+   * ============================================================
+   *
+   * A normal homework task is completed ONLY after the
+   * student explicitly clicks Submit Task.
    */
   const taskAlreadySubmitted =
     !homework.enable_speaking &&
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
 
-  const upsertSubmission = async (
-    patch
-  ) => {
+  /*
+   * ============================================================
+   * UPSERT SUBMISSION
+   * ============================================================
+   */
+  const upsertSubmission = async (patch) => {
     const { data, error } =
       await supabase
         .from('submissions')
@@ -314,66 +152,114 @@ export default function HomeworkCard({
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
+    /*
+     * Immediately tell the parent about the new submission.
+     */
     onChange(data)
+
+    /*
+     * Also immediately update local speaking state.
+     */
+    setSpeakingParts((previous) => ({
+      ...previous,
+      audio_part1_url:
+        data?.audio_part1_url || null,
+      audio_part2_url:
+        data?.audio_part2_url || null,
+      audio_part3_url:
+        data?.audio_part3_url || null,
+    }))
 
     return data
   }
 
   /*
-   * Upload a file to Supabase.
+   * ============================================================
+   * STORAGE UPLOAD
+   * ============================================================
    *
-   * Images are compressed before upload.
-   * Everything else is uploaded unchanged.
+   * IMPORTANT:
+   * Never use the student's original filename as the actual
+   * Storage object key.
+   *
+   * Cyrillic names, spaces and special characters can cause
+   * Supabase Storage "Invalid key" errors.
    */
   const uploadFile = async (
     file,
-    name
+    originalName
   ) => {
-    let uploadFileValue = file
-    let uploadName = name
+    const name =
+      typeof originalName === 'string' &&
+      originalName.trim()
+        ? originalName.trim()
+        : file?.name || 'file'
 
-    if (isImageFile(file)) {
-      uploadFileValue =
-        await compressImage(file)
+    const extensionMatch =
+      name.match(
+        /\.([a-zA-Z0-9]+)$/
+      )
 
-      /*
-       * If compression changed the file into JPEG,
-       * update the filename too.
-       */
-      if (
-        uploadFileValue !== file &&
-        uploadFileValue.type ===
-          'image/jpeg'
-      ) {
-        uploadName =
-          `${name.replace(
-            /\.[^/.]+$/,
-            ''
-          )}.jpg`
-      }
-    }
+    const extension =
+      extensionMatch
+        ? extensionMatch[1].toLowerCase()
+        : ''
 
-    const path = `${studentId}/${homework.id}/${uploadName}`
+    const uniqueId =
+      typeof crypto !== 'undefined' &&
+      typeof crypto.randomUUID ===
+        'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 12)}`
 
-    const { error: upErr } =
-      await supabase.storage
-        .from('submissions')
-        .upload(
+    const safeFileName =
+      extension
+        ? `${uniqueId}.${extension}`
+        : uniqueId
+
+    const path =
+      `${studentId}/${homework.id}/${safeFileName}`
+
+    const {
+      error: uploadError,
+    } = await supabase.storage
+      .from('submissions')
+      .upload(
+        path,
+        file,
+        {
+          upsert: false,
+          contentType:
+            guessMimeType(
+              name,
+              file?.type || ''
+            ),
+        }
+      )
+
+    if (uploadError) {
+      console.error(
+        'Homework Storage upload failed:',
+        {
+          error: uploadError,
           path,
-          uploadFileValue,
-          {
-            upsert: true,
-            contentType:
-              guessMimeType(
-                uploadName,
-                uploadFileValue.type
-              ),
-          }
-        )
+          originalName: name,
+          fileType: file?.type,
+          fileSize: file?.size,
+        }
+      )
 
-    if (upErr) throw upErr
+      throw new Error(
+        uploadError.message ||
+          'Failed to upload file.'
+      )
+    }
 
     return supabase.storage
       .from('submissions')
@@ -381,12 +267,14 @@ export default function HomeworkCard({
       .data.publicUrl
   }
 
-  const validateFiles = (
-    files
-  ) => {
+  /*
+   * ============================================================
+   * NORMAL FILE VALIDATION
+   * ============================================================
+   */
+  const validateFiles = (files) => {
     if (
-      existingCount +
-        files.length >
+      existingCount + files.length >
       maxFiles
     ) {
       throw new Error(
@@ -416,22 +304,14 @@ export default function HomeworkCard({
   }
 
   /*
-   * =========================================================
-   * UPLOAD FILES
-   *
-   * Uploading files NEVER submits the homework.
-   * =========================================================
+   * ============================================================
+   * SAVE NORMAL FILES
+   * ============================================================
    */
-
   const saveFiles = async (
     files
   ) => {
-    if (!files.length) return
-
-    if (taskAlreadySubmitted) {
-      setError(
-        'This homework has already been submitted.'
-      )
+    if (!files.length) {
       return
     }
 
@@ -444,32 +324,15 @@ export default function HomeworkCard({
       const newImages = []
       const newFiles = []
 
-      /*
-       * Process one file at a time.
-       *
-       * This is especially important on phones because
-       * processing several large camera photos simultaneously
-       * can cause browser memory problems.
-       */
       for (
-        const [
-          i,
-          file,
-        ] of files.entries()
+        const file of files
       ) {
-        const safeName =
-          `${Date.now()}-${i}-${file.name}`
-
         const url =
           await uploadFile(
             file,
-            safeName
+            file.name
           )
 
-        /*
-         * Use the original file to determine whether
-         * this is an image submission.
-         */
         if (
           file.type.startsWith(
             'image/'
@@ -489,6 +352,11 @@ export default function HomeworkCard({
         ) {
           newImages.push(url)
         } else {
+          /*
+           * Keep the ORIGINAL filename for display.
+           *
+           * Only the Storage object name is randomized.
+           */
           newFiles.push({
             url,
             name: file.name,
@@ -501,39 +369,51 @@ export default function HomeworkCard({
         }
       }
 
+      const total =
+        existingCount +
+        files.length
+
       /*
        * IMPORTANT:
-       * Files are saved, but task remains pending.
+       * Uploading files does NOT automatically submit the
+       * homework anymore.
+       *
+       * Student must click Submit Task.
        */
       await upsertSubmission({
         screenshot_urls: [
           ...existingImages,
           ...newImages,
         ],
-
         submission_files: [
           ...existingFiles,
           ...newFiles,
         ],
-
         status: 'pending',
-        submitted_at: null,
+        submitted_at:
+          submission?.submitted_at ||
+          null,
       })
     } catch (err) {
       console.error(
-        'File upload failed:',
+        'Homework file save error:',
         err
       )
 
       setError(
         err?.message ||
-          'Could not upload the file. Please try again.'
+          'Failed to upload homework files.'
       )
     } finally {
       setUploading(false)
     }
   }
 
+  /*
+   * ============================================================
+   * NORMAL FILE INPUT
+   * ============================================================
+   */
   const handleFiles = async (
     e
   ) => {
@@ -546,29 +426,34 @@ export default function HomeworkCard({
     await saveFiles(files)
   }
 
+  /*
+   * ============================================================
+   * PASTE IMAGES
+   * ============================================================
+   */
   useEffect(() => {
-    if (!open) return undefined
+    if (!open) {
+      return undefined
+    }
 
     const onPaste = (e) => {
-      if (taskAlreadySubmitted)
-        return
-
-      const images = Array.from(
-        e.clipboardData?.items ||
-          []
-      )
-        .filter(
-          (item) =>
-            item.kind ===
-              'file' &&
-            item.type.startsWith(
-              'image/'
-            )
+      const images =
+        Array.from(
+          e.clipboardData
+            ?.items || []
         )
-        .map((item) =>
-          item.getAsFile()
-        )
-        .filter(Boolean)
+          .filter(
+            (item) =>
+              item.kind ===
+                'file' &&
+              item.type.startsWith(
+                'image/'
+              )
+          )
+          .map((item) =>
+            item.getAsFile()
+          )
+          .filter(Boolean)
 
       if (images.length) {
         e.preventDefault()
@@ -594,17 +479,67 @@ export default function HomeworkCard({
     minFiles,
     allowedTypes,
     submission?.id,
-    taskAlreadySubmitted,
   ])
 
   /*
-   * =========================================================
-   * SPEAKING RECORDING
-   *
-   * Recording does NOT submit the task.
-   * =========================================================
+   * ============================================================
+   * NORMAL TASK SUBMIT
+   * ============================================================
    */
+  const handleTaskSubmit =
+    async () => {
+      setError('')
 
+      if (
+        existingCount <
+        minFiles
+      ) {
+        setError(
+          `Please upload at least ${minFiles} file${
+            minFiles === 1
+              ? ''
+              : 's'
+          } before submitting.`
+        )
+        return
+      }
+
+      if (
+        taskAlreadySubmitted
+      ) {
+        return
+      }
+
+      setUploading(true)
+
+      try {
+        await upsertSubmission({
+          status: 'done',
+          submitted_at:
+            new Date().toISOString(),
+        })
+      } catch (err) {
+        console.error(
+          'Homework submission error:',
+          err
+        )
+
+        setError(
+          err?.message ||
+            'Failed to submit homework.'
+        )
+      } finally {
+        setUploading(false)
+      }
+    }
+
+  /*
+   * ============================================================
+   * SPEAKING RECORDING
+   * ============================================================
+   *
+   * Recording a part DOES NOT submit the task.
+   */
   const handleAudio = async (
     blob,
     fieldKey,
@@ -620,15 +555,31 @@ export default function HomeworkCard({
           `${fileName}.webm`
         )
 
+      /*
+       * Update the local state FIRST so the button immediately
+       * knows this part exists.
+       */
+      setSpeakingParts(
+        (previous) => ({
+          ...previous,
+          [fieldKey]: url,
+        })
+      )
+
       await upsertSubmission({
         [fieldKey]: url,
         status: 'pending',
         submitted_at: null,
       })
     } catch (err) {
+      console.error(
+        'Speaking recording upload error:',
+        err
+      )
+
       setError(
         err?.message ||
-          'Could not upload the recording.'
+          'Failed to save speaking recording.'
       )
     } finally {
       setUploading(false)
@@ -636,9 +587,10 @@ export default function HomeworkCard({
   }
 
   /*
+   * ============================================================
    * SPEAKING MP3 / WAV UPLOAD
+   * ============================================================
    */
-
   const handleAudioUpload =
     async (
       file,
@@ -672,8 +624,19 @@ export default function HomeworkCard({
         const url =
           await uploadFile(
             file,
-            `${fileName}-${Date.now()}-${file.name}`
+            file.name ||
+              `${fileName}.mp3`
           )
+
+        /*
+         * Immediately update the button state.
+         */
+        setSpeakingParts(
+          (previous) => ({
+            ...previous,
+            [fieldKey]: url,
+          })
+        )
 
         await upsertSubmission({
           [fieldKey]: url,
@@ -681,9 +644,14 @@ export default function HomeworkCard({
           submitted_at: null,
         })
       } catch (err) {
+        console.error(
+          'Speaking MP3/WAV upload error:',
+          err
+        )
+
         setError(
           err?.message ||
-            'Could not upload the audio.'
+            'Failed to upload speaking audio.'
         )
       } finally {
         setUploading(false)
@@ -691,50 +659,74 @@ export default function HomeworkCard({
     }
 
   /*
+   * ============================================================
    * DELETE SPEAKING PART
+   * ============================================================
    */
-
   const handleAudioDelete =
-    async (fieldKey) => {
+    async (
+      fieldKey
+    ) => {
       setError('')
 
       try {
+        setSpeakingParts(
+          (previous) => ({
+            ...previous,
+            [fieldKey]: null,
+          })
+        )
+
         await upsertSubmission({
           [fieldKey]: null,
           status: 'pending',
           submitted_at: null,
         })
       } catch (err) {
+        console.error(
+          'Speaking part delete error:',
+          err
+        )
+
         setError(
           err?.message ||
-            'Could not delete the recording.'
+            'Failed to delete speaking part.'
         )
       }
     }
 
   /*
-   * SUBMIT SPEAKING TASK
+   * ============================================================
+   * SPEAKING SUBMIT
+   * ============================================================
+   *
+   * THIS is the final submission action.
    */
-
   const handleSpeakingSubmit =
     async () => {
       setError('')
 
-      const allPartsRecorded =
+      const allPartsReady =
         Boolean(
-          submission?.audio_part1_url
+          speakingParts.audio_part1_url
         ) &&
         Boolean(
-          submission?.audio_part2_url
+          speakingParts.audio_part2_url
         ) &&
         Boolean(
-          submission?.audio_part3_url
+          speakingParts.audio_part3_url
         )
 
-      if (!allPartsRecorded) {
+      if (!allPartsReady) {
         setError(
           'Please record or upload all three speaking parts before submitting.'
         )
+        return
+      }
+
+      if (
+        speakingAlreadySubmitted
+      ) {
         return
       }
 
@@ -742,14 +734,32 @@ export default function HomeworkCard({
 
       try {
         await upsertSubmission({
+          /*
+           * Explicitly preserve all three URLs.
+           */
+          audio_part1_url:
+            speakingParts.audio_part1_url,
+          audio_part2_url:
+            speakingParts.audio_part2_url,
+          audio_part3_url:
+            speakingParts.audio_part3_url,
+
+          /*
+           * Only NOW is the speaking task DONE.
+           */
           status: 'done',
           submitted_at:
             new Date().toISOString(),
         })
       } catch (err) {
+        console.error(
+          'Speaking task submission error:',
+          err
+        )
+
         setError(
           err?.message ||
-            'Could not submit the speaking task.'
+            'Failed to submit speaking task.'
         )
       } finally {
         setUploading(false)
@@ -757,47 +767,56 @@ export default function HomeworkCard({
     }
 
   /*
+   * ============================================================
    * DELETE SCREENSHOT
+   * ============================================================
    */
-
   const handleScreenshotDelete =
-    async (urlToRemove) => {
+    async (
+      urlToRemove
+    ) => {
       setError('')
 
       try {
         const remaining =
           existingImages.filter(
-            (u) =>
-              u !== urlToRemove
+            (url) =>
+              url !==
+              urlToRemove
           )
 
         await upsertSubmission({
           screenshot_urls:
             remaining,
           status: 'pending',
-          submitted_at: null,
+          submitted_at:
+            submission?.submitted_at ||
+            null,
         })
       } catch (err) {
         setError(
           err?.message ||
-            'Could not delete the image.'
+            'Failed to delete image.'
         )
       }
     }
 
   /*
-   * DELETE FILE
+   * ============================================================
+   * DELETE NORMAL FILE
+   * ============================================================
    */
-
   const handleFileDelete =
-    async (fileToRemove) => {
+    async (
+      fileToRemove
+    ) => {
       setError('')
 
       try {
         const remaining =
           existingFiles.filter(
-            (f) =>
-              f.url !==
+            (file) =>
+              file.url !==
               fileToRemove.url
           )
 
@@ -805,113 +824,82 @@ export default function HomeworkCard({
           submission_files:
             remaining,
           status: 'pending',
-          submitted_at: null,
+          submitted_at:
+            submission?.submitted_at ||
+            null,
         })
       } catch (err) {
         setError(
           err?.message ||
-            'Could not delete the file.'
+            'Failed to delete file.'
         )
       }
     }
 
   /*
-   * =========================================================
-   * SUBMIT NORMAL HOMEWORK
-   *
-   * This is the explicit Submit button.
-   * =========================================================
+   * ============================================================
+   * SAVE COMMENT
+   * ============================================================
    */
-
-  const handleTaskSubmit =
+  const saveComment =
     async () => {
+      setSavingComment(true)
       setError('')
-
-      if (
-        existingCount <
-        minFiles
-      ) {
-        setError(
-          `Please upload at least ${minFiles} file${
-            minFiles === 1
-              ? ''
-              : 's'
-          } before submitting.`
-        )
-        return
-      }
-
-      if (taskAlreadySubmitted) {
-        return
-      }
-
-      setUploading(true)
 
       try {
         await upsertSubmission({
-          status: 'done',
-          submitted_at:
-            new Date().toISOString(),
+          comment,
         })
       } catch (err) {
         setError(
           err?.message ||
-            'Could not submit the homework.'
+            'Failed to save comment.'
         )
       } finally {
-        setUploading(false)
+        setSavingComment(false)
       }
     }
-
-  /*
-   * SAVE COMMENT
-   */
-
-  const saveComment = async () => {
-    setSavingComment(true)
-    setError('')
-
-    try {
-      await upsertSubmission({
-        comment,
-      })
-    } catch (err) {
-      setError(
-        err?.message ||
-          'Could not save your comment.'
-      )
-    } finally {
-      setSavingComment(false)
-    }
-  }
 
   const dueLabel =
     homework.due_date
       ? new Date(
           homework.due_date
-        ).toLocaleString([], {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        })
+        ).toLocaleString(
+          [],
+          {
+            dateStyle:
+              'medium',
+            timeStyle:
+              'short',
+          }
+        )
       : null
 
   const accept =
-    buildAccept(allowedTypes)
+    buildAccept(
+      allowedTypes
+    )
 
+  /*
+   * Use LOCAL speaking state here.
+   *
+   * This is the important fix.
+   */
   const allSpeakingPartsRecorded =
     Boolean(
-      submission?.audio_part1_url
+      speakingParts.audio_part1_url
     ) &&
     Boolean(
-      submission?.audio_part2_url
+      speakingParts.audio_part2_url
     ) &&
     Boolean(
-      submission?.audio_part3_url
+      speakingParts.audio_part3_url
     )
 
   const speakingAlreadySubmitted =
     homework.enable_speaking &&
-    submission?.status === 'done' &&
+    submission?.status ===
+      'done' &&
     Boolean(
       submission?.submitted_at
     )
@@ -936,7 +924,6 @@ export default function HomeworkCard({
           </div>
 
           <div className="text-mist text-xs font-mono mt-1 flex flex-wrap gap-x-3">
-
             <span>
               posted{' '}
               {new Date(
@@ -956,25 +943,32 @@ export default function HomeworkCard({
                 due {dueLabel}
               </span>
             )}
-
           </div>
         </div>
 
-        <StampBadge status={status} />
+        <StampBadge
+          status={status}
+        />
       </button>
 
       {open && (
         <div className="border-t border-line p-4 flex flex-col gap-4">
 
-          {/* DESCRIPTION */}
+          {/* =================================================
+              DESCRIPTION
+          ================================================= */}
 
           {homework.description && (
             <p className="text-sm text-paper-dim whitespace-pre-wrap">
-              {homework.description}
+              {
+                homework.description
+              }
             </p>
           )}
 
-          {/* TEACHER ATTACHMENT */}
+          {/* =================================================
+              TEACHER ATTACHMENT
+          ================================================= */}
 
           {homework.attachment_url && (
             <a
@@ -991,7 +985,9 @@ export default function HomeworkCard({
             </a>
           )}
 
-          {/* FILES / PICTURES */}
+          {/* =================================================
+              NORMAL FILES
+          ================================================= */}
 
           <div className="rounded-lg border border-line bg-panel-2 p-3">
 
@@ -1003,20 +999,15 @@ export default function HomeworkCard({
                 </label>
 
                 <p className="text-xs text-mist mt-1">
-
-                  {minFiles === 0
+                  {minFiles ===
+                  0
                     ? 'Optional'
-                    : `Minimum ${minFiles}`}
-
-                  {' · '}
-
-                  Maximum {maxFiles}
-
-                  {' · '}
-
+                    : `Minimum ${minFiles}`}{' '}
+                  · Maximum{' '}
+                  {maxFiles} ·{' '}
                   {existingCount}/
-                  {maxFiles} uploaded
-
+                  {maxFiles}{' '}
+                  uploaded
                 </p>
               </div>
 
@@ -1025,15 +1016,20 @@ export default function HomeworkCard({
                   ', '
                 )}
               </span>
-
             </div>
 
             <input
-              ref={fileInputRef}
+              ref={
+                fileInputRef
+              }
               type="file"
-              accept={accept}
+              accept={
+                accept
+              }
               multiple
-              onChange={handleFiles}
+              onChange={
+                handleFiles
+              }
               className="focus-ring block mt-3 text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
               disabled={
                 uploading ||
@@ -1044,7 +1040,9 @@ export default function HomeworkCard({
             />
 
             <p className="text-xs text-mist mt-2">
-              You can also copy an image and paste it here
+              You can also
+              copy an image
+              and paste it here
               (Ctrl/Cmd + V).
             </p>
 
@@ -1053,23 +1051,29 @@ export default function HomeworkCard({
             {existingImages.length >
               0 && (
               <div className="flex flex-wrap gap-2 mt-3">
-
                 {existingImages.map(
-                  (url, i) => (
+                  (
+                    url,
+                    i
+                  ) => (
                     <div
                       key={url}
                       className="relative group"
                     >
-
                       <a
-                        href={url}
+                        href={
+                          url
+                        }
                         target="_blank"
                         rel="noreferrer"
                       >
                         <img
-                          src={url}
+                          src={
+                            url
+                          }
                           alt={`submission ${
-                            i + 1
+                            i +
+                            1
                           }`}
                           className="w-20 h-20 object-cover rounded-md border border-line"
                         />
@@ -1089,11 +1093,9 @@ export default function HomeworkCard({
                       >
                         ×
                       </button>
-
                     </div>
                   )
                 )}
-
               </div>
             )}
 
@@ -1102,21 +1104,28 @@ export default function HomeworkCard({
             {existingFiles.length >
               0 && (
               <div className="mt-3 grid sm:grid-cols-2 gap-2">
-
                 {existingFiles.map(
-                  (file) => (
+                  (
+                    file
+                  ) => (
                     <div
-                      key={file.url}
+                      key={
+                        file.url
+                      }
                       className="flex items-center gap-2 bg-panel border border-line rounded-md px-3 py-2"
                     >
-
                       <a
-                        href={file.url}
+                        href={
+                          file.url
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-brass hover:underline truncate"
                       >
-                        📎 {file.name}
+                        📎{' '}
+                        {
+                          file.name
+                        }
                       </a>
 
                       <button
@@ -1133,17 +1142,16 @@ export default function HomeworkCard({
                       >
                         ×
                       </button>
-
                     </div>
                   )
                 )}
-
               </div>
             )}
-
           </div>
 
-          {/* NORMAL TASK SUBMIT */}
+          {/* =================================================
+              NORMAL TASK SUBMIT BUTTON
+          ================================================= */}
 
           {!homework.enable_speaking && (
             <div className="rounded-lg border border-line bg-panel-2 p-4">
@@ -1156,18 +1164,17 @@ export default function HomeworkCard({
                   </div>
 
                   <p className="text-xs text-mist mt-1">
-
                     {taskAlreadySubmitted
                       ? 'Your homework has been submitted to your teacher.'
-                      : minFiles > 0
-                        ? `Upload at least ${minFiles} file${
-                            minFiles ===
-                            1
-                              ? ''
-                              : 's'
-                          }, then click Submit Task.`
-                        : 'Complete your work, then click Submit Task.'}
-
+                      : minFiles >
+                        0
+                      ? `Upload at least ${minFiles} file${
+                          minFiles ===
+                          1
+                            ? ''
+                            : 's'
+                        }, then click Submit Task.`
+                      : 'Complete your work, then click Submit Task.'}
                   </p>
                 </div>
 
@@ -1187,12 +1194,12 @@ export default function HomeworkCard({
                   {taskAlreadySubmitted
                     ? '✓ Task Submitted'
                     : existingCount <
-                        minFiles
-                      ? `Upload ${
-                          minFiles -
-                          existingCount
-                        } more`
-                      : 'Submit Task'}
+                      minFiles
+                    ? `Upload ${
+                        minFiles -
+                        existingCount
+                      } more`
+                    : 'Submit Task'}
                 </button>
 
               </div>
@@ -1208,8 +1215,8 @@ export default function HomeworkCard({
                   minFiles ? (
                   <span className="text-brass">
                     ✓ Your work is ready.
-                    Click Submit Task when
-                    you are finished.
+                    Click Submit Task
+                    when you are finished.
                   </span>
                 ) : (
                   <span className="text-mist">
@@ -1223,7 +1230,9 @@ export default function HomeworkCard({
             </div>
           )}
 
-          {/* SPEAKING */}
+          {/* =================================================
+              SPEAKING
+          ================================================= */}
 
           {homework.enable_speaking && (
             <div className="flex flex-col gap-4">
@@ -1231,12 +1240,19 @@ export default function HomeworkCard({
               <div className="grid sm:grid-cols-3 gap-3">
 
                 {PARTS.map(
-                  (p, idx) => (
+                  (
+                    p,
+                    idx
+                  ) => (
                     <AudioRecorder
-                      key={p.key}
-                      label={p.label}
+                      key={
+                        p.key
+                      }
+                      label={
+                        p.label
+                      }
                       existingUrl={
-                        submission?.[
+                        speakingParts[
                           p.key
                         ]
                       }
@@ -1244,22 +1260,28 @@ export default function HomeworkCard({
                         uploading
                       }
 
-                      onSaved={(blob) =>
+                      onSaved={(
+                        blob
+                      ) =>
                         handleAudio(
                           blob,
                           p.key,
                           `part${
-                            idx + 1
+                            idx +
+                            1
                           }`
                         )
                       }
 
-                      onUpload={(file) =>
+                      onUpload={(
+                        file
+                      ) =>
                         handleAudioUpload(
                           file,
                           p.key,
                           `part${
-                            idx + 1
+                            idx +
+                            1
                           }`
                         )
                       }
@@ -1275,7 +1297,9 @@ export default function HomeworkCard({
 
               </div>
 
-              {/* SPEAKING SUBMIT */}
+              {/* =================================================
+                  SPEAKING SUBMIT BUTTON
+              ================================================= */}
 
               <div className="rounded-lg border border-line bg-panel-2 p-4">
 
@@ -1308,8 +1332,8 @@ export default function HomeworkCard({
                     {speakingAlreadySubmitted
                       ? '✓ Speaking Task Submitted'
                       : allSpeakingPartsRecorded
-                        ? 'Submit Speaking Task'
-                        : 'Complete All 3 Parts'}
+                      ? 'Submit Speaking Task'
+                      : 'Complete All 3 Parts'}
                   </button>
 
                 </div>
@@ -1318,9 +1342,9 @@ export default function HomeworkCard({
 
                   {speakingAlreadySubmitted ? (
                     <span className="text-brass">
-                      ✓ Your speaking task has
-                      been submitted to your
-                      teacher.
+                      ✓ Your speaking task
+                      has been submitted
+                      to your teacher.
                     </span>
                   ) : allSpeakingPartsRecorded ? (
                     <span className="text-brass">
@@ -1330,8 +1354,8 @@ export default function HomeworkCard({
                     </span>
                   ) : (
                     <span className="text-mist">
-                      Complete Parts 1, 2, and 3
-                      before submitting.
+                      Complete Parts 1, 2,
+                      and 3 before submitting.
                     </span>
                   )}
 
@@ -1342,32 +1366,41 @@ export default function HomeworkCard({
             </div>
           )}
 
-          {/* COMMENT */}
+          {/* =================================================
+              COMMENT
+          ================================================= */}
 
           <div>
-
             <label className="text-xs uppercase tracking-wide text-mist font-mono">
               Comment for your teacher
               (optional)
             </label>
 
             <textarea
-              value={comment}
-              onChange={(e) =>
-                setComment(e.target.value)
+              value={
+                comment
               }
-              onBlur={saveComment}
+              onChange={(e) =>
+                setComment(
+                  e.target.value
+                )
+              }
+              onBlur={
+                saveComment
+              }
               rows={3}
-              placeholder="Anything you want to mention about this homework…"
+              placeholder="Anything you want to mention about this homework..."
               className="focus-ring w-full mt-2 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+              disabled={
+                uploading
+              }
             />
 
             {savingComment && (
               <p className="text-mist text-xs font-mono mt-1">
-                saving…
+                saving...
               </p>
             )}
-
           </div>
 
           {/* ERROR */}
@@ -1380,7 +1413,6 @@ export default function HomeworkCard({
 
         </div>
       )}
-
     </div>
   )
 }
