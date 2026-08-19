@@ -275,28 +275,38 @@ export default function AccountSettingsModal({ onClose }) {
   }
 
   const deleteAccount = async () => {
-    setDeleteError('')
-    setDeleting(true)
+  setDeleteError('')
+  setDeleting(true)
 
-    try {
-      const {
-        error,
-      } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', profile.id)
+  try {
+    const { error } = await supabase.rpc(
+      'delete_my_account'
+    )
 
-      if (error) {
-        throw error
-      }
-
-      await signOut()
-      onClose()
-    } catch (err) {
-      setDeleteError(err.message)
-      setDeleting(false)
+    if (error) {
+      throw error
     }
+
+    await signOut()
+
+    onClose()
+
+    window.location.href = '/login'
+
+  } catch (err) {
+    console.error(
+      'Account deletion failed:',
+      err
+    )
+
+    setDeleteError(
+      err?.message ||
+      'Failed to delete account.'
+    )
+
+    setDeleting(false)
   }
+}
 
   return (
     <div

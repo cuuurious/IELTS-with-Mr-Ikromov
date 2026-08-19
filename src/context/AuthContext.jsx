@@ -143,47 +143,65 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const signIn = async ({
-    username,
-    password,
-  }) => {
-    const {
-      data: emailData,
-      error: lookupError,
-    } = await supabase.rpc(
-      'auth_email_for_username',
-      {
-        p_username: username,
-      }
-    )
+const signIn = async ({
+  username,
+  password,
+}) => {
 
-    if (lookupError) {
-      throw lookupError
+  const {
+    data: emailData,
+    error: lookupError,
+  } = await supabase.rpc(
+    'auth_email_for_username',
+    {
+      p_username:
+        username
+          .trim()
+          .toLowerCase(),
     }
+  )
 
-    const email =
-      emailData ||
-      usernameToEmail(username)
 
-    const {
-      data,
-      error,
-    } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-    if (error) {
-      throw error
-    }
-
-    await loadProfile(
-      data.user.id
-    )
-
-    return data
+  if (lookupError) {
+    throw lookupError
   }
+
+
+  const email =
+    typeof emailData === 'string'
+      ? emailData
+      : emailData?.email
+
+
+  if (!email) {
+    throw new Error(
+      'Account email not found. Please contact your teacher.'
+    )
+  }
+
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+
+  if (error) {
+    throw error
+  }
+
+
+  await loadProfile(
+    data.user.id
+  )
+
+
+  return data
+}
 
   /*
    * Password recovery uses the REAL recovery email.
