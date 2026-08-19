@@ -8,76 +8,16 @@ export default function Leaderboard({
 }) {
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
-
   const [selectedStudent, setSelectedStudent] = useState(null)
-
   const [dailyProgress, setDailyProgress] = useState([])
   const [loadingDaily, setLoadingDaily] = useState(false)
   const [dailyError, setDailyError] = useState('')
-
   const [manageStudent, setManageStudent] = useState(null)
   const [groups, setGroups] = useState([])
   const [memberGroupIds, setMemberGroupIds] = useState([])
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [savingGroup, setSavingGroup] = useState('')
   const [groupError, setGroupError] = useState('')
-
-  /*
-   * ----------------------------------------------------
-   * LOAD LEADERBOARD
-   * ----------------------------------------------------
-   */
-
-  const loadLeaderboard = async () => {
-    if (!groupId) return
-
-    const rpcName =
-      groupId === 'all'
-        ? 'all_students_leaderboard'
-        : 'group_leaderboard'
-
-    const params =
-      groupId === 'all'
-        ? {}
-        : {
-            p_group_id: groupId,
-          }
-
-    const { data, error } =
-      await supabase.rpc(
-        rpcName,
-        params
-      )
-
-    if (error) {
-      console.error(
-        'Leaderboard error:',
-        error
-      )
-
-      setError(error.message)
-      return
-    }
-
-    setRows(data || [])
-  }
-
-  useEffect(() => {
-    if (!groupId) return
-
-    setRows(null)
-    setError('')
-    setSelectedStudent(null)
-    setDailyProgress([])
-
-    loadLeaderboard()
-  }, [groupId])
-
-  /*
-   * ----------------------------------------------------
-   * DATE HELPERS
-   * ----------------------------------------------------
-   */
 
   const getDateKey = (value) => {
     if (!value) return null
@@ -98,9 +38,7 @@ export default function Leaderboard({
   const dateFromKey = (key) => {
     if (!key) return null
 
-    const date = new Date(
-      `${key}T00:00:00`
-    )
+    const date = new Date(`${key}T00:00:00`)
 
     return Number.isNaN(date.getTime())
       ? null
@@ -112,90 +50,57 @@ export default function Leaderboard({
 
     if (!date) return key
 
-    return date.toLocaleDateString(
-      [],
-      {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }
-    )
+    return date.toLocaleDateString([], {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
   }
 
   /*
-   * ----------------------------------------------------
-   * CALCULATE STREAK FROM REAL SUBMISSION HISTORY
-   * ----------------------------------------------------
+   * A student's historical completion is taken from
+   * homework_completions, NOT from the current submissions row.
    *
-   * We do NOT trust the RPC streak here.
-   *
-   * A day counts when the student submitted at least
-   * one homework task on that day.
-   *
-   * Today counts if there is a submission today.
-   * Otherwise the streak starts from yesterday.
+   * This means resetting homework does not erase history.
    */
+  const calculateStreak = (days, now = new Date()) => {
+    if (!days?.length) return 0
 
-  const calculateStreak = (days) => {
-    if (!days?.length) {
-      return 0
-    }
-
-    const completedDates = new Set(
+    const activeDates = new Set(
       days
-        .filter(
-          (day) =>
-            day.completed > 0
-        )
-        .map(
-          (day) => day.date
-        )
+        .filter((day) => day.completed > 0)
+        .map((day) => day.date)
     )
 
-    if (!completedDates.size) {
-      return 0
-    }
+    if (!activeDates.size) return 0
 
-    const today = new Date()
+    const today = new Date(now)
+    today.setHours(0, 0, 0, 0)
 
-    today.setHours(
-      0,
-      0,
-      0,
-      0
+    const todayKey = getDateKey(today)
+
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayKey = getDateKey(yesterday)
+
+    const todayDay = days.find(
+      (day) => day.date === todayKey
     )
-
-    const todayKey =
-      getDateKey(today)
-
-    const yesterday =
-      new Date(today)
-
-    yesterday.setDate(
-      yesterday.getDate() - 1
-    )
-
-    const yesterdayKey =
-      getDateKey(yesterday)
 
     /*
-     * If neither today nor yesterday has work,
-     * the active streak is zero.
+     * Today's unfinished work does NOT break the streak while
+     * the latest deadline for today's assigned work is still open.
      */
-    let currentDate
+    const deadlinePassed = todayDay?.latestDueDate
+      ? new Date(todayDay.latestDueDate) <= now
+      : false
 
-    if (
-      completedDates.has(
-        todayKey
-      )
-    ) {
+    let currentDate = null
+
+    if (activeDates.has(todayKey)) {
       currentDate = today
-    } else if (
-      completedDates.has(
-        yesterdayKey
-      )
-    ) {
+    } else if (activeDates.has(yesterdayKey) && !deadlinePassed) {
       currentDate = yesterday
     } else {
       return 0
@@ -204,78 +109,240 @@ export default function Leaderboard({
     let streak = 0
 
     while (true) {
-      const key =
-        getDateKey(
-          currentDate
-        )
+      const key = getDateKey(currentDate)
 
-      if (
-        !completedDates.has(key)
-      ) {
-        break
-      }
+      if (!activeDates.has(key)) break
 
       streak += 1
 
-      currentDate =
-        new Date(
-          currentDate
-        )
-
-      currentDate.setDate(
-        currentDate.getDate() - 1
-      )
+      const previous = new Date(currentDate)
+      previous.setDate(previous.getDate() - 1)
+      currentDate = previous
     }
 
     return streak
   }
 
-  /*
-   * ----------------------------------------------------
-   * LOAD COMPLETE DAILY HISTORY
-   * ----------------------------------------------------
-   *
-   * IMPORTANT:
-   * We load BOTH:
-   *
-   * 1. homeworks assigned to the group
-   * 2. student's submissions
-   *
-   * This means previous days remain visible even when
-   * the student submitted nothing on that day.
-   */
+  const loadLeaderboard = async () => {
+    if (!groupId) return
 
-  const loadDailyProgress = async (
-    student
-  ) => {
-    if (
-      !student?.student_id ||
-      !groupId
-    ) {
+    setError('')
+
+    const rpcName =
+      groupId === 'all'
+        ? 'all_students_leaderboard'
+        : 'group_leaderboard'
+
+    const params =
+      groupId === 'all'
+        ? {}
+        : {
+            p_group_id: groupId,
+          }
+
+    const {
+      data,
+      error: rpcError,
+    } = await supabase.rpc(
+      rpcName,
+      params
+    )
+
+    if (rpcError) {
+      console.error(
+        'Leaderboard error:',
+        rpcError
+      )
+
+      setError(rpcError.message)
       return
     }
+
+    const initialRows = data || []
+
+    /*
+     * Get permanent completion timestamps so students with equal
+     * progress are ranked by completion timing instead of surname.
+     */
+    let completionQuery = supabase
+      .from('homework_completions')
+      .select(
+        'student_id, homework_id, completed_at'
+      )
+
+    if (groupId !== 'all') {
+      const {
+        data: groupHomework,
+      } = await supabase
+        .from('homeworks')
+        .select('id')
+        .eq(
+          'group_id',
+          groupId
+        )
+
+      const homeworkIds =
+        (groupHomework || []).map(
+          (homework) => homework.id
+        )
+
+      if (homeworkIds.length === 0) {
+        completionQuery = null
+      } else {
+        completionQuery =
+          completionQuery.in(
+            'homework_id',
+            homeworkIds
+          )
+      }
+    }
+
+    let completions = []
+
+    if (completionQuery) {
+      const {
+        data: completionData,
+        error: completionError,
+      } = await completionQuery
+
+      if (!completionError) {
+        completions =
+          completionData || []
+      }
+    }
+
+    const completionTimes = new Map()
+
+    completions.forEach(
+      (completion) => {
+        if (
+          !completion.student_id ||
+          !completion.completed_at
+        ) {
+          return
+        }
+
+        const time = new Date(
+          completion.completed_at
+        ).getTime()
+
+        const previous =
+          completionTimes.get(
+            completion.student_id
+          )
+
+        if (
+          !previous ||
+          time < previous
+        ) {
+          completionTimes.set(
+            completion.student_id,
+            time
+          )
+        }
+      }
+    )
+
+    const sortedRows =
+      [...initialRows].sort(
+        (a, b) => {
+          const completedA =
+            Number(a.completed) || 0
+
+          const completedB =
+            Number(b.completed) || 0
+
+          if (
+            completedA !==
+            completedB
+          ) {
+            return completedB - completedA
+          }
+
+          const percentageA =
+            Number(a.percentage) || 0
+
+          const percentageB =
+            Number(b.percentage) || 0
+
+          if (
+            percentageA !==
+            percentageB
+          ) {
+            return percentageB - percentageA
+          }
+
+          const timeA =
+            completionTimes.get(
+              a.student_id
+            ) ??
+            Number.MAX_SAFE_INTEGER
+
+          const timeB =
+            completionTimes.get(
+              b.student_id
+            ) ??
+            Number.MAX_SAFE_INTEGER
+
+          if (
+            timeA !==
+            timeB
+          ) {
+            return timeA - timeB
+          }
+
+          return String(
+            a.full_name || ''
+          ).localeCompare(
+            String(
+              b.full_name || ''
+            )
+          )
+        }
+      )
+
+    setRows(
+      sortedRows.map(
+        (row, index) => ({
+          ...row,
+          rank: index + 1,
+        })
+      )
+    )
+  }
+
+  useEffect(() => {
+    if (!groupId) return
+
+    setRows(null)
+    setError('')
+    setSelectedStudent(null)
+    setDailyProgress([])
+    setDailyError('')
+
+    loadLeaderboard()
+  }, [groupId])
+
+  /*
+   * COMPLETE STUDENT HISTORY
+   */
+  const loadDailyProgress = async (student) => {
+    if (!student?.student_id || !groupId) return null
 
     setLoadingDaily(true)
     setDailyError('')
     setDailyProgress([])
 
     try {
-      /*
-       * ------------------------------------------------
-       * LOAD HOMEWORKS
-       * ------------------------------------------------
-       */
-
-      let homeworkQuery =
-        supabase
-          .from('homeworks')
-          .select(`
-            id,
-            title,
-            created_at,
-            due_date,
-            group_id
-          `)
+      let homeworkQuery = supabase
+        .from('homeworks')
+        .select(`
+          id,
+          title,
+          created_at,
+          due_date,
+          group_id
+        `)
 
       if (groupId !== 'all') {
         homeworkQuery =
@@ -291,35 +358,24 @@ export default function Leaderboard({
       } =
         await homeworkQuery.order(
           'created_at',
-          {
-            ascending: false,
-          }
+          { ascending: false }
         )
 
-      if (homeworkError) {
-        throw homeworkError
-      }
+      if (homeworkError) throw homeworkError
 
-      /*
-       * ------------------------------------------------
-       * LOAD STUDENT SUBMISSIONS
-       * ------------------------------------------------
-       */
-
-      let submissionQuery =
-        supabase
-          .from('submissions')
-          .select(`
-            id,
-            homework_id,
-            status,
-            submitted_at,
-            group_id
-          `)
-          .eq(
-            'student_id',
-            student.student_id
-          )
+      let submissionQuery = supabase
+        .from('submissions')
+        .select(`
+          id,
+          homework_id,
+          status,
+          submitted_at,
+          group_id
+        `)
+        .eq(
+          'student_id',
+          student.student_id
+        )
 
       if (groupId !== 'all') {
         submissionQuery =
@@ -335,24 +391,42 @@ export default function Leaderboard({
       } =
         await submissionQuery.order(
           'submitted_at',
-          {
-            ascending: false,
-          }
+          { ascending: false }
         )
 
-      if (submissionError) {
-        throw submissionError
-      }
+      if (submissionError) throw submissionError
 
-      const submissionByHomework =
-        new Map()
+      const {
+        data: historicalCompletions,
+        error: completionError,
+      } =
+        await supabase
+          .from('homework_completions')
+          .select(`
+            homework_id,
+            completed_at,
+            group_id
+          `)
+          .eq(
+            'student_id',
+            student.student_id
+          )
+
+      if (completionError) throw completionError
+
+      const homeworkById = new Map(
+        (homeworks || []).map(
+          (homework) => [
+            homework.id,
+            homework,
+          ]
+        )
+      )
+
+      const submissionByHomework = new Map()
 
       ;(submissions || []).forEach(
         (submission) => {
-          /*
-           * Keep the latest submission
-           * for each homework.
-           */
           const existing =
             submissionByHomework.get(
               submission.homework_id
@@ -361,12 +435,10 @@ export default function Leaderboard({
           if (
             !existing ||
             new Date(
-              submission.submitted_at ||
-                0
+              submission.submitted_at || 0
             ) >
               new Date(
-                existing.submitted_at ||
-                  0
+                existing.submitted_at || 0
               )
           ) {
             submissionByHomework.set(
@@ -377,109 +449,177 @@ export default function Leaderboard({
         }
       )
 
-      /*
-       * ------------------------------------------------
-       * GROUP HOMEWORK BY ASSIGNMENT DATE
-       * ------------------------------------------------
-       *
-       * We use created_at as the homework day.
-       *
-       * If due_date exists, it is displayed as extra
-       * information but does not move the homework
-       * into another day.
-       */
+      const completionByHomework = new Map()
 
-      const grouped = {}
-
-      ;(homeworks || []).forEach(
-        (homework) => {
-          const dateKey =
-            getDateKey(
-              homework.created_at
+      ;(historicalCompletions || []).forEach(
+        (completion) => {
+          if (
+            !homeworkById.has(
+              completion.homework_id
             )
-
-          if (!dateKey) {
+          ) {
             return
           }
 
-          if (!grouped[dateKey]) {
-            grouped[dateKey] = {
-              date: dateKey,
-              tasks: [],
-              completed: 0,
-              total: 0,
-            }
-          }
+          const existing =
+            completionByHomework.get(
+              completion.homework_id
+            )
 
+          if (
+            !existing ||
+            new Date(
+              completion.completed_at
+            ) <
+              new Date(
+                existing.completed_at
+              )
+          ) {
+            completionByHomework.set(
+              completion.homework_id,
+              completion
+            )
+          }
+        }
+      )
+
+      const grouped = {}
+
+      const ensureDay = (dateKey) => {
+        if (!dateKey) return null
+
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = {
+            date: dateKey,
+            tasks: [],
+            completed: 0,
+            total: 0,
+            latestDueDate: null,
+          }
+        }
+
+        return grouped[dateKey]
+      }
+
+      /*
+       * Completed/submitted work belongs to the ACTUAL day it was
+       * completed. This is the important distinction from created_at.
+       *
+       * Unsubmitted work is shown on its deadline day so it remains
+       * visible even when the student has done nothing yet.
+       */
+      ;(homeworks || []).forEach(
+        (homework) => {
           const submission =
             submissionByHomework.get(
               homework.id
             )
 
-          const submitted =
-            Boolean(
-              submission?.submitted_at
+          const historicalCompletion =
+            completionByHomework.get(
+              homework.id
             )
 
-          const status =
-            submission?.status ||
-            'not_submitted'
+          const currentlySubmitted =
+            Boolean(
+              submission?.submitted_at ||
+              submission?.status === 'done' ||
+              submission?.status === 'submitted'
+            )
 
           const completed =
-            submitted ||
-            status === 'done' ||
-            status === 'submitted'
+            Boolean(
+              historicalCompletion
+            ) ||
+            currentlySubmitted
 
-          if (completed) {
-            grouped[dateKey].completed +=
-              1
+          const activityDate =
+            historicalCompletion?.completed_at ||
+            submission?.submitted_at ||
+            null
+
+          const dateKey = getDateKey(
+            activityDate ||
+              homework.due_date ||
+              homework.created_at
+          )
+
+          const day = ensureDay(
+            dateKey
+          )
+
+          if (!day) return
+
+          if (homework.due_date) {
+            if (
+              !day.latestDueDate ||
+              new Date(
+                homework.due_date
+              ) >
+                new Date(
+                  day.latestDueDate
+                )
+            ) {
+              day.latestDueDate =
+                homework.due_date
+            }
           }
 
-          grouped[dateKey].total += 1
+          day.total += 1
 
-          grouped[dateKey].tasks.push({
+          if (completed) {
+            day.completed += 1
+          }
+
+          day.tasks.push({
             id: homework.id,
             title:
               homework.title ||
               'Homework',
-            status,
+            status:
+              submission?.status ||
+              'not_submitted',
             completed,
             submittedAt:
               submission?.submitted_at ||
+              historicalCompletion?.completed_at ||
               null,
             dueDate:
               homework.due_date ||
               null,
+            historicallyCompleted:
+              Boolean(
+                historicalCompletion
+              ),
+            currentlySubmitted,
           })
         }
       )
 
       /*
-       * Sort tasks inside every day.
+       * A homework completed early should not create a duplicate
+       * pending copy on its deadline day. Unsubmitted work stays on
+       * its deadline/created day.
        */
-      Object.values(
-        grouped
-      ).forEach((day) => {
-        day.tasks.sort(
-          (a, b) =>
-            a.title.localeCompare(
-              b.title
-            )
-        )
-      })
+      Object.values(grouped).forEach(
+        (day) => {
+          day.tasks.sort(
+            (a, b) =>
+              a.title.localeCompare(
+                b.title
+              )
+          )
+        }
+      )
 
       const days =
-        Object.values(
-          grouped
-        ).sort((a, b) =>
-          b.date.localeCompare(
-            a.date
-          )
+        Object.values(grouped).sort(
+          (a, b) =>
+            b.date.localeCompare(
+              a.date
+            )
         )
 
-      /*
-       * Calculate streak from the ACTUAL history.
-       */
       const streak =
         calculateStreak(days)
 
@@ -497,10 +637,6 @@ export default function Leaderboard({
         }))
       )
 
-      /*
-       * Return calculated streak so the selected
-       * student can display the real value.
-       */
       return streak
     } catch (err) {
       console.error(
@@ -521,50 +657,19 @@ export default function Leaderboard({
     }
   }
 
-  /*
-   * ----------------------------------------------------
-   * SELECT STUDENT
-   * ----------------------------------------------------
-   */
-
   const selectStudent = async (
     student
   ) => {
-    /*
-     * Keep the rank permanently attached to
-     * the selected student.
-     */
-    const index =
-      (rows || []).findIndex(
-        (row) =>
-          row.student_id ===
-          student.student_id
-      )
-
-    const selectedWithRank = {
+    setSelectedStudent({
       ...student,
-      rank:
-        index >= 0
-          ? index + 1
-          : null,
-    }
-
-    setSelectedStudent(
-      selectedWithRank
-    )
+    })
 
     const streak =
       await loadDailyProgress(
-        selectedWithRank
+        student
       )
 
-    /*
-     * Update the selected profile with the
-     * freshly calculated streak.
-     */
-    if (
-      streak !== null
-    ) {
+    if (streak !== null) {
       setSelectedStudent(
         (previous) =>
           previous
@@ -577,23 +682,12 @@ export default function Leaderboard({
     }
   }
 
-  /*
-   * ----------------------------------------------------
-   * CHAT WITH STUDENT
-   * ----------------------------------------------------
-   */
-
   const handleChat = (
     student
   ) => {
     if (
       !student?.student_id
     ) {
-      console.error(
-        'No student ID available:',
-        student
-      )
-
       return
     }
 
@@ -616,12 +710,6 @@ export default function Leaderboard({
       )
     )
   }
-
-  /*
-   * ----------------------------------------------------
-   * OPEN MANAGE GROUPS
-   * ----------------------------------------------------
-   */
 
   const openManageGroups =
     async (
@@ -708,12 +796,6 @@ export default function Leaderboard({
       setGroupError('')
       setSavingGroup('')
     }
-
-  /*
-   * ----------------------------------------------------
-   * ADD / REMOVE GROUP MEMBERSHIP
-   * ----------------------------------------------------
-   */
 
   const toggleGroupMembership =
     async (
@@ -824,12 +906,6 @@ export default function Leaderboard({
       }
     }
 
-  /*
-   * ----------------------------------------------------
-   * DERIVED VALUES
-   * ----------------------------------------------------
-   */
-
   const selectedStreak =
     useMemo(() => {
       if (
@@ -845,11 +921,12 @@ export default function Leaderboard({
       dailyProgress,
     ])
 
-  /*
-   * ----------------------------------------------------
-   * EARLY STATES
-   * ----------------------------------------------------
-   */
+  const closeStudentProfile =
+    () => {
+      setSelectedStudent(null)
+      setDailyProgress([])
+      setDailyError('')
+    }
 
   if (error) {
     return (
@@ -862,7 +939,7 @@ export default function Leaderboard({
   if (rows === null) {
     return (
       <p className="text-mist text-sm">
-        Loading…
+        Loading...
       </p>
     )
   }
@@ -892,23 +969,13 @@ export default function Leaderboard({
       return 'bg-panel-2 text-mist border-line'
     }
 
-  /*
-   * ----------------------------------------------------
-   * MAIN UI
-   * ----------------------------------------------------
-   */
-
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ---------------------------------------------
-          LEADERBOARD
-         --------------------------------------------- */}
-
       {rows.map(
-        (r, i) => {
+        (r) => {
           const rank =
-            i + 1
+            r.rank
 
           return (
             <button
@@ -926,7 +993,6 @@ export default function Leaderboard({
                   : ''
               }`}
             >
-
               <div
                 className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
                   rank
@@ -985,7 +1051,7 @@ export default function Leaderboard({
                   {r.streak >
                     0 && (
                     <span>
-                      🔥{' '}
+                      {String.fromCodePoint(0x1F525)}{' '}
                       {r.streak}{' '}
                       day
                       {r.streak ===
@@ -1001,24 +1067,13 @@ export default function Leaderboard({
               </div>
 
               <div className="text-mist text-lg">
-                ›
+                {'>'}
               </div>
 
             </button>
           )
         }
       )}
-
-      {/* ---------------------------------------------
-          STUDENT DETAIL MODAL
-          
-          IMPORTANT:
-          It is fixed instead of being inserted above
-          the leaderboard. Therefore:
-          - no page jump
-          - rank numbers stay visible
-          - clicking a student does not move the list
-         --------------------------------------------- */}
 
       {selectedStudent && (
         <div
@@ -1028,20 +1083,12 @@ export default function Leaderboard({
               e.target ===
               e.currentTarget
             ) {
-              setSelectedStudent(
-                null
-              )
-              setDailyProgress(
-                []
-              )
-              setDailyError('')
+              closeStudentProfile()
             }
           }}
         >
 
           <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-panel border border-line rounded-xl shadow-2xl">
-
-            {/* HEADER */}
 
             <div className="sticky top-0 z-10 bg-panel border-b border-line px-5 py-4 flex items-start justify-between gap-4">
 
@@ -1090,33 +1137,22 @@ export default function Leaderboard({
 
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedStudent(
-                    null
-                  )
-                  setDailyProgress(
-                    []
-                  )
-                  setDailyError(
-                    ''
-                  )
-                }}
+                onClick={
+                  closeStudentProfile
+                }
                 className="focus-ring flex-shrink-0 text-mist hover:text-paper text-xl"
                 aria-label="Close student profile"
               >
-                ×
+                X
               </button>
 
             </div>
 
             <div className="p-5">
 
-              {/* STATS */}
-
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
 
                 <div className="bg-panel-2 border border-line rounded-lg p-3">
-
                   <div className="text-xs text-mist font-mono">
                     Rank
                   </div>
@@ -1127,11 +1163,9 @@ export default function Leaderboard({
                       selectedStudent.rank
                     }
                   </div>
-
                 </div>
 
                 <div className="bg-panel-2 border border-line rounded-lg p-3">
-
                   <div className="text-xs text-mist font-mono">
                     Progress
                   </div>
@@ -1142,11 +1176,9 @@ export default function Leaderboard({
                     }
                     %
                   </div>
-
                 </div>
 
                 <div className="bg-panel-2 border border-line rounded-lg p-3">
-
                   <div className="text-xs text-mist font-mono">
                     Completed
                   </div>
@@ -1156,25 +1188,20 @@ export default function Leaderboard({
                       selectedStudent.completed
                     }
                   </div>
-
                 </div>
 
                 <div className="bg-panel-2 border border-line rounded-lg p-3">
-
                   <div className="text-xs text-mist font-mono">
                     Streak
                   </div>
 
                   <div className="text-xl font-display mt-1">
-                    🔥{' '}
+                    {String.fromCodePoint(0x1F525)}{' '}
                     {selectedStreak}
                   </div>
-
                 </div>
 
               </div>
-
-              {/* OVERALL PROGRESS */}
 
               <div className="mt-5">
 
@@ -1215,8 +1242,6 @@ export default function Leaderboard({
 
               </div>
 
-              {/* ACTIONS */}
-
               <div className="flex flex-wrap gap-2 mt-5">
 
                 <button
@@ -1228,7 +1253,7 @@ export default function Leaderboard({
                   }
                   className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
                 >
-                  💬 Chat with
+                  {String.fromCodePoint(0x1F4AC)} Chat with
                   student
                 </button>
 
@@ -1241,13 +1266,11 @@ export default function Leaderboard({
                   }
                   className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
                 >
-                  👥 Manage
+                  {String.fromCodePoint(0x1F465)} Manage
                   groups
                 </button>
 
               </div>
-
-              {/* DAILY HISTORY */}
 
               <div className="mt-6 border-t border-line pt-5">
 
@@ -1258,26 +1281,24 @@ export default function Leaderboard({
                   </h4>
 
                   <p className="text-xs text-mist mt-1">
-                    Previous days are shown even when the
-                    student did not submit anything.
+                    Every assigned homework day is shown,
+                    including days when the student did not
+                    submit anything.
                   </p>
 
                 </div>
 
                 {loadingDaily && (
                   <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-
                     <p className="text-sm text-mist">
                       Loading homework
-                      history…
+                      history...
                     </p>
-
                   </div>
                 )}
 
                 {dailyError && (
                   <div className="mt-3 bg-panel-2 border border-coral rounded-lg p-4">
-
                     <p className="text-sm text-coral">
                       Couldn't load
                       homework
@@ -1286,7 +1307,6 @@ export default function Leaderboard({
                         dailyError
                       }
                     </p>
-
                   </div>
                 )}
 
@@ -1295,12 +1315,10 @@ export default function Leaderboard({
                   dailyProgress.length ===
                     0 && (
                     <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-
                       <p className="text-sm text-mist">
                         No homework
                         history yet.
                       </p>
-
                     </div>
                   )}
 
@@ -1320,8 +1338,6 @@ export default function Leaderboard({
                             }
                             className="bg-panel-2 border border-line rounded-lg p-4"
                           >
-
-                            {/* DAY HEADER */}
 
                             <div className="flex items-start justify-between gap-3 mb-3">
 
@@ -1364,8 +1380,6 @@ export default function Leaderboard({
 
                             </div>
 
-                            {/* DAILY PROGRESS BAR */}
-
                             <div className="h-1.5 bg-panel rounded-full overflow-hidden mb-3">
 
                               <div
@@ -1376,8 +1390,6 @@ export default function Leaderboard({
                               />
 
                             </div>
-
-                            {/* HOMEWORK TASKS */}
 
                             <div className="flex flex-col gap-2">
 
@@ -1400,25 +1412,52 @@ export default function Leaderboard({
                                         }
                                       </div>
 
-                                      {task.submittedAt && (
+                                      {task.submittedAt ? (
                                         <div className="text-xs text-mist font-mono mt-0.5">
-                                          Submitted{' '}
+                                          {task.historicallyCompleted &&
+                                          !task.currentlySubmitted
+                                            ? 'Historically completed '
+                                            : 'Submitted '}
                                           {new Date(
                                             task.submittedAt
-                                          ).toLocaleTimeString(
+                                          ).toLocaleString(
                                             [],
                                             {
-                                              hour: '2-digit',
+                                              month:
+                                                'short',
+                                              day:
+                                                'numeric',
+                                              hour:
+                                                '2-digit',
                                               minute:
                                                 '2-digit',
                                             }
                                           )}
                                         </div>
-                                      )}
-
-                                      {!task.submittedAt && (
+                                      ) : (
                                         <div className="text-xs text-mist font-mono mt-0.5">
                                           No submission
+                                        </div>
+                                      )}
+
+                                      {task.dueDate && (
+                                        <div className="text-xs text-mist font-mono mt-0.5">
+                                          Deadline:{' '}
+                                          {new Date(
+                                            task.dueDate
+                                          ).toLocaleString(
+                                            [],
+                                            {
+                                              month:
+                                                'short',
+                                              day:
+                                                'numeric',
+                                              hour:
+                                                '2-digit',
+                                              minute:
+                                                '2-digit',
+                                            }
+                                          )}
                                         </div>
                                       )}
 
@@ -1457,10 +1496,6 @@ export default function Leaderboard({
 
         </div>
       )}
-
-      {/* ---------------------------------------------
-          MANAGE GROUPS MODAL
-         --------------------------------------------- */}
 
       {manageStudent && (
         <div
@@ -1503,7 +1538,7 @@ export default function Leaderboard({
                 className="focus-ring text-mist hover:text-paper text-xl"
                 aria-label="Close"
               >
-                ×
+                X
               </button>
 
             </div>
@@ -1520,7 +1555,7 @@ export default function Leaderboard({
 
               {loadingGroups ? (
                 <div className="py-8 text-center text-mist">
-                  Loading groups…
+                  Loading groups...
                 </div>
               ) : groups.length ===
                 0 ? (
@@ -1575,7 +1610,7 @@ export default function Leaderboard({
                           >
                             {isMember
                               ? '✓'
-                              : '○'}
+                              : '—'}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -1612,7 +1647,7 @@ export default function Leaderboard({
                             }`}
                           >
                             {saving
-                              ? 'Saving…'
+                              ? 'Saving...'
                               : isMember
                               ? 'Remove'
                               : 'Add'}
@@ -1629,21 +1664,17 @@ export default function Leaderboard({
               <div className="mt-5 pt-4 border-t border-line">
 
                 <p className="text-xs text-mist">
-
                   Removing a
                   student from a
                   group does{' '}
-
                   <strong className="text-paper">
                     not
                   </strong>{' '}
-
                   delete their
                   account. It only
                   removes their
                   membership from that
                   group.
-
                 </p>
 
               </div>
