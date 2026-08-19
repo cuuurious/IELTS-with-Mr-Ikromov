@@ -1,279 +1,79 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
-function Icon({ name, size = 18 }) {
-  const common = {
-    width: size,
-    height: size,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.8,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    'aria-hidden': true,
-  }
-
-  if (name === 'plus') {
-    return (
-      <svg {...common}>
-        <path d="M12 5v14M5 12h14" />
-      </svg>
-    )
-  }
-
-  if (name === 'refresh') {
-    return (
-      <svg {...common}>
-        <path d="M20 11a8.1 8.1 0 0 0-14.9-4L3 10" />
-        <path d="M3 5v5h5" />
-        <path d="M4 13a8.1 8.1 0 0 0 14.9 4L21 14" />
-        <path d="M21 19v-5h-5" />
-      </svg>
-    )
-  }
-
-  if (name === 'chart') {
-    return (
-      <svg {...common}>
-        <path d="M4 19V5" />
-        <path d="M4 19h16" />
-        <path d="M8 16v-5" />
-        <path d="M12 16V7" />
-        <path d="M16 16v-8" />
-      </svg>
-    )
-  }
-
-  if (name === 'close') {
-    return (
-      <svg {...common}>
-        <path d="m6 6 12 12M18 6 6 18" />
-      </svg>
-    )
-  }
-
-  if (name === 'check') {
-    return (
-      <svg {...common}>
-        <path d="m5 12 4 4L19 6" />
-      </svg>
-    )
-  }
-
-  return null
-}
-
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
   const [activeGroup, setActiveGroup] = useState(null)
   const [lists, setLists] = useState([])
   const [creating, setCreating] = useState(false)
   const [viewingResults, setViewingResults] = useState(null)
-  const [resettingId, setResettingId] = useState(null)
-  const [notice, setNotice] = useState('')
 
   useEffect(() => {
-    const loadGroups = async () => {
-      const { data, error } = await supabase
-        .from('groups')
-        .select('*')
-        .order('created_at')
-
-      if (error) {
-        console.error('Could not load groups:', error)
-        return
-      }
-
-      setGroups(data || [])
-
-      if (data?.length) {
-        setActiveGroup(data[0].id)
-      }
-    }
-
-    loadGroups()
+    supabase
+      .from('groups')
+      .select('*')
+      .order('created_at')
+      .then(({ data }) => {
+        setGroups(data || [])
+        if (data?.length) {
+          setActiveGroup(data[0].id)
+        }
+      })
   }, [])
 
   const loadLists = async () => {
     if (!activeGroup) return
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('wordlists')
-      .select(
-        `
-          *,
-          wordlist_items(count)
-        `
-      )
+      .select('*, wordlist_items(count)')
       .eq('group_id', activeGroup)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Could not load word lists:', error)
-      return
-    }
+      .order('created_at', {
+        ascending: false,
+      })
 
     setLists(data || [])
   }
 
   useEffect(() => {
     loadLists()
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup])
 
-  const resetCompletion = async (list) => {
-    const confirmed = window.confirm(
-      `Reset completion for "${list.title}"?\n\nStudents will be able to complete this vocabulary list again. Previous attempts will remain in your results history.`
-    )
-
-    if (!confirmed) return
-
-    setResettingId(list.id)
-    setNotice('')
-
-    try {
-      const { error } = await supabase
-        .from('wordlists')
-        .update({
-          completion_reset_at:
-            new Date().toISOString(),
-        })
-        .eq('id', list.id)
-
-      if (error) throw error
-
-      setNotice(
-        `"${list.title}" is ready for a fresh student attempt.`
-      )
-
-      await loadLists()
-
-      window.setTimeout(() => {
-        setNotice('')
-      }, 3500)
-    } catch (err) {
-      console.error('Could not reset word list:', err)
-
-      setNotice(
-        err?.message ||
-          'Could not reset this word list.'
-      )
-    } finally {
-      setResettingId(null)
-    }
-  }
-
   return (
-    <div className="flex flex-col gap-7">
-
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.2em] text-brass font-mono mb-2">
-            Vocabulary studio
-          </div>
-
-          <h1 className="font-display text-2xl sm:text-3xl text-paper">
-            Word lists
-          </h1>
-
-          <p className="text-mist text-sm mt-2 max-w-xl leading-relaxed">
-            Build focused vocabulary practice for your students.
-            Review generated definitions before publishing, then
-            monitor their progress over time.
-          </p>
-        </div>
-
-        {!creating && activeGroup && (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="focus-ring inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors"
-          >
-            <Icon name="plus" size={17} />
-            New word list
-          </button>
-        )}
-
-      </div>
-
-      {/* =====================================================
-          GROUP NAVIGATION
-      ===================================================== */}
+    <div className="flex flex-col gap-5">
 
       {groups.length === 0 && (
-        <div className="border border-line bg-panel-2 px-4 py-5 rounded-lg">
-          <p className="text-mist text-sm">
-            Create a group first.
-          </p>
-        </div>
+        <p className="text-mist">
+          Create a group first.
+        </p>
       )}
 
       {groups.length > 0 && (
-        <div className="border-b border-line">
-          <div className="flex gap-1 overflow-x-auto pb-px">
+        <div className="flex gap-2 flex-wrap">
 
-            {groups.map((group) => {
-              const active =
-                activeGroup === group.id
-
-              return (
-                <button
-                  key={group.id}
-                  type="button"
-                  onClick={() =>
-                    setActiveGroup(group.id)
-                  }
-                  className={`
-                    focus-ring shrink-0 px-4 py-2.5 text-sm
-                    border-b-2 transition-colors
-                    ${
-                      active
-                        ? 'border-brass text-paper'
-                        : 'border-transparent text-mist hover:text-paper'
-                    }
-                  `}
-                >
-                  {group.name}
-                </button>
-              )
-            })}
-
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================
-          NOTICE
-      ===================================================== */}
-
-      {notice && (
-        <div className="flex items-start gap-3 border border-sage/30 bg-sage/10 rounded-md px-4 py-3">
-
-          <span className="text-sage mt-0.5">
-            <Icon name="check" size={17} />
-          </span>
-
-          <p className="text-sm text-sage">
-            {notice}
-          </p>
+          {groups.map((g) => (
+            <button
+              key={g.id}
+              onClick={() =>
+                setActiveGroup(g.id)
+              }
+              className={`focus-ring px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                activeGroup === g.id
+                  ? 'bg-brass text-onbrass border-brass font-medium'
+                  : 'border-line text-mist hover:text-paper'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
 
         </div>
       )}
 
       {activeGroup && (
         <>
-          {/* =================================================
-              CREATION FORM
-          ================================================= */}
-
-          {creating && (
+          {creating ? (
             <NewWordlistForm
               groupId={activeGroup}
               teacherId={teacherId}
@@ -285,207 +85,58 @@ export default function TeacherWordlists({ teacherId }) {
                 setCreating(false)
               }
             />
+          ) : (
+            <button
+              onClick={() =>
+                setCreating(true)
+              }
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors w-fit"
+            >
+              + New word list
+            </button>
           )}
 
-          {/* =================================================
-              LISTS
-          ================================================= */}
+          <div className="flex flex-col gap-2">
 
-          {!creating && (
-            <div className="flex flex-col gap-3">
-
-              {lists.length === 0 && (
-                <div className="border border-line bg-panel-2 rounded-lg px-5 py-10 text-center">
-
-                  <div className="text-brass text-[11px] uppercase tracking-[0.18em] font-mono">
-                    No vocabulary yet
+            {lists.map((list) => (
+              <div
+                key={list.id}
+                className="ticket rounded-lg p-4 flex items-center justify-between gap-3"
+              >
+                <div>
+                  <div className="font-display text-lg">
+                    {list.title}
                   </div>
 
-                  <p className="text-mist text-sm mt-2">
-                    Create your first word list for this group.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCreating(true)
-                    }
-                    className="focus-ring mt-5 inline-flex items-center gap-2 text-sm text-brass hover:underline"
-                  >
-                    <Icon name="plus" size={15} />
-                    Create word list
-                  </button>
-
+                  <div className="text-mist text-xs font-mono">
+                    {list.wordlist_items?.[0]?.count ?? 0}{' '}
+                    words · posted{' '}
+                    {new Date(
+                      list.created_at
+                    ).toLocaleDateString()}
+                  </div>
                 </div>
-              )}
 
-              {lists.map((list) => {
-                const count =
-                  list.wordlist_items?.[0]
-                    ?.count ?? 0
+                <button
+                  onClick={() =>
+                    setViewingResults(list)
+                  }
+                  className="focus-ring px-3 py-1.5 rounded-md border border-line text-sm hover:border-brass hover:text-brass transition-colors"
+                >
+                  View results
+                </button>
+              </div>
+            ))}
 
-                const isResetting =
-                  resettingId === list.id
+            {lists.length === 0 && (
+              <p className="text-mist text-sm">
+                No word lists for this group yet.
+              </p>
+            )}
 
-                return (
-                  <article
-                    key={list.id}
-                    className="
-                      group
-                      border border-line
-                      bg-panel-2
-                      rounded-lg
-                      px-4 sm:px-5
-                      py-4
-                      transition-all
-                      hover:border-brass/40
-                    "
-                  >
-
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-
-                      {/* LIST INFORMATION */}
-
-                      <div className="min-w-0 flex-1">
-
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[10px] uppercase tracking-[0.16em] font-mono text-brass">
-                            Vocabulary
-                          </span>
-
-                          {list.completion_reset_at && (
-                            <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-sage">
-                              Resettable
-                            </span>
-                          )}
-                        </div>
-
-                        <h2 className="font-display text-lg sm:text-xl text-paper truncate">
-                          {list.title}
-                        </h2>
-
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-mist font-mono">
-
-                          <span>
-                            {count}{' '}
-                            {count === 1
-                              ? 'item'
-                              : 'items'}
-                          </span>
-
-                          <span className="text-line">
-                            ·
-                          </span>
-
-                          <span>
-                            posted{' '}
-                            {new Date(
-                              list.created_at
-                            ).toLocaleDateString()}
-                          </span>
-
-                          {list.completion_reset_at && (
-                            <>
-                              <span className="text-line">
-                                ·
-                              </span>
-
-                              <span className="text-sage">
-                                practice reset{' '}
-                                {new Date(
-                                  list.completion_reset_at
-                                ).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
-
-                        </div>
-
-                      </div>
-
-                      {/* ACTIONS */}
-
-                      <div className="flex flex-wrap items-center gap-2">
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setViewingResults(
-                              list
-                            )
-                          }
-                          className="
-                            focus-ring
-                            inline-flex items-center
-                            justify-center gap-2
-                            px-3 py-2
-                            rounded-md
-                            border border-line
-                            text-sm text-paper
-                            hover:border-brass/60
-                            hover:text-brass
-                            transition-colors
-                          "
-                        >
-                          <Icon
-                            name="chart"
-                            size={16}
-                          />
-                          Results
-                        </button>
-
-                        <button
-                          type="button"
-                          title="Reset student completion"
-                          disabled={
-                            isResetting
-                          }
-                          onClick={() =>
-                            resetCompletion(
-                              list
-                            )
-                          }
-                          className="
-                            focus-ring
-                            inline-flex items-center
-                            justify-center gap-2
-                            px-3 py-2
-                            rounded-md
-                            border border-line
-                            text-sm text-mist
-                            hover:border-sage/60
-                            hover:text-sage
-                            transition-colors
-                            disabled:opacity-50
-                          "
-                        >
-                          <Icon
-                            name="refresh"
-                            size={16}
-                          />
-
-                          {isResetting
-                            ? 'Resetting…'
-                            : 'Reset practice'}
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  </article>
-                )
-              })}
-
-            </div>
-          )}
-
+          </div>
         </>
       )}
-
-      {/* =====================================================
-          RESULTS
-      ===================================================== */}
 
       {viewingResults && (
         <ResultsModal
@@ -500,51 +151,35 @@ export default function TeacherWordlists({ teacherId }) {
   )
 }
 
-/* ===========================================================
-   NEW WORD LIST
-   =========================================================== */
-
 function NewWordlistForm({
   groupId,
   teacherId,
   onDone,
   onCancel,
 }) {
-  const [title, setTitle] =
-    useState('')
+  const [title, setTitle] = useState('')
+  const [rawWords, setRawWords] = useState('')
+  const [items, setItems] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  const [rawWords, setRawWords] =
-    useState('')
-
-  const [items, setItems] =
-    useState(null)
-
-  const [generating, setGenerating] =
-    useState(false)
-
-  const [saving, setSaving] =
-    useState(false)
-
-  const [error, setError] =
-    useState('')
-
-  const inputCount =
-    rawWords
+  const generate = async () => {
+    const words = rawWords
       .split('\n')
       .map((w) => w.trim())
       .filter(Boolean)
-      .length
-
-  const generate = async () => {
-    const words =
-      rawWords
-        .split('\n')
-        .map((w) => w.trim())
-        .filter(Boolean)
 
     if (!words.length) {
       setError(
         'Paste at least one word or collocation first.'
+      )
+      return
+    }
+
+    if (words.length > 250) {
+      setError(
+        `You entered ${words.length} items. Please use 250 words or fewer at a time.`
       )
       return
     }
@@ -562,8 +197,14 @@ function NewWordlistForm({
         sessionData?.session
           ?.access_token
 
+      if (!token) {
+        throw new Error(
+          'Your session has expired. Please log in again.'
+        )
+      }
+
       const resp = await fetch(
-        '/.netlify/functions/define-words',
+        'https://grdfwleehlgoooizyowz.supabase.co/functions/v1/define-words',
         {
           method: 'POST',
           headers: {
@@ -577,23 +218,81 @@ function NewWordlistForm({
         }
       )
 
-      const data =
-        await resp.json()
+      /*
+       * Do not blindly call resp.json().
+       * If Netlify returns an empty/non-JSON response,
+       * this gives the teacher a useful error instead of:
+       * "Unexpected end of JSON input".
+       */
+      const responseText =
+        await resp.text()
+
+      let data = null
+
+      if (responseText.trim()) {
+        try {
+          data =
+            JSON.parse(
+              responseText
+            )
+        } catch {
+          throw new Error(
+            `The translation service returned an invalid response (${resp.status}). Please try again.`
+          )
+        }
+      }
 
       if (!resp.ok) {
         throw new Error(
-          data.error ||
-            'Failed to generate definitions.'
+          data?.error ||
+            `Translation service failed (${resp.status}).`
         )
       }
 
+      if (
+        !data ||
+        !Array.isArray(
+          data.results
+        )
+      ) {
+        throw new Error(
+          'The translation service did not return a valid word list.'
+        )
+      }
+
+      /*
+       * Keep only the fields needed by the new
+       * translation-only generator.
+       *
+       * Definition and example_sentence are deliberately
+       * kept empty for compatibility with the existing
+       * database schema.
+       */
+      const cleanedResults =
+        data.results.map(
+          (item) => ({
+            word:
+              item?.word || '',
+            definition: '',
+            uzbek_translation:
+              item?.uzbek_translation ||
+              '',
+            example_sentence: '',
+          })
+        )
+
       setItems(
-        data.results || []
+        cleanedResults
       )
     } catch (err) {
+      console.error(
+        'Word translation generation failed:',
+        err
+      )
+
       setError(
         err?.message ||
-          'Could not generate the vocabulary list.'
+          'Could not generate translations.'
       )
     } finally {
       setGenerating(false)
@@ -606,13 +305,14 @@ function NewWordlistForm({
     value
   ) => {
     setItems((prev) =>
-      prev.map((item, i) =>
-        i === index
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item
+      prev.map(
+        (item, i) =>
+          i === index
+            ? {
+                ...item,
+                [field]: value,
+              }
+            : item
       )
     )
   }
@@ -630,48 +330,70 @@ function NewWordlistForm({
 
     try {
       const {
-        data: wordlist,
-        error: wordlistError,
-      } = await supabase
-        .from('wordlists')
-        .insert({
-          group_id: groupId,
-          title: title.trim(),
-          created_by: teacherId,
-        })
-        .select()
-        .single()
+        data: wl,
+        error: wlErr,
+      } =
+        await supabase
+          .from('wordlists')
+          .insert({
+            group_id:
+              groupId,
+            title:
+              title.trim(),
+            created_by:
+              teacherId,
+          })
+          .select()
+          .single()
 
-      if (wordlistError) {
-        throw wordlistError
+      if (wlErr) {
+        throw wlErr
       }
 
+      /*
+       * Keep definition/example columns empty for new
+       * translation-only wordlists.
+       *
+       * We do NOT remove those database columns because
+       * older wordlists may still use them.
+       */
       const rows =
-        items.map((item, index) => ({
-          wordlist_id:
-            wordlist.id,
-          word: item.word,
-          definition:
-            item.definition,
-          uzbek_translation:
-            item.uzbek_translation,
-          example_sentence:
-            item.example_sentence,
-          position: index,
-        }))
+        items.map(
+          (item, index) => ({
+            wordlist_id:
+              wl.id,
+            word:
+              item.word,
+            definition: '',
+            uzbek_translation:
+              item.uzbek_translation ||
+              '',
+            example_sentence: '',
+            position:
+              index,
+          })
+        )
 
       const {
-        error: itemsError,
-      } = await supabase
-        .from('wordlist_items')
-        .insert(rows)
+        error: itemsErr,
+      } =
+        await supabase
+          .from(
+            'wordlist_items'
+          )
+          .insert(rows)
 
-      if (itemsError) {
-        throw itemsError
+      if (itemsErr) {
+        throw itemsErr
       }
 
       onDone()
     } catch (err) {
+      console.error(
+        'Wordlist publishing failed:',
+        err
+      )
+
       setError(
         err?.message ||
           'Could not publish the word list.'
@@ -682,350 +404,167 @@ function NewWordlistForm({
   }
 
   return (
-    <section className="border border-line bg-panel-2 rounded-lg overflow-hidden">
+    <div className="ticket rounded-lg p-4 flex flex-col gap-3">
 
-      {/* FORM HEADER */}
+      <input
+        value={title}
+        onChange={(e) =>
+          setTitle(
+            e.target.value
+          )
+        }
+        placeholder="Title (e.g. Passage 3 vocabulary — Lesson 5)"
+        className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2"
+      />
 
-      <div className="px-4 sm:px-5 py-4 border-b border-line">
-
-        <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-brass">
-          New vocabulary practice
-        </div>
-
-        <h2 className="font-display text-xl mt-1">
-          Build a word list
-        </h2>
-
-        <p className="text-mist text-xs mt-1.5">
-          Add as many words or collocations as you need.
-          There is no fixed 30-item limit.
-        </p>
-
-      </div>
-
-      <div className="p-4 sm:p-5 flex flex-col gap-4">
-
-        {/* TITLE */}
-
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.14em] text-mist font-mono">
-            List title
-          </label>
-
-          <input
-            value={title}
+      {!items && (
+        <>
+          <textarea
+            value={rawWords}
             onChange={(e) =>
-              setTitle(e.target.value)
+              setRawWords(
+                e.target.value
+              )
             }
-            placeholder="e.g. Passage 3 — Environmental vocabulary"
-            className="
-              focus-ring
-              w-full mt-1.5
-              bg-panel
-              border border-line
-              rounded-md
-              px-3 py-2.5
-              text-paper
-            "
+            rows={8}
+            placeholder={
+              'One word or collocation per line, e.g.\nimitate\nsubconscious\ntrial and error'
+            }
+            className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 font-mono text-sm"
           />
-        </div>
 
-        {/* WORD INPUT */}
+          <p className="text-mist text-xs">
+            Maximum 250 words or collocations.
+            Only Uzbek translations will be generated.
+          </p>
 
-        {!items && (
-          <>
-            <div>
+          {error && (
+            <p className="text-coral text-sm">
+              {error}
+            </p>
+          )}
 
-              <div className="flex items-end justify-between gap-3">
+          <div className="flex gap-2">
 
-                <label className="text-[11px] uppercase tracking-[0.14em] text-mist font-mono">
-                  Words & collocations
-                </label>
+            <button
+              onClick={generate}
+              disabled={
+                generating
+              }
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+            >
+              {generating
+                ? 'Generating translations…'
+                : 'Generate translations'}
+            </button>
 
-                <span className="text-xs font-mono text-brass">
-                  {inputCount}{' '}
-                  {inputCount === 1
-                    ? 'item'
-                    : 'items'}
-                </span>
+            <button
+              onClick={
+                onCancel
+              }
+              disabled={
+                generating
+              }
+              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+            >
+              Cancel
+            </button>
 
-              </div>
+          </div>
+        </>
+      )}
 
-              <textarea
-                value={rawWords}
-                onChange={(e) =>
-                  setRawWords(
-                    e.target.value
-                  )
-                }
-                rows={9}
-                placeholder={
-                  'One word or collocation per line\n\nmitigate\npose a threat\ntake into account\nheavy rainfall'
-                }
-                className="
-                  focus-ring
-                  w-full mt-1.5
-                  bg-panel
-                  border border-line
-                  rounded-md
-                  px-3 py-3
-                  font-mono
-                  text-sm
-                  leading-6
-                  resize-y
-                "
-              />
+      {items && (
+        <>
+          <p className="text-mist text-xs">
+            Review and edit the Uzbek
+            translations before publishing.
+            Students will see exactly these
+            translations.
+          </p>
 
-              <p className="text-xs text-mist mt-2">
-                One item per line. Words and multi-word
-                collocations are both supported.
-              </p>
+          <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
 
-            </div>
+            {items.map(
+              (item, index) => (
+                <div
+                  key={`${item.word}-${index}`}
+                  className="bg-panel-2 border border-line rounded-md p-3 flex flex-col gap-2"
+                >
 
-            {error && (
-              <p className="text-coral text-sm">
-                {error}
-              </p>
-            )}
+                  <div className="flex items-center justify-between gap-3">
 
-            <div className="flex flex-wrap gap-2">
-
-              <button
-                type="button"
-                onClick={generate}
-                disabled={
-                  generating ||
-                  !inputCount
-                }
-                className="
-                  focus-ring
-                  inline-flex items-center
-                  justify-center
-                  px-4 py-2.5
-                  rounded-md
-                  bg-brass
-                  text-onbrass
-                  font-medium
-                  hover:bg-brass-dim
-                  transition-colors
-                  disabled:opacity-50
-                "
-              >
-                {generating
-                  ? 'Preparing vocabulary…'
-                  : `Generate ${inputCount || ''} items`}
-              </button>
-
-              <button
-                type="button"
-                onClick={onCancel}
-                className="
-                  focus-ring
-                  px-4 py-2.5
-                  rounded-md
-                  border border-line
-                  text-mist
-                  hover:text-paper
-                  hover:border-brass/50
-                  transition-colors
-                "
-              >
-                Cancel
-              </button>
-
-            </div>
-          </>
-        )}
-
-        {/* GENERATED ITEMS */}
-
-        {items && (
-          <>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-
-              <p className="text-mist text-xs">
-                Review every item before publishing.
-                Students will see exactly this content.
-              </p>
-
-              <span className="shrink-0 text-xs font-mono text-brass">
-                {items.length}{' '}
-                {items.length === 1
-                  ? 'item'
-                  : 'items'}
-              </span>
-
-            </div>
-
-            <div className="flex flex-col gap-2 max-h-[32rem] overflow-y-auto pr-1">
-
-              {items.map(
-                (item, index) => (
-                  <div
-                    key={`${item.word}-${index}`}
-                    className="
-                      border border-line
-                      bg-panel
-                      rounded-md
-                      p-3
-                      flex flex-col gap-2
-                    "
-                  >
-
-                    <div className="flex items-center justify-between gap-3">
-
-                      <div className="font-medium text-paper">
-                        {item.word}
-                      </div>
-
-                      <span className="text-[10px] font-mono text-mist">
-                        {index + 1}/
-                        {items.length}
-                      </span>
-
+                    <div className="font-medium">
+                      {item.word}
                     </div>
 
-                    <input
-                      value={
-                        item.definition ||
-                        ''
-                      }
-                      onChange={(e) =>
-                        updateItem(
-                          index,
-                          'definition',
-                          e.target.value
-                        )
-                      }
-                      placeholder="Definition"
-                      className="
-                        focus-ring
-                        bg-panel-2
-                        border border-line
-                        rounded-md
-                        px-2.5 py-2
-                        text-sm
-                      "
-                    />
-
-                    <input
-                      value={
-                        item.uzbek_translation ||
-                        ''
-                      }
-                      onChange={(e) =>
-                        updateItem(
-                          index,
-                          'uzbek_translation',
-                          e.target.value
-                        )
-                      }
-                      placeholder="Uzbek translation"
-                      className="
-                        focus-ring
-                        bg-panel-2
-                        border border-line
-                        rounded-md
-                        px-2.5 py-2
-                        text-sm
-                      "
-                    />
-
-                    <input
-                      value={
-                        item.example_sentence ||
-                        ''
-                      }
-                      onChange={(e) =>
-                        updateItem(
-                          index,
-                          'example_sentence',
-                          e.target.value
-                        )
-                      }
-                      placeholder="Example sentence"
-                      className="
-                        focus-ring
-                        bg-panel-2
-                        border border-line
-                        rounded-md
-                        px-2.5 py-2
-                        text-sm
-                      "
-                    />
+                    <span className="text-[10px] font-mono text-mist">
+                      {index + 1}/
+                      {items.length}
+                    </span>
 
                   </div>
-                )
-              )}
 
-            </div>
+                  <input
+                    value={
+                      item.uzbek_translation ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateItem(
+                        index,
+                        'uzbek_translation',
+                        e.target.value
+                      )
+                    }
+                    placeholder="Uzbek translation"
+                    className="focus-ring bg-panel border border-line rounded-md px-2 py-1.5 text-sm"
+                  />
 
-            {error && (
-              <p className="text-coral text-sm">
-                {error}
-              </p>
+                </div>
+              )
             )}
 
-            <div className="flex flex-wrap gap-2">
+          </div>
 
-              <button
-                type="button"
-                onClick={publish}
-                disabled={
-                  saving ||
-                  !title.trim()
-                }
-                className="
-                  focus-ring
-                  px-4 py-2.5
-                  rounded-md
-                  bg-brass
-                  text-onbrass
-                  font-medium
-                  hover:bg-brass-dim
-                  transition-colors
-                  disabled:opacity-50
-                "
-              >
-                {saving
-                  ? 'Publishing…'
-                  : `Publish ${items.length} items`}
-              </button>
+          {error && (
+            <p className="text-coral text-sm">
+              {error}
+            </p>
+          )}
 
-              <button
-                type="button"
-                onClick={() =>
-                  setItems(null)
-                }
-                className="
-                  focus-ring
-                  px-4 py-2.5
-                  rounded-md
-                  border border-line
-                  text-mist
-                  hover:text-paper
-                  hover:border-brass/50
-                  transition-colors
-                "
-              >
-                Back
-              </button>
+          <div className="flex gap-2">
 
-            </div>
+            <button
+              onClick={publish}
+              disabled={
+                saving ||
+                !title.trim()
+              }
+              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+            >
+              {saving
+                ? 'Publishing…'
+                : 'Publish to group'}
+            </button>
 
-          </>
-        )}
+            <button
+              onClick={() =>
+                setItems(null)
+              }
+              disabled={saving}
+              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+            >
+              Back
+            </button>
 
-      </div>
-    </section>
+          </div>
+        </>
+      )}
+
+    </div>
   )
 }
-
-/* ===========================================================
-   RESULTS
-   =========================================================== */
 
 function ResultsModal({
   wordlist,
@@ -1035,187 +574,102 @@ function ResultsModal({
     useState(null)
 
   useEffect(() => {
-    const loadAttempts =
-      async () => {
-        const {
-          data,
-          error,
-        } = await supabase
-          .from(
-            'wordlist_attempts'
-          )
-          .select(
-            '*, profiles(full_name, username)'
-          )
-          .eq(
-            'wordlist_id',
-            wordlist.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false,
-            }
-          )
-
-        if (error) {
-          console.error(
-            'Could not load attempts:',
-            error
-          )
+    supabase
+      .from('wordlist_attempts')
+      .select(
+        '*, profiles(full_name, username)'
+      )
+      .eq(
+        'wordlist_id',
+        wordlist.id
+      )
+      .order(
+        'created_at',
+        {
+          ascending: false,
         }
-
-        setAttempts(data || [])
-      }
-
-    loadAttempts()
+      )
+      .then(({ data }) =>
+        setAttempts(
+          data || []
+        )
+      )
   }, [wordlist.id])
 
   return (
     <div
-      className="
-        fixed inset-0
-        bg-black/60
-        backdrop-blur-sm
-        flex items-center
-        justify-center
-        p-4
-        z-50
-      "
+      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
       onClick={onClose}
     >
-
       <div
-        className="
-          bg-panel
-          border border-line
-          rounded-lg
-          p-5 sm:p-6
-          max-w-lg
-          w-full
-          max-h-[85vh]
-          overflow-y-auto
-          flex flex-col gap-4
-          shadow-2xl
-        "
+        className="ticket rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto flex flex-col gap-3"
         onClick={(e) =>
           e.stopPropagation()
         }
       >
 
-        {/* HEADER */}
+        <div className="flex items-start justify-between">
 
-        <div className="flex items-start justify-between gap-4">
-
-          <div>
-
-            <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-brass mb-1">
-              Results
-            </div>
-
-            <h2 className="font-display text-xl text-paper">
-              {wordlist.title}
-            </h2>
-
-            <p className="text-xs text-mist mt-1">
-              Previous attempts remain available even
-              after a practice reset.
-            </p>
-
-          </div>
+          <h2 className="font-display text-xl">
+            {wordlist.title}
+          </h2>
 
           <button
-            type="button"
             onClick={onClose}
-            className="
-              focus-ring
-              shrink-0
-              text-mist
-              hover:text-paper
-              p-1
-            "
-            aria-label="Close"
+            className="focus-ring text-mist hover:text-paper text-xl leading-none"
           >
-            <Icon
-              name="close"
-              size={19}
-            />
+            ×
           </button>
 
         </div>
 
-        {/* RESULTS */}
-
         {attempts === null && (
           <p className="text-mist text-sm">
-            Loading results…
+            Loading…
           </p>
         )}
 
-        {attempts?.length === 0 && (
-          <div className="border border-line rounded-md px-4 py-6 text-center">
-            <p className="text-mist text-sm">
-              No attempts yet.
-            </p>
-          </div>
+        {attempts?.length ===
+          0 && (
+          <p className="text-mist text-sm">
+            No attempts yet.
+          </p>
         )}
 
         {attempts?.map(
           (attempt) => (
             <div
-              key={attempt.id}
-              className="
-                border border-line
-                bg-panel-2
-                rounded-md
-                px-4 py-3
-              "
+              key={
+                attempt.id
+              }
+              className="bg-panel-2 border border-line rounded-md p-3"
             >
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between">
 
-                <div className="min-w-0">
+                <span className="font-medium">
+                  {
+                    attempt
+                      .profiles
+                      ?.full_name
+                  }
+                </span>
 
-                  <div className="font-medium text-paper truncate">
-                    {attempt.profiles
-                      ?.full_name ||
-                      attempt.profiles
-                        ?.username ||
-                      'Student'}
-                  </div>
-
-                  {attempt.profiles
-                    ?.username && (
-                    <div className="text-[11px] text-mist font-mono mt-0.5">
-                      @
-                      {
-                        attempt
-                          .profiles
-                          .username
-                      }
-                    </div>
-                  )}
-
-                </div>
-
-                <div className="text-right shrink-0">
-
-                  <div className="font-mono text-lg text-brass">
-                    {attempt.percentage}%
-                  </div>
-
-                  <div className="text-[10px] text-mist uppercase tracking-wide">
-                    score
-                  </div>
-
-                </div>
+                <span className="font-mono text-sm text-brass">
+                  {
+                    attempt.percentage
+                  }
+                  %
+                </span>
 
               </div>
 
-              <div className="text-mist text-xs font-mono mt-3">
+              <div className="text-mist text-xs font-mono mt-1">
                 {attempt.score}/
-                {attempt.total} correct
-                {' · '}
+                {
+                  attempt.total
+                }{' '}
+                correct ·{' '}
                 {new Date(
                   attempt.created_at
                 ).toLocaleString()}
@@ -1226,7 +680,6 @@ function ResultsModal({
         )}
 
       </div>
-
     </div>
   )
 }
