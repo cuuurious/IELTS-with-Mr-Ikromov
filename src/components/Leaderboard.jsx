@@ -528,15 +528,11 @@ export default function Leaderboard({
             )
 
           const completed =
-            Boolean(
-              historicalCompletion
-            ) ||
-            currentlySubmitted
+  currentlySubmitted
 
-          const activityDate =
-            historicalCompletion?.completed_at ||
-            submission?.submitted_at ||
-            null
+const activityDate =
+  submission?.submitted_at ||
+  null
 
           const dateKey = getDateKey(
             activityDate ||
