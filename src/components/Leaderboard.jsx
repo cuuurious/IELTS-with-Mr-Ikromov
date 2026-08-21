@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Leaderboard({
@@ -6,6 +7,10 @@ export default function Leaderboard({
   highlightStudentId,
   onOpenChat,
 }) {
+  const { profile } = useAuth()
+
+  const isTeacher =
+    profile?.role === 'teacher'
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
@@ -527,10 +532,14 @@ export default function Leaderboard({
               submission?.status === 'submitted'
             )
 
-          const completed =
+         const completed =
+  Boolean(
+    historicalCompletion
+  ) ||
   currentlySubmitted
 
 const activityDate =
+  historicalCompletion?.completed_at ||
   submission?.submitted_at ||
   null
 
@@ -711,6 +720,10 @@ const activityDate =
     async (
       student
     ) => {
+      if (!isTeacher) {
+      return
+    }
+
       setManageStudent(student)
       setGroups([])
       setMemberGroupIds([])
@@ -1253,19 +1266,20 @@ const activityDate =
                   student
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    openManageGroups(
-                      selectedStudent
-                    )
-                  }
-                  className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-                >
-                  {String.fromCodePoint(0x1F465)} Manage
-                  groups
-                </button>
-
+                {isTeacher && (
+  <button
+    type="button"
+    onClick={() =>
+      openManageGroups(
+        selectedStudent
+      )
+    }
+    className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
+  >
+    {String.fromCodePoint(0x1F465)} Manage
+    groups
+  </button>
+)}
               </div>
 
               <div className="mt-6 border-t border-line pt-5">
@@ -1493,7 +1507,7 @@ const activityDate =
         </div>
       )}
 
-      {manageStudent && (
+     {isTeacher && manageStudent && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
           onMouseDown={(
