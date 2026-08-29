@@ -893,6 +893,7 @@ export default function GroupChat({
                       }`}
                     >
                       {sender?.full_name ||
+                        sender?.username ||
                         'Member'}
                     </span>
 
@@ -938,9 +939,12 @@ export default function GroupChat({
                         <div className="font-medium">
                           Reply to{' '}
                           {profiles[
-                            reply.sender_id
-                          ]?.full_name ||
-                            'Member'}
+  reply.sender_id
+]?.full_name ||
+  profiles[
+    reply.sender_id
+  ]?.username ||
+  'Member'}
                         </div>
 
                         <div className="truncate opacity-70">
@@ -1260,13 +1264,12 @@ export default function GroupChat({
 
           <div className="flex-1 min-w-0">
 
-            <div className="text-xs text-brass font-medium">
-              Replying to{' '}
-              {profiles[
-                replyingTo.sender_id
-              ]?.full_name ||
-                'Member'}
-            </div>
+          <div className="text-xs text-brass font-medium">
+  Replying to{' '}
+  {profiles[replyingTo.sender_id]?.full_name ||
+    profiles[replyingTo.sender_id]?.username ||
+    'Member'}
+</div>
 
             <div className="text-xs text-mist truncate">
               {replyingTo.content ||
