@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function TeacherWordlists({ teacherId }) {
@@ -15,6 +16,7 @@ export default function TeacherWordlists({ teacherId }) {
       .order('created_at')
       .then(({ data }) => {
         setGroups(data || [])
+
         if (data?.length) {
           setActiveGroup(data[0].id)
         }
@@ -41,38 +43,45 @@ export default function TeacherWordlists({ teacherId }) {
   }, [activeGroup])
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
 
+      {/* GROUP SELECTOR */}
       {groups.length === 0 && (
-        <p className="text-mist">
-          Create a group first.
-        </p>
+        <div className="surface rounded-xl p-6">
+          <p className="text-mist">
+            Create a group first.
+          </p>
+        </div>
       )}
 
       {groups.length > 0 && (
         <div className="flex gap-2 flex-wrap">
+          {groups.map((group) => {
+            const active =
+              activeGroup === group.id
 
-          {groups.map((g) => (
-            <button
-              key={g.id}
-              onClick={() =>
-                setActiveGroup(g.id)
-              }
-              className={`focus-ring px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                activeGroup === g.id
-                  ? 'bg-brass text-onbrass border-brass font-medium'
-                  : 'border-line text-mist hover:text-paper'
-              }`}
-            >
-              {g.name}
-            </button>
-          ))}
-
+            return (
+              <button
+                key={group.id}
+                onClick={() =>
+                  setActiveGroup(group.id)
+                }
+                className={`focus-ring px-4 py-2 rounded-lg text-sm border transition-colors ${
+                  active
+                    ? 'bg-brass text-onbrass border-brass font-medium'
+                    : 'bg-panel border-line text-mist hover:text-paper hover:border-brass'
+                }`}
+              >
+                {group.name}
+              </button>
+            )
+          })}
         </div>
       )}
 
       {activeGroup && (
         <>
+          {/* CREATE */}
           {creating ? (
             <NewWordlistForm
               groupId={activeGroup}
@@ -90,51 +99,74 @@ export default function TeacherWordlists({ teacherId }) {
               onClick={() =>
                 setCreating(true)
               }
-              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors w-fit"
+              className="btn-primary w-fit"
             >
               + New word list
             </button>
           )}
 
-          <div className="flex flex-col gap-2">
+          {/* WORD LISTS */}
+          <section className="flex flex-col gap-4">
 
-            {lists.map((list) => (
-              <div
-                key={list.id}
-                className="ticket rounded-lg p-4 flex items-center justify-between gap-3"
-              >
-                <div>
-                  <div className="font-display text-lg">
-                    {list.title}
-                  </div>
-
-                  <div className="text-mist text-xs font-mono">
-                    {list.wordlist_items?.[0]?.count ?? 0}{' '}
-                    words · posted{' '}
-                    {new Date(
-                      list.created_at
-                    ).toLocaleDateString()}
-                  </div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+                  Vocabulary
                 </div>
 
-                <button
-                  onClick={() =>
-                    setViewingResults(list)
-                  }
-                  className="focus-ring px-3 py-1.5 rounded-md border border-line text-sm hover:border-brass hover:text-brass transition-colors"
-                >
-                  View results
-                </button>
+                <h2 className="font-display text-2xl sm:text-3xl mt-1">
+                  Word lists
+                </h2>
               </div>
-            ))}
 
-            {lists.length === 0 && (
-              <p className="text-mist text-sm">
-                No word lists for this group yet.
-              </p>
-            )}
+              <div className="text-xs font-mono text-mist border border-line rounded-full px-3 py-1.5">
+                {lists.length} list
+                {lists.length === 1 ? '' : 's'}
+              </div>
+            </div>
 
-          </div>
+            <div className="flex flex-col gap-3">
+
+              {lists.map((list) => (
+                <div
+                  key={list.id}
+                  className="ticket p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                >
+                  <div className="min-w-0">
+                    <div className="font-display text-xl text-paper">
+                      {list.title}
+                    </div>
+
+                    <div className="text-mist text-xs font-mono mt-1">
+                      {list.wordlist_items?.[0]?.count ?? 0}{' '}
+                      words · posted{' '}
+                      {new Date(
+                        list.created_at
+                      ).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setViewingResults(list)
+                    }
+                    className="btn-secondary shrink-0"
+                  >
+                    View results
+                  </button>
+                </div>
+              ))}
+
+              {lists.length === 0 && (
+                <div className="surface rounded-xl p-8 text-center">
+                  <p className="text-mist text-sm">
+                    No word lists for this group yet.
+                  </p>
+                </div>
+              )}
+
+            </div>
+          </section>
         </>
       )}
 
@@ -150,6 +182,11 @@ export default function TeacherWordlists({ teacherId }) {
     </div>
   )
 }
+
+
+/* ============================================================
+   NEW WORD LIST
+   ============================================================ */
 
 function NewWordlistForm({
   groupId,
@@ -167,7 +204,7 @@ function NewWordlistForm({
   const generate = async () => {
     const words = rawWords
       .split('\n')
-      .map((w) => w.trim())
+      .map((word) => word.trim())
       .filter(Boolean)
 
     if (!words.length) {
@@ -218,12 +255,6 @@ function NewWordlistForm({
         }
       )
 
-      /*
-       * Do not blindly call resp.json().
-       * If Netlify returns an empty/non-JSON response,
-       * this gives the teacher a useful error instead of:
-       * "Unexpected end of JSON input".
-       */
       const responseText =
         await resp.text()
 
@@ -260,14 +291,6 @@ function NewWordlistForm({
         )
       }
 
-      /*
-       * Keep only the fields needed by the new
-       * translation-only generator.
-       *
-       * Definition and example_sentence are deliberately
-       * kept empty for compatibility with the existing
-       * database schema.
-       */
       const cleanedResults =
         data.results.map(
           (item) => ({
@@ -350,13 +373,6 @@ function NewWordlistForm({
         throw wlErr
       }
 
-      /*
-       * Keep definition/example columns empty for new
-       * translation-only wordlists.
-       *
-       * We do NOT remove those database columns because
-       * older wordlists may still use them.
-       */
       const rows =
         items.map(
           (item, index) => ({
@@ -404,7 +420,17 @@ function NewWordlistForm({
   }
 
   return (
-    <div className="ticket rounded-lg p-4 flex flex-col gap-3">
+    <div className="ticket p-5 flex flex-col gap-4">
+
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+          New vocabulary
+        </div>
+
+        <h2 className="font-display text-2xl mt-1">
+          Create a word list
+        </h2>
+      </div>
 
       <input
         value={title}
@@ -414,7 +440,7 @@ function NewWordlistForm({
           )
         }
         placeholder="Title (e.g. Passage 3 vocabulary — Lesson 5)"
-        className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2"
+        className="focus-ring bg-panel-2 border border-line rounded-lg px-3 py-2.5 text-paper"
       />
 
       {!items && (
@@ -430,7 +456,7 @@ function NewWordlistForm({
             placeholder={
               'One word or collocation per line, e.g.\nimitate\nsubconscious\ntrial and error'
             }
-            className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 font-mono text-sm"
+            className="focus-ring bg-panel-2 border border-line rounded-lg px-3 py-2.5 font-mono text-sm text-paper resize-y"
           />
 
           <p className="text-mist text-xs">
@@ -444,14 +470,11 @@ function NewWordlistForm({
             </p>
           )}
 
-          <div className="flex gap-2">
-
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={generate}
-              disabled={
-                generating
-              }
-              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+              disabled={generating}
+              className="btn-primary disabled:opacity-50"
             >
               {generating
                 ? 'Generating translations…'
@@ -465,11 +488,10 @@ function NewWordlistForm({
               disabled={
                 generating
               }
-              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+              className="btn-secondary disabled:opacity-50"
             >
               Cancel
             </button>
-
           </div>
         </>
       )}
@@ -483,18 +505,16 @@ function NewWordlistForm({
             translations.
           </p>
 
-          <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
+          <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
 
             {items.map(
               (item, index) => (
                 <div
                   key={`${item.word}-${index}`}
-                  className="bg-panel-2 border border-line rounded-md p-3 flex flex-col gap-2"
+                  className="bg-panel-2 border border-line rounded-lg p-3 flex flex-col gap-2"
                 >
-
                   <div className="flex items-center justify-between gap-3">
-
-                    <div className="font-medium">
+                    <div className="font-medium text-paper">
                       {item.word}
                     </div>
 
@@ -502,7 +522,6 @@ function NewWordlistForm({
                       {index + 1}/
                       {items.length}
                     </span>
-
                   </div>
 
                   <input
@@ -518,9 +537,8 @@ function NewWordlistForm({
                       )
                     }
                     placeholder="Uzbek translation"
-                    className="focus-ring bg-panel border border-line rounded-md px-2 py-1.5 text-sm"
+                    className="focus-ring bg-panel border border-line rounded-lg px-2.5 py-2 text-sm text-paper"
                   />
-
                 </div>
               )
             )}
@@ -533,15 +551,14 @@ function NewWordlistForm({
             </p>
           )}
 
-          <div className="flex gap-2">
-
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={publish}
               disabled={
                 saving ||
                 !title.trim()
               }
-              className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {saving
                 ? 'Publishing…'
@@ -553,11 +570,10 @@ function NewWordlistForm({
                 setItems(null)
               }
               disabled={saving}
-              className="focus-ring px-4 py-2 rounded-md border border-line text-mist"
+              className="btn-secondary disabled:opacity-50"
             >
               Back
             </button>
-
           </div>
         </>
       )}
@@ -565,6 +581,11 @@ function NewWordlistForm({
     </div>
   )
 }
+
+
+/* ============================================================
+   RESULTS MODAL
+   ============================================================ */
 
 function ResultsModal({
   wordlist,
@@ -574,112 +595,174 @@ function ResultsModal({
     useState(null)
 
   useEffect(() => {
-    supabase
-      .from('wordlist_attempts')
-      .select(
-        '*, profiles(full_name, username)'
+    const loadAttempts = async () => {
+      const { data } =
+        await supabase
+          .from(
+            'wordlist_attempts'
+          )
+          .select(
+            '*, profiles(full_name, username)'
+          )
+          .eq(
+            'wordlist_id',
+            wordlist.id
+          )
+          .order(
+            'created_at',
+            {
+              ascending: false,
+            }
+          )
+
+      setAttempts(
+        data || []
       )
-      .eq(
-        'wordlist_id',
-        wordlist.id
-      )
-      .order(
-        'created_at',
-        {
-          ascending: false,
-        }
-      )
-      .then(({ data }) =>
-        setAttempts(
-          data || []
-        )
-      )
+    }
+
+    loadAttempts()
   }, [wordlist.id])
 
-  return (
+  /*
+   * Render directly into document.body.
+   *
+   * This is the important fix:
+   * the modal is no longer affected by the
+   * dashboard's layout/overflow/stacking context.
+   */
+  if (
+    typeof document === 'undefined'
+  ) {
+    return null
+  }
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${wordlist.title} results`}
       onClick={onClose}
     >
+
+      {/* BACKDROP */}
+      <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
+
+      {/* MODAL */}
       <div
-        className="ticket rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto flex flex-col gap-3"
+        className="relative z-10 w-full max-w-2xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
         onClick={(e) =>
           e.stopPropagation()
         }
       >
 
-        <div className="flex items-start justify-between">
+        {/* HEADER */}
+        <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-5 border-b border-line bg-panel">
 
-          <h2 className="font-display text-xl">
-            {wordlist.title}
-          </h2>
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+              Student results
+            </div>
+
+            <h2 className="font-display text-2xl sm:text-3xl mt-1 truncate">
+              {wordlist.title}
+            </h2>
+          </div>
 
           <button
             onClick={onClose}
-            className="focus-ring text-mist hover:text-paper text-xl leading-none"
+            className="focus-ring shrink-0 h-9 w-9 rounded-full border border-line text-mist hover:text-paper hover:border-brass transition-colors text-xl leading-none"
+            aria-label="Close results"
           >
             ×
           </button>
 
         </div>
 
-        {attempts === null && (
-          <p className="text-mist text-sm">
-            Loading…
-          </p>
-        )}
+        {/* CONTENT */}
+        <div className="overflow-y-auto max-h-[calc(100vh-9rem)] p-4 sm:p-5">
 
-        {attempts?.length ===
-          0 && (
-          <p className="text-mist text-sm">
-            No attempts yet.
-          </p>
-        )}
+          {attempts === null && (
+            <div className="surface rounded-xl p-8 text-center">
+              <p className="text-mist text-sm">
+                Loading results…
+              </p>
+            </div>
+          )}
 
-        {attempts?.map(
-          (attempt) => (
-            <div
-              key={
-                attempt.id
-              }
-              className="bg-panel-2 border border-line rounded-md p-3"
-            >
+          {attempts?.length === 0 && (
+            <div className="surface rounded-xl p-8 text-center">
+              <p className="text-mist text-sm">
+                No attempts yet.
+              </p>
+            </div>
+          )}
 
-              <div className="flex items-center justify-between">
+          {attempts?.length > 0 && (
+            <div className="flex flex-col gap-3">
 
-                <span className="font-medium">
-                  {
-                    attempt
-                      .profiles
-                      ?.full_name
-                  }
-                </span>
+              {attempts.map(
+                (attempt) => (
+                  <div
+                    key={
+                      attempt.id
+                    }
+                    className="bg-panel-2 border border-line rounded-xl p-4"
+                  >
 
-                <span className="font-mono text-sm text-brass">
-                  {
-                    attempt.percentage
-                  }
-                  %
-                </span>
+                    <div className="flex items-center justify-between gap-4">
 
-              </div>
+                      <span className="font-medium text-paper">
+                        {
+                          attempt
+                            .profiles
+                            ?.full_name ||
+                          attempt
+                            .profiles
+                            ?.username ||
+                          'Student'
+                        }
+                      </span>
 
-              <div className="text-mist text-xs font-mono mt-1">
-                {attempt.score}/
-                {
-                  attempt.total
-                }{' '}
-                correct ·{' '}
-                {new Date(
-                  attempt.created_at
-                ).toLocaleString()}
-              </div>
+                      <span
+                        className={`font-mono text-sm font-medium ${
+                          attempt.percentage >= 90
+                            ? 'text-sage'
+                            : attempt.percentage >= 70
+                              ? 'text-brass'
+                              : 'text-coral'
+                        }`}
+                      >
+                        {
+                          attempt.percentage
+                        }%
+                      </span>
+
+                    </div>
+
+                    <div className="text-mist text-xs font-mono mt-1.5">
+                      {attempt.score}/
+                      {
+                        attempt.total
+                      }{' '}
+                      correct ·{' '}
+                      {new Date(
+                        attempt.created_at
+                      ).toLocaleString()}
+                    </div>
+
+                  </div>
+                )
+              )}
 
             </div>
-          )
-        )}
+          )}
+
+        </div>
 
       </div>
-    </div>
+
+    </div>,
+    document.body
   )
 }

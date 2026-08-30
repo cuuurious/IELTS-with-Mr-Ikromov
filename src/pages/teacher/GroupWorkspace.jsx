@@ -318,18 +318,6 @@ export default function GroupWorkspace({ teacherId }) {
 
   /*
    * RESET HOMEWORK
-   *
-   * Important:
-   * We first collect the exact Storage paths from the
-   * existing submission rows.
-   *
-   * Then we delete those Storage objects.
-   *
-   * Only AFTER successful Storage deletion do we clear
-   * the submission fields.
-   *
-   * This prevents the database from forgetting the files
-   * while the actual files remain in Storage.
    */
   const clearHomeworkContent = async (hw) => {
     if (
@@ -343,9 +331,6 @@ export default function GroupWorkspace({ teacherId }) {
     setBusyAction(`clear-${hw.id}`)
 
     try {
-      /*
-       * 1. Get existing submissions BEFORE clearing them.
-       */
       const { data: subs, error: subsError } = await supabase
         .from('submissions')
         .select(
@@ -355,19 +340,14 @@ export default function GroupWorkspace({ teacherId }) {
 
       if (subsError) throw subsError
 
-      /*
-       * 2. Extract every Storage path.
-       */
       const submissionPaths = []
 
       for (const sub of subs || []) {
         const urls = [
           ...(sub.screenshot_urls || []),
-
           ...(sub.submission_files || [])
             .map((file) => file?.url)
             .filter(Boolean),
-
           sub.audio_part1_url,
           sub.audio_part2_url,
           sub.audio_part3_url,
@@ -385,16 +365,10 @@ export default function GroupWorkspace({ teacherId }) {
         }
       }
 
-      /*
-       * 3. Remove duplicates.
-       */
       const uniqueSubmissionPaths = [
         ...new Set(submissionPaths),
       ]
 
-      /*
-       * 4. DELETE THE ACTUAL FILES FROM STORAGE.
-       */
       if (uniqueSubmissionPaths.length) {
         const { error: storageError } =
           await supabase
@@ -407,10 +381,6 @@ export default function GroupWorkspace({ teacherId }) {
         }
       }
 
-      /*
-       * 5. Only after Storage cleanup succeeds,
-       * reset the database submission state.
-       */
       const { error: updateError } = await supabase
         .from('submissions')
         .update({
@@ -429,11 +399,7 @@ export default function GroupWorkspace({ teacherId }) {
         throw updateError
       }
 
-      /*
-       * 6. Refresh the teacher workspace.
-       */
       await loadGroupData()
-
     } catch (err) {
       console.error(
         'Homework reset failed:',
@@ -478,11 +444,11 @@ export default function GroupWorkspace({ teacherId }) {
   )
 
   return (
-    <div className="flex flex-row gap-4 sm:gap-6">
+    <div className="teacher-workspace flex flex-col lg:flex-row gap-5 lg:gap-6">
 
-      <aside className="w-32 sm:w-56 flex-shrink-0 flex flex-col gap-3">
+      <aside className="teacher-groups-panel w-full lg:w-56 flex-shrink-0 flex flex-col gap-3 surface-raised p-4">
 
-        <div className="text-xs uppercase tracking-wide text-mist font-mono">
+        <div className="text-xs uppercase tracking-[0.18em] text-mist font-mono">
           Your groups
         </div>
 
@@ -501,21 +467,21 @@ export default function GroupWorkspace({ teacherId }) {
                 onKeyDown={(e) =>
                   e.key === 'Enter' && saveRename(g.id)
                 }
-                className="focus-ring bg-panel-2 border border-brass rounded-md px-3 py-2 text-sm"
+                className="focus-ring bg-panel-2 border border-brass rounded-lg px-3 py-2 text-sm"
               />
             ) : (
               <div
                 key={g.id}
-                className={`group flex items-center gap-1 rounded-md text-sm transition-colors ${
+                className={`group flex items-center gap-1 rounded-lg text-sm transition-colors ${
                   activeGroup === g.id
-                    ? 'bg-brass text-onbrass font-medium'
-                    : 'bg-panel-2 text-mist hover:text-paper'
+                    ? 'bg-brass text-onbrass font-medium shadow-sm'
+                    : 'bg-panel-2 text-mist hover:text-paper hover:border-line'
                 }`}
               >
 
                 <button
                   onClick={() => setActiveGroup(g.id)}
-                  className="focus-ring flex-1 text-left px-3 py-2 truncate"
+                  className="focus-ring flex-1 text-left px-3 py-2.5 truncate"
                 >
                   {g.name}
                 </button>
@@ -537,7 +503,7 @@ export default function GroupWorkspace({ teacherId }) {
 
         <form
           onSubmit={createGroup}
-          className="flex flex-col gap-2 mt-2"
+          className="flex flex-col gap-2 mt-2 pt-3 border-t border-line"
         >
           <input
             value={newGroupName}
@@ -545,12 +511,12 @@ export default function GroupWorkspace({ teacherId }) {
               setNewGroupName(e.target.value)
             }
             placeholder="New group name"
-            className="focus-ring w-full min-w-0 bg-panel-2 border border-line rounded-md px-2 py-1.5 text-sm"
+            className="focus-ring w-full min-w-0 bg-panel-2 border border-line rounded-lg px-3 py-2 text-sm"
           />
 
           <button
             disabled={creating}
-            className="focus-ring px-3 py-1.5 rounded-md border border-brass text-brass text-sm hover:bg-brass hover:text-onbrass transition-colors"
+            className="focus-ring px-3 py-2 rounded-lg border border-brass text-brass text-sm hover:bg-brass hover:text-onbrass transition-colors"
           >
             {creating ? 'Creating…' : 'Add group'}
           </button>
@@ -558,22 +524,30 @@ export default function GroupWorkspace({ teacherId }) {
 
       </aside>
 
-      <section className="flex-1 flex flex-col gap-5 min-w-0">
+      <section className="teacher-workspace-main flex-1 flex flex-col gap-5 min-w-0">
 
         {!activeGroup && (
-          <p className="text-mist">
-            Create your first group to get started.
-          </p>
+          <div className="surface-raised p-8 text-center">
+            <p className="text-mist">
+              Create your first group to get started.
+            </p>
+          </div>
         )}
 
         {activeGroup && (
           <>
 
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="teacher-section-header flex items-center justify-between flex-wrap gap-4 surface-raised px-5 py-4 sm:px-6 sm:py-5">
 
-              <h2 className="font-display text-xl">
-                {activeGroupObj?.name}
-              </h2>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-1">
+                  Current group
+                </div>
+
+                <h2 className="font-display text-2xl sm:text-3xl">
+                  {activeGroupObj?.name}
+                </h2>
+              </div>
 
               <PostHomeworkForm
                 groupId={activeGroup}
@@ -596,15 +570,17 @@ export default function GroupWorkspace({ teacherId }) {
             </div>
 
             {roster.length === 0 && (
-              <p className="text-mist text-sm">
-                No approved students in this group yet.
-                Once you approve someone under the
-                Approvals tab, they'll show up here.
-              </p>
+              <div className="surface px-5 py-5">
+                <p className="text-mist text-sm leading-6">
+                  No approved students in this group yet.
+                  Once you approve someone under the
+                  Approvals tab, they'll show up here.
+                </p>
+              </div>
             )}
 
             {roster.length > 0 && (
-              <div className="flex flex-col gap-2">
+              <div className="surface-raised p-4 flex flex-col gap-3">
 
                 <input
                   value={studentSearch}
@@ -612,7 +588,7 @@ export default function GroupWorkspace({ teacherId }) {
                     setStudentSearch(e.target.value)
                   }
                   placeholder="Search students in this group..."
-                  className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                  className="focus-ring w-full bg-panel-2 border border-line rounded-lg px-3 py-2.5 text-sm"
                 />
 
                 <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -642,30 +618,34 @@ export default function GroupWorkspace({ teacherId }) {
 
             {roster.length > 0 &&
               filteredRoster.length === 0 && (
-                <p className="text-mist text-sm">
-                  No students match your search.
-                </p>
+                <div className="surface px-5 py-5">
+                  <p className="text-mist text-sm">
+                    No students match your search.
+                  </p>
+                </div>
               )}
 
             {homeworks.length === 0 &&
               roster.length > 0 && (
-                <p className="text-mist text-sm">
-                  No homework posted yet.
-                </p>
+                <div className="surface px-5 py-5">
+                  <p className="text-mist text-sm">
+                    No homework posted yet.
+                  </p>
+                </div>
               )}
 
             {homeworks.length > 0 &&
               filteredRoster.length > 0 && (
 
-                <div className="overflow-x-auto">
+                <div className="teacher-homework-table surface-raised overflow-x-auto p-2 sm:p-3">
 
                   <table className="w-full text-sm border-separate border-spacing-y-2">
 
                     <thead>
 
-                      <tr className="text-left text-mist text-xs uppercase font-mono">
+                      <tr className="text-left text-mist text-xs uppercase tracking-[0.12em] font-mono">
 
-                        <th className="pr-4 pb-2">
+                        <th className="pr-4 pb-2 pl-2">
                           Student
                         </th>
 
@@ -748,10 +728,10 @@ export default function GroupWorkspace({ teacherId }) {
 
                         <tr
                           key={student.id}
-                          className="bg-panel-2"
+                          className="bg-panel-2 transition-colors hover:bg-[color-mix(in_srgb,var(--color-panel-2)_88%,var(--color-brass))]"
                         >
 
-                          <td className="px-3 py-2 rounded-l-md font-medium whitespace-nowrap">
+                          <td className="px-3 py-3 rounded-l-lg font-medium whitespace-nowrap">
 
                             <div className="flex items-center gap-2">
 
@@ -759,7 +739,7 @@ export default function GroupWorkspace({ teacherId }) {
 
                                 {student.full_name}
 
-                                <div className="text-mist text-xs font-mono">
+                                <div className="text-mist text-xs font-mono mt-0.5">
                                   @{student.username}
                                 </div>
 
@@ -794,7 +774,7 @@ export default function GroupWorkspace({ teacherId }) {
                             return (
                               <td
                                 key={hw.id}
-                                className="px-2 py-2 text-center"
+                                className="px-2 py-3 text-center"
                               >
 
                                 <button
