@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
@@ -662,30 +663,27 @@ const activityDate =
     }
   }
 
-  const selectStudent = async (
-    student
-  ) => {
-    setSelectedStudent({
-      ...student,
-    })
+  const selectStudent = async (student) => {
+  // Open the profile immediately.
+  setSelectedStudent({
+    ...student,
+  })
 
-    const streak =
-      await loadDailyProgress(
-        student
-      )
+  // Load the student's historical progress
+  // without blocking the profile from opening.
+  const streak = await loadDailyProgress(student)
 
-    if (streak !== null) {
-      setSelectedStudent(
-        (previous) =>
-          previous
-            ? {
-                ...previous,
-                streak,
-              }
-            : previous
-      )
-    }
+  if (streak !== null) {
+    setSelectedStudent((previous) =>
+      previous
+        ? {
+            ...previous,
+            streak,
+          }
+        : previous
+    )
   }
+}
 
   const handleChat = (
     student
@@ -1084,9 +1082,10 @@ const activityDate =
         }
       )}
 
-      {selectedStudent && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+      {selectedStudent &&
+  createPortal(
+    <div
+      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
           onMouseDown={(e) => {
             if (
               e.target ===
@@ -1097,7 +1096,7 @@ const activityDate =
           }}
         >
 
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-panel border border-line rounded-xl shadow-2xl">
+          <div className="w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto bg-panel border border-line rounded-xl shadow-2xl">
 
             <div className="sticky top-0 z-10 bg-panel border-b border-line px-5 py-4 flex items-start justify-between gap-4">
 
@@ -1495,6 +1494,7 @@ const activityDate =
                         )
                       )}
 
+
                     </div>
                   )}
 
@@ -1504,10 +1504,11 @@ const activityDate =
 
           </div>
 
-        </div>
-      )}
+            </div>,
+    document.body
+  )}
 
-     {isTeacher && manageStudent && (
+  {isTeacher && manageStudent && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
           onMouseDown={(

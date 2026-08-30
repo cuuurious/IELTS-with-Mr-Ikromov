@@ -76,6 +76,9 @@ export default function HomeworkCard({
     submission,
     homework.due_date
   )
+  
+  console.log('SPEAKING SUBMISSION:', submission)
+  
 
   useEffect(() => {
     setSpeakingParts({
@@ -109,6 +112,17 @@ export default function HomeworkCard({
 
   const taskAlreadySubmitted =
     !homework.enable_speaking &&
+    submission?.status === 'done' &&
+    Boolean(submission?.submitted_at)
+
+  /*
+   * ============================================================
+   * SPEAKING STATUS
+   * ============================================================
+   */
+
+  const speakingAlreadySubmitted =
+    homework.enable_speaking &&
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
 
@@ -158,24 +172,81 @@ export default function HomeworkCard({
 
   /*
    * ============================================================
+   * MARK HOMEWORK AS COMPLETED
+   * ============================================================
+   *
+   * IMPORTANT:
+   *
+   * The leaderboard uses homework_completions for completed
+   * homework in group leaderboards.
+   *
+   * Submitting a homework therefore needs to create a
+   * homework_completions row as well as the submissions row.
+   *
+   * We deliberately check first so we don't create duplicate
+   * completion records.
+   * ============================================================
+   */
+
+  const markHomeworkCompleted =
+    async () => {
+      const {
+        data: existing,
+        error: lookupError,
+      } = await supabase
+        .from('homework_completions')
+        .select(
+          'student_id, homework_id, completed_at'
+        )
+        .eq(
+          'student_id',
+          studentId
+        )
+        .eq(
+          'homework_id',
+          homework.id
+        )
+        .limit(1)
+
+      if (lookupError) {
+        throw lookupError
+      }
+
+      if (
+        existing &&
+        existing.length > 0
+      ) {
+        return existing[0]
+      }
+
+      const {
+        data,
+        error: completionError,
+      } = await supabase
+        .from('homework_completions')
+        .insert({
+          student_id: studentId,
+          homework_id: homework.id,
+          completed_at:
+            new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (completionError) {
+        throw completionError
+      }
+
+      return data
+    }
+
+  /*
+   * ============================================================
    * STORAGE UPLOAD
    * ============================================================
    *
-   * VERY IMPORTANT:
-   *
    * The student's original filename is NEVER used as the
    * Supabase Storage object key.
-   *
-   * Example:
-   *
-   * "Снимок экрана (5).png"
-   *
-   * becomes something like:
-   *
-   * "studentUUID/homeworkUUID/550e8400-e29b-41d4-a716-446655440000.png"
-   *
-   * The original filename is only stored in the database
-   * for display to the teacher.
    * ============================================================
    */
 
@@ -195,11 +266,6 @@ export default function HomeworkCard({
         ? originalName.trim()
         : file.name || 'file'
 
-    /*
-     * Extract ONLY a safe ASCII extension.
-     *
-     * We never put the original filename into the path.
-     */
     const rawExtension =
       name.includes('.')
         ? name
@@ -215,9 +281,6 @@ export default function HomeworkCard({
         ? rawExtension
         : ''
 
-    /*
-     * Generate a completely safe Storage filename.
-     */
     let uniqueId
 
     if (
@@ -233,26 +296,11 @@ export default function HomeworkCard({
           .slice(2, 12)}`
     }
 
-    /*
-     * ONLY safe ASCII characters here.
-     */
     const safeFileName =
       extension
         ? `${uniqueId}.${extension}`
         : uniqueId
 
-    /*
-     * Student ID and homework ID are UUIDs.
-     *
-     * The final Storage key therefore contains no:
-     * - spaces
-     * - Cyrillic
-     * - parentheses
-     * - brackets
-     * - quotes
-     * - emojis
-     * - special characters
-     */
     const path =
       `${studentId}/${homework.id}/${safeFileName}`
 
@@ -407,11 +455,6 @@ export default function HomeworkCard({
         if (isImage) {
           newImages.push(url)
         } else {
-          /*
-           * ORIGINAL filename stays here ONLY for display.
-           *
-           * It is NOT the Storage object key.
-           */
           newFiles.push({
             url,
             name: file.name,
@@ -559,11 +602,21 @@ export default function HomeworkCard({
       setUploading(true)
 
       try {
+        /*
+         * First save the actual submission.
+         */
         await upsertSubmission({
           status: 'done',
           submitted_at:
             new Date().toISOString(),
         })
+
+        /*
+         * Then record the homework completion.
+         *
+         * This is what the group leaderboard uses.
+         */
+        await markHomeworkCompleted()
       } catch (err) {
         console.error(
           'Homework submission error:',
@@ -770,6 +823,9 @@ export default function HomeworkCard({
       setUploading(true)
 
       try {
+        /*
+         * First save the Speaking submission as DONE.
+         */
         await upsertSubmission({
           audio_part1_url:
             speakingParts.audio_part1_url,
@@ -781,6 +837,13 @@ export default function HomeworkCard({
           submitted_at:
             new Date().toISOString(),
         })
+
+        /*
+         * Then create the completion record.
+         *
+         * This fixes the leaderboard counting issue.
+         */
+        await markHomeworkCompleted()
       } catch (err) {
         console.error(
           'Speaking task submission error:',
@@ -918,14 +981,6 @@ export default function HomeworkCard({
     ) &&
     Boolean(
       speakingParts.audio_part3_url
-    )
-
-  const speakingAlreadySubmitted =
-    homework.enable_speaking &&
-    submission?.status ===
-      'done' &&
-    Boolean(
-      submission?.submitted_at
     )
 
   return (

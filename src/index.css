@@ -1,101 +1,898 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-/* Base (dark) design tokens — also the default when no data-theme is set */
 @theme {
-  --color-ink: #10161f;
-  --color-panel: #1a2431;
-  --color-panel-2: #202c3b;
-  --color-line: #2c3a4c;
-  --color-paper: #f4efe4;
-  --color-paper-dim: #e7e0cf;
-  --color-brass: #c9a24b;
-  --color-brass-dim: #9c7d38;
-  --color-sage: #6f9c82;
-  --color-coral: #c1573d;
-  --color-mist: #93a1b3;
-  /* Fixed regardless of theme — used for text sitting on top of brass/sage
-     accent colors, which are themselves the same brightness in both themes. */
-  --color-onbrass: #10161f;
+  /* ============================================================
+     DARK MODE — layered charcoal / blue-grey
+     ============================================================ */
+
+  --color-ink: #0d1218;
+  --color-panel: #151c24;
+  --color-panel-2: #1d2630;
+  --color-line: #303b47;
+
+  --color-paper: #f2eee5;
+  --color-paper-dim: #b9b5aa;
+
+  --color-brass: #c9a45b;
+  --color-brass-dim: #a47f3d;
+
+  --color-sage: #7fa58c;
+
+  /* softer coral — reserved for genuinely overdue/error states */
+  --color-coral: #b87561;
+
+  --color-mist: #929daa;
+  --color-onbrass: #111820;
 
   --font-display: 'Source Serif 4', serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
-/* Light theme override — same token names, different values.
-   The attribute selector out-specifies the plain :root theme block above,
-   so this wins whenever <html data-theme="light"> is set. */
+
+/* ============================================================
+   DAY MODE
+   ============================================================ */
+
 :root[data-theme='light'] {
-  --color-ink: #f3efe6;
-  --color-panel: #fdfbf6;
-  --color-panel-2: #eee7d5;
-  --color-line: #ddd3ba;
-  --color-paper: #1b2431;
-  --color-paper-dim: #333f4f;
-  --color-brass: #b3872f;
-  --color-brass-dim: #8f6a24;
-  --color-sage: #3f7a5c;
-  --color-coral: #a8402a;
-  --color-mist: #5c6a7c;
+  --color-ink: #e7e1d7;
+  --color-panel: #f5f1e9;
+  --color-panel-2: #ebe5db;
+  --color-line: #d3cdc2;
+
+  --color-paper: #27313b;
+  --color-paper-dim: #69716f;
+
+  --color-brass: #9a7027;
+  --color-brass-dim: #76541b;
+
+  --color-sage: #4e795e;
+
+  /* muted warm red */
+  --color-coral: #a96652;
+
+  --color-mist: #737b7b;
+  --color-onbrass: #fffdf8;
 }
 
-html, body, #root {
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+
+html,
+body,
+#root {
+  min-height: 100%;
   height: 100%;
 }
 
-body {
-  background-color: var(--color-ink);
-  color: var(--color-paper);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
-}
-
-/* Examiner stamp - signature element for homework status */
-.stamp {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid currentColor;
-  border-radius: 9999px;
-  transform: rotate(-8deg);
-  font-family: var(--font-mono);
-  letter-spacing: 0.08em;
-}
-.stamp.stamp-done { color: var(--color-sage); }
-.stamp.stamp-pending { color: var(--color-brass); }
-.stamp.stamp-overdue { color: var(--color-coral); }
-
-.ticket {
-  background: var(--color-panel);
-  border: 1px solid var(--color-line);
-  position: relative;
-}
-.ticket::before, .ticket::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
+html {
   background: var(--color-ink);
-  border-radius: 9999px;
-  top: 50%;
-  transform: translateY(-50%);
+  color-scheme: dark;
 }
-.ticket::before { left: -8px; }
-.ticket::after { right: -8px; }
 
-.focus-ring:focus-visible {
-  outline: 2px solid var(--color-brass);
-  outline-offset: 2px;
+html[data-theme='light'] {
+  color-scheme: light;
 }
+
+
+/* ============================================================
+   BODY
+   ============================================================ */
+
+body {
+  margin: 0;
+
+  background:
+    radial-gradient(
+      circle at 8% -5%,
+      color-mix(
+        in srgb,
+        var(--color-brass) 7%,
+        transparent
+      ),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 95% 20%,
+      color-mix(
+        in srgb,
+        var(--color-sage) 4%,
+        transparent
+      ),
+      transparent 28rem
+    ),
+    var(--color-ink);
+
+  color: var(--color-paper);
+
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  transition:
+    background-color .25s ease,
+    color .25s ease;
+}
+
+
+/* ============================================================
+   DAY MODE ATMOSPHERE
+   ============================================================ */
+
+html[data-theme='light'] body {
+  background:
+    radial-gradient(
+      circle at 5% 0%,
+      rgba(154, 112, 39, .055),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 100% 35%,
+      rgba(78, 121, 94, .035),
+      transparent 30rem
+    ),
+    var(--color-ink);
+}
+
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  line-height: 1.08;
+}
+
+h2 {
+  line-height: 1.15;
+}
+
+h3,
+h4 {
+  line-height: 1.2;
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color:
+    var(--color-line)
+    transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mist);
+}
+
+
+/* ============================================================
+   SELECTION / FOCUS
+   ============================================================ */
 
 ::selection {
   background: var(--color-brass);
   color: var(--color-onbrass);
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 3px;
+}
+
+
+/* ============================================================
+   ELEMENTS
+   ============================================================ */
+
+a {
+  color: inherit;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-mist);
+  opacity: .72;
+}
+
+
+/* ============================================================
+   SURFACES
+   ============================================================ */
+
+.surface {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(
+        in srgb,
+        var(--color-panel) 96%,
+        var(--color-paper)
+      ),
+      var(--color-panel)
+    );
+
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+.surface-raised {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(
+        in srgb,
+        var(--color-panel-2) 94%,
+        var(--color-paper)
+      ),
+      var(--color-panel-2)
+    );
+
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, .12),
+    0 2px 5px rgba(0, 0, 0, .08);
+}
+
+html[data-theme='light'] .surface {
+  box-shadow:
+    0 5px 16px rgba(61, 53, 42, .035);
+}
+
+html[data-theme='light'] .surface-raised {
+  box-shadow:
+    0 10px 26px rgba(61, 53, 42, .075),
+    0 2px 5px rgba(61, 53, 42, .045);
+}
+
+.surface-hover {
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.surface-hover:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-brass) 32%,
+      var(--color-line)
+    );
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, .08);
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  min-height: 40px;
+  padding: .55rem 1rem;
+
+  border: 1px solid var(--color-brass);
+  border-radius: 9px;
+
+  background: var(--color-brass);
+  color: var(--color-onbrass);
+
+  font-weight: 600;
+
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.btn-primary:hover {
+  background: var(--color-brass-dim);
+  border-color: var(--color-brass-dim);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, .13);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  min-height: 40px;
+  padding: .55rem 1rem;
+
+  border: 1px solid var(--color-line);
+  border-radius: 9px;
+
+  background: var(--color-panel-2);
+  color: var(--color-paper);
+
+  font-weight: 500;
+
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-brass);
+  color: var(--color-brass);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+
+  min-height: 38px;
+  padding: .45rem .75rem;
+
+  border-radius: 9px;
+
+  color: var(--color-mist);
+
+  transition:
+    color .18s ease,
+    background-color .18s ease;
+}
+
+.btn-ghost:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-paper) 6%,
+      transparent
+    );
+
+  color: var(--color-paper);
+}
+
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.status-not-done {
+  color: var(--color-mist);
+}
+
+.status-incomplete {
+  color: var(--color-brass);
+}
+
+.status-done {
+  color: var(--color-sage);
+}
+
+.status-overdue {
+  color: var(--color-coral);
+}
+
+
+/* ============================================================
+   TICKET / HOMEWORK CARDS
+   ============================================================ */
+
+.ticket {
+  position: relative;
+
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(
+        in srgb,
+        var(--color-panel) 96%,
+        var(--color-paper)
+      ),
+      var(--color-panel)
+    );
+
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, .075),
+    0 1px 3px rgba(0, 0, 0, .07);
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+html[data-theme='light'] .ticket {
+  background:
+    linear-gradient(
+      145deg,
+      #f7f4ee,
+      #f0ebe2
+    );
+
+  box-shadow:
+    0 9px 24px rgba(64, 56, 44, .065),
+    0 1px 3px rgba(64, 56, 44, .04);
+}
+
+.ticket:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-brass) 28%,
+      var(--color-line)
+    );
+
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, .09),
+    0 2px 5px rgba(0, 0, 0, .07);
+}
+
+
+/* ticket cut-outs */
+
+.ticket::before,
+.ticket::after {
+  content: "";
+
+  position: absolute;
+  z-index: 2;
+
+  width: 12px;
+  height: 12px;
+
+  top: 50%;
+
+  background: var(--color-ink);
+
+  border-radius: 9999px;
+
+  transform: translateY(-50%);
+}
+
+.ticket::before {
+  left: -7px;
+}
+
+.ticket::after {
+  right: -7px;
+}
+
+
+/* ============================================================
+   STAMPS
+   ============================================================ */
+
+.stamp {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid currentColor;
+  border-radius: 9999px;
+
+  transform: rotate(-6deg);
+
+  font-family: var(--font-mono);
+  letter-spacing: .08em;
+}
+
+.stamp.stamp-done {
+  color: var(--color-sage);
+}
+
+.stamp.stamp-pending {
+  color: var(--color-brass);
+}
+
+.stamp.stamp-overdue {
+  color: var(--color-coral);
+}
+
+
+/* ============================================================
+   AVATARS
+   ============================================================ */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  overflow: hidden;
+
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+
+  background: var(--color-panel-2);
+  color: var(--color-paper);
+
+  font-weight: 600;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--color-line);
+}
+
+
+/* ============================================================
+   LONDON ATMOSPHERE
+   ============================================================ */
+
+.london-atmosphere {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.london-atmosphere img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  filter:
+    saturate(.70)
+    contrast(1.04);
+
+  opacity: .70;
+
+  transition:
+    opacity .25s ease,
+    filter .25s ease,
+    transform .35s ease;
+}
+
+.london-atmosphere::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(12, 18, 25, .18),
+      transparent 50%,
+      rgba(12, 18, 25, .28)
+    );
+
+  pointer-events: none;
+}
+
+.london-atmosphere:hover img {
+  opacity: .78;
+  transform: scale(1.015);
+}
+
+
+/* DAY MODE — more noticeable, still restrained */
+
+html[data-theme='light'] .london-atmosphere img {
+  filter:
+    saturate(.52)
+    contrast(1.08)
+    sepia(.10);
+
+  opacity: .76;
+}
+
+html[data-theme='light'] .london-atmosphere::after {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 241, 233, .04),
+      transparent 45%,
+      rgba(62, 55, 45, .16)
+    );
+}
+
+
+/* ============================================================
+   DASHBOARD ATMOSPHERE
+   ============================================================ */
+
+.dashboard-atmosphere {
+  position: relative;
+  isolation: isolate;
+}
+
+.dashboard-atmosphere::before {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  width: 360px;
+  height: 360px;
+
+  top: -180px;
+  right: -100px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      color-mix(
+        in srgb,
+        var(--color-brass) 9%,
+        transparent
+      ),
+      transparent 70%
+    );
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation:
+    fade-up .22s ease-out both;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  .ticket {
+    border-radius: 12px;
+  }
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   FINAL VISUAL CORRECTIONS
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   REMOVE THE CSS LONDON SILHOUETTE
+   ------------------------------------------------------------ */
+
+.dashboard-hero::after {
+  display: none !important;
+}
+
+.dashboard-hero::before {
+  display: none !important;
+}
+
+.dashboard-hero .hero-atmosphere {
+  display: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   COMFORTABLE DAY MODE
+   ------------------------------------------------------------ */
+
+html[data-theme='light'] {
+  --color-ink: #ebe8e0;
+  --color-panel: #f7f5ef;
+  --color-panel-2: #f1eee6;
+  --color-line: #d8d3c8;
+
+  --color-paper: #263442;
+  --color-paper-dim: #66727c;
+  --color-mist: #77818a;
+
+  --color-brass: #a87925;
+  --color-brass-dim: #86631f;
+
+  /* Soft, muted red */
+  --color-coral: #b86155;
+
+  --color-sage: #4f8065;
+  --color-onbrass: #fffdf8;
+}
+
+
+/* ------------------------------------------------------------
+   DARK MODE — KEEP DEPTH, SOFTEN THE RED
+   ------------------------------------------------------------ */
+
+html:not([data-theme='light']) {
+  --color-coral: #c86b5c;
+}
+
+
+/* ------------------------------------------------------------
+   HOMEWORK STATUS
+   ------------------------------------------------------------ */
+
+/* INCOMPLETE = red */
+.status-incomplete {
+  color: var(--color-coral) !important;
+}
+
+/* NOT STARTED = quiet neutral */
+.status-not-done {
+  color: var(--color-mist) !important;
+}
+
+/* COMPLETED = calm green */
+.status-done {
+  color: var(--color-sage) !important;
+}
+
+/* OVERDUE = same family, slightly stronger */
+.status-overdue {
+  color: var(--color-coral) !important;
+}
+
+
+/* ------------------------------------------------------------
+   STATUS STAMPS
+   ------------------------------------------------------------ */
+
+.stamp.stamp-pending {
+  color: var(--color-coral) !important;
+}
+
+.stamp.stamp-overdue {
+  color: var(--color-coral) !important;
+}
+
+.stamp.stamp-done {
+  color: var(--color-sage) !important;
+}
+
+
+/* ------------------------------------------------------------
+   DAY MODE — REDUCE HARSH CONTRAST ON CARDS
+   ------------------------------------------------------------ */
+
+html[data-theme='light'] .ticket {
+  box-shadow:
+    0 2px 8px rgba(54, 48, 38, .06),
+    0 1px 2px rgba(54, 48, 38, .05);
+}
+
+html[data-theme='light'] .surface-raised {
+  box-shadow:
+    0 3px 12px rgba(54, 48, 38, .06),
+    0 1px 2px rgba(54, 48, 38, .05);
+}
+
+
+/* ------------------------------------------------------------
+   DAY MODE — SOFTER BACKGROUND
+   ------------------------------------------------------------ */
+
+html[data-theme='light'] body {
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(168, 121, 37, .035),
+      transparent 30rem
+    ),
+    var(--color-ink);
 }
