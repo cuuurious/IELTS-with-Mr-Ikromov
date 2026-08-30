@@ -10,42 +10,120 @@ export default function TeacherWordlists({ teacherId }) {
   const [viewingResults, setViewingResults] = useState(null)
 
   useEffect(() => {
-    supabase
-      .from('groups')
-      .select('*')
-      .order('created_at')
-      .then(({ data }) => {
-        setGroups(data || [])
+    const loadGroups = async () => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select('*')
+        .order('created_at')
 
-        if (data?.length) {
-          setActiveGroup(data[0].id)
-        }
-      })
-  }, [])
+      if (error) {
+        console.error('Failed to load groups:', error)
+        return
+      }
+
+      setGroups(data || [])
+
+      if (data?.length && !activeGroup) {
+        setActiveGroup(data[0].id)
+      }
+    }
+
+    loadGroups()
+  }, [activeGroup])
 
   const loadLists = async () => {
-    if (!activeGroup) return
+    if (!activeGroup || !teacherId) return
 
-    const { data } = await supabase
+    const { data: ownedLists, error: listsError } = await supabase
       .from('wordlists')
       .select('*, wordlist_items(count)')
-      .eq('group_id', activeGroup)
-      .order('created_at', {
-        ascending: false,
-      })
+      .eq('created_by', teacherId)
+      .order('created_at', { ascending: false })
 
-    setLists(data || [])
+    if (listsError) {
+      console.error('Failed to load word lists:', listsError)
+      setLists([])
+      return
+    }
+
+    const { data: links, error: linksError } = await supabase
+      .from('wordlist_groups')
+      .select('wordlist_id, group_id')
+      .eq('group_id', activeGroup)
+
+    if (linksError) {
+      console.error('Failed to load word list group assignments:', linksError)
+    }
+
+    const linkedIds = new Set(
+      (links || []).map((link) => link.wordlist_id)
+    )
+
+    const visible = (ownedLists || []).filter((list) =>
+      linkedIds.has(list.id) || list.group_id === activeGroup
+    )
+
+    setLists(visible)
   }
 
   useEffect(() => {
     loadLists()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroup])
+  }, [activeGroup, teacherId])
+
+  const deleteWordlist = async (list) => {
+    const confirmed = window.confirm(
+      `Delete \"${list.title}\" permanently?\n\nThis will delete the word list, its words, group assignments, and stored student results.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      const { error: attemptsError } = await supabase
+        .from('wordlist_attempts')
+        .delete()
+        .eq('wordlist_id', list.id)
+
+      if (attemptsError) throw attemptsError
+
+      const { error: itemsError } = await supabase
+        .from('wordlist_items')
+        .delete()
+        .eq('wordlist_id', list.id)
+
+      if (itemsError) throw itemsError
+
+      const { error: linksError } = await supabase
+        .from('wordlist_groups')
+        .delete()
+        .eq('wordlist_id', list.id)
+
+      if (linksError) throw linksError
+
+      const { error: listError } = await supabase
+        .from('wordlists')
+        .delete()
+        .eq('id', list.id)
+        .eq('created_by', teacherId)
+
+      if (listError) throw listError
+
+      if (viewingResults?.id === list.id) {
+        setViewingResults(null)
+      }
+
+      await loadLists()
+    } catch (err) {
+      console.error('Word list deletion failed:', err)
+      alert(
+        `Could not delete the word list: ${err?.message || 'Unknown error'}`
+      )
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
 
-      {/* GROUP SELECTOR */}
       {groups.length === 0 && (
         <div className="surface rounded-xl p-6">
           <p className="text-mist">
@@ -57,15 +135,13 @@ export default function TeacherWordlists({ teacherId }) {
       {groups.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {groups.map((group) => {
-            const active =
-              activeGroup === group.id
+            const active = activeGroup === group.id
 
             return (
               <button
                 key={group.id}
-                onClick={() =>
-                  setActiveGroup(group.id)
-                }
+                type="button"
+                onClick={() => setActiveGroup(group.id)}
                 className={`focus-ring px-4 py-2 rounded-lg text-sm border transition-colors ${
                   active
                     ? 'bg-brass text-onbrass border-brass font-medium'
@@ -81,33 +157,28 @@ export default function TeacherWordlists({ teacherId }) {
 
       {activeGroup && (
         <>
-          {/* CREATE */}
           {creating ? (
             <NewWordlistForm
-              groupId={activeGroup}
+              groups={groups}
+              groupIds={[activeGroup]}
               teacherId={teacherId}
               onDone={() => {
                 setCreating(false)
                 loadLists()
               }}
-              onCancel={() =>
-                setCreating(false)
-              }
+              onCancel={() => setCreating(false)}
             />
           ) : (
             <button
-              onClick={() =>
-                setCreating(true)
-              }
+              type="button"
+              onClick={() => setCreating(true)}
               className="btn-primary w-fit"
             >
               + New word list
             </button>
           )}
 
-          {/* WORD LISTS */}
           <section className="flex flex-col gap-4">
-
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
@@ -120,13 +191,11 @@ export default function TeacherWordlists({ teacherId }) {
               </div>
 
               <div className="text-xs font-mono text-mist border border-line rounded-full px-3 py-1.5">
-                {lists.length} list
-                {lists.length === 1 ? '' : 's'}
+                {lists.length} list{lists.length === 1 ? '' : 's'}
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
-
               {lists.map((list) => (
                 <div
                   key={list.id}
@@ -138,22 +207,27 @@ export default function TeacherWordlists({ teacherId }) {
                     </div>
 
                     <div className="text-mist text-xs font-mono mt-1">
-                      {list.wordlist_items?.[0]?.count ?? 0}{' '}
-                      words · posted{' '}
-                      {new Date(
-                        list.created_at
-                      ).toLocaleDateString()}
+                      {list.wordlist_items?.[0]?.count ?? 0} words · posted {new Date(list.created_at).toLocaleDateString()}
                     </div>
                   </div>
 
-                  <button
-                    onClick={() =>
-                      setViewingResults(list)
-                    }
-                    className="btn-secondary shrink-0"
-                  >
-                    View results
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewingResults(list)}
+                      className="btn-secondary"
+                    >
+                      View results
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteWordlist(list)}
+                      className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -164,7 +238,6 @@ export default function TeacherWordlists({ teacherId }) {
                   </p>
                 </div>
               )}
-
             </div>
           </section>
         </>
@@ -173,12 +246,9 @@ export default function TeacherWordlists({ teacherId }) {
       {viewingResults && (
         <ResultsModal
           wordlist={viewingResults}
-          onClose={() =>
-            setViewingResults(null)
-          }
+          onClose={() => setViewingResults(null)}
         />
       )}
-
     </div>
   )
 }
@@ -186,10 +256,12 @@ export default function TeacherWordlists({ teacherId }) {
 
 /* ============================================================
    NEW WORD LIST
-   ============================================================ */
+   ============================================================
+*/
 
 function NewWordlistForm({
-  groupId,
+  groups,
+  groupIds,
   teacherId,
   onDone,
   onCancel,
@@ -200,6 +272,7 @@ function NewWordlistForm({
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [selectedGroupIds, setSelectedGroupIds] = useState(groupIds || [])
 
   const generate = async () => {
     const words = rawWords
@@ -343,8 +416,12 @@ function NewWordlistForm({
   const publish = async () => {
     if (
       !title.trim() ||
-      !items?.length
+      !items?.length ||
+      !selectedGroupIds.length
     ) {
+      setError(
+        'Select at least one group before publishing.'
+      )
       return
     }
 
@@ -360,7 +437,7 @@ function NewWordlistForm({
           .from('wordlists')
           .insert({
             group_id:
-              groupId,
+              selectedGroupIds[0],
             title:
               title.trim(),
             created_by:
@@ -371,6 +448,25 @@ function NewWordlistForm({
 
       if (wlErr) {
         throw wlErr
+      }
+
+      const { error: groupLinksError } =
+        await supabase
+          .from('wordlist_groups')
+          .insert(
+            selectedGroupIds.map((groupId) => ({
+              wordlist_id: wl.id,
+              group_id: groupId,
+            }))
+          )
+
+      if (groupLinksError) {
+        await supabase
+          .from('wordlists')
+          .delete()
+          .eq('id', wl.id)
+
+        throw groupLinksError
       }
 
       const rows =
@@ -442,6 +538,50 @@ function NewWordlistForm({
         placeholder="Title (e.g. Passage 3 vocabulary — Lesson 5)"
         className="focus-ring bg-panel-2 border border-line rounded-lg px-3 py-2.5 text-paper"
       />
+
+      <div className="rounded-xl border border-line bg-panel-2 p-4">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+          Assign to groups
+        </div>
+
+        <p className="text-xs text-mist mt-1 mb-3">
+          Select one or more groups. The same word list will be available to students in every selected group.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {groups.map((group) => {
+            const checked = selectedGroupIds.includes(group.id)
+
+            return (
+              <label
+                key={group.id}
+                className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors ${
+                  checked
+                    ? 'border-brass bg-brass/10 text-paper'
+                    : 'border-line bg-panel hover:border-brass/50 text-mist'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => {
+                    setSelectedGroupIds((prev) =>
+                      prev.includes(group.id)
+                        ? prev.filter((id) => id !== group.id)
+                        : [...prev, group.id]
+                    )
+                  }}
+                  className="accent-brass"
+                />
+
+                <span className="text-sm truncate">
+                  {group.name}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      </div>
 
       {!items && (
         <>
@@ -556,13 +696,16 @@ function NewWordlistForm({
               onClick={publish}
               disabled={
                 saving ||
-                !title.trim()
+                !title.trim() ||
+                !selectedGroupIds.length
               }
               className="btn-primary disabled:opacity-50"
             >
               {saving
                 ? 'Publishing…'
-                : 'Publish to group'}
+                : selectedGroupIds.length > 1
+              ? `Publish to ${selectedGroupIds.length} groups`
+              : 'Publish to group'}
             </button>
 
             <button
@@ -596,11 +739,9 @@ function ResultsModal({
 
   useEffect(() => {
     const loadAttempts = async () => {
-      const { data } =
+      const { data, error } =
         await supabase
-          .from(
-            'wordlist_attempts'
-          )
+          .from('wordlist_attempts')
           .select(
             '*, profiles(full_name, username)'
           )
@@ -615,21 +756,19 @@ function ResultsModal({
             }
           )
 
-      setAttempts(
-        data || []
-      )
+      if (error) {
+        console.error(
+          'Failed to load word list results:',
+          error
+        )
+      }
+
+      setAttempts(data || [])
     }
 
     loadAttempts()
   }, [wordlist.id])
 
-  /*
-   * Render directly into document.body.
-   *
-   * This is the important fix:
-   * the modal is no longer affected by the
-   * dashboard's layout/overflow/stacking context.
-   */
   if (
     typeof document === 'undefined'
   ) {
@@ -642,23 +781,21 @@ function ResultsModal({
       role="dialog"
       aria-modal="true"
       aria-label={`${wordlist.title} results`}
-      onClick={onClose}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
     >
-
-      {/* BACKDROP */}
       <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
 
-      {/* MODAL */}
       <div
-        className="relative z-10 w-full max-w-2xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
-        onClick={(e) =>
+        className="relative z-10 w-full max-w-5xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
+        onMouseDown={(e) =>
           e.stopPropagation()
         }
       >
-
-        {/* HEADER */}
-        <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-5 border-b border-line bg-panel">
-
+        <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-5 border-b border-line">
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
               Student results
@@ -667,23 +804,27 @@ function ResultsModal({
             <h2 className="font-display text-2xl sm:text-3xl mt-1 truncate">
               {wordlist.title}
             </h2>
+
+            <p className="text-xs text-mist mt-1">
+              {attempts?.length || 0}{' '}
+              attempt
+              {attempts?.length === 1 ? '' : 's'}
+            </p>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="focus-ring shrink-0 h-9 w-9 rounded-full border border-line text-mist hover:text-paper hover:border-brass transition-colors text-xl leading-none"
             aria-label="Close results"
           >
             ×
           </button>
-
         </div>
 
-        {/* CONTENT */}
-        <div className="overflow-y-auto max-h-[calc(100vh-9rem)] p-4 sm:p-5">
-
+        <div className="overflow-y-auto max-h-[calc(100vh-10rem)] p-4 sm:p-6">
           {attempts === null && (
-            <div className="surface rounded-xl p-8 text-center">
+            <div className="surface rounded-xl p-10 text-center">
               <p className="text-mist text-sm">
                 Loading results…
               </p>
@@ -691,78 +832,122 @@ function ResultsModal({
           )}
 
           {attempts?.length === 0 && (
-            <div className="surface rounded-xl p-8 text-center">
-              <p className="text-mist text-sm">
-                No attempts yet.
+            <div className="surface rounded-xl p-10 text-center">
+              <p className="font-display text-lg text-paper">
+                No attempts yet
+              </p>
+
+              <p className="text-sm text-mist mt-1">
+                Students have not completed this
+                word list yet.
               </p>
             </div>
           )}
 
           {attempts?.length > 0 && (
-            <div className="flex flex-col gap-3">
+            <div className="overflow-x-auto rounded-xl border border-line">
+              <table className="w-full min-w-[720px] border-collapse">
+                <thead>
+                  <tr className="bg-panel-2 border-b border-line">
+                    <th className="px-5 py-3.5 text-left text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+                      Student
+                    </th>
 
-              {attempts.map(
-                (attempt) => (
-                  <div
-                    key={
-                      attempt.id
-                    }
-                    className="bg-panel-2 border border-line rounded-xl p-4"
-                  >
+                    <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+                      Score
+                    </th>
 
-                    <div className="flex items-center justify-between gap-4">
+                    <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+                      Correct
+                    </th>
 
-                      <span className="font-medium text-paper">
-                        {
-                          attempt
-                            .profiles
-                            ?.full_name ||
-                          attempt
-                            .profiles
-                            ?.username ||
-                          'Student'
-                        }
-                      </span>
+                    <th className="px-5 py-3.5 text-right text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+                      Completed
+                    </th>
+                  </tr>
+                </thead>
 
-                      <span
-                        className={`font-mono text-sm font-medium ${
-                          attempt.percentage >= 90
-                            ? 'text-sage'
-                            : attempt.percentage >= 70
-                              ? 'text-brass'
-                              : 'text-coral'
-                        }`}
+                <tbody>
+                  {attempts.map(
+                    (attempt) => (
+                      <tr
+                        key={attempt.id}
+                        className="border-b border-line last:border-b-0 hover:bg-panel-2/70 transition-colors"
                       >
-                        {
-                          attempt.percentage
-                        }%
-                      </span>
+                        <td className="px-5 py-4">
+                          <div className="font-medium text-paper">
+                            {
+                              attempt
+                                .profiles
+                                ?.full_name ||
+                              attempt
+                                .profiles
+                                ?.username ||
+                              'Student'
+                            }
+                          </div>
 
-                    </div>
+                          {attempt.profiles
+                            ?.username && (
+                            <div className="text-xs text-mist font-mono mt-0.5">
+                              @
+                              {
+                                attempt
+                                  .profiles
+                                  .username
+                              }
+                            </div>
+                          )}
+                        </td>
 
-                    <div className="text-mist text-xs font-mono mt-1.5">
-                      {attempt.score}/
-                      {
-                        attempt.total
-                      }{' '}
-                      correct ·{' '}
-                      {new Date(
-                        attempt.created_at
-                      ).toLocaleString()}
-                    </div>
+                        <td className="px-5 py-4 text-center">
+                          <span
+                            className={`inline-flex min-w-[64px] justify-center rounded-full px-3 py-1 font-mono text-sm font-medium ${
+                              attempt.percentage >= 90
+                                ? 'bg-sage/10 text-sage'
+                                : attempt.percentage >= 70
+                                  ? 'bg-brass/10 text-brass'
+                                  : 'bg-coral/10 text-coral'
+                            }`}
+                          >
+                            {attempt.percentage}%
+                          </span>
+                        </td>
 
-                  </div>
-                )
-              )}
+                        <td className="px-5 py-4 text-center">
+                          <span className="font-mono text-sm text-paper">
+                            {attempt.score}/
+                            {attempt.total}
+                          </span>
+                        </td>
 
+                        <td className="px-5 py-4 text-right">
+                          <span className="text-xs text-mist font-mono whitespace-nowrap">
+                            {new Date(
+                              attempt.created_at
+                            ).toLocaleString(
+                              [],
+                              {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
-
         </div>
-
       </div>
-
     </div>,
     document.body
   )
 }
+

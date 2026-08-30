@@ -3,16 +3,32 @@ import { supabase } from '../../lib/supabaseClient'
 
 function shuffle(arr) {
   const a = [...arr]
+
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(
+      Math.random() * (i + 1)
+    )
+
     ;[a[i], a[j]] = [a[j], a[i]]
   }
+
   return a
 }
 
-function buildQuestions(items) {
-  return shuffle(items).map((item) => {
-    const distractorPool = items.filter(
+function decodeHtmlEntities(value) {
+  if (!value) return ''
+
+  const textarea =
+    document.createElement('textarea')
+
+  textarea.innerHTML = value
+
+  return textarea.value
+}
+
+function buildQuestions(items) {  
+	return shuffle(items).map((item) => {
+    		const distractorPool = items.filter(
       (it) => it.id !== item.id
     )
 
@@ -169,6 +185,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
               className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium"
             >
               I'm ready — start the test
+
             </button>
           )}
         </div>
@@ -185,7 +202,9 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
         </span>
         <div className="ticket rounded-xl w-full max-w-sm p-6 flex flex-col gap-4">
           <p className="text-mist text-sm">What does this mean?</p>
-          <p className="font-display text-2xl text-center">{q.word}</p>
+         <p className="font-display text-2xl text-center">
+  {decodeHtmlEntities(q.word)}
+</p>
           <div className="flex flex-col gap-2">
             {q.options.map((opt, i) => {
               const isCorrect = opt === q.correctAnswer
@@ -203,7 +222,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
                   disabled={!!selected}
                   className={`focus-ring text-left px-3 py-2 rounded-md border text-sm transition-colors ${style}`}
                 >
-                  {opt}
+                  {decodeHtmlEntities(opt)}
                 </button>
               )
             })}
@@ -237,7 +256,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
               .map((d, i) => (
                 <div key={i} className="text-sm mb-1">
                   <span className="font-medium">{d.word}</span>
-                  <span className="text-mist"> — {d.correct}</span>
+                  <span className="text-mist"> — {decodeHtmlEntities(d.correct)}</span>
                 </div>
               ))}
           </div>

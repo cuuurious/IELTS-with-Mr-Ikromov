@@ -115,10 +115,14 @@ export default function StudentWordlists({
         .select(
           `
             *,
-            wordlist_items(count)
+            wordlist_items(count),
+            wordlist_groups!inner(group_id)
           `
         )
-        .in('group_id', groupIds)
+        .in(
+          'wordlist_groups.group_id',
+          groupIds
+        )
         .order('created_at', {
           ascending: false,
         })
@@ -282,7 +286,7 @@ export default function StudentWordlists({
 
         <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
           <p className="text-mist text-sm">
-            Loading your vocabulary practice…
+            Loading your vocabulary practiceвЂ¦
           </p>
         </div>
 
@@ -475,7 +479,7 @@ export default function StudentWordlists({
                     </span>
 
                     <span className="text-line">
-                      ·
+                      В·
                     </span>
 
                     <span>
