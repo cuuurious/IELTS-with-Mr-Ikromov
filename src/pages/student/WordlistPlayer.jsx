@@ -12,15 +12,35 @@ function shuffle(arr) {
 
 function buildQuestions(items) {
   return shuffle(items).map((item) => {
-    const distractorPool = items.filter((it) => it.id !== item.id)
-    const distractors = shuffle(distractorPool)
+    const distractorPool = items.filter(
+      (it) => it.id !== item.id
+    )
+
+    const correctTranslation =
+      item.uzbek_translation || ''
+
+    const distractors = shuffle(
+      distractorPool
+    )
+      .map(
+        (it) =>
+          it.uzbek_translation || ''
+      )
+      .filter(Boolean)
       .slice(0, 3)
-      .map((it) => it.definition)
-    const options = shuffle([item.definition, ...distractors])
-    return { word: item.word, correctAnswer: item.definition, options }
+
+    const options = shuffle([
+      correctTranslation,
+      ...distractors,
+    ])
+
+    return {
+      word: item.word,
+      correctAnswer: correctTranslation,
+      options,
+    }
   })
 }
-
 function categoryFor(percentage) {
   if (percentage >= 90) return { label: 'Excellent!', tone: 'sage', note: 'Outstanding recall — these words are locked in.' }
   if (percentage >= 70) return { label: 'Good job', tone: 'brass', note: 'Solid work. A quick review of the missed ones will make it perfect.' }
