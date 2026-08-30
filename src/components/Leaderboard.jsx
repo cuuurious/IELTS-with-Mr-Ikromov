@@ -1268,11 +1268,15 @@ const activityDate =
                 {isTeacher && (
   <button
     type="button"
-    onClick={() =>
-      openManageGroups(
-        selectedStudent
-      )
-    }
+    onClick={() => {
+      const student = selectedStudent
+
+      closeStudentProfile()
+
+      setTimeout(() => {
+        openManageGroups(student)
+      }, 0)
+    }}
     className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
   >
     {String.fromCodePoint(0x1F465)} Manage
@@ -1508,59 +1512,39 @@ const activityDate =
     document.body
   )}
 
-  {isTeacher && manageStudent && (
+      {isTeacher && manageStudent && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
-          onMouseDown={(
-            e
-          ) => {
-            if (
-              e.target ===
-              e.currentTarget
-            ) {
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
               closeManageGroups()
             }
           }}
         >
-
           <div className="w-full max-w-lg bg-panel border border-line rounded-xl shadow-2xl overflow-hidden">
-
             <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-4">
-
               <div>
-
                 <h3 className="font-display text-xl">
                   Manage groups
                 </h3>
-
                 <p className="text-sm text-mist mt-1">
-                  {
-                    manageStudent.full_name
-                  }
+                  {manageStudent.full_name}
                 </p>
-
               </div>
-
               <button
                 type="button"
-                onClick={
-                  closeManageGroups
-                }
+                onClick={closeManageGroups}
                 className="focus-ring text-mist hover:text-paper text-xl"
                 aria-label="Close"
               >
                 X
               </button>
-
             </div>
 
             <div className="p-5">
-
               {groupError && (
                 <div className="mb-4 rounded-lg border border-coral/40 bg-coral/10 p-3 text-sm text-coral">
-                  {
-                    groupError
-                  }
+                  {groupError}
                 </div>
               )}
 
@@ -1568,147 +1552,105 @@ const activityDate =
                 <div className="py-8 text-center text-mist">
                   Loading groups...
                 </div>
-              ) : groups.length ===
-                0 ? (
+              ) : groups.length === 0 ? (
                 <div className="py-8 text-center">
-
                   <p className="text-mist">
-                    No groups exist
-                    yet.
+                    No groups exist yet.
                   </p>
-
                   <p className="text-xs text-mist mt-1">
-                    Create a group
-                    first from Groups
-                    & homework.
+                    Create a group first from Groups & homework.
                   </p>
-
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
+                  {groups.map((group) => {
+                    const isMember =
+                      memberGroupIds.includes(group.id)
 
-                  {groups.map(
-                    (
-                      group
-                    ) => {
-                      const isMember =
-                        memberGroupIds.includes(
-                          group.id
-                        )
+                    const saving =
+                      savingGroup === group.id
 
-                      const saving =
-                        savingGroup ===
-                        group.id
-
-                      return (
+                    return (
+                      <div
+                        key={group.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                          isMember
+                            ? 'border-brass bg-brass/5'
+                            : 'border-line bg-panel-2'
+                        }`}
+                      >
                         <div
-                          key={
-                            group.id
-                          }
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                          className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
                             isMember
-                              ? 'border-brass bg-brass/5'
-                              : 'border-line bg-panel-2'
+                              ? 'bg-brass text-onbrass'
+                              : 'bg-panel border border-line text-mist'
                           }`}
                         >
-
-                          <div
-                            className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                              isMember
-                                ? 'bg-brass text-onbrass'
-                                : 'bg-panel border border-line text-mist'
-                            }`}
-                          >
-                            {isMember
-                              ? '✓'
-                              : '—'}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-
-                            <div className="font-medium truncate">
-                              {
-                                group.name
-                              }
-                            </div>
-
-                            <div className="text-xs text-mist mt-0.5">
-                              {isMember
-                                ? 'Student is a member'
-                                : 'Student is not a member'}
-                            </div>
-
-                          </div>
-
-                          <button
-                            type="button"
-                            disabled={
-                              saving
-                            }
-                            onClick={() =>
-                              toggleGroupMembership(
-                                group,
-                                isMember
-                              )
-                            }
-                            className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-40 ${
-                              isMember
-                                ? 'border border-coral text-coral hover:bg-coral/10'
-                                : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
-                            }`}
-                          >
-                            {saving
-                              ? 'Saving...'
-                              : isMember
-                              ? 'Remove'
-                              : 'Add'}
-                          </button>
-
+                          {isMember ? '✓' : '—'}
                         </div>
-                      )
-                    }
-                  )}
 
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {group.name}
+                          </div>
+                          <div className="text-xs text-mist mt-0.5">
+                            {isMember
+                              ? 'Student is a member'
+                              : 'Student is not a member'}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() =>
+                            toggleGroupMembership(
+                              group,
+                              isMember
+                            )
+                          }
+                          className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-40 ${
+                            isMember
+                              ? 'border border-coral text-coral hover:bg-coral/10'
+                              : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
+                          }`}
+                        >
+                          {saving
+                            ? 'Saving...'
+                            : isMember
+                            ? 'Remove'
+                            : 'Add'}
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
               <div className="mt-5 pt-4 border-t border-line">
-
                 <p className="text-xs text-mist">
-                  Removing a
-                  student from a
-                  group does{' '}
+                  Removing a student from a group does{' '}
                   <strong className="text-paper">
                     not
                   </strong>{' '}
-                  delete their
-                  account. It only
-                  removes their
-                  membership from that
-                  group.
+                  delete their account. It only removes their
+                  membership from that group.
                 </p>
-
               </div>
-
             </div>
 
             <div className="px-5 py-3 border-t border-line flex justify-end">
-
               <button
                 type="button"
-                onClick={
-                  closeManageGroups
-                }
+                onClick={closeManageGroups}
                 className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
               >
                 Done
               </button>
-
             </div>
-
           </div>
-
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

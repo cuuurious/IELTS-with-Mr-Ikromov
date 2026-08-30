@@ -1,23 +1,26 @@
 // netlify/functions/define-words.mjs
 //
-// Free vocabulary enrichment pipeline:
+// Translation-only vocabulary generation.
 //
-// 1. DictionaryAPI     -> definitions/examples for normal words
-// 2. Wiktionary REST   -> definitions/examples for phrases/collocations
-// 3. Datamuse          -> additional phrase/definition fallback
-// 4. MyMemory          -> English -> Uzbek translation
-//
-// No paid AI API is required.
-//
-// The function keeps the same response format expected by
-// TeacherWordlists.jsx:
-//
+// Input:
 // {
-//   word,
-//   definition,
-//   uzbek_translation,
-//   example_sentence
+//   words: ["abandon", "take into account", ...]
 // }
+//
+// Output:
+// {
+//   results: [
+//     {
+//       word,
+//       definition: "",
+//       uzbek_translation,
+//       example_sentence: ""
+//     }
+//   ]
+// }
+//
+// The definition/example fields are kept empty for compatibility
+// with the existing database schema and older wordlists.
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -26,10 +29,13 @@ const JSON_HEADERS = {
 }
 
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: JSON_HEADERS,
-  })
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers: JSON_HEADERS,
+    }
+  )
 }
 
 function cleanWord(value) {
@@ -38,214 +44,137 @@ function cleanWord(value) {
     .trim()
 }
 
-function isPhrase(word) {
-  return word.split(' ').filter(Boolean).length > 1
-}
+/*
+ * Decode HTML entities returned by translation services.
+ *
+ * Examples:
+ *
+ * &#39;   -> '
+ * &#x27;   -> '
+ * &amp;    -> &
+ * &quot;   -> "
+ * &lt;     -> <
+ * &gt;     -> >
+ * &nbsp;   -> space
+ */
+function decodeHtmlEntities(value) {
+  if (!value) return ''
 
-function cleanWiktionaryHtml(value) {
-  if (!value) return null
+  let result = String(value)
 
-  return value
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&#x27;/gi, "'")
+  const namedEntities = {
+    '&nbsp;': ' ',
+    '&amp;': '&',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&lt;': '<',
+    '&gt;': '>',
+    '&ndash;': '–',
+    '&mdash;': '—',
+    '&hellip;': '…',
+  }
+
+  Object.entries(
+    namedEntities
+  ).forEach(
+    ([entity, replacement]) => {
+      result = result.replace(
+        new RegExp(
+          entity.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            '\\$&'
+          ),
+          'gi'
+        ),
+        replacement
+      )
+    }
+  )
+
+  /*
+   * Decimal numeric entities:
+   * &#39;
+   * &#160;
+   */
+  result = result.replace(
+    /&#(\d+);/g,
+    (_, decimal) => {
+      const codePoint =
+        Number(decimal)
+
+      try {
+        return String.fromCodePoint(
+          codePoint
+        )
+      } catch {
+        return ''
+      }
+    }
+  )
+
+  /*
+   * Hexadecimal numeric entities:
+   * &#x27;
+   * &#x2019;
+   */
+  result = result.replace(
+    /&#x([0-9a-f]+);/gi,
+    (_, hexadecimal) => {
+      const codePoint =
+        parseInt(
+          hexadecimal,
+          16
+        )
+
+      try {
+        return String.fromCodePoint(
+          codePoint
+        )
+      } catch {
+        return ''
+      }
+    }
+  )
+
+  return result
     .replace(/\s+/g, ' ')
     .trim()
 }
 
-function cleanExample(value) {
+function cleanTranslation(value) {
   if (!value) return null
 
-  return cleanWiktionaryHtml(value)
-}
+  let cleaned =
+    decodeHtmlEntities(value)
 
-async function fetchDictionaryDefinition(word) {
-  try {
-    const url =
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-        word
-      )}`
-
-    const resp = await fetch(url)
-
-    if (!resp.ok) {
-      return null
-    }
-
-    const data = await resp.json()
-
-    const entry = data?.[0]
-
-    if (!entry) {
-      return null
-    }
-
-    for (const meaning of entry.meanings || []) {
-      for (const definition of meaning.definitions || []) {
-        if (definition.definition) {
-          return {
-            definition: definition.definition.trim(),
-            example: definition.example || null,
-            source: 'dictionaryapi',
-            partOfSpeech:
-              meaning.partOfSpeech || null,
-          }
-        }
-      }
-    }
-
-    return null
-  } catch (error) {
-    console.error(
-      `DictionaryAPI failed for "${word}":`,
-      error
+  /*
+   * Some APIs can return escaped entities more than once.
+   * Decode a second time if necessary.
+   */
+  if (
+    /&(?:#\d+|#x[0-9a-f]+|amp|quot|apos|nbsp|lt|gt);/i.test(
+      cleaned
     )
+  ) {
+    cleaned =
+      decodeHtmlEntities(cleaned)
+  }
 
+  cleaned = cleaned
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!cleaned) {
     return null
   }
-}
 
-async function fetchWiktionaryDefinition(word) {
-  try {
-    /*
-     * Wiktionary REST expects underscores for spaces.
-     *
-     * Example:
-     * take into account
-     * ->
-     * take_into_account
-     */
-    const page = word.replace(/\s+/g, '_')
-
-    const url =
-      `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(
-        page
-      )}`
-
-    const resp = await fetch(url)
-
-    if (!resp.ok) {
-      return null
-    }
-
-    const data = await resp.json()
-
-    const englishEntries = data?.en || []
-
-    for (const entry of englishEntries) {
-      for (const definition of entry.definitions || []) {
-        const text = cleanWiktionaryHtml(
-          definition.definition
-        )
-
-        if (!text) continue
-
-        let example = null
-
-        if (
-          definition.examples &&
-          definition.examples.length
-        ) {
-          example = cleanExample(
-            definition.examples[0]
-          )
-        } else if (
-          definition.parsedExamples &&
-          definition.parsedExamples.length
-        ) {
-          example = cleanExample(
-            definition.parsedExamples[0]?.example
-          )
-        }
-
-        return {
-          definition: text,
-          example,
-          source: 'wiktionary',
-          partOfSpeech:
-            entry.partOfSpeech || null,
-        }
-      }
-    }
-
-    return null
-  } catch (error) {
-    console.error(
-      `Wiktionary failed for "${word}":`,
-      error
-    )
-
-    return null
-  }
-}
-
-async function fetchDatamuseDefinition(word) {
-  try {
-    const url =
-      `https://api.datamuse.com/words?sp=${encodeURIComponent(
-        word
-      )}&md=d&max=5`
-
-    const resp = await fetch(url)
-
-    if (!resp.ok) {
-      return null
-    }
-
-    const data = await resp.json()
-
-    const exact =
-      data.find(
-        (item) =>
-          item.word?.toLowerCase() ===
-          word.toLowerCase()
-      ) || data[0]
-
-    const rawDefinition =
-      exact?.defs?.[0]
-
-    if (!rawDefinition) {
-      return null
-    }
-
-    /*
-     * Datamuse definitions often start with a part-of-speech
-     * marker such as:
-     *
-     * v\tTo consider...
-     *
-     * Remove that marker.
-     */
-    const definition =
-      rawDefinition
-        .replace(
-          /^[a-z]+\s*\t/i,
-          ''
-        )
-        .replace(/\s+/g, ' ')
-        .trim()
-
-    if (!definition) {
-      return null
-    }
-
-    return {
-      definition,
-      example: null,
-      source: 'datamuse',
-      partOfSpeech: null,
-    }
-  } catch (error) {
-    console.error(
-      `Datamuse failed for "${word}":`,
-      error
-    )
-
-    return null
-  }
+  /*
+   * MyMemory can return the original English word when
+   * it cannot find a translation.
+   */
+  return cleaned
 }
 
 async function fetchTranslation(word) {
@@ -255,37 +184,59 @@ async function fetchTranslation(word) {
         word
       )}&langpair=en|uz`
 
-    const resp = await fetch(url)
+    const resp =
+      await fetch(url)
 
+    /*
+     * Handle rate limits / server failures gracefully.
+     */
     if (!resp.ok) {
+      console.error(
+        `MyMemory returned ${resp.status} for "${word}"`
+      )
+
       return null
     }
 
-    const data = await resp.json()
+    const text =
+      await resp.text()
+
+    if (!text.trim()) {
+      console.error(
+        `MyMemory returned an empty response for "${word}"`
+      )
+
+      return null
+    }
+
+    let data
+
+    try {
+      data =
+        JSON.parse(text)
+    } catch (error) {
+      console.error(
+        `MyMemory returned invalid JSON for "${word}":`,
+        text.slice(0, 500)
+      )
+
+      return null
+    }
 
     const translated =
-      data?.responseData?.translatedText
+      data?.responseData
+        ?.translatedText
 
     if (!translated) {
       return null
     }
 
-    const cleaned = translated
-      .replace(/\s+/g, ' ')
-      .trim()
+    const cleaned =
+      cleanTranslation(
+        translated
+      )
 
     if (!cleaned) {
-      return null
-    }
-
-    /*
-     * MyMemory sometimes returns the original text
-     * when it cannot translate it.
-     */
-    if (
-      cleaned.toLowerCase() ===
-      word.toLowerCase()
-    ) {
       return null
     }
 
@@ -293,9 +244,19 @@ async function fetchTranslation(word) {
      * Ignore obvious failure messages.
      */
     if (
-      /no translation found|invalid|must be less|quota/i.test(
+      /no translation found|invalid|must be less|quota|error/i.test(
         cleaned
       )
+    ) {
+      return null
+    }
+
+    /*
+     * MyMemory sometimes returns the English input unchanged.
+     */
+    if (
+      cleaned.toLowerCase() ===
+      word.toLowerCase()
     ) {
       return null
     }
@@ -311,109 +272,19 @@ async function fetchTranslation(word) {
   }
 }
 
-async function enrichWord(word) {
-  const phrase = isPhrase(word)
-
-  let dictionary = null
-  let wiktionary = null
-  let datamuse = null
-
-  /*
-   * Single words:
-   * DictionaryAPI is the best first source.
-   */
-  if (!phrase) {
-    dictionary =
-      await fetchDictionaryDefinition(word)
-
-    /*
-     * If DictionaryAPI doesn't know the word,
-     * try Wiktionary.
-     */
-    if (!dictionary) {
-      wiktionary =
-        await fetchWiktionaryDefinition(word)
-    }
-
-    /*
-     * Final free definition fallback.
-     */
-    if (!dictionary && !wiktionary) {
-      datamuse =
-        await fetchDatamuseDefinition(word)
-    }
-  } else {
-    /*
-     * Phrases/collocations:
-     * DictionaryAPI usually cannot handle them.
-     * Start with Wiktionary.
-     */
-    wiktionary =
-      await fetchWiktionaryDefinition(word)
-
-    /*
-     * Datamuse sometimes has useful phrase definitions.
-     */
-    if (!wiktionary) {
-      datamuse =
-        await fetchDatamuseDefinition(word)
-    }
-
-    /*
-     * Some phrases may actually exist in DictionaryAPI,
-     * so give it a final chance.
-     */
-    if (!wiktionary && !datamuse) {
-      dictionary =
-        await fetchDictionaryDefinition(word)
-    }
-  }
-
-  const result =
-    dictionary ||
-    wiktionary ||
-    datamuse
-
-  /*
-   * Translation can be requested independently.
-   */
-  const translation =
-    await fetchTranslation(word)
-
-  const definition =
-    result?.definition ||
-    'Definition not found — please review this item manually.'
-
-  const example =
-    result?.example ||
-    `Try to use "${word}" in your own sentence.`
-
-  return {
-    word,
-    definition,
-    uzbek_translation:
-      translation ||
-      'Translation not found — please review this item manually.',
-    example_sentence: example,
-    source:
-      result?.source || 'manual-review',
-    part_of_speech:
-      result?.partOfSpeech || null,
-  }
-}
-
 /*
- * Limit concurrent requests.
+ * Limit simultaneous requests.
  *
- * This is important because each word can make several
- * free API requests.
+ * Five at a time is deliberately conservative because
+ * MyMemory is a free public translation API.
  */
 async function mapWithConcurrency(
   items,
   limit,
   fn
 ) {
-  const results = new Array(items.length)
+  const results =
+    new Array(items.length)
 
   let next = 0
 
@@ -421,47 +292,103 @@ async function mapWithConcurrency(
     while (true) {
       const index = next++
 
-      if (index >= items.length) {
+      if (
+        index >=
+        items.length
+      ) {
         break
       }
 
-      results[index] =
-        await fn(items[index], index)
+      try {
+        results[index] =
+          await fn(
+            items[index],
+            index
+          )
+      } catch (error) {
+        console.error(
+          `Worker failed for item ${index}:`,
+          error
+        )
+
+        results[index] =
+          null
+      }
     }
   }
 
-  const workers = Array.from(
-    {
-      length: Math.min(
-        limit,
-        items.length
-      ),
-    },
-    () => worker()
+  const workerCount =
+    Math.min(
+      limit,
+      items.length
+    )
+
+  const workers =
+    Array.from(
+      {
+        length:
+          workerCount,
+      },
+      () => worker()
+    )
+
+  await Promise.all(
+    workers
   )
 
-  await Promise.all(workers)
-
   return results
+}
+
+async function enrichWord(
+  word
+) {
+  const translation =
+    await fetchTranslation(
+      word
+    )
+
+  return {
+    word,
+
+    /*
+     * Kept empty intentionally.
+     * The new generator only needs translations.
+     */
+    definition: '',
+
+    uzbek_translation:
+      translation ||
+      'Translation not found — please review this item manually.',
+
+    /*
+     * Kept empty intentionally.
+     */
+    example_sentence: '',
+  }
 }
 
 export default async function handler(
   req
 ) {
-  if (req.method !== 'POST') {
-    return new Response(
-      'Method not allowed',
+  if (
+    req.method !== 'POST'
+  ) {
+    return json(
       {
-        status: 405,
-      }
+        error:
+          'Method not allowed',
+      },
+      405
     )
   }
 
   const supabaseUrl =
-    process.env.VITE_SUPABASE_URL
+    process.env
+      .VITE_SUPABASE_URL
 
   const supabaseAnonKey =
-    process.env.VITE_SUPABASE_ANON_KEY
+    process.env
+      .VITE_SUPABASE_ANON_KEY
 
   if (
     !supabaseUrl ||
@@ -533,14 +460,15 @@ export default async function handler(
     const body =
       await req.json()
 
-    words = Array.isArray(
-      body?.words
-    )
-      ? body.words
-          .map(cleanWord)
-          .filter(Boolean)
-      : []
-  } catch {
+    words =
+      Array.isArray(
+        body?.words
+      )
+        ? body.words
+            .map(cleanWord)
+            .filter(Boolean)
+        : []
+  } catch (error) {
     return json(
       {
         error:
@@ -551,25 +479,29 @@ export default async function handler(
   }
 
   /*
-   * Remove duplicate words while preserving
+   * Remove duplicates while preserving
    * the teacher's original order.
    */
   const seen =
     new Set()
 
-  words = words.filter(
-    (word) => {
-      const key =
-        word.toLowerCase()
+  words =
+    words.filter(
+      (word) => {
+        const key =
+          word.toLowerCase()
 
-      if (seen.has(key)) {
-        return false
+        if (
+          seen.has(key)
+        ) {
+          return false
+        }
+
+        seen.add(key)
+
+        return true
       }
-
-      seen.add(key)
-      return true
-    }
-  )
+    )
 
   if (!words.length) {
     return json(
@@ -581,19 +513,31 @@ export default async function handler(
     )
   }
 
-  if (words.length > 40) {
+  /*
+   * New maximum:
+   * 250 words/collocations.
+   */
+  if (
+    words.length > 250
+  ) {
     return json(
       {
         error:
-          'Please send 40 words or fewer at a time.',
+          'Please send 250 words or fewer at a time.',
       },
       400
     )
   }
 
   /*
-   * Five words at a time keeps the free public APIs
-   * from being hit too aggressively.
+   * Translation only.
+   *
+   * No DictionaryAPI.
+   * No Wiktionary.
+   * No Datamuse.
+   *
+   * This makes the generator much faster and avoids
+   * unnecessary external requests.
    */
   const results =
     await mapWithConcurrency(

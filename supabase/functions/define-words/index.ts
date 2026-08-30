@@ -1,569 +1,408 @@
-// supabase/functions/define-words/index.ts
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react'
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import {
+  supabase,
+  usernameToEmail,
+} from '../lib/supabaseClient'
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods":
-    "POST, OPTIONS",
-  "Content-Type": "application/json",
-}
 
-function json(
-  data: unknown,
-  status = 200
-) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: corsHeaders,
-    }
-  )
-}
+const AuthContext = createContext(null)
 
-function cleanWord(value: unknown) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .trim()
-}
 
-/*
- * Decode HTML entities returned by translation services.
- *
- * Examples:
- * &#39;  -> '
- * &#x27;  -> '
- * &amp;   -> &
- * &quot;  -> "
- * &lt;    -> <
- * &gt;    -> >
- * &nbsp;  -> space
- */
-function decodeHtmlEntities(
-  value: string
-) {
-  let result = String(value || "")
+export function AuthProvider({ children }) {
 
-  const namedEntities: Record<
-    string,
-    string
-  > = {
-    "&nbsp;": " ",
-    "&amp;": "&",
-    "&quot;": '"',
-    "&apos;": "'",
-    "&#39;": "'",
-    "&#x27;": "'",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&ndash;": "–",
-    "&mdash;": "—",
-    "&hellip;": "…",
-  }
+  const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  for (
-    const [entity, replacement]
-    of Object.entries(namedEntities)
-  ) {
-    result = result.replace(
-      new RegExp(
-        entity.replace(
-          /[.*+?^${}()|[\]\\]/g,
-          "\\$&"
-        ),
-        "gi"
-      ),
-      replacement
-    )
-  }
 
-  /*
-   * Decimal entities:
-   * &#39;
-   * &#160;
-   */
-  result = result.replace(
-    /&#(\d+);/g,
-    (_, decimal) => {
-      const codePoint =
-        Number(decimal)
+  const loadProfile = useCallback(async (userId) => {
 
-      try {
-        return String.fromCodePoint(
-          codePoint
-        )
-      } catch {
-        return ""
-      }
-    }
-  )
-
-  /*
-   * Hexadecimal entities:
-   * &#x27;
-   * &#x2019;
-   */
-  result = result.replace(
-    /&#x([0-9a-f]+);/gi,
-    (_, hexadecimal) => {
-      const codePoint =
-        parseInt(
-          hexadecimal,
-          16
-        )
-
-      try {
-        return String.fromCodePoint(
-          codePoint
-        )
-      } catch {
-        return ""
-      }
-    }
-  )
-
-  return result
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
-function cleanTranslation(
-  value: unknown
-) {
-  if (!value) {
-    return null
-  }
-
-  let cleaned =
-    decodeHtmlEntities(
-      String(value)
-    )
-
-  /*
-   * Some APIs can escape entities more than once.
-   */
-  if (
-    /&(?:#\d+|#x[0-9a-f]+|amp|quot|apos|nbsp|lt|gt);/i.test(
-      cleaned
-    )
-  ) {
-    cleaned =
-      decodeHtmlEntities(
-        cleaned
-      )
-  }
-
-  cleaned = cleaned
-    .replace(/\s+/g, " ")
-    .trim()
-
-  if (!cleaned) {
-    return null
-  }
-
-  /*
-   * Ignore obvious translation-service errors.
-   */
-  if (
-    /no translation found|invalid|must be less|quota|error/i.test(
-      cleaned
-    )
-  ) {
-    return null
-  }
-
-  return cleaned
-}
-
-async function fetchTranslation(
-  word: string
-) {
-  try {
-    const url =
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
-        word
-      )}&langpair=en|uz`
-
-    const response =
-      await fetch(url)
-
-    if (!response.ok) {
-      console.error(
-        `MyMemory returned ${response.status} for "${word}"`
-      )
-
-      return null
+    if (!userId) {
+      setProfile(null)
+      return
     }
 
-    const text =
-      await response.text()
-
-    if (!text.trim()) {
-      console.error(
-        `MyMemory returned an empty response for "${word}"`
-      )
-
-      return null
-    }
-
-    let data: any
-
-    try {
-      data = JSON.parse(text)
-    } catch {
-      console.error(
-        `Invalid JSON from MyMemory for "${word}":`,
-        text.slice(0, 500)
-      )
-
-      return null
-    }
-
-    const translated =
-      data?.responseData
-        ?.translatedText
-
-    if (!translated) {
-      return null
-    }
-
-    const cleaned =
-      cleanTranslation(
-        translated
-      )
-
-    if (!cleaned) {
-      return null
-    }
-
-    /*
-     * If MyMemory simply returned the English input,
-     * treat that as a failed translation.
-     */
-    if (
-      cleaned.toLowerCase() ===
-      word.toLowerCase()
-    ) {
-      return null
-    }
-
-    return cleaned
-  } catch (error) {
-    console.error(
-      `Translation failed for "${word}":`,
-      error
-    )
-
-    return null
-  }
-}
-
-/*
- * Process several words concurrently,
- * while keeping the number of simultaneous
- * external API requests under control.
- */
-async function mapWithConcurrency<T>(
-  items: string[],
-  limit: number,
-  fn: (item: string) => Promise<T>
-) {
-  const results =
-    new Array<T>(items.length)
-
-  let next = 0
-
-  async function worker() {
-    while (true) {
-      const index = next++
-
-      if (
-        index >= items.length
-      ) {
-        break
-      }
-
-      try {
-        results[index] =
-          await fn(
-            items[index]
-          )
-      } catch (error) {
-        console.error(
-          `Failed to process "${items[index]}":`,
-          error
-        )
-
-        results[index] =
-          null as T
-      }
-    }
-  }
-
-  const workerCount =
-    Math.min(
-      limit,
-      items.length
-    )
-
-  const workers =
-    Array.from(
-      {
-        length:
-          workerCount,
-      },
-      () => worker()
-    )
-
-  await Promise.all(
-    workers
-  )
-
-  return results
-}
-
-async function enrichWord(
-  word: string
-) {
-  const translation =
-    await fetchTranslation(
-      word
-    )
-
-  return {
-    word,
-
-    /*
-     * Definitions are intentionally empty.
-     * The generator is translation-only.
-     */
-    definition: "",
-
-    uzbek_translation:
-      translation ||
-      "Translation not found — please review this item manually.",
-
-    /*
-     * Examples are intentionally empty.
-     */
-    example_sentence: "",
-  }
-}
-
-Deno.serve(
-  async (req) => {
-    /*
-     * Browser CORS preflight.
-     */
-    if (
-      req.method === "OPTIONS"
-    ) {
-      return new Response(
-        "ok",
-        {
-          headers:
-            corsHeaders,
-          status: 200,
-        }
-      )
-    }
-
-    if (
-      req.method !== "POST"
-    ) {
-      return json(
-        {
-          error:
-            "Method not allowed",
-        },
-        405
-      )
-    }
-
-    /*
-     * Supabase Edge Function environment.
-     */
-    const supabaseUrl =
-      Deno.env.get(
-        "SUPABASE_URL"
-      )
-
-    const supabaseAnonKey =
-      Deno.env.get(
-        "SUPABASE_ANON_KEY"
-      )
-
-    if (
-      !supabaseUrl ||
-      !supabaseAnonKey
-    ) {
-      return json(
-        {
-          error:
-            "Supabase environment variables are missing.",
-        },
-        500
-      )
-    }
-
-    /*
-     * Require an authenticated Supabase user.
-     */
-    const authHeader =
-      req.headers.get(
-        "Authorization"
-      ) || ""
-
-    const token =
-      authHeader.replace(
-        /^Bearer\s+/i,
-        ""
-      )
-
-    if (!token) {
-      return json(
-        {
-          error:
-            "Missing authentication token.",
-        },
-        401
-      )
-    }
-
-    const supabase =
-      createClient(
-        supabaseUrl,
-        supabaseAnonKey,
-        {
-          global: {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          },
-        }
-      )
 
     const {
-      data: userData,
-      error: userError,
+      data,
+      error,
+    } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+
+    if (error) {
+      console.error(
+        'Profile loading error:',
+        error
+      )
+    }
+
+
+    setProfile(data || null)
+
+  }, [])
+
+
+
+  useEffect(() => {
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+
+        setSession(data.session)
+
+        loadProfile(
+          data.session?.user?.id
+        )
+        .finally(() => {
+          setLoading(false)
+        })
+
+      })
+
+
+    const {
+      data: sub,
+    } = supabase.auth.onAuthStateChange(
+      (_event, sess) => {
+
+        setSession(sess)
+
+        loadProfile(
+          sess?.user?.id
+        )
+
+      }
+    )
+
+
+    return () =>
+      sub.subscription.unsubscribe()
+
+
+  }, [loadProfile])
+
+
+
+
+  const signUp = async ({
+    username,
+    password,
+    fullName,
+    role,
+    groupIds,
+    contactEmail,
+  }) => {
+
+
+    const email =
+      contactEmail?.trim().toLowerCase()
+      ||
+      usernameToEmail(username)
+
+
+
+    const {
+      data,
+      error,
     } =
-      await supabase.auth.getUser(
-        token
-      )
+      await supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    if (
-      userError ||
-      !userData?.user
-    ) {
-      return json(
-        {
-          error:
-            "Invalid or expired session.",
-        },
-        401
+
+    if (error) {
+      throw error
+    }
+
+
+    const userId =
+      data.user?.id
+
+
+    if (!userId) {
+      throw new Error(
+        'Sign up failed.'
       )
     }
 
-    /*
-     * Read request body.
-     */
-    let body: any
 
-    try {
-      body =
-        await req.json()
-    } catch {
-      return json(
-        {
-          error:
-            "Invalid request body.",
-        },
-        400
-      )
+
+    const {
+      error: profileError,
+    } =
+      await supabase
+        .from('profiles')
+        .insert({
+
+          id:userId,
+
+          full_name:
+            fullName,
+
+          username:
+            username
+              .trim()
+              .toLowerCase(),
+
+          role,
+
+          status:
+            'pending',
+
+          contact_email:
+            contactEmail?.trim()
+            || null,
+
+        })
+
+
+
+    if(profileError){
+      throw profileError
     }
 
-    /*
-     * Extract and clean words.
-     */
-    let words =
-      Array.isArray(
-        body?.words
-      )
-        ? body.words
-            .map(cleanWord)
-            .filter(Boolean)
-        : []
+
+
+
+    if(
+      role === 'student'
+      &&
+      groupIds?.length
+    ){
+
+      const rows =
+        groupIds.map(
+          group_id => ({
+            group_id,
+            student_id:userId,
+          })
+        )
+
+
+      const {
+        error: gmError,
+      } =
+        await supabase
+          .from('group_members')
+          .insert(rows)
+
+
+      if(gmError){
+        throw gmError
+      }
+
+    }
+
+
+
+    await loadProfile(userId)
+
+    return data
+
+  }
+
+
+
+
+  const signIn = async ({
+    username,
+    password,
+  }) => {
+
 
     /*
-     * Remove duplicates while preserving
-     * the teacher's original order.
-     */
-    const seen =
-      new Set<string>()
+      IMPORTANT:
+      Find the user's real Auth email
+      through the database function.
+    */
 
-    words =
-      words.filter(
-        (word: string) => {
-          const key =
-            word.toLowerCase()
 
-          if (
-            seen.has(key)
-          ) {
-            return false
-          }
-
-          seen.add(key)
-
-          return true
+    const {
+      data: emailData,
+      error: lookupError,
+    } =
+      await supabase.rpc(
+        'auth_email_for_username',
+        {
+          p_username:
+            username
+              .trim()
+              .toLowerCase(),
         }
       )
 
-    if (!words.length) {
-      return json(
-        {
-          error:
-            "No words provided.",
-        },
-        400
-      )
+
+    if(lookupError){
+      throw lookupError
     }
 
-    /*
-     * Maximum 250 words/collocations.
-     */
-    if (
-      words.length > 250
-    ) {
-      return json(
-        {
-          error:
-            "Please send 250 words or fewer at a time.",
-        },
-        400
+
+
+    const email =
+      typeof emailData === 'string'
+        ? emailData
+        : emailData?.email
+
+
+
+    if(!email){
+
+      throw new Error(
+        'Account email not found. Please contact your teacher.'
       )
+
     }
 
-    /*
-     * Translation only.
-     *
-     * No DictionaryAPI.
-     * No Wiktionary.
-     * No Datamuse.
-     */
-    const results =
-      await mapWithConcurrency(
-        words,
-        5,
-        enrichWord
-      )
 
-    return json({
-      results,
-    })
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.auth.signInWithPassword({
+
+        email,
+
+        password,
+
+      })
+
+
+
+    if(error){
+
+      throw error
+
+    }
+
+
+
+    await loadProfile(
+      data.user.id
+    )
+
+
+    return data
+
   }
-)
+
+
+
+
+  const sendPasswordReset =
+    async(email)=>{
+
+
+      const cleanEmail =
+        email
+          ?.trim()
+          .toLowerCase()
+
+
+
+      if(!cleanEmail){
+
+        throw new Error(
+          'Please enter your recovery email.'
+        )
+
+      }
+
+
+
+      const {
+        error,
+      } =
+        await supabase.auth
+          .resetPasswordForEmail(
+            cleanEmail,
+            {
+              redirectTo:
+                `${window.location.origin}/reset-password`,
+            }
+          )
+
+
+      if(error){
+        throw error
+      }
+
+
+    }
+
+
+
+
+
+  const signOut = async()=>{
+
+    await supabase.auth.signOut()
+
+    setProfile(null)
+
+  }
+
+
+
+
+  const refreshProfile =
+    () =>
+      loadProfile(
+        session?.user?.id
+      )
+
+
+
+
+  return (
+
+    <AuthContext.Provider
+
+      value={{
+
+        session,
+
+        profile,
+
+        loading,
+
+        signUp,
+
+        signIn,
+
+        signOut,
+
+        refreshProfile,
+
+        sendPasswordReset,
+
+      }}
+
+    >
+
+      {children}
+
+    </AuthContext.Provider>
+
+  )
+
+
+}
+
+
+
+export const useAuth = () =>
+  useContext(AuthContext)

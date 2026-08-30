@@ -444,347 +444,343 @@ export default function GroupWorkspace({ teacherId }) {
   )
 
   return (
-    <div className="teacher-workspace flex flex-col lg:flex-row gap-5 lg:gap-6">
+    <div className="space-y-8">
 
-      <aside className="teacher-groups-panel w-full lg:w-56 flex-shrink-0 flex flex-col gap-3 surface-raised p-4">
-
-        <div className="text-xs uppercase tracking-[0.18em] text-mist font-mono">
-          Your groups
-        </div>
-
-        <div className="flex flex-col gap-2">
-
-          {groups.map((g) =>
-            renamingId === g.id ? (
-              <input
-                key={g.id}
-                autoFocus
-                value={renameValue}
-                onChange={(e) =>
-                  setRenameValue(e.target.value)
-                }
-                onBlur={() => saveRename(g.id)}
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && saveRename(g.id)
-                }
-                className="focus-ring bg-panel-2 border border-brass rounded-lg px-3 py-2 text-sm"
-              />
-            ) : (
-              <div
-                key={g.id}
-                className={`group flex items-center gap-1 rounded-lg text-sm transition-colors ${
-                  activeGroup === g.id
-                    ? 'bg-brass text-onbrass font-medium shadow-sm'
-                    : 'bg-panel-2 text-mist hover:text-paper hover:border-line'
-                }`}
-              >
-
-                <button
-                  onClick={() => setActiveGroup(g.id)}
-                  className="focus-ring flex-1 text-left px-3 py-2.5 truncate"
-                >
-                  {g.name}
-                </button>
-
-                <button
-                  onClick={() => startRename(g)}
-                  className="focus-ring pr-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Rename group"
-                  aria-label="Rename group"
-                >
-                  ✎
-                </button>
-
-              </div>
-            )
-          )}
-
-        </div>
-
-        <form
-          onSubmit={createGroup}
-          className="flex flex-col gap-2 mt-2 pt-3 border-t border-line"
-        >
-          <input
-            value={newGroupName}
-            onChange={(e) =>
-              setNewGroupName(e.target.value)
-            }
-            placeholder="New group name"
-            className="focus-ring w-full min-w-0 bg-panel-2 border border-line rounded-lg px-3 py-2 text-sm"
-          />
-
-          <button
-            disabled={creating}
-            className="focus-ring px-3 py-2 rounded-lg border border-brass text-brass text-sm hover:bg-brass hover:text-onbrass transition-colors"
-          >
-            {creating ? 'Creating…' : 'Add group'}
-          </button>
-        </form>
-
-      </aside>
-
-      <section className="teacher-workspace-main flex-1 flex flex-col gap-5 min-w-0">
-
-        {!activeGroup && (
-          <div className="surface-raised p-8 text-center">
-            <p className="text-mist">
-              Create your first group to get started.
+      {!activeGroup && (
+        <section className="surface-raised rounded-3xl overflow-hidden">
+          <div className="px-6 py-10 sm:px-10 sm:py-12">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brass/30 bg-brass/10 px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-brass">
+                Examiner desk
+              </span>
+            </div>
+            <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-5">
+              Groups & homework
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm sm:text-base text-mist leading-6">
+              Manage your groups, post assignments, and review your students' progress.
             </p>
           </div>
-        )}
+        </section>
+      )}
 
-        {activeGroup && (
-          <>
-
-            <div className="teacher-section-header flex items-center justify-between flex-wrap gap-4 surface-raised px-5 py-4 sm:px-6 sm:py-5">
-
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-1">
-                  Current group
+      {activeGroup && (
+        <>
+          <section className="surface-raised rounded-3xl overflow-hidden">
+            <div className="px-6 py-8 sm:px-10 sm:py-10">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-brass/30 bg-brass/10 px-3 py-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-brass">
+                      Examiner desk
+                    </span>
+                  </div>
+                  <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-5">
+                    {activeGroupObj?.name || 'Group'}
+                  </h1>
+                  <p className="mt-3 text-sm sm:text-base text-mist leading-6 max-w-2xl">
+                    Manage assignments and monitor your students' submissions.
+                  </p>
                 </div>
 
-                <h2 className="font-display text-2xl sm:text-3xl">
-                  {activeGroupObj?.name}
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
+                      Students
+                    </div>
+                    <div className="font-display text-2xl text-paper mt-1">
+                      {roster.length}
+                    </div>
+                  </div>
+                  <div className="h-14 min-w-14 rounded-2xl border border-brass/30 bg-brass/10 px-3 flex flex-col items-center justify-center">
+                    <span className="text-[9px] uppercase tracking-widest text-mist font-mono">
+                      Tasks
+                    </span>
+                    <span className="font-display text-lg leading-none text-brass mt-0.5">
+                      {homeworks.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono mb-2">
+                  Your groups
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((g) =>
+                    renamingId === g.id ? (
+                      <input
+                        key={g.id}
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => saveRename(g.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && saveRename(g.id)}
+                        className="focus-ring h-10 bg-panel-2 border border-brass rounded-xl px-3 text-sm"
+                      />
+                    ) : (
+                      <div
+                        key={g.id}
+                        className={`group flex items-center rounded-xl border transition-colors ${
+                          activeGroup === g.id
+                            ? 'border-brass bg-brass text-onbrass'
+                            : 'border-line bg-panel text-mist hover:border-brass/40 hover:text-paper'
+                        }`}
+                      >
+                        <button
+                          onClick={() => setActiveGroup(g.id)}
+                          className="focus-ring px-4 py-2 text-sm font-medium"
+                        >
+                          {g.name}
+                        </button>
+                        <button
+                          onClick={() => startRename(g)}
+                          className={`focus-ring pr-3 text-xs opacity-60 hover:opacity-100 ${
+                            activeGroup === g.id
+                              ? 'text-onbrass'
+                              : 'text-mist hover:text-brass'
+                          }`}
+                          title="Rename group"
+                          aria-label="Rename group"
+                        >
+                          ✎
+                        </button>
+                      </div>
+                    )
+                  )}
+
+                  <form onSubmit={createGroup} className="flex items-center">
+                    <input
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="New group name"
+                      className="focus-ring h-10 w-40 sm:w-48 bg-panel-2 border border-line rounded-l-xl px-3 text-sm"
+                    />
+                    <button
+                      disabled={creating}
+                      className="focus-ring h-10 px-4 rounded-r-xl border border-brass bg-brass text-onbrass text-sm font-medium hover:bg-brass-dim transition-colors disabled:opacity-50"
+                    >
+                      {creating ? 'Adding…' : 'Add'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                <PostHomeworkForm
+                  groupId={activeGroup}
+                  teacherId={teacherId}
+                  onPosted={(hw) => {
+                    setHomeworks((prev) => [hw, ...prev])
+                    notifyGroup({
+                      groupId: activeGroup,
+                      type: 'homework_new',
+                      title: 'New homework posted',
+                      body: hw.title,
+                    })
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+                  Assignments
+                </div>
+                <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight mt-2">
+                  Student progress
                 </h2>
               </div>
 
-              <PostHomeworkForm
-                groupId={activeGroup}
-                teacherId={teacherId}
-                onPosted={(hw) => {
-                  setHomeworks((prev) => [
-                    hw,
-                    ...prev,
-                  ])
-
-                  notifyGroup({
-                    groupId: activeGroup,
-                    type: 'homework_new',
-                    title: 'New homework posted',
-                    body: hw.title,
-                  })
-                }}
-              />
-
+              <div className="hidden sm:block rounded-full border border-line bg-panel px-4 py-2 text-xs text-mist font-mono">
+                {homeworks.length} assignment{homeworks.length === 1 ? '' : 's'}
+              </div>
             </div>
 
+            {roster.length > 0 && (
+              <div className="surface rounded-2xl p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Search students in this group..."
+                    className="focus-ring w-full bg-panel-2 border border-line rounded-xl px-4 py-3 text-sm"
+                  />
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <span className="text-xs text-mist font-mono">
+                      {studentSearch.trim()
+                        ? `${filteredRoster.length} of ${roster.length}`
+                        : `${roster.length} student${roster.length === 1 ? '' : 's'}`}
+                    </span>
+
+                    {studentSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setStudentSearch('')}
+                        className="focus-ring text-xs text-brass hover:text-brass-dim"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {roster.length === 0 && (
-              <div className="surface px-5 py-5">
-                <p className="text-mist text-sm leading-6">
-                  No approved students in this group yet.
-                  Once you approve someone under the
-                  Approvals tab, they'll show up here.
+              <div className="surface-raised rounded-2xl px-6 py-10 text-center">
+                <div className="font-display text-2xl text-paper">
+                  No students yet
+                </div>
+                <p className="text-mist text-sm leading-6 mt-2 max-w-md mx-auto">
+                  Once you approve students under the Approvals tab, they will appear in this group.
                 </p>
               </div>
             )}
 
-            {roster.length > 0 && (
-              <div className="surface-raised p-4 flex flex-col gap-3">
-
-                <input
-                  value={studentSearch}
-                  onChange={(e) =>
-                    setStudentSearch(e.target.value)
-                  }
-                  placeholder="Search students in this group..."
-                  className="focus-ring w-full bg-panel-2 border border-line rounded-lg px-3 py-2.5 text-sm"
-                />
-
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-
-                  <span className="text-mist text-xs font-mono">
-                    {studentSearch.trim()
-                      ? `Showing ${filteredRoster.length} of ${roster.length} students`
-                      : `${roster.length} student${
-                          roster.length === 1 ? '' : 's'
-                        }`}
-                  </span>
-
-                  {studentSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setStudentSearch('')}
-                      className="focus-ring text-xs text-brass hover:underline"
-                    >
-                      Clear search
-                    </button>
-                  )}
-
+            {roster.length > 0 && filteredRoster.length === 0 && (
+              <div className="surface rounded-2xl px-6 py-10 text-center">
+                <div className="font-display text-xl text-paper">
+                  No students found
                 </div>
-
+                <p className="text-mist text-sm mt-2">
+                  Try a different name, username, or email.
+                </p>
               </div>
             )}
 
-            {roster.length > 0 &&
-              filteredRoster.length === 0 && (
-                <div className="surface px-5 py-5">
-                  <p className="text-mist text-sm">
-                    No students match your search.
-                  </p>
+            {homeworks.length === 0 && roster.length > 0 && (
+              <div className="surface-raised rounded-2xl px-6 py-10 text-center">
+                <div className="font-display text-2xl text-paper">
+                  No homework posted yet
                 </div>
-              )}
+                <p className="text-mist text-sm mt-2">
+                  Use the button above to post the first assignment.
+                </p>
+              </div>
+            )}
 
-            {homeworks.length === 0 &&
-              roster.length > 0 && (
-                <div className="surface px-5 py-5">
-                  <p className="text-mist text-sm">
-                    No homework posted yet.
-                  </p>
-                </div>
-              )}
-
-            {homeworks.length > 0 &&
-              filteredRoster.length > 0 && (
-
-                <div className="teacher-homework-table surface-raised overflow-x-auto p-2 sm:p-3">
-
-                  <table className="w-full text-sm border-separate border-spacing-y-2">
-
+            {homeworks.length > 0 && filteredRoster.length > 0 && (
+              <div className="surface-raised rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-separate border-spacing-0">
                     <thead>
-
-                      <tr className="text-left text-mist text-xs uppercase tracking-[0.12em] font-mono">
-
-                        <th className="pr-4 pb-2 pl-2">
-                          Student
+                      <tr className="border-b border-line">
+                        <th className="sticky left-0 z-10 bg-panel px-4 py-4 text-left min-w-[220px]">
+                          <span className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
+                            Student
+                          </span>
                         </th>
 
                         {homeworks.map((hw) => (
-
                           <th
                             key={hw.id}
-                            className="px-2 pb-2 text-center min-w-[120px]"
+                            className="px-4 py-4 text-center min-w-[150px]"
                           >
-
-                            <div className="flex items-center justify-center gap-1">
-
-                              <span>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-mist max-w-[105px]">
                                 {hw.title}
                               </span>
 
                               <button
-                                onClick={() =>
-                                  setEditingHomework(hw)
-                                }
-                                className="focus-ring text-mist hover:text-brass normal-case"
-                                title="Edit deadline / settings"
+                                onClick={() => setEditingHomework(hw)}
+                                className="focus-ring text-mist hover:text-brass"
+                                title="Edit homework"
                                 aria-label="Edit homework"
                               >
                                 ✎
                               </button>
 
                               <button
-                                onClick={() =>
-                                  clearHomeworkContent(hw)
-                                }
-                                disabled={
-                                  busyAction ===
-                                  `clear-${hw.id}`
-                                }
-                                className="focus-ring text-mist hover:text-brass normal-case disabled:opacity-40"
-                                title="Reset student submissions and delete uploaded files"
-                                aria-label="Reset student submissions and delete uploaded files"
+                                onClick={() => clearHomeworkContent(hw)}
+                                disabled={busyAction === `clear-${hw.id}`}
+                                className="focus-ring text-mist hover:text-brass disabled:opacity-40"
+                                title="Reset submissions"
+                                aria-label="Reset submissions"
                               >
                                 ↻
                               </button>
 
                               <button
-                                onClick={() =>
-                                  deleteHomework(hw)
-                                }
-                                disabled={
-                                  busyAction ===
-                                  `delete-${hw.id}`
-                                }
-                                className="focus-ring text-mist hover:text-coral normal-case disabled:opacity-40"
+                                onClick={() => deleteHomework(hw)}
+                                disabled={busyAction === `delete-${hw.id}`}
+                                className="focus-ring text-mist hover:text-coral disabled:opacity-40"
                                 title="Delete homework completely"
                                 aria-label="Delete homework completely"
                               >
                                 🗑
                               </button>
-
                             </div>
 
                             {hw.due_date && (
-                              <div className="text-[10px] font-normal normal-case mt-1 text-mist">
-                                due{' '}
-                                {new Date(
-                                  hw.due_date
-                                ).toLocaleDateString()}
+                              <div className="text-[10px] font-normal mt-1 text-mist">
+                                due {new Date(hw.due_date).toLocaleDateString()}
                               </div>
                             )}
-
                           </th>
-
                         ))}
-
                       </tr>
-
                     </thead>
 
                     <tbody>
-
                       {filteredRoster.map((student) => (
-
                         <tr
                           key={student.id}
-                          className="bg-panel-2 transition-colors hover:bg-[color-mix(in_srgb,var(--color-panel-2)_88%,var(--color-brass))]"
+                          className="border-t border-line/70 hover:bg-[color-mix(in_srgb,var(--color-panel-2)_55%,transparent)] transition-colors"
                         >
+                          <td className="sticky left-0 z-10 bg-panel px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="avatar h-10 w-10 text-sm">
+                                {student.full_name?.charAt(0)?.toUpperCase() || '?'}
+                              </div>
 
-                          <td className="px-3 py-3 rounded-l-lg font-medium whitespace-nowrap">
-
-                            <div className="flex items-center gap-2">
-
-                              <div>
-
-                                {student.full_name}
-
-                                <div className="text-mist text-xs font-mono mt-0.5">
+                              <div className="min-w-0">
+                                <div className="font-medium text-paper truncate max-w-[170px]">
+                                  {student.full_name}
+                                </div>
+                                <div className="text-xs text-mist font-mono mt-0.5 truncate max-w-[170px]">
                                   @{student.username}
                                 </div>
-
                               </div>
 
                               <button
-                                onClick={() =>
-                                  removeStudent(student)
-                                }
-                                disabled={
-                                  busyAction ===
-                                  `remove-${student.id}`
-                                }
-                                className="focus-ring text-mist hover:text-coral text-xs disabled:opacity-40"
+                                onClick={() => removeStudent(student)}
+                                disabled={busyAction === `remove-${student.id}`}
+                                className="focus-ring ml-auto text-mist hover:text-coral text-xs disabled:opacity-40"
                                 title="Remove student from this group"
                                 aria-label="Remove student from this group"
                               >
                                 ✕
                               </button>
-
                             </div>
-
                           </td>
 
                           {homeworks.map((hw) => {
-
-                            const sub =
-                              submissions[
-                                `${hw.id}_${student.id}`
-                              ]
+                            const sub = submissions[`${hw.id}_${student.id}`]
 
                             return (
                               <td
                                 key={hw.id}
-                                className="px-2 py-3 text-center"
+                                className="px-4 py-4 text-center"
                               >
-
                                 <button
-                                  className="focus-ring"
+                                  className="focus-ring inline-flex"
                                   onClick={() =>
                                     setViewing({
-                                      studentName:
-                                        student.full_name,
-                                      homeworkTitle:
-                                        hw.title,
+                                      studentName: student.full_name,
+                                      homeworkTitle: hw.title,
                                       submission: sub,
                                     })
                                   }
@@ -796,25 +792,19 @@ export default function GroupWorkspace({ teacherId }) {
                                     )}
                                   />
                                 </button>
-
                               </td>
                             )
                           })}
-
                         </tr>
                       ))}
-
                     </tbody>
-
                   </table>
-
                 </div>
-              )}
-
-          </>
-        )}
-
-      </section>
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {viewing && (
         <SubmissionPanel
@@ -826,16 +816,11 @@ export default function GroupWorkspace({ teacherId }) {
       {editingHomework && (
         <EditHomeworkModal
           homework={editingHomework}
-          onClose={() =>
-            setEditingHomework(null)
-          }
+          onClose={() => setEditingHomework(null)}
           onSaved={(updated) => {
-
             setHomeworks((prev) =>
               prev.map((h) =>
-                h.id === updated.id
-                  ? updated
-                  : h
+                h.id === updated.id ? updated : h
               )
             )
 
@@ -848,7 +833,6 @@ export default function GroupWorkspace({ teacherId }) {
           }}
         />
       )}
-
     </div>
   )
 }
