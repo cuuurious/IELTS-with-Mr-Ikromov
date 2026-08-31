@@ -298,7 +298,7 @@ export function AuthProvider({ children }) {
         cleanEmail,
         {
           redirectTo:
-            `${window.location.origin}/reset-password`,
+  'https://ieltswithmrikromov.com/reset-password',
         }
       )
 
