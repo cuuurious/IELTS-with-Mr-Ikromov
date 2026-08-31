@@ -82,6 +82,12 @@ export async function notifyGroup({
       }
     )
 
+    console.log('=== PUSH DEBUG ===')
+    console.log('Push data:', pushData)
+    console.log('Push error:', pushError)
+    console.log('Recipients:', rows.map((row) => row.user_id))
+    console.log('==================') 
+
     /*
      * Push failure must never break the
      * teacher's original action.
@@ -93,12 +99,14 @@ export async function notifyGroup({
       )
     }
 
-    if (pushData?.error) {
-      console.error(
-        'Push function returned an error:',
-        pushData.error
-      )
-    }
+    console.log('PUSH FUNCTION RESULT:', pushData)
+
+if (pushData?.error) {
+  console.error(
+    'Push function returned an error:',
+    pushData.error
+  )
+}
   } catch (error) {
     console.error(
       'notifyGroup failed:',
