@@ -19,15 +19,28 @@ function Gate() {
     )
   }
 
-  if (!session) return <Navigate to="/login" replace />
-  if (!profile || profile.status !== 'approved') return <PendingApproval />
-  return profile.role === 'teacher' ? <TeacherDashboard /> : <StudentDashboard />
+  if (!session) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!profile || profile.status !== 'approved') {
+    return <PendingApproval />
+  }
+
+  return profile.role === 'teacher'
+    ? <TeacherDashboard />
+    : <StudentDashboard />
 }
 
 function PublicOnly({ children }) {
   const { session, loading } = useAuth()
+
   if (loading) return null
-  if (session) return <Navigate to="/app" replace />
+
+  if (session) {
+    return <Navigate to="/app" replace />
+  }
+
   return children
 }
 
@@ -36,12 +49,56 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-          <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
-          <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/app" element={<Gate />} />
-          <Route path="*" element={<Navigate to="/app" replace />} />
+
+          {/* Normal authentication pages */}
+          <Route
+            path="/login"
+            element={
+              <PublicOnly>
+                <Login />
+              </PublicOnly>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <PublicOnly>
+                <Register />
+              </PublicOnly>
+            }
+          />
+
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicOnly>
+                <ForgotPassword />
+              </PublicOnly>
+            }
+          />
+
+          {/* IMPORTANT:
+              Recovery route must NOT use PublicOnly.
+              Supabase creates a temporary recovery session here.
+          */}
+          <Route
+            path="/reset-password"
+            element={<ResetPassword />}
+          />
+
+          {/* Main application */}
+          <Route
+            path="/app"
+            element={<Gate />}
+          />
+
+          {/* Unknown routes */}
+          <Route
+            path="*"
+            element={<Navigate to="/app" replace />}
+          />
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
