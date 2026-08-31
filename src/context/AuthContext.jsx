@@ -16,6 +16,10 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isRecoveringPassword, setIsRecoveringPassword] =
+    useState(
+      window.location.pathname === '/reset-password'
+    )
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) {
@@ -37,27 +41,99 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    let mounted = true
 
-      loadProfile(
-        data.session?.user?.id
-      ).finally(() => {
+    const initializeAuth = async () => {
+      const {
+        data,
+        error,
+      } = await supabase.auth.getSession()
+
+      if (!mounted) return
+
+      if (error) {
+        console.error(
+          'Could not get auth session:',
+          error
+        )
+
+        setSession(null)
+        setProfile(null)
         setLoading(false)
-      })
-    })
+        return
+      }
+
+      const initialSession = data?.session || null
+
+      setSession(initialSession)
+
+      /*
+       * Password recovery has its own route and its own
+       * session handling. Do not load the normal profile
+       * while the user is on /reset-password.
+       */
+      const recoveryRoute =
+        window.location.pathname === '/reset-password'
+
+      if (recoveryRoute) {
+        setIsRecoveringPassword(true)
+        setProfile(null)
+      } else if (initialSession?.user?.id) {
+        await loadProfile(
+          initialSession.user.id
+        )
+      } else {
+        setProfile(null)
+      }
+
+      if (mounted) {
+        setLoading(false)
+      }
+    }
+
+    initializeAuth()
 
     const {
       data: sub,
     } = supabase.auth.onAuthStateChange(
-      (_event, sess) => {
+      async (event, sess) => {
+        if (!mounted) return
+
+        /*
+         * Supabase fires PASSWORD_RECOVERY when the
+         * user opens a valid password-reset link.
+         */
+        if (
+          event === 'PASSWORD_RECOVERY' ||
+          window.location.pathname === '/reset-password'
+        ) {
+          setIsRecoveringPassword(true)
+          setSession(sess)
+          setProfile(null)
+          setLoading(false)
+          return
+        }
+
+        /*
+         * Normal authentication events.
+         */
+        setIsRecoveringPassword(false)
         setSession(sess)
-        loadProfile(sess?.user?.id)
+
+        if (sess?.user?.id) {
+          await loadProfile(
+            sess.user.id
+          )
+        } else {
+          setProfile(null)
+        }
       }
     )
 
-    return () =>
+    return () => {
+      mounted = false
       sub.subscription.unsubscribe()
+    }
   }, [loadProfile])
 
   const signUp = async ({
@@ -143,65 +219,59 @@ export function AuthProvider({ children }) {
     return data
   }
 
-const signIn = async ({
-  username,
-  password,
-}) => {
-
-  const {
-    data: emailData,
-    error: lookupError,
-  } = await supabase.rpc(
-    'auth_email_for_username',
-    {
-      p_username:
-        username
-          .trim()
-          .toLowerCase(),
-    }
-  )
-
-
-  if (lookupError) {
-    throw lookupError
-  }
-
-
-  const email =
-    typeof emailData === 'string'
-      ? emailData
-      : emailData?.email
-
-
-  if (!email) {
-    throw new Error(
-      'Account email not found. Please contact your teacher.'
+  const signIn = async ({
+    username,
+    password,
+  }) => {
+    const {
+      data: emailData,
+      error: lookupError,
+    } = await supabase.rpc(
+      'auth_email_for_username',
+      {
+        p_username:
+          username
+            .trim()
+            .toLowerCase(),
+      }
     )
+
+    if (lookupError) {
+      throw lookupError
+    }
+
+    const email =
+      typeof emailData === 'string'
+        ? emailData
+        : emailData?.email
+
+    if (!email) {
+      throw new Error(
+        'Account email not found. Please contact your teacher.'
+      )
+    }
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+    if (error) {
+      throw error
+    }
+
+    setIsRecoveringPassword(false)
+
+    await loadProfile(
+      data.user.id
+    )
+
+    return data
   }
-
-
-  const {
-    data,
-    error,
-  } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-
-  if (error) {
-    throw error
-  }
-
-
-  await loadProfile(
-    data.user.id
-  )
-
-
-  return data
-}
 
   /*
    * Password recovery uses the REAL recovery email.
@@ -239,7 +309,9 @@ const signIn = async ({
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    setSession(null)
     setProfile(null)
+    setIsRecoveringPassword(false)
   }
 
   const refreshProfile = () =>
@@ -253,6 +325,7 @@ const signIn = async ({
         session,
         profile,
         loading,
+        isRecoveringPassword,
         signUp,
         signIn,
         signOut,
