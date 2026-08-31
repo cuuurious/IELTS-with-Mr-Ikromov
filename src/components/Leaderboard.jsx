@@ -9,15 +9,16 @@ export default function Leaderboard({
   onOpenChat,
 }) {
   const { profile } = useAuth()
+  const isTeacher = profile?.role === 'teacher'
 
-  const isTeacher =
-    profile?.role === 'teacher'
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
+
   const [dailyProgress, setDailyProgress] = useState([])
   const [loadingDaily, setLoadingDaily] = useState(false)
   const [dailyError, setDailyError] = useState('')
+
   const [manageStudent, setManageStudent] = useState(null)
   const [groups, setGroups] = useState([])
   const [memberGroupIds, setMemberGroupIds] = useState([])
@@ -27,12 +28,8 @@ export default function Leaderboard({
 
   const getDateKey = (value) => {
     if (!value) return null
-
     const date = new Date(value)
-
-    if (Number.isNaN(date.getTime())) {
-      return null
-    }
+    if (Number.isNaN(date.getTime())) return null
 
     return `${date.getFullYear()}-${String(
       date.getMonth() + 1
@@ -43,17 +40,12 @@ export default function Leaderboard({
 
   const dateFromKey = (key) => {
     if (!key) return null
-
     const date = new Date(`${key}T00:00:00`)
-
-    return Number.isNaN(date.getTime())
-      ? null
-      : date
+    return Number.isNaN(date.getTime()) ? null : date
   }
 
   const formatDate = (key) => {
     const date = dateFromKey(key)
-
     if (!date) return key
 
     return date.toLocaleDateString([], {
@@ -64,24 +56,20 @@ export default function Leaderboard({
     })
   }
 
-  /*
-   * A student's historical completion is taken from
-   * homework_completions, NOT from the current submissions row.
-   *
-   * This means resetting homework does not erase history.
-   */
   const calculateStreak = (days, now = new Date()) => {
     if (!days?.length) return 0
 
     const activeDates = new Set(
       days
-        .filter((day) => day.completed > 0)
+        .filter((day) => Number(day.completed) > 0)
         .map((day) => day.date)
     )
 
     if (!activeDates.size) return 0
 
-    const today = new Date(now)
+    const currentTime = new Date(now)
+
+    const today = new Date(currentTime)
     today.setHours(0, 0, 0, 0)
 
     const todayKey = getDateKey(today)
@@ -90,16 +78,10 @@ export default function Leaderboard({
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayKey = getDateKey(yesterday)
 
-    const todayDay = days.find(
-      (day) => day.date === todayKey
-    )
+    const todayDay = days.find((day) => day.date === todayKey)
 
-    /*
-     * Today's unfinished work does NOT break the streak while
-     * the latest deadline for today's assigned work is still open.
-     */
     const deadlinePassed = todayDay?.latestDueDate
-      ? new Date(todayDay.latestDueDate) <= now
+      ? new Date(todayDay.latestDueDate) <= currentTime
       : false
 
     let currentDate = null
@@ -116,7 +98,6 @@ export default function Leaderboard({
 
     while (true) {
       const key = getDateKey(currentDate)
-
       if (!activeDates.has(key)) break
 
       streak += 1
@@ -142,64 +123,42 @@ export default function Leaderboard({
     const params =
       groupId === 'all'
         ? {}
-        : {
-            p_group_id: groupId,
-          }
+        : { p_group_id: groupId }
 
-    const {
-      data,
-      error: rpcError,
-    } = await supabase.rpc(
+    const { data, error: rpcError } = await supabase.rpc(
       rpcName,
       params
     )
 
     if (rpcError) {
-      console.error(
-        'Leaderboard error:',
-        rpcError
-      )
-
+      console.error('Leaderboard error:', rpcError)
       setError(rpcError.message)
       return
     }
 
     const initialRows = data || []
 
-    /*
-     * Get permanent completion timestamps so students with equal
-     * progress are ranked by completion timing instead of surname.
-     */
     let completionQuery = supabase
       .from('homework_completions')
-      .select(
-        'student_id, homework_id, completed_at'
-      )
+      .select('student_id, homework_id, completed_at')
 
     if (groupId !== 'all') {
-      const {
-        data: groupHomework,
-      } = await supabase
+      const { data: groupHomework } = await supabase
         .from('homeworks')
         .select('id')
-        .eq(
-          'group_id',
-          groupId
-        )
+        .eq('group_id', groupId)
 
-      const homeworkIds =
-        (groupHomework || []).map(
-          (homework) => homework.id
-        )
+      const homeworkIds = (groupHomework || []).map(
+        (homework) => homework.id
+      )
 
       if (homeworkIds.length === 0) {
         completionQuery = null
       } else {
-        completionQuery =
-          completionQuery.in(
-            'homework_id',
-            homeworkIds
-          )
+        completionQuery = completionQuery.in(
+          'homework_id',
+          homeworkIds
+        )
       }
     }
 
@@ -212,108 +171,62 @@ export default function Leaderboard({
       } = await completionQuery
 
       if (!completionError) {
-        completions =
-          completionData || []
+        completions = completionData || []
       }
     }
 
     const completionTimes = new Map()
 
-    completions.forEach(
-      (completion) => {
-        if (
-          !completion.student_id ||
-          !completion.completed_at
-        ) {
-          return
-        }
-
-        const time = new Date(
-          completion.completed_at
-        ).getTime()
-
-        const previous =
-          completionTimes.get(
-            completion.student_id
-          )
-
-        if (
-          !previous ||
-          time < previous
-        ) {
-          completionTimes.set(
-            completion.student_id,
-            time
-          )
-        }
+    completions.forEach((completion) => {
+      if (!completion.student_id || !completion.completed_at) {
+        return
       }
-    )
 
-    const sortedRows =
-      [...initialRows].sort(
-        (a, b) => {
-          const completedA =
-            Number(a.completed) || 0
+      const time = new Date(completion.completed_at).getTime()
+      const previous = completionTimes.get(completion.student_id)
 
-          const completedB =
-            Number(b.completed) || 0
+      if (!previous || time < previous) {
+        completionTimes.set(completion.student_id, time)
+      }
+    })
 
-          if (
-            completedA !==
-            completedB
-          ) {
-            return completedB - completedA
-          }
+    const sortedRows = [...initialRows].sort((a, b) => {
+      const completedA = Number(a.completed) || 0
+      const completedB = Number(b.completed) || 0
 
-          const percentageA =
-            Number(a.percentage) || 0
+      if (completedA !== completedB) {
+        return completedB - completedA
+      }
 
-          const percentageB =
-            Number(b.percentage) || 0
+      const percentageA = Number(a.percentage) || 0
+      const percentageB = Number(b.percentage) || 0
 
-          if (
-            percentageA !==
-            percentageB
-          ) {
-            return percentageB - percentageA
-          }
+      if (percentageA !== percentageB) {
+        return percentageB - percentageA
+      }
 
-          const timeA =
-            completionTimes.get(
-              a.student_id
-            ) ??
-            Number.MAX_SAFE_INTEGER
+      const timeA =
+        completionTimes.get(a.student_id) ??
+        Number.MAX_SAFE_INTEGER
 
-          const timeB =
-            completionTimes.get(
-              b.student_id
-            ) ??
-            Number.MAX_SAFE_INTEGER
+      const timeB =
+        completionTimes.get(b.student_id) ??
+        Number.MAX_SAFE_INTEGER
 
-          if (
-            timeA !==
-            timeB
-          ) {
-            return timeA - timeB
-          }
+      if (timeA !== timeB) {
+        return timeA - timeB
+      }
 
-          return String(
-            a.full_name || ''
-          ).localeCompare(
-            String(
-              b.full_name || ''
-            )
-          )
-        }
+      return String(a.full_name || '').localeCompare(
+        String(b.full_name || '')
       )
+    })
 
     setRows(
-      sortedRows.map(
-        (row, index) => ({
-          ...row,
-          rank: index + 1,
-        })
-      )
+      sortedRows.map((row, index) => ({
+        ...row,
+        rank: index + 1,
+      }))
     )
   }
 
@@ -329,9 +242,6 @@ export default function Leaderboard({
     loadLeaderboard()
   }, [groupId])
 
-  /*
-   * COMPLETE STUDENT HISTORY
-   */
   const loadDailyProgress = async (student) => {
     if (!student?.student_id || !groupId) return null
 
@@ -351,21 +261,13 @@ export default function Leaderboard({
         `)
 
       if (groupId !== 'all') {
-        homeworkQuery =
-          homeworkQuery.eq(
-            'group_id',
-            groupId
-          )
+        homeworkQuery = homeworkQuery.eq('group_id', groupId)
       }
 
-      const {
-        data: homeworks,
-        error: homeworkError,
-      } =
-        await homeworkQuery.order(
-          'created_at',
-          { ascending: false }
-        )
+      const { data: homeworks, error: homeworkError } =
+        await homeworkQuery.order('created_at', {
+          ascending: false,
+        })
 
       if (homeworkError) throw homeworkError
 
@@ -378,116 +280,82 @@ export default function Leaderboard({
           submitted_at,
           group_id
         `)
-        .eq(
-          'student_id',
-          student.student_id
-        )
+        .eq('student_id', student.student_id)
 
       if (groupId !== 'all') {
-        submissionQuery =
-          submissionQuery.eq(
-            'group_id',
-            groupId
-          )
+        submissionQuery = submissionQuery.eq(
+          'group_id',
+          groupId
+        )
       }
 
-      const {
-        data: submissions,
-        error: submissionError,
-      } =
-        await submissionQuery.order(
-          'submitted_at',
-          { ascending: false }
-        )
+      const { data: submissions, error: submissionError } =
+        await submissionQuery.order('submitted_at', {
+          ascending: false,
+        })
 
       if (submissionError) throw submissionError
 
       const {
         data: historicalCompletions,
         error: completionError,
-      } =
-        await supabase
-          .from('homework_completions')
-          .select(`
-            homework_id,
-            completed_at,
-            group_id
-          `)
-          .eq(
-            'student_id',
-            student.student_id
-          )
+      } = await supabase
+        .from('homework_completions')
+        .select(`
+          homework_id,
+          completed_at,
+          group_id
+        `)
+        .eq('student_id', student.student_id)
 
       if (completionError) throw completionError
 
       const homeworkById = new Map(
-        (homeworks || []).map(
-          (homework) => [
-            homework.id,
-            homework,
-          ]
-        )
+        (homeworks || []).map((homework) => [
+          homework.id,
+          homework,
+        ])
       )
 
       const submissionByHomework = new Map()
 
-      ;(submissions || []).forEach(
-        (submission) => {
-          const existing =
-            submissionByHomework.get(
-              submission.homework_id
-            )
+      ;(submissions || []).forEach((submission) => {
+        const existing = submissionByHomework.get(
+          submission.homework_id
+        )
 
-          if (
-            !existing ||
-            new Date(
-              submission.submitted_at || 0
-            ) >
-              new Date(
-                existing.submitted_at || 0
-              )
-          ) {
-            submissionByHomework.set(
-              submission.homework_id,
-              submission
-            )
-          }
+        if (
+          !existing ||
+          new Date(submission.submitted_at || 0) >
+            new Date(existing.submitted_at || 0)
+        ) {
+          submissionByHomework.set(
+            submission.homework_id,
+            submission
+          )
         }
-      )
+      })
 
       const completionByHomework = new Map()
 
-      ;(historicalCompletions || []).forEach(
-        (completion) => {
-          if (
-            !homeworkById.has(
-              completion.homework_id
-            )
-          ) {
-            return
-          }
+      ;(historicalCompletions || []).forEach((completion) => {
+        if (!homeworkById.has(completion.homework_id)) return
 
-          const existing =
-            completionByHomework.get(
-              completion.homework_id
-            )
+        const existing = completionByHomework.get(
+          completion.homework_id
+        )
 
-          if (
-            !existing ||
-            new Date(
-              completion.completed_at
-            ) <
-              new Date(
-                existing.completed_at
-              )
-          ) {
-            completionByHomework.set(
-              completion.homework_id,
-              completion
-            )
-          }
+        if (
+          !existing ||
+          new Date(completion.completed_at) <
+            new Date(existing.completed_at)
+        ) {
+          completionByHomework.set(
+            completion.homework_id,
+            completion
+          )
         }
-      )
+      })
 
       const grouped = {}
 
@@ -507,127 +375,80 @@ export default function Leaderboard({
         return grouped[dateKey]
       }
 
-      /*
-       * Completed/submitted work belongs to the ACTUAL day it was
-       * completed. This is the important distinction from created_at.
-       *
-       * Unsubmitted work is shown on its deadline day so it remains
-       * visible even when the student has done nothing yet.
-       */
-      ;(homeworks || []).forEach(
-        (homework) => {
-          const submission =
-            submissionByHomework.get(
-              homework.id
-            )
-
-          const historicalCompletion =
-            completionByHomework.get(
-              homework.id
-            )
-
-          const currentlySubmitted =
-            Boolean(
-              submission?.submitted_at ||
-              submission?.status === 'done' ||
-              submission?.status === 'submitted'
-            )
-
-         const completed =
-  Boolean(
-    historicalCompletion
-  ) ||
-  currentlySubmitted
-
-const activityDate =
-  historicalCompletion?.completed_at ||
-  submission?.submitted_at ||
-  null
-
-          const dateKey = getDateKey(
-            activityDate ||
-              homework.due_date ||
-              homework.created_at
-          )
-
-          const day = ensureDay(
-            dateKey
-          )
-
-          if (!day) return
-
-          if (homework.due_date) {
-            if (
-              !day.latestDueDate ||
-              new Date(
-                homework.due_date
-              ) >
-                new Date(
-                  day.latestDueDate
-                )
-            ) {
-              day.latestDueDate =
-                homework.due_date
-            }
-          }
-
-          day.total += 1
-
-          if (completed) {
-            day.completed += 1
-          }
-
-          day.tasks.push({
-            id: homework.id,
-            title:
-              homework.title ||
-              'Homework',
-            status:
-              submission?.status ||
-              'not_submitted',
-            completed,
-            submittedAt:
-              submission?.submitted_at ||
-              historicalCompletion?.completed_at ||
-              null,
-            dueDate:
-              homework.due_date ||
-              null,
-            historicallyCompleted:
-              Boolean(
-                historicalCompletion
-              ),
-            currentlySubmitted,
-          })
-        }
-      )
-
-      /*
-       * A homework completed early should not create a duplicate
-       * pending copy on its deadline day. Unsubmitted work stays on
-       * its deadline/created day.
-       */
-      Object.values(grouped).forEach(
-        (day) => {
-          day.tasks.sort(
-            (a, b) =>
-              a.title.localeCompare(
-                b.title
-              )
-          )
-        }
-      )
-
-      const days =
-        Object.values(grouped).sort(
-          (a, b) =>
-            b.date.localeCompare(
-              a.date
-            )
+      ;(homeworks || []).forEach((homework) => {
+        const submission = submissionByHomework.get(
+          homework.id
         )
 
-      const streak =
-        calculateStreak(days)
+        const historicalCompletion =
+          completionByHomework.get(homework.id)
+
+        const currentlySubmitted = Boolean(
+          submission?.submitted_at ||
+            submission?.status === 'done' ||
+            submission?.status === 'submitted'
+        )
+
+        const completed = Boolean(
+          historicalCompletion || currentlySubmitted
+        )
+
+        const completedAt =
+          historicalCompletion?.completed_at ||
+          submission?.submitted_at ||
+          null
+
+        const dateKey = getDateKey(
+          completedAt ||
+            homework.due_date ||
+            homework.created_at
+        )
+
+        const day = ensureDay(dateKey)
+
+        if (!day) return
+
+        if (homework.due_date) {
+          if (
+            !day.latestDueDate ||
+            new Date(homework.due_date) >
+              new Date(day.latestDueDate)
+          ) {
+            day.latestDueDate = homework.due_date
+          }
+        }
+
+        day.total += 1
+
+        if (completed) {
+          day.completed += 1
+        }
+
+        day.tasks.push({
+          id: homework.id,
+          title: homework.title || 'Homework',
+          status: submission?.status || 'not_submitted',
+          completed,
+          submittedAt: completedAt,
+          dueDate: homework.due_date || null,
+          historicallyCompleted: Boolean(
+            historicalCompletion
+          ),
+          currentlySubmitted,
+        })
+      })
+
+      Object.values(grouped).forEach((day) => {
+        day.tasks.sort((a, b) =>
+          a.title.localeCompare(b.title)
+        )
+      })
+
+      const days = Object.values(grouped).sort((a, b) =>
+        b.date.localeCompare(a.date)
+      )
+
+      const streak = calculateStreak(days)
 
       setDailyProgress(
         days.map((day) => ({
@@ -635,9 +456,7 @@ const activityDate =
           percentage:
             day.total > 0
               ? Math.round(
-                  (day.completed /
-                    day.total) *
-                    100
+                  (day.completed / day.total) * 100
                 )
               : 0,
         }))
@@ -645,18 +464,14 @@ const activityDate =
 
       return streak
     } catch (err) {
-      console.error(
-        'Daily progress error:',
-        err
-      )
+      console.error('Daily progress error:', err)
 
       setDailyError(
-        err.message ||
+        err?.message ||
           'Failed to load daily progress.'
       )
 
       setDailyProgress([])
-
       return null
     } finally {
       setLoadingDaily(false)
@@ -664,276 +479,157 @@ const activityDate =
   }
 
   const selectStudent = async (student) => {
-  // Open the profile immediately.
-  setSelectedStudent({
-    ...student,
-  })
+    setSelectedStudent({
+      ...student,
+      streak: 0,
+    })
 
-  // Load the student's historical progress
-  // without blocking the profile from opening.
-  const streak = await loadDailyProgress(student)
+    const streak = await loadDailyProgress(student)
 
-  if (streak !== null) {
-    setSelectedStudent((previous) =>
-      previous
-        ? {
-            ...previous,
-            streak,
-          }
-        : previous
-    )
-  }
-}
-
-  const handleChat = (
-    student
-  ) => {
-    if (
-      !student?.student_id
-    ) {
-      return
+    if (streak !== null) {
+      setSelectedStudent((previous) =>
+        previous
+          ? {
+              ...previous,
+              streak,
+            }
+          : previous
+      )
     }
+  }
 
-    if (
-      typeof onOpenChat ===
-      'function'
-    ) {
+  const handleChat = (student) => {
+    if (!student?.student_id) return
+
+    if (typeof onOpenChat === 'function') {
       onOpenChat(student)
       return
     }
 
     window.dispatchEvent(
-      new CustomEvent(
-        'notification-navigate',
-        {
-          detail: {
-            link: `private-chat:${student.student_id}`,
-          },
-        }
-      )
+      new CustomEvent('notification-navigate', {
+        detail: {
+          link: `private-chat:${student.student_id}`,
+        },
+      })
     )
   }
 
-  const openManageGroups =
-    async (
-      student
-    ) => {
-      if (!isTeacher) {
-      return
+  const openManageGroups = async (student) => {
+    if (!isTeacher || !student?.student_id) return
+
+    setManageStudent(student)
+    setGroups([])
+    setMemberGroupIds([])
+    setGroupError('')
+    setLoadingGroups(true)
+
+    try {
+      const { data: allGroups, error: groupsError } =
+        await supabase
+          .from('groups')
+          .select('id, name, created_at')
+          .order('created_at', {
+            ascending: true,
+          })
+
+      if (groupsError) throw groupsError
+
+      const { data: memberships, error: membershipError } =
+        await supabase
+          .from('group_members')
+          .select('group_id')
+          .eq('student_id', student.student_id)
+
+      if (membershipError) throw membershipError
+
+      setGroups(allGroups || [])
+      setMemberGroupIds(
+        (memberships || []).map(
+          (membership) => membership.group_id
+        )
+      )
+    } catch (err) {
+      console.error('Manage groups error:', err)
+      setGroupError(
+        err?.message || 'Failed to load groups.'
+      )
+    } finally {
+      setLoadingGroups(false)
     }
+  }
 
-      setManageStudent(student)
-      setGroups([])
-      setMemberGroupIds([])
-      setGroupError('')
-      setLoadingGroups(true)
+  const closeManageGroups = () => {
+    setManageStudent(null)
+    setGroups([])
+    setMemberGroupIds([])
+    setGroupError('')
+    setSavingGroup('')
+  }
 
-      try {
-        const {
-          data: allGroups,
-          error: groupsError,
-        } =
-          await supabase
-            .from('groups')
-            .select(
-              'id, name, created_at'
-            )
-            .order(
-              'created_at',
-              {
-                ascending: true,
-              }
-            )
+  const toggleGroupMembership = async (
+    group,
+    isMember
+  ) => {
+    if (!manageStudent) return
 
-        if (groupsError) {
-          throw groupsError
+    setSavingGroup(group.id)
+    setGroupError('')
+
+    try {
+      if (isMember) {
+        const { error: deleteError } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', group.id)
+          .eq('student_id', manageStudent.student_id)
+
+        if (deleteError) throw deleteError
+
+        setMemberGroupIds((previous) =>
+          previous.filter((id) => id !== group.id)
+        )
+      } else {
+        const { error: insertError } = await supabase
+          .from('group_members')
+          .insert({
+            group_id: group.id,
+            student_id: manageStudent.student_id,
+          })
+
+        if (insertError && insertError.code !== '23505') {
+          throw insertError
         }
 
-        const {
-          data: memberships,
-          error:
-            membershipError,
-        } =
-          await supabase
-            .from(
-              'group_members'
-            )
-            .select(
-              'group_id'
-            )
-            .eq(
-              'student_id',
-              student.student_id
-            )
-
-        if (membershipError) {
-          throw membershipError
-        }
-
-        setGroups(
-          allGroups || []
-        )
-
-        setMemberGroupIds(
-          (
-            memberships || []
-          ).map(
-            (membership) =>
-              membership.group_id
-          )
-        )
-      } catch (err) {
-        console.error(err)
-
-        setGroupError(
-          err.message
-        )
-      } finally {
-        setLoadingGroups(
-          false
+        setMemberGroupIds((previous) =>
+          previous.includes(group.id)
+            ? previous
+            : [...previous, group.id]
         )
       }
-    }
 
-  const closeManageGroups =
-    () => {
-      setManageStudent(null)
-      setGroups([])
-      setMemberGroupIds([])
-      setGroupError('')
+      await loadLeaderboard()
+    } catch (err) {
+      console.error('Group membership error:', err)
+      setGroupError(
+        err?.message ||
+          'Failed to update group membership.'
+      )
+    } finally {
       setSavingGroup('')
     }
+  }
 
-  const toggleGroupMembership =
-    async (
-      group,
-      isMember
-    ) => {
-      if (
-        !manageStudent
-      ) {
-        return
-      }
+  const selectedStreak = useMemo(
+    () => calculateStreak(dailyProgress),
+    [dailyProgress]
+  )
 
-      setSavingGroup(
-        group.id
-      )
-
-      setGroupError('')
-
-      try {
-        if (isMember) {
-          const {
-            error,
-          } =
-            await supabase
-              .from(
-                'group_members'
-              )
-              .delete()
-              .eq(
-                'group_id',
-                group.id
-              )
-              .eq(
-                'student_id',
-                manageStudent.student_id
-              )
-
-          if (error) {
-            throw error
-          }
-
-          setMemberGroupIds(
-            (prev) =>
-              prev.filter(
-                (id) =>
-                  id !==
-                  group.id
-              )
-          )
-        } else {
-          const {
-            error,
-          } =
-            await supabase
-              .from(
-                'group_members'
-              )
-              .insert({
-                group_id:
-                  group.id,
-                student_id:
-                  manageStudent.student_id,
-              })
-
-          if (error) {
-            if (
-              error.code ===
-              '23505'
-            ) {
-              setMemberGroupIds(
-                (prev) =>
-                  prev.includes(
-                    group.id
-                  )
-                    ? prev
-                    : [
-                        ...prev,
-                        group.id,
-                      ]
-              )
-            } else {
-              throw error
-            }
-          } else {
-            setMemberGroupIds(
-              (prev) =>
-                prev.includes(
-                  group.id
-                )
-                  ? prev
-                  : [
-                      ...prev,
-                      group.id,
-                    ]
-            )
-          }
-        }
-
-        await loadLeaderboard()
-      } catch (err) {
-        console.error(err)
-
-        setGroupError(
-          err.message
-        )
-      } finally {
-        setSavingGroup('')
-      }
-    }
-
-  const selectedStreak =
-    useMemo(() => {
-      if (
-        !dailyProgress.length
-      ) {
-        return 0
-      }
-
-      return calculateStreak(
-        dailyProgress
-      )
-    }, [
-      dailyProgress,
-    ])
-
-  const closeStudentProfile =
-    () => {
-      setSelectedStudent(null)
-      setDailyProgress([])
-      setDailyError('')
-    }
+  const closeStudentProfile = () => {
+    setSelectedStudent(null)
+    setDailyProgress([])
+    setDailyError('')
+  }
 
   if (error) {
     return (
@@ -959,700 +655,565 @@ const activityDate =
     )
   }
 
-  const rankStyle =
-    (rank) => {
-      if (rank === 1) {
-        return 'bg-brass text-onbrass border-brass'
-      }
-
-      if (rank === 2) {
-        return 'bg-panel-2 text-paper border-mist'
-      }
-
-      if (rank === 3) {
-        return 'bg-panel-2 text-paper border-brass-dim'
-      }
-
-      return 'bg-panel-2 text-mist border-line'
+  const rankStyle = (rank) => {
+    if (rank === 1) {
+      return 'bg-brass text-onbrass border-brass'
     }
+
+    if (rank === 2) {
+      return 'bg-panel-2 text-paper border-mist'
+    }
+
+    if (rank === 3) {
+      return 'bg-panel-2 text-paper border-brass-dim'
+    }
+
+    return 'bg-panel-2 text-mist border-line'
+  }
 
   return (
     <div className="flex flex-col gap-3">
-
-      {rows.map(
-        (r) => {
-          const rank =
-            r.rank
-
-          return (
-            <button
-              type="button"
-              key={
-                r.student_id
-              }
-              onClick={() =>
-                selectStudent(r)
-              }
-              className={`ticket rounded-lg p-3 flex items-center gap-3 text-left w-full transition-colors hover:border-brass ${
-                r.student_id ===
-                highlightStudentId
-                  ? 'border-brass'
-                  : ''
-              }`}
-            >
-              <div
-                className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
-                  rank
-                )}`}
-              >
-                {rank}
-              </div>
-
-              <div className="flex-1 min-w-0">
-
-                <div className="flex items-center justify-between gap-2">
-
-                  <span className="font-medium truncate">
-                    {r.full_name}
-                  </span>
-
-                  <span className="font-mono text-sm text-brass">
-                    {r.percentage}%
-                  </span>
-
-                </div>
-
-                <div className="text-xs text-mist font-mono mt-0.5">
-                  @{r.username ||
-                    'student'}
-                </div>
-
-                <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
-
-                  <div
-                    className="h-full bg-brass rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(
-                          0,
-                          Number(
-                            r.percentage
-                          ) ||
-                            0
-                        )
-                      )}%`,
-                    }}
-                  />
-
-                </div>
-
-                <div className="text-mist text-xs font-mono mt-1 flex gap-3">
-
-                  <span>
-                    {r.completed}/
-                    {r.total}{' '}
-                    tasks
-                  </span>
-
-                  {r.streak >
-                    0 && (
-                    <span>
-                      {String.fromCodePoint(0x1F525)}{' '}
-                      {r.streak}{' '}
-                      day
-                      {r.streak ===
-                      1
-                        ? ''
-                        : 's'}{' '}
-                      in a row
-                    </span>
-                  )}
-
-                </div>
-
-              </div>
-
-              <div className="text-mist text-lg">
-                {'>'}
-              </div>
-
-            </button>
-          )
-        }
-      )}
-
-      {selectedStudent &&
-  createPortal(
-    <div
-      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
-          onMouseDown={(e) => {
-            if (
-              e.target ===
-              e.currentTarget
-            ) {
-              closeStudentProfile()
-            }
-          }}
+      {rows.map((student) => (
+        <button
+          key={student.student_id}
+          type="button"
+          onClick={() => selectStudent(student)}
+          className={`ticket w-full rounded-lg p-3 flex items-center gap-3 text-left transition-colors hover:border-brass ${
+            student.student_id === highlightStudentId
+              ? 'border-brass'
+              : ''
+          }`}
         >
+          <div
+            className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
+              student.rank
+            )}`}
+          >
+            {student.rank}
+          </div>
 
-          <div className="w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto bg-panel border border-line rounded-xl shadow-2xl">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-paper truncate">
+                {student.full_name}
+              </span>
 
-            <div className="sticky top-0 z-10 bg-panel border-b border-line px-5 py-4 flex items-start justify-between gap-4">
-
-              <div className="flex items-center gap-3 min-w-0">
-
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brass text-onbrass flex items-center justify-center font-display font-bold text-lg">
-                  {(
-                    selectedStudent.full_name ||
-                    '?'
-                  )
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-
-                <div className="min-w-0">
-
-                  <div className="flex items-center gap-2 flex-wrap">
-
-                    <span
-                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
-                        selectedStudent.rank
-                      )}`}
-                    >
-                      {
-                        selectedStudent.rank
-                      }
-                    </span>
-
-                    <h3 className="font-display text-xl truncate">
-                      {
-                        selectedStudent.full_name
-                      }
-                    </h3>
-
-                  </div>
-
-                  <p className="text-mist text-xs font-mono mt-1">
-                    @
-                    {selectedStudent.username ||
-                      'student'}
-                  </p>
-
-                </div>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={
-                  closeStudentProfile
-                }
-                className="focus-ring flex-shrink-0 text-mist hover:text-paper text-xl"
-                aria-label="Close student profile"
-              >
-                X
-              </button>
-
+              <span className="font-mono text-sm text-brass">
+                {student.percentage}%
+              </span>
             </div>
 
-            <div className="p-5">
+            <div className="text-xs text-mist font-mono mt-0.5">
+              @{student.username || 'student'}
+            </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-
-                <div className="bg-panel-2 border border-line rounded-lg p-3">
-                  <div className="text-xs text-mist font-mono">
-                    Rank
-                  </div>
-
-                  <div className="text-xl font-display text-brass mt-1">
-                    #
-                    {
-                      selectedStudent.rank
-                    }
-                  </div>
-                </div>
-
-                <div className="bg-panel-2 border border-line rounded-lg p-3">
-                  <div className="text-xs text-mist font-mono">
-                    Progress
-                  </div>
-
-                  <div className="text-xl font-display text-brass mt-1">
-                    {
-                      selectedStudent.percentage
-                    }
-                    %
-                  </div>
-                </div>
-
-                <div className="bg-panel-2 border border-line rounded-lg p-3">
-                  <div className="text-xs text-mist font-mono">
-                    Completed
-                  </div>
-
-                  <div className="text-xl font-display mt-1">
-                    {
-                      selectedStudent.completed
-                    }
-                  </div>
-                </div>
-
-                <div className="bg-panel-2 border border-line rounded-lg p-3">
-                  <div className="text-xs text-mist font-mono">
-                    Streak
-                  </div>
-
-                  <div className="text-xl font-display mt-1">
-                    {String.fromCodePoint(0x1F525)}{' '}
-                    {selectedStreak}
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="mt-5">
-
-                <div className="flex justify-between text-xs font-mono mb-2">
-
-                  <span className="text-mist">
-                    Overall progress
-                  </span>
-
-                  <span className="text-brass">
-                    {
-                      selectedStudent.percentage
-                    }
-                    %
-                  </span>
-
-                </div>
-
-                <div className="h-2 bg-panel-2 rounded-full overflow-hidden">
-
-                  <div
-                    className="h-full bg-brass rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(
-                          0,
-                          Number(
-                            selectedStudent.percentage
-                          ) ||
-                            0
-                        )
-                      )}%`,
-                    }}
-                  />
-
-                </div>
-
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-5">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleChat(
-                      selectedStudent
+            <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
+              <div
+                className="h-full bg-brass rounded-full transition-all"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(
+                      0,
+                      Number(student.percentage) || 0
                     )
-                  }
-                  className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-                >
-                  {String.fromCodePoint(0x1F4AC)} Chat with
-                  student
-                </button>
+                  )}%`,
+                }}
+              />
+            </div>
 
-                {isTeacher && (
-  <button
-    type="button"
-    onClick={() => {
-      const student = selectedStudent
+            <div className="text-mist text-xs font-mono mt-1 flex gap-3">
+              <span>
+                {student.completed}/{student.total} tasks
+              </span>
 
-      closeStudentProfile()
+              {student.streak > 0 && (
+                <span>
+                  🔥 {student.streak}{' '}
+                  {student.streak === 1 ? 'day' : 'days'} in a row
+                </span>
+              )}
+            </div>
+          </div>
 
-      setTimeout(() => {
-        openManageGroups(student)
-      }, 0)
-    }}
-    className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-  >
-    {String.fromCodePoint(0x1F465)} Manage
-    groups
-  </button>
-)}
+          <div className="text-mist text-lg flex-shrink-0">
+            ›
+          </div>
+        </button>
+      ))}
+
+      {selectedStudent &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeStudentProfile()
+              }
+            }}
+          >
+            <div
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-panel text-paper shadow-2xl"
+              onMouseDown={(event) =>
+                event.stopPropagation()
+              }
+            >
+              <div className="flex-shrink-0 border-b border-line bg-panel px-5 py-4 sm:px-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border-2 font-display font-bold ${rankStyle(
+                          selectedStudent.rank
+                        )}`}
+                      >
+                        {selectedStudent.rank}
+                      </div>
+
+                      <div className="min-w-0">
+                        <h2 className="truncate font-display text-xl font-semibold text-paper sm:text-2xl">
+                          {selectedStudent.full_name}
+                        </h2>
+
+                        <p className="mt-0.5 truncate text-sm font-mono text-mist">
+                          @{selectedStudent.username || 'student'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeStudentProfile}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+                    aria-label="Close student profile"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
-              <div className="mt-6 border-t border-line pt-5">
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-xl border border-line bg-panel-2 p-3">
+                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
+                      Rank
+                    </div>
+                    <div className="mt-1 text-xl font-display text-brass">
+                      #{selectedStudent.rank}
+                    </div>
+                  </div>
 
-                <div>
+                  <div className="rounded-xl border border-line bg-panel-2 p-3">
+                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
+                      Progress
+                    </div>
+                    <div className="mt-1 text-xl font-display text-brass">
+                      {selectedStudent.percentage}%
+                    </div>
+                  </div>
 
-                  <h4 className="font-medium text-lg">
-                    Homework history
-                  </h4>
+                  <div className="rounded-xl border border-line bg-panel-2 p-3">
+                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
+                      Completed
+                    </div>
+                    <div className="mt-1 text-xl font-display text-paper">
+                      {selectedStudent.completed}
+                    </div>
+                  </div>
 
-                  <p className="text-xs text-mist mt-1">
-                    Every assigned homework day is shown,
-                    including days when the student did not
-                    submit anything.
-                  </p>
-
+                  <div className="rounded-xl border border-line bg-panel-2 p-3">
+                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
+                      Streak
+                    </div>
+                    <div className="mt-1 text-xl font-display text-brass">
+                      🔥 {selectedStudent.streak ?? selectedStreak}
+                    </div>
+                  </div>
                 </div>
 
-                {loadingDaily && (
-                  <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-                    <p className="text-sm text-mist">
-                      Loading homework
-                      history...
-                    </p>
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-mono">
+                    <span className="text-mist">
+                      Overall progress
+                    </span>
+                    <span className="text-brass">
+                      {selectedStudent.percentage}%
+                    </span>
                   </div>
-                )}
 
-                {dailyError && (
-                  <div className="mt-3 bg-panel-2 border border-coral rounded-lg p-4">
-                    <p className="text-sm text-coral">
-                      Couldn't load
-                      homework
-                      history:{' '}
-                      {
-                        dailyError
+                  <div className="h-2 overflow-hidden rounded-full bg-panel-2">
+                    <div
+                      className="h-full rounded-full bg-brass transition-all"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            Number(
+                              selectedStudent.percentage
+                            ) || 0
+                          )
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {selectedStudent.contact_email && (
+                    <div className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper">
+                      <span className="text-mist">
+                        Email:{' '}
+                      </span>
+                      {selectedStudent.contact_email}
+                    </div>
+                  )}
+
+                  <div className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper">
+                    <span className="text-mist">
+                      Status:{' '}
+                    </span>
+                    {selectedStudent.status || 'approved'}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {typeof onOpenChat === 'function' && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleChat(selectedStudent)
                       }
-                    </p>
-                  </div>
-                )}
+                      className="rounded-xl border border-brass bg-brass/10 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/20"
+                    >
+                      Chat with student
+                    </button>
+                  )}
 
-                {!loadingDaily &&
-                  !dailyError &&
-                  dailyProgress.length ===
-                    0 && (
-                    <div className="mt-3 bg-panel-2 border border-line rounded-lg p-4">
-                      <p className="text-sm text-mist">
-                        No homework
-                        history yet.
+                  {isTeacher && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openManageGroups(selectedStudent)
+                      }
+                      className="rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm font-medium text-paper transition hover:border-brass hover:text-brass"
+                    >
+                      Manage groups
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-8 border-t border-line pt-6">
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <h3 className="font-display text-xl font-semibold text-paper">
+                        Homework history
+                      </h3>
+                      <p className="mt-1 text-sm text-mist">
+                        Daily completion and submission history
+                      </p>
+                    </div>
+
+                    {loadingDaily && (
+                      <span className="text-xs font-mono text-mist">
+                        Loading...
+                      </span>
+                    )}
+                  </div>
+
+                  {dailyError && (
+                    <div className="mt-4 rounded-xl border border-coral/40 bg-coral/10 p-4">
+                      <p className="text-sm text-coral">
+                        Couldn't load homework history:{' '}
+                        {dailyError}
                       </p>
                     </div>
                   )}
 
-                {!loadingDaily &&
-                  !dailyError &&
-                  dailyProgress.length >
-                    0 && (
-                    <div className="mt-3 flex flex-col gap-3">
+                  {!loadingDaily &&
+                    !dailyError &&
+                    dailyProgress.length === 0 && (
+                      <div className="mt-4 rounded-xl border border-line bg-panel-2 p-5">
+                        <p className="text-sm text-mist">
+                          No homework history yet.
+                        </p>
+                      </div>
+                    )}
 
-                      {dailyProgress.map(
-                        (
-                          day
-                        ) => (
+                  {!loadingDaily &&
+                    !dailyError &&
+                    dailyProgress.length > 0 && (
+                      <div className="mt-4 flex flex-col gap-4">
+                        {dailyProgress.map((day) => (
                           <div
-                            key={
-                              day.date
-                            }
-                            className="bg-panel-2 border border-line rounded-lg p-4"
+                            key={day.date}
+                            className="rounded-xl border border-line bg-panel-2 p-4"
                           >
-
-                            <div className="flex items-start justify-between gap-3 mb-3">
-
+                            <div className="flex items-start justify-between gap-3">
                               <div>
-
-                                <div className="font-medium">
-                                  {formatDate(
-                                    day.date
-                                  )}
+                                <div className="font-medium text-paper">
+                                  {formatDate(day.date)}
                                 </div>
 
-                                <div className="text-xs text-mist font-mono mt-1">
-                                  {
-                                    day.completed
-                                  }
-                                  /
-                                  {
-                                    day.total
-                                  }{' '}
+                                <div className="mt-1 text-xs font-mono text-mist">
+                                  {day.completed}/{day.total}{' '}
                                   completed
                                 </div>
-
                               </div>
 
                               <div className="text-right">
-
                                 <div className="text-sm font-mono text-brass">
-                                  {
-                                    day.percentage
-                                  }
-                                  %
+                                  {day.percentage}%
                                 </div>
-
                                 <div className="text-xs text-mist">
-                                  daily
-                                  progress
+                                  daily progress
                                 </div>
-
                               </div>
-
                             </div>
 
-                            <div className="h-1.5 bg-panel rounded-full overflow-hidden mb-3">
-
+                            <div className="mb-3 mt-3 h-1.5 overflow-hidden rounded-full bg-panel">
                               <div
-                                className="h-full bg-brass rounded-full"
+                                className="h-full rounded-full bg-brass"
                                 style={{
                                   width: `${day.percentage}%`,
                                 }}
                               />
-
                             </div>
 
-                            <div className="flex flex-col gap-2">
-
-                              {day.tasks.map(
-                                (
-                                  task
-                                ) => (
-                                  <div
-                                    key={
-                                      task.id
-                                    }
-                                    className="flex items-center justify-between gap-3 border-t border-line pt-2"
-                                  >
-
-                                    <div className="min-w-0">
-
-                                      <div className="text-sm truncate">
-                                        {
-                                          task.title
-                                        }
-                                      </div>
-
-                                      {task.submittedAt ? (
-                                        <div className="text-xs text-mist font-mono mt-0.5">
-                                          {task.historicallyCompleted &&
-                                          !task.currentlySubmitted
-                                            ? 'Historically completed '
-                                            : 'Submitted '}
-                                          {new Date(
-                                            task.submittedAt
-                                          ).toLocaleString(
-                                            [],
-                                            {
-                                              month:
-                                                'short',
-                                              day:
-                                                'numeric',
-                                              hour:
-                                                '2-digit',
-                                              minute:
-                                                '2-digit',
-                                            }
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <div className="text-xs text-mist font-mono mt-0.5">
-                                          No submission
-                                        </div>
-                                      )}
-
-                                      {task.dueDate && (
-                                        <div className="text-xs text-mist font-mono mt-0.5">
-                                          Deadline:{' '}
-                                          {new Date(
-                                            task.dueDate
-                                          ).toLocaleString(
-                                            [],
-                                            {
-                                              month:
-                                                'short',
-                                              day:
-                                                'numeric',
-                                              hour:
-                                                '2-digit',
-                                              minute:
-                                                '2-digit',
-                                            }
-                                          )}
-                                        </div>
-                                      )}
-
+                            <div className="flex flex-col">
+                              {day.tasks.map((task) => (
+                                <div
+                                  key={task.id}
+                                  className="flex items-start justify-between gap-4 border-t border-line py-3"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="truncate text-sm font-medium text-paper">
+                                      {task.title}
                                     </div>
 
-                                    <span
-                                      className={`flex-shrink-0 text-xs font-mono ${
-                                        task.completed
-                                          ? 'text-brass'
-                                          : 'text-coral'
-                                      }`}
-                                    >
-                                      {task.completed
-                                        ? 'DONE'
-                                        : 'NOT DONE'}
-                                    </span>
+                                    {task.submittedAt ? (
+                                      <div className="mt-1 text-xs font-mono text-mist">
+                                        {task.historicallyCompleted &&
+                                        !task.currentlySubmitted
+                                          ? 'Historically completed '
+                                          : 'Submitted '}
+                                        {new Date(
+                                          task.submittedAt
+                                        ).toLocaleString([], {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <div className="mt-1 text-xs font-mono text-mist">
+                                        No submission
+                                      </div>
+                                    )}
 
+                                    {task.dueDate && (
+                                      <div className="mt-1 text-xs font-mono text-mist">
+                                        Deadline:{' '}
+                                        {new Date(
+                                          task.dueDate
+                                        ).toLocaleString([], {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
-                                )
-                              )}
 
+                                  <span
+                                    className={`flex-shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-semibold ${
+                                      task.completed
+                                        ? 'border-sage/50 bg-sage/10 text-sage'
+                                        : 'border-coral/50 bg-coral/10 text-coral'
+                                    }`}
+                                  >
+                                    {task.completed
+                                      ? 'DONE'
+                                      : 'NOT DONE'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              <div className="flex-shrink-0 border-t border-line bg-panel px-5 py-4 sm:px-7">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeStudentProfile}
+                    className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-onaccent transition hover:brightness-105"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {isTeacher &&
+        manageStudent &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 p-4"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeManageGroups()
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl border border-line bg-panel text-paper shadow-2xl"
+              onMouseDown={(event) =>
+                event.stopPropagation()
+              }
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-line bg-panel px-5 py-4">
+                <div className="min-w-0">
+                  <h3 className="truncate font-display text-xl font-semibold text-paper">
+                    Manage groups
+                  </h3>
+                  <p className="mt-1 truncate text-sm text-mist">
+                    {manageStudent.full_name}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeManageGroups}
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="max-h-[calc(85vh-80px)] overflow-y-auto p-5">
+                {groupError && (
+                  <div className="mb-4 rounded-xl border border-coral/40 bg-coral/10 p-3 text-sm text-coral">
+                    {groupError}
+                  </div>
+                )}
+
+                {loadingGroups ? (
+                  <div className="py-10 text-center text-sm text-mist">
+                    Loading groups...
+                  </div>
+                ) : groups.length === 0 ? (
+                  <div className="rounded-xl border border-line bg-panel-2 p-6 text-center">
+                    <p className="text-sm text-mist">
+                      No groups exist yet.
+                    </p>
+                    <p className="mt-1 text-xs text-mist">
+                      Create a group first from Groups & homework.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {groups.map((group) => {
+                      const isMember =
+                        memberGroupIds.includes(group.id)
+
+                      const saving =
+                        savingGroup === group.id
+
+                      return (
+                        <div
+                          key={group.id}
+                          className={`flex items-center gap-3 rounded-xl border p-3 transition-colors ${
+                            isMember
+                              ? 'border-brass/50 bg-brass/10'
+                              : 'border-line bg-panel-2'
+                          }`}
+                        >
+                          <div
+                            className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
+                              isMember
+                                ? 'bg-brass text-onbrass'
+                                : 'border border-line bg-panel text-mist'
+                            }`}
+                          >
+                            {isMember ? '✓' : '—'}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium text-paper">
+                              {group.name}
                             </div>
 
+                            <div className="mt-0.5 text-xs text-mist">
+                              {isMember
+                                ? 'Student is a member'
+                                : 'Student is not a member'}
+                            </div>
                           </div>
-                        )
-                      )}
 
-
-                    </div>
-                  )}
-
-              </div>
-
-            </div>
-
-          </div>
-
-            </div>,
-    document.body
-  )}
-
-      {isTeacher && manageStudent && createPortal(
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              closeManageGroups()
-            }
-          }}
-        >
-          <div className="w-full max-w-lg bg-panel border border-line rounded-xl shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-xl">
-                  Manage groups
-                </h3>
-                <p className="text-sm text-mist mt-1">
-                  {manageStudent.full_name}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeManageGroups}
-                className="focus-ring text-mist hover:text-paper text-xl"
-                aria-label="Close"
-              >
-                X
-              </button>
-            </div>
-
-            <div className="p-5">
-              {groupError && (
-                <div className="mb-4 rounded-lg border border-coral/40 bg-coral/10 p-3 text-sm text-coral">
-                  {groupError}
-                </div>
-              )}
-
-              {loadingGroups ? (
-                <div className="py-8 text-center text-mist">
-                  Loading groups...
-                </div>
-              ) : groups.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-mist">
-                    No groups exist yet.
-                  </p>
-                  <p className="text-xs text-mist mt-1">
-                    Create a group first from Groups & homework.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {groups.map((group) => {
-                    const isMember =
-                      memberGroupIds.includes(group.id)
-
-                    const saving =
-                      savingGroup === group.id
-
-                    return (
-                      <div
-                        key={group.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                          isMember
-                            ? 'border-brass bg-brass/5'
-                            : 'border-line bg-panel-2'
-                        }`}
-                      >
-                        <div
-                          className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                            isMember
-                              ? 'bg-brass text-onbrass'
-                              : 'bg-panel border border-line text-mist'
-                          }`}
-                        >
-                          {isMember ? '✓' : '—'}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {group.name}
-                          </div>
-                          <div className="text-xs text-mist mt-0.5">
-                            {isMember
-                              ? 'Student is a member'
-                              : 'Student is not a member'}
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() =>
-                            toggleGroupMembership(
-                              group,
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() =>
+                              toggleGroupMembership(
+                                group,
+                                isMember
+                              )
+                            }
+                            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${
                               isMember
-                            )
-                          }
-                          className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-40 ${
-                            isMember
-                              ? 'border border-coral text-coral hover:bg-coral/10'
-                              : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
-                          }`}
-                        >
-                          {saving
-                            ? 'Saving...'
-                            : isMember
-                            ? 'Remove'
-                            : 'Add'}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                                ? 'border border-coral text-coral hover:bg-coral/10'
+                                : 'border border-brass text-brass hover:bg-brass hover:text-onbrass'
+                            }`}
+                          >
+                            {saving
+                              ? 'Saving...'
+                              : isMember
+                              ? 'Remove'
+                              : 'Add'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
 
-              <div className="mt-5 pt-4 border-t border-line">
-                <p className="text-xs text-mist">
-                  Removing a student from a group does{' '}
-                  <strong className="text-paper">
-                    not
-                  </strong>{' '}
-                  delete their account. It only removes their
-                  membership from that group.
-                </p>
+                <div className="mt-5 border-t border-line pt-4">
+                  <p className="text-xs leading-5 text-mist">
+                    Removing a student from a group does{' '}
+                    <strong className="text-paper">
+                      not
+                    </strong>{' '}
+                    delete their account. It only removes their
+                    membership from that group.
+                  </p>
+                </div>
+
+                <div className="mt-5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeManageGroups}
+                    className="rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm font-medium text-paper transition hover:border-brass hover:text-brass"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
-
-            <div className="px-5 py-3 border-t border-line flex justify-end">
-              <button
-                type="button"
-                onClick={closeManageGroups}
-                className="focus-ring px-4 py-2 rounded-md border border-line text-sm text-paper hover:border-brass hover:text-brass"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
+          </div>,
+          document.body
+        )}
     </div>
   )
 }

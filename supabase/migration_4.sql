@@ -23,7 +23,6 @@ create policy "push_insert_own" on public.push_subscriptions
   for insert with check (user_id = auth.uid());
 create policy "push_delete_own" on public.push_subscriptions
   for delete using (user_id = auth.uid());
--- Netlify functions use the service role key, which bypasses RLS,
 -- so they can read every subscription to deliver a push.
 
 -- ---------- Fix: group_leaderboard "student_id is ambiguous" ----------

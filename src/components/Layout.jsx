@@ -16,15 +16,134 @@ export default function Layout({
   const isTeacher = profile?.role === 'teacher'
 
   return (
-    <div className="min-h-screen bg-ink text-paper flex flex-col">
+    <div
+      className="
+        min-h-screen
+        flex flex-col
+        text-[#17182D]
+        bg-[#F5F7FF]
+        relative
+        overflow-x-hidden
+      "
+    >
+
+      {/* =====================================================
+          DECORATIVE BACKGROUND
+          ===================================================== */}
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          fixed inset-0
+          overflow-hidden
+          -z-0
+        "
+      >
+
+        {/* Large lavender glow */}
+        <div
+          className="
+            absolute
+            -top-56
+            right-[-10rem]
+            w-[38rem]
+            h-[38rem]
+            rounded-full
+            bg-[#7468F5]/10
+            blur-3xl
+          "
+        />
+
+        {/* Cyan glow */}
+        <div
+          className="
+            absolute
+            bottom-[-15rem]
+            left-[-12rem]
+            w-[34rem]
+            h-[34rem]
+            rounded-full
+            bg-[#49D6D0]/10
+            blur-3xl
+          "
+        />
+
+        {/* Soft angled line */}
+        <div
+          className="
+            absolute
+            top-[24rem]
+            -left-[10rem]
+            w-[75rem]
+            h-[1px]
+            bg-[#7468F5]/10
+            rotate-[-17deg]
+          "
+        />
+
+        {/* Floating rounded square */}
+        <div
+          className="
+            absolute
+            top-[9rem]
+            right-[7%]
+            w-20
+            h-20
+            rounded-[1.5rem]
+            bg-gradient-to-br
+            from-[#7468F5]/20
+            to-[#A89FFF]/10
+            rotate-[14deg]
+            blur-[0.2px]
+          "
+        />
+
+        {/* Floating cyan shape */}
+        <div
+          className="
+            absolute
+            bottom-[10rem]
+            left-[4%]
+            w-14
+            h-14
+            rounded-[1.1rem]
+            bg-[#49D6D0]/20
+            rotate-[-18deg]
+          "
+        />
+
+        {/* Floating coral shape */}
+        <div
+          className="
+            absolute
+            bottom-[5rem]
+            right-[5%]
+            w-16
+            h-16
+            rounded-[1.2rem]
+            bg-[#FF7770]/15
+            rotate-[20deg]
+          "
+        />
+
+      </div>
+
 
       {/* =====================================================
           HEADER
-      ===================================================== */}
+          ===================================================== */}
 
-      <header className="sticky top-0 z-40 border-b border-line bg-ink/95 backdrop-blur-md">
+      <header
+        className="
+          sticky top-0 z-40
+          border-b border-[#DDE2F0]
+          bg-white/80
+          backdrop-blur-xl
+        "
+      >
 
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="h-[76px] flex items-center justify-between gap-4">
 
@@ -33,22 +152,64 @@ export default function Layout({
             <div className="flex items-center gap-3 min-w-0">
 
               <div className="relative shrink-0">
+
                 <img
                   src="/mrikromov.jpg"
                   alt="IELTS with Mr Ikromov"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover object-center border border-line shadow-sm"
+                  className="
+                    w-11 h-11
+                    sm:w-12 sm:h-12
+                    rounded-[1rem]
+                    object-cover
+                    object-center
+                    border border-white
+                    shadow-[0_8px_25px_rgba(30,35,70,0.12)]
+                  "
                 />
 
-                <span className="absolute -right-1 -bottom-1 w-3 h-3 rounded-full bg-sage border-2 border-ink" />
+                <span
+                  className="
+                    absolute
+                    -right-1
+                    -bottom-1
+                    w-3
+                    h-3
+                    rounded-full
+                    bg-[#49C98A]
+                    border-2
+                    border-white
+                  "
+                />
+
               </div>
 
               <div className="min-w-0">
 
-                <div className="font-display text-[17px] sm:text-[19px] leading-tight font-semibold tracking-tight truncate">
+                <div
+                  className="
+                    text-[17px]
+                    sm:text-[19px]
+                    leading-tight
+                    font-semibold
+                    tracking-[-0.02em]
+                    text-[#17182D]
+                    truncate
+                  "
+                >
                   IELTS with Mr Ikromov
                 </div>
 
-                <div className="text-[10px] sm:text-[11px] text-mist font-mono uppercase tracking-[0.12em] mt-0.5">
+                <div
+                  className="
+                    text-[10px]
+                    sm:text-[11px]
+                    text-[#7B819A]
+                    font-mono
+                    uppercase
+                    tracking-[0.14em]
+                    mt-0.5
+                  "
+                >
                   {isTeacher
                     ? 'Examiner desk'
                     : 'Candidate portal'}
@@ -58,25 +219,78 @@ export default function Layout({
 
             </div>
 
+
             {/* RIGHT CONTROLS */}
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
 
-              <span className="hidden lg:block text-sm text-mist mr-2 max-w-[180px] truncate">
+              <span
+                className="
+                  hidden
+                  lg:block
+                  text-sm
+                  text-[#707790]
+                  mr-1
+                  max-w-[180px]
+                  truncate
+                "
+              >
                 {profile?.full_name}
               </span>
 
-              <ThemeToggle />
 
-              <NotificationBell profile={profile} />
+              {/* Theme */}
+
+              <div
+                className="
+                  rounded-full
+                  border border-[#DCE1EF]
+                  bg-white/80
+                  shadow-sm
+                "
+              >
+                <ThemeToggle />
+              </div>
+
+
+              {/* Notifications */}
+
+              <div
+                className="
+                  rounded-full
+                  border border-[#DCE1EF]
+                  bg-white/80
+                  shadow-sm
+                "
+              >
+                <NotificationBell profile={profile} />
+              </div>
+
+
+              {/* Settings */}
 
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
-                className="focus-ring w-9 h-9 rounded-full border border-line bg-panel/40 flex items-center justify-center text-mist hover:text-brass hover:border-brass hover:bg-panel transition-all duration-200"
+                className="
+                  focus-ring
+                  w-9 h-9
+                  rounded-full
+                  border border-[#DCE1EF]
+                  bg-white/80
+                  flex items-center justify-center
+                  text-[#747A93]
+                  hover:text-[#6357E8]
+                  hover:border-[#9B94FF]
+                  hover:bg-[#F4F2FF]
+                  hover:shadow-[0_6px_20px_rgba(99,87,232,0.12)]
+                  transition-all
+                  duration-200
+                "
                 title="Account settings"
                 aria-label="Account settings"
               >
+
                 <svg
                   width="16"
                   height="16"
@@ -88,14 +302,35 @@ export default function Layout({
                   strokeLinejoin="round"
                 >
                   <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1.51 1v.09a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1.51 1v.09a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
                 </svg>
+
               </button>
+
+
+              {/* Logout */}
 
               <button
                 type="button"
                 onClick={signOut}
-                className="focus-ring hidden sm:inline-flex items-center justify-center h-9 px-3.5 rounded-lg border border-line bg-panel/30 text-sm text-paper-dim hover:text-brass hover:border-brass hover:bg-panel transition-all duration-200"
+                className="
+                  focus-ring
+                  hidden sm:inline-flex
+                  items-center justify-center
+                  h-9
+                  px-3.5
+                  rounded-[0.7rem]
+                  border border-[#DCE1EF]
+                  bg-white/80
+                  text-sm
+                  font-medium
+                  text-[#4D536B]
+                  hover:text-[#6357E8]
+                  hover:border-[#9B94FF]
+                  hover:bg-[#F4F2FF]
+                  transition-all
+                  duration-200
+                "
               >
                 Log out
               </button>
@@ -111,35 +346,91 @@ export default function Layout({
 
       {/* =====================================================
           NAVIGATION
-      ===================================================== */}
+          ===================================================== */}
 
       {tabs && (
-        <nav className="sticky top-[76px] z-30 border-b border-line bg-ink/90 backdrop-blur-md">
 
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <nav
+          className="
+            sticky
+            top-[76px]
+            z-30
+            px-3
+            pt-3
+          "
+        >
 
-            <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-none">
+          <div className="max-w-[1440px] mx-auto">
+
+            <div
+              className="
+                inline-flex
+                max-w-full
+                items-center
+                gap-1
+                overflow-x-auto
+                rounded-[1.15rem]
+                border border-[#DDE2F0]
+                bg-white/75
+                backdrop-blur-xl
+                p-1.5
+                shadow-[0_10px_35px_rgba(39,45,85,0.07)]
+                scrollbar-none
+              "
+            >
 
               {tabs.map((t) => {
-                const active = activeTab === t.key
+
+                const active =
+                  activeTab === t.key
 
                 return (
+
                   <button
                     type="button"
                     key={t.key}
-                    onClick={() => onTabChange(t.key)}
-                    className={`focus-ring relative shrink-0 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                      active
-                        ? 'bg-panel-2 text-brass shadow-sm'
-                        : 'text-mist hover:text-paper hover:bg-panel/60'
-                    }`}
+                    onClick={() =>
+                      onTabChange(t.key)
+                    }
+                    className={`
+                      focus-ring
+                      relative
+                      shrink-0
+                      px-4
+                      py-2.5
+                      rounded-[0.85rem]
+                      text-sm
+                      font-semibold
+                      whitespace-nowrap
+                      transition-all
+                      duration-200
+
+                      ${
+                        active
+                          ? `
+                            text-white
+                            bg-gradient-to-r
+                            from-[#6559EC]
+                            to-[#8175F7]
+                            shadow-[0_7px_18px_rgba(101,89,236,0.25)]
+                          `
+                          : `
+                            text-[#727991]
+                            hover:text-[#242744]
+                            hover:bg-[#F1F3FB]
+                          `
+                      }
+                    `}
                   >
                     {t.label}
 
-                    {active && (
-                      <span className="absolute left-3 right-3 -bottom-[9px] h-0.5 rounded-full bg-brass" />
-                    )}
+                    {/* Notification count for approvals */}
+
+                    {t.key === 'approvals' &&
+                      pendingCountSafe(t.label) && null}
+
                   </button>
+
                 )
               })}
 
@@ -148,16 +439,27 @@ export default function Layout({
           </div>
 
         </nav>
+
       )}
 
 
       {/* =====================================================
           MAIN CONTENT
-      ===================================================== */}
+          ===================================================== */}
 
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
 
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div
+          className="
+            max-w-[1440px]
+            mx-auto
+            px-4
+            sm:px-6
+            lg:px-8
+            py-6
+            sm:py-8
+          "
+        >
 
           <div className="animate-fade-up">
             {children}
@@ -170,14 +472,26 @@ export default function Layout({
 
       {/* =====================================================
           ACCOUNT SETTINGS
-      ===================================================== */}
+          ===================================================== */}
 
       {settingsOpen && (
         <AccountSettingsModal
-          onClose={() => setSettingsOpen(false)}
+          onClose={() =>
+            setSettingsOpen(false)
+          }
         />
       )}
 
     </div>
   )
+}
+
+
+/*
+ * Kept deliberately harmless.
+ * Approval counts are already included in the tab label
+ * by TeacherDashboard, so no extra notification UI is needed.
+ */
+function pendingCountSafe() {
+  return false
 }

@@ -3,25 +3,32 @@ import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
 import SubmissionPanel from './SubmissionPanel'
 import EditHomeworkModal from './EditHomeworkModal'
-import StampBadge, { getSubmissionStatus } from '../../components/StampBadge'
+import { getSubmissionStatus } from '../../components/StampBadge'
 import { notifyGroup } from '../../lib/notify'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
   const [activeGroup, setActiveGroup] = useState(null)
+
   const [newGroupName, setNewGroupName] = useState('')
   const [creating, setCreating] = useState(false)
+
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
 
   const [roster, setRoster] = useState([])
   const [homeworks, setHomeworks] = useState([])
   const [submissions, setSubmissions] = useState({})
+
   const [viewing, setViewing] = useState(null)
   const [editingHomework, setEditingHomework] = useState(null)
-  const [busyAction, setBusyAction] = useState('')
 
+  const [busyAction, setBusyAction] = useState('')
   const [studentSearch, setStudentSearch] = useState('')
+
+  /* =========================================================
+     GROUPS
+  ========================================================= */
 
   const loadGroups = async () => {
     const { data } = await supabase
@@ -38,6 +45,7 @@ export default function GroupWorkspace({ teacherId }) {
 
   useEffect(() => {
     loadGroups()
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -68,9 +76,9 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
-  const startRename = (g) => {
-    setRenamingId(g.id)
-    setRenameValue(g.name)
+  const startRename = (group) => {
+    setRenamingId(group.id)
+    setRenameValue(group.name)
   }
 
   const saveRename = async (id) => {
@@ -90,7 +98,9 @@ export default function GroupWorkspace({ teacherId }) {
 
     if (!error) {
       setGroups((prev) =>
-        prev.map((g) => (g.id === id ? data : g))
+        prev.map((group) =>
+          group.id === id ? data : group
+        )
       )
     } else {
       alert(`Couldn't rename group: ${error.message}`)
@@ -98,6 +108,10 @@ export default function GroupWorkspace({ teacherId }) {
 
     setRenamingId(null)
   }
+
+  /* =========================================================
+     GROUP DATA
+  ========================================================= */
 
   const loadGroupData = async () => {
     if (!activeGroup) return
@@ -112,7 +126,7 @@ export default function GroupWorkspace({ teacherId }) {
 
     setRoster(
       (members || [])
-        .map((m) => m.profiles)
+        .map((member) => member.profiles)
         .filter(Boolean)
     )
 
@@ -131,8 +145,10 @@ export default function GroupWorkspace({ teacherId }) {
 
     const map = {}
 
-    ;(subs || []).forEach((s) => {
-      map[`${s.homework_id}_${s.student_id}`] = s
+    ;(subs || []).forEach((submission) => {
+      map[
+        `${submission.homework_id}_${submission.student_id}`
+      ] = submission
     })
 
     setSubmissions(map)
@@ -141,12 +157,14 @@ export default function GroupWorkspace({ teacherId }) {
   useEffect(() => {
     loadGroupData()
     setStudentSearch('')
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup])
 
-  /*
-   * Remove student ONLY from current group.
-   */
+  /* =========================================================
+     REMOVE STUDENT FROM GROUP
+  ========================================================= */
+
   const removeStudent = async (student) => {
     if (
       !window.confirm(
@@ -168,13 +186,17 @@ export default function GroupWorkspace({ teacherId }) {
       if (error) throw error
 
       setRoster((prev) =>
-        prev.filter((s) => s.id !== student.id)
+        prev.filter(
+          (studentItem) =>
+            studentItem.id !== student.id
+        )
       )
 
       setSubmissions((prev) =>
         Object.fromEntries(
           Object.entries(prev).filter(
-            ([key]) => !key.endsWith(`_${student.id}`)
+            ([key]) =>
+              !key.endsWith(`_${student.id}`)
           )
         )
       )
@@ -187,32 +209,29 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
-  /*
-   * Convert a public Supabase Storage URL into the actual
-   * Storage object path.
-   */
+  /* =========================================================
+     STORAGE
+  ========================================================= */
+
   const storagePathFromPublicUrl = (url, bucket) => {
     if (!url) return null
 
-    const marker = `/storage/v1/object/public/${bucket}/`
+    const marker =
+      `/storage/v1/object/public/${bucket}/`
+
     const index = url.indexOf(marker)
 
     return index >= 0
-      ? decodeURIComponent(url.slice(index + marker.length))
+      ? decodeURIComponent(
+          url.slice(index + marker.length)
+        )
       : null
   }
 
-  /*
-   * Completely delete homework.
-   *
-   * This removes:
-   * - all student submission files
-   * - screenshots
-   * - audio
-   * - submitted files
-   * - homework attachment
-   * - homework database row
-   */
+  /* =========================================================
+     DELETE HOMEWORK
+  ========================================================= */
+
   const deleteHomework = async (hw) => {
     if (
       !window.confirm(
@@ -225,12 +244,13 @@ export default function GroupWorkspace({ teacherId }) {
     setBusyAction(`delete-${hw.id}`)
 
     try {
-      const { data: subs, error: subsError } = await supabase
-        .from('submissions')
-        .select(
-          'screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
-        )
-        .eq('homework_id', hw.id)
+      const { data: subs, error: subsError } =
+        await supabase
+          .from('submissions')
+          .select(
+            'screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
+          )
+          .eq('homework_id', hw.id)
 
       if (subsError) throw subsError
 
@@ -240,7 +260,7 @@ export default function GroupWorkspace({ teacherId }) {
         for (const url of [
           ...(sub.screenshot_urls || []),
           ...(sub.submission_files || [])
-            .map((f) => f?.url)
+            .map((file) => file?.url)
             .filter(Boolean),
           sub.audio_part1_url,
           sub.audio_part2_url,
@@ -260,23 +280,23 @@ export default function GroupWorkspace({ teacherId }) {
       ]
 
       if (uniqueSubmissionPaths.length) {
-        const { error: storageError } = await supabase
-          .storage
-          .from('submissions')
-          .remove(uniqueSubmissionPaths)
+        const { error: storageError } =
+          await supabase.storage
+            .from('submissions')
+            .remove(uniqueSubmissionPaths)
 
         if (storageError) throw storageError
       }
 
-      const homeworkPath = storagePathFromPublicUrl(
-        hw.attachment_url,
-        'homework-files'
-      )
+      const homeworkPath =
+        storagePathFromPublicUrl(
+          hw.attachment_url,
+          'homework-files'
+        )
 
       if (homeworkPath) {
         const { error: homeworkStorageError } =
-          await supabase
-            .storage
+          await supabase.storage
             .from('homework-files')
             .remove([homeworkPath])
 
@@ -293,18 +313,25 @@ export default function GroupWorkspace({ teacherId }) {
       if (error) throw error
 
       setHomeworks((prev) =>
-        prev.filter((h) => h.id !== hw.id)
+        prev.filter(
+          (homework) =>
+            homework.id !== hw.id
+        )
       )
 
       setSubmissions((prev) =>
         Object.fromEntries(
           Object.entries(prev).filter(
-            ([key]) => !key.startsWith(`${hw.id}_`)
+            ([key]) =>
+              !key.startsWith(`${hw.id}_`)
           )
         )
       )
     } catch (err) {
-      console.error('Homework deletion failed:', err)
+      console.error(
+        'Homework deletion failed:',
+        err
+      )
 
       alert(
         `Couldn't delete this homework: ${
@@ -316,9 +343,10 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
-  /*
-   * RESET HOMEWORK
-   */
+  /* =========================================================
+     RESET HOMEWORK
+  ========================================================= */
+
   const clearHomeworkContent = async (hw) => {
     if (
       !window.confirm(
@@ -331,12 +359,13 @@ export default function GroupWorkspace({ teacherId }) {
     setBusyAction(`clear-${hw.id}`)
 
     try {
-      const { data: subs, error: subsError } = await supabase
-        .from('submissions')
-        .select(
-          'id, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
-        )
-        .eq('homework_id', hw.id)
+      const { data: subs, error: subsError } =
+        await supabase
+          .from('submissions')
+          .select(
+            'id, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
+          )
+          .eq('homework_id', hw.id)
 
       if (subsError) throw subsError
 
@@ -371,8 +400,7 @@ export default function GroupWorkspace({ teacherId }) {
 
       if (uniqueSubmissionPaths.length) {
         const { error: storageError } =
-          await supabase
-            .storage
+          await supabase.storage
             .from('submissions')
             .remove(uniqueSubmissionPaths)
 
@@ -381,19 +409,20 @@ export default function GroupWorkspace({ teacherId }) {
         }
       }
 
-      const { error: updateError } = await supabase
-        .from('submissions')
-        .update({
-          screenshot_urls: [],
-          submission_files: [],
-          audio_part1_url: null,
-          audio_part2_url: null,
-          audio_part3_url: null,
-          comment: null,
-          status: 'pending',
-          submitted_at: null,
-        })
-        .eq('homework_id', hw.id)
+      const { error: updateError } =
+        await supabase
+          .from('submissions')
+          .update({
+            screenshot_urls: [],
+            submission_files: [],
+            audio_part1_url: null,
+            audio_part2_url: null,
+            audio_part3_url: null,
+            comment: null,
+            status: 'pending',
+            submitted_at: null,
+          })
+          .eq('homework_id', hw.id)
 
       if (updateError) {
         throw updateError
@@ -416,18 +445,19 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
-  /*
-   * Filter current group roster.
-   */
+  /* =========================================================
+     SEARCH
+  ========================================================= */
+
   const filteredRoster = useMemo(() => {
-    const query = studentSearch.trim().toLowerCase()
+    const query = studentSearch
+      .trim()
+      .toLowerCase()
 
-    if (!query) {
-      return roster
-    }
+    if (!query) return roster
 
-    return roster.filter((student) => {
-      return [
+    return roster.filter((student) =>
+      [
         student.full_name,
         student.username,
         student.contact_email,
@@ -436,143 +466,222 @@ export default function GroupWorkspace({ teacherId }) {
         .some((value) =>
           value.toLowerCase().includes(query)
         )
-    })
+    )
   }, [roster, studentSearch])
 
   const activeGroupObj = groups.find(
-    (g) => g.id === activeGroup
+    (group) => group.id === activeGroup
   )
+
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
     <div className="space-y-8">
 
+      {/* =====================================================
+          EMPTY STATE
+      ===================================================== */}
+
       {!activeGroup && (
-        <section className="surface-raised rounded-3xl overflow-hidden">
-          <div className="px-6 py-10 sm:px-10 sm:py-12">
-            <div className="inline-flex items-center gap-2 rounded-full border border-brass/30 bg-brass/10 px-3 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-brass">
+        <section className="relative overflow-hidden rounded-[28px] border border-line bg-panel">
+          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-cyan-300/10 blur-3xl" />
+
+          <div className="relative px-7 py-12 sm:px-12 sm:py-14">
+
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                 Examiner desk
               </span>
             </div>
-            <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-5">
+
+            <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
               Groups & homework
             </h1>
-            <p className="mt-3 max-w-2xl text-sm sm:text-base text-mist leading-6">
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-mist sm:text-base">
               Manage your groups, post assignments, and review your students' progress.
             </p>
+
           </div>
         </section>
       )}
 
       {activeGroup && (
         <>
-          <section className="surface-raised rounded-3xl overflow-hidden">
-            <div className="px-6 py-8 sm:px-10 sm:py-10">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-brass/30 bg-brass/10 px-3 py-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-brass">
+
+          {/* =================================================
+              HERO
+          ================================================= */}
+
+          <section className="relative overflow-hidden rounded-[28px] border border-line bg-panel">
+
+            <div className="absolute -right-24 -top-28 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+            <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" />
+
+            <div className="relative px-7 py-9 sm:px-11 sm:py-11">
+
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+
+                <div className="min-w-0">
+
+                  <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5">
+
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                       Examiner desk
                     </span>
+
                   </div>
-                  <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-5">
+
+                  <h1 className="mt-5 truncate font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
                     {activeGroupObj?.name || 'Group'}
                   </h1>
-                  <p className="mt-3 text-sm sm:text-base text-mist leading-6 max-w-2xl">
+
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-mist sm:text-base">
                     Manage assignments and monitor your students' submissions.
                   </p>
+
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
+                <div className="flex items-center gap-5">
+
+                  <div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-mist">
                       Students
                     </div>
-                    <div className="font-display text-2xl text-paper mt-1">
+
+                    <div className="mt-1 font-display text-3xl text-paper">
                       {roster.length}
                     </div>
                   </div>
-                  <div className="h-14 min-w-14 rounded-2xl border border-brass/30 bg-brass/10 px-3 flex flex-col items-center justify-center">
-                    <span className="text-[9px] uppercase tracking-widest text-mist font-mono">
+
+                  <div className="h-16 min-w-16 rounded-2xl border border-accent/25 bg-accent/10 px-4 flex flex-col items-center justify-center">
+
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-mist">
                       Tasks
                     </span>
-                    <span className="font-display text-lg leading-none text-brass mt-0.5">
+
+                    <span className="mt-1 font-display text-xl leading-none text-accent">
                       {homeworks.length}
                     </span>
+
                   </div>
+
                 </div>
+
               </div>
+
             </div>
           </section>
 
-          <section className="space-y-6">
 
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono mb-2">
-                  Your groups
-                </div>
+          {/* =================================================
+              GROUP CONTROLS
+          ================================================= */}
 
-                <div className="flex flex-wrap gap-2">
-                  {groups.map((g) =>
-                    renamingId === g.id ? (
-                      <input
-                        key={g.id}
-                        autoFocus
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onBlur={() => saveRename(g.id)}
-                        onKeyDown={(e) => e.key === 'Enter' && saveRename(g.id)}
-                        className="focus-ring h-10 bg-panel-2 border border-brass rounded-xl px-3 text-sm"
-                      />
-                    ) : (
-                      <div
-                        key={g.id}
-                        className={`group flex items-center rounded-xl border transition-colors ${
-                          activeGroup === g.id
-                            ? 'border-brass bg-brass text-onbrass'
-                            : 'border-line bg-panel text-mist hover:border-brass/40 hover:text-paper'
-                        }`}
-                      >
-                        <button
-                          onClick={() => setActiveGroup(g.id)}
-                          className="focus-ring px-4 py-2 text-sm font-medium"
-                        >
-                          {g.name}
-                        </button>
-                        <button
-                          onClick={() => startRename(g)}
-                          className={`focus-ring pr-3 text-xs opacity-60 hover:opacity-100 ${
-                            activeGroup === g.id
-                              ? 'text-onbrass'
-                              : 'text-mist hover:text-brass'
-                          }`}
-                          title="Rename group"
-                          aria-label="Rename group"
-                        >
-                          ✎
-                        </button>
-                      </div>
-                    )
-                  )}
+          <section>
 
-                  <form onSubmit={createGroup} className="flex items-center">
+            <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+              Your groups
+            </div>
+
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+
+                {groups.map((group) =>
+                  renamingId === group.id ? (
                     <input
-                      value={newGroupName}
-                      onChange={(e) => setNewGroupName(e.target.value)}
-                      placeholder="New group name"
-                      className="focus-ring h-10 w-40 sm:w-48 bg-panel-2 border border-line rounded-l-xl px-3 text-sm"
+                      key={group.id}
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) =>
+                        setRenameValue(e.target.value)
+                      }
+                      onBlur={() =>
+                        saveRename(group.id)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          saveRename(group.id)
+                        }
+
+                        if (e.key === 'Escape') {
+                          setRenamingId(null)
+                        }
+                      }}
+                      className="focus-ring h-11 w-40 rounded-xl border border-accent bg-panel px-3 text-sm text-paper outline-none"
                     />
-                    <button
-                      disabled={creating}
-                      className="focus-ring h-10 px-4 rounded-r-xl border border-brass bg-brass text-onbrass text-sm font-medium hover:bg-brass-dim transition-colors disabled:opacity-50"
+                  ) : (
+                    <div
+                      key={group.id}
+                      className={`flex h-11 items-center overflow-hidden rounded-xl border transition-all ${
+                        activeGroup === group.id
+                          ? 'border-accent bg-accent text-onaccent shadow-lg shadow-accent/15'
+                          : 'border-line bg-panel text-mist hover:border-accent/35 hover:text-paper'
+                      }`}
                     >
-                      {creating ? 'Adding…' : 'Add'}
-                    </button>
-                  </form>
-                </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveGroup(group.id)
+                        }
+                        className="focus-ring h-full px-4 text-sm font-medium"
+                      >
+                        {group.name}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          startRename(group)
+                        }
+                        className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg text-xs transition ${
+                          activeGroup === group.id
+                            ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
+                            : 'text-mist hover:bg-panel-2 hover:text-accent'
+                        }`}
+                        title="Rename group"
+                        aria-label="Rename group"
+                      >
+                        ✎
+                      </button>
+
+                    </div>
+                  )
+                )}
+
+                <form
+                  onSubmit={createGroup}
+                  className="flex h-11 overflow-hidden rounded-xl border border-line bg-panel"
+                >
+
+                  <input
+                    value={newGroupName}
+                    onChange={(e) =>
+                      setNewGroupName(e.target.value)
+                    }
+                    placeholder="New group name"
+                    className="focus-ring w-36 bg-transparent px-3 text-sm text-paper placeholder:text-mist/70 outline-none sm:w-44"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="focus-ring border-l border-accent/20 bg-accent px-5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
+                  >
+                    {creating ? 'Adding…' : 'Add'}
+                  </button>
+
+                </form>
+
               </div>
 
               <div className="shrink-0">
@@ -580,7 +689,11 @@ export default function GroupWorkspace({ teacherId }) {
                   groupId={activeGroup}
                   teacherId={teacherId}
                   onPosted={(hw) => {
-                    setHomeworks((prev) => [hw, ...prev])
+                    setHomeworks((prev) => [
+                      hw,
+                      ...prev,
+                    ])
+
                     notifyGroup({
                       groupId: activeGroup,
                       type: 'homework_new',
@@ -590,221 +703,389 @@ export default function GroupWorkspace({ teacherId }) {
                   }}
                 />
               </div>
+
             </div>
+
+          </section>
+
+
+          {/* =================================================
+              STUDENT PROGRESS TITLE
+          ================================================= */}
+
+          <section>
 
             <div className="flex items-end justify-between gap-4">
+
               <div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+
+                <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                   Assignments
                 </div>
-                <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight mt-2">
+
+                <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-paper sm:text-4xl">
                   Student progress
                 </h2>
+
               </div>
 
-              <div className="hidden sm:block rounded-full border border-line bg-panel px-4 py-2 text-xs text-mist font-mono">
-                {homeworks.length} assignment{homeworks.length === 1 ? '' : 's'}
+              <div className="hidden rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist sm:block">
+                {homeworks.length} assignment
+                {homeworks.length === 1 ? '' : 's'}
               </div>
+
             </div>
 
-            {roster.length > 0 && (
-              <div className="surface rounded-2xl p-4 sm:p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <input
-                    value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                    placeholder="Search students in this group..."
-                    className="focus-ring w-full bg-panel-2 border border-line rounded-xl px-4 py-3 text-sm"
-                  />
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3">
-                    <span className="text-xs text-mist font-mono">
+            {/* =================================================
+                SEARCH
+            ================================================= */}
+
+            {roster.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-line bg-panel p-3 sm:p-4">
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+
+                  <div className="relative min-w-0 flex-1">
+
+                    <input
+                      value={studentSearch}
+                      onChange={(e) =>
+                        setStudentSearch(e.target.value)
+                      }
+                      placeholder="Search students in this group..."
+                      className="focus-ring h-12 w-full rounded-xl border border-line bg-panel-2 px-4 text-sm text-paper placeholder:text-mist/70 outline-none transition focus:border-accent/50"
+                    />
+
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between gap-3 px-1 sm:justify-end">
+
+                    <span className="font-mono text-xs text-mist">
                       {studentSearch.trim()
                         ? `${filteredRoster.length} of ${roster.length}`
-                        : `${roster.length} student${roster.length === 1 ? '' : 's'}`}
+                        : `${roster.length} student${
+                            roster.length === 1
+                              ? ''
+                              : 's'
+                          }`}
                     </span>
 
                     {studentSearch && (
                       <button
                         type="button"
-                        onClick={() => setStudentSearch('')}
-                        className="focus-ring text-xs text-brass hover:text-brass-dim"
+                        onClick={() =>
+                          setStudentSearch('')
+                        }
+                        className="focus-ring text-xs font-medium text-accent hover:underline"
                       >
                         Clear
                       </button>
                     )}
+
                   </div>
+
                 </div>
+
               </div>
             )}
 
+
+            {/* =================================================
+                EMPTY STATES
+            ================================================= */}
+
             {roster.length === 0 && (
-              <div className="surface-raised rounded-2xl px-6 py-10 text-center">
+              <div className="mt-6 rounded-2xl border border-line bg-panel px-6 py-12 text-center">
+
                 <div className="font-display text-2xl text-paper">
                   No students yet
                 </div>
-                <p className="text-mist text-sm leading-6 mt-2 max-w-md mx-auto">
+
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-mist">
                   Once you approve students under the Approvals tab, they will appear in this group.
                 </p>
+
               </div>
             )}
 
-            {roster.length > 0 && filteredRoster.length === 0 && (
-              <div className="surface rounded-2xl px-6 py-10 text-center">
-                <div className="font-display text-xl text-paper">
-                  No students found
-                </div>
-                <p className="text-mist text-sm mt-2">
-                  Try a different name, username, or email.
-                </p>
-              </div>
-            )}
+            {roster.length > 0 &&
+              filteredRoster.length === 0 && (
+                <div className="mt-6 rounded-2xl border border-line bg-panel px-6 py-12 text-center">
 
-            {homeworks.length === 0 && roster.length > 0 && (
-              <div className="surface-raised rounded-2xl px-6 py-10 text-center">
-                <div className="font-display text-2xl text-paper">
-                  No homework posted yet
+                  <div className="font-display text-xl text-paper">
+                    No students found
+                  </div>
+
+                  <p className="mt-2 text-sm text-mist">
+                    Try a different name, username, or email.
+                  </p>
+
                 </div>
-                <p className="text-mist text-sm mt-2">
-                  Use the button above to post the first assignment.
-                </p>
-              </div>
-            )}
+              )}
+
+            {homeworks.length === 0 &&
+              roster.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-line bg-panel px-6 py-12 text-center">
+
+                  <div className="font-display text-2xl text-paper">
+                    No homework posted yet
+                  </div>
+
+                  <p className="mt-2 text-sm text-mist">
+                    Use the button above to post the first assignment.
+                  </p>
+
+                </div>
+              )}
+
+
+            {/* =================================================
+                PROGRESS TABLE
+            ================================================= */}
 
             {homeworks.length > 0 && filteredRoster.length > 0 && (
-              <div className="surface-raised rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-separate border-spacing-0">
+              <div className="progress-table-shell">
+
+                <div className="progress-table-scroll">
+
+                  <table className="progress-table">
+
+                    <colgroup>
+                      <col className="progress-student-col" />
+
+                      {homeworks.map((hw) => (
+                        <col
+                          key={hw.id}
+                          className="progress-homework-col"
+                        />
+                      ))}
+                    </colgroup>
+
                     <thead>
-                      <tr className="border-b border-line">
-                        <th className="sticky left-0 z-10 bg-panel px-4 py-4 text-left min-w-[220px]">
-                          <span className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
+
+                      <tr>
+
+                        <th className="progress-student-header">
+                          <span>
                             Student
                           </span>
                         </th>
 
                         {homeworks.map((hw) => (
+
                           <th
                             key={hw.id}
-                            className="px-4 py-4 text-center min-w-[150px]"
+                            className="progress-homework-header"
                           >
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-mist max-w-[105px]">
+
+                            <div className="progress-homework-heading">
+
+                              <span className="progress-homework-title">
                                 {hw.title}
                               </span>
 
-                              <button
-                                onClick={() => setEditingHomework(hw)}
-                                className="focus-ring text-mist hover:text-brass"
-                                title="Edit homework"
-                                aria-label="Edit homework"
-                              >
-                                ✎
-                              </button>
+                              <div className="progress-homework-actions">
 
-                              <button
-                                onClick={() => clearHomeworkContent(hw)}
-                                disabled={busyAction === `clear-${hw.id}`}
-                                className="focus-ring text-mist hover:text-brass disabled:opacity-40"
-                                title="Reset submissions"
-                                aria-label="Reset submissions"
-                              >
-                                ↻
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditingHomework(hw)
+                                  }
+                                  className="progress-action"
+                                  title="Edit homework"
+                                  aria-label="Edit homework"
+                                >
+                                  ✎
+                                </button>
 
-                              <button
-                                onClick={() => deleteHomework(hw)}
-                                disabled={busyAction === `delete-${hw.id}`}
-                                className="focus-ring text-mist hover:text-coral disabled:opacity-40"
-                                title="Delete homework completely"
-                                aria-label="Delete homework completely"
-                              >
-                                🗑
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    clearHomeworkContent(hw)
+                                  }
+                                  disabled={
+                                    busyAction ===
+                                    `clear-${hw.id}`
+                                  }
+                                  className="progress-action"
+                                  title="Reset submissions"
+                                  aria-label="Reset submissions"
+                                >
+                                  ↻
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    deleteHomework(hw)
+                                  }
+                                  disabled={
+                                    busyAction ===
+                                    `delete-${hw.id}`
+                                  }
+                                  className="progress-action progress-action-danger"
+                                  title="Delete homework completely"
+                                  aria-label="Delete homework completely"
+                                >
+                                  ×
+                                </button>
+
+                              </div>
+
                             </div>
 
                             {hw.due_date && (
-                              <div className="text-[10px] font-normal mt-1 text-mist">
-                                due {new Date(hw.due_date).toLocaleDateString()}
+                              <div className="progress-due-date">
+                                due{' '}
+                                {new Date(
+                                  hw.due_date
+                                ).toLocaleDateString()}
                               </div>
                             )}
+
                           </th>
+
                         ))}
+
                       </tr>
+
                     </thead>
 
                     <tbody>
+
                       {filteredRoster.map((student) => (
+
                         <tr
                           key={student.id}
-                          className="border-t border-line/70 hover:bg-[color-mix(in_srgb,var(--color-panel-2)_55%,transparent)] transition-colors"
+                          className="progress-student-row"
                         >
-                          <td className="sticky left-0 z-10 bg-panel px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="avatar h-10 w-10 text-sm">
-                                {student.full_name?.charAt(0)?.toUpperCase() || '?'}
+
+                          <td className="progress-student-cell">
+
+                            <div className="progress-student">
+
+                              <div className="progress-avatar">
+                                {student.full_name
+                                  ?.charAt(0)
+                                  ?.toUpperCase() || '?'}
                               </div>
 
-                              <div className="min-w-0">
-                                <div className="font-medium text-paper truncate max-w-[170px]">
+                              <div className="progress-student-info">
+
+                                <div className="progress-student-name">
                                   {student.full_name}
                                 </div>
-                                <div className="text-xs text-mist font-mono mt-0.5 truncate max-w-[170px]">
+
+                                <div className="progress-student-username">
                                   @{student.username}
                                 </div>
+
                               </div>
 
                               <button
-                                onClick={() => removeStudent(student)}
-                                disabled={busyAction === `remove-${student.id}`}
-                                className="focus-ring ml-auto text-mist hover:text-coral text-xs disabled:opacity-40"
+                                type="button"
+                                onClick={() =>
+                                  removeStudent(student)
+                                }
+                                disabled={
+                                  busyAction ===
+                                  `remove-${student.id}`
+                                }
+                                className="progress-remove"
                                 title="Remove student from this group"
                                 aria-label="Remove student from this group"
                               >
-                                ✕
+                                ×
                               </button>
+
                             </div>
+
                           </td>
 
                           {homeworks.map((hw) => {
-                            const sub = submissions[`${hw.id}_${student.id}`]
+
+                            const sub =
+                              submissions[
+                                `${hw.id}_${student.id}`
+                              ]
+
+                            const status =
+                              getSubmissionStatus(
+                                sub,
+                                hw.due_date
+                              )
+
+                            const isDone =
+                              status === 'done'
 
                             return (
+
                               <td
                                 key={hw.id}
-                                className="px-4 py-4 text-center"
+                                className="progress-status-cell"
                               >
+
                                 <button
-                                  className="focus-ring inline-flex"
+                                  type="button"
+                                  className="progress-status-button"
                                   onClick={() =>
                                     setViewing({
-                                      studentName: student.full_name,
-                                      homeworkTitle: hw.title,
+                                      studentName:
+                                        student.full_name,
+                                      homeworkTitle:
+                                        hw.title,
                                       submission: sub,
                                     })
                                   }
+                                  aria-label={`${hw.title} — ${
+                                    isDone
+                                      ? 'Done'
+                                      : 'Incomplete'
+                                  }`}
                                 >
-                                  <StampBadge
-                                    status={getSubmissionStatus(
-                                      sub,
-                                      hw.due_date
-                                    )}
-                                  />
+
+                                  <span
+                                    className={
+                                      isDone
+                                        ? 'progress-status progress-status-done'
+                                        : 'progress-status progress-status-incomplete'
+                                    }
+                                  >
+                                    {isDone
+                                      ? 'DONE'
+                                      : 'INCOMPLETE'}
+                                  </span>
+
                                 </button>
+
                               </td>
+
                             )
                           })}
+
                         </tr>
+
                       ))}
+
                     </tbody>
+
                   </table>
+
                 </div>
+
               </div>
             )}
+
           </section>
+
         </>
       )}
+
+      {/* =======================================================
+          SUBMISSION PANEL
+      ======================================================= */}
 
       {viewing && (
         <SubmissionPanel
@@ -813,14 +1094,22 @@ export default function GroupWorkspace({ teacherId }) {
         />
       )}
 
+      {/* =======================================================
+          EDIT HOMEWORK
+      ======================================================= */}
+
       {editingHomework && (
         <EditHomeworkModal
           homework={editingHomework}
-          onClose={() => setEditingHomework(null)}
+          onClose={() =>
+            setEditingHomework(null)
+          }
           onSaved={(updated) => {
             setHomeworks((prev) =>
-              prev.map((h) =>
-                h.id === updated.id ? updated : h
+              prev.map((homework) =>
+                homework.id === updated.id
+                  ? updated
+                  : homework
               )
             )
 
@@ -833,6 +1122,7 @@ export default function GroupWorkspace({ teacherId }) {
           }}
         />
       )}
+
     </div>
   )
 }

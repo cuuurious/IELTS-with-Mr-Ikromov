@@ -1,108 +1,142 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* =========================================================
+   IELTS — GLOBAL DESIGN SYSTEM
+   Soft editorial light / warm charcoal night
+   ========================================================= */
+
 @theme {
-  /* ============================================================
-     DARK MODE — layered charcoal / blue-grey
-     ============================================================ */
+  --color-ink: #f5f3ee;
+  --color-panel: #fffdfa;
+  --color-panel-2: #f1efe9;
+  --color-line: #dedbd3;
 
-  --color-ink: #0d1218;
-  --color-panel: #151c24;
-  --color-panel-2: #1d2630;
-  --color-line: #303b47;
+  --color-paper: #24232a;
+  --color-paper-dim: #696873;
+  --color-mist: #85838c;
 
-  --color-paper: #f2eee5;
-  --color-paper-dim: #b9b5aa;
+  --color-brass: #7565df;
+  --color-brass-dim: #6252cc;
 
-  --color-brass: #c9a45b;
-  --color-brass-dim: #a47f3d;
+  --color-sage: #4b9b79;
+  --color-coral: #d96870;
 
-  --color-sage: #7fa58c;
+  --color-onbrass: #ffffff;
 
-  /* softer coral — reserved for genuinely overdue/error states */
-  --color-coral: #b87561;
-
-  --color-mist: #929daa;
-  --color-onbrass: #111820;
+  --color-indigo: #7565df;
+  --color-indigo-dark: #6252cc;
+  --color-cyan: #55aaa9;
+  --color-lavender: #968be8;
 
   --font-display: 'Source Serif 4', serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
 
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
 
-/* ============================================================
-   DAY MODE
-   ============================================================ */
+html[data-theme='light'] {
+  --color-ink: #f5f3ee;
+  --color-panel: #fffdfa;
+  --color-panel-2: #f1efe9;
+  --color-line: #dedbd3;
 
-:root[data-theme='light'] {
-  --color-ink: #e7e1d7;
-  --color-panel: #f5f1e9;
-  --color-panel-2: #ebe5db;
-  --color-line: #d3cdc2;
+  --color-paper: #24232a;
+  --color-paper-dim: #696873;
+  --color-mist: #85838c;
 
-  --color-paper: #27313b;
-  --color-paper-dim: #69716f;
+  --color-brass: #7565df;
+  --color-brass-dim: #6252cc;
 
-  --color-brass: #9a7027;
-  --color-brass-dim: #76541b;
+  --color-sage: #4b9b79;
+  --color-coral: #d96870;
 
-  --color-sage: #4e795e;
+  --color-onbrass: #ffffff;
 
-  /* muted warm red */
-  --color-coral: #a96652;
+  --color-indigo: #7565df;
+  --color-indigo-dark: #6252cc;
+  --color-cyan: #55aaa9;
+  --color-lavender: #968be8;
 
-  --color-mist: #737b7b;
-  --color-onbrass: #fffdf8;
+  color-scheme: light;
 }
 
+/* =========================================================
+   DARK THEME
+   Soft charcoal — NOT navy
+   ========================================================= */
 
-/* ============================================================
-   ROOT
-   ============================================================ */
+html[data-theme='dark'],
+html:not([data-theme='light']) {
+
+  --color-ink: #1d1d21;
+
+  --color-panel: #26262b;
+  --color-panel-2: #2d2d33;
+
+  --color-line: #3b3b43;
+
+  --color-paper: #f3f1eb;
+  --color-paper-dim: #c3c0ba;
+  --color-mist: #9b99a0;
+
+  --color-brass: #a69af4;
+  --color-brass-dim: #9183e6;
+
+  --color-sage: #72c29d;
+  --color-coral: #ef9295;
+
+  --color-onbrass: #ffffff;
+
+  --color-indigo: #a69af4;
+  --color-indigo-dark: #9183e6;
+
+  --color-cyan: #72c6c2;
+  --color-lavender: #b4acf9;
+
+  color-scheme: dark;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
 
 html,
 body,
 #root {
+  width: 100%;
   min-height: 100%;
-  height: 100%;
+  margin: 0;
 }
 
 html {
   background: var(--color-ink);
-  color-scheme: dark;
 }
-
-html[data-theme='light'] {
-  color-scheme: light;
-}
-
-
-/* ============================================================
-   BODY
-   ============================================================ */
 
 body {
-  margin: 0;
+  min-height: 100vh;
 
   background:
     radial-gradient(
-      circle at 8% -5%,
+      700px 430px at 92% -10%,
       color-mix(
         in srgb,
-        var(--color-brass) 7%,
+        var(--color-indigo) 7%,
         transparent
       ),
-      transparent 30rem
+      transparent 70%
     ),
     radial-gradient(
-      circle at 95% 20%,
+      560px 420px at 4% 75%,
       color-mix(
         in srgb,
-        var(--color-sage) 4%,
+        var(--color-cyan) 5%,
         transparent
       ),
-      transparent 28rem
+      transparent 72%
     ),
     var(--color-ink);
 
@@ -120,30 +154,9 @@ body {
     color .25s ease;
 }
 
-
-/* ============================================================
-   DAY MODE ATMOSPHERE
-   ============================================================ */
-
-html[data-theme='light'] body {
-  background:
-    radial-gradient(
-      circle at 5% 0%,
-      rgba(154, 112, 39, .055),
-      transparent 28rem
-    ),
-    radial-gradient(
-      circle at 100% 35%,
-      rgba(78, 121, 94, .035),
-      transparent 30rem
-    ),
-    var(--color-ink);
-}
-
-
-/* ============================================================
+/* =========================================================
    TYPOGRAPHY
-   ============================================================ */
+   ========================================================= */
 
 .font-display {
   font-family: var(--font-display);
@@ -164,6 +177,7 @@ h4 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.015em;
+  color: var(--color-paper);
 }
 
 h1 {
@@ -179,12 +193,13 @@ h4 {
   line-height: 1.2;
 }
 
-
-/* ============================================================
-   SCROLLBAR
-   ============================================================ */
+/* =========================================================
+   GLOBAL
+   ========================================================= */
 
 * {
+  box-sizing: border-box;
+
   scrollbar-width: thin;
   scrollbar-color:
     var(--color-line)
@@ -209,14 +224,9 @@ h4 {
   background: var(--color-mist);
 }
 
-
-/* ============================================================
-   SELECTION / FOCUS
-   ============================================================ */
-
 ::selection {
   background: var(--color-brass);
-  color: var(--color-onbrass);
+  color: #ffffff;
 }
 
 .focus-ring:focus-visible {
@@ -224,85 +234,42 @@ h4 {
   outline-offset: 3px;
 }
 
-
-/* ============================================================
-   ELEMENTS
-   ============================================================ */
-
 a {
   color: inherit;
 }
 
-a,
 button,
 input,
 textarea,
 select {
-  -webkit-tap-highlight-color: transparent;
-}
-
-input,
-textarea,
-select {
+  color: var(--color-paper);
   font-family: var(--font-body);
 }
 
 input::placeholder,
 textarea::placeholder {
   color: var(--color-mist);
-  opacity: .72;
+  opacity: .9;
 }
 
-
-/* ============================================================
+/* =========================================================
    SURFACES
-   ============================================================ */
+   ========================================================= */
 
 .surface {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(
-        in srgb,
-        var(--color-panel) 96%,
-        var(--color-paper)
-      ),
-      var(--color-panel)
-    );
-
+  background: var(--color-panel);
   border: 1px solid var(--color-line);
-  border-radius: 14px;
+  border-radius: 16px;
 }
 
 .surface-raised {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(
-        in srgb,
-        var(--color-panel-2) 94%,
-        var(--color-paper)
-      ),
-      var(--color-panel-2)
-    );
-
+  background: var(--color-panel-2);
   border: 1px solid var(--color-line);
-  border-radius: 14px;
+  border-radius: 16px;
 
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, .12),
-    0 2px 5px rgba(0, 0, 0, .08);
-}
-
-html[data-theme='light'] .surface {
-  box-shadow:
-    0 5px 16px rgba(61, 53, 42, .035);
-}
-
-html[data-theme='light'] .surface-raised {
-  box-shadow:
-    0 10px 26px rgba(61, 53, 42, .075),
-    0 2px 5px rgba(61, 53, 42, .045);
+    0 10px 28px rgba(35, 35, 45, .07),
+    0 1px 2px rgba(35, 35, 45, .06);
 }
 
 .surface-hover {
@@ -317,20 +284,16 @@ html[data-theme='light'] .surface-raised {
   border-color:
     color-mix(
       in srgb,
-      var(--color-brass) 32%,
+      var(--color-brass) 30%,
       var(--color-line)
     );
 
   transform: translateY(-1px);
-
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, .08);
 }
 
-
-/* ============================================================
+/* =========================================================
    BUTTONS
-   ============================================================ */
+   ========================================================= */
 
 .btn-primary {
   display: inline-flex;
@@ -342,10 +305,10 @@ html[data-theme='light'] .surface-raised {
   padding: .55rem 1rem;
 
   border: 1px solid var(--color-brass);
-  border-radius: 9px;
+  border-radius: 10px;
 
   background: var(--color-brass);
-  color: var(--color-onbrass);
+  color: #ffffff;
 
   font-weight: 600;
 
@@ -363,7 +326,12 @@ html[data-theme='light'] .surface-raised {
   transform: translateY(-1px);
 
   box-shadow:
-    0 7px 18px rgba(0, 0, 0, .13);
+    0 7px 18px
+    color-mix(
+      in srgb,
+      var(--color-brass) 18%,
+      transparent
+    );
 }
 
 .btn-secondary {
@@ -376,7 +344,7 @@ html[data-theme='light'] .surface-raised {
   padding: .55rem 1rem;
 
   border: 1px solid var(--color-line);
-  border-radius: 9px;
+  border-radius: 10px;
 
   background: var(--color-panel-2);
   color: var(--color-paper);
@@ -403,37 +371,32 @@ html[data-theme='light'] .surface-raised {
   min-height: 38px;
   padding: .45rem .75rem;
 
-  border-radius: 9px;
+  border-radius: 10px;
 
   color: var(--color-mist);
-
-  transition:
-    color .18s ease,
-    background-color .18s ease;
 }
 
 .btn-ghost:hover {
   background:
     color-mix(
       in srgb,
-      var(--color-paper) 6%,
+      var(--color-paper) 5%,
       transparent
     );
 
   color: var(--color-paper);
 }
 
-
-/* ============================================================
+/* =========================================================
    STATUS
-   ============================================================ */
+   ========================================================= */
 
 .status-not-done {
   color: var(--color-mist);
 }
 
 .status-incomplete {
-  color: var(--color-brass);
+  color: var(--color-coral);
 }
 
 .status-done {
@@ -444,68 +407,23 @@ html[data-theme='light'] .surface-raised {
   color: var(--color-coral);
 }
 
-
-/* ============================================================
-   TICKET / HOMEWORK CARDS
-   ============================================================ */
+/* =========================================================
+   MODALS / TICKETS
+   ========================================================= */
 
 .ticket {
   position: relative;
 
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(
-        in srgb,
-        var(--color-panel) 96%,
-        var(--color-paper)
-      ),
-      var(--color-panel)
-    );
-
+  background: var(--color-panel);
   border: 1px solid var(--color-line);
-  border-radius: 14px;
+  border-radius: 16px;
 
   overflow: hidden;
 
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, .075),
-    0 1px 3px rgba(0, 0, 0, .07);
-
-  transition:
-    border-color .18s ease,
-    box-shadow .18s ease,
-    transform .18s ease;
+    0 20px 55px rgba(20, 20, 25, .16),
+    0 2px 5px rgba(20, 20, 25, .08);
 }
-
-html[data-theme='light'] .ticket {
-  background:
-    linear-gradient(
-      145deg,
-      #f7f4ee,
-      #f0ebe2
-    );
-
-  box-shadow:
-    0 9px 24px rgba(64, 56, 44, .065),
-    0 1px 3px rgba(64, 56, 44, .04);
-}
-
-.ticket:hover {
-  border-color:
-    color-mix(
-      in srgb,
-      var(--color-brass) 28%,
-      var(--color-line)
-    );
-
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, .09),
-    0 2px 5px rgba(0, 0, 0, .07);
-}
-
-
-/* ticket cut-outs */
 
 .ticket::before,
 .ticket::after {
@@ -520,7 +438,6 @@ html[data-theme='light'] .ticket {
   top: 50%;
 
   background: var(--color-ink);
-
   border-radius: 9999px;
 
   transform: translateY(-50%);
@@ -534,43 +451,9 @@ html[data-theme='light'] .ticket {
   right: -7px;
 }
 
-
-/* ============================================================
-   STAMPS
-   ============================================================ */
-
-.stamp {
-  position: relative;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 2px solid currentColor;
-  border-radius: 9999px;
-
-  transform: rotate(-6deg);
-
-  font-family: var(--font-mono);
-  letter-spacing: .08em;
-}
-
-.stamp.stamp-done {
-  color: var(--color-sage);
-}
-
-.stamp.stamp-pending {
-  color: var(--color-brass);
-}
-
-.stamp.stamp-overdue {
-  color: var(--color-coral);
-}
-
-
-/* ============================================================
-   AVATARS
-   ============================================================ */
+/* =========================================================
+   AVATAR
+   ========================================================= */
 
 .avatar {
   display: inline-flex;
@@ -595,131 +478,767 @@ html[data-theme='light'] .ticket {
   object-fit: cover;
 }
 
-
-/* ============================================================
-   DIVIDER
-   ============================================================ */
-
 .divider {
   width: 100%;
   height: 1px;
   background: var(--color-line);
 }
 
+/* =========================================================
+   INPUTS
+   ========================================================= */
 
-/* ============================================================
-   LONDON ATMOSPHERE
-   ============================================================ */
-
-.london-atmosphere {
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px;
+input,
+textarea,
+select {
+  background: var(--color-panel);
+  color: var(--color-paper);
+  border-color: var(--color-line);
 }
 
-.london-atmosphere img {
+input:focus,
+textarea:focus,
+select:focus {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-brass) 60%,
+      var(--color-line)
+    );
+
+  outline: none;
+}
+
+/* =========================================================
+   HARD-CODED LIGHT COMPONENTS
+   Convert Tailwind white/gray surfaces
+   ========================================================= */
+
+html[data-theme='light'] .bg-white {
+  background-color: #fffdfa !important;
+}
+
+html[data-theme='light'] .bg-slate-50,
+html[data-theme='light'] .bg-gray-50 {
+  background-color: #f5f3ee !important;
+}
+
+html[data-theme='light'] .bg-slate-100,
+html[data-theme='light'] .bg-gray-100 {
+  background-color: #eeece6 !important;
+}
+
+html[data-theme='light'] .text-slate-950,
+html[data-theme='light'] .text-slate-900,
+html[data-theme='light'] .text-slate-800,
+html[data-theme='light'] .text-gray-900,
+html[data-theme='light'] .text-gray-800 {
+  color: #24232a !important;
+}
+
+html[data-theme='light'] .text-slate-700,
+html[data-theme='light'] .text-slate-600,
+html[data-theme='light'] .text-slate-500,
+html[data-theme='light'] .text-gray-700,
+html[data-theme='light'] .text-gray-600,
+html[data-theme='light'] .text-gray-500 {
+  color: #696873 !important;
+}
+
+html[data-theme='light'] .border-slate-100,
+html[data-theme='light'] .border-slate-200,
+html[data-theme='light'] .border-gray-100,
+html[data-theme='light'] .border-gray-200 {
+  border-color: #dedbd3 !important;
+}
+
+/* =========================================================
+   HARD-CODED DARK COMPONENTS
+   ========================================================= */
+
+html[data-theme='dark'] .bg-white,
+html:not([data-theme='light']) .bg-white {
+  background-color: #26262b !important;
+}
+
+html[data-theme='dark'] .bg-slate-50,
+html[data-theme='dark'] .bg-gray-50,
+html:not([data-theme='light']) .bg-slate-50,
+html:not([data-theme='light']) .bg-gray-50 {
+  background-color: #2d2d33 !important;
+}
+
+html[data-theme='dark'] .bg-slate-100,
+html[data-theme='dark'] .bg-gray-100,
+html:not([data-theme='light']) .bg-slate-100,
+html:not([data-theme='light']) .bg-gray-100 {
+  background-color: #323238 !important;
+}
+
+html[data-theme='dark'] .text-slate-950,
+html[data-theme='dark'] .text-slate-900,
+html[data-theme='dark'] .text-slate-800,
+html[data-theme='dark'] .text-slate-700,
+html[data-theme='dark'] .text-gray-900,
+html[data-theme='dark'] .text-gray-800,
+html[data-theme='dark'] .text-gray-700,
+html:not([data-theme='light']) .text-slate-950,
+html:not([data-theme='light']) .text-slate-900,
+html:not([data-theme='light']) .text-slate-800,
+html:not([data-theme='light']) .text-slate-700,
+html:not([data-theme='light']) .text-gray-900,
+html:not([data-theme='light']) .text-gray-800,
+html:not([data-theme='light']) .text-gray-700 {
+  color: #f3f1eb !important;
+}
+
+html[data-theme='dark'] .text-slate-600,
+html[data-theme='dark'] .text-slate-500,
+html[data-theme='dark'] .text-slate-400,
+html[data-theme='dark'] .text-gray-600,
+html[data-theme='dark'] .text-gray-500,
+html:not([data-theme='light']) .text-slate-600,
+html:not([data-theme='light']) .text-slate-500,
+html:not([data-theme='light']) .text-slate-400,
+html:not([data-theme='light']) .text-gray-600,
+html:not([data-theme='light']) .text-gray-500 {
+  color: #b7b4ae !important;
+}
+
+html[data-theme='dark'] .border-slate-100,
+html[data-theme='dark'] .border-slate-200,
+html[data-theme='dark'] .border-gray-100,
+html[data-theme='dark'] .border-gray-200,
+html:not([data-theme='light']) .border-slate-100,
+html:not([data-theme='light']) .border-slate-200,
+html:not([data-theme='light']) .border-gray-100,
+html:not([data-theme='light']) .border-gray-200 {
+  border-color: #3b3b43 !important;
+}
+
+/* =========================================================
+   TEXT UTILITIES
+   ========================================================= */
+
+html[data-theme='dark'] .text-paper,
+html:not([data-theme='light']) .text-paper {
+  color: #f3f1eb !important;
+}
+
+html[data-theme='dark'] .text-paper-dim,
+html:not([data-theme='light']) .text-paper-dim {
+  color: #c3c0ba !important;
+}
+
+html[data-theme='dark'] .text-mist,
+html:not([data-theme='light']) .text-mist {
+  color: #9b99a0 !important;
+}
+
+html[data-theme='dark'] .text-brass,
+html:not([data-theme='light']) .text-brass {
+  color: #a69af4 !important;
+}
+
+/* =========================================================
+   DARK INPUTS
+   ========================================================= */
+
+html[data-theme='dark'] input,
+html[data-theme='dark'] textarea,
+html[data-theme='dark'] select,
+html:not([data-theme='light']) input,
+html:not([data-theme='light']) textarea,
+html:not([data-theme='light']) select {
+  background-color: #26262b !important;
+  color: #f3f1eb !important;
+  border-color: #3b3b43 !important;
+}
+
+html[data-theme='dark'] input::placeholder,
+html[data-theme='dark'] textarea::placeholder,
+html:not([data-theme='light']) input::placeholder,
+html:not([data-theme='light']) textarea::placeholder {
+  color: #89878f !important;
+}
+
+/* =========================================================
+   PROGRESS TABLE
+   ========================================================= */
+
+.progress-table-shell {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  overflow: hidden;
 
-  filter:
-    saturate(.70)
-    contrast(1.04);
+  border: 1px solid var(--color-line);
+  border-radius: 22px;
 
-  opacity: .70;
+  background: var(--color-panel);
 
-  transition:
-    opacity .25s ease,
-    filter .25s ease,
-    transform .35s ease;
-}
-
-.london-atmosphere::after {
-  content: "";
-
-  position: absolute;
-  inset: 0;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(12, 18, 25, .18),
-      transparent 50%,
-      rgba(12, 18, 25, .28)
-    );
-
-  pointer-events: none;
-}
-
-.london-atmosphere:hover img {
-  opacity: .78;
-  transform: scale(1.015);
-}
-
-
-/* DAY MODE — more noticeable, still restrained */
-
-html[data-theme='light'] .london-atmosphere img {
-  filter:
-    saturate(.52)
-    contrast(1.08)
-    sepia(.10);
-
-  opacity: .76;
-}
-
-html[data-theme='light'] .london-atmosphere::after {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(245, 241, 233, .04),
-      transparent 45%,
-      rgba(62, 55, 45, .16)
+  box-shadow:
+    0 16px 44px
+    color-mix(
+      in srgb,
+      var(--color-paper) 7%,
+      transparent
     );
 }
 
-
-/* ============================================================
-   DASHBOARD ATMOSPHERE
-   ============================================================ */
-
-.dashboard-atmosphere {
-  position: relative;
-  isolation: isolate;
+.progress-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
-.dashboard-atmosphere::before {
-  content: "";
+.progress-table {
+  width: 100%;
+  min-width: 1120px;
 
-  position: absolute;
-  z-index: -1;
+  table-layout: fixed;
 
-  width: 360px;
-  height: 360px;
+  border-collapse: separate;
+  border-spacing: 0;
 
-  top: -180px;
-  right: -100px;
+  color: var(--color-paper);
+}
+
+.progress-student-col,
+.progress-student-header,
+.progress-student-cell {
+  width: 285px;
+}
+
+.progress-homework-col,
+.progress-status-cell {
+  width: 145px;
+}
+
+.progress-table th,
+.progress-table td {
+  box-sizing: border-box;
+}
+
+.progress-table thead th {
+  height: 96px;
+  padding: 16px 10px 12px;
+
+  vertical-align: middle;
+
+  background: var(--color-panel-2);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.progress-student-header {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+
+  padding-left: 24px !important;
+
+  text-align: left;
+
+  color: var(--color-paper);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.progress-homework-header {
+  text-align: center;
+}
+
+.progress-homework-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  gap: 5px;
+  min-width: 0;
+}
+
+.progress-homework-title {
+  display: block;
+
+  min-width: 0;
+  max-width: 125px;
+
+  overflow: hidden;
+
+  color: var(--color-paper);
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+
+  text-align: center;
+  text-overflow: ellipsis;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.progress-homework-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  align-items: center;
+  gap: 1px;
+}
+
+.progress-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 21px;
+  height: 21px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: var(--color-mist);
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.progress-action:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-brass) 10%,
+      transparent
+    );
+
+  color: var(--color-brass);
+}
+
+.progress-action-danger:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-coral) 10%,
+      transparent
+    );
+
+  color: var(--color-coral);
+}
+
+.progress-due-date {
+  margin-top: 8px;
+
+  color: var(--color-mist);
+
+  font-size: 10px;
+  font-weight: 500;
+
+  text-align: center;
+}
+
+.progress-student-row {
+  transition: background-color .16s ease;
+}
+
+.progress-student-row:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-indigo) 4%,
+      transparent
+    );
+}
+
+.progress-table tbody td {
+  height: 72px;
+
+  vertical-align: middle;
+
+  border-bottom:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--color-line) 78%,
+      transparent
+    );
+}
+
+.progress-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.progress-student-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+
+  padding: 12px 16px 12px 24px;
+
+  background: var(--color-panel);
+
+  vertical-align: middle;
+}
+
+.progress-student-row:hover
+.progress-student-cell {
+  background: var(--color-panel-2);
+}
+
+.progress-student {
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 11px !important;
+
+  width: 100%;
+  min-width: 0;
+
+  flex-direction: row !important;
+}
+
+.progress-avatar {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px !important;
+  height: 38px !important;
+
+  min-width: 38px;
+  max-width: 38px;
+
+  flex: 0 0 38px !important;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-indigo) 22%,
+      var(--color-line)
+    );
 
   border-radius: 50%;
 
   background:
-    radial-gradient(
-      circle,
+    linear-gradient(
+      135deg,
       color-mix(
         in srgb,
-        var(--color-brass) 9%,
-        transparent
+        var(--color-indigo) 10%,
+        var(--color-panel-2)
       ),
-      transparent 70%
+      color-mix(
+        in srgb,
+        var(--color-cyan) 7%,
+        var(--color-panel-2)
+      )
     );
 
-  pointer-events: none;
+  color: var(--color-indigo);
+
+  font-size: 14px;
+  font-weight: 700;
 }
 
+.progress-student-info {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
 
-/* ============================================================
+.progress-student-name {
+  width: 100%;
+  overflow: hidden;
+
+  color: var(--color-paper);
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-student-username {
+  width: 100%;
+
+  margin-top: 3px;
+  overflow: hidden;
+
+  color: var(--color-mist);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-remove {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px !important;
+  height: 24px !important;
+
+  min-width: 24px;
+
+  flex: 0 0 24px !important;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: var(--color-mist);
+
+  font-size: 17px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  opacity: .55;
+}
+
+.progress-student:hover
+.progress-remove {
+  opacity: 1;
+}
+
+.progress-remove:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-coral) 10%,
+      transparent
+    );
+
+  color: var(--color-coral);
+}
+
+.progress-status-cell {
+  padding: 10px 8px;
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+.progress-status-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.progress-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 72px;
+  height: 29px;
+
+  padding: 0 12px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: .06em;
+  line-height: 1;
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+.progress-status-button:hover
+.progress-status {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 15px
+    color-mix(
+      in srgb,
+      var(--color-paper) 9%,
+      transparent
+    );
+}
+
+.progress-status-done {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-sage) 30%,
+      var(--color-line)
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-sage) 11%,
+      var(--color-panel)
+    );
+
+  color: var(--color-sage);
+}
+
+.progress-status-incomplete {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-coral) 30%,
+      var(--color-line)
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-coral) 9%,
+      var(--color-panel)
+    );
+
+  color: var(--color-coral);
+}
+
+/* =========================================================
+   LIGHT PROGRESS TABLE
+   ========================================================= */
+
+html[data-theme='light']
+.progress-table-shell {
+  background: #fffdfa;
+  border-color: #dedbd3;
+
+  box-shadow:
+    0 18px 55px rgba(80, 75, 130, .06);
+}
+
+html[data-theme='light']
+.progress-table thead th {
+  background: #f1efe9;
+  border-bottom-color: #dedbd3;
+}
+
+html[data-theme='light']
+.progress-student-cell {
+  background: #fffdfa;
+}
+
+html[data-theme='light']
+.progress-student-row:hover
+.progress-student-cell {
+  background: #faf9f5;
+}
+
+html[data-theme='light']
+.progress-table tbody td {
+  border-bottom-color: #e7e4dd;
+}
+
+html[data-theme='light']
+.progress-student-name,
+html[data-theme='light']
+.progress-homework-title {
+  color: #24232a !important;
+}
+
+html[data-theme='light']
+.progress-student-username,
+html[data-theme='light']
+.progress-due-date {
+  color: #85838c !important;
+}
+
+html[data-theme='light']
+.progress-avatar {
+  background:
+    linear-gradient(
+      135deg,
+      #eeeaff,
+      #e9f6f4
+    );
+
+  border-color: #dad5f5;
+  color: #7565df;
+}
+
+/* =========================================================
+   DARK PROGRESS TABLE
+   ========================================================= */
+
+html[data-theme='dark']
+.progress-table-shell,
+html:not([data-theme='light'])
+.progress-table-shell {
+  background: #26262b;
+  border-color: #3b3b43;
+}
+
+html[data-theme='dark']
+.progress-table thead th,
+html:not([data-theme='light'])
+.progress-table thead th {
+  background: #2d2d33;
+  border-bottom-color: #3b3b43;
+}
+
+html[data-theme='dark']
+.progress-student-cell,
+html:not([data-theme='light'])
+.progress-student-cell {
+  background: #26262b;
+}
+
+html[data-theme='dark']
+.progress-student-row:hover
+.progress-student-cell,
+html:not([data-theme='light'])
+.progress-student-row:hover
+.progress-student-cell {
+  background: #2d2d33;
+}
+
+html[data-theme='dark']
+.progress-student-name,
+html[data-theme='dark']
+.progress-homework-title,
+html:not([data-theme='light'])
+.progress-student-name,
+html:not([data-theme='light'])
+.progress-homework-title {
+  color: #f3f1eb !important;
+}
+
+html[data-theme='dark']
+.progress-student-username,
+html[data-theme='dark']
+.progress-due-date,
+html:not([data-theme='light'])
+.progress-student-username,
+html:not([data-theme='light'])
+.progress-due-date {
+  color: #9b99a0 !important;
+}
+
+/* =========================================================
    ANIMATION
-   ============================================================ */
+   ========================================================= */
 
 @keyframes fade-up {
   from {
@@ -738,27 +1257,63 @@ html[data-theme='light'] .london-atmosphere::after {
     fade-up .22s ease-out both;
 }
 
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
+@media (max-width: 1100px) {
 
-@media (max-width: 640px) {
+  .progress-student-col,
+  .progress-student-header,
+  .progress-student-cell {
+    width: 260px;
+  }
+
+  .progress-homework-col,
+  .progress-status-cell {
+    width: 135px;
+  }
+}
+
+@media (max-width: 760px) {
+
   body {
     font-size: 14px;
   }
+
+  .progress-table {
+    min-width: 1040px;
+  }
+
+  .progress-student-col,
+  .progress-student-header,
+  .progress-student-cell {
+    width: 245px;
+  }
+
+  .progress-homework-col,
+  .progress-status-cell {
+    width: 130px;
+  }
+
+  .progress-table thead th {
+    height: 90px;
+  }
+
+  .progress-student-cell {
+    padding-left: 16px;
+  }
+}
+
+@media (max-width: 640px) {
 
   .ticket {
     border-radius: 12px;
   }
 }
 
-
-/* ============================================================
-   REDUCED MOTION
-   ============================================================ */
-
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -766,178 +1321,5 @@ html[data-theme='light'] .london-atmosphere::after {
     animation-iteration-count: 1 !important;
     transition-duration: .001ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* ============================================================
-   FINAL VISUAL CORRECTIONS
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   REMOVE THE CSS LONDON SILHOUETTE
-   ------------------------------------------------------------ */
-
-.dashboard-hero::after {
-  display: none !important;
-}
-
-.dashboard-hero::before {
-  display: none !important;
-}
-
-.dashboard-hero .hero-atmosphere {
-  display: none !important;
-}
-
-
-/* ------------------------------------------------------------
-   COMFORTABLE DAY MODE
-   ------------------------------------------------------------ */
-
-html[data-theme='light'] {
-  --color-ink: #ebe8e0;
-  --color-panel: #f7f5ef;
-  --color-panel-2: #f1eee6;
-  --color-line: #d8d3c8;
-
-  --color-paper: #263442;
-  --color-paper-dim: #66727c;
-  --color-mist: #77818a;
-
-  --color-brass: #a87925;
-  --color-brass-dim: #86631f;
-
-  /* Soft, muted red */
-  --color-coral: #b86155;
-
-  --color-sage: #4f8065;
-  --color-onbrass: #fffdf8;
-}
-
-
-/* ------------------------------------------------------------
-   DARK MODE — KEEP DEPTH, SOFTEN THE RED
-   ------------------------------------------------------------ */
-
-html:not([data-theme='light']) {
-  --color-coral: #c86b5c;
-}
-
-
-/* ------------------------------------------------------------
-   HOMEWORK STATUS
-   ------------------------------------------------------------ */
-
-/* INCOMPLETE = red */
-.status-incomplete {
-  color: var(--color-coral) !important;
-}
-
-/* NOT STARTED = quiet neutral */
-.status-not-done {
-  color: var(--color-mist) !important;
-}
-
-/* COMPLETED = calm green */
-.status-done {
-  color: var(--color-sage) !important;
-}
-
-/* OVERDUE = same family, slightly stronger */
-.status-overdue {
-  color: var(--color-coral) !important;
-}
-
-
-/* ------------------------------------------------------------
-   STATUS STAMPS
-   ------------------------------------------------------------ */
-
-.stamp.stamp-pending {
-  color: var(--color-coral) !important;
-}
-
-.stamp.stamp-overdue {
-  color: var(--color-coral) !important;
-}
-
-.stamp.stamp-done {
-  color: var(--color-sage) !important;
-}
-
-
-/* ------------------------------------------------------------
-   DAY MODE — REDUCE HARSH CONTRAST ON CARDS
-   ------------------------------------------------------------ */
-
-html[data-theme='light'] .ticket {
-  box-shadow:
-    0 2px 8px rgba(54, 48, 38, .06),
-    0 1px 2px rgba(54, 48, 38, .05);
-}
-
-html[data-theme='light'] .surface-raised {
-  box-shadow:
-    0 3px 12px rgba(54, 48, 38, .06),
-    0 1px 2px rgba(54, 48, 38, .05);
-}
-
-
-/* ------------------------------------------------------------
-   DAY MODE — SOFTER BACKGROUND
-   ------------------------------------------------------------ */
-
-html[data-theme='light'] body {
-  background:
-    radial-gradient(
-      circle at 12% 0%,
-      rgba(168, 121, 37, .035),
-      transparent 30rem
-    ),
-    var(--color-ink);
-}
-/* ============================================================
-   TEACHER GROUP WORKSPACE
-   ============================================================ */
-
-.teacher-groups-panel {
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, .06),
-    0 1px 2px rgba(0, 0, 0, .04);
-}
-
-.teacher-section-header {
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, .05),
-    0 1px 2px rgba(0, 0, 0, .04);
-}
-
-.teacher-homework-table {
-  overflow: hidden;
-}
-
-.teacher-homework-table table {
-  border-collapse: separate;
-}
-
-html[data-theme='light'] .teacher-groups-panel,
-html[data-theme='light'] .teacher-section-header,
-html[data-theme='light'] .teacher-homework-table {
-  box-shadow:
-    0 3px 14px rgba(54, 48, 38, .055),
-    0 1px 2px rgba(54, 48, 38, .04);
-}
-
-html:not([data-theme='light']) .teacher-groups-panel,
-html:not([data-theme='light']) .teacher-section-header,
-html:not([data-theme='light']) .teacher-homework-table {
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, .16),
-    0 1px 2px rgba(0, 0, 0, .18);
-}
-
-@media (max-width: 1023px) {
-  .teacher-groups-panel {
-    width: 100%;
   }
 }

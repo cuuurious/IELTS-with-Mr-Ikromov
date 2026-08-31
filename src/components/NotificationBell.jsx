@@ -4,24 +4,45 @@ import { supabase } from '../lib/supabaseClient'
 export default function NotificationBell({ profile }) {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
   const boxRef = useRef(null)
+
+  /*
+   * ============================================================
+   * LOAD NOTIFICATIONS
+   * ============================================================
+   */
 
   const load = async () => {
     if (!profile?.id) return
+
+    setLoading(true)
 
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', profile.id)
+      .eq('read', false)
       .order('created_at', { ascending: false })
       .limit(30)
 
-    if (!error) {
-      setItems(data || [])
+    if (error) {
+      console.error(
+        'Failed to load notifications:',
+        error
+      )
     } else {
-      console.error('Failed to load notifications:', error)
+      setItems(data || [])
     }
+
+    setLoading(false)
   }
+
+  /*
+   * ============================================================
+   * INITIAL LOAD + REALTIME
+   * ============================================================
+   */
 
   useEffect(() => {
     if (!profile?.id) return
@@ -29,7 +50,7 @@ export default function NotificationBell({ profile }) {
     load()
 
     const channel = supabase
-      .channel(`notif-${profile.id}`)
+      .channel(`notifications-${profile.id}`)
       .on(
         'postgres_changes',
         {
@@ -39,10 +60,41 @@ export default function NotificationBell({ profile }) {
           filter: `user_id=eq.${profile.id}`,
         },
         (payload) => {
-          setItems((prev) => [payload.new, ...prev])
+          if (!payload?.new) return
+
+          /*
+           * Only unread notifications belong
+           * in the notification drawer.
+           */
+          if (payload.new.read) return
+
+          setItems((previous) => {
+            /*
+             * Prevent duplicate realtime rows.
+             */
+            if (
+              previous.some(
+                (item) =>
+                  item.id === payload.new.id
+              )
+            ) {
+              return previous
+            }
+
+            return [
+              payload.new,
+              ...previous,
+            ].slice(0, 30)
+          })
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(
+            'Notification realtime connected'
+          )
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -51,11 +103,17 @@ export default function NotificationBell({ profile }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
+  /*
+   * ============================================================
+   * CLOSE WHEN CLICKING OUTSIDE
+   * ============================================================
+   */
+
   useEffect(() => {
-    const onClickOutside = (e) => {
+    const onClickOutside = (event) => {
       if (
         boxRef.current &&
-        !boxRef.current.contains(e.target)
+        !boxRef.current.contains(event.target)
       ) {
         setOpen(false)
       }
@@ -74,52 +132,67 @@ export default function NotificationBell({ profile }) {
     }
   }, [])
 
-  const unread = items.filter(
-    (n) => !n.read
-  ).length
+  /*
+   * ============================================================
+   * UNREAD COUNT
+   * ============================================================
+   */
 
-  const markRead = async (notification) => {
-    if (notification.read) return
+  const unread = items.length
 
-    setItems((prev) =>
-      prev.map((n) =>
-        n.id === notification.id
-          ? { ...n, read: true }
-          : n
+  /*
+   * ============================================================
+   * OPEN NOTIFICATION
+   * ============================================================
+   */
+
+  const openNotification = async (notification) => {
+    if (!notification?.id) return
+
+    /*
+     * Remove it immediately from the UI.
+     *
+     * This means the notification disappears as soon
+     * as the student/teacher opens it.
+     */
+    setItems((previous) =>
+      previous.filter(
+        (item) =>
+          item.id !== notification.id
       )
     )
 
+    /*
+     * Mark it read in Supabase.
+     */
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
       .eq('id', notification.id)
+      .eq('user_id', profile.id)
 
     if (error) {
       console.error(
         'Failed to mark notification read:',
         error
       )
+
+      /*
+       * If the database update failed, reload
+       * so the notification doesn't disappear
+       * permanently from the UI.
+       */
+      await load()
+      return
     }
-  }
 
-  const openNotification = async (notification) => {
-    console.log(
-      'Opening notification:',
-      notification
-    )
-
-    await markRead(notification)
-
+    /*
+     * Close dropdown.
+     */
     setOpen(false)
 
     /*
-     * Send the notification to the dashboard.
-     *
-     * Example:
-     *
-     * private-chat:
-     * STUDENT_ID:
-     * MESSAGE_ID
+     * Navigate inside the application.
      */
     window.dispatchEvent(
       new CustomEvent(
@@ -127,111 +200,346 @@ export default function NotificationBell({ profile }) {
         {
           detail: {
             notification,
-            link: notification.link || null,
-            type: notification.type || null,
+            link:
+              notification.link || null,
+            type:
+              notification.type || null,
           },
         }
       )
     )
   }
 
+  /*
+   * ============================================================
+   * CLEAR ALL
+   * ============================================================
+   */
+
+  const clearAll = async () => {
+    if (!profile?.id || !items.length) {
+      return
+    }
+
+    const ids = items.map(
+      (notification) =>
+        notification.id
+    )
+
+    /*
+     * Optimistic UI.
+     */
+    setItems([])
+    setOpen(false)
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', profile.id)
+      .in('id', ids)
+
+    if (error) {
+      console.error(
+        'Failed to clear notifications:',
+        error
+      )
+
+      await load()
+    }
+  }
+
   return (
     <div
-      className="relative"
       ref={boxRef}
+      className="relative"
     >
+
+      {/* ======================================================
+          BELL
+          ====================================================== */}
 
       <button
         type="button"
         onClick={() =>
-          setOpen((value) => !value)
+          setOpen((previous) => !previous)
         }
-        className="focus-ring relative w-9 h-9 rounded-full border border-line flex items-center justify-center text-mist hover:text-brass hover:border-brass transition-colors"
+        className="
+          focus-ring
+          relative
+          w-10
+          h-10
+          rounded-full
+          border
+          border-line
+          bg-panel
+          flex
+          items-center
+          justify-center
+          text-mist
+          hover:text-indigo
+          hover:border-indigo
+          transition-all
+          duration-200
+        "
         title="Notifications"
         aria-label="Notifications"
+        aria-expanded={open}
       >
 
         <svg
-          width="16"
-          height="16"
+          width="17"
+          height="17"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
           <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
 
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 bg-coral text-paper text-[10px] font-mono rounded-full w-4 h-4 flex items-center justify-center">
-            {unread > 9
-              ? '9+'
+          <span
+            className="
+              absolute
+              -top-1
+              -right-1
+              min-w-[18px]
+              h-[18px]
+              px-1
+              rounded-full
+              bg-coral
+              text-white
+              text-[9px]
+              font-bold
+              font-mono
+              flex
+              items-center
+              justify-center
+              border-2
+              border-ink
+            "
+          >
+            {unread > 99
+              ? '99+'
               : unread}
           </span>
         )}
 
       </button>
 
+
+      {/* ======================================================
+          DROPDOWN
+          ====================================================== */}
+
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto ticket rounded-lg p-2 z-50 shadow-lg">
+        <div
+          className="
+            absolute
+            right-0
+            top-[calc(100%+10px)]
+            w-[360px]
+            max-w-[calc(100vw-24px)]
+            overflow-hidden
+            rounded-2xl
+            border
+            border-line
+            bg-panel
+            shadow-[0_20px_60px_rgba(20,30,50,.18)]
+            z-[100]
+          "
+        >
 
-          {items.length === 0 && (
-            <p className="text-mist text-sm p-3">
-              No notifications yet.
-            </p>
-          )}
+          {/* HEADER */}
 
-          {items.map((n) => (
-            <button
-              type="button"
-              key={n.id}
-              onClick={() =>
-                openNotification(n)
-              }
-              className={`w-full text-left px-3 py-3 border-b border-line last:border-0 transition-colors rounded-md ${
-                n.read
-                  ? 'opacity-70 hover:bg-panel-2'
-                  : 'bg-panel-2 hover:bg-panel'
-              }`}
-            >
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              gap-3
+              px-4
+              py-3
+              border-b
+              border-line
+              bg-panel-2
+            "
+          >
 
-              <div className="flex items-start gap-2">
+            <div>
+              <div className="font-semibold text-paper">
+                Notifications
+              </div>
 
-                <div className="flex-1 min-w-0">
+              <div className="text-xs text-mist mt-0.5">
+                {loading
+                  ? 'Loading…'
+                  : unread > 0
+                    ? `${unread} unread`
+                    : "You're all caught up"}
+              </div>
+            </div>
 
-                  <div className="text-sm font-medium text-paper">
-                    {n.title}
+            {unread > 0 && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="
+                  text-xs
+                  font-medium
+                  text-mist
+                  hover:text-indigo
+                  transition-colors
+                "
+              >
+                Clear all
+              </button>
+            )}
+
+          </div>
+
+
+          {/* CONTENT */}
+
+          <div className="max-h-[430px] overflow-y-auto">
+
+            {loading && items.length === 0 && (
+              <div className="px-4 py-8 text-center text-sm text-mist">
+                Loading notifications…
+              </div>
+            )}
+
+            {!loading && items.length === 0 && (
+              <div className="px-5 py-10 text-center">
+
+                <div
+                  className="
+                    mx-auto
+                    mb-3
+                    w-11
+                    h-11
+                    rounded-full
+                    bg-indigo/10
+                    border
+                    border-indigo/20
+                    flex
+                    items-center
+                    justify-center
+                    text-indigo
+                  "
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 01-3.46 0" />
+                  </svg>
+                </div>
+
+                <div className="text-sm font-medium text-paper">
+                  No new notifications
+                </div>
+
+                <div className="text-xs text-mist mt-1">
+                  New messages and updates will appear here.
+                </div>
+
+              </div>
+            )}
+
+            {items.map((notification) => (
+              <button
+                type="button"
+                key={notification.id}
+                onClick={() =>
+                  openNotification(
+                    notification
+                  )
+                }
+                className="
+                  w-full
+                  text-left
+                  px-4
+                  py-3.5
+                  border-b
+                  border-line
+                  last:border-b-0
+                  bg-panel
+                  hover:bg-panel-2
+                  transition-colors
+                "
+              >
+
+                <div className="flex gap-3">
+
+                  <div
+                    className="
+                      mt-1
+                      w-2
+                      h-2
+                      rounded-full
+                      bg-coral
+                      shrink-0
+                    "
+                  />
+
+                  <div className="min-w-0 flex-1">
+
+                    <div className="text-sm font-semibold text-paper">
+                      {notification.title}
+                    </div>
+
+                    {notification.body && (
+                      <div className="text-xs text-mist mt-1 line-clamp-2">
+                        {notification.body}
+                      </div>
+                    )}
+
+                    <div className="text-[10px] font-mono text-mist mt-2">
+                      {new Date(
+                        notification.created_at
+                      ).toLocaleString(
+                        [],
+                        {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        }
+                      )}
+                    </div>
+
                   </div>
 
-                  {n.body && (
-                    <div className="text-mist text-xs mt-0.5 line-clamp-2">
-                      {n.body}
-                    </div>
-                  )}
-
-                  <div className="text-mist text-[10px] font-mono mt-1">
-                    {new Date(
-                      n.created_at
-                    ).toLocaleString(
-                      [],
-                      {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      }
-                    )}
+                  <div className="text-mist shrink-0 mt-1">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
                   </div>
 
                 </div>
 
-                {!n.read && (
-                  <span className="mt-1 w-2 h-2 rounded-full bg-coral flex-shrink-0" />
-                )}
+              </button>
+            ))}
 
-              </div>
-
-            </button>
-          ))}
+          </div>
 
         </div>
       )}

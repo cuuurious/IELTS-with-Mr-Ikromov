@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient'
 
 // VAPID public key is safe to ship to the browser — it's the private key
-// that must stay server-side only (used in the Netlify function).
+// that must stay server-side only (used by the Supabase Edge Function).
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
 
 function urlBase64ToUint8Array(base64String) {

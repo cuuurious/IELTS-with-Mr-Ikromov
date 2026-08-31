@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function TeacherStudents() {
@@ -15,10 +16,7 @@ export default function TeacherStudents() {
   const [sortBy, setSortBy] = useState('name-asc')
 
   const [view, setView] = useState('all')
-
-  const [selectedStudent, setSelectedStudent] =
-    useState(null)
-
+  const [selectedStudent, setSelectedStudent] = useState(null)
   const [busyAction, setBusyAction] = useState('')
 
   const loadData = async () => {
@@ -36,16 +34,12 @@ export default function TeacherStudents() {
           'id, full_name, username, contact_email, role, status, created_at'
         )
         .eq('role', 'student')
-        .order('full_name', {
-          ascending: true,
-        }),
+        .order('full_name', { ascending: true }),
 
       supabase
         .from('groups')
         .select('id, name')
-        .order('name', {
-          ascending: true,
-        }),
+        .order('name', { ascending: true }),
 
       supabase
         .from('group_members')
@@ -82,9 +76,7 @@ export default function TeacherStudents() {
       setError(membershipsResult.error.message)
       setMemberships([])
     } else {
-      setMemberships(
-        membershipsResult.data || []
-      )
+      setMemberships(membershipsResult.data || [])
     }
 
     setLoading(false)
@@ -137,9 +129,7 @@ export default function TeacherStudents() {
         map[membership.student_id] = []
       }
 
-      map[membership.student_id].push(
-        membership.group_id
-      )
+      map[membership.student_id].push(membership.group_id)
     })
 
     return map
@@ -147,37 +137,22 @@ export default function TeacherStudents() {
 
   const groupById = useMemo(() => {
     return Object.fromEntries(
-      groups.map((group) => [
-        group.id,
-        group,
-      ])
+      groups.map((group) => [group.id, group])
     )
   }, [groups])
 
   const getStudentGroups = (studentId) => {
-    return (
-      membershipsByStudent[studentId] || []
-    )
-      .map(
-        (groupId) =>
-          groupById[groupId]
-      )
+    return (membershipsByStudent[studentId] || [])
+      .map((groupId) => groupById[groupId])
       .filter(Boolean)
   }
 
   const studentsWithoutGroup = useMemo(() => {
     return students.filter(
       (student) =>
-        !(
-          membershipsByStudent[
-            student.id
-          ]?.length
-        )
+        !(membershipsByStudent[student.id]?.length)
     )
-  }, [
-    students,
-    membershipsByStudent,
-  ])
+  }, [students, membershipsByStudent])
 
   const filteredStudents = useMemo(() => {
     let result =
@@ -185,109 +160,74 @@ export default function TeacherStudents() {
         ? studentsWithoutGroup
         : students
 
-    const query =
-      search.trim().toLowerCase()
+    const query = search.trim().toLowerCase()
 
     if (query) {
-      result = result.filter(
-        (student) => {
-          const groupsForStudent =
-            getStudentGroups(
-              student.id
-            )
+      result = result.filter((student) => {
+        const groupsForStudent =
+          getStudentGroups(student.id)
 
-          const groupNames =
-            groupsForStudent
-              .map((g) => g.name)
-              .join(' ')
+        const groupNames = groupsForStudent
+          .map((g) => g.name)
+          .join(' ')
 
-          return [
-            student.full_name,
-            student.username,
-            student.contact_email,
-            groupNames,
-          ]
-            .filter(Boolean)
-            .some((value) =>
-              value
-                .toLowerCase()
-                .includes(query)
-            )
-        }
-      )
+        return [
+          student.full_name,
+          student.username,
+          student.contact_email,
+          groupNames,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            value.toLowerCase().includes(query)
+          )
+      })
     }
 
     if (view === 'all') {
-      if (
-        statusFilter !== 'all'
-      ) {
+      if (statusFilter !== 'all') {
         result = result.filter(
           (student) =>
-            student.status ===
-            statusFilter
+            student.status === statusFilter
         )
       }
 
-      if (
-        groupFilter !== 'all'
-      ) {
-        result = result.filter(
-          (student) => {
-            const studentGroupIds =
-              membershipsByStudent[
-                student.id
-              ] || []
+      if (groupFilter !== 'all') {
+        result = result.filter((student) => {
+          const studentGroupIds =
+            membershipsByStudent[student.id] || []
 
-            if (
-              groupFilter ===
-              'none'
-            ) {
-              return (
-                studentGroupIds.length ===
-                0
-              )
-            }
-
-            return studentGroupIds.includes(
-              groupFilter
-            )
+          if (groupFilter === 'none') {
+            return studentGroupIds.length === 0
           }
-        )
+
+          return studentGroupIds.includes(groupFilter)
+        })
       }
     }
 
     result = [...result]
 
     result.sort((a, b) => {
-      if (
-        sortBy === 'name-desc'
-      ) {
-        return b.full_name.localeCompare(
-          a.full_name
-        )
+      if (sortBy === 'name-desc') {
+        return b.full_name.localeCompare(a.full_name)
       }
 
-      if (
-        sortBy === 'newest'
-      ) {
+      if (sortBy === 'newest') {
         return (
           new Date(b.created_at) -
           new Date(a.created_at)
         )
       }
 
-      if (
-        sortBy === 'oldest'
-      ) {
+      if (sortBy === 'oldest') {
         return (
           new Date(a.created_at) -
           new Date(b.created_at)
         )
       }
 
-      return a.full_name.localeCompare(
-        b.full_name
-      )
+      return a.full_name.localeCompare(b.full_name)
     })
 
     return result
@@ -303,20 +243,14 @@ export default function TeacherStudents() {
     groupById,
   ])
 
-  const addToGroup = async (
-    student,
-    groupId
-  ) => {
+  const addToGroup = async (student, groupId) => {
     if (!groupId) return
 
-    const exists =
-      memberships.some(
-        (membership) =>
-          membership.student_id ===
-            student.id &&
-          membership.group_id ===
-            groupId
-      )
+    const exists = memberships.some(
+      (membership) =>
+        membership.student_id === student.id &&
+        membership.group_id === groupId
+    )
 
     if (exists) return
 
@@ -324,15 +258,14 @@ export default function TeacherStudents() {
       `add-${student.id}-${groupId}`
     )
 
-    const { data, error } =
-      await supabase
-        .from('group_members')
-        .insert({
-          student_id: student.id,
-          group_id: groupId,
-        })
-        .select()
-        .single()
+    const { data, error } = await supabase
+      .from('group_members')
+      .insert({
+        student_id: student.id,
+        group_id: groupId,
+      })
+      .select()
+      .single()
 
     if (error) {
       console.error(
@@ -344,19 +277,13 @@ export default function TeacherStudents() {
         `Couldn't add student to the group: ${error.message}`
       )
     } else if (data) {
-      setMemberships((prev) => [
-        ...prev,
-        data,
-      ])
+      setMemberships((prev) => [...prev, data])
     }
 
     setBusyAction('')
   }
 
-  const removeFromGroup = async (
-    student,
-    group
-  ) => {
+  const removeFromGroup = async (student, group) => {
     if (
       !window.confirm(
         `Remove ${student.full_name} from "${group.name}"?\n\nTheir account will NOT be deleted.`
@@ -369,12 +296,11 @@ export default function TeacherStudents() {
       `remove-${student.id}-${group.id}`
     )
 
-    const { error } =
-      await supabase
-        .from('group_members')
-        .delete()
-        .eq('student_id', student.id)
-        .eq('group_id', group.id)
+    const { error } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('student_id', student.id)
+      .eq('group_id', group.id)
 
     if (error) {
       console.error(
@@ -390,10 +316,8 @@ export default function TeacherStudents() {
         prev.filter(
           (membership) =>
             !(
-              membership.student_id ===
-                student.id &&
-              membership.group_id ===
-                group.id
+              membership.student_id === student.id &&
+              membership.group_id === group.id
             )
         )
       )
@@ -427,9 +351,8 @@ export default function TeacherStudents() {
       )}
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
-
         <div>
-          <h2 className="font-display text-xl">
+          <h2 className="font-display text-xl text-paper">
             Students
           </h2>
 
@@ -442,16 +365,13 @@ export default function TeacherStudents() {
         <div className="text-mist text-sm font-mono">
           {students.length} total
         </div>
-
       </div>
 
       <div className="flex gap-2 flex-wrap">
 
         <button
           type="button"
-          onClick={() =>
-            setView('all')
-          }
+          onClick={() => setView('all')}
           className={`focus-ring px-3 py-2 rounded-md text-sm ${
             view === 'all'
               ? 'bg-brass text-onbrass'
@@ -483,11 +403,9 @@ export default function TeacherStudents() {
 
         <input
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, username, email, or group…"
-          className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+          className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist"
         />
 
         {view === 'all' && (
@@ -496,11 +414,9 @@ export default function TeacherStudents() {
             <select
               value={groupFilter}
               onChange={(e) =>
-                setGroupFilter(
-                  e.target.value
-                )
+                setGroupFilter(e.target.value)
               }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
             >
               <option value="all">
                 All groups
@@ -510,26 +426,22 @@ export default function TeacherStudents() {
                 No group
               </option>
 
-              {groups.map(
-                (group) => (
-                  <option
-                    key={group.id}
-                    value={group.id}
-                  >
-                    {group.name}
-                  </option>
-                )
-              )}
+              {groups.map((group) => (
+                <option
+                  key={group.id}
+                  value={group.id}
+                >
+                  {group.name}
+                </option>
+              ))}
             </select>
 
             <select
               value={statusFilter}
               onChange={(e) =>
-                setStatusFilter(
-                  e.target.value
-                )
+                setStatusFilter(e.target.value)
               }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
             >
               <option value="approved">
                 Approved
@@ -551,11 +463,9 @@ export default function TeacherStudents() {
             <select
               value={sortBy}
               onChange={(e) =>
-                setSortBy(
-                  e.target.value
-                )
+                setSortBy(e.target.value)
               }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
             >
               <option value="name-asc">
                 Name A–Z
@@ -624,259 +534,279 @@ export default function TeacherStudents() {
       ) : (
         <div className="flex flex-col gap-3">
 
-          {filteredStudents.map(
-            (student) => {
-              const studentGroups =
-                getStudentGroups(
-                  student.id
-                )
+          {filteredStudents.map((student) => {
+            const studentGroups =
+              getStudentGroups(student.id)
 
-              return (
-                <div
-                  key={student.id}
-                  className="ticket rounded-lg p-4"
-                >
+            return (
+              <div
+                key={student.id}
+                className="ticket rounded-lg p-4"
+              >
 
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
 
-                    <div className="min-w-0">
+                  <div className="min-w-0">
 
-                      <div className="font-display text-lg">
-                        {student.full_name}
-                      </div>
-
-                      <div className="text-mist text-sm font-mono">
-                        @{student.username}
-                      </div>
-
-                      {student.contact_email && (
-                        <div className="text-mist text-xs mt-1">
-                          {student.contact_email}
-                        </div>
-                      )}
-
+                    <div className="font-display text-lg text-paper">
+                      {student.full_name}
                     </div>
 
-                    <span
-                      className={`text-xs px-2 py-1 rounded-md ${
-                        student.status ===
-                        'approved'
-                          ? 'bg-sage text-onbrass'
-                          : student.status ===
-                            'pending'
-                          ? 'border border-brass text-brass'
-                          : 'border border-coral text-coral'
-                      }`}
-                    >
-                      {student.status}
-                    </span>
-
-                  </div>
-
-                  <div className="mt-4">
-
-                    <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
-                      Groups
+                    <div className="text-mist text-sm font-mono">
+                      @{student.username}
                     </div>
 
-                    {studentGroups.length ===
-                    0 ? (
-                      <span className="text-mist text-sm">
-                        No group
-                      </span>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-
-                        {studentGroups.map(
-                          (group) => (
-                            <div
-                              key={group.id}
-                              className="flex items-center gap-1 bg-panel-2 border border-line rounded-md px-2 py-1 text-sm"
-                            >
-                              <span>
-                                {group.name}
-                              </span>
-
-                              <button
-                                type="button"
-                                disabled={
-                                  busyAction ===
-                                  `remove-${student.id}-${group.id}`
-                                }
-                                onClick={() =>
-                                  removeFromGroup(
-                                    student,
-                                    group
-                                  )
-                                }
-                                className="focus-ring text-mist hover:text-coral disabled:opacity-40"
-                                title="Remove from group"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          )
-                        )}
-
+                    {student.contact_email && (
+                      <div className="text-mist text-xs mt-1">
+                        {student.contact_email}
                       </div>
                     )}
 
                   </div>
 
-                  <div className="mt-4 flex items-center gap-2 flex-wrap">
-
-                    <select
-                      defaultValue=""
-                      onChange={(e) => {
-                        const groupId =
-                          e.target.value
-
-                        if (groupId) {
-                          addToGroup(
-                            student,
-                            groupId
-                          )
-                        }
-
-                        e.target.value = ''
-                      }}
-                      disabled={
-                        student.status !==
-                        'approved'
-                      }
-                      className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm disabled:opacity-40"
-                    >
-                      <option value="">
-                        Add to group…
-                      </option>
-
-                      {groups
-                        .filter(
-                          (group) =>
-                            !studentGroups.some(
-                              (g) =>
-                                g.id ===
-                                group.id
-                            )
-                        )
-                        .map(
-                          (group) => (
-                            <option
-                              key={
-                                group.id
-                              }
-                              value={
-                                group.id
-                              }
-                            >
-                              {group.name}
-                            </option>
-                          )
-                        )}
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedStudent(
-                          student
-                        )
-                      }
-                      className="focus-ring px-3 py-2 rounded-md border border-line text-sm text-mist hover:text-paper"
-                    >
-                      View details
-                    </button>
-
-                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-md ${
+                      student.status === 'approved'
+                        ? 'bg-sage text-onbrass'
+                        : student.status === 'pending'
+                        ? 'border border-brass text-brass'
+                        : 'border border-coral text-coral'
+                    }`}
+                  >
+                    {student.status}
+                  </span>
 
                 </div>
-              )
-            }
-          )}
+
+                <div className="mt-4">
+
+                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
+                    Groups
+                  </div>
+
+                  {studentGroups.length === 0 ? (
+                    <span className="text-mist text-sm">
+                      No group
+                    </span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+
+                      {studentGroups.map((group) => (
+                        <div
+                          key={group.id}
+                          className="flex items-center gap-1 bg-panel-2 border border-line rounded-md px-2 py-1 text-sm text-paper"
+                        >
+                          <span>
+                            {group.name}
+                          </span>
+
+                          <button
+                            type="button"
+                            disabled={
+                              busyAction ===
+                              `remove-${student.id}-${group.id}`
+                            }
+                            onClick={() =>
+                              removeFromGroup(
+                                student,
+                                group
+                              )
+                            }
+                            className="focus-ring text-mist hover:text-coral disabled:opacity-40"
+                            title="Remove from group"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="mt-4 flex items-center gap-2 flex-wrap">
+
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      const groupId = e.target.value
+
+                      if (groupId) {
+                        addToGroup(
+                          student,
+                          groupId
+                        )
+                      }
+
+                      e.target.value = ''
+                    }}
+                    disabled={
+                      student.status !== 'approved'
+                    }
+                    className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper disabled:opacity-40"
+                  >
+                    <option value="">
+                      Add to group…
+                    </option>
+
+                    {groups
+                      .filter(
+                        (group) =>
+                          !studentGroups.some(
+                            (g) =>
+                              g.id === group.id
+                          )
+                      )
+                      .map((group) => (
+                        <option
+                          key={group.id}
+                          value={group.id}
+                        >
+                          {group.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedStudent(student)
+                    }
+                    className="focus-ring px-3 py-2 rounded-md border border-line text-sm text-mist hover:text-paper"
+                  >
+                    View details
+                  </button>
+
+                </div>
+
+              </div>
+            )
+          })}
 
         </div>
       )}
 
-      {selectedStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      {selectedStudent &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              width: '100vw',
+              height: '100vh',
+            }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedStudent(null)
+              }
+            }}
+          >
+            <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px]" />
 
-          <div className="w-full max-w-lg ticket rounded-lg p-5">
+            <div
+              className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-line bg-panel text-paper shadow-2xl"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
 
-            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
 
-              <div>
-                <h3 className="font-display text-xl">
-                  {selectedStudent.full_name}
-                </h3>
+                <div className="min-w-0">
+                  <h3 className="font-display text-xl font-semibold text-paper truncate">
+                    {selectedStudent.full_name}
+                  </h3>
 
-                <p className="text-mist text-sm font-mono">
-                  @{selectedStudent.username}
-                </p>
+                  <p className="mt-1 text-sm font-mono text-mist truncate">
+                    @{selectedStudent.username || 'student'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedStudent(null)
+                  }
+                  className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedStudent(null)
-                }
-                className="focus-ring text-mist hover:text-paper text-xl"
-                aria-label="Close"
-              >
-                ×
-              </button>
+              <div className="space-y-4 p-6 text-sm">
+
+                <div>
+                  <span className="text-mist">
+                    Email
+                  </span>
+
+                  <div className="mt-1 text-paper break-all">
+                    {selectedStudent.contact_email ||
+                      'Not provided'}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-mist">
+                    Status
+                  </span>
+
+                  <div className="mt-1 text-paper">
+                    {selectedStudent.status}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-mist">
+                    Groups
+                  </span>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+
+                    {getStudentGroups(
+                      selectedStudent.id
+                    ).length > 0 ? (
+                      getStudentGroups(
+                        selectedStudent.id
+                      ).map((group) => (
+                        <span
+                          key={group.id}
+                          className="rounded-full border border-line bg-panel-2 px-3 py-1 text-xs text-paper"
+                        >
+                          {group.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-mist">
+                        No group
+                      </span>
+                    )}
+
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="flex justify-end border-t border-line px-6 py-4">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedStudent(null)
+                  }
+                  className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass transition hover:brightness-105"
+                >
+                  Close
+                </button>
+
+              </div>
 
             </div>
-
-            <div className="mt-5 flex flex-col gap-3 text-sm">
-
-              <div>
-                <span className="text-mist">
-                  Email:{' '}
-                </span>
-                {selectedStudent.contact_email ||
-                  'Not provided'}
-              </div>
-
-              <div>
-                <span className="text-mist">
-                  Status:{' '}
-                </span>
-                {selectedStudent.status}
-              </div>
-
-              <div>
-                <span className="text-mist">
-                  Groups:{' '}
-                </span>
-
-                {getStudentGroups(
-                  selectedStudent.id
-                )
-                  .map((g) => g.name)
-                  .join(', ') ||
-                  'No group'}
-              </div>
-
-            </div>
-
-            <div className="mt-5 flex justify-end">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedStudent(null)
-                }
-                className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass text-sm"
-              >
-                Close
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
     </div>
   )
