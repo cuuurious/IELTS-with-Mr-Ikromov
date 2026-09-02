@@ -593,12 +593,6 @@ export default function HomeworkCard({
         return
       }
 
-      if (
-        taskAlreadySubmitted
-      ) {
-        return
-      }
-
       setUploading(true)
 
       try {
@@ -811,12 +805,6 @@ export default function HomeworkCard({
         setError(
           'Please record or upload all three speaking parts before submitting.'
         )
-        return
-      }
-
-      if (
-        speakingAlreadySubmitted
-      ) {
         return
       }
 
@@ -1107,8 +1095,7 @@ export default function HomeworkCard({
               disabled={
                 uploading ||
                 existingCount >=
-                  maxFiles ||
-                taskAlreadySubmitted
+                  maxFiles
               }
             />
 
@@ -1154,9 +1141,6 @@ export default function HomeworkCard({
 
                       <button
                         type="button"
-                        disabled={
-                          taskAlreadySubmitted
-                        }
                         onClick={() =>
                           handleScreenshotDelete(
                             url
@@ -1203,9 +1187,6 @@ export default function HomeworkCard({
 
                       <button
                         type="button"
-                        disabled={
-                          taskAlreadySubmitted
-                        }
                         onClick={() =>
                           handleFileDelete(
                             file
@@ -1238,7 +1219,7 @@ export default function HomeworkCard({
 
                   <p className="text-xs text-mist mt-1">
                     {taskAlreadySubmitted
-                      ? 'Your homework has been submitted to your teacher.'
+                      ? 'Submitted to your teacher. You can still make changes and click Update Submission to save them.'
                       : minFiles >
                         0
                       ? `Upload at least ${minFiles} file${
@@ -1258,14 +1239,13 @@ export default function HomeworkCard({
                   }
                   disabled={
                     uploading ||
-                    taskAlreadySubmitted ||
                     existingCount <
                       minFiles
                   }
                   className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {taskAlreadySubmitted
-                    ? '✓ Task Submitted'
+                    ? 'Update Submission'
                     : existingCount <
                       minFiles
                     ? `Upload ${
@@ -1282,7 +1262,8 @@ export default function HomeworkCard({
                 {taskAlreadySubmitted ? (
                   <span className="text-brass">
                     ✓ Submitted to your
-                    teacher.
+                    teacher. You can still
+                    edit and resubmit.
                   </span>
                 ) : existingCount >=
                   minFiles ? (
@@ -1392,13 +1373,12 @@ export default function HomeworkCard({
                     }
                     disabled={
                       !allSpeakingPartsRecorded ||
-                      uploading ||
-                      speakingAlreadySubmitted
+                      uploading
                     }
                     className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {speakingAlreadySubmitted
-                      ? '✓ Speaking Task Submitted'
+                      ? 'Update Speaking Submission'
                       : allSpeakingPartsRecorded
                       ? 'Submit Speaking Task'
                       : 'Complete All 3 Parts'}
@@ -1410,9 +1390,9 @@ export default function HomeworkCard({
 
                   {speakingAlreadySubmitted ? (
                     <span className="text-brass">
-                      ✓ Your speaking task
-                      has been submitted
-                      to your teacher.
+                      ✓ Submitted to your
+                      teacher. You can still
+                      edit and resubmit.
                     </span>
                   ) : allSpeakingPartsRecorded ? (
                     <span className="text-brass">

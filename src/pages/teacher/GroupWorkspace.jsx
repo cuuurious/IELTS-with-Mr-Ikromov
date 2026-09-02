@@ -433,11 +433,72 @@ export default function GroupWorkspace({ teacherId }) {
         await supabase
           .from('submissions')
           .select(
-            'id, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
+            'id, student_id, status, submitted_at, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url'
           )
           .eq('homework_id', hw.id)
 
       if (subsError) throw subsError
+
+      /*
+       * ===================================================
+       * PRESERVE COMPLETION HISTORY BEFORE WIPING
+       * ===================================================
+       *
+       * Resetting a homework should let the student redo it,
+       * but it must NOT erase the fact that they already
+       * completed it once — that record is what the
+       * leaderboard and streaks rely on.
+       *
+       * Every submission that was already "done" gets a
+       * homework_completions row (if it doesn't already have
+       * one) BEFORE we clear the submission back to pending.
+       * ===================================================
+       */
+
+      const alreadyDone = (subs || []).filter(
+        (sub) =>
+          sub.student_id &&
+          (sub.status === 'done' || sub.submitted_at)
+      )
+
+      if (alreadyDone.length) {
+        const {
+          data: existingCompletions,
+          error: existingCompletionsError,
+        } = await supabase
+          .from('homework_completions')
+          .select('student_id')
+          .eq('homework_id', hw.id)
+
+        if (existingCompletionsError) {
+          throw existingCompletionsError
+        }
+
+        const alreadyRecorded = new Set(
+          (existingCompletions || []).map(
+            (completion) => completion.student_id
+          )
+        )
+
+        const missingCompletions = alreadyDone
+          .filter(
+            (sub) => !alreadyRecorded.has(sub.student_id)
+          )
+          .map((sub) => ({
+            student_id: sub.student_id,
+            homework_id: hw.id,
+            completed_at:
+              sub.submitted_at || new Date().toISOString(),
+          }))
+
+        if (missingCompletions.length) {
+          const { error: backfillError } = await supabase
+            .from('homework_completions')
+            .insert(missingCompletions)
+
+          if (backfillError) throw backfillError
+        }
+      }
 
       const submissionPaths = []
 
