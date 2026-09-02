@@ -697,8 +697,16 @@ html:not([data-theme='light']) textarea::placeholder {
 
 .progress-table-scroll {
   width: 100%;
-  max-height: 74vh;
-  overflow: auto;
+
+  /*
+   * No vertical cap on purpose — the teacher wants to see every
+   * student by scrolling the page, not a tiny inner window that
+   * only shows a handful of rows at a time. The table just grows
+   * to fit everyone; only sideways scrolling (for many homework
+   * columns) stays contained here.
+   */
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .progress-table {
@@ -731,7 +739,16 @@ html:not([data-theme='light']) textarea::placeholder {
 
 .progress-table thead th {
   position: sticky;
-  top: 0;
+
+  /*
+   * Now that the table isn't in its own capped-height scroll box
+   * (see .progress-table-scroll), this sticks relative to the page
+   * itself while scrolling — so it has to clear the app's own
+   * sticky header (76px) + tab bar (68px) instead of sitting at
+   * the very top of the viewport, or it would end up hidden
+   * underneath them.
+   */
+  top: 144px;
   z-index: 4;
 
   height: 76px;
