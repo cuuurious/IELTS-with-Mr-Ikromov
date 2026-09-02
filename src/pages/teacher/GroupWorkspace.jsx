@@ -210,6 +210,58 @@ export default function GroupWorkspace({ teacherId }) {
   }
 
   /* =========================================================
+     PERMANENTLY DELETE A STUDENT'S WHOLE ACCOUNT
+     (every group, not just this one — unrecoverable)
+  ========================================================= */
+
+  const deleteStudentAccount = async (student) => {
+    const confirmation = window.prompt(
+      `This PERMANENTLY deletes ${student.full_name}'s entire account — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.\n\nType DELETE to confirm.`
+    )
+
+    if (confirmation !== 'DELETE') {
+      return
+    }
+
+    setBusyAction(`delete-${student.id}`)
+
+    try {
+      const { data, error } =
+        await supabase.functions.invoke(
+          'delete-student',
+          {
+            body: { studentId: student.id },
+          }
+        )
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      setRoster((prev) =>
+        prev.filter(
+          (studentItem) =>
+            studentItem.id !== student.id
+        )
+      )
+
+      setSubmissions((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(
+            ([key]) =>
+              !key.endsWith(`_${student.id}`)
+          )
+        )
+      )
+    } catch (err) {
+      alert(
+        `Couldn't delete this account: ${err.message}`
+      )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  /* =========================================================
      STORAGE
   ========================================================= */
 
@@ -1001,6 +1053,22 @@ export default function GroupWorkspace({ teacherId }) {
                                 ×
                               </button>
 
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  deleteStudentAccount(student)
+                                }
+                                disabled={
+                                  busyAction ===
+                                  `delete-${student.id}`
+                                }
+                                className="progress-delete"
+                                title="Permanently delete this student's entire account"
+                                aria-label="Permanently delete this student's entire account"
+                              >
+                                Delete
+                              </button>
+
                             </div>
 
                           </td>
@@ -1018,8 +1086,26 @@ export default function GroupWorkspace({ teacherId }) {
                                 hw.due_date
                               )
 
-                            const isDone =
+                            // status is 'done' | 'pending' | 'overdue'.
+                            // Collapsing this to a plain isDone boolean
+                            // used to show every not-yet-due homework as
+                            // "INCOMPLETE" the instant it was posted —
+                            // it should only read that way once the
+                            // deadline has actually passed with nothing
+                            // submitted.
+                            const statusLabel =
                               status === 'done'
+                                ? 'DONE'
+                                : status === 'overdue'
+                                  ? 'INCOMPLETE'
+                                  : 'NOT YET'
+
+                            const statusClassName =
+                              status === 'done'
+                                ? 'progress-status progress-status-done'
+                                : status === 'overdue'
+                                  ? 'progress-status progress-status-incomplete'
+                                  : 'progress-status progress-status-pending'
 
                             return (
 
@@ -1040,23 +1126,13 @@ export default function GroupWorkspace({ teacherId }) {
                                       submission: sub,
                                     })
                                   }
-                                  aria-label={`${hw.title} — ${
-                                    isDone
-                                      ? 'Done'
-                                      : 'Incomplete'
-                                  }`}
+                                  aria-label={`${hw.title} — ${statusLabel}`}
                                 >
 
                                   <span
-                                    className={
-                                      isDone
-                                        ? 'progress-status progress-status-done'
-                                        : 'progress-status progress-status-incomplete'
-                                    }
+                                    className={statusClassName}
                                   >
-                                    {isDone
-                                      ? 'DONE'
-                                      : 'INCOMPLETE'}
+                                    {statusLabel}
                                   </span>
 
                                 </button>

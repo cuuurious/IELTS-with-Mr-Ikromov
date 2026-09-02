@@ -509,6 +509,16 @@ const deleteAccount = async () => {
         </form>
 
         {/* DANGER ZONE */}
+        {/*
+          Self-delete is student-only. The database only auto-cleans up
+          things a STUDENT owns (submissions, memberships, messages…) —
+          groups and homeworks a teacher created point back at their
+          profile without cascading, so a teacher deleting themselves
+          here would either fail outright or leave the app in a broken
+          state. Teachers remove a student's account from that
+          student's row in the group roster instead.
+        */}
+        {profile?.role !== 'teacher' && (
         <div className="flex flex-col gap-3 pt-4 border-t border-line">
           <div className="text-xs uppercase tracking-wide text-coral font-mono">
             Danger zone
@@ -583,6 +593,7 @@ const deleteAccount = async () => {
             </div>
           )}
         </div>
+        )}
         </div>
       </div>
     </div>
