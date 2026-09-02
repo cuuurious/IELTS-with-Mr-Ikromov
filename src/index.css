@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
  
@@ -687,8 +686,8 @@ html:not([data-theme='light']) textarea::placeholder {
  
 .progress-table-scroll {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
+  max-height: 65vh;
+  overflow: auto;
 }
  
 .progress-table {
@@ -720,6 +719,10 @@ html:not([data-theme='light']) textarea::placeholder {
 }
  
 .progress-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+ 
   height: 96px;
   padding: 16px 10px 12px;
  
@@ -732,7 +735,14 @@ html:not([data-theme='light']) textarea::placeholder {
 .progress-student-header {
   position: sticky;
   left: 0;
-  z-index: 5;
+ 
+  /*
+   * This cell is sticky on BOTH axes (top, from .progress-table
+   * thead th above, and left, here) — it needs to stay above
+   * every other sticky cell so the corner never gets covered by
+   * a homework column scrolling underneath it.
+   */
+  z-index: 6;
  
   padding-left: 24px !important;
  
@@ -794,26 +804,40 @@ html:not([data-theme='light']) textarea::placeholder {
   align-items: center;
   justify-content: center;
  
-  width: 21px;
-  height: 21px;
+  width: 23px;
+  height: 23px;
   padding: 0;
  
-  border: 0;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
  
-  background: transparent;
+  /*
+   * A faint resting background instead of fully transparent —
+   * that's what was reading as "robotic": three bare unicode
+   * glyphs (✎ ↻ ×) floating with no visual weight of their own
+   * until hovered. A visible pill at rest reads as an actual
+   * control instead of stray punctuation.
+   */
+  background:
+    color-mix(in srgb, var(--color-mist) 9%, transparent);
   color: var(--color-mist);
- 
-  font-size: 13px;
  
   cursor: pointer;
 }
  
+.progress-action svg {
+  width: 12px;
+  height: 12px;
+}
+ 
 .progress-action:hover {
+  border-color:
+    color-mix(in srgb, var(--color-brass) 35%, transparent);
+ 
   background:
     color-mix(
       in srgb,
-      var(--color-brass) 10%,
+      var(--color-brass) 14%,
       transparent
     );
  
@@ -821,10 +845,13 @@ html:not([data-theme='light']) textarea::placeholder {
 }
  
 .progress-action-danger:hover {
+  border-color:
+    color-mix(in srgb, var(--color-coral) 35%, transparent);
+ 
   background:
     color-mix(
       in srgb,
-      var(--color-coral) 10%,
+      var(--color-coral) 14%,
       transparent
     );
  
@@ -943,6 +970,74 @@ html:not([data-theme='light']) textarea::placeholder {
  
   font-size: 14px;
   font-weight: 700;
+}
+ 
+/*
+ * Every student's avatar was the exact same indigo — fine
+ * individually, but a whole roster of identical circles reads as
+ * flat/monochrome. Rotating through the palette's other accent
+ * colors (same tokens used elsewhere in the app, so it stays "on
+ * brand" rather than random) makes the list scannable at a glance
+ * and gives it some life.
+ */
+.progress-student-row:nth-child(6n+2) .progress-avatar {
+  border-color:
+    color-mix(in srgb, var(--color-sage) 25%, var(--color-line));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-sage) 14%, var(--color-panel-2)),
+      color-mix(in srgb, var(--color-cyan) 10%, var(--color-panel-2))
+    );
+  color: var(--color-sage);
+}
+ 
+.progress-student-row:nth-child(6n+3) .progress-avatar {
+  border-color:
+    color-mix(in srgb, var(--color-coral) 25%, var(--color-line));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-coral) 14%, var(--color-panel-2)),
+      color-mix(in srgb, var(--color-brass) 8%, var(--color-panel-2))
+    );
+  color: var(--color-coral);
+}
+ 
+.progress-student-row:nth-child(6n+4) .progress-avatar {
+  border-color:
+    color-mix(in srgb, var(--color-cyan) 28%, var(--color-line));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-cyan) 15%, var(--color-panel-2)),
+      color-mix(in srgb, var(--color-lavender) 10%, var(--color-panel-2))
+    );
+  color: var(--color-cyan);
+}
+ 
+.progress-student-row:nth-child(6n+5) .progress-avatar {
+  border-color:
+    color-mix(in srgb, var(--color-brass) 28%, var(--color-line));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-brass) 15%, var(--color-panel-2)),
+      color-mix(in srgb, var(--color-coral) 8%, var(--color-panel-2))
+    );
+  color: var(--color-brass);
+}
+ 
+.progress-student-row:nth-child(6n+6) .progress-avatar {
+  border-color:
+    color-mix(in srgb, var(--color-lavender) 28%, var(--color-line));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-lavender) 15%, var(--color-panel-2)),
+      color-mix(in srgb, var(--color-indigo) 8%, var(--color-panel-2))
+    );
+  color: var(--color-lavender);
 }
  
 .progress-student-info {
@@ -1180,6 +1275,50 @@ html:not([data-theme='light']) textarea::placeholder {
   color: var(--color-brass);
 }
  
+/*
+ * StampBadge.jsx (the student's own "Done / Not yet / Incomplete"
+ * badge on each homework card) has never had any CSS backing its
+ * `stamp stamp-${status}` classes — it's been rendering as bare
+ * unstyled text this whole time in both themes.
+ */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+ 
+  border-radius: 50%;
+  border: 2px solid transparent;
+ 
+  font-weight: 700;
+  letter-spacing: .04em;
+ 
+  transform: rotate(-6deg);
+}
+ 
+.stamp-done {
+  border-color:
+    color-mix(in srgb, var(--color-sage) 55%, transparent);
+  background:
+    color-mix(in srgb, var(--color-sage) 12%, transparent);
+  color: var(--color-sage);
+}
+ 
+.stamp-pending {
+  border-color:
+    color-mix(in srgb, var(--color-brass) 55%, transparent);
+  background:
+    color-mix(in srgb, var(--color-brass) 12%, transparent);
+  color: var(--color-brass);
+}
+ 
+.stamp-overdue {
+  border-color:
+    color-mix(in srgb, var(--color-coral) 55%, transparent);
+  background:
+    color-mix(in srgb, var(--color-coral) 12%, transparent);
+  color: var(--color-coral);
+}
+ 
 /* =========================================================
    LIGHT PROGRESS TABLE
    ========================================================= */
@@ -1242,6 +1381,23 @@ html[data-theme='light']
   color: #7565df;
 }
  
+/*
+ * The "STUDENT" column label and the edit/reset/delete icon
+ * buttons were relying only on var(--color-paper)/var(--color-mist)
+ * with no explicit per-theme fallback like everything else in this
+ * table has — that gap is what was going invisible in dark mode.
+ */
+html[data-theme='light']
+.progress-student-header {
+  color: #24232a !important;
+}
+ 
+html[data-theme='light']
+.progress-action {
+  background: rgba(36, 35, 42, .06) !important;
+  color: #85838c !important;
+}
+ 
 /* =========================================================
    DARK PROGRESS TABLE
    ========================================================= */
@@ -1297,6 +1453,21 @@ html:not([data-theme='light'])
 .progress-student-username,
 html:not([data-theme='light'])
 .progress-due-date {
+  color: #9b99a0 !important;
+}
+ 
+html[data-theme='dark']
+.progress-student-header,
+html:not([data-theme='light'])
+.progress-student-header {
+  color: #f3f1eb !important;
+}
+ 
+html[data-theme='dark']
+.progress-action,
+html:not([data-theme='light'])
+.progress-action {
+  background: rgba(243, 241, 235, .07) !important;
   color: #9b99a0 !important;
 }
  
