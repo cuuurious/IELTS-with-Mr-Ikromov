@@ -157,6 +157,15 @@ export default function TeacherDashboard() {
       handleNotificationNavigation
     )
 
+    // A push notification may have arrived (and dispatched this event)
+    // before this listener existed — main.jsx stashes it here for
+    // exactly that case, so pick it up now instead of losing it.
+    if (window.__pendingNav) {
+      const pendingLink = window.__pendingNav
+      window.__pendingNav = null
+      handleNotificationNavigation({ detail: { link: pendingLink } })
+    }
+
     return () => {
       window.removeEventListener(
         'notification-navigate',

@@ -313,9 +313,19 @@ const deleteAccount = async () => {
       onClick={onClose}
     >
       <div
-        className="ticket rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto flex flex-col gap-6"
+        className="ticket rounded-lg max-w-md w-full max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        {/*
+          The .ticket class (index.css) sets `overflow: hidden` for its
+          decorative side-notches, which was silently fighting with
+          `overflow-y-auto` on this same element and clipping anything
+          past ~85% of the screen height — including the whole "Delete
+          my account" section. Scrolling now happens on this inner
+          wrapper instead, so .ticket's overflow:hidden only ever clips
+          the notches like it's meant to.
+        */}
+        <div className="p-6 overflow-y-auto min-h-0 flex flex-col gap-6">
         <div className="flex items-start justify-between">
           <h2 className="font-display text-xl">
             Account settings
@@ -572,6 +582,7 @@ const deleteAccount = async () => {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>
