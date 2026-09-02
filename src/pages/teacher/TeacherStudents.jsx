@@ -346,6 +346,60 @@ export default function TeacherStudents() {
     setBusyAction('')
   }
 
+  /*
+   * Permanently deletes a student's whole account — every group,
+   * homework submission, recording, and chat message, everywhere,
+   * forever. Unrecoverable.
+   */
+  const deleteStudentAccount = async (student) => {
+    const confirmation = window.prompt(
+      `This PERMANENTLY deletes ${student.full_name}'s entire account — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.\n\nType DELETE to confirm.`
+    )
+
+    if (confirmation !== 'DELETE') {
+      return
+    }
+
+    setBusyAction(`delete-${student.id}`)
+
+    try {
+      const { data, error } =
+        await supabase.functions.invoke(
+          'delete-student',
+          {
+            body: { studentId: student.id },
+          }
+        )
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      setStudents((prev) =>
+        prev.filter(
+          (studentItem) =>
+            studentItem.id !== student.id
+        )
+      )
+
+      setMemberships((prev) =>
+        prev.filter(
+          (membership) =>
+            membership.student_id !== student.id
+        )
+      )
+
+      if (selectedStudent?.id === student.id) {
+        setSelectedStudent(null)
+      }
+    } catch (err) {
+      alert(
+        `Couldn't delete this account: ${err.message}`
+      )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
   const clearFilters = () => {
     setSearch('')
     setGroupFilter('all')
@@ -817,7 +871,26 @@ export default function TeacherStudents() {
 
               </div>
 
-              <div className="flex justify-end border-t border-line px-6 py-4">
+              <div className="flex items-center justify-between gap-3 border-t border-line px-6 py-4">
+
+                <button
+                  type="button"
+                  disabled={
+                    busyAction ===
+                    `delete-${selectedStudent.id}`
+                  }
+                  onClick={() =>
+                    deleteStudentAccount(
+                      selectedStudent
+                    )
+                  }
+                  className="focus-ring rounded-xl border border-coral/40 px-4 py-2.5 text-sm font-semibold text-coral transition hover:bg-coral/10 disabled:opacity-50"
+                >
+                  {busyAction ===
+                  `delete-${selectedStudent.id}`
+                    ? 'Deleting…'
+                    : 'Delete this account'}
+                </button>
 
                 <button
                   type="button"

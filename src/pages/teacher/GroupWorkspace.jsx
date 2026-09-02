@@ -272,57 +272,12 @@ export default function GroupWorkspace({ teacherId }) {
     }
   }
 
-  /* =========================================================
-     PERMANENTLY DELETE A STUDENT'S WHOLE ACCOUNT
-     (every group, not just this one — unrecoverable)
-  ========================================================= */
-
-  const deleteStudentAccount = async (student) => {
-    const confirmation = window.prompt(
-      `This PERMANENTLY deletes ${student.full_name}'s entire account — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.\n\nType DELETE to confirm.`
-    )
-
-    if (confirmation !== 'DELETE') {
-      return
-    }
-
-    setBusyAction(`delete-${student.id}`)
-
-    try {
-      const { data, error } =
-        await supabase.functions.invoke(
-          'delete-student',
-          {
-            body: { studentId: student.id },
-          }
-        )
-
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-
-      setRoster((prev) =>
-        prev.filter(
-          (studentItem) =>
-            studentItem.id !== student.id
-        )
-      )
-
-      setSubmissions((prev) =>
-        Object.fromEntries(
-          Object.entries(prev).filter(
-            ([key]) =>
-              !key.endsWith(`_${student.id}`)
-          )
-        )
-      )
-    } catch (err) {
-      alert(
-        `Couldn't delete this account: ${err.message}`
-      )
-    } finally {
-      setBusyAction('')
-    }
-  }
+  /*
+   * Permanently deleting a student's whole account now lives on the
+   * Students page (View details → Delete this account) instead of
+   * here — this group roster only handles removing a student from
+   * THIS group.
+   */
 
   /* =========================================================
      STORAGE
@@ -1162,22 +1117,6 @@ export default function GroupWorkspace({ teacherId }) {
                                 aria-label="Remove student from this group"
                               >
                                 ×
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteStudentAccount(student)
-                                }
-                                disabled={
-                                  busyAction ===
-                                  `delete-${student.id}`
-                                }
-                                className="progress-delete"
-                                title="Permanently delete this student's entire account"
-                                aria-label="Permanently delete this student's entire account"
-                              >
-                                Delete
                               </button>
 
                             </div>
