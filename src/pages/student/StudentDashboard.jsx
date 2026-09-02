@@ -667,17 +667,93 @@ useEffect(() => {
           notification?.link ||
           ''
 
-        if (
-          !link.startsWith(
-            'private-chat:'
-          )
-        ) {
-          return
-        }
+        // Open a specific homework from a notification.
+if (link.startsWith('homework:')) {
+  const homeworkId = link.split(':')[1]
 
-        const studentId =
-          link
-            .split(':')[1]
+  if (!homeworkId) return
+
+  /*
+   * The notification only carries the homework id, but the
+   * homework card only renders when its group is the active
+   * group. A student can belong to more than one group, so
+   * look up which group this homework actually belongs to
+   * and switch to it before trying to scroll.
+   */
+  const {
+    data: targetHomework,
+    error: targetHomeworkError,
+  } = await supabase
+    .from('homeworks')
+    .select('id, group_id')
+    .eq('id', homeworkId)
+    .maybeSingle()
+
+  if (targetHomeworkError) {
+    console.error(
+      'Could not look up homework for notification:',
+      targetHomeworkError
+    )
+  }
+
+  if (
+    targetHomework?.group_id &&
+    targetHomework.group_id !== activeGroup
+  ) {
+    setActiveGroup(targetHomework.group_id)
+  }
+
+  setTab('homework')
+
+  // Give React a moment to switch groups/tabs and load the
+  // homework list, then scroll to and briefly highlight the
+  // assignment. Retry for a bit since a group switch triggers
+  // its own async fetch that a single fixed delay can miss.
+  let attempts = 0
+
+  const tryScrollToHomework = () => {
+    const element = document.getElementById(
+      `homework-${homeworkId}`
+    )
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+
+      element.classList.add('homework-highlight')
+
+      setTimeout(() => {
+        element.classList.remove('homework-highlight')
+      }, 2200)
+
+      return
+    }
+
+    attempts += 1
+
+    if (attempts < 15) {
+      setTimeout(tryScrollToHomework, 200)
+    }
+  }
+
+  setTimeout(tryScrollToHomework, 150)
+
+  return
+}
+
+if (
+  !link.startsWith(
+    'private-chat:'
+  )
+) {
+  return
+}
+
+const studentId =
+  link
+    .split(':')[1]
 
         if (
           !studentId ||
@@ -1016,6 +1092,7 @@ useEffect(() => {
                     {homeworks.map((homework) => (
                       <div
                         key={homework.id}
+                        id={`homework-${homework.id}`}
                         className="group relative rounded-3xl border border-line bg-panel shadow-sm overflow-hidden transition-all duration-200 hover:border-brass-dim/40 hover:-translate-y-0.5 hover:shadow-xl"
                       >
                         <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brass/30 via-brass to-brass/30 opacity-70 group-hover:opacity-100 transition-opacity" />

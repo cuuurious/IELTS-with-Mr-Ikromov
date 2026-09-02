@@ -1257,6 +1257,31 @@ html:not([data-theme='light'])
     fade-up .22s ease-out both;
 }
 
+/*
+ * Briefly highlights a homework card when a student is
+ * scrolled to it from a notification, so it's obvious which
+ * assignment they were sent to.
+ */
+@keyframes homework-highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brass) 55%, transparent);
+    border-color: var(--color-brass);
+  }
+
+  70% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-brass) 0%, transparent);
+    border-color: var(--color-brass);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brass) 0%, transparent);
+  }
+}
+
+.homework-highlight {
+  animation: homework-highlight-pulse 1.1s ease-out 2;
+}
+
 /* =========================================================
    RESPONSIVE
    ========================================================= */

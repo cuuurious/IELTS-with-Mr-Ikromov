@@ -2,8 +2,9 @@
 
 A homework, speaking-practice, and vocabulary portal that replaces the old
 "screenshots + voice notes in one Telegram chat, marked in an Excel sheet"
-workflow. React (Vite) frontend, Supabase backend, deployed on Netlify with
-two serverless functions.
+workflow. React (Vite) frontend deployed to a Cloudflare Worker at
+ieltswithmrikromov.com, Supabase backend (database, auth, storage, and
+Edge Functions for anything that needs a service-role key).
 
 ---
 
@@ -62,42 +63,82 @@ email"** (only needs doing once, skip if already done).
 
 ## 2. Environment variables
 
-Copy `.env.example` to `.env` for local dev, and set the same in **Netlify →
-Site settings → Environment variables** for production. The `VAPID_*` keys
-enable real push notifications — generate them with:
+Copy `.env.example` to `.env` for local dev **and** before every production
+build — the frontend and the Edge Functions get their variables from two
+completely different places:
+
+- **Frontend (Cloudflare Worker)** — there's no build server involved.
+  `.env` on your own machine is read by `npm run build`, which bakes the
+  `VITE_*` values straight into the static files in `dist/`. Whatever is in
+  your local `.env` at build time is what ships — there's nowhere else to
+  set these for the frontend.
+- **Edge Functions (Supabase)** — set with the Supabase CLI:
+  `supabase secrets set VAPID_PRIVATE_KEY=... SUPABASE_SERVICE_ROLE_KEY=...`
+  (or one at a time). These never touch the frontend build.
+- **`daily-reminders.yml` (GitHub Actions)** — the one exception that does
+  need GitHub repository secrets, since it's the only thing that runs on
+  GitHub rather than your machine or Supabase. See below.
+
+The `VAPID_*` keys enable real push notifications — generate them with:
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-| Variable | Where it's used | Notes |
+| Variable | Where it's used | Set it in |
 |---|---|---|
-| `VITE_SUPABASE_URL` | frontend + functions | from Supabase → Project Settings → API |
-| `VITE_SUPABASE_ANON_KEY` | frontend + functions | same page, the `anon public` key |
-| `VITE_VAPID_PUBLIC_KEY` | frontend + functions | from `web-push generate-vapid-keys` |
-| `VAPID_PRIVATE_KEY` | functions only | **never** put this in the frontend |
-| `SUPABASE_SERVICE_ROLE_KEY` | functions only | Project Settings → API → legacy `service_role` key. **Never** expose this to the browser. |
+| `VITE_SUPABASE_URL` | frontend build + GitHub Actions | local `.env` **and** a GitHub Actions repository secret |
+| `VITE_SUPABASE_ANON_KEY` | frontend build | local `.env` only |
+| `VITE_VAPID_PUBLIC_KEY` | frontend build | local `.env` only |
+| `VAPID_PUBLIC_KEY` | functions | `supabase secrets set` (same value as `VITE_VAPID_PUBLIC_KEY` above) |
+| `VAPID_PRIVATE_KEY` | functions only | `supabase secrets set` — **never** put this in the frontend build |
+| `SUPABASE_SERVICE_ROLE_KEY` | functions only | `supabase secrets set` **and** a GitHub Actions repository secret (used by `daily-reminders.yml` to call the function) — **never** expose this to the browser |
 
 No AI API key needed — word definitions/translations use free public APIs.
 
 ## 3. Deploying
 
-Serverless functions (push notifications, daily reminders, word
-definitions) **can't** be deployed by dragging the `dist` folder onto
-Netlify — that only uploads static files. Use one of:
+**Frontend → Cloudflare Worker.** There's no auto-deploy on push — build
+locally and upload the result:
 
-**Netlify CLI (no GitHub needed):**
 ```bash
-npm install -g netlify-cli
-netlify login
-netlify link        # pick your existing site
-netlify deploy --prod
+npm run build
 ```
 
-**Or connect a GitHub repo** in Netlify → Add new site → Import an existing
-project. Build command `npm run build`, publish directory `dist` (already
-set in `netlify.toml`), functions directory `netlify/functions` (also
-already set). Every push auto-deploys.
+Then go to Cloudflare dashboard → Workers & Pages → `ielts-with-mr-ikromov`
+→ deploy/update → drag the whole `dist` folder onto the uploader → Deploy.
+(A `wrangler.toml` plus `npx wrangler deploy` would let this run from a
+terminal or even auto-deploy from GitHub Actions the same way
+`daily-reminders.yml` does — worth setting up later if the manual upload
+gets tedious, but not required.)
+
+**Edge Functions → Supabase.** The Cloudflare Worker only serves static
+files, so anything that needs the service-role key (push notifications,
+daily reminders, word definitions, account admin actions) runs as a
+Supabase Edge Function instead. Deploy them with the Supabase CLI:
+
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR-PROJECT-REF
+npx supabase functions deploy          # deploys every function in supabase/functions
+npx supabase secrets set \
+  VAPID_PUBLIC_KEY=YOUR-VAPID-PUBLIC-KEY \
+  VAPID_PRIVATE_KEY=YOUR-VAPID-PRIVATE-KEY \
+  SUPABASE_SERVICE_ROLE_KEY=YOUR-SERVICE-ROLE-KEY
+```
+
+(`SUPABASE_URL` is provided automatically inside every Edge Function — you
+don't set it yourself.)
+
+**Daily reminders → GitHub Actions cron.** Supabase Edge Functions don't
+schedule themselves, so `.github/workflows/daily-reminders.yml` calls the
+deployed `daily-reminders` function once a day (6:00 AM UTC by default —
+edit the `cron:` line to change it). This is the one part of the whole
+setup that still runs on GitHub — it needs two repository secrets under
+**GitHub → repo → Settings → Secrets and variables → Actions**:
+`VITE_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. You can trigger it
+manually any time from the Actions tab (`workflow_dispatch`) to test it
+without waiting for the schedule.
 
 ## 4. First-time run
 

@@ -695,11 +695,12 @@ export default function GroupWorkspace({ teacherId }) {
                     ])
 
                     notifyGroup({
-                      groupId: activeGroup,
-                      type: 'homework_new',
-                      title: 'New homework posted',
-                      body: hw.title,
-                    })
+  			groupId: activeGroup,
+  			type: 'homework_new',
+  			title: 'New homework posted',
+  			body: hw.title,
+  			link: `homework:${hw.id}`,
+		    })
                   }}
                 />
               </div>
@@ -1118,6 +1119,7 @@ export default function GroupWorkspace({ teacherId }) {
               type: 'homework_updated',
               title: 'Homework updated',
               body: `"${updated.title}" was changed by your teacher.`,
+              link: `homework:${updated.id}`,
             })
           }}
         />
