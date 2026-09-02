@@ -1267,7 +1267,7 @@ export default function HomeworkCard({
 
                 {taskAlreadySubmitted ? (
                   submittedLate ? (
-                    <span className="text-cyan">
+                    <span className="text-amber">
                       ⏰ Submitted late. You
                       can still edit and
                       resubmit.
@@ -1404,7 +1404,7 @@ export default function HomeworkCard({
 
                   {speakingAlreadySubmitted ? (
                     submittedLate ? (
-                      <span className="text-cyan">
+                      <span className="text-amber">
                         ⏰ Submitted late. You
                         can still edit and
                         resubmit.

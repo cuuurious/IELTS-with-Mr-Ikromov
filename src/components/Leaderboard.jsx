@@ -1289,7 +1289,7 @@ export default function Leaderboard({
                                       !task.completed
                                         ? 'border-coral/50 bg-coral/10 text-coral'
                                         : task.late
-                                        ? 'border-cyan/50 bg-cyan/10 text-cyan'
+                                        ? 'border-amber/50 bg-amber/10 text-amber'
                                         : 'border-sage/50 bg-sage/10 text-sage'
                                     }`}
                                   >
