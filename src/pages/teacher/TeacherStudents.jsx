@@ -147,6 +147,26 @@ export default function TeacherStudents() {
       .filter(Boolean)
   }
 
+  /*
+   * Give each group a stable, distinct color (cycling through the
+   * design system's accent palette by the group's position in the
+   * groups list) so group chips are easy to tell apart at a glance
+   * instead of all rendering as the same neutral gray pill.
+   */
+  const groupChipPalette = [
+    { border: 'border-sage/40', bg: 'bg-sage/10', text: 'text-sage' },
+    { border: 'border-coral/40', bg: 'bg-coral/10', text: 'text-coral' },
+    { border: 'border-cyan/40', bg: 'bg-cyan/10', text: 'text-cyan' },
+    { border: 'border-brass/40', bg: 'bg-brass/10', text: 'text-brass' },
+    { border: 'border-lavender/40', bg: 'bg-lavender/10', text: 'text-lavender' },
+  ]
+
+  const getGroupChipStyle = (groupId) => {
+    const index = groups.findIndex((g) => g.id === groupId)
+    const safeIndex = index === -1 ? 0 : index
+    return groupChipPalette[safeIndex % groupChipPalette.length]
+  }
+
   const studentsWithoutGroup = useMemo(() => {
     return students.filter(
       (student) =>
@@ -591,34 +611,38 @@ export default function TeacherStudents() {
                   ) : (
                     <div className="flex flex-wrap gap-2">
 
-                      {studentGroups.map((group) => (
-                        <div
-                          key={group.id}
-                          className="flex items-center gap-1 bg-panel-2 border border-line rounded-md px-2 py-1 text-sm text-paper"
-                        >
-                          <span>
-                            {group.name}
-                          </span>
+                      {studentGroups.map((group) => {
+                        const chip = getGroupChipStyle(group.id)
 
-                          <button
-                            type="button"
-                            disabled={
-                              busyAction ===
-                              `remove-${student.id}-${group.id}`
-                            }
-                            onClick={() =>
-                              removeFromGroup(
-                                student,
-                                group
-                              )
-                            }
-                            className="focus-ring text-mist hover:text-coral disabled:opacity-40"
-                            title="Remove from group"
+                        return (
+                          <div
+                            key={group.id}
+                            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium ${chip.border} ${chip.bg} ${chip.text}`}
                           >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                            <span>
+                              {group.name}
+                            </span>
+
+                            <button
+                              type="button"
+                              disabled={
+                                busyAction ===
+                                `remove-${student.id}-${group.id}`
+                              }
+                              onClick={() =>
+                                removeFromGroup(
+                                  student,
+                                  group
+                                )
+                              }
+                              className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
+                              title="Remove from group"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )
+                      })}
 
                     </div>
                   )}
@@ -770,14 +794,18 @@ export default function TeacherStudents() {
                     ).length > 0 ? (
                       getStudentGroups(
                         selectedStudent.id
-                      ).map((group) => (
-                        <span
-                          key={group.id}
-                          className="rounded-full border border-line bg-panel-2 px-3 py-1 text-xs text-paper"
-                        >
-                          {group.name}
-                        </span>
-                      ))
+                      ).map((group) => {
+                        const chip = getGroupChipStyle(group.id)
+
+                        return (
+                          <span
+                            key={group.id}
+                            className={`rounded-full border px-3 py-1 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
+                          >
+                            {group.name}
+                          </span>
+                        )
+                      })
                     ) : (
                       <span className="text-mist">
                         No group

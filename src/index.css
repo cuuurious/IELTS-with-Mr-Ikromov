@@ -1,109 +1,120 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
- 
+
 /* =========================================================
    IELTS — GLOBAL DESIGN SYSTEM
    Soft editorial light / warm charcoal night
    ========================================================= */
- 
+
 @theme {
   --color-ink: #f5f3ee;
   --color-panel: #fffdfa;
   --color-panel-2: #f1efe9;
   --color-line: #dedbd3;
- 
+
   --color-paper: #24232a;
   --color-paper-dim: #696873;
   --color-mist: #85838c;
- 
+
   --color-brass: #7565df;
   --color-brass-dim: #6252cc;
- 
+
   --color-sage: #4b9b79;
   --color-coral: #d96870;
- 
+
   --color-onbrass: #ffffff;
- 
+
   --color-indigo: #7565df;
   --color-indigo-dark: #6252cc;
   --color-cyan: #55aaa9;
   --color-lavender: #968be8;
- 
+
+  /* Alias so components can use "accent" as a synonym for the
+     brand color (brass) without a duplicate palette to maintain. */
+  --color-accent: #7565df;
+  --color-onaccent: #ffffff;
+
   --font-display: 'Source Serif 4', serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 }
- 
+
 /* =========================================================
    LIGHT THEME
    ========================================================= */
- 
+
 html[data-theme='light'] {
   --color-ink: #f5f3ee;
   --color-panel: #fffdfa;
   --color-panel-2: #f1efe9;
   --color-line: #dedbd3;
- 
+
   --color-paper: #24232a;
   --color-paper-dim: #696873;
   --color-mist: #85838c;
- 
+
   --color-brass: #7565df;
   --color-brass-dim: #6252cc;
- 
+
   --color-sage: #4b9b79;
   --color-coral: #d96870;
- 
+
   --color-onbrass: #ffffff;
- 
+
   --color-indigo: #7565df;
   --color-indigo-dark: #6252cc;
   --color-cyan: #55aaa9;
   --color-lavender: #968be8;
- 
+
+  --color-accent: #7565df;
+  --color-onaccent: #ffffff;
+
   color-scheme: light;
 }
- 
+
 /* =========================================================
    DARK THEME
    Soft charcoal — NOT navy
    ========================================================= */
- 
+
 html[data-theme='dark'],
 html:not([data-theme='light']) {
- 
+
   --color-ink: #1d1d21;
- 
+
   --color-panel: #26262b;
   --color-panel-2: #2d2d33;
- 
+
   --color-line: #3b3b43;
- 
+
   --color-paper: #f3f1eb;
   --color-paper-dim: #c3c0ba;
   --color-mist: #9b99a0;
- 
+
   --color-brass: #a69af4;
   --color-brass-dim: #9183e6;
- 
+
   --color-sage: #72c29d;
   --color-coral: #ef9295;
- 
+
   --color-onbrass: #ffffff;
- 
+
   --color-indigo: #a69af4;
   --color-indigo-dark: #9183e6;
- 
+
   --color-cyan: #72c6c2;
   --color-lavender: #b4acf9;
- 
+
+  --color-accent: #a69af4;
+  --color-onaccent: #ffffff;
+
   color-scheme: dark;
 }
- 
+
 /* =========================================================
    PAGE
    ========================================================= */
- 
+
 html,
 body,
 #root {
@@ -111,14 +122,14 @@ body,
   min-height: 100%;
   margin: 0;
 }
- 
+
 html {
   background: var(--color-ink);
 }
- 
+
 body {
   min-height: 100vh;
- 
+
   background:
     radial-gradient(
       700px 430px at 92% -10%,
@@ -139,37 +150,37 @@ body {
       transparent 72%
     ),
     var(--color-ink);
- 
+
   color: var(--color-paper);
- 
+
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.55;
- 
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
- 
+
   transition:
     background-color .25s ease,
     color .25s ease;
 }
- 
+
 /* =========================================================
    TYPOGRAPHY
    ========================================================= */
- 
+
 .font-display {
   font-family: var(--font-display);
 }
- 
+
 .font-body {
   font-family: var(--font-body);
 }
- 
+
 .font-mono {
   font-family: var(--font-mono);
 }
- 
+
 h1,
 h2,
 h3,
@@ -179,65 +190,65 @@ h4 {
   letter-spacing: -0.015em;
   color: var(--color-paper);
 }
- 
+
 h1 {
   line-height: 1.08;
 }
- 
+
 h2 {
   line-height: 1.15;
 }
- 
+
 h3,
 h4 {
   line-height: 1.2;
 }
- 
+
 /* =========================================================
    GLOBAL
    ========================================================= */
- 
+
 * {
   box-sizing: border-box;
- 
+
   scrollbar-width: thin;
   scrollbar-color:
     var(--color-line)
     transparent;
 }
- 
+
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
- 
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
- 
+
 *::-webkit-scrollbar-thumb {
   background: var(--color-line);
   border-radius: 999px;
 }
- 
+
 *::-webkit-scrollbar-thumb:hover {
   background: var(--color-mist);
 }
- 
+
 ::selection {
   background: var(--color-brass);
   color: #ffffff;
 }
- 
+
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-brass);
   outline-offset: 3px;
 }
- 
+
 a {
   color: inherit;
 }
- 
+
 button,
 input,
 textarea,
@@ -245,33 +256,33 @@ select {
   color: var(--color-paper);
   font-family: var(--font-body);
 }
- 
+
 input::placeholder,
 textarea::placeholder {
   color: var(--color-mist);
   opacity: .9;
 }
- 
+
 /* =========================================================
    SURFACES
    ========================================================= */
- 
+
 .surface {
   background: var(--color-panel);
   border: 1px solid var(--color-line);
   border-radius: 16px;
 }
- 
+
 .surface-raised {
   background: var(--color-panel-2);
   border: 1px solid var(--color-line);
   border-radius: 16px;
- 
+
   box-shadow:
     0 10px 28px rgba(35, 35, 45, .07),
     0 1px 2px rgba(35, 35, 45, .06);
 }
- 
+
 .surface-hover {
   transition:
     background-color .18s ease,
@@ -279,7 +290,7 @@ textarea::placeholder {
     transform .18s ease,
     box-shadow .18s ease;
 }
- 
+
 .surface-hover:hover {
   border-color:
     color-mix(
@@ -287,44 +298,44 @@ textarea::placeholder {
       var(--color-brass) 30%,
       var(--color-line)
     );
- 
+
   transform: translateY(-1px);
 }
- 
+
 /* =========================================================
    BUTTONS
    ========================================================= */
- 
+
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
- 
+
   min-height: 40px;
   padding: .55rem 1rem;
- 
+
   border: 1px solid var(--color-brass);
   border-radius: 10px;
- 
+
   background: var(--color-brass);
   color: #ffffff;
- 
+
   font-weight: 600;
- 
+
   transition:
     background-color .18s ease,
     border-color .18s ease,
     transform .18s ease,
     box-shadow .18s ease;
 }
- 
+
 .btn-primary:hover {
   background: var(--color-brass-dim);
   border-color: var(--color-brass-dim);
- 
+
   transform: translateY(-1px);
- 
+
   box-shadow:
     0 7px 18px
     color-mix(
@@ -333,49 +344,49 @@ textarea::placeholder {
       transparent
     );
 }
- 
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
- 
+
   min-height: 40px;
   padding: .55rem 1rem;
- 
+
   border: 1px solid var(--color-line);
   border-radius: 10px;
- 
+
   background: var(--color-panel-2);
   color: var(--color-paper);
- 
+
   font-weight: 500;
- 
+
   transition:
     background-color .18s ease,
     border-color .18s ease,
     color .18s ease;
 }
- 
+
 .btn-secondary:hover {
   border-color: var(--color-brass);
   color: var(--color-brass);
 }
- 
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .45rem;
- 
+
   min-height: 38px;
   padding: .45rem .75rem;
- 
+
   border-radius: 10px;
- 
+
   color: var(--color-mist);
 }
- 
+
 .btn-ghost:hover {
   background:
     color-mix(
@@ -383,111 +394,111 @@ textarea::placeholder {
       var(--color-paper) 5%,
       transparent
     );
- 
+
   color: var(--color-paper);
 }
- 
+
 /* =========================================================
    STATUS
    ========================================================= */
- 
+
 .status-not-done {
   color: var(--color-mist);
 }
- 
+
 .status-incomplete {
   color: var(--color-coral);
 }
- 
+
 .status-done {
   color: var(--color-sage);
 }
- 
+
 .status-overdue {
   color: var(--color-coral);
 }
- 
+
 /* =========================================================
    MODALS / TICKETS
    ========================================================= */
- 
+
 .ticket {
   position: relative;
- 
+
   background: var(--color-panel);
   border: 1px solid var(--color-line);
   border-radius: 16px;
- 
+
   overflow: hidden;
- 
+
   box-shadow:
     0 20px 55px rgba(20, 20, 25, .16),
     0 2px 5px rgba(20, 20, 25, .08);
 }
- 
+
 .ticket::before,
 .ticket::after {
   content: "";
- 
+
   position: absolute;
   z-index: 2;
- 
+
   width: 12px;
   height: 12px;
- 
+
   top: 50%;
- 
+
   background: var(--color-ink);
   border-radius: 9999px;
- 
+
   transform: translateY(-50%);
 }
- 
+
 .ticket::before {
   left: -7px;
 }
- 
+
 .ticket::after {
   right: -7px;
 }
- 
+
 /* =========================================================
    AVATAR
    ========================================================= */
- 
+
 .avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
- 
+
   flex-shrink: 0;
   overflow: hidden;
- 
+
   border: 1px solid var(--color-line);
   border-radius: 50%;
- 
+
   background: var(--color-panel-2);
   color: var(--color-paper);
- 
+
   font-weight: 600;
 }
- 
+
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
- 
+
 .divider {
   width: 100%;
   height: 1px;
   background: var(--color-line);
 }
- 
+
 /* =========================================================
    INPUTS
    ========================================================= */
- 
+
 input,
 textarea,
 select {
@@ -495,7 +506,7 @@ select {
   color: var(--color-paper);
   border-color: var(--color-line);
 }
- 
+
 input:focus,
 textarea:focus,
 select:focus {
@@ -505,29 +516,29 @@ select:focus {
       var(--color-brass) 60%,
       var(--color-line)
     );
- 
+
   outline: none;
 }
- 
+
 /* =========================================================
    HARD-CODED LIGHT COMPONENTS
    Convert Tailwind white/gray surfaces
    ========================================================= */
- 
+
 html[data-theme='light'] .bg-white {
   background-color: #fffdfa !important;
 }
- 
+
 html[data-theme='light'] .bg-slate-50,
 html[data-theme='light'] .bg-gray-50 {
   background-color: #f5f3ee !important;
 }
- 
+
 html[data-theme='light'] .bg-slate-100,
 html[data-theme='light'] .bg-gray-100 {
   background-color: #eeece6 !important;
 }
- 
+
 html[data-theme='light'] .text-slate-950,
 html[data-theme='light'] .text-slate-900,
 html[data-theme='light'] .text-slate-800,
@@ -535,7 +546,7 @@ html[data-theme='light'] .text-gray-900,
 html[data-theme='light'] .text-gray-800 {
   color: #24232a !important;
 }
- 
+
 html[data-theme='light'] .text-slate-700,
 html[data-theme='light'] .text-slate-600,
 html[data-theme='light'] .text-slate-500,
@@ -544,37 +555,37 @@ html[data-theme='light'] .text-gray-600,
 html[data-theme='light'] .text-gray-500 {
   color: #696873 !important;
 }
- 
+
 html[data-theme='light'] .border-slate-100,
 html[data-theme='light'] .border-slate-200,
 html[data-theme='light'] .border-gray-100,
 html[data-theme='light'] .border-gray-200 {
   border-color: #dedbd3 !important;
 }
- 
+
 /* =========================================================
    HARD-CODED DARK COMPONENTS
    ========================================================= */
- 
+
 html[data-theme='dark'] .bg-white,
 html:not([data-theme='light']) .bg-white {
   background-color: #26262b !important;
 }
- 
+
 html[data-theme='dark'] .bg-slate-50,
 html[data-theme='dark'] .bg-gray-50,
 html:not([data-theme='light']) .bg-slate-50,
 html:not([data-theme='light']) .bg-gray-50 {
   background-color: #2d2d33 !important;
 }
- 
+
 html[data-theme='dark'] .bg-slate-100,
 html[data-theme='dark'] .bg-gray-100,
 html:not([data-theme='light']) .bg-slate-100,
 html:not([data-theme='light']) .bg-gray-100 {
   background-color: #323238 !important;
 }
- 
+
 html[data-theme='dark'] .text-slate-950,
 html[data-theme='dark'] .text-slate-900,
 html[data-theme='dark'] .text-slate-800,
@@ -591,7 +602,7 @@ html:not([data-theme='light']) .text-gray-800,
 html:not([data-theme='light']) .text-gray-700 {
   color: #f3f1eb !important;
 }
- 
+
 html[data-theme='dark'] .text-slate-600,
 html[data-theme='dark'] .text-slate-500,
 html[data-theme='dark'] .text-slate-400,
@@ -604,7 +615,7 @@ html:not([data-theme='light']) .text-gray-600,
 html:not([data-theme='light']) .text-gray-500 {
   color: #b7b4ae !important;
 }
- 
+
 html[data-theme='dark'] .border-slate-100,
 html[data-theme='dark'] .border-slate-200,
 html[data-theme='dark'] .border-gray-100,
@@ -615,35 +626,35 @@ html:not([data-theme='light']) .border-gray-100,
 html:not([data-theme='light']) .border-gray-200 {
   border-color: #3b3b43 !important;
 }
- 
+
 /* =========================================================
    TEXT UTILITIES
    ========================================================= */
- 
+
 html[data-theme='dark'] .text-paper,
 html:not([data-theme='light']) .text-paper {
   color: #f3f1eb !important;
 }
- 
+
 html[data-theme='dark'] .text-paper-dim,
 html:not([data-theme='light']) .text-paper-dim {
   color: #c3c0ba !important;
 }
- 
+
 html[data-theme='dark'] .text-mist,
 html:not([data-theme='light']) .text-mist {
   color: #9b99a0 !important;
 }
- 
+
 html[data-theme='dark'] .text-brass,
 html:not([data-theme='light']) .text-brass {
   color: #a69af4 !important;
 }
- 
+
 /* =========================================================
    DARK INPUTS
    ========================================================= */
- 
+
 html[data-theme='dark'] input,
 html[data-theme='dark'] textarea,
 html[data-theme='dark'] select,
@@ -654,27 +665,27 @@ html:not([data-theme='light']) select {
   color: #f3f1eb !important;
   border-color: #3b3b43 !important;
 }
- 
+
 html[data-theme='dark'] input::placeholder,
 html[data-theme='dark'] textarea::placeholder,
 html:not([data-theme='light']) input::placeholder,
 html:not([data-theme='light']) textarea::placeholder {
   color: #89878f !important;
 }
- 
+
 /* =========================================================
    PROGRESS TABLE
    ========================================================= */
- 
+
 .progress-table-shell {
   width: 100%;
   overflow: hidden;
- 
+
   border: 1px solid var(--color-line);
   border-radius: 22px;
- 
+
   background: var(--color-panel);
- 
+
   box-shadow:
     0 16px 44px
     color-mix(
@@ -683,59 +694,59 @@ html:not([data-theme='light']) textarea::placeholder {
       transparent
     );
 }
- 
+
 .progress-table-scroll {
   width: 100%;
   max-height: 65vh;
   overflow: auto;
 }
- 
+
 .progress-table {
   width: 100%;
   min-width: 1120px;
- 
+
   table-layout: fixed;
- 
+
   border-collapse: separate;
   border-spacing: 0;
- 
+
   color: var(--color-paper);
 }
- 
+
 .progress-student-col,
 .progress-student-header,
 .progress-student-cell {
   width: 285px;
 }
- 
+
 .progress-homework-col,
 .progress-status-cell {
   width: 145px;
 }
- 
+
 .progress-table th,
 .progress-table td {
   box-sizing: border-box;
 }
- 
+
 .progress-table thead th {
   position: sticky;
   top: 0;
   z-index: 4;
- 
+
   height: 96px;
   padding: 16px 10px 12px;
- 
+
   vertical-align: middle;
- 
+
   background: var(--color-panel-2);
   border-bottom: 1px solid var(--color-line);
 }
- 
+
 .progress-student-header {
   position: sticky;
   left: 0;
- 
+
   /*
    * This cell is sticky on BOTH axes (top, from .progress-table
    * thead th above, and left, here) — it needs to stay above
@@ -743,74 +754,74 @@ html:not([data-theme='light']) textarea::placeholder {
    * a homework column scrolling underneath it.
    */
   z-index: 6;
- 
+
   padding-left: 24px !important;
- 
+
   text-align: left;
- 
+
   color: var(--color-paper);
- 
+
   font-size: 11px;
   font-weight: 700;
- 
+
   letter-spacing: .16em;
   text-transform: uppercase;
 }
- 
+
 .progress-homework-header {
   text-align: center;
 }
- 
+
 .progress-homework-heading {
   display: flex;
   align-items: flex-start;
   justify-content: center;
- 
+
   gap: 5px;
   min-width: 0;
 }
- 
+
 .progress-homework-title {
   display: block;
- 
+
   min-width: 0;
   max-width: 125px;
- 
+
   overflow: hidden;
- 
+
   color: var(--color-paper);
- 
+
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
- 
+
   text-align: center;
   text-overflow: ellipsis;
- 
+
   white-space: normal;
   overflow-wrap: anywhere;
 }
- 
+
 .progress-homework-actions {
   display: inline-flex;
   flex-shrink: 0;
- 
+
   align-items: center;
   gap: 1px;
 }
- 
+
 .progress-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
- 
+
   width: 23px;
   height: 23px;
   padding: 0;
- 
+
   border: 1px solid transparent;
   border-radius: 7px;
- 
+
   /*
    * A faint resting background instead of fully transparent —
    * that's what was reading as "robotic": three bare unicode
@@ -821,58 +832,58 @@ html:not([data-theme='light']) textarea::placeholder {
   background:
     color-mix(in srgb, var(--color-mist) 9%, transparent);
   color: var(--color-mist);
- 
+
   cursor: pointer;
 }
- 
+
 .progress-action svg {
   width: 12px;
   height: 12px;
 }
- 
+
 .progress-action:hover {
   border-color:
     color-mix(in srgb, var(--color-brass) 35%, transparent);
- 
+
   background:
     color-mix(
       in srgb,
       var(--color-brass) 14%,
       transparent
     );
- 
+
   color: var(--color-brass);
 }
- 
+
 .progress-action-danger:hover {
   border-color:
     color-mix(in srgb, var(--color-coral) 35%, transparent);
- 
+
   background:
     color-mix(
       in srgb,
       var(--color-coral) 14%,
       transparent
     );
- 
+
   color: var(--color-coral);
 }
- 
+
 .progress-due-date {
   margin-top: 8px;
- 
+
   color: var(--color-mist);
- 
+
   font-size: 10px;
   font-weight: 500;
- 
+
   text-align: center;
 }
- 
+
 .progress-student-row {
   transition: background-color .16s ease;
 }
- 
+
 .progress-student-row:hover {
   background:
     color-mix(
@@ -881,12 +892,12 @@ html:not([data-theme='light']) textarea::placeholder {
       transparent
     );
 }
- 
+
 .progress-table tbody td {
   height: 72px;
- 
+
   vertical-align: middle;
- 
+
   border-bottom:
     1px solid
     color-mix(
@@ -895,62 +906,62 @@ html:not([data-theme='light']) textarea::placeholder {
       transparent
     );
 }
- 
+
 .progress-table tbody tr:last-child td {
   border-bottom: 0;
 }
- 
+
 .progress-student-cell {
   position: sticky;
   left: 0;
   z-index: 3;
- 
+
   padding: 12px 16px 12px 24px;
- 
+
   background: var(--color-panel);
- 
+
   vertical-align: middle;
 }
- 
+
 .progress-student-row:hover
 .progress-student-cell {
   background: var(--color-panel-2);
 }
- 
+
 .progress-student {
   display: flex !important;
   align-items: center !important;
- 
+
   gap: 11px !important;
- 
+
   width: 100%;
   min-width: 0;
- 
+
   flex-direction: row !important;
 }
- 
+
 .progress-avatar {
   display: flex !important;
   align-items: center;
   justify-content: center;
- 
+
   width: 38px !important;
   height: 38px !important;
- 
+
   min-width: 38px;
   max-width: 38px;
- 
+
   flex: 0 0 38px !important;
- 
+
   border: 1px solid
     color-mix(
       in srgb,
       var(--color-indigo) 22%,
       var(--color-line)
     );
- 
+
   border-radius: 50%;
- 
+
   background:
     linear-gradient(
       135deg,
@@ -965,13 +976,13 @@ html:not([data-theme='light']) textarea::placeholder {
         var(--color-panel-2)
       )
     );
- 
+
   color: var(--color-indigo);
- 
+
   font-size: 14px;
   font-weight: 700;
 }
- 
+
 /*
  * Every student's avatar was the exact same indigo — fine
  * individually, but a whole roster of identical circles reads as
@@ -991,7 +1002,7 @@ html:not([data-theme='light']) textarea::placeholder {
     );
   color: var(--color-sage);
 }
- 
+
 .progress-student-row:nth-child(6n+3) .progress-avatar {
   border-color:
     color-mix(in srgb, var(--color-coral) 25%, var(--color-line));
@@ -1003,7 +1014,7 @@ html:not([data-theme='light']) textarea::placeholder {
     );
   color: var(--color-coral);
 }
- 
+
 .progress-student-row:nth-child(6n+4) .progress-avatar {
   border-color:
     color-mix(in srgb, var(--color-cyan) 28%, var(--color-line));
@@ -1015,7 +1026,7 @@ html:not([data-theme='light']) textarea::placeholder {
     );
   color: var(--color-cyan);
 }
- 
+
 .progress-student-row:nth-child(6n+5) .progress-avatar {
   border-color:
     color-mix(in srgb, var(--color-brass) 28%, var(--color-line));
@@ -1027,7 +1038,7 @@ html:not([data-theme='light']) textarea::placeholder {
     );
   color: var(--color-brass);
 }
- 
+
 .progress-student-row:nth-child(6n+6) .progress-avatar {
   border-color:
     color-mix(in srgb, var(--color-lavender) 28%, var(--color-line));
@@ -1039,76 +1050,76 @@ html:not([data-theme='light']) textarea::placeholder {
     );
   color: var(--color-lavender);
 }
- 
+
 .progress-student-info {
   min-width: 0;
   flex: 1 1 auto;
   overflow: hidden;
 }
- 
+
 .progress-student-name {
   width: 100%;
   overflow: hidden;
- 
+
   color: var(--color-paper);
- 
+
   font-size: 14px;
   font-weight: 600;
   line-height: 1.25;
- 
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
- 
+
 .progress-student-username {
   width: 100%;
- 
+
   margin-top: 3px;
   overflow: hidden;
- 
+
   color: var(--color-mist);
- 
+
   font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.25;
- 
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
- 
+
 .progress-remove {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
- 
+
   width: 24px !important;
   height: 24px !important;
- 
+
   min-width: 24px;
- 
+
   flex: 0 0 24px !important;
- 
+
   padding: 0;
- 
+
   border: 0;
   border-radius: 7px;
- 
+
   background: transparent;
   color: var(--color-mist);
- 
+
   font-size: 17px;
   line-height: 1;
- 
+
   cursor: pointer;
- 
+
   opacity: .55;
 }
- 
+
 .progress-student:hover
 .progress-remove {
   opacity: 1;
 }
- 
+
 /*
  * Permanently deletes the student's whole account (not just this
  * group). Deliberately NOT styled like .progress-remove — it stays
@@ -1120,19 +1131,19 @@ html:not([data-theme='light']) textarea::placeholder {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
- 
+
   flex: 0 0 auto !important;
- 
+
   padding: 3px 8px !important;
- 
+
   border: 1px solid
     color-mix(in srgb, var(--color-coral) 35%, var(--color-line));
   border-radius: 999px;
- 
+
   background:
     color-mix(in srgb, var(--color-coral) 8%, transparent);
   color: var(--color-coral);
- 
+
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 600;
@@ -1140,20 +1151,20 @@ html:not([data-theme='light']) textarea::placeholder {
   text-transform: uppercase;
   white-space: nowrap;
   line-height: 1;
- 
+
   cursor: pointer;
 }
- 
+
 .progress-delete:hover {
   background:
     color-mix(in srgb, var(--color-coral) 18%, transparent);
 }
- 
+
 .progress-delete:disabled {
   opacity: .5;
   cursor: default;
 }
- 
+
 .progress-remove:hover {
   background:
     color-mix(
@@ -1161,57 +1172,57 @@ html:not([data-theme='light']) textarea::placeholder {
       var(--color-coral) 10%,
       transparent
     );
- 
+
   color: var(--color-coral);
 }
- 
+
 .progress-status-cell {
   padding: 10px 8px;
- 
+
   text-align: center;
   vertical-align: middle;
 }
- 
+
 .progress-status-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
- 
+
   padding: 0;
- 
+
   border: 0;
   background: transparent;
- 
+
   cursor: pointer;
 }
- 
+
 .progress-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
- 
+
   min-width: 72px;
   height: 29px;
- 
+
   padding: 0 12px;
- 
+
   border-radius: 999px;
- 
+
   font-size: 10px;
   font-weight: 700;
- 
+
   letter-spacing: .06em;
   line-height: 1;
- 
+
   transition:
     transform .15s ease,
     box-shadow .15s ease;
 }
- 
+
 .progress-status-button:hover
 .progress-status {
   transform: translateY(-1px);
- 
+
   box-shadow:
     0 5px 15px
     color-mix(
@@ -1220,7 +1231,7 @@ html:not([data-theme='light']) textarea::placeholder {
       transparent
     );
 }
- 
+
 .progress-status-done {
   border: 1px solid
     color-mix(
@@ -1228,17 +1239,17 @@ html:not([data-theme='light']) textarea::placeholder {
       var(--color-sage) 30%,
       var(--color-line)
     );
- 
+
   background:
     color-mix(
       in srgb,
       var(--color-sage) 11%,
       var(--color-panel)
     );
- 
+
   color: var(--color-sage);
 }
- 
+
 .progress-status-incomplete {
   border: 1px solid
     color-mix(
@@ -1246,17 +1257,17 @@ html:not([data-theme='light']) textarea::placeholder {
       var(--color-coral) 30%,
       var(--color-line)
     );
- 
+
   background:
     color-mix(
       in srgb,
       var(--color-coral) 9%,
       var(--color-panel)
     );
- 
+
   color: var(--color-coral);
 }
- 
+
 .progress-status-pending {
   border: 1px solid
     color-mix(
@@ -1264,17 +1275,17 @@ html:not([data-theme='light']) textarea::placeholder {
       var(--color-brass) 30%,
       var(--color-line)
     );
- 
+
   background:
     color-mix(
       in srgb,
       var(--color-brass) 9%,
       var(--color-panel)
     );
- 
+
   color: var(--color-brass);
 }
- 
+
 /*
  * StampBadge.jsx (the student's own "Done / Not yet / Incomplete"
  * badge on each homework card) has never had any CSS backing its
@@ -1285,16 +1296,16 @@ html:not([data-theme='light']) textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
- 
+
   border-radius: 50%;
   border: 2px solid transparent;
- 
+
   font-weight: 700;
   letter-spacing: .04em;
- 
+
   transform: rotate(-6deg);
 }
- 
+
 .stamp-done {
   border-color:
     color-mix(in srgb, var(--color-sage) 55%, transparent);
@@ -1302,7 +1313,7 @@ html:not([data-theme='light']) textarea::placeholder {
     color-mix(in srgb, var(--color-sage) 12%, transparent);
   color: var(--color-sage);
 }
- 
+
 .stamp-pending {
   border-color:
     color-mix(in srgb, var(--color-brass) 55%, transparent);
@@ -1310,7 +1321,7 @@ html:not([data-theme='light']) textarea::placeholder {
     color-mix(in srgb, var(--color-brass) 12%, transparent);
   color: var(--color-brass);
 }
- 
+
 .stamp-overdue {
   border-color:
     color-mix(in srgb, var(--color-coral) 55%, transparent);
@@ -1318,56 +1329,56 @@ html:not([data-theme='light']) textarea::placeholder {
     color-mix(in srgb, var(--color-coral) 12%, transparent);
   color: var(--color-coral);
 }
- 
+
 /* =========================================================
    LIGHT PROGRESS TABLE
    ========================================================= */
- 
+
 html[data-theme='light']
 .progress-table-shell {
   background: #fffdfa;
   border-color: #dedbd3;
- 
+
   box-shadow:
     0 18px 55px rgba(80, 75, 130, .06);
 }
- 
+
 html[data-theme='light']
 .progress-table thead th {
   background: #f1efe9;
   border-bottom-color: #dedbd3;
 }
- 
+
 html[data-theme='light']
 .progress-student-cell {
   background: #fffdfa;
 }
- 
+
 html[data-theme='light']
 .progress-student-row:hover
 .progress-student-cell {
   background: #faf9f5;
 }
- 
+
 html[data-theme='light']
 .progress-table tbody td {
   border-bottom-color: #e7e4dd;
 }
- 
+
 html[data-theme='light']
 .progress-student-name,
 html[data-theme='light']
 .progress-homework-title {
   color: #24232a !important;
 }
- 
+
 html[data-theme='light']
 .progress-student-username,
 html[data-theme='light']
 .progress-due-date {
   color: #85838c !important;
 }
- 
+
 html[data-theme='light']
 .progress-avatar {
   background:
@@ -1376,11 +1387,11 @@ html[data-theme='light']
       #eeeaff,
       #e9f6f4
     );
- 
+
   border-color: #dad5f5;
   color: #7565df;
 }
- 
+
 /*
  * The "STUDENT" column label and the edit/reset/delete icon
  * buttons were relying only on var(--color-paper)/var(--color-mist)
@@ -1391,17 +1402,17 @@ html[data-theme='light']
 .progress-student-header {
   color: #24232a !important;
 }
- 
+
 html[data-theme='light']
 .progress-action {
   background: rgba(36, 35, 42, .06) !important;
   color: #85838c !important;
 }
- 
+
 /* =========================================================
    DARK PROGRESS TABLE
    ========================================================= */
- 
+
 html[data-theme='dark']
 .progress-table-shell,
 html:not([data-theme='light'])
@@ -1409,7 +1420,7 @@ html:not([data-theme='light'])
   background: #26262b;
   border-color: #3b3b43;
 }
- 
+
 html[data-theme='dark']
 .progress-table thead th,
 html:not([data-theme='light'])
@@ -1417,14 +1428,14 @@ html:not([data-theme='light'])
   background: #2d2d33;
   border-bottom-color: #3b3b43;
 }
- 
+
 html[data-theme='dark']
 .progress-student-cell,
 html:not([data-theme='light'])
 .progress-student-cell {
   background: #26262b;
 }
- 
+
 html[data-theme='dark']
 .progress-student-row:hover
 .progress-student-cell,
@@ -1433,7 +1444,7 @@ html:not([data-theme='light'])
 .progress-student-cell {
   background: #2d2d33;
 }
- 
+
 html[data-theme='dark']
 .progress-student-name,
 html[data-theme='dark']
@@ -1444,7 +1455,7 @@ html:not([data-theme='light'])
 .progress-homework-title {
   color: #f3f1eb !important;
 }
- 
+
 html[data-theme='dark']
 .progress-student-username,
 html[data-theme='dark']
@@ -1455,14 +1466,14 @@ html:not([data-theme='light'])
 .progress-due-date {
   color: #9b99a0 !important;
 }
- 
+
 html[data-theme='dark']
 .progress-student-header,
 html:not([data-theme='light'])
 .progress-student-header {
   color: #f3f1eb !important;
 }
- 
+
 html[data-theme='dark']
 .progress-action,
 html:not([data-theme='light'])
@@ -1470,28 +1481,28 @@ html:not([data-theme='light'])
   background: rgba(243, 241, 235, .07) !important;
   color: #9b99a0 !important;
 }
- 
+
 /* =========================================================
    ANIMATION
    ========================================================= */
- 
+
 @keyframes fade-up {
   from {
     opacity: 0;
     transform: translateY(5px);
   }
- 
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
- 
+
 .animate-fade-up {
   animation:
     fade-up .22s ease-out both;
 }
- 
+
 /*
  * Briefly highlights a homework card when a student is
  * scrolled to it from a notification, so it's obvious which
@@ -1502,78 +1513,78 @@ html:not([data-theme='light'])
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brass) 55%, transparent);
     border-color: var(--color-brass);
   }
- 
+
   70% {
     box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-brass) 0%, transparent);
     border-color: var(--color-brass);
   }
- 
+
   100% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brass) 0%, transparent);
   }
 }
- 
+
 .homework-highlight {
   animation: homework-highlight-pulse 1.1s ease-out 2;
 }
- 
+
 /* =========================================================
    RESPONSIVE
    ========================================================= */
- 
+
 @media (max-width: 1100px) {
- 
+
   .progress-student-col,
   .progress-student-header,
   .progress-student-cell {
     width: 260px;
   }
- 
+
   .progress-homework-col,
   .progress-status-cell {
     width: 135px;
   }
 }
- 
+
 @media (max-width: 760px) {
- 
+
   body {
     font-size: 14px;
   }
- 
+
   .progress-table {
     min-width: 1040px;
   }
- 
+
   .progress-student-col,
   .progress-student-header,
   .progress-student-cell {
     width: 245px;
   }
- 
+
   .progress-homework-col,
   .progress-status-cell {
     width: 130px;
   }
- 
+
   .progress-table thead th {
     height: 90px;
   }
- 
+
   .progress-student-cell {
     padding-left: 16px;
   }
 }
- 
+
 @media (max-width: 640px) {
- 
+
   .ticket {
     border-radius: 12px;
   }
 }
- 
+
 @media (prefers-reduced-motion: reduce) {
- 
+
   *,
   *::before,
   *::after {

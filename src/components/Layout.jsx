@@ -20,8 +20,8 @@ export default function Layout({
       className="
         min-h-screen
         flex flex-col
-        text-[#17182D]
-        bg-[#F5F7FF]
+        text-paper
+        bg-ink
         relative
         overflow-x-hidden
       "
@@ -50,7 +50,7 @@ export default function Layout({
             w-[38rem]
             h-[38rem]
             rounded-full
-            bg-[#7468F5]/10
+            bg-indigo/10
             blur-3xl
           "
         />
@@ -64,7 +64,7 @@ export default function Layout({
             w-[34rem]
             h-[34rem]
             rounded-full
-            bg-[#49D6D0]/10
+            bg-cyan/10
             blur-3xl
           "
         />
@@ -77,7 +77,7 @@ export default function Layout({
             -left-[10rem]
             w-[75rem]
             h-[1px]
-            bg-[#7468F5]/10
+            bg-indigo/10
             rotate-[-17deg]
           "
         />
@@ -92,8 +92,8 @@ export default function Layout({
             h-20
             rounded-[1.5rem]
             bg-gradient-to-br
-            from-[#7468F5]/20
-            to-[#A89FFF]/10
+            from-indigo/20
+            to-lavender/10
             rotate-[14deg]
             blur-[0.2px]
           "
@@ -108,7 +108,7 @@ export default function Layout({
             w-14
             h-14
             rounded-[1.1rem]
-            bg-[#49D6D0]/20
+            bg-cyan/20
             rotate-[-18deg]
           "
         />
@@ -122,7 +122,7 @@ export default function Layout({
             w-16
             h-16
             rounded-[1.2rem]
-            bg-[#FF7770]/15
+            bg-coral/15
             rotate-[20deg]
           "
         />
@@ -137,8 +137,8 @@ export default function Layout({
       <header
         className="
           sticky top-0 z-40
-          border-b border-[#DDE2F0]
-          bg-white/80
+          border-b border-line
+          bg-panel/80
           backdrop-blur-xl
         "
       >
@@ -162,7 +162,7 @@ export default function Layout({
                     rounded-[1rem]
                     object-cover
                     object-center
-                    border border-white
+                    border border-panel
                     shadow-[0_8px_25px_rgba(30,35,70,0.12)]
                   "
                 />
@@ -175,9 +175,9 @@ export default function Layout({
                     w-3
                     h-3
                     rounded-full
-                    bg-[#49C98A]
+                    bg-sage
                     border-2
-                    border-white
+                    border-panel
                   "
                 />
 
@@ -192,7 +192,7 @@ export default function Layout({
                     leading-tight
                     font-semibold
                     tracking-[-0.02em]
-                    text-[#17182D]
+                    text-paper
                     truncate
                   "
                 >
@@ -203,7 +203,7 @@ export default function Layout({
                   className="
                     text-[10px]
                     sm:text-[11px]
-                    text-[#7B819A]
+                    text-mist
                     font-mono
                     uppercase
                     tracking-[0.14em]
@@ -229,7 +229,7 @@ export default function Layout({
                   hidden
                   lg:block
                   text-sm
-                  text-[#707790]
+                  text-mist
                   mr-1
                   max-w-[180px]
                   truncate
@@ -244,8 +244,8 @@ export default function Layout({
               <div
                 className="
                   rounded-full
-                  border border-[#DCE1EF]
-                  bg-white/80
+                  border border-line
+                  bg-panel/80
                   shadow-sm
                 "
               >
@@ -258,8 +258,8 @@ export default function Layout({
               <div
                 className="
                   rounded-full
-                  border border-[#DCE1EF]
-                  bg-white/80
+                  border border-line
+                  bg-panel/80
                   shadow-sm
                 "
               >
@@ -276,13 +276,13 @@ export default function Layout({
                   focus-ring
                   w-9 h-9
                   rounded-full
-                  border border-[#DCE1EF]
-                  bg-white/80
+                  border border-line
+                  bg-panel/80
                   flex items-center justify-center
-                  text-[#747A93]
-                  hover:text-[#6357E8]
-                  hover:border-[#9B94FF]
-                  hover:bg-[#F4F2FF]
+                  text-mist
+                  hover:text-brass
+                  hover:border-brass/50
+                  hover:bg-brass/10
                   hover:shadow-[0_6px_20px_rgba(99,87,232,0.12)]
                   transition-all
                   duration-200
@@ -320,14 +320,14 @@ export default function Layout({
                   h-9
                   px-3.5
                   rounded-[0.7rem]
-                  border border-[#DCE1EF]
-                  bg-white/80
+                  border border-line
+                  bg-panel/80
                   text-sm
                   font-medium
-                  text-[#4D536B]
-                  hover:text-[#6357E8]
-                  hover:border-[#9B94FF]
-                  hover:bg-[#F4F2FF]
+                  text-mist
+                  hover:text-brass
+                  hover:border-brass/50
+                  hover:bg-brass/10
                   transition-all
                   duration-200
                 "
@@ -370,11 +370,11 @@ export default function Layout({
                 gap-1
                 overflow-x-auto
                 rounded-[1.15rem]
-                border border-[#DDE2F0]
-                bg-white/75
+                border border-line
+                bg-panel/75
                 backdrop-blur-xl
                 p-1.5
-                shadow-[0_10px_35px_rgba(39,45,85,0.07)]
+                shadow-[0_10px_35px_rgba(0,0,0,0.12)]
                 scrollbar-none
               "
             >
@@ -408,16 +408,16 @@ export default function Layout({
                       ${
                         active
                           ? `
-                            text-white
+                            text-onbrass
                             bg-gradient-to-r
-                            from-[#6559EC]
-                            to-[#8175F7]
+                            from-brass
+                            to-lavender
                             shadow-[0_7px_18px_rgba(101,89,236,0.25)]
                           `
                           : `
-                            text-[#727991]
-                            hover:text-[#242744]
-                            hover:bg-[#F1F3FB]
+                            text-mist
+                            hover:text-paper
+                            hover:bg-panel-2
                           `
                       }
                     `}
