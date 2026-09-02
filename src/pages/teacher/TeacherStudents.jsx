@@ -23,63 +23,88 @@ export default function TeacherStudents() {
     setLoading(true)
     setError('')
 
-    const [
-      studentsResult,
-      groupsResult,
-      membershipsResult,
-    ] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select(
-          'id, full_name, username, contact_email, role, status, created_at'
+    /*
+     * This whole function used to have no try/catch around it — if
+     * any of the three requests below rejected outright (a network
+     * hiccup, an expired session, anything that throws instead of
+     * returning { error }), the code would jump straight out of
+     * this function and setLoading(false) at the very end would
+     * never run, leaving the page stuck on "Loading students…"
+     * forever with no way to tell what went wrong. Wrapping it in
+     * try/catch/finally means loading always clears and a real
+     * error message shows up instead of an infinite spinner.
+     */
+    try {
+      const [
+        studentsResult,
+        groupsResult,
+        membershipsResult,
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select(
+            'id, full_name, username, contact_email, role, status, created_at'
+          )
+          .eq('role', 'student')
+          .order('full_name', { ascending: true }),
+
+        supabase
+          .from('groups')
+          .select('id, name')
+          .order('name', { ascending: true }),
+
+        supabase
+          .from('group_members')
+          .select('group_id, student_id'),
+      ])
+
+      if (studentsResult.error) {
+        console.error(
+          'Failed to load students:',
+          studentsResult.error
         )
-        .eq('role', 'student')
-        .order('full_name', { ascending: true }),
+        setError(studentsResult.error.message)
+        setStudents([])
+      } else {
+        setStudents(studentsResult.data || [])
+      }
 
-      supabase
-        .from('groups')
-        .select('id, name')
-        .order('name', { ascending: true }),
+      if (groupsResult.error) {
+        console.error(
+          'Failed to load groups:',
+          groupsResult.error
+        )
+        setError(groupsResult.error.message)
+        setGroups([])
+      } else {
+        setGroups(groupsResult.data || [])
+      }
 
-      supabase
-        .from('group_members')
-        .select('group_id, student_id'),
-    ])
-
-    if (studentsResult.error) {
+      if (membershipsResult.error) {
+        console.error(
+          'Failed to load memberships:',
+          membershipsResult.error
+        )
+        setError(membershipsResult.error.message)
+        setMemberships([])
+      } else {
+        setMemberships(membershipsResult.data || [])
+      }
+    } catch (err) {
       console.error(
-        'Failed to load students:',
-        studentsResult.error
+        'Failed to load students page:',
+        err
       )
-      setError(studentsResult.error.message)
+      setError(
+        err?.message ||
+          'Something went wrong loading students. Please refresh the page.'
+      )
       setStudents([])
-    } else {
-      setStudents(studentsResult.data || [])
-    }
-
-    if (groupsResult.error) {
-      console.error(
-        'Failed to load groups:',
-        groupsResult.error
-      )
-      setError(groupsResult.error.message)
       setGroups([])
-    } else {
-      setGroups(groupsResult.data || [])
-    }
-
-    if (membershipsResult.error) {
-      console.error(
-        'Failed to load memberships:',
-        membershipsResult.error
-      )
-      setError(membershipsResult.error.message)
       setMemberships([])
-    } else {
-      setMemberships(membershipsResult.data || [])
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {

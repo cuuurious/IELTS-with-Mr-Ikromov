@@ -724,7 +724,7 @@ html:not([data-theme='light']) textarea::placeholder {
 .progress-student-col,
 .progress-student-header,
 .progress-student-cell {
-  width: 285px;
+  width: 320px;
 }
 
 .progress-homework-col,
@@ -738,19 +738,13 @@ html:not([data-theme='light']) textarea::placeholder {
 }
 
 .progress-table thead th {
-  position: sticky;
-
   /*
-   * Now that the table isn't in its own capped-height scroll box
-   * (see .progress-table-scroll), this sticks relative to the page
-   * itself while scrolling — so it has to clear the app's own
-   * sticky header (76px) + tab bar (68px) instead of sitting at
-   * the very top of the viewport, or it would end up hidden
-   * underneath them.
+   * Deliberately NOT sticky/pinned anymore — pinning it while the
+   * page scrolled was landing the header mid-table on top of rows
+   * (covering student names) instead of cleanly at the top. Back
+   * to a plain header that scrolls away with the rest of the
+   * table, same as before any of this was touched.
    */
-  top: 144px;
-  z-index: 4;
-
   height: 76px;
   padding: 12px 10px 8px;
 
@@ -763,13 +757,6 @@ html:not([data-theme='light']) textarea::placeholder {
 .progress-student-header {
   position: sticky;
   left: 0;
-
-  /*
-   * This cell is sticky on BOTH axes (top, from .progress-table
-   * thead th above, and left, here) — it needs to stay above
-   * every other sticky cell so the corner never gets covered by
-   * a homework column scrolling underneath it.
-   */
   z-index: 6;
 
   padding-left: 24px !important;
@@ -783,6 +770,14 @@ html:not([data-theme='light']) textarea::placeholder {
 
   letter-spacing: .16em;
   text-transform: uppercase;
+
+  /*
+   * A visible line where the pinned student column ends and the
+   * homework columns begin — without it, the boundary was easy to
+   * mistake for content overlapping/covering the student column
+   * while scrolling sideways.
+   */
+  border-right: 1px solid var(--color-line);
 }
 
 .progress-homework-header {
@@ -947,6 +942,8 @@ html:not([data-theme='light']) textarea::placeholder {
   background: var(--color-panel);
 
   vertical-align: middle;
+
+  border-right: 1px solid var(--color-line);
 }
 
 .progress-student-row:hover
@@ -1080,12 +1077,10 @@ html:not([data-theme='light']) textarea::placeholder {
 .progress-student-info {
   min-width: 0;
   flex: 1 1 auto;
-  overflow: hidden;
 }
 
 .progress-student-name {
   width: 100%;
-  overflow: hidden;
 
   color: var(--color-paper);
 
@@ -1093,8 +1088,15 @@ html:not([data-theme='light']) textarea::placeholder {
   font-weight: 600;
   line-height: 1.25;
 
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /*
+   * Full names should always be readable, not cut off with "…" —
+   * a wider student column (see .progress-student-col) plus
+   * letting long names wrap onto a second line instead of
+   * truncating covers this without needing to keep shrinking
+   * the row.
+   */
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .progress-student-username {
@@ -1563,7 +1565,7 @@ html:not([data-theme='light'])
   .progress-student-col,
   .progress-student-header,
   .progress-student-cell {
-    width: 260px;
+    width: 290px;
   }
 
   .progress-homework-col,
@@ -1585,7 +1587,7 @@ html:not([data-theme='light'])
   .progress-student-col,
   .progress-student-header,
   .progress-student-cell {
-    width: 245px;
+    width: 270px;
   }
 
   .progress-homework-col,
