@@ -1371,6 +1371,19 @@ html:not([data-theme='light']) textarea::placeholder {
   color: var(--color-coral);
 }
 
+/*
+ * Submitted, but after the homework's deadline had already
+ * passed. Distinct from both "done" (on time) and "overdue"
+ * (never submitted at all).
+ */
+.stamp-late {
+  border-color:
+    color-mix(in srgb, var(--color-cyan) 55%, transparent);
+  background:
+    color-mix(in srgb, var(--color-cyan) 12%, transparent);
+  color: var(--color-cyan);
+}
+
 /* =========================================================
    LIGHT PROGRESS TABLE
    ========================================================= */
@@ -1540,8 +1553,25 @@ html:not([data-theme='light'])
 }
 
 .animate-fade-up {
+  /*
+   * IMPORTANT: fill-mode is "backwards", not "both".
+   *
+   * "both" would leave transform: translateY(0) applied to
+   * this element forever after the animation finishes. Even
+   * though that's visually a no-op, a lingering non-"none"
+   * transform on an ancestor makes every position:fixed
+   * modal inside it (the ones NOT rendered through a portal,
+   * e.g. EditHomeworkModal) position itself relative to THIS
+   * box instead of the actual browser viewport — which is
+   * exactly why "fixed inset-0" modals were appearing
+   * mid-page instead of centered over the whole screen.
+   *
+   * "backwards" keeps the same fade-in look but releases the
+   * transform once the .22s animation ends, so fixed-position
+   * children go back to positioning against the real viewport.
+   */
   animation:
-    fade-up .22s ease-out both;
+    fade-up .22s ease-out backwards;
 }
 
 /*

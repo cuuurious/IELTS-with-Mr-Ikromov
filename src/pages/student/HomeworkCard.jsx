@@ -9,6 +9,7 @@ import {
 import AudioRecorder from '../../components/AudioRecorder'
 import StampBadge, {
   getSubmissionStatus,
+  isLateSubmission,
 } from '../../components/StampBadge'
 
 const PARTS = [
@@ -76,9 +77,12 @@ export default function HomeworkCard({
     submission,
     homework.due_date
   )
-  
-  console.log('SPEAKING SUBMISSION:', submission)
-  
+
+  const submittedLate = isLateSubmission(
+    submission,
+    homework.due_date
+  )
+
 
   useEffect(() => {
     setSpeakingParts({
@@ -1219,7 +1223,9 @@ export default function HomeworkCard({
 
                   <p className="text-xs text-mist mt-1">
                     {taskAlreadySubmitted
-                      ? 'Submitted to your teacher. You can still make changes and click Update Submission to save them.'
+                      ? submittedLate
+                        ? 'Submitted after the deadline. Your teacher can see this was late. You can still make changes and click Update Submission to save them.'
+                        : 'Submitted to your teacher. You can still make changes and click Update Submission to save them.'
                       : minFiles >
                         0
                       ? `Upload at least ${minFiles} file${
@@ -1260,11 +1266,19 @@ export default function HomeworkCard({
               <div className="mt-3 text-xs">
 
                 {taskAlreadySubmitted ? (
-                  <span className="text-brass">
-                    ✓ Submitted to your
-                    teacher. You can still
-                    edit and resubmit.
-                  </span>
+                  submittedLate ? (
+                    <span className="text-cyan">
+                      ⏰ Submitted late. You
+                      can still edit and
+                      resubmit.
+                    </span>
+                  ) : (
+                    <span className="text-brass">
+                      ✓ Submitted to your
+                      teacher. You can still
+                      edit and resubmit.
+                    </span>
+                  )
                 ) : existingCount >=
                   minFiles ? (
                   <span className="text-brass">
@@ -1389,11 +1403,19 @@ export default function HomeworkCard({
                 <div className="mt-3 text-xs">
 
                   {speakingAlreadySubmitted ? (
-                    <span className="text-brass">
-                      ✓ Submitted to your
-                      teacher. You can still
-                      edit and resubmit.
-                    </span>
+                    submittedLate ? (
+                      <span className="text-cyan">
+                        ⏰ Submitted late. You
+                        can still edit and
+                        resubmit.
+                      </span>
+                    ) : (
+                      <span className="text-brass">
+                        ✓ Submitted to your
+                        teacher. You can still
+                        edit and resubmit.
+                      </span>
+                    )
                   ) : allSpeakingPartsRecorded ? (
                     <span className="text-brass">
                       ✓ All three parts are

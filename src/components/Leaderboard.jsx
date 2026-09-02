@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
@@ -110,124 +110,479 @@ export default function Leaderboard({
     return streak
   }
 
+  /*
+   * ============================================================
+   * SHARED "WHAT DID THIS STUDENT ACTUALLY COMPLETE" LOGIC
+   * ============================================================
+   *
+   * This is the ONE place that decides, from a student's raw
+   * homeworks/submissions/completions rows, which homeworks
+   * count as completed, which day each belongs to, and whether
+   * a completion happened after its deadline.
+   *
+   * It used to be duplicated (once for the main leaderboard
+   * list, sourced from a Supabase RPC that isn't visible here,
+   * and once for the "Homework history" popup, computed in the
+   * browser) — the two never had to agree, which is why the
+   * list and the popup could show different numbers for the
+   * exact same student. Every place in this file that needs
+   * completed/total/percentage/streak/day-by-day history now
+   * calls this same function so they can't drift apart again.
+   * ============================================================
+   */
+
+  const computeDailyProgress = (
+    homeworks,
+    submissions,
+    completions
+  ) => {
+    const submissionByHomework = new Map()
+
+    ;(submissions || []).forEach((submission) => {
+      const existing = submissionByHomework.get(
+        submission.homework_id
+      )
+
+      if (
+        !existing ||
+        new Date(submission.submitted_at || 0) >
+          new Date(existing.submitted_at || 0)
+      ) {
+        submissionByHomework.set(
+          submission.homework_id,
+          submission
+        )
+      }
+    })
+
+    const homeworkById = new Map(
+      (homeworks || []).map((homework) => [
+        homework.id,
+        homework,
+      ])
+    )
+
+    const completionByHomework = new Map()
+
+    ;(completions || []).forEach((completion) => {
+      if (!homeworkById.has(completion.homework_id)) return
+
+      const existing = completionByHomework.get(
+        completion.homework_id
+      )
+
+      if (
+        !existing ||
+        new Date(completion.completed_at) <
+          new Date(existing.completed_at)
+      ) {
+        completionByHomework.set(
+          completion.homework_id,
+          completion
+        )
+      }
+    })
+
+    const grouped = {}
+
+    const ensureDay = (dateKey) => {
+      if (!dateKey) return null
+
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = {
+          date: dateKey,
+          tasks: [],
+          completed: 0,
+          total: 0,
+          latestDueDate: null,
+        }
+      }
+
+      return grouped[dateKey]
+    }
+
+    let completedCount = 0
+    let earliestCompletionTime = null
+
+    ;(homeworks || []).forEach((homework) => {
+      const submission = submissionByHomework.get(
+        homework.id
+      )
+
+      const historicalCompletion =
+        completionByHomework.get(homework.id)
+
+      const currentlySubmitted = Boolean(
+        submission?.submitted_at ||
+          submission?.status === 'done' ||
+          submission?.status === 'submitted'
+      )
+
+      const completed = Boolean(
+        historicalCompletion || currentlySubmitted
+      )
+
+      const completedAt =
+        historicalCompletion?.completed_at ||
+        submission?.submitted_at ||
+        null
+
+      const late = Boolean(
+        completed &&
+          completedAt &&
+          homework.due_date &&
+          new Date(completedAt).getTime() >
+            new Date(homework.due_date).getTime()
+      )
+
+      const dateKey = getDateKey(
+        completedAt ||
+          homework.due_date ||
+          homework.created_at
+      )
+
+      const day = ensureDay(dateKey)
+
+      if (day) {
+        if (homework.due_date) {
+          if (
+            !day.latestDueDate ||
+            new Date(homework.due_date) >
+              new Date(day.latestDueDate)
+          ) {
+            day.latestDueDate = homework.due_date
+          }
+        }
+
+        day.total += 1
+
+        if (completed) {
+          day.completed += 1
+        }
+
+        day.tasks.push({
+          id: homework.id,
+          title: homework.title || 'Homework',
+          status: submission?.status || 'not_submitted',
+          completed,
+          late,
+          submittedAt: completedAt,
+          dueDate: homework.due_date || null,
+          historicallyCompleted: Boolean(
+            historicalCompletion
+          ),
+          currentlySubmitted,
+        })
+      }
+
+      if (completed) {
+        completedCount += 1
+
+        if (completedAt) {
+          const time = new Date(completedAt).getTime()
+
+          if (
+            !earliestCompletionTime ||
+            time < earliestCompletionTime
+          ) {
+            earliestCompletionTime = time
+          }
+        }
+      }
+    })
+
+    Object.values(grouped).forEach((day) => {
+      day.tasks.sort((a, b) =>
+        a.title.localeCompare(b.title)
+      )
+    })
+
+    const days = Object.values(grouped)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map((day) => ({
+        ...day,
+        percentage:
+          day.total > 0
+            ? Math.round(
+                (day.completed / day.total) * 100
+              )
+            : 0,
+      }))
+
+    const total = (homeworks || []).length
+
+    const percentage =
+      total > 0
+        ? Math.round((completedCount / total) * 100)
+        : 0
+
+    return {
+      days,
+      completed: completedCount,
+      total,
+      percentage,
+      earliestCompletionTime,
+    }
+  }
+
   const loadLeaderboard = async () => {
     if (!groupId) return
 
     setError('')
 
-    const rpcName =
-      groupId === 'all'
-        ? 'all_students_leaderboard'
-        : 'group_leaderboard'
+    try {
+      /*
+       * ========================================================
+       * 1. ROSTER
+       * ========================================================
+       * For "all students" we also need each student's own
+       * group memberships, so that when we total up their
+       * homeworks below we only count homeworks from groups
+       * they're actually in — not every homework that exists
+       * for every group in the school.
+       * ========================================================
+       */
 
-    const params =
-      groupId === 'all'
-        ? {}
-        : { p_group_id: groupId }
+      let studentRows = []
+      const groupIdsByStudent = new Map()
 
-    const { data, error: rpcError } = await supabase.rpc(
-      rpcName,
-      params
-    )
+      if (groupId === 'all') {
+        const { data: profilesData, error: profilesError } =
+          await supabase
+            .from('profiles')
+            .select(
+              'id, full_name, username, contact_email, status'
+            )
+            .eq('role', 'student')
 
-    if (rpcError) {
-      console.error('Leaderboard error:', rpcError)
-      setError(rpcError.message)
-      return
-    }
+        if (profilesError) throw profilesError
 
-    const initialRows = data || []
+        studentRows = (profilesData || []).map((p) => ({
+          student_id: p.id,
+          full_name: p.full_name,
+          username: p.username,
+          contact_email: p.contact_email,
+          status: p.status,
+        }))
 
-    let completionQuery = supabase
-      .from('homework_completions')
-      .select('student_id, homework_id, completed_at')
+        const { data: memberRows, error: memberError } =
+          await supabase
+            .from('group_members')
+            .select('student_id, group_id')
 
-    if (groupId !== 'all') {
-      const { data: groupHomework } = await supabase
+        if (memberError) throw memberError
+
+        ;(memberRows || []).forEach((row) => {
+          if (!groupIdsByStudent.has(row.student_id)) {
+            groupIdsByStudent.set(
+              row.student_id,
+              new Set()
+            )
+          }
+
+          groupIdsByStudent
+            .get(row.student_id)
+            .add(row.group_id)
+        })
+      } else {
+        const { data: memberRows, error: memberError } =
+          await supabase
+            .from('group_members')
+            .select(
+              'student_id, profiles(id, full_name, username, contact_email, status)'
+            )
+            .eq('group_id', groupId)
+
+        if (memberError) throw memberError
+
+        studentRows = (memberRows || [])
+          .filter((m) => m.profiles)
+          .map((m) => ({
+            student_id: m.student_id,
+            full_name: m.profiles.full_name,
+            username: m.profiles.username,
+            contact_email: m.profiles.contact_email,
+            status: m.profiles.status,
+          }))
+      }
+
+      /*
+       * ========================================================
+       * 2. HOMEWORKS IN SCOPE
+       * ========================================================
+       */
+
+      let homeworkQuery = supabase
         .from('homeworks')
-        .select('id')
-        .eq('group_id', groupId)
+        .select('id, title, due_date, created_at, group_id')
 
-      const homeworkIds = (groupHomework || []).map(
+      if (groupId !== 'all') {
+        homeworkQuery = homeworkQuery.eq(
+          'group_id',
+          groupId
+        )
+      }
+
+      const { data: homeworks, error: homeworksError } =
+        await homeworkQuery
+
+      if (homeworksError) throw homeworksError
+
+      const homeworkIds = (homeworks || []).map(
         (homework) => homework.id
       )
 
-      if (homeworkIds.length === 0) {
-        completionQuery = null
-      } else {
-        completionQuery = completionQuery.in(
-          'homework_id',
-          homeworkIds
+      /*
+       * ========================================================
+       * 3. SUBMISSIONS + COMPLETIONS FOR EVERYONE, ONE SHOT
+       * ========================================================
+       */
+
+      let submissions = []
+      let completions = []
+
+      if (homeworkIds.length) {
+        const { data: subData, error: subError } =
+          await supabase
+            .from('submissions')
+            .select(
+              'student_id, homework_id, status, submitted_at'
+            )
+            .in('homework_id', homeworkIds)
+
+        if (subError) throw subError
+        submissions = subData || []
+
+        const { data: compData, error: compError } =
+          await supabase
+            .from('homework_completions')
+            .select(
+              'student_id, homework_id, completed_at'
+            )
+            .in('homework_id', homeworkIds)
+
+        if (compError) throw compError
+        completions = compData || []
+      }
+
+      const submissionsByStudent = new Map()
+
+      submissions.forEach((submission) => {
+        if (
+          !submissionsByStudent.has(submission.student_id)
+        ) {
+          submissionsByStudent.set(
+            submission.student_id,
+            []
+          )
+        }
+
+        submissionsByStudent
+          .get(submission.student_id)
+          .push(submission)
+      })
+
+      const completionsByStudent = new Map()
+
+      completions.forEach((completion) => {
+        if (
+          !completionsByStudent.has(completion.student_id)
+        ) {
+          completionsByStudent.set(
+            completion.student_id,
+            []
+          )
+        }
+
+        completionsByStudent
+          .get(completion.student_id)
+          .push(completion)
+      })
+
+      /*
+       * ========================================================
+       * 4. COMPUTE EVERY STUDENT'S STATS
+       * ========================================================
+       * Same computeDailyProgress() function the profile popup
+       * uses below, so the list and the popup can never disagree
+       * again.
+       * ========================================================
+       */
+
+      const computedRows = studentRows.map((student) => {
+        const relevantHomeworks =
+          groupId === 'all'
+            ? (homeworks || []).filter((homework) =>
+                groupIdsByStudent
+                  .get(student.student_id)
+                  ?.has(homework.group_id)
+              )
+            : homeworks || []
+
+        const {
+          days,
+          completed,
+          total,
+          percentage,
+          earliestCompletionTime,
+        } = computeDailyProgress(
+          relevantHomeworks,
+          submissionsByStudent.get(
+            student.student_id
+          ) || [],
+          completionsByStudent.get(
+            student.student_id
+          ) || []
         )
-      }
-    }
 
-    let completions = []
+        return {
+          ...student,
+          completed,
+          total,
+          percentage,
+          streak: calculateStreak(days),
+          _earliestCompletionTime: earliestCompletionTime,
+        }
+      })
 
-    if (completionQuery) {
-      const {
-        data: completionData,
-        error: completionError,
-      } = await completionQuery
+      const sortedRows = [...computedRows].sort((a, b) => {
+        if (a.completed !== b.completed) {
+          return b.completed - a.completed
+        }
 
-      if (!completionError) {
-        completions = completionData || []
-      }
-    }
+        if (a.percentage !== b.percentage) {
+          return b.percentage - a.percentage
+        }
 
-    const completionTimes = new Map()
+        const timeA =
+          a._earliestCompletionTime ??
+          Number.MAX_SAFE_INTEGER
 
-    completions.forEach((completion) => {
-      if (!completion.student_id || !completion.completed_at) {
-        return
-      }
+        const timeB =
+          b._earliestCompletionTime ??
+          Number.MAX_SAFE_INTEGER
 
-      const time = new Date(completion.completed_at).getTime()
-      const previous = completionTimes.get(completion.student_id)
+        if (timeA !== timeB) {
+          return timeA - timeB
+        }
 
-      if (!previous || time < previous) {
-        completionTimes.set(completion.student_id, time)
-      }
-    })
+        return String(a.full_name || '').localeCompare(
+          String(b.full_name || '')
+        )
+      })
 
-    const sortedRows = [...initialRows].sort((a, b) => {
-      const completedA = Number(a.completed) || 0
-      const completedB = Number(b.completed) || 0
-
-      if (completedA !== completedB) {
-        return completedB - completedA
-      }
-
-      const percentageA = Number(a.percentage) || 0
-      const percentageB = Number(b.percentage) || 0
-
-      if (percentageA !== percentageB) {
-        return percentageB - percentageA
-      }
-
-      const timeA =
-        completionTimes.get(a.student_id) ??
-        Number.MAX_SAFE_INTEGER
-
-      const timeB =
-        completionTimes.get(b.student_id) ??
-        Number.MAX_SAFE_INTEGER
-
-      if (timeA !== timeB) {
-        return timeA - timeB
-      }
-
-      return String(a.full_name || '').localeCompare(
-        String(b.full_name || '')
+      setRows(
+        sortedRows.map((row, index) => ({
+          ...row,
+          rank: index + 1,
+        }))
       )
-    })
-
-    setRows(
-      sortedRows.map((row, index) => ({
-        ...row,
-        rank: index + 1,
-      }))
-    )
+    } catch (err) {
+      console.error('Leaderboard error:', err)
+      setError(
+        err?.message || 'Failed to load the leaderboard.'
+      )
+    }
   }
 
   useEffect(() => {
@@ -264,12 +619,39 @@ export default function Leaderboard({
         homeworkQuery = homeworkQuery.eq('group_id', groupId)
       }
 
-      const { data: homeworks, error: homeworkError } =
+      const { data: allHomeworks, error: homeworkError } =
         await homeworkQuery.order('created_at', {
           ascending: false,
         })
 
       if (homeworkError) throw homeworkError
+
+      let homeworks = allHomeworks || []
+
+      /*
+       * For "all students", only count homeworks from groups
+       * this specific student actually belongs to — not every
+       * homework that exists across every group.
+       */
+      if (groupId === 'all') {
+        const {
+          data: memberRows,
+          error: memberError,
+        } = await supabase
+          .from('group_members')
+          .select('group_id')
+          .eq('student_id', student.student_id)
+
+        if (memberError) throw memberError
+
+        const studentGroupIds = new Set(
+          (memberRows || []).map((row) => row.group_id)
+        )
+
+        homeworks = homeworks.filter((homework) =>
+          studentGroupIds.has(homework.group_id)
+        )
+      }
 
       let submissionQuery = supabase
         .from('submissions')
@@ -310,156 +692,35 @@ export default function Leaderboard({
 
       if (completionError) throw completionError
 
-      const homeworkById = new Map(
-        (homeworks || []).map((homework) => [
-          homework.id,
-          homework,
-        ])
-      )
-
-      const submissionByHomework = new Map()
-
-      ;(submissions || []).forEach((submission) => {
-        const existing = submissionByHomework.get(
-          submission.homework_id
-        )
-
-        if (
-          !existing ||
-          new Date(submission.submitted_at || 0) >
-            new Date(existing.submitted_at || 0)
-        ) {
-          submissionByHomework.set(
-            submission.homework_id,
-            submission
-          )
-        }
-      })
-
-      const completionByHomework = new Map()
-
-      ;(historicalCompletions || []).forEach((completion) => {
-        if (!homeworkById.has(completion.homework_id)) return
-
-        const existing = completionByHomework.get(
-          completion.homework_id
-        )
-
-        if (
-          !existing ||
-          new Date(completion.completed_at) <
-            new Date(existing.completed_at)
-        ) {
-          completionByHomework.set(
-            completion.homework_id,
-            completion
-          )
-        }
-      })
-
-      const grouped = {}
-
-      const ensureDay = (dateKey) => {
-        if (!dateKey) return null
-
-        if (!grouped[dateKey]) {
-          grouped[dateKey] = {
-            date: dateKey,
-            tasks: [],
-            completed: 0,
-            total: 0,
-            latestDueDate: null,
-          }
-        }
-
-        return grouped[dateKey]
-      }
-
-      ;(homeworks || []).forEach((homework) => {
-        const submission = submissionByHomework.get(
-          homework.id
-        )
-
-        const historicalCompletion =
-          completionByHomework.get(homework.id)
-
-        const currentlySubmitted = Boolean(
-          submission?.submitted_at ||
-            submission?.status === 'done' ||
-            submission?.status === 'submitted'
-        )
-
-        const completed = Boolean(
-          historicalCompletion || currentlySubmitted
-        )
-
-        const completedAt =
-          historicalCompletion?.completed_at ||
-          submission?.submitted_at ||
-          null
-
-        const dateKey = getDateKey(
-          completedAt ||
-            homework.due_date ||
-            homework.created_at
-        )
-
-        const day = ensureDay(dateKey)
-
-        if (!day) return
-
-        if (homework.due_date) {
-          if (
-            !day.latestDueDate ||
-            new Date(homework.due_date) >
-              new Date(day.latestDueDate)
-          ) {
-            day.latestDueDate = homework.due_date
-          }
-        }
-
-        day.total += 1
-
-        if (completed) {
-          day.completed += 1
-        }
-
-        day.tasks.push({
-          id: homework.id,
-          title: homework.title || 'Homework',
-          status: submission?.status || 'not_submitted',
-          completed,
-          submittedAt: completedAt,
-          dueDate: homework.due_date || null,
-          historicallyCompleted: Boolean(
-            historicalCompletion
-          ),
-          currentlySubmitted,
-        })
-      })
-
-      Object.values(grouped).forEach((day) => {
-        day.tasks.sort((a, b) =>
-          a.title.localeCompare(b.title)
-        )
-      })
-
-      const days = Object.values(grouped).sort((a, b) =>
-        b.date.localeCompare(a.date)
+      const {
+        days,
+        completed,
+        total,
+        percentage,
+      } = computeDailyProgress(
+        homeworks,
+        submissions || [],
+        historicalCompletions || []
       )
 
       const streak = calculateStreak(days)
 
-      setDailyProgress(
-        days.map((day) => ({
-          ...day,
-          percentage:
-            day.total > 0
-              ? Math.round(
-                  (day.completed / day.total) * 100
-                )
-              : 0,
-        }))
+      setDailyProgress(days)
+
+      /*
+       * Keep the Rank/Progress/Completed summary box in sync
+       * with the "Homework history" list right below it — both
+       * now come from the exact same calculation.
+       */
+      setSelectedStudent((previous) =>
+        previous
+          ? {
+              ...previous,
+              completed,
+              total,
+              percentage,
+            }
+          : previous
       )
 
       return streak
@@ -619,11 +880,6 @@ export default function Leaderboard({
       setSavingGroup('')
     }
   }
-
-  const selectedStreak = useMemo(
-    () => calculateStreak(dailyProgress),
-    [dailyProgress]
-  )
 
   const closeStudentProfile = () => {
     setSelectedStudent(null)
@@ -827,7 +1083,7 @@ export default function Leaderboard({
                       Streak
                     </div>
                     <div className="mt-1 text-xl font-display text-brass">
-                      🔥 {selectedStudent.streak ?? selectedStreak}
+                      🔥 {selectedStudent.streak ?? 0}
                     </div>
                   </div>
                 </div>
@@ -1030,14 +1286,18 @@ export default function Leaderboard({
 
                                   <span
                                     className={`flex-shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-semibold ${
-                                      task.completed
-                                        ? 'border-sage/50 bg-sage/10 text-sage'
-                                        : 'border-coral/50 bg-coral/10 text-coral'
+                                      !task.completed
+                                        ? 'border-coral/50 bg-coral/10 text-coral'
+                                        : task.late
+                                        ? 'border-cyan/50 bg-cyan/10 text-cyan'
+                                        : 'border-sage/50 bg-sage/10 text-sage'
                                     }`}
                                   >
-                                    {task.completed
-                                      ? 'DONE'
-                                      : 'NOT DONE'}
+                                    {!task.completed
+                                      ? 'NOT DONE'
+                                      : task.late
+                                      ? 'LATE'
+                                      : 'DONE'}
                                   </span>
                                 </div>
                               ))}
