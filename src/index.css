@@ -181,14 +181,27 @@ body {
   font-family: var(--font-mono);
 }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--color-paper);
+/*
+ * In @layer base so it's a DEFAULT, not a mandate — Tailwind's own
+ * utility classes (text-[#...], text-paper, etc.) live in a layer
+ * that comes after "base", so any heading that sets its own color
+ * class properly overrides this fallback. Before this was in a
+ * layer, this rule was unconditionally winning over EVERY heading's
+ * own color, including the login page's headings ("Welcome back.",
+ * "Sign in") — which are deliberately dark navy text, not
+ * theme-reactive — making them render nearly invisible (pale cream,
+ * meant for dark backgrounds) on the login page's light background.
+ */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-paper);
+  }
 }
 
 h1 {
