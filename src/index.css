@@ -1327,6 +1327,24 @@ html:not([data-theme='light']) textarea::placeholder {
   color: var(--color-brass);
 }
 
+.progress-status-late {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--color-cyan) 30%,
+      var(--color-line)
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-cyan) 9%,
+      var(--color-panel)
+    );
+
+  color: var(--color-cyan);
+}
+
 /*
  * StampBadge.jsx (the student's own "Done / Not yet / Incomplete"
  * badge on each homework card) has never had any CSS backing its

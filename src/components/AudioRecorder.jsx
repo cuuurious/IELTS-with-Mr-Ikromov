@@ -480,13 +480,39 @@ export default function AudioRecorder({
           .split('.')
           .pop()
 
-      if (
-        !['mp3', 'wav'].includes(
+      /*
+       * Accept whatever voice-memo format a student's phone
+       * actually produces (iPhone Voice Memos exports .m4a,
+       * many Android/Telegram recorders export .ogg/.amr,
+       * etc.) — not just .mp3/.wav. This is what makes
+       * "upload a file instead of recording live" actually
+       * usable in practice.
+       */
+      const allowedExtensions = [
+        'mp3',
+        'wav',
+        'm4a',
+        'aac',
+        'ogg',
+        'oga',
+        'opus',
+        'weba',
+        'webm',
+        'flac',
+        'wma',
+        'amr',
+        '3gp',
+      ]
+
+      const looksLikeAudio =
+        allowedExtensions.includes(
           extension
-        )
-      ) {
+        ) ||
+        file.type.startsWith('audio/')
+
+      if (!looksLikeAudio) {
         setError(
-          'Please choose an MP3 or WAV file.'
+          'Please choose an audio file (MP3, WAV, M4A, OGG, and most other audio formats are fine).'
         )
         return
       }
@@ -564,8 +590,10 @@ export default function AudioRecorder({
       </div>
 
       <div className="text-xs text-mist">
-        Record directly or upload
-        an MP3/WAV.
+        Record directly, or upload
+        an audio file (MP3, WAV,
+        M4A, OGG, and most other
+        formats work).
       </div>
 
       {/* =====================================================
@@ -683,7 +711,7 @@ export default function AudioRecorder({
           <input
             ref={fileRef}
             type="file"
-            accept=".mp3,.wav,audio/mpeg,audio/wav"
+            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.weba,.webm,.flac,.wma,.amr,.3gp"
             onChange={
               handleUpload
             }
@@ -700,7 +728,7 @@ export default function AudioRecorder({
             }
             className="focus-ring px-3 py-2 rounded-md border border-line text-mist hover:border-brass hover:text-brass text-sm disabled:opacity-40"
           >
-            📎 Upload MP3 / WAV
+            📎 Upload audio file
           </button>
         </>
       )}

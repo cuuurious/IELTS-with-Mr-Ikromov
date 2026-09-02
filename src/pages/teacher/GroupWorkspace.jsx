@@ -1197,26 +1197,34 @@ export default function GroupWorkspace({ teacherId }) {
                                 hw.due_date
                               )
 
-                            // status is 'done' | 'pending' | 'overdue'.
+                            // status is 'done' | 'late' | 'pending' | 'overdue'.
                             // Collapsing this to a plain isDone boolean
                             // used to show every not-yet-due homework as
                             // "INCOMPLETE" the instant it was posted —
                             // it should only read that way once the
                             // deadline has actually passed with nothing
-                            // submitted.
+                            // submitted. "late" (submitted, but after the
+                            // deadline) must be checked before falling
+                            // through to "NOT YET" — otherwise a late
+                            // submission looks identical to no submission
+                            // at all on the teacher's side.
                             const statusLabel =
                               status === 'done'
                                 ? 'DONE'
-                                : status === 'overdue'
-                                  ? 'INCOMPLETE'
-                                  : 'NOT YET'
+                                : status === 'late'
+                                  ? 'LATE'
+                                  : status === 'overdue'
+                                    ? 'INCOMPLETE'
+                                    : 'NOT YET'
 
                             const statusClassName =
                               status === 'done'
                                 ? 'progress-status progress-status-done'
-                                : status === 'overdue'
-                                  ? 'progress-status progress-status-incomplete'
-                                  : 'progress-status progress-status-pending'
+                                : status === 'late'
+                                  ? 'progress-status progress-status-late'
+                                  : status === 'overdue'
+                                    ? 'progress-status progress-status-incomplete'
+                                    : 'progress-status progress-status-pending'
 
                             return (
 
