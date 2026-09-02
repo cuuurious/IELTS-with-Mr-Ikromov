@@ -110,6 +110,69 @@ export default function GroupWorkspace({ teacherId }) {
   }
 
   /* =========================================================
+     DELETE GROUP
+     (permanently deletes the group, every homework in it, the
+     whole group chat, and every member's ENTIRE account —
+     unrecoverable)
+  ========================================================= */
+
+  const deleteGroup = async (group) => {
+    const confirmation = window.prompt(
+      `This PERMANENTLY deletes the group "${group.name}" — every student who is a member (their entire account, even other groups they belong to), every homework, submission and file, and the whole group chat. This cannot be undone.\n\nType DELETE to confirm.`
+    )
+
+    if (confirmation !== 'DELETE') {
+      return
+    }
+
+    setBusyAction(`delete-group-${group.id}`)
+
+    try {
+      const { data, error } =
+        await supabase.functions.invoke(
+          'delete-group',
+          {
+            body: { groupId: group.id },
+          }
+        )
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      const remaining = groups.filter(
+        (g) => g.id !== group.id
+      )
+
+      setGroups(remaining)
+
+      if (activeGroup === group.id) {
+        const nextActive = remaining.length
+          ? remaining[0].id
+          : null
+
+        setActiveGroup(nextActive)
+
+        if (!nextActive) {
+          setRoster([])
+          setHomeworks([])
+          setSubmissions({})
+        }
+      }
+
+      alert(
+        data?.message ||
+          `Group "${group.name}" was deleted.`
+      )
+    } catch (err) {
+      alert(
+        `Couldn't delete this group: ${err.message}`
+      )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  /* =========================================================
      GROUP DATA
   ========================================================= */
 
@@ -530,7 +593,7 @@ export default function GroupWorkspace({ teacherId }) {
   ========================================================= */
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
 
       {/* =====================================================
           EMPTY STATE
@@ -570,18 +633,18 @@ export default function GroupWorkspace({ teacherId }) {
               HERO
           ================================================= */}
 
-          <section className="relative overflow-hidden rounded-[28px] border border-line bg-panel">
+          <section className="relative overflow-hidden rounded-2xl border border-line bg-panel">
 
-            <div className="absolute -right-24 -top-28 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-            <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" />
+            <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
+            <div className="absolute -bottom-14 left-1/3 h-32 w-32 rounded-full bg-cyan-300/10 blur-3xl" />
 
-            <div className="relative px-7 py-9 sm:px-11 sm:py-11">
+            <div className="relative px-5 py-4 sm:px-7 sm:py-5">
 
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
 
-                  <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5">
+                  <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1">
 
                     <span className="h-1.5 w-1.5 rounded-full bg-accent" />
 
@@ -591,35 +654,31 @@ export default function GroupWorkspace({ teacherId }) {
 
                   </div>
 
-                  <h1 className="mt-5 truncate font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
+                  <h1 className="truncate font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
                     {activeGroupObj?.name || 'Group'}
                   </h1>
 
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-mist sm:text-base">
-                    Manage assignments and monitor your students' submissions.
-                  </p>
-
                 </div>
 
-                <div className="flex items-center gap-5">
+                <div className="flex shrink-0 items-center gap-4">
 
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-mist">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-mist">
                       Students
                     </div>
 
-                    <div className="mt-1 font-display text-3xl text-paper">
+                    <div className="mt-0.5 font-display text-lg text-paper">
                       {roster.length}
                     </div>
                   </div>
 
-                  <div className="h-16 min-w-16 rounded-2xl border border-accent/25 bg-accent/10 px-4 flex flex-col items-center justify-center">
+                  <div className="h-10 min-w-12 rounded-xl border border-accent/25 bg-accent/10 px-3 flex flex-col items-center justify-center">
 
-                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-mist">
+                    <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-mist">
                       Tasks
                     </span>
 
-                    <span className="mt-1 font-display text-xl leading-none text-accent">
+                    <span className="font-display text-sm leading-none text-accent">
                       {homeworks.length}
                     </span>
 
@@ -695,7 +754,7 @@ export default function GroupWorkspace({ teacherId }) {
                         onClick={() =>
                           startRename(group)
                         }
-                        className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg text-xs transition ${
+                        className={`focus-ring flex h-7 w-7 items-center justify-center rounded-lg text-xs transition ${
                           activeGroup === group.id
                             ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
                             : 'text-mist hover:bg-panel-2 hover:text-accent'
@@ -704,6 +763,41 @@ export default function GroupWorkspace({ teacherId }) {
                         aria-label="Rename group"
                       >
                         ✎
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteGroup(group)
+                        }
+                        disabled={
+                          busyAction ===
+                          `delete-group-${group.id}`
+                        }
+                        className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40 ${
+                          activeGroup === group.id
+                            ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
+                            : 'text-mist hover:bg-coral/10 hover:text-coral'
+                        }`}
+                        title="Delete group permanently"
+                        aria-label="Delete group permanently"
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
                       </button>
 
                     </div>
@@ -777,7 +871,7 @@ export default function GroupWorkspace({ teacherId }) {
                   Assignments
                 </div>
 
-                <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-paper sm:text-4xl">
+                <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl">
                   Student progress
                 </h2>
 
@@ -796,7 +890,7 @@ export default function GroupWorkspace({ teacherId }) {
             ================================================= */}
 
             {roster.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-line bg-panel p-3 sm:p-4">
+              <div className="mt-3 rounded-2xl border border-line bg-panel p-3 sm:p-4">
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 
@@ -899,7 +993,7 @@ export default function GroupWorkspace({ teacherId }) {
             ================================================= */}
 
             {homeworks.length > 0 && filteredRoster.length > 0 && (
-              <div className="progress-table-shell">
+              <div className="mt-4 progress-table-shell">
 
                 <div className="progress-table-scroll">
 
@@ -935,7 +1029,10 @@ export default function GroupWorkspace({ teacherId }) {
 
                             <div className="progress-homework-heading">
 
-                              <span className="progress-homework-title">
+                              <span
+                                className="progress-homework-title"
+                                title={hw.title}
+                              >
                                 {hw.title}
                               </span>
 
