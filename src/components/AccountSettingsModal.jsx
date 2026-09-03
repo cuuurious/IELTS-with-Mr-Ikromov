@@ -357,8 +357,10 @@ const deleteAccount = async () => {
           </h2>
 
           <button
+            type="button"
             onClick={onClose}
-            className="focus-ring text-mist hover:text-paper text-xl leading-none"
+            aria-label="Close"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
           >
             ×
           </button>

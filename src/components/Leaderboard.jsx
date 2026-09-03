@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
+import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
 
 export default function Leaderboard({
   groupId,
@@ -351,7 +352,7 @@ export default function Leaderboard({
           await supabase
             .from('profiles')
             .select(
-              'id, full_name, username, contact_email, status'
+              'id, full_name, username, contact_email, status, target_band'
             )
             .eq('role', 'student')
 
@@ -363,6 +364,7 @@ export default function Leaderboard({
           username: p.username,
           contact_email: p.contact_email,
           status: p.status,
+          target_band: p.target_band,
         }))
 
         const { data: memberRows, error: memberError } =
@@ -389,7 +391,7 @@ export default function Leaderboard({
           await supabase
             .from('group_members')
             .select(
-              'student_id, profiles(id, full_name, username, contact_email, status)'
+              'student_id, profiles(id, full_name, username, contact_email, status, target_band)'
             )
             .eq('group_id', groupId)
 
@@ -403,6 +405,7 @@ export default function Leaderboard({
             username: m.profiles.username,
             contact_email: m.profiles.contact_email,
             status: m.profiles.status,
+            target_band: m.profiles.target_band,
           }))
       }
 
@@ -978,7 +981,7 @@ export default function Leaderboard({
               />
             </div>
 
-            <div className="text-mist text-xs font-mono mt-1 flex gap-3">
+            <div className="text-mist text-xs font-mono mt-1 flex gap-3 flex-wrap">
               <span>
                 {student.completed}/{student.total} tasks
               </span>
@@ -987,6 +990,13 @@ export default function Leaderboard({
                 <span>
                   🔥 {student.streak}{' '}
                   {student.streak === 1 ? 'day' : 'days'} in a row
+                </span>
+              )}
+
+              {isTeacher && student.target_band != null && (
+                <span className="text-brass">
+                  {getTargetBandInfo(student.target_band).emoji}{' '}
+                  Target {formatTargetBand(student.target_band)}
                 </span>
               )}
             </div>
@@ -1132,6 +1142,23 @@ export default function Leaderboard({
                     </span>
                     {selectedStudent.status || 'approved'}
                   </div>
+
+                  {isTeacher &&
+                    selectedStudent.target_band != null && (
+                      <div className="rounded-lg border border-brass/40 bg-brass/10 px-3 py-2 text-sm text-brass">
+                        <span>
+                          {
+                            getTargetBandInfo(
+                              selectedStudent.target_band
+                            ).emoji
+                          }{' '}
+                          Target{' '}
+                          {formatTargetBand(
+                            selectedStudent.target_band
+                          )}
+                        </span>
+                      </div>
+                    )}
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 
 export default function TeacherStudents() {
   const [students, setStudents] = useState([])
@@ -43,7 +44,7 @@ export default function TeacherStudents() {
         supabase
           .from('profiles')
           .select(
-            'id, full_name, username, contact_email, role, status, created_at'
+            'id, full_name, username, contact_email, role, status, created_at, target_band'
           )
           .eq('role', 'student')
           .order('full_name', { ascending: true }),
@@ -667,17 +668,32 @@ export default function TeacherStudents() {
 
                   </div>
 
-                  <span
-                    className={`text-xs px-2 py-1 rounded-md ${
-                      student.status === 'approved'
-                        ? 'bg-sage text-onbrass'
-                        : student.status === 'pending'
-                        ? 'border border-brass text-brass'
-                        : 'border border-coral text-coral'
-                    }`}
-                  >
-                    {student.status}
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+
+                    {student.target_band != null && (
+                      <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-brass/40 bg-brass/10 text-brass">
+                        <span>
+                          {getTargetBandInfo(student.target_band).emoji}
+                        </span>
+                        <span>
+                          Target {formatTargetBand(student.target_band)}
+                        </span>
+                      </span>
+                    )}
+
+                    <span
+                      className={`text-xs px-2 py-1 rounded-md ${
+                        student.status === 'approved'
+                          ? 'bg-sage text-onbrass'
+                          : student.status === 'pending'
+                          ? 'border border-brass text-brass'
+                          : 'border border-coral text-coral'
+                      }`}
+                    >
+                      {student.status}
+                    </span>
+
+                  </div>
 
                 </div>
 
@@ -864,6 +880,35 @@ export default function TeacherStudents() {
                     {selectedStudent.status}
                   </div>
                 </div>
+
+                {selectedStudent.target_band != null && (
+                  <div>
+                    <span className="text-mist">
+                      Target band
+                    </span>
+
+                    <div className="mt-1 flex items-center gap-1.5 text-brass font-medium">
+                      <span>
+                        {
+                          getTargetBandInfo(
+                            selectedStudent.target_band
+                          ).emoji
+                        }
+                      </span>
+                      <span>
+                        {formatTargetBand(
+                          selectedStudent.target_band
+                        )}{' '}
+                        —{' '}
+                        {
+                          getTargetBandInfo(
+                            selectedStudent.target_band
+                          ).label
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <span className="text-mist">
