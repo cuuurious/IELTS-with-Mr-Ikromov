@@ -36,7 +36,7 @@ export default function AiFeedbackCard({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-line bg-panel-2 px-4 py-4 text-sm text-mist">
+        <div className="rounded-2xl border border-line bg-panel-2 px-4 py-4 text-sm text-paper-dim">
           🤖 The AI is reading this submission now — this usually takes
           under a minute.
         </div>
@@ -139,7 +139,7 @@ export default function AiFeedbackCard({
                 </div>
 
                 {criterion.comment && (
-                  <p className="mt-1 text-xs text-mist leading-5">
+                  <p className="mt-1 text-xs text-paper-dim leading-5">
                     {criterion.comment}
                   </p>
                 )}
