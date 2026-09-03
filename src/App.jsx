@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import LoadingScreen from './components/LoadingScreen'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
@@ -12,11 +13,7 @@ function Gate() {
   const { session, profile, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-ink flex items-center justify-center text-mist font-mono">
-        Loading…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!session) {

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 
 import Layout from '../../components/Layout'
+import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
 import GroupChat from '../../components/GroupChat'
 import Leaderboard from '../../components/Leaderboard'
@@ -227,49 +228,6 @@ const [loading, setLoading] =
     activeGroup,
     profile?.id,
   ])
-
-  /*
-   * ============================================================
-   * REALTIME: AI GRADING RESULTS
-   * ============================================================
-   * The ai-grading Edge Function writes ai_status/ai_result onto a
-   * submission a little while after it's sent (it's an API call, not
-   * instant) — this is what makes that result appear on its own,
-   * without the student needing to refresh, same as chat messages.
-   */
-
-  useEffect(() => {
-    if (!activeGroup || !profile?.id) return
-
-    const channel = supabase
-      .channel(
-        `student-submissions-${profile.id}-${activeGroup}`
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'submissions',
-          filter: `student_id=eq.${profile.id}`,
-        },
-        (payload) => {
-          const submission = payload.new
-
-          if (submission.group_id !== activeGroup) return
-
-          setSubmissions((prev) => ({
-            ...prev,
-            [submission.homework_id]: submission,
-          }))
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [activeGroup, profile?.id])
 
   /*
  * ============================================================
@@ -995,9 +953,7 @@ const studentId =
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ink flex items-center justify-center text-mist">
-        Loading…
-      </div>
+      <LoadingScreen label="Loading your dashboard…" />
     )
   }
 
