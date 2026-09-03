@@ -205,7 +205,12 @@ function bytesToBase64(bytes) {
   return btoa(binary)
 }
 
-function buildWritingPrompt(criteriaText, comment) {
+function buildWritingPrompt(criteriaText, comment, files = []) {
+  const submissionNote =
+    files.length > 0
+      ? "The student's essay is attached below — either as photos/screenshots (read in order, some may be handwritten; do your best with unclear handwriting rather than refusing to grade) or as an uploaded document file (e.g. Word, PDF, or text). Read whichever form is present."
+      : "The attached images are photos or screenshots of the student's actual essay, in reading order. Some may be handwritten — read carefully and do your best with unclear handwriting rather than refusing to grade."
+
   return [
     "You are an experienced IELTS examiner grading a student's written submission.",
     '',
@@ -215,7 +220,7 @@ function buildWritingPrompt(criteriaText, comment) {
     criteriaText,
     '=== END OF GRADING CRITERIA ===',
     '',
-    "The attached images are photos or screenshots of the student's actual essay, in reading order. Some may be handwritten — read carefully and do your best with unclear handwriting rather than refusing to grade.",
+    submissionNote,
     comment ? `\nThe student added this note for their teacher: "${comment}"` : '',
     '',
     'Give specific, constructive feedback a real examiner would write — reference actual sentences or issues where useful, not generic advice.',
@@ -524,14 +529,20 @@ Deno.serve(async (req) => {
           result = parseJsonLoose(extractOutputText(evaluation))
         } else {
           const images = submission.screenshot_urls || []
+          const files = (submission.submission_files || []).filter(
+            (f) => f?.url
+          )
 
-          if (!images.length) {
-            throw new Error('No images were submitted to evaluate.')
+          if (!images.length && !files.length) {
+            throw new Error(
+              'No essay photos or files were submitted to evaluate.'
+            )
           }
 
           const promptText = buildWritingPrompt(
             criteriaText,
-            submission.comment
+            submission.comment,
+            files
           )
 
           const content = [
@@ -540,6 +551,15 @@ Deno.serve(async (req) => {
               type: 'input_image',
               image_url: url,
               detail: 'high',
+            })),
+            // A student can submit the essay as an uploaded document
+            // (docx, pdf, txt, ...) instead of, or alongside, photos.
+            // OpenAI fetches the file itself from this public Supabase
+            // Storage URL and extracts its text — no need to download
+            // or base64-encode it ourselves.
+            ...files.map((f) => ({
+              type: 'input_file',
+              file_url: f.url,
             })),
           ]
 
