@@ -2,12 +2,14 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ProfileModal from './ProfileModal'
 import MessageActionMenu from './MessageActionMenu'
+import ReactionPicker from './ReactionPicker'
 import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
 
 const MENU_WIDTH = 212
+const PICKER_WIDTH = 46 * 6 // matches ReactionPicker's ~6 emoji buttons
 
 // "Today" / "Yesterday" / a short date — the little centered pill
 // Telegram shows whenever the conversation crosses into a new day.
@@ -76,6 +78,12 @@ export default function Chat({
   // clipped by the chat panel around it.
   const [menuMessage, setMenuMessage] = useState(null)
   const [menuPosition, setMenuPosition] = useState(null)
+
+  // Same idea, for the "+" reaction picker — one shared floating
+  // popup instead of a native <details> per message, so it can
+  // actually be told to close (see ReactionPicker.jsx).
+  const [pickerMessage, setPickerMessage] = useState(null)
+  const [pickerPosition, setPickerPosition] = useState(null)
 
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -978,6 +986,31 @@ export default function Chat({
     setMenuPosition(null)
   }
 
+  const openReactionPicker = (e, message) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - PICKER_WIDTH - 8
+    )
+
+    const top = Math.min(
+      rect.top - 54,
+      window.innerHeight - 60
+    )
+
+    setPickerMessage(message)
+    setPickerPosition({
+      top: Math.max(8, top),
+      left: Math.max(8, left),
+    })
+  }
+
+  const closeReactionPicker = () => {
+    setPickerMessage(null)
+    setPickerPosition(null)
+  }
+
   /*
    * ============================================================
    * MULTI-SELECT DELETE
@@ -1006,6 +1039,180 @@ export default function Chat({
   const cancelSelecting = () => {
     setSelectMode(false)
     setSelectedIds(new Set())
+  }
+
+  /*
+   * ============================================================
+   * SWIPE TO REPLY + LONG-PRESS TO SELECT
+   * (Telegram-style: drag a bubble sideways to reply to it,
+   * long-press on touch — or right-click on desktop — to jump
+   * straight into select mode instead of going through the "⋯"
+   * menu first.)
+   * ============================================================
+   */
+
+  const SWIPE_THRESHOLD = 56
+  const SWIPE_MAX = 80
+  const LONG_PRESS_MS = 450
+  const MOVE_CANCEL_PX = 10
+
+  const gestureRef = useRef({
+    id: null,
+    startX: 0,
+    startY: 0,
+    dx: 0,
+    active: false,
+    longPressTimer: null,
+    longPressFired: false,
+  })
+
+  const [swipeVisual, setSwipeVisual] = useState({
+    id: null,
+    dx: 0,
+  })
+
+  const clearLongPressTimer = () => {
+    if (gestureRef.current.longPressTimer) {
+      clearTimeout(gestureRef.current.longPressTimer)
+      gestureRef.current.longPressTimer = null
+    }
+  }
+
+  const handleBubblePointerDown = (e, message) => {
+    if (selectMode) return
+    if (editingId === message.id) return
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+
+    // Don't hijack drags/holds that start on a real control inside
+    // the bubble (the edit "Save" button, video/audio player
+    // controls, etc.) — only the bubble's own background should
+    // start a swipe or long-press.
+    if (
+      e.target.closest(
+        'button, input, textarea, video, audio, a'
+      )
+    ) {
+      return
+    }
+
+    // Keep receiving pointermove/up even if a fast drag carries the
+    // cursor outside this (possibly narrow) bubble — otherwise a
+    // quick swipe on a short message can get cut off early.
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Pointer capture isn't available for this pointer — the
+      // gesture still works, it's just less forgiving on fast drags.
+    }
+
+    gestureRef.current = {
+      id: message.id,
+      startX: e.clientX,
+      startY: e.clientY,
+      dx: 0,
+      active: true,
+      longPressTimer: null,
+      longPressFired: false,
+    }
+
+    if (e.pointerType !== 'mouse') {
+      gestureRef.current.longPressTimer = setTimeout(() => {
+        const g = gestureRef.current
+
+        if (g.id === message.id && g.active) {
+          g.longPressFired = true
+          g.active = false
+
+          if (navigator.vibrate) navigator.vibrate(12)
+
+          startSelecting(message.id)
+          setSwipeVisual({ id: null, dx: 0 })
+        }
+      }, LONG_PRESS_MS)
+    }
+  }
+
+  const handleBubblePointerMove = (e, message) => {
+    const g = gestureRef.current
+
+    if (!g.active || g.id !== message.id) return
+
+    const rawDx = e.clientX - g.startX
+    const dy = e.clientY - g.startY
+
+    if (
+      g.longPressTimer &&
+      (Math.abs(rawDx) > MOVE_CANCEL_PX ||
+        Math.abs(dy) > MOVE_CANCEL_PX)
+    ) {
+      clearLongPressTimer()
+    }
+
+    // Only treat this as a horizontal swipe once it's clearly more
+    // sideways than vertical, so scrolling the message list still
+    // works normally on touch screens.
+    if (Math.abs(rawDx) <= Math.abs(dy)) return
+
+    const dx = Math.max(
+      -SWIPE_MAX,
+      Math.min(SWIPE_MAX, rawDx)
+    )
+    g.dx = dx
+    setSwipeVisual({ id: message.id, dx })
+  }
+
+  const endBubbleGesture = (message, commit) => {
+    const g = gestureRef.current
+
+    clearLongPressTimer()
+
+    const wasActive = g.id === message.id
+    const dx = g.dx
+    const longPressFired = g.longPressFired
+
+    gestureRef.current = {
+      id: null,
+      startX: 0,
+      startY: 0,
+      dx: 0,
+      active: false,
+      longPressTimer: null,
+      longPressFired: false,
+    }
+
+    if (!wasActive || longPressFired) return
+
+    if (commit && Math.abs(dx) >= SWIPE_THRESHOLD) {
+      setReplyingTo(message)
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
+
+    setSwipeVisual({ id: message.id, dx: 0 })
+    setTimeout(() => {
+      setSwipeVisual((prev) =>
+        prev.id === message.id
+          ? { id: null, dx: 0 }
+          : prev
+      )
+    }, 160)
+  }
+
+  const handleBubblePointerUp = (e, message) =>
+    endBubbleGesture(message, true)
+
+  const handleBubblePointerCancel = (e, message) =>
+    endBubbleGesture(message, false)
+
+  const handleBubbleContextMenu = (e, message) => {
+    if (selectMode) return
+    if (editingId === message.id) return
+
+    // Let a real right-click on a video/audio control (e.g. "Save
+    // video as…") through instead of hijacking it.
+    if (e.target.closest('video, audio')) return
+
+    e.preventDefault()
+    startSelecting(message.id)
   }
 
   const bulkDeleteForMe = async () => {
@@ -1077,22 +1284,39 @@ export default function Chat({
     cancelSelecting()
   }
 
+  // Only one reaction per person per message, like Telegram — picking
+  // a new emoji swaps out whichever one you already had, rather than
+  // stacking up multiple reactions from the same person. mine below
+  // covers every reaction this user has on this message, not just a
+  // same-emoji match, so a leftover second reaction from before this
+  // rule existed also gets cleaned up the next time they react here.
   const toggleReaction = async (message, reaction) => {
-    const existing = (reactions[message.id] || []).find(
-      (item) =>
-        item.user_id === selfId && item.reaction === reaction
+    const mine = (reactions[message.id] || []).filter(
+      (item) => item.user_id === selfId
     )
 
-    if (existing) {
+    const existingSame = mine.find(
+      (item) => item.reaction === reaction
+    )
+
+    if (mine.length) {
       const { error: reactionError } = await supabase
         .from('message_reactions')
         .delete()
-        .eq('id', existing.id)
+        .in(
+          'id',
+          mine.map((item) => item.id)
+        )
 
       if (reactionError) {
         setError(reactionError.message)
       }
+    }
 
+    // Clicking the reaction you already had just removes it (that's
+    // the "take it back" case) — anything else replaces it with the
+    // new one.
+    if (existingSame) {
       return
     }
 
@@ -1119,6 +1343,16 @@ export default function Chat({
       (item) =>
         item.user_id === selfId && item.reaction === reaction
     )
+
+  // Only two people can ever react in a private chat, so this doesn't
+  // need a name lookup — just tell "you" apart from the other person.
+  const reactedByLabel = (messageId, reaction) =>
+    (reactions[messageId] || [])
+      .filter((item) => item.reaction === reaction)
+      .map((item) =>
+        item.user_id === selfId ? 'You' : peerName || 'They'
+      )
+      .join(', ')
 
   const getReply = (message) => {
     if (!message.reply_to_id) return null
@@ -1332,6 +1566,17 @@ export default function Chat({
         />
       )}
 
+      {pickerMessage && (
+        <ReactionPicker
+          position={pickerPosition}
+          reactions={REACTIONS}
+          onClose={closeReactionPicker}
+          onPick={(reaction) =>
+            toggleReaction(pickerMessage, reaction)
+          }
+        />
+      )}
+
       {/* PINNED MESSAGE */}
 
       {pins.length > 0 && (() => {
@@ -1487,12 +1732,76 @@ export default function Chat({
                 }`}
               >
                 <div
-                  className={`px-3 py-2 rounded-lg text-sm ${
+                  onPointerDown={
+                    selectMode
+                      ? undefined
+                      : (e) => handleBubblePointerDown(e, m)
+                  }
+                  onPointerMove={
+                    selectMode
+                      ? undefined
+                      : (e) => handleBubblePointerMove(e, m)
+                  }
+                  onPointerUp={
+                    selectMode
+                      ? undefined
+                      : (e) => handleBubblePointerUp(e, m)
+                  }
+                  onPointerCancel={
+                    selectMode
+                      ? undefined
+                      : (e) =>
+                          handleBubblePointerCancel(e, m)
+                  }
+                  onContextMenu={(e) =>
+                    handleBubbleContextMenu(e, m)
+                  }
+                  style={{
+                    touchAction: 'pan-y',
+                    transform:
+                      swipeVisual.id === m.id
+                        ? `translateX(${swipeVisual.dx}px)`
+                        : undefined,
+                    transition:
+                      swipeVisual.id === m.id &&
+                      gestureRef.current.active
+                        ? 'none'
+                        : 'transform 160ms ease',
+                  }}
+                  className={`relative select-none px-3 py-2 rounded-lg text-sm ${
                     mine
                       ? 'bg-brass text-onbrass'
                       : 'bg-panel-2 text-paper'
                   }`}
                 >
+
+                  {swipeVisual.id === m.id &&
+                    swipeVisual.dx !== 0 && (
+                      <span
+                        className="absolute top-1/2 text-brass text-base pointer-events-none"
+                        style={{
+                          [swipeVisual.dx > 0
+                            ? 'left'
+                            : 'right']: -26,
+                          opacity: Math.min(
+                            1,
+                            Math.abs(swipeVisual.dx) /
+                              SWIPE_THRESHOLD
+                          ),
+                          transform: `translateY(-50%) scale(${
+                            0.6 +
+                            0.4 *
+                              Math.min(
+                                1,
+                                Math.abs(swipeVisual.dx) /
+                                  SWIPE_THRESHOLD
+                              )
+                          })`,
+                        }}
+                      >
+                        ↩
+                      </span>
+                    )}
 
                   {reply && (
                     <div
@@ -1600,6 +1909,7 @@ export default function Chat({
                       <button
                         key={reaction}
                         type="button"
+                        title={reactedByLabel(m.id, reaction)}
                         onClick={() =>
                           toggleReaction(m, reaction)
                         }
@@ -1614,26 +1924,14 @@ export default function Chat({
                     )
                   })}
 
-                  <details className="relative">
-                    <summary className="list-none cursor-pointer text-xs text-mist hover:text-brass px-1">
-                      +
-                    </summary>
-
-                    <div className="absolute bottom-5 left-0 z-30 bg-panel border border-line rounded-lg shadow-xl p-1 flex gap-1">
-                      {REACTIONS.map((reaction) => (
-                        <button
-                          key={reaction}
-                          type="button"
-                          onClick={() =>
-                            toggleReaction(m, reaction)
-                          }
-                          className="w-8 h-8 rounded-md hover:bg-panel-2"
-                        >
-                          {reaction}
-                        </button>
-                      ))}
-                    </div>
-                  </details>
+                  <button
+                    type="button"
+                    onClick={(e) => openReactionPicker(e, m)}
+                    className="focus-ring text-xs text-mist hover:text-brass px-1"
+                    aria-label="Add reaction"
+                  >
+                    +
+                  </button>
 
                   <button
                     type="button"

@@ -352,7 +352,7 @@ export default function Leaderboard({
           await supabase
             .from('profiles')
             .select(
-              'id, full_name, username, contact_email, status, target_band'
+              'id, full_name, username, contact_email, status, target_band, avatar_url'
             )
             .eq('role', 'student')
 
@@ -365,6 +365,7 @@ export default function Leaderboard({
           contact_email: p.contact_email,
           status: p.status,
           target_band: p.target_band,
+          avatar_url: p.avatar_url,
         }))
 
         const { data: memberRows, error: memberError } =
@@ -391,7 +392,7 @@ export default function Leaderboard({
           await supabase
             .from('group_members')
             .select(
-              'student_id, profiles(id, full_name, username, contact_email, status, target_band)'
+              'student_id, profiles(id, full_name, username, contact_email, status, target_band, avatar_url)'
             )
             .eq('group_id', groupId)
 
@@ -406,6 +407,7 @@ export default function Leaderboard({
             contact_email: m.profiles.contact_email,
             status: m.profiles.status,
             target_band: m.profiles.target_band,
+            avatar_url: m.profiles.avatar_url,
           }))
       }
 
@@ -944,11 +946,24 @@ export default function Leaderboard({
           }`}
         >
           <div
-            className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
+            className={`relative flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
               student.rank
             )}`}
           >
-            {student.rank}
+            {student.avatar_url ? (
+              <>
+                <img
+                  src={student.avatar_url}
+                  alt=""
+                  className="absolute inset-0 h-full w-full rounded-full object-cover"
+                />
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-panel bg-brass text-[9px] font-bold leading-none text-onbrass">
+                  {student.rank}
+                </span>
+              </>
+            ) : (
+              student.rank
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -1029,11 +1044,24 @@ export default function Leaderboard({
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border-2 font-display font-bold ${rankStyle(
+                        className={`relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border-2 font-display font-bold ${rankStyle(
                           selectedStudent.rank
                         )}`}
                       >
-                        {selectedStudent.rank}
+                        {selectedStudent.avatar_url ? (
+                          <>
+                            <img
+                              src={selectedStudent.avatar_url}
+                              alt=""
+                              className="absolute inset-0 h-full w-full rounded-full object-cover"
+                            />
+                            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-panel bg-brass text-[10px] font-bold leading-none text-onbrass">
+                              {selectedStudent.rank}
+                            </span>
+                          </>
+                        ) : (
+                          selectedStudent.rank
+                        )}
                       </div>
 
                       <div className="min-w-0">
