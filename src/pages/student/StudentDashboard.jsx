@@ -229,6 +229,49 @@ const [loading, setLoading] =
   ])
 
   /*
+   * ============================================================
+   * REALTIME: AI GRADING RESULTS
+   * ============================================================
+   * The ai-grading Edge Function writes ai_status/ai_result onto a
+   * submission a little while after it's sent (it's an API call, not
+   * instant) — this is what makes that result appear on its own,
+   * without the student needing to refresh, same as chat messages.
+   */
+
+  useEffect(() => {
+    if (!activeGroup || !profile?.id) return
+
+    const channel = supabase
+      .channel(
+        `student-submissions-${profile.id}-${activeGroup}`
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'submissions',
+          filter: `student_id=eq.${profile.id}`,
+        },
+        (payload) => {
+          const submission = payload.new
+
+          if (submission.group_id !== activeGroup) return
+
+          setSubmissions((prev) => ({
+            ...prev,
+            [submission.homework_id]: submission,
+          }))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [activeGroup, profile?.id])
+
+  /*
  * ============================================================
  * LOAD PRIVATE CHAT CONTACTS
  * ============================================================

@@ -14,6 +14,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [description, setDescription] = useState(homework.description || '')
   const [dueDate, setDueDate] = useState(toLocalInputValue(homework.due_date))
   const [enableSpeaking, setEnableSpeaking] = useState(homework.enable_speaking)
+  const [aiEvalEnabled, setAiEvalEnabled] = useState(homework.ai_eval_enabled ?? false)
   const [allowedTypes, setAllowedTypes] = useState(homework.allowed_submission_types?.length ? homework.allowed_submission_types : ['image'])
   const [minFiles, setMinFiles] = useState(homework.min_submission_files ?? 1)
   const [maxFiles, setMaxFiles] = useState(homework.max_submission_files ?? 10)
@@ -39,6 +40,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       description,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       enable_speaking: enableSpeaking,
+      ai_eval_enabled: aiEvalEnabled,
       allowed_submission_types: allowedTypes,
       min_submission_files: minFiles,
       max_submission_files: maxFiles,
@@ -62,6 +64,10 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm" />
           <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer"><input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} /> Include speaking recording</label>
         </div>
+        <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer">
+          <input type="checkbox" checked={aiEvalEnabled} onChange={(e) => setAiEvalEnabled(e.target.checked)} />
+          <span>Evaluate submissions with AI<span className="block text-xs text-mist font-normal mt-0.5">Graded automatically against your uploaded {enableSpeaking ? 'Speaking' : 'Writing'} criteria.</span></span>
+        </label>
         <div className="bg-panel-2 border border-line rounded-lg p-3">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div><div className="text-sm font-medium">Student upload rules</div><div className="text-xs text-mist">Allowed types and total file/picture count.</div></div>

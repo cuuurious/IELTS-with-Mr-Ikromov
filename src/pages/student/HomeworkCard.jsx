@@ -11,6 +11,24 @@ import StampBadge, {
   getSubmissionStatus,
   isLateSubmission,
 } from '../../components/StampBadge'
+import AiFeedbackCard from '../../components/AiFeedbackCard'
+
+// Fire-and-forget: asks the ai-grading Edge Function to evaluate a
+// just-submitted homework. Silently does nothing if the homework
+// doesn't have AI grading turned on — the function itself checks that
+// too, but skipping the network call here avoids the wasted request
+// on every ordinary homework.
+const requestAiEvaluation = (submissionId, homework) => {
+  if (!homework?.ai_eval_enabled || !submissionId) return
+
+  supabase.functions
+    .invoke('ai-grading', {
+      body: { action: 'evaluate', submissionId },
+    })
+    .catch((err) => {
+      console.error('AI evaluation request failed:', err)
+    })
+}
 
 const PARTS = [
   {
@@ -665,7 +683,7 @@ export default function HomeworkCard({
         /*
          * First save the actual submission.
          */
-        await upsertSubmission({
+        const saved = await upsertSubmission({
           status: 'done',
           submitted_at:
             new Date().toISOString(),
@@ -677,6 +695,8 @@ export default function HomeworkCard({
          * This is what the group leaderboard uses.
          */
         await markHomeworkCompleted()
+
+        requestAiEvaluation(saved?.id, homework)
       } catch (err) {
         console.error(
           'Homework submission error:',
@@ -880,7 +900,7 @@ export default function HomeworkCard({
         /*
          * First save the Speaking submission as DONE.
          */
-        await upsertSubmission({
+        const saved = await upsertSubmission({
           audio_part1_url:
             speakingParts.audio_part1_url,
           audio_part2_url:
@@ -898,6 +918,8 @@ export default function HomeworkCard({
          * This fixes the leaderboard counting issue.
          */
         await markHomeworkCompleted()
+
+        requestAiEvaluation(saved?.id, homework)
       } catch (err) {
         console.error(
           'Speaking task submission error:',
@@ -1497,6 +1519,12 @@ export default function HomeworkCard({
 
             </div>
           )}
+
+          {/* =================================================
+              AI EVALUATION
+          ================================================= */}
+
+          <AiFeedbackCard submission={submission} />
 
           {/* =================================================
               COMMENT

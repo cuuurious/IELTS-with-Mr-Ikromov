@@ -243,6 +243,53 @@ export default function GroupWorkspace({ teacherId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup])
 
+  /*
+   * ============================================================
+   * REALTIME: AI GRADING RESULTS
+   * ============================================================
+   * The ai-grading Edge Function writes ai_status/ai_result onto a
+   * submission a little while after it's sent — this is what makes
+   * that result (and a "Re-run AI" click) appear here on its own,
+   * including inside an already-open submission panel, without
+   * needing to close and reopen it.
+   */
+
+  useEffect(() => {
+    if (!activeGroup) return
+
+    const channel = supabase
+      .channel(`teacher-submissions-${activeGroup}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'submissions',
+          filter: `group_id=eq.${activeGroup}`,
+        },
+        (payload) => {
+          const submission = payload.new
+          const key = `${submission.homework_id}_${submission.student_id}`
+
+          setSubmissions((prev) => ({
+            ...prev,
+            [key]: submission,
+          }))
+
+          setViewing((prev) =>
+            prev && prev.submission?.id === submission.id
+              ? { ...prev, submission }
+              : prev
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [activeGroup])
+
   /* =========================================================
      REMOVE STUDENT FROM GROUP
   ========================================================= */

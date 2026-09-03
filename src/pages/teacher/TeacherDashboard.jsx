@@ -9,6 +9,7 @@ import TeacherChat from './TeacherChat'
 import TeacherGroupChats from './TeacherGroupChats'
 import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
+import AiGradingSettings from './AiGradingSettings'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -192,6 +193,10 @@ export default function TeacherDashboard() {
       label: 'Leaderboards',
     },
     {
+      key: 'ai-grading',
+      label: 'AI Grading',
+    },
+    {
       key: 'approvals',
       label: `Approvals${
         pendingCount
@@ -245,6 +250,12 @@ export default function TeacherDashboard() {
 
       {tab === 'leaderboards' && (
         <TeacherLeaderboards />
+      )}
+
+      {tab === 'ai-grading' && (
+        <AiGradingSettings
+          teacherId={profile.id}
+        />
       )}
 
       {tab === 'approvals' && (

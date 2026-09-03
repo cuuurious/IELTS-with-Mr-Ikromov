@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { supabase } from '../../lib/supabaseClient'
+import AiFeedbackCard from '../../components/AiFeedbackCard'
 
 export default function SubmissionPanel({
   studentName,
@@ -6,6 +9,28 @@ export default function SubmissionPanel({
   submission,
   onClose,
 }) {
+  const [reEvaluating, setReEvaluating] = useState(false)
+
+  const reEvaluate = async () => {
+    if (!submission?.id || reEvaluating) return
+
+    setReEvaluating(true)
+
+    try {
+      const { error } = await supabase.functions.invoke('ai-grading', {
+        body: { action: 'evaluate', submissionId: submission.id },
+      })
+
+      if (error) throw error
+      // The result lands via realtime a few seconds later — see
+      // GroupWorkspace.jsx's submissions subscription.
+    } catch (err) {
+      console.error('Re-run AI evaluation failed:', err)
+    } finally {
+      setReEvaluating(false)
+    }
+  }
+
   const modal = (
     <div
       className="fixed inset-0 z-[99999] flex h-screen w-screen items-center justify-center bg-black/60 p-4 sm:p-6"
@@ -145,6 +170,15 @@ export default function SubmissionPanel({
                   </div>
                 </section>
               ) : null
+            )}
+
+            {/* AI EVALUATION */}
+            {submission && (
+              <AiFeedbackCard
+                submission={submission}
+                onReEvaluate={reEvaluate}
+                reEvaluating={reEvaluating}
+              />
             )}
 
             {/* COMMENT */}

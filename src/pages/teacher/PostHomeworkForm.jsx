@@ -11,6 +11,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [enableSpeaking, setEnableSpeaking] = useState(false)
+  const [aiEvalEnabled, setAiEvalEnabled] = useState(false)
   const [allowedTypes, setAllowedTypes] = useState(DEFAULT_TYPES)
   const [minFiles, setMinFiles] = useState(1)
   const [maxFiles, setMaxFiles] = useState(10)
@@ -54,6 +55,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           description,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
           enable_speaking: enableSpeaking,
+          ai_eval_enabled: aiEvalEnabled,
           allowed_submission_types: allowedTypes,
           min_submission_files: minFiles,
           max_submission_files: maxFiles,
@@ -70,6 +72,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       setDescription('')
       setDueDate('')
       setEnableSpeaking(false)
+      setAiEvalEnabled(false)
       setAllowedTypes(DEFAULT_TYPES)
       setMinFiles(1)
       setMaxFiles(10)
@@ -105,6 +108,14 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           Include speaking Part 1 / 2 / 3
         </label>
       </div>
+
+      <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer">
+        <input type="checkbox" checked={aiEvalEnabled} onChange={(e) => setAiEvalEnabled(e.target.checked)} />
+        <span>
+          Evaluate submissions with AI
+          <span className="block text-xs text-mist font-normal mt-0.5">Students get a band score and feedback automatically when they submit, graded against your uploaded {enableSpeaking ? 'Speaking' : 'Writing'} criteria (set up under the "AI Grading" tab).</span>
+        </span>
+      </label>
 
       <div className="bg-panel-2 border border-line rounded-lg p-3">
         <div className="flex items-center justify-between gap-3 mb-2">
