@@ -165,7 +165,7 @@ export default function Chats({
       } = await supabase
         .from('profiles')
         .select(
-          'id, full_name, username, role, status'
+          'id, full_name, username, role, status, avatar_url'
         )
         .in(
           'id',
@@ -383,15 +383,27 @@ export default function Chats({
                     >
                       <div className="flex items-center gap-3">
 
-                        <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
-                          {String(
-                            person.full_name ||
+                        {person.avatar_url ? (
+                          <img
+                            src={person.avatar_url}
+                            alt={
+                              person.full_name ||
                               person.username ||
-                              '?'
-                          )
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                              'Profile photo'
+                            }
+                            className="w-10 h-10 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
+                            {String(
+                              person.full_name ||
+                                person.username ||
+                                '?'
+                            )
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+                        )}
 
                         <div className="min-w-0">
 

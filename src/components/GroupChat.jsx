@@ -1,10 +1,43 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ProfileModal from './ProfileModal'
+import MessageActionMenu from './MessageActionMenu'
+import VoiceBubble from './VoiceBubble'
+import VideoNoteBubble from './VideoNoteBubble'
 
 const MAX_FILE_MB = 25
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
+
+const MENU_WIDTH = 212
+
+// "Today" / "Yesterday" / a short date — the little centered pill
+// Telegram shows whenever the conversation crosses into a new day.
+function formatDateDivider(value) {
+  const date = new Date(value)
+  const now = new Date()
+
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const startOfDate = new Date(date)
+  startOfDate.setHours(0, 0, 0, 0)
+
+  const dayDiff = Math.round(
+    (startOfToday - startOfDate) / 86400000
+  )
+
+  if (dayDiff === 0) return 'Today'
+  if (dayDiff === 1) return 'Yesterday'
+
+  const sameYear = date.getFullYear() === now.getFullYear()
+
+  return date.toLocaleDateString([], {
+    month: 'long',
+    day: 'numeric',
+    year: sameYear ? undefined : 'numeric',
+  })
+}
 
 // Distinct, deterministic name/avatar color per sender — same idea as
 // Telegram's per-member colors in a group, so members are easy to
@@ -61,6 +94,13 @@ export default function GroupChat({
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
 
+  // The single floating "⋯" menu — which message it's for (null when
+  // closed) and where on screen to draw it. Fixed-position and drawn
+  // once here rather than once per message, so it can never be
+  // clipped by the chat panel around it.
+  const [menuMessage, setMenuMessage] = useState(null)
+  const [menuPosition, setMenuPosition] = useState(null)
+
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -76,6 +116,7 @@ export default function GroupChat({
   const [editingText, setEditingText] = useState('')
 
   const [recording, setRecording] = useState(false)
+  const [recordingKind, setRecordingKind] = useState('audio')
   const [recordSeconds, setRecordSeconds] = useState(0)
   const [recordedBlob, setRecordedBlob] = useState(null)
 
@@ -680,7 +721,7 @@ export default function GroupChat({
     await uploadFile(file, mediaType)
   }
 
-  const startRecording = async () => {
+  const startRecording = async (kind = 'audio') => {
     setError('')
 
     try {
@@ -689,14 +730,28 @@ export default function GroupChat({
         !navigator.mediaDevices.getUserMedia
       ) {
         throw new Error(
-          'Voice recording is not supported by this browser.'
+          `${
+            kind === 'video' ? 'Video' : 'Voice'
+          } recording is not supported by this browser.`
         )
       }
 
+      const constraints =
+        kind === 'video'
+          ? {
+              audio: true,
+              video: {
+                facingMode: 'user',
+                width: { ideal: 480 },
+                height: { ideal: 480 },
+              },
+            }
+          : { audio: true }
+
       const stream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        })
+        await navigator.mediaDevices.getUserMedia(
+          constraints
+        )
 
       streamRef.current = stream
 
@@ -717,7 +772,9 @@ export default function GroupChat({
           {
             type:
               recorder.mimeType ||
-              'audio/webm',
+              (kind === 'video'
+                ? 'video/webm'
+                : 'audio/webm'),
           }
         )
 
@@ -733,6 +790,7 @@ export default function GroupChat({
       recorder.start()
 
       setRecording(true)
+      setRecordingKind(kind)
       setRecordSeconds(0)
 
       timerRef.current =
@@ -768,17 +826,19 @@ export default function GroupChat({
   const sendRecording = async () => {
     if (!recordedBlob) return
 
+    const isVideo = recordingKind === 'video'
+
     const file = new File(
       [recordedBlob],
-      'voice-message.webm',
+      `${isVideo ? 'video-note' : 'voice-message'}.webm`,
       {
         type:
           recordedBlob.type ||
-          'audio/webm',
+          (isVideo ? 'video/webm' : 'audio/webm'),
       }
     )
 
-    await uploadFile(file, 'audio')
+    await uploadFile(file, isVideo ? 'video_note' : 'audio')
 
     setRecordedBlob(null)
     setRecordSeconds(0)
@@ -901,6 +961,37 @@ export default function GroupChat({
     } catch (err) {
       console.error('Copy failed:', err)
     }
+  }
+
+  /*
+   * ============================================================
+   * "⋯" MESSAGE MENU
+   * ============================================================
+   * One floating menu, positioned from wherever the "⋯" that opened
+   * it actually sits on screen — see MessageActionMenu.jsx for why
+   * this replaced the old per-message dropdown.
+   */
+
+  const openMessageMenu = (e, message) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - MENU_WIDTH - 8
+    )
+
+    const top = Math.min(
+      rect.bottom + 6,
+      window.innerHeight - 260
+    )
+
+    setMenuMessage(message)
+    setMenuPosition({ top: Math.max(8, top), left: Math.max(8, left) })
+  }
+
+  const closeMessageMenu = () => {
+    setMenuMessage(null)
+    setMenuPosition(null)
   }
 
   /*
@@ -1158,6 +1249,78 @@ export default function GroupChat({
         onClose={() => setViewingProfileId(null)}
       />
 
+      {menuMessage && (
+        <MessageActionMenu
+          position={menuPosition}
+          onClose={closeMessageMenu}
+          items={[
+            ...(Boolean(menuMessage.content)
+              ? [
+                  {
+                    key: 'copy',
+                    icon: '📋',
+                    label: 'Copy text',
+                    onClick: () => copyMessageText(menuMessage),
+                  },
+                ]
+              : []),
+            ...(selfRole === 'teacher'
+              ? [
+                  {
+                    key: 'pin',
+                    icon: '📌',
+                    label: isPinned(menuMessage.id)
+                      ? 'Unpin'
+                      : 'Pin message',
+                    onClick: () =>
+                      isPinned(menuMessage.id)
+                        ? unpinMessage(menuMessage.id)
+                        : pinMessage(menuMessage),
+                  },
+                ]
+              : []),
+            ...(menuMessage.sender_id === selfId &&
+            Boolean(menuMessage.content)
+              ? [
+                  {
+                    key: 'edit',
+                    icon: '✏️',
+                    label: 'Edit',
+                    onClick: () => startEdit(menuMessage),
+                  },
+                ]
+              : []),
+            {
+              key: 'select',
+              icon: '☑️',
+              label: 'Select',
+              onClick: () => startSelecting(menuMessage.id),
+            },
+            ...(canDeleteEveryone(menuMessage)
+              ? [
+                  {
+                    key: 'delete-everyone',
+                    icon: '🗑️',
+                    label: 'Delete for everyone',
+                    danger: true,
+                    divider: true,
+                    onClick: () =>
+                      deleteForEveryone(menuMessage),
+                  },
+                ]
+              : []),
+            {
+              key: 'delete-me',
+              icon: '🗑️',
+              label: 'Delete for me',
+              danger: true,
+              divider: !canDeleteEveryone(menuMessage),
+              onClick: () => deleteForMe(menuMessage),
+            },
+          ]}
+        />
+      )}
+
       <div className="px-4 py-3 border-b border-line bg-panel-2/70 flex items-center justify-between">
 
         <div>
@@ -1322,8 +1485,15 @@ export default function GroupChat({
 
             const prev = visible[index - 1]
 
+            const dateChanged =
+              index === 0 ||
+              !prev ||
+              new Date(prev.created_at).toDateString() !==
+                new Date(message.created_at).toDateString()
+
             const groupedWithPrev = Boolean(
-              prev &&
+              !dateChanged &&
+                prev &&
                 prev.sender_id === message.sender_id &&
                 new Date(message.created_at) -
                   new Date(prev.created_at) <
@@ -1341,32 +1511,41 @@ export default function GroupChat({
             const selected = selectedIds.has(message.id)
 
             return (
-              <div
-                key={message.id}
-                id={`group-message-${message.id}`}
-                onClick={
-                  selectMode
-                    ? () => toggleSelected(message.id)
-                    : undefined
-                }
-                className={`flex items-end gap-2 ${
-                  selectMode ? 'cursor-pointer' : ''
-                } ${
-                  !selectMode && mine
-                    ? 'justify-end'
-                    : 'justify-start'
-                } ${
-                  index === 0
-                    ? ''
-                    : groupedWithPrev
-                    ? 'mt-1'
-                    : 'mt-3'
-                } ${
-                  isHighlighted
-                    ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
-                    : ''
-                } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
-              >
+              <Fragment key={message.id}>
+
+                {dateChanged && (
+                  <div className="flex justify-center my-3">
+                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-panel-2 text-mist border border-line">
+                      {formatDateDivider(message.created_at)}
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  id={`group-message-${message.id}`}
+                  onClick={
+                    selectMode
+                      ? () => toggleSelected(message.id)
+                      : undefined
+                  }
+                  className={`flex items-end gap-2 ${
+                    selectMode ? 'cursor-pointer' : ''
+                  } ${
+                    !selectMode && mine
+                      ? 'justify-end'
+                      : 'justify-start'
+                  } ${
+                    index === 0 || dateChanged
+                      ? ''
+                      : groupedWithPrev
+                      ? 'mt-1'
+                      : 'mt-3'
+                  } ${
+                    isHighlighted
+                      ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
+                      : ''
+                  } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
+                >
 
                 {selectMode && (
                   <input
@@ -1482,89 +1661,14 @@ export default function GroupChat({
                       )}
                     </span>
 
-                    <details className="relative leading-none ml-auto">
-                      <summary className="list-none cursor-pointer px-1 text-mist hover:text-brass">
-                        ⋯
-                      </summary>
-
-                      <div
-                        className={`absolute top-full mt-1 z-30 min-w-[160px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
-                          mine ? 'right-0' : 'left-0'
-                        }`}
-                      >
-                        {Boolean(message.content) && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              copyMessageText(message)
-                            }
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                          >
-                            Copy text
-                          </button>
-                        )}
-
-                        {selfRole === 'teacher' && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              messagePinned
-                                ? unpinMessage(message.id)
-                                : pinMessage(message)
-                            }
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                          >
-                            {messagePinned
-                              ? 'Unpin'
-                              : 'Pin message'}
-                          </button>
-                        )}
-
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              startEdit(message)
-                            }
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                          >
-                            Edit
-                          </button>
-                        )}
-
-                        {messageCanDeleteEveryone && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              deleteForEveryone(message)
-                            }
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                          >
-                            Delete for everyone
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            deleteForMe(message)
-                          }
-                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                        >
-                          Delete for me
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            startSelecting(message.id)
-                          }
-                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper border-t border-line"
-                        >
-                          Select
-                        </button>
-                      </div>
-                    </details>
+                    <button
+                      type="button"
+                      onClick={(e) => openMessageMenu(e, message)}
+                      className="ml-auto px-1 leading-none text-mist hover:text-brass"
+                      aria-label="Message options"
+                    >
+                      ⋯
+                    </button>
 
                   </div>
 
@@ -1621,11 +1725,15 @@ export default function GroupChat({
                     )}
 
                     {message.media_type ===
+                      'video_note' && (
+                      <VideoNoteBubble src={message.media_url} />
+                    )}
+
+                    {message.media_type ===
                       'audio' && (
-                      <audio
+                      <VoiceBubble
                         src={message.media_url}
-                        controls
-                        className="max-w-full"
+                        tone={mine ? 'mine' : 'theirs'}
                       />
                     )}
 
@@ -1787,7 +1895,8 @@ export default function GroupChat({
 
                 </div>
 
-              </div>
+                </div>
+              </Fragment>
             )
           })}
 
@@ -1910,13 +2019,21 @@ export default function GroupChat({
       {recordedBlob && (
         <div className="px-3 py-2 border-t border-line flex items-center gap-2">
 
-          <audio
-            controls
-            src={URL.createObjectURL(
-              recordedBlob
-            )}
-            className="flex-1"
-          />
+          {recordingKind === 'video' ? (
+            <video
+              controls
+              src={URL.createObjectURL(recordedBlob)}
+              className="h-24 rounded-lg"
+            />
+          ) : (
+            <audio
+              controls
+              src={URL.createObjectURL(
+                recordedBlob
+              )}
+              className="flex-1"
+            />
+          )}
 
           <button
             type="button"
@@ -1949,7 +2066,7 @@ export default function GroupChat({
 
           <span className="w-2 h-2 rounded-full bg-coral animate-pulse" />
 
-          Recording{' '}
+          {recordingKind === 'video' ? '📹' : '🎤'} Recording{' '}
           {formatSeconds(
             recordSeconds
           )}
@@ -2038,14 +2155,22 @@ export default function GroupChat({
 
           <button
             type="button"
-            onClick={
-              startRecording
-            }
+            onClick={() => startRecording('audio')}
             disabled={uploading}
             title="Record voice message"
             className="focus-ring w-10 h-10 rounded-lg border border-line text-mist hover:text-brass hover:border-brass disabled:opacity-40"
           >
             🎤
+          </button>
+
+          <button
+            type="button"
+            onClick={() => startRecording('video')}
+            disabled={uploading}
+            title="Record video message"
+            className="focus-ring w-10 h-10 rounded-lg border border-line text-mist hover:text-brass hover:border-brass disabled:opacity-40"
+          >
+            📹
           </button>
 
           <input

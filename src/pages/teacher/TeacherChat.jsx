@@ -147,7 +147,7 @@ export default function TeacherChat({
           await supabase
             .from('profiles')
             .select(
-              'id, full_name, username, contact_email'
+              'id, full_name, username, contact_email, avatar_url'
             )
             .in('id', peerIds)
 
@@ -371,15 +371,27 @@ export default function TeacherChat({
                 >
                   <div className="flex items-center gap-3">
 
-                    <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
-                      {String(
-                        student.full_name ||
+                    {student.avatar_url ? (
+                      <img
+                        src={student.avatar_url}
+                        alt={
+                          student.full_name ||
                           student.username ||
-                          '?'
-                      )
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
+                          'Student'
+                        }
+                        className="w-10 h-10 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
+                        {String(
+                          student.full_name ||
+                            student.username ||
+                            '?'
+                        )
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                    )}
 
                     <div className="min-w-0 flex-1">
 

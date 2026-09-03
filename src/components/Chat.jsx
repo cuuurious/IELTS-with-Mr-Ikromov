@@ -1,8 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ProfileModal from './ProfileModal'
+import MessageActionMenu from './MessageActionMenu'
+import VoiceBubble from './VoiceBubble'
+import VideoNoteBubble from './VideoNoteBubble'
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
+
+const MENU_WIDTH = 212
+
+// "Today" / "Yesterday" / a short date — the little centered pill
+// Telegram shows whenever the conversation crosses into a new day.
+function formatDateDivider(value) {
+  const date = new Date(value)
+  const now = new Date()
+
+  const startOfToday = new Date(now)
+  startOfToday.setHours(0, 0, 0, 0)
+
+  const startOfDate = new Date(date)
+  startOfDate.setHours(0, 0, 0, 0)
+
+  const dayDiff = Math.round(
+    (startOfToday - startOfDate) / 86400000
+  )
+
+  if (dayDiff === 0) return 'Today'
+  if (dayDiff === 1) return 'Yesterday'
+
+  const sameYear = date.getFullYear() === now.getFullYear()
+
+  return date.toLocaleDateString([], {
+    month: 'long',
+    day: 'numeric',
+    year: sameYear ? undefined : 'numeric',
+  })
+}
 
 export default function Chat({
   selfId,
@@ -37,10 +70,18 @@ export default function Chat({
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
 
+  // The single floating "⋯" menu — which message it's for (null when
+  // closed) and where on screen to draw it. Fixed-position and drawn
+  // once here rather than once per message, so it can never be
+  // clipped by the chat panel around it.
+  const [menuMessage, setMenuMessage] = useState(null)
+  const [menuPosition, setMenuPosition] = useState(null)
+
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [recording, setRecording] = useState(false)
+  const [recordingKind, setRecordingKind] = useState(null)
   const [error, setError] = useState('')
 
   const [replyingTo, setReplyingTo] = useState(null)
@@ -106,6 +147,7 @@ export default function Chat({
 
     if (parsed.type === 'image') return '📷 Photo'
     if (parsed.type === 'video') return '🎥 Video'
+    if (parsed.type === 'video_note') return '📹 Video message'
     if (parsed.type === 'audio') return '🎤 Voice message'
     if (parsed.type === 'file') {
       return `📎 ${parsed.name || 'File'}`
@@ -530,8 +572,10 @@ export default function Chat({
     setSending(false)
   }
 
-  const uploadChatFile = async (file) => {
+  const uploadChatFile = async (file, options = {}) => {
     if (!file || !peerId) return
+
+    const { asVideoNote = false } = options
 
     setUploading(true)
     setError('')
@@ -579,7 +623,7 @@ export default function Chat({
       if (file.type.startsWith('image/')) {
         type = 'image'
       } else if (file.type.startsWith('video/')) {
-        type = 'video'
+        type = asVideoNote ? 'video_note' : 'video'
       } else if (file.type.startsWith('audio/')) {
         type = 'audio'
       }
@@ -628,7 +672,7 @@ export default function Chat({
     await uploadChatFile(file)
   }
 
-  const startRecording = async () => {
+  const startRecording = async (kind = 'audio') => {
     if (recording || uploading) return
 
     setError('')
@@ -636,14 +680,28 @@ export default function Chat({
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error(
-          'Voice recording is not supported by this browser.'
+          `${
+            kind === 'video' ? 'Video' : 'Voice'
+          } recording is not supported by this browser.`
         )
       }
 
+      const constraints =
+        kind === 'video'
+          ? {
+              audio: true,
+              video: {
+                facingMode: 'user',
+                width: { ideal: 480 },
+                height: { ideal: 480 },
+              },
+            }
+          : { audio: true }
+
       const stream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        })
+        await navigator.mediaDevices.getUserMedia(
+          constraints
+        )
 
       const recorder = new MediaRecorder(stream)
 
@@ -660,19 +718,26 @@ export default function Chat({
           track.stop()
         })
 
+        const fallbackType =
+          kind === 'video' ? 'video/webm' : 'audio/webm'
+
         const blob = new Blob(audioChunksRef.current, {
-          type: recorder.mimeType || 'audio/webm',
+          type: recorder.mimeType || fallbackType,
         })
 
         const file = new File(
           [blob],
-          `voice-${Date.now()}.webm`,
+          `${
+            kind === 'video' ? 'video-note' : 'voice'
+          }-${Date.now()}.webm`,
           {
-            type: recorder.mimeType || 'audio/webm',
+            type: recorder.mimeType || fallbackType,
           }
         )
 
-        await uploadChatFile(file)
+        await uploadChatFile(file, {
+          asVideoNote: kind === 'video',
+        })
       }
 
       mediaRecorderRef.current = recorder
@@ -680,12 +745,17 @@ export default function Chat({
       recorder.start()
 
       setRecording(true)
+      setRecordingKind(kind)
     } catch (err) {
       console.error(err)
       setError(
-        err.message || 'Could not start voice recording.'
+        err.message ||
+          `Could not start ${
+            kind === 'video' ? 'video' : 'voice'
+          } recording.`
       )
       setRecording(false)
+      setRecordingKind(null)
     }
   }
 
@@ -700,6 +770,7 @@ export default function Chat({
 
     mediaRecorderRef.current = null
     setRecording(false)
+    setRecordingKind(null)
   }
 
   /*
@@ -878,6 +949,37 @@ export default function Chat({
 
   /*
    * ============================================================
+   * "⋯" MESSAGE MENU
+   * ============================================================
+   * One floating menu, positioned from wherever the "⋯" that opened
+   * it actually sits on screen — see MessageActionMenu.jsx for why
+   * this replaced the old per-message dropdown.
+   */
+
+  const openMessageMenu = (e, message) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+
+    const left = Math.min(
+      rect.left,
+      window.innerWidth - MENU_WIDTH - 8
+    )
+
+    const top = Math.min(
+      rect.bottom + 6,
+      window.innerHeight - 260
+    )
+
+    setMenuMessage(message)
+    setMenuPosition({ top: Math.max(8, top), left: Math.max(8, left) })
+  }
+
+  const closeMessageMenu = () => {
+    setMenuMessage(null)
+    setMenuPosition(null)
+  }
+
+  /*
+   * ============================================================
    * MULTI-SELECT DELETE
    * ============================================================
    */
@@ -1032,8 +1134,12 @@ export default function Chat({
    * ============================================================
    */
 
-  const renderMessage = (message) => {
+  const renderMessage = (message, mine) => {
     const parsed = parseMessage(message.content)
+
+    if (parsed.type === 'video_note') {
+      return <VideoNoteBubble src={parsed.url} />
+    }
 
     if (parsed.type === 'image') {
       return (
@@ -1065,17 +1171,10 @@ export default function Chat({
 
     if (parsed.type === 'audio') {
       return (
-        <div className="min-w-[220px]">
-          <div className="text-xs font-mono mb-2 opacity-70">
-            🎤 Voice message
-          </div>
-
-          <audio
-            controls
-            src={parsed.url}
-            className="w-full"
-          />
-        </div>
+        <VoiceBubble
+          src={parsed.url}
+          tone={mine ? 'mine' : 'theirs'}
+        />
       )
     }
 
@@ -1166,6 +1265,73 @@ export default function Chat({
         onClose={() => setViewingProfileId(null)}
       />
 
+      {menuMessage && (
+        <MessageActionMenu
+          position={menuPosition}
+          onClose={closeMessageMenu}
+          items={[
+            ...(parseMessage(menuMessage.content).type === 'text'
+              ? [
+                  {
+                    key: 'copy',
+                    icon: '📋',
+                    label: 'Copy text',
+                    onClick: () => copyMessageText(menuMessage),
+                  },
+                ]
+              : []),
+            {
+              key: 'pin',
+              icon: '📌',
+              label: isPinned(menuMessage.id)
+                ? 'Unpin'
+                : 'Pin message',
+              onClick: () =>
+                isPinned(menuMessage.id)
+                  ? unpinMessage(menuMessage.id)
+                  : pinMessage(menuMessage),
+            },
+            ...(canEdit(menuMessage)
+              ? [
+                  {
+                    key: 'edit',
+                    icon: '✏️',
+                    label: 'Edit',
+                    onClick: () => startEdit(menuMessage),
+                  },
+                ]
+              : []),
+            {
+              key: 'select',
+              icon: '☑️',
+              label: 'Select',
+              onClick: () => startSelecting(menuMessage.id),
+            },
+            ...(canDeleteEveryone(menuMessage)
+              ? [
+                  {
+                    key: 'delete-everyone',
+                    icon: '🗑️',
+                    label: 'Delete for everyone',
+                    danger: true,
+                    divider: true,
+                    onClick: () =>
+                      deleteForEveryone(menuMessage),
+                  },
+                ]
+              : []),
+            {
+              key: 'delete-me',
+              icon: '🗑️',
+              label: 'Delete for me',
+              danger: true,
+              divider: !canDeleteEveryone(menuMessage),
+              onClick: () => deleteForMe(menuMessage),
+            },
+          ]}
+        />
+      )}
+
       {/* PINNED MESSAGE */}
 
       {pins.length > 0 && (() => {
@@ -1248,8 +1414,16 @@ export default function Chat({
             String(highlightedMessageId) === String(m.id)
 
           const prev = visible[index - 1]
+
+          const dateChanged =
+            index === 0 ||
+            !prev ||
+            new Date(prev.created_at).toDateString() !==
+              new Date(m.created_at).toDateString()
+
           const groupedWithPrev = Boolean(
-            prev &&
+            !dateChanged &&
+              prev &&
               prev.sender_id === m.sender_id &&
               new Date(m.created_at) -
                 new Date(prev.created_at) <
@@ -1259,32 +1433,41 @@ export default function Chat({
           const selected = selectedIds.has(m.id)
 
           return (
-            <div
-              key={m.id}
-              id={`private-message-${m.id}`}
-              onClick={
-                selectMode
-                  ? () => toggleSelected(m.id)
-                  : undefined
-              }
-              className={`flex items-end gap-2 ${
-                selectMode ? 'cursor-pointer' : ''
-              } ${
-                !selectMode && mine
-                  ? 'justify-end'
-                  : 'justify-start'
-              } ${
-                index === 0
-                  ? ''
-                  : groupedWithPrev
-                  ? 'mt-1'
-                  : 'mt-3'
-              } ${
-                isHighlighted
-                  ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
-                  : ''
-              } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
-            >
+            <Fragment key={m.id}>
+
+              {dateChanged && (
+                <div className="flex justify-center my-3">
+                  <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-panel-2 text-mist border border-line">
+                    {formatDateDivider(m.created_at)}
+                  </span>
+                </div>
+              )}
+
+              <div
+                id={`private-message-${m.id}`}
+                onClick={
+                  selectMode
+                    ? () => toggleSelected(m.id)
+                    : undefined
+                }
+                className={`flex items-end gap-2 ${
+                  selectMode ? 'cursor-pointer' : ''
+                } ${
+                  !selectMode && mine
+                    ? 'justify-end'
+                    : 'justify-start'
+                } ${
+                  index === 0 || dateChanged
+                    ? ''
+                    : groupedWithPrev
+                    ? 'mt-1'
+                    : 'mt-3'
+                } ${
+                  isHighlighted
+                    ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
+                    : ''
+                } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
+              >
 
               {selectMode && (
                 <input
@@ -1361,7 +1544,7 @@ export default function Chat({
                       </button>
                     </div>
                   ) : (
-                    renderMessage(m)
+                    renderMessage(m, mine)
                   )}
 
                 </div>
@@ -1386,78 +1569,20 @@ export default function Chat({
                     </span>
                   )}
 
-                  <details className="relative leading-none">
-                    <summary className="list-none cursor-pointer px-1 hover:text-brass">
-                      ⋯
-                    </summary>
+                  {messagePinned && (
+                    <span className="text-brass" title="Pinned">
+                      📌
+                    </span>
+                  )}
 
-                    <div
-                      className={`absolute top-full mt-1 z-30 min-w-[160px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
-                        mine ? 'right-0' : 'left-0'
-                      }`}
-                    >
-                      {parseMessage(m.content).type ===
-                        'text' && (
-                        <button
-                          type="button"
-                          onClick={() => copyMessageText(m)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                        >
-                          Copy text
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          messagePinned
-                            ? unpinMessage(m.id)
-                            : pinMessage(m)
-                        }
-                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                      >
-                        {messagePinned
-                          ? 'Unpin'
-                          : 'Pin message'}
-                      </button>
-
-                      {messageCanEdit && (
-                        <button
-                          type="button"
-                          onClick={() => startEdit(m)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                        >
-                          Edit
-                        </button>
-                      )}
-
-                      {messageCanDeleteEveryone && (
-                        <button
-                          type="button"
-                          onClick={() => deleteForEveryone(m)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                        >
-                          Delete for everyone
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => deleteForMe(m)}
-                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                      >
-                        Delete for me
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => startSelecting(m.id)}
-                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper border-t border-line"
-                      >
-                        Select
-                      </button>
-                    </div>
-                  </details>
+                  <button
+                    type="button"
+                    onClick={(e) => openMessageMenu(e, m)}
+                    className="px-1 leading-none hover:text-brass"
+                    aria-label="Message options"
+                  >
+                    ⋯
+                  </button>
 
                 </div>
 
@@ -1521,7 +1646,8 @@ export default function Chat({
                 </div>
 
               </div>
-            </div>
+              </div>
+            </Fragment>
           )
         })}
 
@@ -1642,19 +1768,32 @@ export default function Chat({
           📎
         </button>
 
-        {/* VOICE */}
+        {/* VOICE / VIDEO */}
 
         {!recording ? (
-          <button
-            type="button"
-            onClick={startRecording}
-            disabled={uploading}
-            className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
-            title="Record voice message"
-            aria-label="Record voice message"
-          >
-            🎤
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => startRecording('audio')}
+              disabled={uploading}
+              className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
+              title="Record voice message"
+              aria-label="Record voice message"
+            >
+              🎤
+            </button>
+
+            <button
+              type="button"
+              onClick={() => startRecording('video')}
+              disabled={uploading}
+              className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
+              title="Record video message"
+              aria-label="Record video message"
+            >
+              📹
+            </button>
+          </>
         ) : (
           <button
             type="button"
@@ -1673,7 +1812,9 @@ export default function Chat({
           onChange={(e) => setText(e.target.value)}
           placeholder={
             recording
-              ? 'Recording voice message…'
+              ? recordingKind === 'video'
+                ? 'Recording video message…'
+                : 'Recording voice message…'
               : 'Type a message…'
           }
           disabled={recording || uploading}
