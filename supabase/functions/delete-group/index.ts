@@ -10,9 +10,13 @@ const corsHeaders = {
 
 /*
  * Deletes a whole group, permanently:
- *   - every student who is a member of the group has their ENTIRE
- *     account deleted (all groups, submissions, chats, everywhere —
- *     not just this group)
+ *   - a student who is ONLY a member of this group (no other group)
+ *     has their ENTIRE account deleted (all submissions, chats,
+ *     everywhere)
+ *   - a student who ALSO belongs to at least one other group KEEPS
+ *     their account — they're just removed from this group, along
+ *     with this group's homeworks/submissions/completions (their
+ *     other group's data is untouched)
  *   - every homework posted to the group, its submissions, and its
  *     uploaded files
  *   - every group chat message and its attachments
@@ -474,12 +478,14 @@ Deno.serve(async (req) => {
 
     /*
      * ------------------------------------------------------------
-     * DELETE EVERY STUDENT IN THE GROUP
+     * FIGURE OUT WHICH STUDENTS ACTUALLY LOSE THEIR ACCOUNT
      * ------------------------------------------------------------
      *
-     * Deleting each student's auth account cascades to their
-     * profile, memberships in every group (not just this one),
-     * submissions, word list attempts, and chat messages.
+     * A student who is ALSO a member of some other group must keep
+     * their account — they just lose this group (and this group's
+     * homeworks/submissions/completions, which cascade away below
+     * when the group itself is deleted). Only a student whose ONLY
+     * group is this one gets their whole account deleted.
      */
 
     const {
@@ -502,10 +508,52 @@ Deno.serve(async (req) => {
       ),
     ]
 
+    let studentIdsWithOtherGroups = new Set<string>()
+
+    if (studentIds.length > 0) {
+      const {
+        data: otherMemberships,
+        error: otherMembershipsError,
+      } = await admin
+        .from('group_members')
+        .select('student_id')
+        .in('student_id', studentIds)
+        .neq('group_id', groupId)
+
+      if (otherMembershipsError) {
+        throw otherMembershipsError
+      }
+
+      studentIdsWithOtherGroups = new Set(
+        (otherMemberships || []).map(
+          (membership) => membership.student_id
+        )
+      )
+    }
+
+    const studentIdsToDelete = studentIds.filter(
+      (id) => !studentIdsWithOtherGroups.has(id)
+    )
+
+    const keptStudentCount =
+      studentIds.length - studentIdsToDelete.length
+
+    /*
+     * ------------------------------------------------------------
+     * DELETE ONLY THE STUDENTS WHO HAVE NO OTHER GROUP
+     * ------------------------------------------------------------
+     *
+     * Deleting each of these students' auth accounts cascades to
+     * their profile, this membership, submissions, word list
+     * attempts, and chat messages. Students who belong to another
+     * group are left alone here — their account, their other
+     * group, and their other group's data are untouched.
+     */
+
     const deletedStudentIds: string[] = []
     const failedStudentIds: string[] = []
 
-    for (const studentId of studentIds) {
+    for (const studentId of studentIdsToDelete) {
       const {
         error: deleteAuthError,
       } = await admin.auth.admin.deleteUser(
@@ -528,7 +576,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error:
-            `Deleted ${deletedStudentIds.length} of ${studentIds.length} students, but ${failedStudentIds.length} could not be deleted. The group was NOT deleted so nothing is left half-broken — please try again.`,
+            `Deleted ${deletedStudentIds.length} of ${studentIdsToDelete.length} student accounts that only belonged to this group, but ${failedStudentIds.length} could not be deleted. The group was NOT deleted so nothing is left half-broken — please try again.`,
         }),
         {
           status: 500,
@@ -545,11 +593,12 @@ Deno.serve(async (req) => {
      * DELETE THE GROUP
      * ------------------------------------------------------------
      *
-     * This cascades to: group_members, group_messages,
-     * group_message_actions, homeworks (which cascades further to
-     * their submissions and completions), submissions, and
-     * wordlist_groups for this group. Word lists themselves were
-     * already protected above.
+     * This cascades to: group_members (removing the membership of
+     * any kept student, without touching their account), group_
+     * messages, group_message_actions, homeworks (which cascades
+     * further to their submissions and completions), submissions,
+     * and wordlist_groups for this group. Word lists themselves
+     * were already protected above.
      */
     const {
       error: deleteGroupError,
@@ -562,15 +611,33 @@ Deno.serve(async (req) => {
       throw deleteGroupError
     }
 
+    const messageParts = [
+      `Group "${group.name}" was permanently deleted.`,
+    ]
+
+    if (deletedStudentIds.length > 0) {
+      messageParts.push(
+        `${deletedStudentIds.length} student account${
+          deletedStudentIds.length === 1 ? '' : 's'
+        } were also deleted (they had no other group).`
+      )
+    }
+
+    if (keptStudentCount > 0) {
+      messageParts.push(
+        `${keptStudentCount} student${
+          keptStudentCount === 1 ? '' : 's'
+        } kept their account (still in another group) and were just removed from this group.`
+      )
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        message:
-          `Group "${group.name}" and ${deletedStudentIds.length} student account${
-            deletedStudentIds.length === 1 ? '' : 's'
-          } were permanently deleted.`,
+        message: messageParts.join(' '),
         groupId,
         deletedStudentCount: deletedStudentIds.length,
+        keptStudentCount,
       }),
       {
         status: 200,

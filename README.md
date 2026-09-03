@@ -185,3 +185,10 @@ This also needs three new Edge Functions deployed (`npx supabase functions deplo
 - `rollback-failed-signup` — cleans up a stranded auth account if the sign-up flow fails partway through, so a failed username never gets permanently stuck.
 - `change-password` — the "change password" flow in Account Settings now runs this server-side instead of calling `signInWithPassword` from the browser, so confirming your current password no longer creates a second, unintended session.
 - `send-push` was updated (not new) — it now checks the caller is actually a teacher before sending a push notification to anyone.
+
+## Migration 9 — students can see the leaderboard, and deleting a group no longer wipes a student's other group
+Run `supabase/migration_9.sql` in the Supabase SQL Editor after migration 8. It only adds new read permissions (Row Level Security policies) — it doesn't touch or remove anything that already exists, and it's safe to run more than once.
+
+This fixes two bugs:
+- **Students couldn't see the leaderboard at all.** The leaderboard reads student profiles/submissions/completions directly from the browser now (fixed a streak bug earlier), but the database's permission rules only ever let a student read their *own* data — so the leaderboard came back empty for students. This migration adds a narrow rule: a student (or teacher) can read another person's profile/membership/submissions/completions only when they share a group.
+- **Deleting a group deleted a student's ENTIRE account, even if they were also in another group.** `delete-group` was updated so only a student whose *only* group is the one being deleted has their account deleted; a student in more than one group just gets removed from the deleted group and keeps their account and their other group untouched. This one needs the `delete-group` function redeployed (`npx supabase functions deploy` picks it up — no new function, just updated code).
