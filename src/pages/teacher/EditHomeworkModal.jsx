@@ -21,12 +21,22 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Was previously special-cased so checking "Other file types" wiped
+  // out every other checked type (and vice versa) — meant to make
+  // "other" exclusive, but it actually just silently discarded
+  // whatever the teacher had already picked, so a real multi-select
+  // ("audio + video + other") collapsed down to whatever was clicked
+  // last. Now every checkbox is a plain, independent toggle; "other"
+  // combined with specific types is redundant (accepting "any file"
+  // already covers them) but harmless — buildAccept()/
+  // matchesSubmissionType() in lib/submissionTypes.js already treat
+  // "other" as "no restriction" regardless of what else is checked.
   const toggleType = (value) => {
-    setAllowedTypes((prev) => {
-      if (value === 'other') return prev.includes('other') ? prev.filter((x) => x !== 'other') : ['other']
-      const next = prev.filter((x) => x !== 'other')
-      return next.includes(value) ? next.filter((x) => x !== value) : [...next, value]
-    })
+    setAllowedTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [...prev, value]
+    )
   }
 
   const save = async (e) => {
@@ -44,10 +54,26 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       allowed_submission_types: allowedTypes,
       min_submission_files: minFiles,
       max_submission_files: maxFiles,
-    }).eq('id', homework.id).select().single()
+    }).eq('id', homework.id).select().maybeSingle()
+    if (updErr) { setSaving(false); return setError(updErr.message) }
+
+    // maybeSingle() returns null instead of throwing when 0 rows come
+    // back — which can happen as a brief, harmless glitch (e.g. right
+    // after running a database migration) even though the update
+    // itself went through. Re-read the row by its known id before
+    // showing an error over something that actually worked.
+    let saved = data
+    if (!saved) {
+      const { data: refetched } = await supabase
+        .from('homeworks')
+        .select()
+        .eq('id', homework.id)
+        .maybeSingle()
+      saved = refetched
+    }
     setSaving(false)
-    if (updErr) return setError(updErr.message)
-    onSaved(data)
+    if (!saved) return setError('The change may not have saved — please check and try again if it looks wrong.')
+    onSaved(saved)
     onClose()
   }
 

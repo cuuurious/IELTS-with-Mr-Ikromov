@@ -19,12 +19,22 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Was previously special-cased so checking "Other file types" wiped
+  // out every other checked type (and vice versa) — meant to make
+  // "other" exclusive, but it actually just silently discarded
+  // whatever the teacher had already picked, so a real multi-select
+  // ("audio + video + other") collapsed down to whatever was clicked
+  // last. Now every checkbox is a plain, independent toggle; "other"
+  // combined with specific types is redundant (accepting "any file"
+  // already covers them) but harmless — buildAccept()/
+  // matchesSubmissionType() in lib/submissionTypes.js already treat
+  // "other" as "no restriction" regardless of what else is checked.
   const toggleType = (value) => {
-    setAllowedTypes((prev) => {
-      if (value === 'other') return prev.includes('other') ? prev.filter((x) => x !== 'other') : ['other']
-      const next = prev.filter((x) => x !== 'other')
-      return next.includes(value) ? next.filter((x) => x !== value) : [...next, value]
-    })
+    setAllowedTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [...prev, value]
+    )
   }
 
   const submit = async (e) => {
@@ -64,10 +74,35 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           created_by: teacherId,
         })
         .select()
-        .single()
+        .maybeSingle()
       if (insErr) throw insErr
 
-      onPosted(data)
+      // maybeSingle() doesn't throw when 0 rows come back — which can
+      // happen as a brief, harmless glitch (e.g. right after running a
+      // database migration) even though the insert itself succeeded.
+      // Rather than show a scary "cannot coerce" error over something
+      // that actually worked, fall back to reading the row we just
+      // created before giving up.
+      let posted = data
+      if (!posted) {
+        const { data: refetched } = await supabase
+          .from('homeworks')
+          .select()
+          .eq('group_id', groupId)
+          .eq('created_by', teacherId)
+          .eq('title', title)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        posted = refetched
+      }
+      if (!posted) {
+        throw new Error(
+          'The homework may not have posted — please check the list and try again if it is missing.'
+        )
+      }
+
+      onPosted(posted)
       setTitle('')
       setDescription('')
       setDueDate('')
