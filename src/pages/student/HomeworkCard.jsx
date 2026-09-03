@@ -30,6 +30,34 @@ const requestAiEvaluation = (submissionId, homework) => {
     })
 }
 
+// Resubmitting an AI-graded task re-runs the (paid) AI evaluation and
+// throws away the previous feedback. Rather than let a stray click —
+// or an accidental wrong file, like the one that started this — burn
+// another AI request silently, this asks the student to actually look
+// at what they're about to send before it goes out. Only shown on a
+// RESUBMIT (the first submission never asks, so normal homework flow
+// stays exactly as fast as before).
+const confirmAiResubmission = ({ images = [], files = [], speaking = false }) => {
+  const what = speaking
+    ? 'your three speaking recordings'
+    : [
+        images.length
+          ? `${images.length} photo${images.length === 1 ? '' : 's'}`
+          : null,
+        files.length
+          ? files
+              .map((f) => f?.name || 'a file')
+              .join(', ')
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' and ') || 'your files'
+
+  return window.confirm(
+    `You already submitted this — resubmitting will send ${what} to AI grading again and replace your current feedback.\n\nDouble check this is the right, final version before continuing. Submit again?`
+  )
+}
+
 const PARTS = [
   {
     key: 'audio_part1_url',
@@ -677,6 +705,17 @@ export default function HomeworkCard({
         return
       }
 
+      if (
+        homework?.ai_eval_enabled &&
+        taskAlreadySubmitted &&
+        !confirmAiResubmission({
+          images: existingImages,
+          files: existingFiles,
+        })
+      ) {
+        return
+      }
+
       setUploading(true)
 
       try {
@@ -891,6 +930,14 @@ export default function HomeworkCard({
         setError(
           'Please record or upload all three speaking parts before submitting.'
         )
+        return
+      }
+
+      if (
+        homework?.ai_eval_enabled &&
+        speakingAlreadySubmitted &&
+        !confirmAiResubmission({ speaking: true })
+      ) {
         return
       }
 
