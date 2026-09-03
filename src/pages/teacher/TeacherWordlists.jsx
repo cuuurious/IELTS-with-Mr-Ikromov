@@ -496,6 +496,23 @@ function NewWordlistForm({
           .insert(rows)
 
       if (itemsErr) {
+        // The list itself and its group links were already saved in
+        // the two steps above, and each of those is its own separate
+        // database write — so a failure here alone used to leave a
+        // real, group-linked word list behind with zero words in it.
+        // Undo both earlier steps so a failed publish never leaves a
+        // half-created list — same as the rollback just above for a
+        // failed group-link save.
+        await supabase
+          .from('wordlist_groups')
+          .delete()
+          .eq('wordlist_id', wl.id)
+
+        await supabase
+          .from('wordlists')
+          .delete()
+          .eq('id', wl.id)
+
         throw itemsErr
       }
 

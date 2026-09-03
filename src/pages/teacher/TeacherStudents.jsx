@@ -254,8 +254,12 @@ export default function TeacherStudents() {
     result = [...result]
 
     result.sort((a, b) => {
+      // full_name can be null/empty for a student who just registered
+      // and hasn't set a name yet — localeCompare throws on undefined,
+      // which used to blank out the whole list. Fall back to '' so a
+      // nameless student just sorts to one end instead of crashing.
       if (sortBy === 'name-desc') {
-        return b.full_name.localeCompare(a.full_name)
+        return (b.full_name || '').localeCompare(a.full_name || '')
       }
 
       if (sortBy === 'newest') {
@@ -272,7 +276,7 @@ export default function TeacherStudents() {
         )
       }
 
-      return a.full_name.localeCompare(b.full_name)
+      return (a.full_name || '').localeCompare(b.full_name || '')
     })
 
     return result

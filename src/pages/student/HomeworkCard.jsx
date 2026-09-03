@@ -73,6 +73,30 @@ export default function HomeworkCard({
     existingImages.length +
     existingFiles.length
 
+  // saveFiles() below reads from this ref instead of the
+  // existingImages/existingFiles variables above. Those are fine for
+  // rendering, but a paste-triggered save reads them from inside a
+  // window 'paste' listener set up by a useEffect that doesn't
+  // re-subscribe on every render — so without this ref, a second
+  // paste (even a sequential one, right after the first upload
+  // finishes) could still compute its "existing files" list from a
+  // stale, pre-upload snapshot and silently drop the first file when
+  // it overwrites the row. The ref is always current: it's kept in
+  // sync with the submission prop, and also updated immediately after
+  // this component's own successful saves, so every save always
+  // builds on the real latest list.
+  const submissionRef = useRef(submission)
+
+  useEffect(() => {
+    submissionRef.current = submission
+  }, [submission])
+
+  // Serializes calls to saveFiles so a paste that arrives while an
+  // earlier upload is still saving queues up behind it instead of
+  // racing it — both would otherwise read the same "existing files"
+  // snapshot and the second upsert would overwrite the first.
+  const saveQueueRef = useRef(Promise.resolve())
+
   const status = getSubmissionStatus(
     submission,
     homework.due_date
@@ -378,20 +402,12 @@ export default function HomeworkCard({
    * ============================================================
    */
 
+  // Note: the max-file-count check used to live here, but it read
+  // existingCount from render scope, which could be stale by the time
+  // a queued save actually runs. That check now happens in
+  // runSaveFiles right before this is called, using the always-current
+  // submissionRef — this function only checks file type.
   const validateFiles = (files) => {
-    if (
-      existingCount + files.length >
-      maxFiles
-    ) {
-      throw new Error(
-        `This homework allows a maximum of ${maxFiles} file${
-          maxFiles === 1
-            ? ''
-            : 's'
-        }.`
-      )
-    }
-
     for (const file of files) {
       if (
         !allowedTypes.some(
@@ -415,9 +431,35 @@ export default function HomeworkCard({
    * ============================================================
    */
 
-  const saveFiles = async (files) => {
+  const runSaveFiles = async (files) => {
     if (!files.length) {
       return
+    }
+
+    // Read the "existing so far" lists from the ref (always current)
+    // rather than the existingImages/existingFiles closure variables,
+    // so this reflects any save that finished just ahead of this one
+    // in the queue — including one triggered by a stale paste-handler
+    // closure from an earlier render.
+    const baseImages =
+      submissionRef.current?.screenshot_urls || []
+
+    const baseFiles =
+      submissionRef.current?.submission_files || []
+
+    if (
+      baseImages.length +
+        baseFiles.length +
+        files.length >
+      maxFiles
+    ) {
+      throw new Error(
+        `This homework allows a maximum of ${maxFiles} file${
+          maxFiles === 1
+            ? ''
+            : 's'
+        }.`
+      )
     }
 
     validateFiles(files)
@@ -474,20 +516,26 @@ export default function HomeworkCard({
        *
        * Student must explicitly click Submit Task.
        */
-      await upsertSubmission({
+      const saved = await upsertSubmission({
         screenshot_urls: [
-          ...existingImages,
+          ...baseImages,
           ...newImages,
         ],
         submission_files: [
-          ...existingFiles,
+          ...baseFiles,
           ...newFiles,
         ],
         status: 'pending',
         submitted_at:
-          submission?.submitted_at ||
+          submissionRef.current?.submitted_at ||
           null,
       })
+
+      // Update immediately so the next queued save (or the very next
+      // paste, if it arrives before this component re-renders with
+      // the new submission prop) builds on this save's result instead
+      // of an outdated one.
+      submissionRef.current = saved
     } catch (err) {
       console.error(
         'Homework file save error:',
@@ -501,6 +549,20 @@ export default function HomeworkCard({
     } finally {
       setUploading(false)
     }
+  }
+
+  const saveFiles = (files) => {
+    // Chain onto the queue regardless of whether the previous save
+    // succeeded or failed, so one failed upload doesn't permanently
+    // jam the queue for later pastes/uploads.
+    const next = saveQueueRef.current.then(
+      () => runSaveFiles(files),
+      () => runSaveFiles(files)
+    )
+
+    saveQueueRef.current = next.catch(() => {})
+
+    return next
   }
 
   /*

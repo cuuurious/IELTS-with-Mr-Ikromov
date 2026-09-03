@@ -163,6 +163,62 @@ Deno.serve(async (req) => {
 
     /*
      * --------------------------------------------------------
+     * AUTHORIZE: ONLY TEACHERS MAY SEND PUSH NOTIFICATIONS
+     * --------------------------------------------------------
+     *
+     * IMPORTANT: being logged in is not enough here. Without
+     * this check, any authenticated student could call this
+     * function directly (bypassing the app's own UI) with an
+     * arbitrary list of userIds and an arbitrary title/body/
+     * link, and push a notification that looks exactly like an
+     * official one to every classmate or the teacher — a real
+     * phishing/spam risk, not just a theoretical one.
+     */
+
+    const profileResponse =
+      await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${requestingUser.id}&select=role`,
+        {
+          headers: {
+            apikey:
+              serviceRoleKey,
+            Authorization:
+              `Bearer ${serviceRoleKey}`,
+          },
+        }
+      )
+
+    if (!profileResponse.ok) {
+      throw new Error(
+        'Could not verify the requesting user\'s role.'
+      )
+    }
+
+    const profileRows =
+      await profileResponse.json()
+
+    const requestingRole =
+      profileRows?.[0]?.role
+
+    if (requestingRole !== 'teacher') {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Only teachers can send push notifications.',
+        }),
+        {
+          status: 403,
+          headers: {
+            ...corsHeaders,
+            'Content-Type':
+              'application/json',
+          },
+        }
+      )
+    }
+
+    /*
+     * --------------------------------------------------------
      * REQUEST BODY
      * --------------------------------------------------------
      */

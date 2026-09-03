@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
 import SubmissionPanel from './SubmissionPanel'
@@ -9,6 +9,13 @@ import { notifyGroup } from '../../lib/notify'
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
   const [activeGroup, setActiveGroup] = useState(null)
+
+  // Keeps the latest activeGroup readable from inside async callbacks
+  // without them closing over a stale value. Used so a slow-loading
+  // fetch for a group the teacher has since clicked away from can't
+  // overwrite a faster, newer fetch's results.
+  const activeGroupRef = useRef(activeGroup)
+  activeGroupRef.current = activeGroup
 
   const [newGroupName, setNewGroupName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -177,15 +184,38 @@ export default function GroupWorkspace({ teacherId }) {
   ========================================================= */
 
   const loadGroupData = async () => {
-    if (!activeGroup) return
+    // Snapshot which group this call was made for. If the teacher
+    // switches groups again before these requests come back (Group A
+    // then immediately Group B), Group A's slower response would
+    // otherwise land second and silently overwrite Group B's roster —
+    // the requestedGroup check below discards it instead.
+    const requestedGroup = activeGroup
+
+    if (!requestedGroup) return
 
     const { data: members } = await supabase
       .from('group_members')
       .select(
         'student_id, profiles!inner(id, full_name, username, status, contact_email)'
       )
-      .eq('group_id', activeGroup)
+      .eq('group_id', requestedGroup)
       .eq('profiles.status', 'approved')
+
+    const { data: hw } = await supabase
+      .from('homeworks')
+      .select('*')
+      .eq('group_id', requestedGroup)
+      .order('created_at', { ascending: false })
+
+    const { data: subs } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('group_id', requestedGroup)
+
+    // A newer request has since started (or completed) for a
+    // different group — this response is stale, so drop it instead
+    // of committing it to state.
+    if (requestedGroup !== activeGroupRef.current) return
 
     setRoster(
       (members || [])
@@ -193,18 +223,7 @@ export default function GroupWorkspace({ teacherId }) {
         .filter(Boolean)
     )
 
-    const { data: hw } = await supabase
-      .from('homeworks')
-      .select('*')
-      .eq('group_id', activeGroup)
-      .order('created_at', { ascending: false })
-
     setHomeworks(hw || [])
-
-    const { data: subs } = await supabase
-      .from('submissions')
-      .select('*')
-      .eq('group_id', activeGroup)
 
     const map = {}
 
@@ -862,7 +881,15 @@ export default function GroupWorkspace({ teacherId }) {
   			title: 'New homework posted',
   			body: hw.title,
   			link: `homework:${hw.id}`,
-		    })
+		    }).then((result) => {
+                      if (result?.ok) return
+
+                      alert(
+                        result?.reason === 'push'
+                          ? `"${hw.title}" was posted and students were notified in-app, but phone/desktop push notifications failed to send.`
+                          : `"${hw.title}" was posted, but students could not be notified — check your connection and let them know directly if needed.`
+                      )
+                    })
                   }}
                 />
               </div>
@@ -1315,6 +1342,14 @@ export default function GroupWorkspace({ teacherId }) {
               title: 'Homework updated',
               body: `"${updated.title}" was changed by your teacher.`,
               link: `homework:${updated.id}`,
+            }).then((result) => {
+              if (result?.ok) return
+
+              alert(
+                result?.reason === 'push'
+                  ? `"${updated.title}" was updated and students were notified in-app, but phone/desktop push notifications failed to send.`
+                  : `"${updated.title}" was updated, but students could not be notified — check your connection and let them know directly if needed.`
+              )
             })
           }}
         />

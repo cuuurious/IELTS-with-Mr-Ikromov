@@ -1,12 +1,16 @@
 name: Trigger daily homework reminders
 
 # Replaces the old Netlify scheduled function (netlify/functions/daily-
-# reminders.mjs), which ran on Netlify's own cron. Now that the site is
-# static-hosted on GitHub Pages, GitHub Actions' schedule trigger calls
-# the Supabase Edge Function (supabase/functions/daily-reminders) once a
-# day instead.
+# reminders.mjs), which ran on Netlify's own cron. The site itself is
+# hosted on Cloudflare Pages, which auto-deploys straight from this repo
+# on every push to main — that's unrelated to this workflow. Cloudflare
+# Pages has no built-in way to run something on a daily schedule, so
+# this workflow just uses GitHub Actions' schedule trigger to call the
+# Supabase Edge Function (supabase/functions/daily-reminders) once a day.
 #
-# Requires one repository secret that deploy.yml doesn't already have:
+# Requires two repository secrets under GitHub → repo → Settings →
+# Secrets and variables → Actions:
+#   VITE_SUPABASE_URL — same project URL used everywhere else.
 #   SUPABASE_SERVICE_ROLE_KEY — Supabase → Project Settings → API →
 #   legacy "service_role" key. Never expose this anywhere else.
 #

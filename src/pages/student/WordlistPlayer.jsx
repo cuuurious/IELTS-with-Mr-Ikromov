@@ -129,6 +129,19 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
 
   if (!items) return <p className="text-mist">Loading…</p>
 
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col gap-4 items-center text-center">
+        <div className="w-full flex items-center justify-between">
+          <button onClick={onExit} className="focus-ring text-mist hover:text-paper text-sm">
+            ← Back
+          </button>
+        </div>
+        <p className="text-mist">This word list doesn't have any words in it yet.</p>
+      </div>
+    )
+  }
+
   if (mode === 'study') {
     const item = items[cardIndex]
     return (

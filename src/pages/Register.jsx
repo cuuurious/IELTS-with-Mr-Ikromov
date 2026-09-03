@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
+import {
+  TARGET_BANDS,
+  DEFAULT_TARGET_BAND,
+  formatTargetBand,
+} from '../lib/targetBands'
 
 export default function Register() {
   const { signUp } = useAuth()
@@ -13,6 +18,9 @@ export default function Register() {
   const [contactEmail, setContactEmail] = useState('')
   const [groups, setGroups] = useState([])
   const [selectedGroups, setSelectedGroups] = useState([])
+  const [targetBand, setTargetBand] = useState(
+    DEFAULT_TARGET_BAND
+  )
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -57,6 +65,10 @@ export default function Register() {
         role,
         groupIds: selectedGroups,
         contactEmail,
+        targetBand:
+          role === 'student'
+            ? targetBand
+            : undefined,
       })
 
       navigate('/app')
@@ -183,6 +195,51 @@ export default function Register() {
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+
+          {role === 'student' && (
+            <div>
+              <label className="text-xs uppercase tracking-wide text-mist font-mono">
+                Your target band
+              </label>
+
+              <div className="mt-2 grid grid-cols-5 gap-1.5">
+                {TARGET_BANDS.map((band) => (
+                  <button
+                    type="button"
+                    key={band.value}
+                    onClick={() =>
+                      setTargetBand(band.value)
+                    }
+                    aria-pressed={
+                      targetBand === band.value
+                    }
+                    className={`focus-ring flex flex-col items-center gap-0.5 rounded-md border px-1.5 py-2 text-center transition-colors ${
+                      targetBand === band.value
+                        ? 'border-brass bg-brass/10 text-brass'
+                        : 'border-line text-mist hover:border-brass/50'
+                    }`}
+                  >
+                    <span className="text-lg leading-none">
+                      {band.emoji}
+                    </span>
+                    <span className="text-sm font-semibold leading-none">
+                      {formatTargetBand(band.value)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-mist text-xs mt-2">
+                {
+                  TARGET_BANDS.find(
+                    (b) => b.value === targetBand
+                  )?.label
+                }{' '}
+                — you can change this anytime later in
+                Account Settings.
+              </p>
             </div>
           )}
 

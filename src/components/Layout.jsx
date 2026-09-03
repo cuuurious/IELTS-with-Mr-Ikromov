@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import AccountSettingsModal from './AccountSettingsModal'
+import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
 
 export default function Layout({
   tabs,
@@ -237,6 +238,44 @@ export default function Layout({
               >
                 {profile?.full_name}
               </span>
+
+              {!isTeacher && profile?.target_band != null && (
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  title="Change your target band in Account Settings"
+                  className="
+                    focus-ring
+                    hidden
+                    sm:flex
+                    items-center
+                    gap-1
+                    rounded-full
+                    border border-line
+                    bg-panel/80
+                    shadow-sm
+                    px-2.5 py-1
+                    text-xs font-semibold
+                    text-brass
+                    hover:border-brass
+                    transition-colors
+                  "
+                >
+                  <span>
+                    {
+                      getTargetBandInfo(
+                        profile.target_band
+                      ).emoji
+                    }
+                  </span>
+                  <span>
+                    Target{' '}
+                    {formatTargetBand(
+                      profile.target_band
+                    )}
+                  </span>
+                </button>
+              )}
 
 
               {/* Theme */}

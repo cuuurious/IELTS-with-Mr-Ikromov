@@ -2,9 +2,11 @@
 
 A homework, speaking-practice, and vocabulary portal that replaces the old
 "screenshots + voice notes in one Telegram chat, marked in an Excel sheet"
-workflow. React (Vite) frontend deployed to a Cloudflare Worker at
-ieltswithmrikromov.com, Supabase backend (database, auth, storage, and
-Edge Functions for anything that needs a service-role key).
+workflow. React (Vite) frontend deployed to Cloudflare Pages at
+ieltswithmrikromov.com (connected to this GitHub repo — every push to
+`main` triggers a new build automatically), Supabase backend (database,
+auth, storage, and Edge Functions for anything that needs a service-role
+key).
 
 ---
 
@@ -63,21 +65,21 @@ email"** (only needs doing once, skip if already done).
 
 ## 2. Environment variables
 
-Copy `.env.example` to `.env` for local dev **and** before every production
-build — the frontend and the Edge Functions get their variables from two
-completely different places:
+Copy `.env.example` to `.env` for local dev. In production, the frontend
+and the Edge Functions get their variables from two completely different
+places, and neither one reads your local `.env` file:
 
-- **Frontend (Cloudflare Worker)** — there's no build server involved.
-  `.env` on your own machine is read by `npm run build`, which bakes the
-  `VITE_*` values straight into the static files in `dist/`. Whatever is in
-  your local `.env` at build time is what ships — there's nowhere else to
-  set these for the frontend.
+- **Frontend (Cloudflare Pages)** — Cloudflare builds the site itself on
+  its own servers every time you push, so it needs its own copy of the
+  `VITE_*` values, set once in Cloudflare dashboard → your Pages project
+  → **Settings → Environment variables** (not from your local `.env`).
+  Your local `.env` only matters for `npm run dev` on your own machine.
 - **Edge Functions (Supabase)** — set with the Supabase CLI:
   `supabase secrets set VAPID_PRIVATE_KEY=... SUPABASE_SERVICE_ROLE_KEY=...`
   (or one at a time). These never touch the frontend build.
 - **`daily-reminders.yml` (GitHub Actions)** — the one exception that does
   need GitHub repository secrets, since it's the only thing that runs on
-  GitHub rather than your machine or Supabase. See below.
+  GitHub rather than Cloudflare or Supabase. See below.
 
 The `VAPID_*` keys enable real push notifications — generate them with:
 
@@ -87,9 +89,9 @@ npx web-push generate-vapid-keys
 
 | Variable | Where it's used | Set it in |
 |---|---|---|
-| `VITE_SUPABASE_URL` | frontend build + GitHub Actions | local `.env` **and** a GitHub Actions repository secret |
-| `VITE_SUPABASE_ANON_KEY` | frontend build | local `.env` only |
-| `VITE_VAPID_PUBLIC_KEY` | frontend build | local `.env` only |
+| `VITE_SUPABASE_URL` | frontend build + GitHub Actions | Cloudflare Pages env variable **and** a GitHub Actions repository secret |
+| `VITE_SUPABASE_ANON_KEY` | frontend build | Cloudflare Pages env variable |
+| `VITE_VAPID_PUBLIC_KEY` | frontend build | Cloudflare Pages env variable |
 | `VAPID_PUBLIC_KEY` | functions | `supabase secrets set` (same value as `VITE_VAPID_PUBLIC_KEY` above) |
 | `VAPID_PRIVATE_KEY` | functions only | `supabase secrets set` — **never** put this in the frontend build |
 | `SUPABASE_SERVICE_ROLE_KEY` | functions only | `supabase secrets set` **and** a GitHub Actions repository secret (used by `daily-reminders.yml` to call the function) — **never** expose this to the browser |
@@ -98,21 +100,15 @@ No AI API key needed — word definitions/translations use free public APIs.
 
 ## 3. Deploying
 
-**Frontend → Cloudflare Worker.** There's no auto-deploy on push — build
-locally and upload the result:
+**Frontend → Cloudflare Pages.** Fully automatic — commit and push to
+`main` (e.g. via GitHub Desktop) and Cloudflare builds and deploys the new
+version on its own within a minute or two. Nothing to run locally for a
+normal deploy. Check progress, and roll back to any earlier build with one
+click, in Cloudflare dashboard → your Pages project → **Deployments**.
+`npm run build` is only for testing a production build locally before you
+push — it doesn't deploy anything by itself.
 
-```bash
-npm run build
-```
-
-Then go to Cloudflare dashboard → Workers & Pages → `ielts-with-mr-ikromov`
-→ deploy/update → drag the whole `dist` folder onto the uploader → Deploy.
-(A `wrangler.toml` plus `npx wrangler deploy` would let this run from a
-terminal or even auto-deploy from GitHub Actions the same way
-`daily-reminders.yml` does — worth setting up later if the manual upload
-gets tedious, but not required.)
-
-**Edge Functions → Supabase.** The Cloudflare Worker only serves static
+**Edge Functions → Supabase.** Cloudflare Pages only serves static
 files, so anything that needs the service-role key (push notifications,
 daily reminders, word definitions, account admin actions) runs as a
 Supabase Edge Function instead. Deploy them with the Supabase CLI:
@@ -181,3 +177,11 @@ Run `supabase/migration_7.sql` in the Supabase SQL Editor after migrations 2–6
 
 ### Password reset email setup
 In Supabase Dashboard → Authentication → URL Configuration, add the deployed site URL and `/reset-password` as an allowed redirect URL. Keep the standard Supabase recovery email template enabled. New registrations require a recovery email so password reset has a real destination.
+
+## Migration 8 — student target bands
+Run `supabase/migration_8.sql` in the Supabase SQL Editor after migrations 2–7. It adds a `target_band` column to `profiles` (7.0–9.0, half-point steps, enforced by a database check constraint) and defaults every existing student to 7.5. Students pick their own target during sign-up and can change it anytime from Account Settings — nothing is forced on anyone.
+
+This also needs three new Edge Functions deployed (`npx supabase functions deploy` picks up all of them):
+- `rollback-failed-signup` — cleans up a stranded auth account if the sign-up flow fails partway through, so a failed username never gets permanently stuck.
+- `change-password` — the "change password" flow in Account Settings now runs this server-side instead of calling `signInWithPassword` from the browser, so confirming your current password no longer creates a second, unintended session.
+- `send-push` was updated (not new) — it now checks the caller is actually a teacher before sending a push notification to anyone.

@@ -22,3 +22,18 @@ entrypoint = "./functions/reset-student-password/index.ts"
 # static_files = [ "./functions/reset-student-password/*.html" ]
 [functions.cleanup-submission-storage]
 verify_jwt = false
+
+[functions.delete-group]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/delete-group/index.ts"
+
+[functions.rollback-failed-signup]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/rollback-failed-signup/index.ts"
+
+[functions.change-password]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/change-password/index.ts"

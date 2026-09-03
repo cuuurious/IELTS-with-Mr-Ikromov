@@ -7,6 +7,10 @@ import {
   enablePush,
   disablePush,
 } from '../lib/push'
+import {
+  TARGET_BANDS,
+  formatTargetBand,
+} from '../lib/targetBands'
 
 export default function AccountSettingsModal({ onClose }) {
   const { profile, refreshProfile, signOut } = useAuth()
@@ -28,6 +32,13 @@ export default function AccountSettingsModal({ onClose }) {
   const [contactSaving, setContactSaving] = useState(false)
   const [contactMessage, setContactMessage] = useState('')
   const [contactError, setContactError] = useState('')
+
+  const [targetBand, setTargetBand] = useState(
+    profile?.target_band ?? null
+  )
+  const [targetBandSaving, setTargetBandSaving] = useState(false)
+  const [targetBandMessage, setTargetBandMessage] = useState('')
+  const [targetBandError, setTargetBandError] = useState('')
 
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -86,50 +97,25 @@ export default function AccountSettingsModal({ onClose }) {
     setPwSaving(true)
 
     try {
+      // Verifying the current password and updating to the new one
+      // both happen server-side in one call, so the browser's own
+      // session is never touched — no more "confirming" your
+      // password accidentally logging you in a second time.
       const {
-        data: userData,
-        error: userError,
-      } = await supabase.auth.getUser()
+        data,
+        error: invokeError,
+      } = await supabase.functions.invoke(
+        'change-password',
+        {
+          body: {
+            currentPassword,
+            newPassword,
+          },
+        }
+      )
 
-      if (userError || !userData?.user) {
-        throw new Error(
-          'Your session has expired. Please sign in again.'
-        )
-      }
-
-      const authEmail =
-        userData.user.email
-
-      if (!authEmail) {
-        throw new Error(
-          'No authentication email is associated with this account.'
-        )
-      }
-
-      const {
-        error: reauthError,
-      } =
-        await supabase.auth.signInWithPassword({
-          email: authEmail,
-          password: currentPassword,
-        })
-
-      if (reauthError) {
-        throw new Error(
-          'Current password is incorrect.'
-        )
-      }
-
-      const {
-        error: updateError,
-      } =
-        await supabase.auth.updateUser({
-          password: newPassword,
-        })
-
-      if (updateError) {
-        throw updateError
-      }
+      if (invokeError) throw invokeError
+      if (data?.error) throw new Error(data.error)
 
       setPwMessage(
         'Password updated successfully.'
@@ -273,6 +259,45 @@ export default function AccountSettingsModal({ onClose }) {
       setContactSaving(false)
     }
   }
+
+  const saveTargetBand = async (value) => {
+    setTargetBand(value)
+    setTargetBandSaving(true)
+    setTargetBandMessage('')
+    setTargetBandError('')
+
+    try {
+      const {
+        error: profileError,
+      } = await supabase
+        .from('profiles')
+        .update({
+          target_band: value,
+        })
+        .eq('id', profile.id)
+
+      if (profileError) {
+        throw profileError
+      }
+
+      setTargetBandMessage('Target band updated.')
+
+      await refreshProfile()
+    } catch (err) {
+      console.error(
+        'Target band save failed:',
+        err
+      )
+
+      setTargetBandError(
+        err?.message ||
+          'Could not save your target band.'
+      )
+    } finally {
+      setTargetBandSaving(false)
+    }
+  }
+
 const deleteAccount = async () => {
   setDeleteError('')
   setDeleting(true)
@@ -507,6 +532,58 @@ const deleteAccount = async () => {
               : 'Save recovery email'}
           </button>
         </form>
+
+        {profile?.role === 'student' && (
+          <div className="flex flex-col gap-3 pt-4 border-t border-line">
+            <div className="text-xs uppercase tracking-wide text-mist font-mono">
+              Target band
+            </div>
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {TARGET_BANDS.map((band) => (
+                <button
+                  type="button"
+                  key={band.value}
+                  disabled={targetBandSaving}
+                  onClick={() =>
+                    saveTargetBand(band.value)
+                  }
+                  aria-pressed={
+                    targetBand === band.value
+                  }
+                  className={`focus-ring flex flex-col items-center gap-0.5 rounded-md border px-1.5 py-2 text-center transition-colors disabled:opacity-50 ${
+                    targetBand === band.value
+                      ? 'border-brass bg-brass/10 text-brass'
+                      : 'border-line text-mist hover:border-brass/50'
+                  }`}
+                >
+                  <span className="text-lg leading-none">
+                    {band.emoji}
+                  </span>
+                  <span className="text-sm font-semibold leading-none">
+                    {formatTargetBand(band.value)}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {targetBandMessage && (
+              <div className="rounded-md border border-sage/40 bg-sage/10 px-3 py-2">
+                <p className="text-sage text-sm">
+                  {targetBandMessage}
+                </p>
+              </div>
+            )}
+
+            {targetBandError && (
+              <div className="rounded-md border border-coral/40 bg-coral/10 px-3 py-2">
+                <p className="text-coral text-sm">
+                  {targetBandError}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* DANGER ZONE */}
         {/*

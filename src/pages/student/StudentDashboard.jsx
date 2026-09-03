@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 
@@ -25,6 +26,15 @@ export default function StudentDashboard() {
 
   const [activeGroup, setActiveGroup] =
     useState(null)
+
+  // The notification-tap handler below is wired up once (its effect
+  // only depends on profile?.id, so it doesn't re-subscribe every
+  // time the student switches groups). Without this ref, it would
+  // keep comparing against whatever activeGroup was on that very
+  // first render — so tapping a notification for a different group
+  // than the one currently open could fail to actually switch groups.
+  const activeGroupRef = useRef(activeGroup)
+  activeGroupRef.current = activeGroup
 
   const [homeworks, setHomeworks] =
     useState([])
@@ -698,7 +708,7 @@ if (link.startsWith('homework:')) {
 
   if (
     targetHomework?.group_id &&
-    targetHomework.group_id !== activeGroup
+    targetHomework.group_id !== activeGroupRef.current
   ) {
     setActiveGroup(targetHomework.group_id)
   }

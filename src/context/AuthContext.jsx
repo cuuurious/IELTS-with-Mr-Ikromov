@@ -9,6 +9,10 @@ import {
   supabase,
   usernameToEmail,
 } from '../lib/supabaseClient'
+import {
+  DEFAULT_TARGET_BAND,
+  isValidTargetBand,
+} from '../lib/targetBands'
 
 const AuthContext = createContext(null)
 
@@ -143,7 +147,36 @@ export function AuthProvider({ children }) {
     role,
     groupIds,
     contactEmail,
+    targetBand,
   }) => {
+    const normalizedUsername = username
+      .trim()
+      .toLowerCase()
+
+    // Check this up front, before creating any auth account. The most
+    // common reason the profile insert below used to fail was a
+    // duplicate username — catching it here means we never create an
+    // orphaned login for it in the first place, and the person gets a
+    // clear, specific error instead of a raw database message.
+    const {
+      data: existingUsername,
+      error: usernameCheckError,
+    } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', normalizedUsername)
+      .maybeSingle()
+
+    if (usernameCheckError) {
+      throw usernameCheckError
+    }
+
+    if (existingUsername) {
+      throw new Error(
+        'That username is already taken. Please choose a different one.'
+      )
+    }
+
     const email =
       contactEmail?.trim().toLowerCase() ||
       usernameToEmail(username)
@@ -175,9 +208,7 @@ export function AuthProvider({ children }) {
       .insert({
         id: userId,
         full_name: fullName,
-        username: username
-          .trim()
-          .toLowerCase(),
+        username: normalizedUsername,
         role,
         status:
           role === 'teacher'
@@ -185,9 +216,44 @@ export function AuthProvider({ children }) {
             : 'pending',
         contact_email:
           contactEmail?.trim() || null,
+        // Target band isn't meaningful for a teacher account. For a
+        // student, fall back to the default rather than trusting
+        // whatever the form sent — isValidTargetBand also guards
+        // against someone bypassing the UI and posting an out-of-
+        // range value directly.
+        target_band:
+          role === 'student'
+            ? isValidTargetBand(targetBand)
+              ? Number(targetBand)
+              : DEFAULT_TARGET_BAND
+            : null,
       })
 
     if (profileError) {
+      // The auth account was created above, but the profile row that
+      // makes it actually usable failed to save. Left alone, this
+      // permanently strands the username (the derived email is now
+      // "already registered", but there's no working account behind
+      // it). Ask the server to delete the orphaned auth account we
+      // just created — using this brand-new account's own session,
+      // which is exactly why the sign-up flow keeps it signed in
+      // instead of signing out on error — so the username is free
+      // again immediately. This is a best-effort cleanup: if it also
+      // fails (e.g. no network), we still surface the original error
+      // below rather than hiding it.
+      try {
+        await supabase.functions.invoke(
+          'rollback-failed-signup'
+        )
+      } catch (rollbackError) {
+        console.error(
+          'Could not roll back the failed sign-up:',
+          rollbackError
+        )
+      }
+
+      await supabase.auth.signOut()
+
       throw profileError
     }
 

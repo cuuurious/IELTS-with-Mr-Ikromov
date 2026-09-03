@@ -286,7 +286,7 @@ export default function StudentWordlists({
 
         <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
           <p className="text-mist text-sm">
-            Loading your vocabulary practiceвЂ¦
+            Loading your vocabulary practice…
           </p>
         </div>
 
