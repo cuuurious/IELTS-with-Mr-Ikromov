@@ -970,27 +970,27 @@ const studentId =
       activeTab={tab}
       onTabChange={handleTabChange}
     >
-      <div className="space-y-7">
+      <div className="space-y-5">
 
         {/* ======================================================
             PAGE INTRO
            ====================================================== */}
-        <section className="dashboard-hero relative overflow-hidden rounded-3xl border border-line bg-panel shadow-sm">
+        <section className="dashboard-hero relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
   <div className="hero-atmosphere" />
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 blur-3xl" />
             <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
           </div>
 
-          <div className="relative px-6 py-7 sm:px-8 sm:py-9">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="relative px-5 py-4 sm:px-7 sm:py-5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-brass-dim/25 bg-brass/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
+                <div className="inline-flex items-center gap-2 rounded-full border border-brass-dim/25 bg-brass/10 px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] text-brass font-mono">
                   <span className="h-1.5 w-1.5 rounded-full bg-brass" />
                   Candidate portal
                 </div>
 
-                <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight mt-4">
+                <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight mt-2">
                   {tab === 'homework'
                     ? 'Your homework'
                     : tab === 'wordlists'
@@ -1002,7 +1002,7 @@ const studentId =
                           : 'Chats'}
                 </h1>
 
-                <p className="mt-3 text-sm sm:text-base text-mist leading-6 max-w-2xl">
+                <p className="mt-1.5 text-sm text-mist leading-6 max-w-2xl">
                   {tab === 'homework'
                     ? 'Keep track of your assignments and submit your work on time.'
                     : tab === 'wordlists'
@@ -1073,15 +1073,10 @@ const studentId =
 
             {myGroups.length > 0 && (
               <>
-                <div className="flex items-end justify-between gap-4 px-1">
-                  <div>
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                      Assignments
-                    </div>
-                    <h2 className="font-display text-2xl sm:text-3xl mt-1">
-                      Recent homework
-                    </h2>
+                <div className="flex items-center justify-between gap-4 px-1">
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+                    Assignments
                   </div>
 
                   <div className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-panel-2 px-3 py-1.5 text-xs text-mist font-mono">
@@ -1157,15 +1152,10 @@ const studentId =
 
             {activeGroup ? (
               <section className="rounded-3xl border border-line bg-panel shadow-sm overflow-hidden">
-                <div className="px-5 sm:px-7 py-5 border-b border-line flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                      Your group
-                    </div>
-                    <h2 className="font-display text-2xl mt-1">
-                      Leaderboard
-                    </h2>
+                <div className="px-5 sm:px-7 py-3.5 border-b border-line flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+                    Your group
                   </div>
 
                   <div className="hidden sm:block text-xs text-mist font-mono">
@@ -1243,30 +1233,18 @@ const studentId =
             PRIVATE CHATS
            ====================================================== */}
         {tab === 'chats' && (
-          <section className="space-y-5">
-            <div>
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-4 px-1">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
                 <span className="h-1.5 w-1.5 rounded-full bg-brass" />
                 Messages
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-                <div>
-                  <h2 className="font-display text-2xl sm:text-3xl mt-1">
-                    Your conversations
-                  </h2>
-
-                  <p className="text-sm text-mist mt-1">
-                    Private conversations with your teacher and classmates.
-                  </p>
-                </div>
-
-                <div className="text-xs text-mist font-mono">
-                  {chatContacts.length}{' '}
-                  {chatContacts.length === 1
-                    ? 'conversation'
-                    : 'conversations'}
-                </div>
+              <div className="text-xs text-mist font-mono">
+                {chatContacts.length}{' '}
+                {chatContacts.length === 1
+                  ? 'conversation'
+                  : 'conversations'}
               </div>
             </div>
 
