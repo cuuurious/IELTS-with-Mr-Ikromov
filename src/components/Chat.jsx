@@ -1,18 +1,147 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Chat({ selfId, peerId, peerName }) {
+const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
+
+export default function Chat({
+  selfId,
+  peerId,
+  peerName,
+  targetMessageId = null,
+}) {
   const [messages, setMessages] = useState([])
+  const [reactions, setReactions] = useState({})
+  const [selfRole, setSelfRole] = useState('student')
+
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [recording, setRecording] = useState(false)
   const [error, setError] = useState('')
 
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editingText, setEditingText] = useState('')
+
+  const [highlightedMessageId, setHighlightedMessageId] =
+    useState(null)
+
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
   const fileRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
+
+  /*
+   * ============================================================
+   * PARSE MESSAGE CONTENT
+   * ============================================================
+   * A private message's `content` column doubles as either plain
+   * text or a JSON blob describing a photo/video/voice note/file
+   * (there's no separate media_url column here, unlike group
+   * chat). Editing only ever applies to the plain-text case.
+   * ============================================================
+   */
+
+  const parseMessage = (content) => {
+    if (!content) {
+      return {
+        type: 'text',
+        text: '',
+      }
+    }
+
+    try {
+      const parsed = JSON.parse(content)
+
+      if (parsed && parsed.type && parsed.url) {
+        return parsed
+      }
+    } catch {
+      // Normal text message.
+    }
+
+    return {
+      type: 'text',
+      text: content,
+    }
+  }
+
+  const previewFor = (message) => {
+    if (!message) return ''
+
+    const parsed = parseMessage(message.content)
+
+    if (parsed.type === 'image') return '📷 Photo'
+    if (parsed.type === 'video') return '🎥 Video'
+    if (parsed.type === 'audio') return '🎤 Voice message'
+    if (parsed.type === 'file') {
+      return `📎 ${parsed.name || 'File'}`
+    }
+
+    return parsed.text
+  }
+
+  /*
+   * ============================================================
+   * LOAD
+   * ============================================================
+   */
+
+  const loadReactions = async (messageRows) => {
+    const ids = (messageRows || [])
+      .map((m) => m.id)
+      .filter(Boolean)
+
+    if (!ids.length) {
+      setReactions({})
+      return
+    }
+
+    const { data, error: reactionsError } = await supabase
+      .from('message_reactions')
+      .select('*')
+      .in('message_id', ids)
+
+    if (reactionsError) {
+      console.error(
+        'Reaction loading error:',
+        reactionsError
+      )
+      return
+    }
+
+    const grouped = {}
+
+    ;(data || []).forEach((reaction) => {
+      if (!grouped[reaction.message_id]) {
+        grouped[reaction.message_id] = []
+      }
+
+      grouped[reaction.message_id].push(reaction)
+    })
+
+    setReactions(grouped)
+  }
+
+  useEffect(() => {
+    if (!selfId) return
+
+    let active = true
+
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', selfId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setSelfRole(data?.role || 'student')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selfId])
 
   useEffect(() => {
     if (!peerId) return
@@ -20,7 +149,7 @@ export default function Chat({ selfId, peerId, peerName }) {
     let active = true
 
     const load = async () => {
-      const { data, error } = await supabase
+      const { data, error: loadError } = await supabase
         .from('messages')
         .select('*')
         .or(
@@ -28,8 +157,10 @@ export default function Chat({ selfId, peerId, peerName }) {
         )
         .order('created_at', { ascending: true })
 
-      if (!error && active) {
-        setMessages(data || [])
+      if (!loadError && active) {
+        const rows = data || []
+        setMessages(rows)
+        await loadReactions(rows)
       }
     }
 
@@ -62,6 +193,91 @@ export default function Chat({ selfId, peerId, peerName }) {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          const m = payload.new
+
+          const belongs =
+            (m.sender_id === selfId && m.receiver_id === peerId) ||
+            (m.sender_id === peerId && m.receiver_id === selfId)
+
+          if (belongs) {
+            setMessages((prev) =>
+              prev.map((item) =>
+                item.id === m.id ? m : item
+              )
+            )
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          setMessages((prev) =>
+            prev.filter(
+              (item) => item.id !== payload.old.id
+            )
+          )
+
+          setReactions((prev) => {
+            const next = { ...prev }
+            delete next[payload.old.id]
+            return next
+          })
+
+          setReplyingTo((current) =>
+            current?.id === payload.old.id ? null : current
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          const reaction = payload.new
+
+          setReactions((prev) => ({
+            ...prev,
+            [reaction.message_id]: [
+              ...(prev[reaction.message_id] || []),
+              reaction,
+            ],
+          }))
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          setReactions((prev) => ({
+            ...prev,
+            [payload.old.message_id]: (
+              prev[payload.old.message_id] || []
+            ).filter(
+              (reaction) => reaction.id !== payload.old.id
+            ),
+          }))
+        }
+      )
       .subscribe()
 
     return () => {
@@ -76,33 +292,47 @@ export default function Chat({ selfId, peerId, peerName }) {
     })
   }, [messages])
 
-  const parseMessage = (content) => {
-    if (!content) {
-      return {
-        type: 'text',
-        text: '',
-      }
-    }
+  /*
+   * Notification navigation: jump straight to a specific message
+   * and briefly highlight it, same behavior as group chat.
+   */
+  useEffect(() => {
+    if (!targetMessageId || !messages.length) return
 
-    try {
-      const parsed = JSON.parse(content)
+    const exists = messages.some(
+      (message) =>
+        String(message.id) === String(targetMessageId)
+    )
 
-      if (
-        parsed &&
-        parsed.type &&
-        parsed.url
-      ) {
-        return parsed
-      }
-    } catch {
-      // Normal text message.
-    }
+    if (!exists) return
 
-    return {
-      type: 'text',
-      text: content,
-    }
-  }
+    const timer = setTimeout(() => {
+      const element = document.getElementById(
+        `private-message-${targetMessageId}`
+      )
+
+      if (!element) return
+
+      setHighlightedMessageId(targetMessageId)
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+
+      setTimeout(() => {
+        setHighlightedMessageId(null)
+      }, 3500)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [targetMessageId, messages])
+
+  /*
+   * ============================================================
+   * SEND / UPLOAD
+   * ============================================================
+   */
 
   const sendText = async (e) => {
     e.preventDefault()
@@ -117,18 +347,26 @@ export default function Chat({ selfId, peerId, peerName }) {
     setError('')
     setText('')
 
+    const payload = {
+      sender_id: selfId,
+      receiver_id: peerId,
+      content,
+    }
+
+    if (replyingTo?.id) {
+      payload.reply_to_id = replyingTo.id
+    }
+
     const { error: sendError } = await supabase
       .from('messages')
-      .insert({
-        sender_id: selfId,
-        receiver_id: peerId,
-        content,
-      })
+      .insert(payload)
 
     if (sendError) {
       console.error(sendError)
       setError(sendError.message)
       setText(content)
+    } else {
+      setReplyingTo(null)
     }
 
     setSending(false)
@@ -195,17 +433,25 @@ export default function Chat({ selfId, peerId, peerName }) {
         mime: file.type,
       })
 
+      const payload = {
+        sender_id: selfId,
+        receiver_id: peerId,
+        content: messageContent,
+      }
+
+      if (replyingTo?.id) {
+        payload.reply_to_id = replyingTo.id
+      }
+
       const { error: messageError } = await supabase
         .from('messages')
-        .insert({
-          sender_id: selfId,
-          receiver_id: peerId,
-          content: messageContent,
-        })
+        .insert(payload)
 
       if (messageError) {
         throw messageError
       }
+
+      setReplyingTo(null)
     } catch (err) {
       console.error(err)
       setError(err.message || 'Could not send the file.')
@@ -241,8 +487,7 @@ export default function Chat({ selfId, peerId, peerName }) {
           audio: true,
         })
 
-      const recorder =
-        new MediaRecorder(stream)
+      const recorder = new MediaRecorder(stream)
 
       audioChunksRef.current = []
 
@@ -257,22 +502,15 @@ export default function Chat({ selfId, peerId, peerName }) {
           track.stop()
         })
 
-        const blob = new Blob(
-          audioChunksRef.current,
-          {
-            type:
-              recorder.mimeType ||
-              'audio/webm',
-          }
-        )
+        const blob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || 'audio/webm',
+        })
 
         const file = new File(
           [blob],
           `voice-${Date.now()}.webm`,
           {
-            type:
-              recorder.mimeType ||
-              'audio/webm',
+            type: recorder.mimeType || 'audio/webm',
           }
         )
 
@@ -287,8 +525,7 @@ export default function Chat({ selfId, peerId, peerName }) {
     } catch (err) {
       console.error(err)
       setError(
-        err.message ||
-          'Could not start voice recording.'
+        err.message || 'Could not start voice recording.'
       )
       setRecording(false)
     }
@@ -306,6 +543,144 @@ export default function Chat({ selfId, peerId, peerName }) {
     mediaRecorderRef.current = null
     setRecording(false)
   }
+
+  /*
+   * ============================================================
+   * REPLY / EDIT / DELETE / REACT
+   * ============================================================
+   * Editing is a "you can only edit what YOU wrote" action, full
+   * stop — that's how Telegram works, and there's no such thing
+   * as an admin editing someone else's message there either.
+   * Deleting is different: the teacher can remove a message from
+   * either side of the conversation, same moderation power they
+   * already have in group chat.
+   * ============================================================
+   */
+
+  const canDelete = (message) =>
+    message.sender_id === selfId || selfRole === 'teacher'
+
+  const canEdit = (message) =>
+    message.sender_id === selfId &&
+    parseMessage(message.content).type === 'text'
+
+  const startReply = (message) => {
+    setReplyingTo(message)
+
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  const startEdit = (message) => {
+    if (!canEdit(message)) return
+
+    setEditingId(message.id)
+    setEditingText(message.content || '')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditingText('')
+  }
+
+  const saveEdit = async (message) => {
+    const content = editingText.trim()
+
+    if (!content) return
+
+    const { error: editError } = await supabase
+      .from('messages')
+      .update({
+        content,
+        edited_at: new Date().toISOString(),
+      })
+      .eq('id', message.id)
+
+    if (editError) {
+      setError(editError.message)
+      return
+    }
+
+    setEditingId(null)
+    setEditingText('')
+  }
+
+  const deleteMessage = async (message) => {
+    if (!canDelete(message)) return
+
+    if (
+      !window.confirm(
+        'Delete this message for everyone?'
+      )
+    ) {
+      return
+    }
+
+    const { error: deleteError } = await supabase
+      .from('messages')
+      .delete()
+      .eq('id', message.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+    }
+  }
+
+  const toggleReaction = async (message, reaction) => {
+    const existing = (reactions[message.id] || []).find(
+      (item) =>
+        item.user_id === selfId && item.reaction === reaction
+    )
+
+    if (existing) {
+      const { error: reactionError } = await supabase
+        .from('message_reactions')
+        .delete()
+        .eq('id', existing.id)
+
+      if (reactionError) {
+        setError(reactionError.message)
+      }
+
+      return
+    }
+
+    const { error: reactionError } = await supabase
+      .from('message_reactions')
+      .insert({
+        message_id: message.id,
+        user_id: selfId,
+        reaction,
+      })
+
+    if (reactionError) {
+      setError(reactionError.message)
+    }
+  }
+
+  const reactionCount = (messageId, reaction) =>
+    (reactions[messageId] || []).filter(
+      (item) => item.reaction === reaction
+    ).length
+
+  const hasReaction = (messageId, reaction) =>
+    (reactions[messageId] || []).some(
+      (item) =>
+        item.user_id === selfId && item.reaction === reaction
+    )
+
+  const getReply = (message) => {
+    if (!message.reply_to_id) return null
+
+    return messages.find(
+      (item) => item.id === message.reply_to_id
+    )
+  }
+
+  /*
+   * ============================================================
+   * RENDER MESSAGE CONTENT
+   * ============================================================
+   */
 
   const renderMessage = (message) => {
     const parsed = parseMessage(message.content)
@@ -393,7 +768,7 @@ export default function Chat({ selfId, peerId, peerName }) {
 
       {/* MESSAGES */}
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
         {messages.length === 0 && (
           <p className="text-mist text-sm">
@@ -401,29 +776,213 @@ export default function Chat({ selfId, peerId, peerName }) {
           </p>
         )}
 
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
-              m.sender_id === selfId
-                ? 'ml-auto bg-brass text-onbrass'
-                : 'mr-auto bg-panel-2 text-paper'
-            }`}
-          >
+        {messages.map((m) => {
+          const mine = m.sender_id === selfId
+          const reply = getReply(m)
+          const messageCanEdit = canEdit(m)
+          const messageCanDelete = canDelete(m)
+          const isHighlighted =
+            String(highlightedMessageId) === String(m.id)
 
-            {renderMessage(m)}
+          return (
+            <div
+              key={m.id}
+              id={`private-message-${m.id}`}
+              className={`flex ${
+                mine ? 'justify-end' : 'justify-start'
+              } ${
+                isHighlighted
+                  ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
+                  : ''
+              }`}
+            >
+              <div
+                className={`max-w-[75%] flex flex-col ${
+                  mine ? 'items-end' : 'items-start'
+                }`}
+              >
+                <div
+                  className={`px-3 py-2 rounded-lg text-sm ${
+                    mine
+                      ? 'bg-brass text-onbrass'
+                      : 'bg-panel-2 text-paper'
+                  }`}
+                >
 
-            <div className="text-[10px] opacity-60 font-mono mt-1">
-              {new Date(
-                m.created_at
-              ).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+                  {reply && (
+                    <div
+                      className={`mb-2 border-l-2 rounded px-2 py-1 text-xs ${
+                        mine
+                          ? 'border-onbrass/60 bg-black/10'
+                          : 'border-brass bg-panel'
+                      }`}
+                    >
+                      <div className="font-medium">
+                        Reply to{' '}
+                        {reply.sender_id === selfId
+                          ? 'yourself'
+                          : peerName || 'them'}
+                      </div>
+
+                      <div className="truncate opacity-70">
+                        {previewFor(reply)}
+                      </div>
+                    </div>
+                  )}
+
+                  {editingId === m.id ? (
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        value={editingText}
+                        onChange={(e) =>
+                          setEditingText(e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            saveEdit(m)
+                          }
+
+                          if (e.key === 'Escape') {
+                            cancelEdit()
+                          }
+                        }}
+                        className="focus-ring flex-1 rounded-lg px-2 py-1 bg-panel text-paper border border-line"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(m)}
+                        className="text-xs font-medium shrink-0"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    renderMessage(m)
+                  )}
+
+                </div>
+
+                {/* META ROW — timestamp, edited tag, and the
+                    "⋯" actions menu, all in one inline row
+                    instead of floating over the bubble */}
+                <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-mist">
+
+                  <span className="opacity-70">
+                    {new Date(
+                      m.created_at
+                    ).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+
+                  {m.edited_at && (
+                    <span className="italic opacity-70">
+                      edited
+                    </span>
+                  )}
+
+                  {(messageCanEdit || messageCanDelete) && (
+                    <details className="relative leading-none">
+                      <summary className="list-none cursor-pointer px-1 hover:text-brass">
+                        ⋯
+                      </summary>
+
+                      <div
+                        className={`absolute top-full mt-1 z-30 min-w-[110px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
+                          mine ? 'right-0' : 'left-0'
+                        }`}
+                      >
+                        {messageCanEdit && (
+                          <button
+                            type="button"
+                            onClick={() => startEdit(m)}
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                          >
+                            Edit
+                          </button>
+                        )}
+
+                        {messageCanDelete && (
+                          <button
+                            type="button"
+                            onClick={() => deleteMessage(m)}
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </details>
+                  )}
+
+                </div>
+
+                <div className="flex items-center gap-1 mt-0.5">
+
+                  {REACTIONS.map((reaction) => {
+                    const count = reactionCount(
+                      m.id,
+                      reaction
+                    )
+
+                    if (!count) return null
+
+                    return (
+                      <button
+                        key={reaction}
+                        type="button"
+                        onClick={() =>
+                          toggleReaction(m, reaction)
+                        }
+                        className={`focus-ring text-xs border rounded-full px-2 py-0.5 ${
+                          hasReaction(m.id, reaction)
+                            ? 'border-brass text-brass bg-brass/10'
+                            : 'border-line text-mist'
+                        }`}
+                      >
+                        {reaction} {count}
+                      </button>
+                    )
+                  })}
+
+                  <details className="relative">
+                    <summary className="list-none cursor-pointer text-xs text-mist hover:text-brass px-1">
+                      +
+                    </summary>
+
+                    <div className="absolute bottom-5 left-0 z-30 bg-panel border border-line rounded-lg shadow-xl p-1 flex gap-1">
+                      {REACTIONS.map((reaction) => (
+                        <button
+                          key={reaction}
+                          type="button"
+                          onClick={() =>
+                            toggleReaction(m, reaction)
+                          }
+                          className="w-8 h-8 rounded-md hover:bg-panel-2"
+                        >
+                          {reaction}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+
+                  <button
+                    type="button"
+                    onClick={() => startReply(m)}
+                    className="text-[11px] text-mist hover:text-brass px-1"
+                  >
+                    Reply
+                  </button>
+
+                </div>
+
+              </div>
             </div>
-
-          </div>
-        ))}
+          )
+        })}
 
         <div ref={bottomRef} />
 
@@ -434,6 +993,37 @@ export default function Chat({ selfId, peerId, peerName }) {
       {error && (
         <div className="px-3 py-2 border-t border-line text-coral text-xs">
           {error}
+        </div>
+      )}
+
+      {/* REPLY PREVIEW */}
+
+      {replyingTo && (
+        <div className="px-3 py-2 border-t border-line bg-panel-2 flex items-center gap-3">
+
+          <div className="w-1 h-8 rounded-full bg-brass" />
+
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-brass font-medium">
+              Replying to{' '}
+              {replyingTo.sender_id === selfId
+                ? 'yourself'
+                : peerName || 'them'}
+            </div>
+
+            <div className="text-xs text-mist truncate">
+              {previewFor(replyingTo)}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setReplyingTo(null)}
+            className="text-mist hover:text-paper text-lg"
+          >
+            ×
+          </button>
+
         </div>
       )}
 
@@ -493,6 +1083,7 @@ export default function Chat({ selfId, peerId, peerName }) {
         )}
 
         <input
+          ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={
@@ -507,10 +1098,7 @@ export default function Chat({ selfId, peerId, peerName }) {
         <button
           type="submit"
           disabled={
-            sending ||
-            uploading ||
-            recording ||
-            !text.trim()
+            sending || uploading || recording || !text.trim()
           }
           className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
         >

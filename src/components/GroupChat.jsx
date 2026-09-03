@@ -659,10 +659,10 @@ export default function GroupChat({
   }
 
   const startEdit = (message) => {
-    if (
-      message.sender_id !== selfId &&
-      selfRole !== 'teacher'
-    ) {
+    // Only the sender can edit their own message — a teacher can
+    // remove a student's message for moderation, but never rewrite
+    // it, same as real Telegram.
+    if (message.sender_id !== selfId) {
       return
     }
 
@@ -849,9 +849,15 @@ export default function GroupChat({
             const reply =
               getReply(message)
 
-            const canManage =
+            // Deleting is sender-or-teacher (moderation); editing is
+            // sender-only — a teacher should never be able to rewrite
+            // a student's words, only remove them.
+            const canDelete =
               mine ||
               selfRole === 'teacher'
+
+            const canEdit =
+              mine && Boolean(message.content)
 
             const messageReactions =
               reactions[message.id] || []
@@ -917,6 +923,44 @@ export default function GroupChat({
                         }
                       )}
                     </span>
+
+                    {(canEdit || canDelete) && (
+                      <details className="relative leading-none ml-auto">
+                        <summary className="list-none cursor-pointer px-1 text-mist hover:text-brass">
+                          ⋯
+                        </summary>
+
+                        <div
+                          className={`absolute top-full mt-1 z-30 min-w-[110px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
+                            mine ? 'right-0' : 'left-0'
+                          }`}
+                        >
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startEdit(message)
+                              }
+                              className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                            >
+                              Edit
+                            </button>
+                          )}
+
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                deleteMessage(message)
+                              }
+                              className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </details>
+                    )}
 
                   </div>
 
@@ -1036,38 +1080,6 @@ export default function GroupChat({
                           {message.content}
                         </div>
                       )
-                    )}
-
-                    {canManage && (
-                      <div className="absolute -top-3 right-1 hidden group-hover:flex gap-1 bg-panel border border-line rounded-full px-1.5 py-1 shadow-md">
-
-                        {message.content && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              startEdit(
-                                message
-                              )
-                            }
-                            className="text-[10px] text-mist hover:text-brass"
-                          >
-                            Edit
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            deleteMessage(
-                              message
-                            )
-                          }
-                          className="text-[10px] text-mist hover:text-coral"
-                        >
-                          Delete
-                        </button>
-
-                      </div>
                     )}
 
                   </div>
