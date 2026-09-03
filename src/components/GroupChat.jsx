@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import ProfileModal from './ProfileModal'
 
 const MAX_FILE_MB = 25
 
@@ -48,12 +49,25 @@ export default function GroupChat({
   // "Delete for me". The row stays for everyone else in the group.
   const [hiddenIds, setHiddenIds] = useState(new Set())
 
+  // Pinned messages, newest pin first — the teacher pins/unpins
+  // (same moderation role they already have), everyone in the group
+  // sees the banner. `pinIndex` is which pin the banner shows when
+  // there's more than one.
+  const [pins, setPins] = useState([])
+  const [pinIndex, setPinIndex] = useState(0)
+
+  // Telegram-style multi-select: pick several messages, then delete
+  // them all in one go instead of one at a time.
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
   const [selfRole, setSelfRole] = useState('student')
+  const [viewingProfileId, setViewingProfileId] = useState(null)
   const [showActions, setShowActions] = useState(false)
 
   const [replyingTo, setReplyingTo] = useState(null)
@@ -83,7 +97,7 @@ export default function GroupChat({
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, username, role')
+      .select('id, full_name, username, role, avatar_url')
       .in('id', uniqueIds)
 
     if (error) {
@@ -185,6 +199,23 @@ export default function GroupChat({
     )
   }
 
+  const loadPins = async () => {
+    if (!groupId) return
+
+    const { data, error } = await supabase
+      .from('group_message_pins')
+      .select('*')
+      .eq('group_id', groupId)
+      .order('pinned_at', { ascending: false })
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setPins(data || [])
+  }
+
   const loadActions = async () => {
     if (selfRole !== 'teacher') return
 
@@ -230,6 +261,7 @@ export default function GroupChat({
 
       await loadMessages()
       await loadHiddenForMe()
+      await loadPins()
     }
 
     initialise()
@@ -390,6 +422,28 @@ export default function GroupChat({
         }
       )
 
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_message_pins',
+          filter: `group_id=eq.${groupId}`,
+        },
+        () => loadPins()
+      )
+
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'group_message_pins',
+          filter: `group_id=eq.${groupId}`,
+        },
+        () => loadPins()
+      )
+
       .subscribe()
 
     return () => {
@@ -408,6 +462,12 @@ export default function GroupChat({
       behavior: 'smooth',
     })
   }, [messages])
+
+  // Always land on the most recently pinned message when the pin
+  // list changes, same as opening a Telegram group with a new pin.
+  useEffect(() => {
+    setPinIndex(0)
+  }, [pins.length])
 
   /*
    * Notification navigation:
@@ -445,6 +505,27 @@ export default function GroupChat({
 
     return () => clearTimeout(timer)
   }, [initialMessageId, messages])
+
+  // Same jump-and-briefly-highlight behavior as above, but triggered
+  // on demand — used by the pinned-message banner.
+  const jumpToMessage = (messageId) => {
+    const element = document.getElementById(
+      `group-message-${messageId}`
+    )
+
+    if (!element) return
+
+    setHighlightedMessageId(messageId)
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+
+    setTimeout(() => {
+      setHighlightedMessageId(null)
+    }, 3500)
+  }
 
   useEffect(() => {
     return () => {
@@ -766,6 +847,159 @@ export default function GroupChat({
     }
   }
 
+  /*
+   * ============================================================
+   * PIN / UNPIN / COPY
+   * ============================================================
+   * Pinning is a teacher-only moderation action, same as it is in a
+   * real Telegram group (only admins pin there too) — everyone in
+   * the group can see the pinned banner and jump to it, but only the
+   * teacher can add or remove a pin.
+   * ============================================================
+   */
+
+  const isPinned = (messageId) =>
+    pins.some((pin) => pin.message_id === messageId)
+
+  const pinMessage = async (message) => {
+    if (selfRole !== 'teacher') return
+
+    const { error } = await supabase
+      .from('group_message_pins')
+      .upsert(
+        {
+          message_id: message.id,
+          group_id: groupId,
+          pinned_by: selfId,
+        },
+        { onConflict: 'message_id' }
+      )
+
+    if (error) {
+      setError(error.message)
+    }
+  }
+
+  const unpinMessage = async (messageId) => {
+    if (selfRole !== 'teacher') return
+
+    const { error } = await supabase
+      .from('group_message_pins')
+      .delete()
+      .eq('message_id', messageId)
+
+    if (error) {
+      setError(error.message)
+    }
+  }
+
+  const copyMessageText = async (message) => {
+    if (!message.content) return
+
+    try {
+      await navigator.clipboard.writeText(message.content)
+    } catch (err) {
+      console.error('Copy failed:', err)
+    }
+  }
+
+  /*
+   * ============================================================
+   * MULTI-SELECT DELETE
+   * ============================================================
+   */
+
+  const startSelecting = (messageId) => {
+    setSelectMode(true)
+    setSelectedIds(new Set([messageId]))
+  }
+
+  const toggleSelected = (messageId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+
+      if (next.has(messageId)) {
+        next.delete(messageId)
+      } else {
+        next.add(messageId)
+      }
+
+      return next
+    })
+  }
+
+  const cancelSelecting = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const bulkDeleteForMe = async () => {
+    const ids = [...selectedIds]
+
+    if (!ids.length) return
+
+    if (
+      !window.confirm(
+        `Remove ${ids.length} message${
+          ids.length > 1 ? 's' : ''
+        } from your view of the chat? Other members will still see ${
+          ids.length > 1 ? 'them' : 'it'
+        }.`
+      )
+    ) {
+      return
+    }
+
+    setHiddenIds((prev) => {
+      const next = new Set(prev)
+      ids.forEach((id) => next.add(id))
+      return next
+    })
+
+    const { error } = await supabase
+      .from('group_message_deletions')
+      .upsert(
+        ids.map((id) => ({
+          message_id: id,
+          user_id: selfId,
+        })),
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+      )
+
+    if (error) {
+      setError(error.message)
+    }
+
+    cancelSelecting()
+  }
+
+  const bulkDeleteForEveryone = async () => {
+    const ids = [...selectedIds]
+
+    if (!ids.length) return
+
+    if (
+      !window.confirm(
+        `Delete ${ids.length} message${
+          ids.length > 1 ? 's' : ''
+        } for everyone?`
+      )
+    ) {
+      return
+    }
+
+    const { error } = await supabase
+      .from('group_messages')
+      .delete()
+      .in('id', ids)
+
+    if (error) {
+      setError(error.message)
+    }
+
+    cancelSelecting()
+  }
+
   const startEdit = (message) => {
     // Only the sender can edit their own message — a teacher can
     // remove a student's message for moderation, but never rewrite
@@ -904,8 +1138,25 @@ export default function GroupChat({
     )
   }
 
+  const selectedMessages = messages.filter((message) =>
+    selectedIds.has(message.id)
+  )
+
+  const canBulkDeleteEveryone =
+    selectedMessages.length > 0 &&
+    selectedMessages.every((message) =>
+      canDeleteEveryone(message)
+    )
+
   return (
     <div className="group-chat-shell flex flex-col h-[36rem] bg-panel border border-line rounded-2xl overflow-hidden shadow-lg">
+
+      <ProfileModal
+        userId={viewingProfileId}
+        viewerId={selfId}
+        viewerRole={selfRole}
+        onClose={() => setViewingProfileId(null)}
+      />
 
       <div className="px-4 py-3 border-b border-line bg-panel-2/70 flex items-center justify-between">
 
@@ -919,27 +1170,114 @@ export default function GroupChat({
           </div>
         </div>
 
-        {selfRole === 'teacher' && (
+        <div className="flex items-center gap-2 shrink-0">
+
           <button
             type="button"
             onClick={() =>
-              setShowActions(
-                (value) => !value
-              )
+              selectMode
+                ? cancelSelecting()
+                : setSelectMode(true)
             }
             className="focus-ring text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
           >
-            {showActions
-              ? 'Hide activity'
-              : 'Recent activity'}
+            {selectMode ? 'Cancel' : 'Select'}
           </button>
-        )}
+
+          {selfRole === 'teacher' && (
+            <button
+              type="button"
+              onClick={() =>
+                setShowActions(
+                  (value) => !value
+                )
+              }
+              className="focus-ring text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
+            >
+              {showActions
+                ? 'Hide activity'
+                : 'Recent activity'}
+            </button>
+          )}
+
+        </div>
 
       </div>
 
+      {/* PINNED MESSAGE */}
+
+      {pins.length > 0 && (() => {
+        const activePin = pins[pinIndex] || pins[0]
+        const pinnedMessage = messages.find(
+          (m) => m.id === activePin?.message_id
+        )
+
+        if (!pinnedMessage) return null
+
+        const pinnedSender = profiles[pinnedMessage.sender_id]
+
+        return (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-line bg-panel-2/60">
+
+            <button
+              type="button"
+              onClick={() => jumpToMessage(pinnedMessage.id)}
+              className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
+            >
+              <span className="text-brass shrink-0">📌</span>
+
+              <div className="min-w-0">
+                <div className="text-[10px] text-mist">
+                  {pins.length > 1
+                    ? `Pinned message ${pinIndex + 1} of ${pins.length}`
+                    : 'Pinned message'}
+                  {' · '}
+                  {pinnedSender?.full_name ||
+                    pinnedSender?.username ||
+                    'Member'}
+                </div>
+
+                <div className="text-xs text-paper truncate">
+                  {pinnedMessage.content ||
+                    (pinnedMessage.media_type
+                      ? 'Media message'
+                      : '')}
+                </div>
+              </div>
+            </button>
+
+            {pins.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setPinIndex(
+                    (index) => (index + 1) % pins.length
+                  )
+                }
+                className="focus-ring text-mist hover:text-brass text-xs px-2 shrink-0"
+              >
+                Next
+              </button>
+            )}
+
+            {selfRole === 'teacher' && (
+              <button
+                type="button"
+                onClick={() => unpinMessage(pinnedMessage.id)}
+                title="Unpin"
+                className="focus-ring text-mist hover:text-coral text-sm px-1 shrink-0"
+              >
+                ×
+              </button>
+            )}
+
+          </div>
+        )
+      })()}
+
       <div className="flex-1 min-h-0 flex">
 
-        <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4 space-y-3">
+        <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4">
 
           {messages.length === 0 && (
             <div className="h-full flex items-center justify-center text-mist text-sm">
@@ -949,7 +1287,7 @@ export default function GroupChat({
 
           {messages
             .filter((message) => !hiddenIds.has(message.id))
-            .map((message) => {
+            .map((message, index, visible) => {
             const mine =
               message.sender_id === selfId
 
@@ -973,12 +1311,24 @@ export default function GroupChat({
             const canEdit =
               mine && Boolean(message.content)
 
+            const messagePinned = isPinned(message.id)
+
             const messageReactions =
               reactions[message.id] || []
 
             const isHighlighted =
               String(highlightedMessageId) ===
               String(message.id)
+
+            const prev = visible[index - 1]
+
+            const groupedWithPrev = Boolean(
+              prev &&
+                prev.sender_id === message.sender_id &&
+                new Date(message.created_at) -
+                  new Date(prev.created_at) <
+                  5 * 60 * 1000
+            )
 
             const initial = String(
               sender?.full_name ||
@@ -988,26 +1338,85 @@ export default function GroupChat({
               .charAt(0)
               .toUpperCase()
 
+            const selected = selectedIds.has(message.id)
+
             return (
               <div
                 key={message.id}
                 id={`group-message-${message.id}`}
+                onClick={
+                  selectMode
+                    ? () => toggleSelected(message.id)
+                    : undefined
+                }
                 className={`flex items-end gap-2 ${
-                  mine
+                  selectMode ? 'cursor-pointer' : ''
+                } ${
+                  !selectMode && mine
                     ? 'justify-end'
                     : 'justify-start'
+                } ${
+                  index === 0
+                    ? ''
+                    : groupedWithPrev
+                    ? 'mt-1'
+                    : 'mt-3'
                 } ${
                   isHighlighted
                     ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
                     : ''
-                }`}
+                } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
               >
+
+                {selectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() =>
+                      toggleSelected(message.id)
+                    }
+                    className="w-4 h-4 mb-1 shrink-0 accent-brass"
+                  />
+                )}
 
                 {!mine && (
                   <div
-                    className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass ${accent.avatarBg}`}
+                    className={`w-7 shrink-0 ${
+                      selectMode
+                        ? 'pointer-events-none'
+                        : ''
+                    }`}
                   >
-                    {initial}
+                    {!groupedWithPrev && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setViewingProfileId(
+                            message.sender_id
+                          )
+                        }
+                        className="focus-ring block"
+                      >
+                        {sender?.avatar_url ? (
+                          <img
+                            src={sender.avatar_url}
+                            alt={
+                              sender?.full_name ||
+                              sender?.username ||
+                              'Member'
+                            }
+                            className="w-7 h-7 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass ${accent.avatarBg}`}
+                          >
+                            {initial}
+                          </div>
+                        )}
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1016,23 +1425,46 @@ export default function GroupChat({
                     mine
                       ? 'items-end'
                       : 'items-start'
-                  } flex flex-col`}
+                  } flex flex-col ${
+                    selectMode ? 'pointer-events-none' : ''
+                  }`}
                 >
+
+                  {!groupedWithPrev && (
+                    <div className="px-1 mb-0.5 flex items-center gap-2 text-[11px]">
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setViewingProfileId(
+                            message.sender_id
+                          )
+                        }
+                        className={`focus-ring font-semibold hover:underline ${accent.name}`}
+                      >
+                        {sender?.full_name ||
+                          sender?.username ||
+                          'Member'}
+                      </button>
+
+                      {sender?.role ===
+                        'teacher' && (
+                        <span className="rounded-full border border-brass/40 px-1.5 text-brass">
+                          TEACHER
+                        </span>
+                      )}
+
+                    </div>
+                  )}
 
                   <div className="px-1 mb-1 flex items-center gap-2 text-[11px]">
 
-                    <span
-                      className={`font-semibold ${accent.name}`}
-                    >
-                      {sender?.full_name ||
-                        sender?.username ||
-                        'Member'}
-                    </span>
-
-                    {sender?.role ===
-                      'teacher' && (
-                      <span className="rounded-full border border-brass/40 px-1.5 text-brass">
-                        TEACHER
+                    {messagePinned && (
+                      <span
+                        className="text-brass"
+                        title="Pinned"
+                      >
+                        📌
                       </span>
                     )}
 
@@ -1060,6 +1492,34 @@ export default function GroupChat({
                           mine ? 'right-0' : 'left-0'
                         }`}
                       >
+                        {Boolean(message.content) && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyMessageText(message)
+                            }
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                          >
+                            Copy text
+                          </button>
+                        )}
+
+                        {selfRole === 'teacher' && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              messagePinned
+                                ? unpinMessage(message.id)
+                                : pinMessage(message)
+                            }
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                          >
+                            {messagePinned
+                              ? 'Unpin'
+                              : 'Pin message'}
+                          </button>
+                        )}
+
                         {canEdit && (
                           <button
                             type="button"
@@ -1092,6 +1552,16 @@ export default function GroupChat({
                           className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
                         >
                           Delete for me
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startSelecting(message.id)
+                          }
+                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper border-t border-line"
+                        >
+                          Select
                         </button>
                       </div>
                     </details>
@@ -1497,7 +1967,48 @@ export default function GroupChat({
         </div>
       )}
 
-      {!recording &&
+      {selectMode && (
+        <div className="flex items-center gap-2 p-3 border-t border-line">
+
+          <span className="text-sm text-mist">
+            {selectedIds.size} selected
+          </span>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={cancelSelecting}
+              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-line text-mist hover:text-paper"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={bulkDeleteForMe}
+              disabled={!selectedIds.size}
+              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-coral text-coral disabled:opacity-40"
+            >
+              Delete for me
+            </button>
+
+            {canBulkDeleteEveryone && (
+              <button
+                type="button"
+                onClick={bulkDeleteForEveryone}
+                disabled={!selectedIds.size}
+                className="focus-ring text-xs px-3 py-1.5 rounded-md bg-coral text-onbrass disabled:opacity-40"
+              >
+                Delete for everyone
+              </button>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {!selectMode &&
+        !recording &&
         !recordedBlob && (
         <form
           onSubmit={send}

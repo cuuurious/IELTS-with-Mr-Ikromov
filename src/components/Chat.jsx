@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import ProfileModal from './ProfileModal'
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
 
@@ -13,10 +14,28 @@ export default function Chat({
   const [reactions, setReactions] = useState({})
   const [selfRole, setSelfRole] = useState('student')
 
+  // Just the peer's photo, kept fresh independently of the message
+  // list, for the chat header. The full profile (bio, etc.) is
+  // fetched by ProfileModal itself, on demand, when it's opened.
+  const [peerAvatarUrl, setPeerAvatarUrl] = useState('')
+  const [viewingProfileId, setViewingProfileId] = useState(null)
+
   // Messages this user has hidden from their own view only — "Delete
   // for me". The row stays in the database for the other person; we
   // just never render it here.
   const [hiddenIds, setHiddenIds] = useState(new Set())
+
+  // Pinned messages, newest pin first — either person in a private
+  // chat can pin, same as a real Telegram DM. `pinIndex` is which
+  // pinned message the banner is currently showing, for chats with
+  // more than one pin.
+  const [pins, setPins] = useState([])
+  const [pinIndex, setPinIndex] = useState(0)
+
+  // Telegram-style multi-select: pick several messages, then delete
+  // them all in one go instead of one at a time.
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
 
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -36,6 +55,14 @@ export default function Chat({
   const fileRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
+
+  // Lets the pin realtime handler always see the current message
+  // list without having to resubscribe every time a message arrives.
+  const messagesRef = useRef([])
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
 
   /*
    * ============================================================
@@ -129,6 +156,31 @@ export default function Chat({
     setReactions(grouped)
   }
 
+  const loadPins = async (messageIds) => {
+    const ids =
+      messageIds && messageIds.length
+        ? messageIds
+        : messagesRef.current.map((m) => m.id)
+
+    if (!ids.length) {
+      setPins([])
+      return
+    }
+
+    const { data, error: pinsError } = await supabase
+      .from('message_pins')
+      .select('*')
+      .in('message_id', ids)
+      .order('pinned_at', { ascending: false })
+
+    if (pinsError) {
+      console.error('Pin loading error:', pinsError)
+      return
+    }
+
+    setPins(data || [])
+  }
+
   useEffect(() => {
     if (!selfId) return
 
@@ -153,6 +205,25 @@ export default function Chat({
 
     let active = true
 
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', peerId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setPeerAvatarUrl(data?.avatar_url || '')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [peerId])
+
+  useEffect(() => {
+    if (!peerId) return
+
+    let active = true
+
     const load = async () => {
       const { data, error: loadError } = await supabase
         .from('messages')
@@ -166,6 +237,7 @@ export default function Chat({
         const rows = data || []
         setMessages(rows)
         await loadReactions(rows)
+        await loadPins(rows.map((row) => row.id))
       }
 
       const { data: deletions, error: deletionsError } =
@@ -315,6 +387,28 @@ export default function Chat({
           })
         }
       )
+      .on(
+        // No cheap way to filter this to just this conversation from
+        // the payload alone, so just re-check against the messages
+        // we already have loaded — same trick group chat uses for
+        // its moderation-activity feed.
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_pins',
+        },
+        () => loadPins()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'message_pins',
+        },
+        () => loadPins()
+      )
       .subscribe()
 
     return () => {
@@ -328,6 +422,12 @@ export default function Chat({
       behavior: 'smooth',
     })
   }, [messages])
+
+  // Always land on the most recently pinned message when the pin
+  // list changes, same as opening a Telegram chat with a new pin.
+  useEffect(() => {
+    setPinIndex(0)
+  }, [pins.length])
 
   /*
    * Notification navigation: jump straight to a specific message
@@ -364,6 +464,27 @@ export default function Chat({
 
     return () => clearTimeout(timer)
   }, [targetMessageId, messages])
+
+  // Same jump-and-briefly-highlight behavior as above, but triggered
+  // on demand — used by the pinned-message banner.
+  const jumpToMessage = (messageId) => {
+    const element = document.getElementById(
+      `private-message-${messageId}`
+    )
+
+    if (!element) return
+
+    setHighlightedMessageId(messageId)
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+
+    setTimeout(() => {
+      setHighlightedMessageId(null)
+    }, 3500)
+  }
 
   /*
    * ============================================================
@@ -707,6 +828,153 @@ export default function Chat({
     }
   }
 
+  /*
+   * ============================================================
+   * PIN / UNPIN / COPY
+   * ============================================================
+   * Either person can pin in a private chat — there's no "admin"
+   * side of a 1:1 conversation, same as a real Telegram DM.
+   * ============================================================
+   */
+
+  const isPinned = (messageId) =>
+    pins.some((pin) => pin.message_id === messageId)
+
+  const pinMessage = async (message) => {
+    const { error: pinError } = await supabase
+      .from('message_pins')
+      .upsert(
+        { message_id: message.id, pinned_by: selfId },
+        { onConflict: 'message_id' }
+      )
+
+    if (pinError) {
+      setError(pinError.message)
+    }
+  }
+
+  const unpinMessage = async (messageId) => {
+    const { error: unpinError } = await supabase
+      .from('message_pins')
+      .delete()
+      .eq('message_id', messageId)
+
+    if (unpinError) {
+      setError(unpinError.message)
+    }
+  }
+
+  const copyMessageText = async (message) => {
+    const parsed = parseMessage(message.content)
+
+    if (parsed.type !== 'text' || !parsed.text) return
+
+    try {
+      await navigator.clipboard.writeText(parsed.text)
+    } catch (err) {
+      console.error('Copy failed:', err)
+    }
+  }
+
+  /*
+   * ============================================================
+   * MULTI-SELECT DELETE
+   * ============================================================
+   */
+
+  const startSelecting = (messageId) => {
+    setSelectMode(true)
+    setSelectedIds(new Set([messageId]))
+  }
+
+  const toggleSelected = (messageId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+
+      if (next.has(messageId)) {
+        next.delete(messageId)
+      } else {
+        next.add(messageId)
+      }
+
+      return next
+    })
+  }
+
+  const cancelSelecting = () => {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const bulkDeleteForMe = async () => {
+    const ids = [...selectedIds]
+
+    if (!ids.length) return
+
+    if (
+      !window.confirm(
+        `Remove ${ids.length} message${
+          ids.length > 1 ? 's' : ''
+        } from your side of the chat? ${
+          peerName || 'The other person'
+        } will still see ${
+          ids.length > 1 ? 'them' : 'it'
+        }.`
+      )
+    ) {
+      return
+    }
+
+    setHiddenIds((prev) => {
+      const next = new Set(prev)
+      ids.forEach((id) => next.add(id))
+      return next
+    })
+
+    const { error: bulkHideError } = await supabase
+      .from('message_deletions')
+      .upsert(
+        ids.map((id) => ({
+          message_id: id,
+          user_id: selfId,
+        })),
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+      )
+
+    if (bulkHideError) {
+      setError(bulkHideError.message)
+    }
+
+    cancelSelecting()
+  }
+
+  const bulkDeleteForEveryone = async () => {
+    const ids = [...selectedIds]
+
+    if (!ids.length) return
+
+    if (
+      !window.confirm(
+        `Delete ${ids.length} message${
+          ids.length > 1 ? 's' : ''
+        } for everyone?`
+      )
+    ) {
+      return
+    }
+
+    const { error: bulkDeleteError } = await supabase
+      .from('messages')
+      .delete()
+      .in('id', ids)
+
+    if (bulkDeleteError) {
+      setError(bulkDeleteError.message)
+    }
+
+    cancelSelecting()
+  }
+
   const toggleReaction = async (message, reaction) => {
     const existing = (reactions[message.id] || []).find(
       (item) =>
@@ -839,18 +1107,128 @@ export default function Chat({
     )
   }
 
+  const selectedMessages = messages.filter((m) =>
+    selectedIds.has(m.id)
+  )
+
+  const canBulkDeleteEveryone =
+    selectedMessages.length > 0 &&
+    selectedMessages.every((m) => canDeleteEveryone(m))
+
   return (
     <div className="flex flex-col h-[28rem] bg-panel border border-line rounded-lg overflow-hidden">
 
-      {/* HEADER */}
+      {/* HEADER — tap the name/photo to view their profile, or use
+          Select to pick several messages at once */}
 
-      <div className="px-4 py-3 border-b border-line font-display text-lg">
-        {peerName}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-line">
+
+        <button
+          type="button"
+          onClick={() => setViewingProfileId(peerId)}
+          className="focus-ring flex-1 min-w-0 flex items-center gap-3 text-left hover:opacity-80"
+        >
+          {peerAvatarUrl ? (
+            <img
+              src={peerAvatarUrl}
+              alt={peerName}
+              className="w-9 h-9 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-brass flex items-center justify-center text-sm font-semibold text-onbrass shrink-0">
+              {String(peerName || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          <span className="font-display text-lg truncate">
+            {peerName}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            selectMode
+              ? cancelSelecting()
+              : setSelectMode(true)
+          }
+          className="focus-ring shrink-0 text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
+        >
+          {selectMode ? 'Cancel' : 'Select'}
+        </button>
+
       </div>
+
+      <ProfileModal
+        userId={viewingProfileId}
+        viewerId={selfId}
+        viewerRole={selfRole}
+        onClose={() => setViewingProfileId(null)}
+      />
+
+      {/* PINNED MESSAGE */}
+
+      {pins.length > 0 && (() => {
+        const activePin = pins[pinIndex] || pins[0]
+        const pinnedMessage = messages.find(
+          (m) => m.id === activePin?.message_id
+        )
+
+        if (!pinnedMessage) return null
+
+        return (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-line bg-panel-2/60">
+
+            <button
+              type="button"
+              onClick={() => jumpToMessage(pinnedMessage.id)}
+              className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
+            >
+              <span className="text-brass shrink-0">📌</span>
+
+              <div className="min-w-0">
+                <div className="text-[10px] text-mist">
+                  {pins.length > 1
+                    ? `Pinned message ${pinIndex + 1} of ${pins.length}`
+                    : 'Pinned message'}
+                </div>
+
+                <div className="text-xs text-paper truncate">
+                  {previewFor(pinnedMessage)}
+                </div>
+              </div>
+            </button>
+
+            {pins.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setPinIndex(
+                    (index) => (index + 1) % pins.length
+                  )
+                }
+                className="focus-ring text-mist hover:text-brass text-xs px-2 shrink-0"
+              >
+                Next
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => unpinMessage(pinnedMessage.id)}
+              title="Unpin"
+              className="focus-ring text-mist hover:text-coral text-sm px-1 shrink-0"
+            >
+              ×
+            </button>
+
+          </div>
+        )
+      })()}
 
       {/* MESSAGES */}
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-3">
 
         {messages.length === 0 && (
           <p className="text-mist text-sm">
@@ -860,29 +1238,69 @@ export default function Chat({
 
         {messages
           .filter((m) => !hiddenIds.has(m.id))
-          .map((m) => {
+          .map((m, index, visible) => {
           const mine = m.sender_id === selfId
           const reply = getReply(m)
           const messageCanEdit = canEdit(m)
           const messageCanDeleteEveryone = canDeleteEveryone(m)
+          const messagePinned = isPinned(m.id)
           const isHighlighted =
             String(highlightedMessageId) === String(m.id)
+
+          const prev = visible[index - 1]
+          const groupedWithPrev = Boolean(
+            prev &&
+              prev.sender_id === m.sender_id &&
+              new Date(m.created_at) -
+                new Date(prev.created_at) <
+                5 * 60 * 1000
+          )
+
+          const selected = selectedIds.has(m.id)
 
           return (
             <div
               key={m.id}
               id={`private-message-${m.id}`}
-              className={`flex ${
-                mine ? 'justify-end' : 'justify-start'
+              onClick={
+                selectMode
+                  ? () => toggleSelected(m.id)
+                  : undefined
+              }
+              className={`flex items-end gap-2 ${
+                selectMode ? 'cursor-pointer' : ''
+              } ${
+                !selectMode && mine
+                  ? 'justify-end'
+                  : 'justify-start'
+              } ${
+                index === 0
+                  ? ''
+                  : groupedWithPrev
+                  ? 'mt-1'
+                  : 'mt-3'
               } ${
                 isHighlighted
                   ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
                   : ''
-              }`}
+              } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
             >
+
+              {selectMode && (
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => toggleSelected(m.id)}
+                  className="w-4 h-4 mb-1 shrink-0 accent-brass"
+                />
+              )}
+
               <div
                 className={`max-w-[75%] flex flex-col ${
                   mine ? 'items-end' : 'items-start'
+                } ${
+                  selectMode ? 'pointer-events-none' : ''
                 }`}
               >
                 <div
@@ -978,6 +1396,31 @@ export default function Chat({
                         mine ? 'right-0' : 'left-0'
                       }`}
                     >
+                      {parseMessage(m.content).type ===
+                        'text' && (
+                        <button
+                          type="button"
+                          onClick={() => copyMessageText(m)}
+                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                        >
+                          Copy text
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          messagePinned
+                            ? unpinMessage(m.id)
+                            : pinMessage(m)
+                        }
+                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                      >
+                        {messagePinned
+                          ? 'Unpin'
+                          : 'Pin message'}
+                      </button>
+
                       {messageCanEdit && (
                         <button
                           type="button"
@@ -1004,6 +1447,14 @@ export default function Chat({
                         className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
                       >
                         Delete for me
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => startSelecting(m.id)}
+                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper border-t border-line"
+                      >
+                        Select
                       </button>
                     </div>
                   </details>
@@ -1117,8 +1568,52 @@ export default function Chat({
         </div>
       )}
 
+      {/* SELECTION BAR — replaces the composer while picking
+          messages to bulk-delete */}
+
+      {selectMode && (
+        <div className="flex items-center gap-2 p-3 border-t border-line">
+
+          <span className="text-sm text-mist">
+            {selectedIds.size} selected
+          </span>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={cancelSelecting}
+              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-line text-mist hover:text-paper"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={bulkDeleteForMe}
+              disabled={!selectedIds.size}
+              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-coral text-coral disabled:opacity-40"
+            >
+              Delete for me
+            </button>
+
+            {canBulkDeleteEveryone && (
+              <button
+                type="button"
+                onClick={bulkDeleteForEveryone}
+                disabled={!selectedIds.size}
+                className="focus-ring text-xs px-3 py-1.5 rounded-md bg-coral text-onbrass disabled:opacity-40"
+              >
+                Delete for everyone
+              </button>
+            )}
+          </div>
+
+        </div>
+      )}
+
       {/* COMPOSER */}
 
+      {!selectMode && (
       <form
         onSubmit={sendText}
         className="flex gap-2 p-3 border-t border-line items-center"
@@ -1196,6 +1691,7 @@ export default function Chat({
         </button>
 
       </form>
+      )}
 
     </div>
   )

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -25,6 +25,26 @@ export default function AccountSettingsModal({ onClose }) {
   const [pwSaving, setPwSaving] = useState(false)
   const [pwMessage, setPwMessage] = useState('')
   const [pwError, setPwError] = useState('')
+
+  const avatarInputRef = useRef(null)
+
+  const [avatarUrl, setAvatarUrl] = useState(
+    profile?.avatar_url || ''
+  )
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+
+  const [username, setUsername] = useState(
+    profile?.username || ''
+  )
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameMessage, setUsernameMessage] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+
+  const [bio, setBio] = useState(profile?.bio || '')
+  const [bioSaving, setBioSaving] = useState(false)
+  const [bioMessage, setBioMessage] = useState('')
+  const [bioError, setBioError] = useState('')
 
   const [contactEmail, setContactEmail] = useState(
     profile?.contact_email || ''
@@ -71,6 +91,194 @@ export default function AccountSettingsModal({ onClose }) {
       setPushStatus(await getPushStatus())
     } finally {
       setPushBusy(false)
+    }
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+
+    e.target.value = ''
+
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please choose an image file.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Images must be 5MB or smaller.')
+      return
+    }
+
+    setAvatarUploading(true)
+    setAvatarError('')
+
+    try {
+      const extension = file.name.includes('.')
+        ? file.name.split('.').pop()
+        : 'jpg'
+
+      const safeExtension =
+        extension
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .toLowerCase() || 'jpg'
+
+      // A fresh, timestamped filename each time (rather than
+      // overwriting the same path) sidesteps browser/CDN caching
+      // showing a stale photo right after a change.
+      const path = `${profile.id}/avatar-${Date.now()}.${safeExtension}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, {
+          upsert: false,
+          contentType: file.type,
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      const url = data?.publicUrl
+
+      if (!url) {
+        throw new Error('Could not create the photo URL.')
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: url })
+        .eq('id', profile.id)
+
+      if (profileError) throw profileError
+
+      setAvatarUrl(url)
+
+      await refreshProfile()
+    } catch (err) {
+      console.error('Avatar upload failed:', err)
+
+      setAvatarError(
+        err?.message || 'Could not update your photo.'
+      )
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  const saveUsername = async (e) => {
+    e.preventDefault()
+
+    setUsernameSaving(true)
+    setUsernameMessage('')
+    setUsernameError('')
+
+    const cleanUsername = username.trim().toLowerCase()
+
+    try {
+      if (!cleanUsername) {
+        throw new Error('Username cannot be empty.')
+      }
+
+      if (!/^[a-z0-9_.]{3,32}$/.test(cleanUsername)) {
+        throw new Error(
+          'Usernames can only use letters, numbers, dots and underscores (3-32 characters).'
+        )
+      }
+
+      if (cleanUsername === (profile?.username || '').toLowerCase()) {
+        setUsernameMessage("That's already your username.")
+        return
+      }
+
+      const {
+        data: existingProfile,
+        error: lookupError,
+      } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('username', cleanUsername)
+        .neq('id', profile.id)
+        .maybeSingle()
+
+      if (lookupError) throw lookupError
+
+      if (existingProfile) {
+        throw new Error(
+          'That username is already taken.'
+        )
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ username: cleanUsername })
+        .eq('id', profile.id)
+
+      if (updateError) {
+        if (updateError.code === '23505') {
+          throw new Error(
+            'That username is already taken.'
+          )
+        }
+
+        throw updateError
+      }
+
+      setUsername(cleanUsername)
+
+      setUsernameMessage(
+        'Username updated — use it next time you log in.'
+      )
+
+      await refreshProfile()
+    } catch (err) {
+      console.error('Username save failed:', err)
+
+      setUsernameError(
+        err?.message || 'Could not save your username.'
+      )
+    } finally {
+      setUsernameSaving(false)
+    }
+  }
+
+  const saveBio = async (e) => {
+    e.preventDefault()
+
+    setBioSaving(true)
+    setBioMessage('')
+    setBioError('')
+
+    const cleanBio = bio.trim()
+
+    try {
+      if (cleanBio.length > 300) {
+        throw new Error(
+          'Bio must be 300 characters or fewer.'
+        )
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ bio: cleanBio || null })
+        .eq('id', profile.id)
+
+      if (updateError) throw updateError
+
+      setBioMessage('Bio saved.')
+
+      await refreshProfile()
+    } catch (err) {
+      console.error('Bio save failed:', err)
+
+      setBioError(
+        err?.message || 'Could not save your bio.'
+      )
+    } finally {
+      setBioSaving(false)
     }
   }
 
@@ -364,6 +572,150 @@ const deleteAccount = async () => {
           >
             ×
           </button>
+        </div>
+
+        {/* PROFILE — photo, username, bio. Shown to others when they
+            tap your name in a chat. */}
+        <div className="flex flex-col gap-4 pb-2 border-b border-line">
+          <div className="text-xs uppercase tracking-wide text-mist font-mono">
+            Profile
+          </div>
+
+          <div className="flex items-center gap-4">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Your profile photo"
+                className="w-16 h-16 rounded-full object-cover border border-line shrink-0"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-brass flex items-center justify-center text-xl font-semibold text-onbrass shrink-0">
+                {String(
+                  profile?.full_name ||
+                    profile?.username ||
+                    '?'
+                )
+                  .charAt(0)
+                  .toUpperCase()}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  avatarInputRef.current?.click()
+                }
+                disabled={avatarUploading}
+                className="focus-ring text-xs border border-line rounded-md px-3 py-1.5 hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                {avatarUploading
+                  ? 'Uploading…'
+                  : 'Change photo'}
+              </button>
+
+              {avatarError && (
+                <p className="text-coral text-xs">
+                  {avatarError}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <form
+            onSubmit={saveUsername}
+            className="flex flex-col gap-2"
+          >
+            <label className="text-xs text-mist">
+              Username
+            </label>
+
+            <div className="flex gap-2">
+              <input
+                value={username}
+                onChange={(e) =>
+                  setUsername(e.target.value)
+                }
+                className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                placeholder="username"
+              />
+
+              <button
+                disabled={usernameSaving}
+                className="focus-ring shrink-0 border border-line rounded-md px-3 py-2 text-sm hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                {usernameSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+
+            <p className="text-mist text-xs">
+              You log in with this — letters, numbers,
+              dots and underscores only.
+            </p>
+
+            {usernameMessage && (
+              <p className="text-sage text-xs">
+                {usernameMessage}
+              </p>
+            )}
+
+            {usernameError && (
+              <p className="text-coral text-xs">
+                {usernameError}
+              </p>
+            )}
+          </form>
+
+          <form
+            onSubmit={saveBio}
+            className="flex flex-col gap-2"
+          >
+            <label className="text-xs text-mist">
+              Bio
+            </label>
+
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              maxLength={300}
+              rows={3}
+              placeholder="Say a little about yourself — shown on your profile."
+              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm resize-none"
+            />
+
+            <div className="flex items-center justify-between">
+              <span className="text-mist text-[10px] font-mono">
+                {bio.length}/300
+              </span>
+
+              <button
+                disabled={bioSaving}
+                className="focus-ring border border-line rounded-md px-3 py-1.5 text-sm hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                {bioSaving ? 'Saving…' : 'Save bio'}
+              </button>
+            </div>
+
+            {bioMessage && (
+              <p className="text-sage text-xs">
+                {bioMessage}
+              </p>
+            )}
+
+            {bioError && (
+              <p className="text-coral text-xs">
+                {bioError}
+              </p>
+            )}
+          </form>
         </div>
 
         {/* CHANGE PASSWORD */}
