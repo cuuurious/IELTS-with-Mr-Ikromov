@@ -13,6 +13,11 @@ export default function Chat({
   const [reactions, setReactions] = useState({})
   const [selfRole, setSelfRole] = useState('student')
 
+  // Messages this user has hidden from their own view only — "Delete
+  // for me". The row stays in the database for the other person; we
+  // just never render it here.
+  const [hiddenIds, setHiddenIds] = useState(new Set())
+
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -162,6 +167,20 @@ export default function Chat({
         setMessages(rows)
         await loadReactions(rows)
       }
+
+      const { data: deletions, error: deletionsError } =
+        await supabase
+          .from('message_deletions')
+          .select('message_id')
+          .eq('user_id', selfId)
+
+      if (!deletionsError && active) {
+        setHiddenIds(
+          new Set(
+            (deletions || []).map((row) => row.message_id)
+          )
+        )
+      }
     }
 
     load()
@@ -276,6 +295,24 @@ export default function Chat({
               (reaction) => reaction.id !== payload.old.id
             ),
           }))
+        }
+      )
+      .on(
+        // Keeps "Delete for me" in sync if the same account has this
+        // chat open in another tab or device.
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_deletions',
+          filter: `user_id=eq.${selfId}`,
+        },
+        (payload) => {
+          setHiddenIds((prev) => {
+            const next = new Set(prev)
+            next.add(payload.new.message_id)
+            return next
+          })
         }
       )
       .subscribe()
@@ -551,13 +588,18 @@ export default function Chat({
    * Editing is a "you can only edit what YOU wrote" action, full
    * stop — that's how Telegram works, and there's no such thing
    * as an admin editing someone else's message there either.
-   * Deleting is different: the teacher can remove a message from
-   * either side of the conversation, same moderation power they
-   * already have in group chat.
+   *
+   * Deleting has two levels, also matching Telegram:
+   *  - "Delete for everyone" actually removes the row, so it only
+   *    goes to the sender, or to the teacher moderating either side
+   *    of the conversation.
+   *  - "Delete for me" is available to BOTH people on ANY message —
+   *    it just hides that message from your own view; the other
+   *    person still sees it untouched.
    * ============================================================
    */
 
-  const canDelete = (message) =>
+  const canDeleteEveryone = (message) =>
     message.sender_id === selfId || selfRole === 'teacher'
 
   const canEdit = (message) =>
@@ -604,8 +646,8 @@ export default function Chat({
     setEditingText('')
   }
 
-  const deleteMessage = async (message) => {
-    if (!canDelete(message)) return
+  const deleteForEveryone = async (message) => {
+    if (!canDeleteEveryone(message)) return
 
     if (
       !window.confirm(
@@ -622,6 +664,46 @@ export default function Chat({
 
     if (deleteError) {
       setError(deleteError.message)
+    }
+  }
+
+  const deleteForMe = async (message) => {
+    if (
+      !window.confirm(
+        `Remove this message from your side of the chat? ${
+          peerName || 'The other person'
+        } will still see it.`
+      )
+    ) {
+      return
+    }
+
+    // Optimistic: hide it immediately, then persist the marker so it
+    // stays hidden next time this chat loads.
+    setHiddenIds((prev) => {
+      const next = new Set(prev)
+      next.add(message.id)
+      return next
+    })
+
+    const { error: hideError } = await supabase
+      .from('message_deletions')
+      .upsert(
+        { message_id: message.id, user_id: selfId },
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+      )
+
+    if (hideError) {
+      console.error(hideError)
+      setError(hideError.message)
+
+      // Roll back so the message reappears rather than silently
+      // vanishing if the write actually failed.
+      setHiddenIds((prev) => {
+        const next = new Set(prev)
+        next.delete(message.id)
+        return next
+      })
     }
   }
 
@@ -776,11 +858,13 @@ export default function Chat({
           </p>
         )}
 
-        {messages.map((m) => {
+        {messages
+          .filter((m) => !hiddenIds.has(m.id))
+          .map((m) => {
           const mine = m.sender_id === selfId
           const reply = getReply(m)
           const messageCanEdit = canEdit(m)
-          const messageCanDelete = canDelete(m)
+          const messageCanDeleteEveryone = canDeleteEveryone(m)
           const isHighlighted =
             String(highlightedMessageId) === String(m.id)
 
@@ -884,39 +968,45 @@ export default function Chat({
                     </span>
                   )}
 
-                  {(messageCanEdit || messageCanDelete) && (
-                    <details className="relative leading-none">
-                      <summary className="list-none cursor-pointer px-1 hover:text-brass">
-                        ⋯
-                      </summary>
+                  <details className="relative leading-none">
+                    <summary className="list-none cursor-pointer px-1 hover:text-brass">
+                      ⋯
+                    </summary>
 
-                      <div
-                        className={`absolute top-full mt-1 z-30 min-w-[110px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
-                          mine ? 'right-0' : 'left-0'
-                        }`}
+                    <div
+                      className={`absolute top-full mt-1 z-30 min-w-[160px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
+                        mine ? 'right-0' : 'left-0'
+                      }`}
+                    >
+                      {messageCanEdit && (
+                        <button
+                          type="button"
+                          onClick={() => startEdit(m)}
+                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                        >
+                          Edit
+                        </button>
+                      )}
+
+                      {messageCanDeleteEveryone && (
+                        <button
+                          type="button"
+                          onClick={() => deleteForEveryone(m)}
+                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
+                        >
+                          Delete for everyone
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => deleteForMe(m)}
+                        className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
                       >
-                        {messageCanEdit && (
-                          <button
-                            type="button"
-                            onClick={() => startEdit(m)}
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                          >
-                            Edit
-                          </button>
-                        )}
-
-                        {messageCanDelete && (
-                          <button
-                            type="button"
-                            onClick={() => deleteMessage(m)}
-                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </details>
-                  )}
+                        Delete for me
+                      </button>
+                    </div>
+                  </details>
 
                 </div>
 

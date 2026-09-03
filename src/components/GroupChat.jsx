@@ -5,6 +5,34 @@ const MAX_FILE_MB = 25
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
 
+// Distinct, deterministic name/avatar color per sender — same idea as
+// Telegram's per-member colors in a group, so members are easy to
+// tell apart at a glance. The teacher gets their own fixed brass
+// color (handled separately) rather than picking one from here.
+const MEMBER_ACCENTS = [
+  { name: 'text-sage', avatarBg: 'bg-sage' },
+  { name: 'text-cyan', avatarBg: 'bg-cyan' },
+  { name: 'text-lavender', avatarBg: 'bg-lavender' },
+  { name: 'text-amber', avatarBg: 'bg-amber' },
+  { name: 'text-coral', avatarBg: 'bg-coral' },
+]
+
+const accentForSender = (sender) => {
+  if (sender?.role === 'teacher') {
+    return { name: 'text-brass', avatarBg: 'bg-brass' }
+  }
+
+  const id = sender?.id || ''
+
+  let hash = 0
+
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) % MEMBER_ACCENTS.length
+  }
+
+  return MEMBER_ACCENTS[Math.abs(hash) % MEMBER_ACCENTS.length]
+}
+
 export default function GroupChat({
   groupId,
   selfId,
@@ -15,6 +43,10 @@ export default function GroupChat({
   const [profiles, setProfiles] = useState({})
   const [reactions, setReactions] = useState({})
   const [actions, setActions] = useState([])
+
+  // Messages this member has hidden from their own view only —
+  // "Delete for me". The row stays for everyone else in the group.
+  const [hiddenIds, setHiddenIds] = useState(new Set())
 
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -135,6 +167,24 @@ export default function GroupChat({
     await loadReactions(rows)
   }
 
+  const loadHiddenForMe = async () => {
+    if (!selfId) return
+
+    const { data, error } = await supabase
+      .from('group_message_deletions')
+      .select('message_id')
+      .eq('user_id', selfId)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setHiddenIds(
+      new Set((data || []).map((row) => row.message_id))
+    )
+  }
+
   const loadActions = async () => {
     if (selfRole !== 'teacher') return
 
@@ -179,6 +229,7 @@ export default function GroupChat({
       }
 
       await loadMessages()
+      await loadHiddenForMe()
     }
 
     initialise()
@@ -320,12 +371,31 @@ export default function GroupChat({
         }
       )
 
+      .on(
+        // Keeps "Delete for me" in sync if this member has the group
+        // open in another tab or device.
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_message_deletions',
+          filter: `user_id=eq.${selfId}`,
+        },
+        (payload) => {
+          setHiddenIds((prev) => {
+            const next = new Set(prev)
+            next.add(payload.new.message_id)
+            return next
+          })
+        }
+      )
+
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [groupId, selfRole])
+  }, [groupId, selfRole, selfId])
 
   useEffect(() => {
     if (selfRole === 'teacher') {
@@ -633,12 +703,13 @@ export default function GroupChat({
     setRecordSeconds(0)
   }
 
-  const deleteMessage = async (message) => {
-    const allowed =
-      message.sender_id === selfId ||
-      selfRole === 'teacher'
+  // "Delete for everyone" actually removes the row — only the sender,
+  // or the teacher moderating the group, can do that.
+  const canDeleteEveryone = (message) =>
+    message.sender_id === selfId || selfRole === 'teacher'
 
-    if (!allowed) return
+  const deleteForEveryone = async (message) => {
+    if (!canDeleteEveryone(message)) return
 
     if (
       !window.confirm(
@@ -655,6 +726,43 @@ export default function GroupChat({
 
     if (error) {
       setError(error.message)
+    }
+  }
+
+  // "Delete for me" is available to every member on any message — it
+  // only hides it from this member's own view; everyone else still
+  // sees it, same as Telegram.
+  const deleteForMe = async (message) => {
+    if (
+      !window.confirm(
+        'Remove this message from your view of the chat? Other members will still see it.'
+      )
+    ) {
+      return
+    }
+
+    setHiddenIds((prev) => {
+      const next = new Set(prev)
+      next.add(message.id)
+      return next
+    })
+
+    const { error } = await supabase
+      .from('group_message_deletions')
+      .upsert(
+        { message_id: message.id, user_id: selfId },
+        { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+      )
+
+    if (error) {
+      console.error(error)
+      setError(error.message)
+
+      setHiddenIds((prev) => {
+        const next = new Set(prev)
+        next.delete(message.id)
+        return next
+      })
     }
   }
 
@@ -839,22 +947,28 @@ export default function GroupChat({
             </div>
           )}
 
-          {messages.map((message) => {
+          {messages
+            .filter((message) => !hiddenIds.has(message.id))
+            .map((message) => {
             const mine =
               message.sender_id === selfId
 
             const sender =
               profiles[message.sender_id]
 
+            const accent = accentForSender(sender)
+
             const reply =
               getReply(message)
 
-            // Deleting is sender-or-teacher (moderation); editing is
-            // sender-only — a teacher should never be able to rewrite
-            // a student's words, only remove them.
-            const canDelete =
-              mine ||
-              selfRole === 'teacher'
+            // Deleting for everyone is sender-or-teacher
+            // (moderation); editing is sender-only — a teacher
+            // should never be able to rewrite a student's words,
+            // only remove them. Deleting for me (hiding it from
+            // just this member's own view) is available on every
+            // message, for everyone.
+            const messageCanDeleteEveryone =
+              canDeleteEveryone(message)
 
             const canEdit =
               mine && Boolean(message.content)
@@ -866,11 +980,19 @@ export default function GroupChat({
               String(highlightedMessageId) ===
               String(message.id)
 
+            const initial = String(
+              sender?.full_name ||
+                sender?.username ||
+                '?'
+            )
+              .charAt(0)
+              .toUpperCase()
+
             return (
               <div
                 key={message.id}
                 id={`group-message-${message.id}`}
-                className={`flex ${
+                className={`flex items-end gap-2 ${
                   mine
                     ? 'justify-end'
                     : 'justify-start'
@@ -880,6 +1002,14 @@ export default function GroupChat({
                     : ''
                 }`}
               >
+
+                {!mine && (
+                  <div
+                    className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass ${accent.avatarBg}`}
+                  >
+                    {initial}
+                  </div>
+                )}
 
                 <div
                   className={`group max-w-[82%] ${
@@ -892,11 +1022,7 @@ export default function GroupChat({
                   <div className="px-1 mb-1 flex items-center gap-2 text-[11px]">
 
                     <span
-                      className={`font-semibold ${
-                        sender?.role === 'teacher'
-                          ? 'text-brass'
-                          : 'text-paper-dim'
-                      }`}
+                      className={`font-semibold ${accent.name}`}
                     >
                       {sender?.full_name ||
                         sender?.username ||
@@ -924,43 +1050,51 @@ export default function GroupChat({
                       )}
                     </span>
 
-                    {(canEdit || canDelete) && (
-                      <details className="relative leading-none ml-auto">
-                        <summary className="list-none cursor-pointer px-1 text-mist hover:text-brass">
-                          ⋯
-                        </summary>
+                    <details className="relative leading-none ml-auto">
+                      <summary className="list-none cursor-pointer px-1 text-mist hover:text-brass">
+                        ⋯
+                      </summary>
 
-                        <div
-                          className={`absolute top-full mt-1 z-30 min-w-[110px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
-                            mine ? 'right-0' : 'left-0'
-                          }`}
+                      <div
+                        className={`absolute top-full mt-1 z-30 min-w-[160px] rounded-lg border border-line bg-panel shadow-xl py-1 text-xs ${
+                          mine ? 'right-0' : 'left-0'
+                        }`}
+                      >
+                        {canEdit && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              startEdit(message)
+                            }
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
+                          >
+                            Edit
+                          </button>
+                        )}
+
+                        {messageCanDeleteEveryone && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              deleteForEveryone(message)
+                            }
+                            className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
+                          >
+                            Delete for everyone
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteForMe(message)
+                          }
+                          className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
                         >
-                          {canEdit && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                startEdit(message)
-                              }
-                              className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-paper"
-                            >
-                              Edit
-                            </button>
-                          )}
-
-                          {canDelete && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                deleteMessage(message)
-                              }
-                              className="w-full text-left px-3 py-1.5 hover:bg-panel-2 text-coral"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </details>
-                    )}
+                          Delete for me
+                        </button>
+                      </div>
+                    </details>
 
                   </div>
 
