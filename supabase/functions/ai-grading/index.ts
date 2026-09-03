@@ -205,6 +205,19 @@ function bytesToBase64(bytes) {
   return btoa(binary)
 }
 
+// Left unguided, the model tends to form one holistic impression of
+// the submission and then paste that same number into every criterion
+// — which is exactly what the descriptive comments in this app were
+// NOT doing (they clearly differ per criterion) while the numbers all
+// came back "7". This block is shared by both prompts to force the
+// scoring itself, not just the prose, to actually reflect that.
+const SCORING_DISCIPLINE = [
+  'Score every criterion independently. Evaluate and decide the band for each criterion using ONLY the evidence relevant to that specific criterion, one at a time — do not decide a single overall impression first and then copy it into every criterion.',
+  "It is normal, and expected, for a real submission to be stronger in some criteria than others. If after honestly scoring each criterion on its own they all happen to land on the exact same number, that's fine — but treat identical scores across the board as a signal to double-check you actually evaluated each one separately rather than defaulted to a gut feeling.",
+  'Use the full scale the criteria describe, including any fractional/half-band scores it allows, not just whole numbers — do not round to the nearest whole or "safe middle" value out of caution.',
+  "overall_band should be a genuine aggregate of the individual criterion bands you actually gave (following the rubric's own method for combining them if it states one; otherwise average the criteria and round the way the exam type normally does) — it should not be an independently-guessed number that the criteria are then forced to match.",
+].join(' ')
+
 function buildWritingPrompt(criteriaText, comment, files = []) {
   const submissionNote =
     files.length > 0
@@ -224,6 +237,8 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
     comment ? `\nThe student added this note for their teacher: "${comment}"` : '',
     '',
     'Give specific, constructive feedback a real examiner would write — reference actual sentences or issues where useful, not generic advice.',
+    '',
+    SCORING_DISCIPLINE,
   ]
     .filter(Boolean)
     .join('\n')
@@ -245,6 +260,8 @@ function buildSpeakingPrompt(criteriaText, transcripts, comment) {
     comment ? `\nThe student added this note for their teacher: "${comment}"` : '',
     '',
     'Give specific, constructive feedback a real examiner would write.',
+    '',
+    SCORING_DISCIPLINE,
   ]
     .filter(Boolean)
     .join('\n')
