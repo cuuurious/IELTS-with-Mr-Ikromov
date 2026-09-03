@@ -40,13 +40,14 @@ const OPENAI_TRANSCRIBE_URL = 'https://api.openai.com/v1/audio/transcriptions'
 // OpenAI renames/replaces its models every so often. Rather than
 // hard-code a name that might stop working in a year, both are read
 // from optional secrets first, falling back to what's current as of
-// this being written (gpt-4o for text+vision grading and reading the
-// criteria PDF; gpt-transcribe for speech-to-text). If OpenAI ever
-// retires one of these, there's no need to edit this file or
-// redeploy — just set the secret to whatever the new model is called:
+// this being written (gpt-5.6-terra for text+vision grading and
+// reading the criteria PDF; gpt-transcribe for speech-to-text). If
+// OpenAI ever retires one of these, there's no need to edit this file
+// or redeploy — just set the secret to whatever the new model is
+// called:
 //   npx supabase secrets set OPENAI_TEXT_MODEL=<new model name>
 //   npx supabase secrets set OPENAI_TRANSCRIBE_MODEL=<new model name>
-const TEXT_MODEL = Deno.env.get('OPENAI_TEXT_MODEL') || 'gpt-4o'
+const TEXT_MODEL = Deno.env.get('OPENAI_TEXT_MODEL') || 'gpt-5.6-terra'
 const TRANSCRIBE_MODEL =
   Deno.env.get('OPENAI_TRANSCRIBE_MODEL') || 'gpt-transcribe'
 
