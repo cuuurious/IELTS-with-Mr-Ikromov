@@ -26,6 +26,7 @@ export default function GroupWorkspace({ teacherId }) {
   const [roster, setRoster] = useState([])
   const [homeworks, setHomeworks] = useState([])
   const [submissions, setSubmissions] = useState({})
+  const [groupDataLoading, setGroupDataLoading] = useState(false)
 
   const [viewing, setViewing] = useState(null)
   const [editingHomework, setEditingHomework] = useState(null)
@@ -193,28 +194,44 @@ export default function GroupWorkspace({ teacherId }) {
 
     if (!requestedGroup) return
 
-    const { data: members } = await supabase
-      .from('group_members')
-      .select(
-        'student_id, profiles!inner(id, full_name, username, status, contact_email)'
-      )
-      .eq('group_id', requestedGroup)
-      .eq('profiles.status', 'approved')
+    // Was previously three round trips run one after another (each
+    // waiting on the last), which is exactly why switching groups
+    // felt slow and, worse, left the PREVIOUS group's roster and
+    // homework sitting on screen — unchanged and with nothing telling
+    // you it was stale — for the entire time all three were loading.
+    // Running them together roughly triples the speed, and
+    // groupDataLoading (set below, cleared once real data lands) is
+    // what tells the table to visibly dim instead of quietly lying.
+    setGroupDataLoading(true)
 
-    const { data: hw } = await supabase
-      .from('homeworks')
-      .select('*')
-      .eq('group_id', requestedGroup)
-      .order('created_at', { ascending: false })
-
-    const { data: subs } = await supabase
-      .from('submissions')
-      .select('*')
-      .eq('group_id', requestedGroup)
+    const [
+      { data: members },
+      { data: hw },
+      { data: subs },
+    ] = await Promise.all([
+      supabase
+        .from('group_members')
+        .select(
+          'student_id, profiles!inner(id, full_name, username, status, contact_email)'
+        )
+        .eq('group_id', requestedGroup)
+        .eq('profiles.status', 'approved'),
+      supabase
+        .from('homeworks')
+        .select('*')
+        .eq('group_id', requestedGroup)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('submissions')
+        .select('*')
+        .eq('group_id', requestedGroup),
+    ])
 
     // A newer request has since started (or completed) for a
     // different group — this response is stale, so drop it instead
-    // of committing it to state.
+    // of committing it to state. Leave groupDataLoading alone here:
+    // whichever request actually matches the current group is the one
+    // that gets to turn loading back off, below.
     if (requestedGroup !== activeGroupRef.current) return
 
     setRoster(
@@ -234,6 +251,7 @@ export default function GroupWorkspace({ teacherId }) {
     })
 
     setSubmissions(map)
+    setGroupDataLoading(false)
   }
 
   useEffect(() => {
@@ -950,14 +968,24 @@ export default function GroupWorkspace({ teacherId }) {
               STUDENT PROGRESS TITLE
           ================================================= */}
 
-          <section>
+          <section
+            className={
+              groupDataLoading
+                ? 'pointer-events-none opacity-40 transition-opacity'
+                : 'transition-opacity'
+            }
+          >
 
             <div className="flex items-end justify-between gap-4">
 
               <div>
 
                 <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full bg-accent ${
+                      groupDataLoading ? 'animate-pulse' : ''
+                    }`}
+                  />
                   Assignments
                 </div>
 
@@ -967,10 +995,16 @@ export default function GroupWorkspace({ teacherId }) {
 
               </div>
 
-              <div className="hidden rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist sm:block">
-                {homeworks.length} assignment
-                {homeworks.length === 1 ? '' : 's'}
-              </div>
+              {groupDataLoading ? (
+                <div className="rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist">
+                  Loading this group…
+                </div>
+              ) : (
+                <div className="hidden rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist sm:block">
+                  {homeworks.length} assignment
+                  {homeworks.length === 1 ? '' : 's'}
+                </div>
+              )}
 
             </div>
 
