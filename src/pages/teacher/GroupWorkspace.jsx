@@ -996,18 +996,29 @@ export default function GroupWorkspace({ teacherId }) {
 		    }).then((result) => {
                       if (result?.ok) return
 
+                      // A push-only failure means students already
+                      // got the in-app notification (the part that
+                      // actually matters) — the phone/desktop push is
+                      // a secondary channel on top of that, and isn't
+                      // worth interrupting the teacher for every
+                      // single time it doesn't go through. Only a
+                      // full failure (nobody told anything) surfaces
+                      // a popup.
+                      if (result?.reason === 'push') {
+                        console.warn(
+                          `Push notification failed for "${hw.title}":`,
+                          result?.detail
+                        )
+                        return
+                      }
+
                       setConfirmDialog({
-                        title:
-                          result?.reason === 'push'
-                            ? 'Push notification failed'
-                            : "Students weren't notified",
+                        title: "Students weren't notified",
                         message:
-                          result?.reason === 'push'
-                            ? `"${hw.title}" was posted and students were notified in-app, but phone/desktop push notifications failed to send.`
-                            : `"${hw.title}" was posted, but students could not be notified in-app either — let them know directly if needed.` +
-                              (result?.detail
-                                ? `\n\nDetails: ${result.detail}`
-                                : ''),
+                          `"${hw.title}" was posted, but students could not be notified in-app either — let them know directly if needed.` +
+                          (result?.detail
+                            ? `\n\nDetails: ${result.detail}`
+                            : ''),
                         tone: 'coral',
                         hideCancel: true,
                       })
@@ -1500,18 +1511,25 @@ export default function GroupWorkspace({ teacherId }) {
             }).then((result) => {
               if (result?.ok) return
 
+              // Same reasoning as the "new homework" notify above —
+              // a push-only failure still leaves students notified
+              // in-app, so it's logged rather than interrupting the
+              // teacher every time.
+              if (result?.reason === 'push') {
+                console.warn(
+                  `Push notification failed for "${updated.title}":`,
+                  result?.detail
+                )
+                return
+              }
+
               setConfirmDialog({
-                title:
-                  result?.reason === 'push'
-                    ? 'Push notification failed'
-                    : "Students weren't notified",
+                title: "Students weren't notified",
                 message:
-                  result?.reason === 'push'
-                    ? `"${updated.title}" was updated and students were notified in-app, but phone/desktop push notifications failed to send.`
-                    : `"${updated.title}" was updated, but students could not be notified in-app either — let them know directly if needed.` +
-                      (result?.detail
-                        ? `\n\nDetails: ${result.detail}`
-                        : ''),
+                  `"${updated.title}" was updated, but students could not be notified in-app either — let them know directly if needed.` +
+                  (result?.detail
+                    ? `\n\nDetails: ${result.detail}`
+                    : ''),
                 tone: 'coral',
                 hideCancel: true,
               })

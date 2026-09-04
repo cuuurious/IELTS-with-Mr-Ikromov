@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
@@ -42,6 +42,20 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [mockTask1Prompt, setMockTask1Prompt] = useState('')
   const [mockTask2Prompt, setMockTask2Prompt] = useState('')
   const [mockTask1Image, setMockTask1Image] = useState(null)
+  const mockTask1ImageInputRef = useRef(null)
+
+  // Clears the picked file AND resets the native input's own value —
+  // just calling setMockTask1Image(null) alone left the browser still
+  // showing the old filename next to the button (its onChange only
+  // fires on an actual change, so picking the exact same file again
+  // afterward wouldn't have registered at all).
+  const clearMockTask1Image = () => {
+    setMockTask1Image(null)
+
+    if (mockTask1ImageInputRef.current) {
+      mockTask1ImageInputRef.current.value = ''
+    }
+  }
 
   const chooseHomeworkType = (type) => {
     setHomeworkType(type)
@@ -304,12 +318,30 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
                 className="focus-ring w-full bg-panel border border-line rounded-md px-3 py-2 text-sm"
               />
               <label className="text-xs uppercase tracking-wide text-mist font-mono block mt-2 mb-1">Task 1 chart / graph image (optional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
-                className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer"
-              />
+
+              {mockTask1Image ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-paper truncate max-w-[220px]">
+                    {mockTask1Image.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearMockTask1Image}
+                    className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel-2 text-coral hover:bg-coral hover:text-white transition"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <input
+                  ref={mockTask1ImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
+                  className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                />
+              )}
+
               <p className="text-xs text-mist mt-1">Shown to students inline in the writing window — no extra tab needed.</p>
             </div>
           )}
