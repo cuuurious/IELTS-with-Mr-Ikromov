@@ -20,6 +20,16 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Separate from `loading` (which only covers the very first check of
+  // "is anyone signed in"). This covers every later profile (re)fetch —
+  // on the initial load, when the tab regains focus, when Supabase
+  // silently refreshes the token, and so on. Gate() in App.jsx combines
+  // the two so it never shows "waiting for approval" while a profile
+  // fetch is still in flight — that flash was happening because
+  // `profile` briefly reads as null (not-yet-fetched looks identical
+  // to genuinely-has-no-profile) while a fetch was still running, and
+  // Gate had no way to tell the two apart.
+  const [profileLoading, setProfileLoading] = useState(false)
   const [isRecoveringPassword, setIsRecoveringPassword] =
     useState(
       window.location.pathname === '/reset-password'
@@ -30,6 +40,8 @@ export function AuthProvider({ children }) {
       setProfile(null)
       return
     }
+
+    setProfileLoading(true)
 
     const { data, error } = await supabase
       .from('profiles')
@@ -42,6 +54,7 @@ export function AuthProvider({ children }) {
     }
 
     setProfile(data || null)
+    setProfileLoading(false)
   }, [])
 
   useEffect(() => {
@@ -119,7 +132,13 @@ export function AuthProvider({ children }) {
         }
 
         /*
-         * Normal authentication events.
+         * Normal authentication events. This also fires on the very
+         * first load (Supabase re-announces the existing session
+         * here too, alongside initializeAuth() above) and again on
+         * every silent token refresh — none of those should touch
+         * `loading`, since that's reserved for the one-time "have we
+         * checked yet at all" gate. `loadProfile` tracks its own busy
+         * state via `profileLoading` instead.
          */
         setIsRecoveringPassword(false)
         setSession(sess)
@@ -391,6 +410,7 @@ export function AuthProvider({ children }) {
         session,
         profile,
         loading,
+        profileLoading,
         isRecoveringPassword,
         signUp,
         signIn,

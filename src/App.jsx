@@ -10,9 +10,15 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import TeacherDashboard from './pages/teacher/TeacherDashboard'
 
 function Gate() {
-  const { session, profile, loading } = useAuth()
+  const { session, profile, loading, profileLoading } = useAuth()
 
-  if (loading) {
+  // profileLoading covers every profile fetch, not just the first one
+  // (tab refocus, a silent token refresh). Without this, a fetch still
+  // in flight looked identical to "this account has no profile", which
+  // is what made "waiting for approval" flash for approved accounts —
+  // teachers included — instead of just staying on the loading screen
+  // until there's an actual answer.
+  if (loading || (session && profileLoading)) {
     return <LoadingScreen />
   }
 
