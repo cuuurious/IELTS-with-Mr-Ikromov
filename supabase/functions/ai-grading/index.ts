@@ -18,11 +18,13 @@ const corsHeaders = {
  *     "speaking") so every future evaluation can quote it directly.
  *
  *   action: "evaluate"
- *     Evaluates one submission — either by reading the essay photos
- *     (writing) or by transcribing the three speaking recordings and
- *     grading the transcript (speaking) — strictly against whichever
- *     criteria text is on file for that skill, and writes the result
- *     onto the submissions row (ai_status / ai_result / ai_error).
+ *     Evaluates one submission — by reading the essay photos/files
+ *     (standard writing homework), by reading the typed essay text
+ *     straight off the submission (Writing Mock Test homework), or by
+ *     transcribing the three speaking recordings and grading the
+ *     transcript (speaking) — strictly against whichever criteria
+ *     text is on file for that skill, and writes the result onto the
+ *     submissions row (ai_status / ai_result / ai_error).
  *     Speaking still gets a numeric band, overall and per criterion.
  *     Writing does NOT — by request, it's feedback-only: descriptive
  *     per-criterion comments plus personalized grammar/collocation
@@ -391,6 +393,79 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
     .join('\n')
 }
 
+// Writing Mock Test submissions are typed directly in the app (see
+// the "Writing Mock Test" homework type) instead of uploaded as
+// photos/files, so they get their own prompt builder — same rubric,
+// same no-numeric-score policy (WRITING_DISCIPLINE below still
+// applies), just built from typed task text plus whichever task
+// prompt(s) the teacher set instead of image content.
+function buildWritingMockPrompt(criteriaText, comment, mockEssay, homework) {
+  const sections = []
+
+  if (
+    mockEssay?.task1_text?.trim() &&
+    (homework.mock_task_mode === 'task1' || homework.mock_task_mode === 'full')
+  ) {
+    sections.push(
+      [
+        '=== TASK 1 — the student\'s response ===',
+        `Prompt given to the student: ${homework.mock_task1_prompt || '(not recorded)'}`,
+        '',
+        mockEssay.task1_text,
+      ].join('\n')
+    )
+  }
+
+  if (
+    mockEssay?.task2_text?.trim() &&
+    (homework.mock_task_mode === 'task2' || homework.mock_task_mode === 'full')
+  ) {
+    sections.push(
+      [
+        '=== TASK 2 — the student\'s response ===',
+        `Prompt given to the student: ${homework.mock_task2_prompt || '(not recorded)'}`,
+        '',
+        mockEssay.task2_text,
+      ].join('\n')
+    )
+  }
+
+  const modeNote =
+    homework.mock_task_mode === 'full'
+      ? "The student answered both Task 1 and Task 2 back-to-back under one continuous timer, exactly as in the real exam — evaluate each task on its own terms, then give feedback that reflects both."
+      : `The student answered ${homework.mock_task_mode === 'task1' ? 'Task 1' : 'Task 2'} only, as a standalone timed mock test.`
+
+  const chartNote =
+    homework.mock_task1_image_url &&
+    (homework.mock_task_mode === 'task1' || homework.mock_task_mode === 'full')
+      ? 'The Task 1 chart/graph/table/diagram the student was responding to is attached as an image — check whether their response actually describes what it shows.'
+      : ''
+
+  return [
+    'You are an experienced IELTS examiner giving a student detailed, actionable feedback on a TIMED MOCK WRITING TEST they just completed inside the app — this is feedback only, with no numeric score attached. The text below is exactly what the student typed, under time pressure and without the ability to paste — judge it as a real timed first-draft response, not a polished essay.',
+    '',
+    "Base your feedback STRICTLY on the grading criteria below — it may be the standard IELTS Writing band descriptors, or the teacher's own custom rubric. Follow whatever criteria it describes, and use its own criterion names in your answer.",
+    '',
+    '=== GRADING CRITERIA ===',
+    criteriaText,
+    '=== END OF GRADING CRITERIA ===',
+    '',
+    modeNote,
+    chartNote,
+    '',
+    sections.join('\n\n'),
+    comment ? `\nThe student added this note for their teacher: "${comment}"` : '',
+    '',
+    'Give specific, constructive feedback a real examiner would write — reference actual sentences or issues where useful, not generic advice.',
+    '',
+    WRITING_DISCIPLINE,
+    '',
+    LANGUAGE_TIPS_INSTRUCTION,
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
 function buildSpeakingPrompt(criteriaText, transcripts, comment) {
   return [
     "You are an experienced IELTS examiner grading a student's spoken submission.",
@@ -688,6 +763,57 @@ Deno.serve(async (req) => {
                 name: 'speaking_evaluation',
                 strict: true,
                 schema: SPEAKING_EVALUATION_SCHEMA,
+              },
+            },
+          })
+
+          result = parseJsonLoose(extractOutputText(evaluation))
+        } else if (homework.homework_type === 'writing_mock') {
+          const mockEssay = submission.mock_essay || {}
+
+          const hasText = Boolean(
+            mockEssay.task1_text?.trim() || mockEssay.task2_text?.trim()
+          )
+
+          if (!hasText) {
+            throw new Error(
+              'No mock test answer was submitted to evaluate.'
+            )
+          }
+
+          const promptText = buildWritingMockPrompt(
+            criteriaText,
+            submission.comment,
+            mockEssay,
+            homework
+          )
+
+          const content = [{ type: 'input_text', text: promptText }]
+
+          // Give the model the actual Task 1 chart/graph so it can
+          // judge whether the response describes what's really there,
+          // the same way a human examiner would glance at it.
+          if (
+            homework.mock_task1_image_url &&
+            (homework.mock_task_mode === 'task1' ||
+              homework.mock_task_mode === 'full')
+          ) {
+            content.push({
+              type: 'input_image',
+              image_url: homework.mock_task1_image_url,
+              detail: 'high',
+            })
+          }
+
+          const evaluation = await callOpenAiResponses(openaiKey, {
+            model: TEXT_MODEL,
+            input: [{ role: 'user', content }],
+            text: {
+              format: {
+                type: 'json_schema',
+                name: 'writing_evaluation',
+                strict: true,
+                schema: WRITING_EVALUATION_SCHEMA,
               },
             },
           })

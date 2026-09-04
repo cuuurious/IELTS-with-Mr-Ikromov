@@ -12,6 +12,12 @@ import StampBadge, {
   isLateSubmission,
 } from '../../components/StampBadge'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
+import WritingMockTest from './WritingMockTest'
+import {
+  DEFAULT_TIME_LIMITS,
+  TASK_MODE_LABELS,
+  countWords,
+} from '../../lib/writingMock'
 
 // Maps what MediaRecorder actually reports back (via blob.type) to a
 // real file extension, so a browser recording gets saved and later
@@ -108,6 +114,9 @@ export default function HomeworkCard({
     submission?.comment || ''
   )
   const [savingComment, setSavingComment] = useState(false)
+
+  const [mockTestOpen, setMockTestOpen] = useState(false)
+  const [startingMock, setStartingMock] = useState(false)
 
   const [speakingParts, setSpeakingParts] = useState({
     audio_part1_url:
@@ -219,6 +228,23 @@ export default function HomeworkCard({
 
   const speakingAlreadySubmitted =
     homework.enable_speaking &&
+    submission?.status === 'done' &&
+    Boolean(submission?.submitted_at)
+
+  /*
+   * ============================================================
+   * WRITING MOCK TEST STATUS
+   * ============================================================
+   */
+
+  const isMockHomework = homework.homework_type === 'writing_mock'
+
+  const mockEssay = submission?.mock_essay || null
+
+  const mockStarted = Boolean(mockEssay?.started_at)
+
+  const mockAlreadySubmitted =
+    isMockHomework &&
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
 
@@ -1018,6 +1044,105 @@ export default function HomeworkCard({
 
   /*
    * ============================================================
+   * WRITING MOCK TEST — START / AUTOSAVE / SUBMIT
+   * ============================================================
+   *
+   * The actual timed environment (clock, paste-blocked textareas,
+   * word counts, tab/fullscreen logging) lives in WritingMockTest.jsx
+   * — it knows nothing about Supabase. These three handlers are the
+   * only bridge between it and the submissions row, reusing the same
+   * upsertSubmission / markHomeworkCompleted / requestAiEvaluation
+   * this file already has for every other homework type.
+   */
+
+  const handleMockStart = async () => {
+    const modeLabel =
+      TASK_MODE_LABELS[homework.mock_task_mode] || 'writing'
+
+    const minutes =
+      homework.mock_time_limit_minutes ||
+      DEFAULT_TIME_LIMITS[homework.mock_task_mode] ||
+      40
+
+    const ready = window.confirm(
+      `Ready to start your ${modeLabel} mock test?\n\nOnce you begin you will have ${minutes} minutes. The timer cannot be paused, pasting text is disabled, and your essay is submitted automatically the moment time runs out.\n\nStart now?`
+    )
+
+    if (!ready) return
+
+    setStartingMock(true)
+    setError('')
+
+    try {
+      await upsertSubmission({
+        mock_essay: {
+          task_mode: homework.mock_task_mode,
+          time_limit_minutes: minutes,
+          // Never overwrite an already-running clock — resuming after
+          // a reload/close must keep counting down from the original
+          // start time, not hand out a fresh block of time.
+          started_at: mockEssay?.started_at || new Date().toISOString(),
+          submitted_at: null,
+          auto_submitted: false,
+          tab_switch_count: mockEssay?.tab_switch_count || 0,
+          fullscreen_exit_count: mockEssay?.fullscreen_exit_count || 0,
+          task1_text: mockEssay?.task1_text || '',
+          task2_text: mockEssay?.task2_text || '',
+        },
+        status: 'pending',
+      })
+
+      setMockTestOpen(true)
+    } catch (err) {
+      console.error('Could not start mock test:', err)
+
+      setError(
+        err?.message || 'Could not start the mock test.'
+      )
+    } finally {
+      setStartingMock(false)
+    }
+  }
+
+  const handleMockAutosave = async (patch) => {
+    try {
+      await upsertSubmission({
+        mock_essay: {
+          ...(submissionRef.current?.mock_essay || {}),
+          ...patch,
+        },
+        status: 'pending',
+      })
+    } catch (err) {
+      // Silent by design — this fires every 20 seconds in the
+      // background, and surfacing a transient network blip as an
+      // error while the student is mid-sentence would be more
+      // disruptive than useful. The next tick simply tries again.
+      console.error('Mock test autosave failed:', err)
+    }
+  }
+
+  const handleMockSubmit = async (patch) => {
+    const saved = await upsertSubmission({
+      mock_essay: {
+        ...(submissionRef.current?.mock_essay || {}),
+        ...patch,
+      },
+      status: 'done',
+      submitted_at: new Date().toISOString(),
+    })
+
+    await markHomeworkCompleted()
+
+    requestAiEvaluation(saved?.id, homework)
+
+    setMockTestOpen(false)
+
+    return saved
+  }
+
+  /*
+   * ============================================================
    * DELETE SCREENSHOT
    * ============================================================
    */
@@ -1141,6 +1266,7 @@ export default function HomeworkCard({
     )
 
   return (
+    <>
     <div className="ticket rounded-lg overflow-hidden">
 
       {/* =====================================================
@@ -1216,9 +1342,109 @@ export default function HomeworkCard({
           )}
 
           {/* =================================================
+              WRITING MOCK TEST
+          ================================================= */}
+
+          {isMockHomework && (
+            <div className="rounded-lg border border-line bg-panel-2 p-4 flex flex-col gap-3">
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="font-medium text-paper">
+                    Writing Mock Test — {TASK_MODE_LABELS[homework.mock_task_mode] || 'Writing'}
+                  </div>
+
+                  <p className="text-xs text-mist mt-1">
+                    {homework.mock_time_limit_minutes || DEFAULT_TIME_LIMITS[homework.mock_task_mode] || '—'} minute
+                    {(homework.mock_time_limit_minutes || 0) === 1 ? '' : 's'} once started · no pasting allowed · auto-submits when time is up
+                  </p>
+                </div>
+              </div>
+
+              {(homework.mock_task_mode === 'task1' || homework.mock_task_mode === 'full') && homework.mock_task1_prompt && (
+                <div className="rounded-md border border-line bg-panel px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 1 prompt</div>
+                  <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task1_prompt}</p>
+                  {homework.mock_task1_image_url && (
+                    <img
+                      src={homework.mock_task1_image_url}
+                      alt="Task 1 chart"
+                      className="mt-2 max-h-56 rounded-md border border-line object-contain"
+                    />
+                  )}
+                </div>
+              )}
+
+              {(homework.mock_task_mode === 'task2' || homework.mock_task_mode === 'full') && homework.mock_task2_prompt && (
+                <div className="rounded-md border border-line bg-panel px-3 py-2.5">
+                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 2 prompt</div>
+                  <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task2_prompt}</p>
+                </div>
+              )}
+
+              {mockAlreadySubmitted ? (
+                <div className="text-xs">
+                  {submittedLate ? (
+                    <span className="text-amber">
+                      ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}
+                      {mockEssay?.auto_submitted && ' (auto-submitted when time ran out)'}
+                    </span>
+                  ) : (
+                    <span className="text-brass">
+                      ✓ Submitted — {new Date(submission.submitted_at).toLocaleString()}
+                      {mockEssay?.auto_submitted && ' (auto-submitted when time ran out)'}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleMockStart}
+                  disabled={startingMock}
+                  className="focus-ring self-start px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
+                >
+                  {startingMock
+                    ? 'Starting…'
+                    : mockStarted
+                    ? 'Resume Mock Test'
+                    : 'Start Mock Test'}
+                </button>
+              )}
+
+              {/* Read-only recap once submitted, so the student can
+                  see what they wrote without reopening the (now
+                  closed) timed window. */}
+              {mockAlreadySubmitted && mockEssay && (
+                <div className="flex flex-col gap-2">
+                  {mockEssay.task1_text && (
+                    <details className="rounded-md border border-line bg-panel px-3 py-2.5">
+                      <summary className="text-xs uppercase tracking-wide text-mist font-mono cursor-pointer">
+                        Your Task 1 answer ({countWords(mockEssay.task1_text)} words)
+                      </summary>
+                      <p className="mt-2 text-sm text-paper-dim whitespace-pre-wrap">{mockEssay.task1_text}</p>
+                    </details>
+                  )}
+
+                  {mockEssay.task2_text && (
+                    <details className="rounded-md border border-line bg-panel px-3 py-2.5">
+                      <summary className="text-xs uppercase tracking-wide text-mist font-mono cursor-pointer">
+                        Your Task 2 answer ({countWords(mockEssay.task2_text)} words)
+                      </summary>
+                      <p className="mt-2 text-sm text-paper-dim whitespace-pre-wrap">{mockEssay.task2_text}</p>
+                    </details>
+                  )}
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* =================================================
               NORMAL FILES
           ================================================= */}
 
+          {!isMockHomework && (
+          <>
           <div className="rounded-lg border border-line bg-panel-2 p-3">
 
             <div className="flex flex-wrap justify-between gap-2">
@@ -1600,6 +1826,8 @@ export default function HomeworkCard({
 
             </div>
           )}
+          </>
+          )}
 
           {/* =================================================
               AI EVALUATION
@@ -1655,5 +1883,16 @@ export default function HomeworkCard({
         </div>
       )}
     </div>
+
+    {mockTestOpen && (
+      <WritingMockTest
+        homework={homework}
+        submission={submission}
+        onAutosave={handleMockAutosave}
+        onSubmit={handleMockSubmit}
+        onClose={() => setMockTestOpen(false)}
+      />
+    )}
+    </>
   )
 }

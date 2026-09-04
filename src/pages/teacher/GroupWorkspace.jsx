@@ -442,17 +442,22 @@ export default function GroupWorkspace({ teacherId }) {
         if (storageError) throw storageError
       }
 
-      const homeworkPath =
+      const homeworkFilePaths = [
         storagePathFromPublicUrl(
           hw.attachment_url,
           'homework-files'
-        )
+        ),
+        storagePathFromPublicUrl(
+          hw.mock_task1_image_url,
+          'homework-files'
+        ),
+      ].filter(Boolean)
 
-      if (homeworkPath) {
+      if (homeworkFilePaths.length) {
         const { error: homeworkStorageError } =
           await supabase.storage
             .from('homework-files')
-            .remove([homeworkPath])
+            .remove(homeworkFilePaths)
 
         if (homeworkStorageError) {
           throw homeworkStorageError
@@ -636,6 +641,12 @@ export default function GroupWorkspace({ teacherId }) {
             comment: null,
             status: 'pending',
             submitted_at: null,
+            // Writing Mock Test attempts are keyed off started_at —
+            // without wiping this too, "Reset" would leave the old
+            // clock in place and the student's next click would just
+            // resume (and instantly auto-submit) an already-expired,
+            // already-graded attempt instead of starting a fresh one.
+            mock_essay: null,
           })
           .eq('homework_id', hw.id)
 

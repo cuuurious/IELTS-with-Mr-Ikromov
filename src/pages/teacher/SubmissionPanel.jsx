@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
+import { countWords } from '../../lib/writingMock'
 
 export default function SubmissionPanel({
   studentName,
@@ -141,6 +142,72 @@ export default function SubmissionPanel({
                       </span>
                     </a>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* WRITING MOCK TEST */}
+            {submission?.mock_essay && (
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+                    Writing mock test
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-2xl border border-line bg-panel-2 p-4">
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-mist">
+                    {submission.mock_essay.time_limit_minutes && (
+                      <span>{submission.mock_essay.time_limit_minutes} min limit</span>
+                    )}
+
+                    {submission.mock_essay.started_at && (
+                      <span>started {new Date(submission.mock_essay.started_at).toLocaleString()}</span>
+                    )}
+
+                    {submission.mock_essay.auto_submitted && (
+                      <span className="text-amber">auto-submitted — time ran out</span>
+                    )}
+                  </div>
+
+                  {/* Teacher-only integrity context — never shown to
+                      or used to block the student, just useful signal
+                      alongside the essay itself. */}
+                  {(submission.mock_essay.tab_switch_count > 0 ||
+                    submission.mock_essay.fullscreen_exit_count > 0) && (
+                    <div className="rounded-xl border border-coral/30 bg-coral/5 px-3 py-2 text-xs text-coral">
+                      {submission.mock_essay.tab_switch_count > 0 &&
+                        `Left the tab ${submission.mock_essay.tab_switch_count} time${submission.mock_essay.tab_switch_count === 1 ? '' : 's'} during the test.`}{' '}
+                      {submission.mock_essay.fullscreen_exit_count > 0 &&
+                        `Exited fullscreen ${submission.mock_essay.fullscreen_exit_count} time${submission.mock_essay.fullscreen_exit_count === 1 ? '' : 's'}.`}
+                    </div>
+                  )}
+
+                  {submission.mock_essay.task1_text && (
+                    <div className="rounded-xl border border-line bg-panel px-4 py-3">
+                      <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-mist">
+                        Task 1 · {countWords(submission.mock_essay.task1_text)} words
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm leading-6 text-paper-dim">
+                        {submission.mock_essay.task1_text}
+                      </p>
+                    </div>
+                  )}
+
+                  {submission.mock_essay.task2_text && (
+                    <div className="rounded-xl border border-line bg-panel px-4 py-3">
+                      <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-mist">
+                        Task 2 · {countWords(submission.mock_essay.task2_text)} words
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm leading-6 text-paper-dim">
+                        {submission.mock_essay.task2_text}
+                      </p>
+                    </div>
+                  )}
+
                 </div>
               </section>
             )}
