@@ -8,8 +8,10 @@ import {
   secondsRemaining,
   formatClock,
 } from '../../lib/writingMock'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const FULL_TASK_ORDER = ['task1', 'task2']
+const AUTOSAVE_MS = 5000
 
 // The full-screen, timed writing environment itself. Everything about
 // PERSISTING the essay (autosave / final submit) is delegated back up
@@ -51,6 +53,7 @@ export default function WritingMockTest({
 
   const [submitting, setSubmitting] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   // Latest values, readable from inside the interval/listeners set up
   // once below without them closing over stale state.
@@ -58,7 +61,6 @@ export default function WritingMockTest({
   textsRef.current = texts
 
   const tabSwitchCountRef = useRef(mockEssay.tab_switch_count || 0)
-  const fullscreenExitCountRef = useRef(mockEssay.fullscreen_exit_count || 0)
   const submittedRef = useRef(false)
   const submittingRef = useRef(false)
   const startedAtRef = useRef(mockEssay.started_at)
@@ -79,7 +81,6 @@ export default function WritingMockTest({
         task1_text: textsRef.current.task1,
         task2_text: textsRef.current.task2,
         tab_switch_count: tabSwitchCountRef.current,
-        fullscreen_exit_count: fullscreenExitCountRef.current,
         auto_submitted: auto,
       })
 
@@ -119,7 +120,10 @@ export default function WritingMockTest({
   }, [timeLimitMinutes])
 
   /* ============================================================
-     AUTOSAVE — every 20 seconds while the window is open.
+     AUTOSAVE — every few seconds while the window is open, so the
+     teacher's already-open review panel (it subscribes to realtime
+     updates) sees near-live progress, and a crash/reload loses at
+     most a few seconds of typing.
   ============================================================ */
 
   useEffect(() => {
@@ -130,11 +134,10 @@ export default function WritingMockTest({
         task1_text: textsRef.current.task1,
         task2_text: textsRef.current.task2,
         tab_switch_count: tabSwitchCountRef.current,
-        fullscreen_exit_count: fullscreenExitCountRef.current,
       })
 
       setLastSavedAt(new Date())
-    }, 20000)
+    }, AUTOSAVE_MS)
 
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,41 +159,53 @@ export default function WritingMockTest({
   }, [])
 
   /* ============================================================
-     QUIET INTEGRITY LOG — tab switching / leaving fullscreen.
+     QUIET INTEGRITY LOG — leaving this tab/window during the test.
      Never shown to or blocked for the student here; saved for the
      teacher to see alongside the submission afterwards as context,
      not as proof of anything.
+
+     Deliberately NOT using the real Fullscreen API for this. It was
+     tried, but most browsers force-exit fullscreen the instant a
+     student switches tabs — which made the writing window visually
+     look like it had closed (the browser's own address bar/tabs
+     reappearing), even though the app itself hadn't changed anything
+     and no work was lost. Window focus + tab visibility give the same
+     signal without that side effect, so the window never appears to
+     close on its own — it only ever closes via Minimize or Submit.
+
+     Both listeners feed one shared "away" flag rather than each
+     counting independently, so a single tab-switch (which usually
+     fires both a blur AND a visibility change together) is logged
+     once, not twice.
   ============================================================ */
 
   useEffect(() => {
-    const onVisibility = () => {
-      if (document.hidden && !submittedRef.current) {
+    let away = false
+
+    const markAway = () => {
+      if (!away && !submittedRef.current) {
+        away = true
         tabSwitchCountRef.current += 1
       }
     }
 
-    const onFullscreenChange = () => {
-      if (!document.fullscreenElement && !submittedRef.current) {
-        fullscreenExitCountRef.current += 1
-      }
+    const markBack = () => {
+      away = false
+    }
+
+    const onVisibility = () => {
+      if (document.hidden) markAway()
+      else markBack()
     }
 
     document.addEventListener('visibilitychange', onVisibility)
-    document.addEventListener('fullscreenchange', onFullscreenChange)
-
-    // Best-effort exam atmosphere, not a requirement to function —
-    // silently do nothing if the browser/device refuses (iOS Safari
-    // doesn't support this on arbitrary elements, some browsers need
-    // a fresh user gesture, etc).
-    document.documentElement.requestFullscreen?.().catch(() => {})
+    window.addEventListener('blur', markAway)
+    window.addEventListener('focus', markBack)
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
-      document.removeEventListener('fullscreenchange', onFullscreenChange)
-
-      if (document.fullscreenElement) {
-        document.exitFullscreen?.().catch(() => {})
-      }
+      window.removeEventListener('blur', markAway)
+      window.removeEventListener('focus', markBack)
     }
   }, [])
 
@@ -205,42 +220,47 @@ export default function WritingMockTest({
     )
 
     if (short.length) {
-      const detail = short
-        .map(
+      setConfirmDialog({
+        title: 'Short on words',
+        points: short.map(
           (t) =>
-            `${TASK_MODE_LABELS[t]} is only ${countWords(texts[t])} words (IELTS recommends at least ${MIN_WORDS[t]})`
-        )
-        .join('; ')
-
-      if (!window.confirm(`${detail}. Submit anyway?`)) return
-    } else if (
-      !window.confirm(
-        'Submit your mock test now? You will not be able to make further changes.'
-      )
-    ) {
+            `${TASK_MODE_LABELS[t]}: ${countWords(texts[t])} words (IELTS recommends at least ${MIN_WORDS[t]})`
+        ),
+        message: 'You can still submit as-is, or go back and keep writing.',
+        confirmLabel: 'Submit anyway',
+        cancelLabel: 'Keep writing',
+        tone: 'coral',
+        onConfirm: () => finishTest({ auto: false }),
+      })
       return
     }
 
-    finishTest({ auto: false })
+    setConfirmDialog({
+      title: 'Submit your mock test?',
+      message: "You won't be able to make further changes after this.",
+      confirmLabel: 'Submit Now',
+      cancelLabel: 'Keep writing',
+      onConfirm: () => finishTest({ auto: false }),
+    })
   }
 
   const handleMinimize = () => {
-    if (
-      !window.confirm(
-        'Hide the writing window? The timer keeps running in the background — reopen it with "Resume Mock Test" on the homework.'
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Hide the writing window?',
+      message:
+        'The timer keeps running in the background. Reopen it anytime with "Resume Mock Test" on the homework — it opens straight back up, no need to confirm again.',
+      confirmLabel: 'Minimize',
+      cancelLabel: 'Stay here',
+      onConfirm: () => {
+        onAutosave({
+          task1_text: textsRef.current.task1,
+          task2_text: textsRef.current.task2,
+          tab_switch_count: tabSwitchCountRef.current,
+        })
 
-    onAutosave({
-      task1_text: textsRef.current.task1,
-      task2_text: textsRef.current.task2,
-      tab_switch_count: tabSwitchCountRef.current,
-      fullscreen_exit_count: fullscreenExitCountRef.current,
+        onClose()
+      },
     })
-
-    onClose()
   }
 
   const blockPaste = (e) => {
@@ -404,6 +424,17 @@ export default function WritingMockTest({
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
     </div>
   )
 

@@ -176,13 +176,10 @@ export default function SubmissionPanel({
                   {/* Teacher-only integrity context — never shown to
                       or used to block the student, just useful signal
                       alongside the essay itself. */}
-                  {(submission.mock_essay.tab_switch_count > 0 ||
-                    submission.mock_essay.fullscreen_exit_count > 0) && (
+                  {submission.mock_essay.tab_switch_count > 0 && (
                     <div className="rounded-xl border border-coral/30 bg-coral/5 px-3 py-2 text-xs text-coral">
-                      {submission.mock_essay.tab_switch_count > 0 &&
-                        `Left the tab ${submission.mock_essay.tab_switch_count} time${submission.mock_essay.tab_switch_count === 1 ? '' : 's'} during the test.`}{' '}
-                      {submission.mock_essay.fullscreen_exit_count > 0 &&
-                        `Exited fullscreen ${submission.mock_essay.fullscreen_exit_count} time${submission.mock_essay.fullscreen_exit_count === 1 ? '' : 's'}.`}
+                      Left this tab/window {submission.mock_essay.tab_switch_count} time
+                      {submission.mock_essay.tab_switch_count === 1 ? '' : 's'} during the test.
                     </div>
                   )}
 

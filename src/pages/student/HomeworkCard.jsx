@@ -12,6 +12,7 @@ import StampBadge, {
   isLateSubmission,
 } from '../../components/StampBadge'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
+import ConfirmModal from '../../components/ConfirmModal'
 import WritingMockTest from './WritingMockTest'
 import {
   DEFAULT_TIME_LIMITS,
@@ -117,6 +118,7 @@ export default function HomeworkCard({
 
   const [mockTestOpen, setMockTestOpen] = useState(false)
   const [startingMock, setStartingMock] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const [speakingParts, setSpeakingParts] = useState({
     audio_part1_url:
@@ -1048,14 +1050,31 @@ export default function HomeworkCard({
    * ============================================================
    *
    * The actual timed environment (clock, paste-blocked textareas,
-   * word counts, tab/fullscreen logging) lives in WritingMockTest.jsx
-   * — it knows nothing about Supabase. These three handlers are the
-   * only bridge between it and the submissions row, reusing the same
+   * word counts, tab-switch logging) lives in WritingMockTest.jsx —
+   * it knows nothing about Supabase. These handlers are the only
+   * bridge between it and the submissions row, reusing the same
    * upsertSubmission / markHomeworkCompleted / requestAiEvaluation
    * this file already has for every other homework type.
    */
 
-  const handleMockStart = async () => {
+  // Clicking "Start/Resume Mock Test" only ever needs a readiness
+  // check — and only the confirmation, rules dialog — the FIRST time,
+  // before anything has been created yet. Once mock_essay.started_at
+  // exists, the test is already running server-side; reopening it is
+  // just resuming, so it skips both the dialog and the network round
+  // trip and opens straight back up. Asking again here was actively
+  // harmful: a student who clicked Minimize and came back could easily
+  // dismiss the readiness dialog out of habit (since nothing new was
+  // actually starting) and get stuck looking at a "Resume" button that
+  // silently did nothing.
+  const handleMockStart = () => {
+    setError('')
+
+    if (mockStarted) {
+      setMockTestOpen(true)
+      return
+    }
+
     const modeLabel =
       TASK_MODE_LABELS[homework.mock_task_mode] || 'writing'
 
@@ -1064,11 +1083,25 @@ export default function HomeworkCard({
       DEFAULT_TIME_LIMITS[homework.mock_task_mode] ||
       40
 
-    const ready = window.confirm(
-      `Ready to start your ${modeLabel} mock test?\n\nOnce you begin you will have ${minutes} minutes. The timer cannot be paused, pasting text is disabled, and your essay is submitted automatically the moment time runs out.\n\nStart now?`
-    )
+    setConfirmDialog({
+      title: `Ready to start your ${modeLabel} mock test?`,
+      points: [
+        `You will have ${minutes} minutes once you begin.`,
+        'The timer cannot be paused.',
+        'Pasting text is disabled — type your answer directly.',
+        'Your essay is submitted automatically the moment time runs out.',
+      ],
+      confirmLabel: 'Start Test',
+      cancelLabel: 'Not yet',
+      onConfirm: doStartMock,
+    })
+  }
 
-    if (!ready) return
+  const doStartMock = async () => {
+    const minutes =
+      homework.mock_time_limit_minutes ||
+      DEFAULT_TIME_LIMITS[homework.mock_task_mode] ||
+      40
 
     setStartingMock(true)
     setError('')
@@ -1078,16 +1111,12 @@ export default function HomeworkCard({
         mock_essay: {
           task_mode: homework.mock_task_mode,
           time_limit_minutes: minutes,
-          // Never overwrite an already-running clock — resuming after
-          // a reload/close must keep counting down from the original
-          // start time, not hand out a fresh block of time.
-          started_at: mockEssay?.started_at || new Date().toISOString(),
+          started_at: new Date().toISOString(),
           submitted_at: null,
           auto_submitted: false,
-          tab_switch_count: mockEssay?.tab_switch_count || 0,
-          fullscreen_exit_count: mockEssay?.fullscreen_exit_count || 0,
-          task1_text: mockEssay?.task1_text || '',
-          task2_text: mockEssay?.task2_text || '',
+          tab_switch_count: 0,
+          task1_text: '',
+          task2_text: '',
         },
         status: 'pending',
       })
@@ -1114,7 +1143,7 @@ export default function HomeworkCard({
         status: 'pending',
       })
     } catch (err) {
-      // Silent by design — this fires every 20 seconds in the
+      // Silent by design — this fires every few seconds in the
       // background, and surfacing a transient network blip as an
       // error while the student is mid-sentence would be more
       // disruptive than useful. The next tick simply tries again.
@@ -1893,6 +1922,17 @@ export default function HomeworkCard({
         onClose={() => setMockTestOpen(false)}
       />
     )}
+
+    <ConfirmModal
+      open={Boolean(confirmDialog)}
+      {...confirmDialog}
+      onCancel={() => setConfirmDialog(null)}
+      onConfirm={() => {
+        const run = confirmDialog?.onConfirm
+        setConfirmDialog(null)
+        run?.()
+      }}
+    />
     </>
   )
 }

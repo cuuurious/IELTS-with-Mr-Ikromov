@@ -1327,6 +1327,21 @@ export default function GroupWorkspace({ teacherId }) {
                             // through to "NOT YET" — otherwise a late
                             // submission looks identical to no submission
                             // at all on the teacher's side.
+                            //
+                            // A Writing Mock Test in the 'pending' bucket
+                            // could either mean "hasn't opened it yet" or
+                            // "has an attempt running right now" — those
+                            // read very differently to a teacher glancing
+                            // at this table, so the started-but-not-yet-
+                            // submitted case gets its own label. Reuses
+                            // the existing pending styling rather than a
+                            // new color, since it's informational, not a
+                            // new status.
+                            const mockInProgress =
+                              hw.homework_type === 'writing_mock' &&
+                              Boolean(sub?.mock_essay?.started_at) &&
+                              status === 'pending'
+
                             const statusLabel =
                               status === 'done'
                                 ? 'DONE'
@@ -1334,7 +1349,9 @@ export default function GroupWorkspace({ teacherId }) {
                                   ? 'LATE'
                                   : status === 'overdue'
                                     ? 'INCOMPLETE'
-                                    : 'NOT YET'
+                                    : mockInProgress
+                                      ? 'WRITING…'
+                                      : 'NOT YET'
 
                             const statusClassName =
                               status === 'done'
