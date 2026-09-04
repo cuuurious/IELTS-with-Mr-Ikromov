@@ -143,6 +143,22 @@ export default function HomeworkCard({
     submissionRef.current = submission
   }, [submission])
 
+  // Opening a homework marks its "new homework posted" notification as
+  // read, the same way clicking it from the notification bell already
+  // does. Previously that was the ONLY way to clear it — a student who
+  // found this homework by scrolling their homework list instead of
+  // through the bell would see it stay marked unread forever, even
+  // after opening it or submitting their work.
+  useEffect(() => {
+    if (!open) return
+
+    window.dispatchEvent(
+      new CustomEvent('notification-mark-read', {
+        detail: { link: `homework:${homework.id}` },
+      })
+    )
+  }, [open, homework.id])
+
   // Serializes calls to saveFiles so a paste that arrives while an
   // earlier upload is still saving queues up behind it instead of
   // racing it — both would otherwise read the same "existing files"

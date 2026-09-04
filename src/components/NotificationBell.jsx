@@ -105,6 +105,69 @@ export default function NotificationBell({ profile }) {
 
   /*
    * ============================================================
+   * MARK READ FROM ELSEWHERE IN THE APP
+   * ============================================================
+   *
+   * Clicking a notification right here already marks it read. But a
+   * student (or teacher) can just as easily reach the same homework
+   * by scrolling their homework list instead of going through this
+   * dropdown — that used to leave the notification stuck as unread
+   * forever, since nothing else in the app ever touched the `read`
+   * column. Any component can now dispatch this event with the same
+   * `link` a notification carries (e.g. `homework:<id>`) when the
+   * thing that notification points at gets opened, and every
+   * matching unread notification clears here too.
+   */
+
+  useEffect(() => {
+    if (!profile?.id) return
+
+    const handleExternalRead = async (event) => {
+      const link = event.detail?.link
+      if (!link) return
+
+      setItems((previous) =>
+        previous.filter(
+          (item) => item.link !== link
+        )
+      )
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', profile.id)
+        .eq('link', link)
+        .eq('read', false)
+
+      if (error) {
+        console.error(
+          'Failed to mark notification read:',
+          error
+        )
+
+        // Reload so a notification that didn't actually get marked
+        // read in the database doesn't stay wrongly cleared here.
+        await load()
+      }
+    }
+
+    window.addEventListener(
+      'notification-mark-read',
+      handleExternalRead
+    )
+
+    return () => {
+      window.removeEventListener(
+        'notification-mark-read',
+        handleExternalRead
+      )
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id])
+
+  /*
+   * ============================================================
    * CLOSE WHEN CLICKING OUTSIDE
    * ============================================================
    */
