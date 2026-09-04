@@ -369,11 +369,15 @@ function NewWordlistForm({
           (item) => ({
             word:
               item?.word || '',
-            definition: '',
+            definition:
+              item?.definition ||
+              '',
             uzbek_translation:
               item?.uzbek_translation ||
               '',
-            example_sentence: '',
+            example_sentence:
+              item?.example_sentence ||
+              '',
           })
         )
 
@@ -476,11 +480,15 @@ function NewWordlistForm({
               wl.id,
             word:
               item.word,
-            definition: '',
+            definition:
+              item.definition ||
+              '',
             uzbek_translation:
               item.uzbek_translation ||
               '',
-            example_sentence: '',
+            example_sentence:
+              item.example_sentence ||
+              '',
             position:
               index,
           })
@@ -618,7 +626,11 @@ function NewWordlistForm({
 
           <p className="text-mist text-xs">
             Maximum 250 words or collocations.
-            Only Uzbek translations will be generated.
+            Each gets an English definition, an example sentence (both
+            from Merriam-Webster's Learner's Dictionary, when it has an
+            entry), and a Uzbek translation — collocations and phrases
+            don't always have their own dictionary entry, so you may
+            need to fill a few in by hand.
           </p>
 
           {error && (
@@ -634,8 +646,8 @@ function NewWordlistForm({
               className="btn-primary disabled:opacity-50"
             >
               {generating
-                ? 'Generating translations…'
-                : 'Generate translations'}
+                ? 'Generating definitions…'
+                : 'Generate definitions & translations'}
             </button>
 
             <button
@@ -656,10 +668,14 @@ function NewWordlistForm({
       {items && (
         <>
           <p className="text-mist text-xs">
-            Review and edit the Uzbek
+            Review and edit the definitions,
+            example sentences, and Uzbek
             translations before publishing.
-            Students will see exactly these
-            translations.
+            Students will see exactly what's
+            here — a blank field usually means
+            it's a collocation/phrase that
+            wasn't its own dictionary entry, so
+            it's worth filling in by hand.
           </p>
 
           <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
@@ -683,6 +699,22 @@ function NewWordlistForm({
 
                   <input
                     value={
+                      item.definition ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateItem(
+                        index,
+                        'definition',
+                        e.target.value
+                      )
+                    }
+                    placeholder="English definition"
+                    className="focus-ring bg-panel border border-line rounded-lg px-2.5 py-2 text-sm text-paper"
+                  />
+
+                  <input
+                    value={
                       item.uzbek_translation ||
                       ''
                     }
@@ -695,6 +727,22 @@ function NewWordlistForm({
                     }
                     placeholder="Uzbek translation"
                     className="focus-ring bg-panel border border-line rounded-lg px-2.5 py-2 text-sm text-paper"
+                  />
+
+                  <input
+                    value={
+                      item.example_sentence ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateItem(
+                        index,
+                        'example_sentence',
+                        e.target.value
+                      )
+                    }
+                    placeholder="Example sentence (optional)"
+                    className="focus-ring bg-panel border border-line rounded-lg px-2.5 py-2 text-sm text-paper italic"
                   />
                 </div>
               )

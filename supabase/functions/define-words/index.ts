@@ -178,6 +178,203 @@ function cleanTranslation(
   return cleaned
 }
 
+/*
+ * Strip Merriam-Webster's internal markup tokens out of definition
+ * text (their API returns strings like "{bc}to make {it}less{/it}
+ * severe" instead of plain text). This only needs to handle what
+ * actually shows up in `shortdef` — the short, already-simplified
+ * definitions this function uses — not the full formatting language
+ * MW uses in the long-form `def`/`sseq` structure.
+ */
+function cleanMwText(value: unknown) {
+  let text = String(value || "")
+
+  // Paired tokens: keep the text inside them.
+  text = text.replace(
+    /\{(it|b|wi|inf|sup|gloss|qword|parahw|phrase)\}(.*?)\{\/\1\}/g,
+    "$2"
+  )
+
+  // {sx|word||} / {a_link|word} / {d_link|text|...} -- cross-references
+  // and links. Keep just the display word/text (first piece).
+  text = text.replace(
+    /\{(?:sx|a_link|d_link|i_link|et_link|mat|dxt)\|([^|}]*)[^}]*\}/g,
+    "$1"
+  )
+
+  // {bc} is a "bold colon" used to separate sense groups.
+  text = text.replace(/\{bc\}/g, ": ")
+
+  text = text
+    .replace(/\{ldquo\}/g, "“")
+    .replace(/\{rdquo\}/g, "”")
+
+  // Anything else ({dx}, {sxn}, closing tags that slipped through, etc.)
+  // -- just drop it, it's formatting metadata, not content.
+  text = text.replace(/\{\/?[a-z_]+[^}]*\}/gi, "")
+
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/^[:;\s]+/, "")
+    .trim()
+}
+
+/*
+ * Merriam-Webster's entries nest example sentences ("verbal
+ * illustrations") deep inside their sense structure, under a "vis"
+ * array wherever it happens to occur -- rather than model that whole
+ * nested shape, just walk the entry looking for any ["vis", [...]]
+ * pair and use its first example. {wi}...{/wi} inside the example
+ * (marking where the headword itself appears) gets unwrapped to plain
+ * text by cleanMwText, same as everything else.
+ */
+function extractFirstExample(node: unknown): string | null {
+  if (!node || typeof node !== "object") {
+    return null
+  }
+
+  if (Array.isArray(node)) {
+    if (node[0] === "vis" && Array.isArray(node[1])) {
+      for (const illustration of node[1]) {
+        const text = cleanMwText(
+          (illustration as any)?.t
+        )
+
+        if (text) {
+          return text
+        }
+      }
+    }
+
+    for (const child of node) {
+      const found = extractFirstExample(child)
+
+      if (found) {
+        return found
+      }
+    }
+
+    return null
+  }
+
+  for (const key of Object.keys(node as object)) {
+    const found = extractFirstExample(
+      (node as Record<string, unknown>)[key]
+    )
+
+    if (found) {
+      return found
+    }
+  }
+
+  return null
+}
+
+/*
+ * Merriam-Webster Learner's Dictionary API.
+ *
+ * https://www.dictionaryapi.com/products/api-learners-dictionary
+ *
+ * A real, non-technical-friendly gotcha this has to handle: when there
+ * is no exact entry for what was queried, MW does NOT return an error
+ * or an empty array -- it returns HTTP 200 with an array of plain
+ * spelling-suggestion STRINGS instead of definition objects. A lot of
+ * collocations (e.g. "take into account") aren't their own headword --
+ * they're nested inside a related word's entry -- so this shows up a
+ * lot for multi-word phrases specifically. Treat that case the same as
+ * "no definition found" rather than showing a suggestion as if it were
+ * a definition.
+ */
+async function fetchMwEntry(
+  word: string,
+  apiKey: string
+): Promise<{ definition: string | null; example: string | null }> {
+  const empty = { definition: null, example: null }
+
+  try {
+    const url =
+      `https://www.dictionaryapi.com/api/v3/references/learners/json/${encodeURIComponent(
+        word
+      )}?key=${apiKey}`
+
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      console.error(
+        `Merriam-Webster returned ${response.status} for "${word}"`
+      )
+
+      return empty
+    }
+
+    let data: any
+
+    try {
+      data = await response.json()
+    } catch {
+      console.error(
+        `Invalid JSON from Merriam-Webster for "${word}"`
+      )
+
+      return empty
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return empty
+    }
+
+    /*
+     * No exact entry -- just spelling suggestions as plain strings.
+     */
+    if (typeof data[0] === "string") {
+      return empty
+    }
+
+    /*
+     * Ambiguous headwords (e.g. "bear" the verb vs. the noun) can come
+     * back as several entries. Prefer the one whose id actually matches
+     * what was queried over whatever MW happened to sort first.
+     */
+    const normalizedWord = word.toLowerCase()
+
+    const bestEntry =
+      data.find((entry: any) => {
+        const id = String(entry?.meta?.id || "")
+          .toLowerCase()
+          .split(":")[0]
+
+        return id === normalizedWord
+      }) || data[0]
+
+    const shortdefs = Array.isArray(bestEntry?.shortdef)
+      ? bestEntry.shortdef
+      : []
+
+    /*
+     * A word list entry is a flashcard, not a dictionary page -- the
+     * first sense or two is plenty, and keeps entries readable.
+     */
+    const cleaned = shortdefs
+      .slice(0, 2)
+      .map((sense: string) => cleanMwText(sense))
+      .filter(Boolean)
+
+    const example = extractFirstExample(bestEntry)
+
+    return {
+      definition: cleaned.length ? cleaned.join("; ") : null,
+      example,
+    }
+  } catch (error) {
+    console.error(
+      `Definition lookup failed for "${word}":`,
+      error
+    )
+
+    return empty
+  }
+}
+
 async function fetchTranslation(
   word: string
 ) {
@@ -326,30 +523,38 @@ async function mapWithConcurrency<T>(
 }
 
 async function enrichWord(
-  word: string
+  word: string,
+  mwApiKey: string | null
 ) {
-  const translation =
-    await fetchTranslation(
-      word
-    )
+  const [translation, mwEntry] = await Promise.all([
+    fetchTranslation(word),
+    mwApiKey
+      ? fetchMwEntry(word, mwApiKey)
+      : Promise.resolve({ definition: null, example: null }),
+  ])
 
   return {
     word,
 
     /*
-     * Definitions are intentionally empty.
-     * The generator is translation-only.
+     * Merriam-Webster's Learner's Dictionary. Collocations/phrases that
+     * aren't their own headword there (a real limitation of using a
+     * traditional dictionary for this) simply come back empty here --
+     * left for the teacher to fill in by hand, same as before.
      */
-    definition: "",
+    definition: mwEntry.definition || "",
 
     uzbek_translation:
       translation ||
       "Translation not found — please review this item manually.",
 
     /*
-     * Examples are intentionally empty.
+     * A real example sentence straight from the dictionary entry, when
+     * MW has one on file for this sense. Left blank (same graceful
+     * fallback as definition) when there isn't one -- the teacher can
+     * still add one by hand before publishing.
      */
-    example_sentence: "",
+    example_sentence: mwEntry.example || "",
   }
 }
 
@@ -549,17 +754,27 @@ Deno.serve(
     }
 
     /*
-     * Translation only.
+     * Merriam-Webster's free Learner's Dictionary API key. Set with:
+     *   npx supabase secrets set MERRIAM_WEBSTER_API_KEY=xxxxx
      *
-     * No DictionaryAPI.
-     * No Wiktionary.
-     * No Datamuse.
+     * Missing key is not a hard error -- definitions just come back
+     * empty (same as before this was added) so translations still work
+     * even if this hasn't been configured yet.
      */
+    const mwApiKey =
+      Deno.env.get("MERRIAM_WEBSTER_API_KEY") || null
+
+    if (!mwApiKey) {
+      console.error(
+        "MERRIAM_WEBSTER_API_KEY is not set — definitions will be left blank. Run: npx supabase secrets set MERRIAM_WEBSTER_API_KEY=xxxxx"
+      )
+    }
+
     const results =
       await mapWithConcurrency(
         words,
         5,
-        enrichWord
+        (word: string) => enrichWord(word, mwApiKey)
       )
 
     return json({

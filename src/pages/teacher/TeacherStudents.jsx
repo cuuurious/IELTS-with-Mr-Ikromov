@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 
-export default function TeacherStudents() {
+export default function TeacherStudents({ onStartChat }) {
   const [students, setStudents] = useState([])
   const [groups, setGroups] = useState([])
   const [memberships, setMemberships] = useState([])
@@ -44,7 +44,7 @@ export default function TeacherStudents() {
         supabase
           .from('profiles')
           .select(
-            'id, full_name, username, contact_email, role, status, created_at, target_band'
+            'id, full_name, username, contact_email, role, status, created_at, target_band, bio, avatar_url'
           )
           .eq('role', 'student')
           .order('full_name', { ascending: true }),
@@ -835,14 +835,36 @@ export default function TeacherStudents() {
 
               <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
 
-                <div className="min-w-0">
-                  <h3 className="font-display text-xl font-semibold text-paper truncate">
-                    {selectedStudent.full_name}
-                  </h3>
+                <div className="flex items-start gap-3 min-w-0">
 
-                  <p className="mt-1 text-sm font-mono text-mist truncate">
-                    @{selectedStudent.username || 'student'}
-                  </p>
+                  {selectedStudent.avatar_url ? (
+                    <img
+                      src={selectedStudent.avatar_url}
+                      alt={selectedStudent.full_name || 'Student photo'}
+                      className="w-12 h-12 rounded-full object-cover border border-line shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-brass flex items-center justify-center text-lg font-semibold text-onbrass shrink-0">
+                      {String(
+                        selectedStudent.full_name ||
+                          selectedStudent.username ||
+                          '?'
+                      )
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <h3 className="font-display text-xl font-semibold text-paper truncate">
+                      {selectedStudent.full_name}
+                    </h3>
+
+                    <p className="mt-1 text-sm font-mono text-mist truncate">
+                      @{selectedStudent.username || 'student'}
+                    </p>
+                  </div>
+
                 </div>
 
                 <button
@@ -859,6 +881,22 @@ export default function TeacherStudents() {
               </div>
 
               <div className="space-y-4 p-6 text-sm">
+
+                <div>
+                  <span className="text-mist">
+                    Bio
+                  </span>
+
+                  {selectedStudent.bio ? (
+                    <p className="mt-1 text-paper whitespace-pre-wrap">
+                      {selectedStudent.bio}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-mist italic">
+                      No bio yet.
+                    </p>
+                  )}
+                </div>
 
                 <div>
                   <span className="text-mist">
@@ -966,15 +1004,32 @@ export default function TeacherStudents() {
                     : 'Delete this account'}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedStudent(null)
-                  }
-                  className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass transition hover:brightness-105"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+
+                  {onStartChat && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onStartChat(selectedStudent)
+                        setSelectedStudent(null)
+                      }}
+                      className="focus-ring rounded-xl border border-brass px-4 py-2.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
+                    >
+                      💬 Chat with student
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedStudent(null)
+                    }
+                    className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass transition hover:brightness-105"
+                  >
+                    Close
+                  </button>
+
+                </div>
 
               </div>
 

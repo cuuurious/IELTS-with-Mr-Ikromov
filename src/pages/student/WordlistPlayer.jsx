@@ -26,37 +26,68 @@ function decodeHtmlEntities(value) {
   return textarea.value
 }
 
-function buildQuestions(items) {  
-	return shuffle(items).map((item) => {
-    		const distractorPool = items.filter(
+// The quiz used to test on the definition — when definitions were
+// temporarily cut off from word lists, the options here were switched
+// over to the Uzbek translation as a stand-in. Definitions are back, so
+// this goes back to testing on those; meaningOf() below still falls
+// back to the translation for the rare item that has no definition on
+// file (a collocation MW doesn't have its own entry for, say), so a
+// blank definition never shows up as an actual quiz option.
+function meaningOf(item) {
+  return item.definition || item.uzbek_translation || ''
+}
+
+function buildQuestions(items) {
+  const usable = items.filter((item) => meaningOf(item))
+
+  return shuffle(usable).map((item) => {
+    const distractorPool = usable.filter(
       (it) => it.id !== item.id
     )
 
-    const correctTranslation =
-      item.uzbek_translation || ''
+    const correctAnswer = meaningOf(item)
 
     const distractors = shuffle(
       distractorPool
     )
-      .map(
-        (it) =>
-          it.uzbek_translation || ''
+      .map(meaningOf)
+      .filter(
+        (meaning) =>
+          meaning && meaning !== correctAnswer
       )
-      .filter(Boolean)
       .slice(0, 3)
 
     const options = shuffle([
-      correctTranslation,
+      correctAnswer,
       ...distractors,
     ])
 
     return {
       word: item.word,
-      correctAnswer: correctTranslation,
+      correctAnswer,
       options,
     }
   })
 }
+// A few small, self-contained animations for this page only — a flip
+// card (study mode), a "pop" entrance whenever a new card/question
+// shows up, and a little pulse on whichever answer was just tapped.
+// Kept scoped to this component (a plain <style> tag) rather than
+// touching the shared stylesheet.
+const ANIMATION_STYLES = `
+@keyframes wlp-pop {
+  from { opacity: 0; transform: scale(0.94) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes wlp-pulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.wlp-pop { animation: wlp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+.wlp-pulse { animation: wlp-pulse 0.28s ease-out; }
+`
+
 function categoryFor(percentage) {
   if (percentage >= 90) return { label: 'Excellent!', tone: 'sage', note: 'Outstanding recall — these words are locked in.' }
   if (percentage >= 70) return { label: 'Good job', tone: 'brass', note: 'Solid work. A quick review of the missed ones will make it perfect.' }
@@ -146,6 +177,8 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
     const item = items[cardIndex]
     return (
       <div className="flex flex-col gap-4 items-center">
+        <style>{ANIMATION_STYLES}</style>
+
         <div className="w-full flex items-center justify-between">
           <button onClick={onExit} className="focus-ring text-mist hover:text-paper text-sm">
             ← Back
@@ -155,21 +188,50 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
           </span>
         </div>
 
-        <button
-          onClick={() => setFlipped((f) => !f)}
-          className="focus-ring ticket rounded-xl w-full max-w-sm h-64 flex flex-col items-center justify-center gap-3 p-6 text-center"
+        <div
+          key={cardIndex}
+          className="wlp-pop w-full max-w-sm"
+          style={{ perspective: '1200px' }}
         >
-          {!flipped ? (
-            <span className="font-display text-3xl">{item.word}</span>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-paper">{item.definition}</p>
-              <p className="text-brass font-medium">{item.uzbek_translation}</p>
-              <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
+          <button
+            onClick={() => setFlipped((f) => !f)}
+            aria-label={flipped ? 'Show the word' : 'Reveal definition and translation'}
+            className="focus-ring relative w-full h-64 block"
+            style={{
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)',
+              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
+            {/* FRONT — the word */}
+            <div
+              className="ticket rounded-xl absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center"
+              style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+            >
+              <span className="font-display text-3xl">{item.word}</span>
+              <span className="text-mist text-xs font-mono mt-2">tap to reveal</span>
             </div>
-          )}
-          <span className="text-mist text-xs font-mono mt-2">tap to {flipped ? 'see word' : 'reveal'}</span>
-        </button>
+
+            {/* BACK — definition, translation, example */}
+            <div
+              className="ticket rounded-xl absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center overflow-y-auto"
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              {item.definition && (
+                <p className="text-paper">{item.definition}</p>
+              )}
+              <p className="text-brass font-medium">{item.uzbek_translation}</p>
+              {item.example_sentence && (
+                <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
+              )}
+              <span className="text-mist text-xs font-mono mt-2">tap to see word</span>
+            </div>
+          </button>
+        </div>
 
         <div className="flex gap-3">
           <button
@@ -210,10 +272,11 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
     const q = questions[qIndex]
     return (
       <div className="flex flex-col gap-4 items-center">
+        <style>{ANIMATION_STYLES}</style>
         <span className="text-mist text-xs font-mono">
           Question {qIndex + 1} / {questions.length}
         </span>
-        <div className="ticket rounded-xl w-full max-w-sm p-6 flex flex-col gap-4">
+        <div key={qIndex} className="wlp-pop ticket rounded-xl w-full max-w-sm p-6 flex flex-col gap-4">
           <p className="text-mist text-sm">What does this mean?</p>
          <p className="font-display text-2xl text-center">
   {decodeHtmlEntities(q.word)}
@@ -233,7 +296,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
                   key={i}
                   onClick={() => answer(opt)}
                   disabled={!!selected}
-                  className={`focus-ring text-left px-3 py-2 rounded-md border text-sm transition-colors ${style}`}
+                  className={`focus-ring text-left px-3 py-2 rounded-md border text-sm transition-colors ${style} ${isChosen ? 'wlp-pulse' : ''}`}
                 >
                   {decodeHtmlEntities(opt)}
                 </button>
@@ -249,7 +312,8 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
   // results
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="ticket rounded-lg p-6 max-w-sm w-full flex flex-col gap-4 text-center">
+      <style>{ANIMATION_STYLES}</style>
+      <div className="wlp-pop ticket rounded-lg p-6 max-w-sm w-full flex flex-col gap-4 text-center">
         <span className={`stamp stamp-${category.tone === 'sage' ? 'done' : category.tone === 'coral' ? 'overdue' : 'pending'} w-20 h-20 mx-auto text-xs`}>
           {result.percentage}%
         </span>

@@ -175,6 +175,25 @@ export default function TeacherDashboard() {
     }
   }, [])
 
+  /*
+   * "Chat with student" button on a student's profile (Students tab)
+   * jumps to the Chat tab with that student already selected — same
+   * mechanism a push-notification deep link uses above, just
+   * triggered by a click instead of an incoming notification.
+   */
+  const handleStartChat = (student) => {
+    if (!student?.id) return
+
+    setNotificationChat({
+      studentId: student.id,
+      studentName: student.full_name,
+      messageId: null,
+    })
+
+    setNotificationGroup(null)
+    setTab('chat')
+  }
+
   const tabs = [
     {
       key: 'groups',
@@ -239,7 +258,7 @@ export default function TeacherDashboard() {
       )}
 
       {tab === 'students' && (
-        <TeacherStudents />
+        <TeacherStudents onStartChat={handleStartChat} />
       )}
 
       {tab === 'wordlists' && (
