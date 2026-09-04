@@ -80,23 +80,33 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-ink text-paper flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen text-paper flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
             src="/ielts.png"
             alt="IELTS with Mr Ikromov"
-            className="w-16 h-16 mx-auto rounded-2xl mb-3"
+            className="w-16 h-16 mx-auto rounded-2xl mb-3 shadow-lg"
+            style={{ boxShadow: '0 10px 24px rgba(20,20,25,.22)' }}
           />
 
           <h1 className="font-display text-2xl">Create your account</h1>
 
-          <p className="text-mist text-sm mt-1">
+          <p className="text-paper-dim text-sm mt-1">
             Your account needs Mr Ikromov's approval before you can log in.
           </p>
         </div>
 
-        <form onSubmit={submit} className="ticket rounded-lg p-6 flex flex-col gap-4">
+        <form
+          onSubmit={submit}
+          className="ticket rounded-lg p-6 flex flex-col gap-4"
+          style={{
+            borderColor:
+              'color-mix(in srgb, var(--color-brass) 22%, var(--color-line))',
+            boxShadow:
+              '0 24px 60px rgba(20,20,25,.22), 0 3px 8px rgba(20,20,25,.12)',
+          }}
+        >
           <div className="flex gap-2 bg-panel-2 rounded-md p-1">
             {['student', 'teacher'].map((r) => (
               <button
