@@ -345,6 +345,10 @@ Deno.serve(async (req) => {
     let failed = 0
     let removed = 0
 
+    // Kept so the response can say WHY nothing went out, instead of
+    // just how many failed — see the "ok: false" branch below.
+    let firstFailureDetail = null
+
     const payload =
       JSON.stringify({
         title,
@@ -402,6 +406,11 @@ Deno.serve(async (req) => {
           removed++
         }
 
+        if (!firstFailureDetail) {
+          firstFailureDetail =
+            `${statusCode || 'no status'}: ${error?.message || String(error)}`
+        }
+
         console.error(
           'Push delivery failed:',
           {
@@ -422,9 +431,26 @@ Deno.serve(async (req) => {
      * --------------------------------------------------------
      */
 
+    // Previously this always reported ok:true here, even when EVERY
+    // subscription failed and literally nobody received anything —
+    // the caller (notifyGroup in the app) only ever treats a response
+    // as a failure when it carries an `error` field, so a 100%
+    // delivery failure was silently indistinguishable from a real
+    // success. This is exactly the gap that let push notifications
+    // stay broken without anyone finding out from the app itself.
+    const totalFailure =
+      (subscriptions?.length || 0) > 0 && sent === 0
+
     return new Response(
       JSON.stringify({
-        ok: true,
+        ok: !totalFailure,
+        ...(totalFailure && {
+          error: `Delivery failed for all ${failed} subscription(s).${
+            firstFailureDetail
+              ? ` First error: ${firstFailureDetail}`
+              : ''
+          }`,
+        }),
         requested:
           uniqueUserIds.length,
         subscriptions:
