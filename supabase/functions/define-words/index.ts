@@ -2,6 +2,19 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
+// Definitions/example sentences come from Merriam-Webster's Learner's
+// Dictionary first (fetchMwEntry below) — it's the authoritative,
+// human-written source, so it's always tried first and always wins
+// when it has an entry. But a lot of collocations/phrases ("trial and
+// error", "unsettling experience") simply aren't their own headword
+// there. For anything MW/MyMemory couldn't fill in, this now makes
+// ONE batched call to OpenAI (reusing the same OPENAI_API_KEY secret
+// the ai-grading function already needs — nothing new to configure if
+// that's already set up) asking it to write the missing
+// definition/example/translation itself. See generateWithAi() below.
+//
+// Deploy with: npx supabase functions deploy define-words
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -459,6 +472,179 @@ async function fetchTranslation(
 }
 
 /*
+ * ============================================================
+ * AI FALLBACK — for definitions/examples/translations that the
+ * dictionary and translation service above couldn't provide.
+ * ============================================================
+ */
+
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+
+// Same override mechanism as ai-grading's TEXT_MODEL — if OpenAI ever
+// retires this model name, set the secret instead of editing code:
+//   npx supabase secrets set OPENAI_TEXT_MODEL=<new model name>
+const TEXT_MODEL =
+  Deno.env.get("OPENAI_TEXT_MODEL") || "gpt-5.6-terra"
+
+const WORD_ENRICHMENT_SCHEMA = {
+  type: "object",
+  properties: {
+    words: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          word: { type: "string" },
+          definition: { type: "string" },
+          example_sentence: { type: "string" },
+          uzbek_translation: { type: "string" },
+        },
+        required: [
+          "word",
+          "definition",
+          "example_sentence",
+          "uzbek_translation",
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["words"],
+  additionalProperties: false,
+}
+
+// The Responses API sometimes hands back a convenience `output_text`
+// field, and always hands back the full `output` array — walk both so
+// this doesn't break if OpenAI stops sending the convenience field.
+// (Same helper as ai-grading/index.ts.)
+function extractOutputText(payload: any): string {
+  if (
+    typeof payload?.output_text === "string" &&
+    payload.output_text
+  ) {
+    return payload.output_text
+  }
+
+  const items = Array.isArray(payload?.output)
+    ? payload.output
+    : []
+
+  for (const item of items) {
+    if (item?.type === "message" && Array.isArray(item.content)) {
+      for (const part of item.content) {
+        if (
+          part?.type === "output_text" &&
+          typeof part.text === "string"
+        ) {
+          return part.text
+        }
+      }
+    }
+  }
+
+  throw new Error("The AI did not return any text.")
+}
+
+// Structured Outputs (strict json_schema) should already guarantee
+// clean JSON — this is just a safety net.
+function parseJsonLoose(text: string): any {
+  try {
+    return JSON.parse(text)
+  } catch {
+    // fall through
+  }
+
+  const match = text.match(/\{[\s\S]*\}/)
+
+  if (match) {
+    try {
+      return JSON.parse(match[0])
+    } catch {
+      // fall through
+    }
+  }
+
+  throw new Error("Could not read the AI's response as JSON.")
+}
+
+function buildEnrichmentPrompt(words: string[]) {
+  return [
+    "You are helping build IELTS vocabulary flashcards for Uzbek-speaking students.",
+    "",
+    'A dictionary lookup already failed for these English words or collocations — most likely because a multi-word phrase like "trial and error" simply isn\'t its own dictionary headword.',
+    "",
+    "For EACH one below, write:",
+    '- "definition": a short, clear English definition in plain learner\'s-dictionary style (one sentence, no jargon, no repeating the headword itself as the first word of the definition).',
+    '- "example_sentence": one natural sentence that actually uses the word/collocation, written exactly as given.',
+    '- "uzbek_translation": an accurate, natural Uzbek translation (a short phrase, not a full sentence).',
+    "",
+    "Return ALL of them, in this exact order, with the word spelled exactly as given:",
+    ...words.map((word, i) => `${i + 1}. ${word}`),
+  ].join("\n")
+}
+
+async function generateWithAi(
+  words: string[],
+  apiKey: string
+): Promise<
+  Array<{
+    word: string
+    definition: string
+    example_sentence: string
+    uzbek_translation: string
+  }>
+> {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: TEXT_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: buildEnrichmentPrompt(words),
+            },
+          ],
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "word_enrichment",
+          strict: true,
+          schema: WORD_ENRICHMENT_SCHEMA,
+        },
+      },
+    }),
+  })
+
+  const json = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      json?.error?.message ||
+        `OpenAI request failed (${response.status}).`
+    )
+  }
+
+  const parsed = parseJsonLoose(extractOutputText(json))
+
+  return Array.isArray(parsed?.words) ? parsed.words : []
+}
+
+// The exact fallback string enrichWord() below uses when MyMemory
+// couldn't translate something — used to tell "the AI actually
+// translated this" apart from "nothing has translated this yet".
+const UNTRANSLATED_PLACEHOLDER =
+  "Translation not found — please review this item manually."
+
+/*
  * Process several words concurrently,
  * while keeping the number of simultaneous
  * external API requests under control.
@@ -540,19 +726,19 @@ async function enrichWord(
      * Merriam-Webster's Learner's Dictionary. Collocations/phrases that
      * aren't their own headword there (a real limitation of using a
      * traditional dictionary for this) simply come back empty here --
-     * left for the teacher to fill in by hand, same as before.
+     * the AI fallback pass in Deno.serve() below fills in anything
+     * still blank after this, when an OpenAI key is configured.
      */
     definition: mwEntry.definition || "",
 
     uzbek_translation:
-      translation ||
-      "Translation not found — please review this item manually.",
+      translation || UNTRANSLATED_PLACEHOLDER,
 
     /*
      * A real example sentence straight from the dictionary entry, when
      * MW has one on file for this sense. Left blank (same graceful
-     * fallback as definition) when there isn't one -- the teacher can
-     * still add one by hand before publishing.
+     * fallback as definition) when there isn't one -- filled in by the
+     * AI fallback pass below, same as definition.
      */
     example_sentence: mwEntry.example || "",
   }
@@ -776,6 +962,103 @@ Deno.serve(
         5,
         (word: string) => enrichWord(word, mwApiKey)
       )
+
+    /*
+     * --------------------------------------------------------
+     * AI FALLBACK
+     * --------------------------------------------------------
+     * Reuses the OPENAI_API_KEY secret ai-grading already needs — if
+     * that's already configured for this project, this needs nothing
+     * new. Missing key (or the AI call itself failing) is NOT a hard
+     * error: this whole block is best-effort, and a blank field left
+     * for the teacher to fill in by hand is exactly what happened
+     * before this feature existed, so there's nothing to break.
+     */
+    const openaiKey =
+      Deno.env.get("OPENAI_API_KEY") || null
+
+    if (!openaiKey) {
+      console.error(
+        "OPENAI_API_KEY is not set — collocations/phrases the dictionary couldn't define will be left blank instead of AI-generated. Run: npx supabase secrets set OPENAI_API_KEY=sk-..."
+      )
+    } else {
+      const needsAi = results
+        .map((result, index) => ({ result, index }))
+        .filter(
+          ({ result }) =>
+            result &&
+            (!result.definition ||
+              !result.example_sentence ||
+              result.uzbek_translation ===
+                UNTRANSLATED_PLACEHOLDER)
+        )
+
+      if (needsAi.length) {
+        try {
+          const aiWords = needsAi.map(
+            ({ result }) => result.word
+          )
+
+          const aiResults = await generateWithAi(
+            aiWords,
+            openaiKey
+          )
+
+          const aiByWord = new Map(
+            aiResults.map((item) => [
+              String(item?.word || "").toLowerCase(),
+              item,
+            ])
+          )
+
+          needsAi.forEach(({ result, index }) => {
+            const aiItem = aiByWord.get(
+              result.word.toLowerCase()
+            )
+
+            if (!aiItem) return
+
+            if (
+              !result.definition &&
+              aiItem.definition
+            ) {
+              results[index] = {
+                ...results[index],
+                definition: aiItem.definition,
+              }
+            }
+
+            if (
+              !result.example_sentence &&
+              aiItem.example_sentence
+            ) {
+              results[index] = {
+                ...results[index],
+                example_sentence:
+                  aiItem.example_sentence,
+              }
+            }
+
+            if (
+              result.uzbek_translation ===
+                UNTRANSLATED_PLACEHOLDER &&
+              aiItem.uzbek_translation
+            ) {
+              results[index] = {
+                ...results[index],
+                uzbek_translation:
+                  aiItem.uzbek_translation,
+              }
+            }
+          })
+        } catch (error) {
+          console.error(
+            "AI definition fallback failed — leaving blanks for manual entry:",
+            error
+          )
+        }
+      }
+    }
 
     return json({
       results,

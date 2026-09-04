@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
 
+// A word list now counts toward a student's homework completion
+// percentage, but only once they've actually scored well on it — not
+// just opened/attempted it. Matches the "Good job" threshold already
+// used elsewhere in this file's categoryFor-style language.
+const WORDLIST_PASS_THRESHOLD = 70
+
 export default function Leaderboard({
   groupId,
   highlightStudentId,
@@ -135,7 +141,9 @@ export default function Leaderboard({
   const computeDailyProgress = (
     homeworks,
     submissions,
-    completions
+    completions,
+    wordlists = [],
+    wordlistAttempts = []
   ) => {
     const submissionByHomework = new Map()
 
@@ -292,6 +300,106 @@ export default function Leaderboard({
       }
     })
 
+    /*
+     * ==========================================================
+     * WORD LISTS — folded into the same completed/total count as
+     * homeworks above.
+     *
+     * A word list has no due date and can be replayed, so "completed"
+     * here means a PASSING attempt (>= WORDLIST_PASS_THRESHOLD%), not
+     * just any attempt — otherwise a single low-score practice run
+     * would count the same as actually knowing the words. It also
+     * only looks at attempts made after the list's last
+     * completion_reset_at (same "current cycle" rule
+     * StudentWordlists.jsx already uses), so a teacher resetting a
+     * list for re-practice correctly un-counts the old attempt.
+     * ==========================================================
+     */
+
+    const attemptsByWordlist = new Map()
+
+    ;(wordlistAttempts || []).forEach((attempt) => {
+      if (!attemptsByWordlist.has(attempt.wordlist_id)) {
+        attemptsByWordlist.set(attempt.wordlist_id, [])
+      }
+
+      attemptsByWordlist.get(attempt.wordlist_id).push(attempt)
+    })
+
+    ;(wordlists || []).forEach((wordlist) => {
+      const resetAt = wordlist.completion_reset_at
+        ? new Date(wordlist.completion_reset_at).getTime()
+        : null
+
+      const currentAttempts = (
+        attemptsByWordlist.get(wordlist.id) || []
+      ).filter(
+        (attempt) =>
+          !resetAt ||
+          new Date(attempt.created_at).getTime() > resetAt
+      )
+
+      const passingAttempts = currentAttempts
+        .filter(
+          (attempt) =>
+            Number(attempt.percentage) >= WORDLIST_PASS_THRESHOLD
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.created_at) - new Date(b.created_at)
+        )
+
+      const completed = passingAttempts.length > 0
+      const completedAt = completed
+        ? passingAttempts[0].created_at
+        : null
+
+      const dateKey = getDateKey(
+        completedAt || wordlist.created_at
+      )
+
+      const day = ensureDay(dateKey)
+
+      if (day) {
+        day.total += 1
+
+        if (completed) {
+          day.completed += 1
+        }
+
+        day.tasks.push({
+          id: `wordlist:${wordlist.id}`,
+          title: `Vocabulary: ${wordlist.title || 'Word list'}`,
+          status: completed
+            ? 'done'
+            : currentAttempts.length
+            ? 'below_pass'
+            : 'not_submitted',
+          completed,
+          late: false,
+          submittedAt: completedAt,
+          dueDate: null,
+          historicallyCompleted: false,
+          currentlySubmitted: completed,
+        })
+      }
+
+      if (completed) {
+        completedCount += 1
+
+        if (completedAt) {
+          const time = new Date(completedAt).getTime()
+
+          if (
+            !earliestCompletionTime ||
+            time < earliestCompletionTime
+          ) {
+            earliestCompletionTime = time
+          }
+        }
+      }
+    })
+
     Object.values(grouped).forEach((day) => {
       day.tasks.sort((a, b) =>
         a.title.localeCompare(b.title)
@@ -310,7 +418,8 @@ export default function Leaderboard({
             : 0,
       }))
 
-    const total = (homeworks || []).length
+    const total =
+      (homeworks || []).length + (wordlists || []).length
 
     const percentage =
       total > 0
@@ -506,6 +615,77 @@ export default function Leaderboard({
 
       /*
        * ========================================================
+       * 3.5 WORD LISTS IN SCOPE, + EVERYONE'S ATTEMPTS
+       * ========================================================
+       * A word list can be assigned to several groups at once (the
+       * wordlist_groups join table), unlike a homework's single
+       * group_id — so this always fetches every word list along
+       * with which group(s) it's linked to, then narrows down to
+       * "in scope" the same way homeworks are narrowed down above.
+       * ========================================================
+       */
+
+      const { data: wordlistsRaw, error: wordlistsError } =
+        await supabase
+          .from('wordlists')
+          .select(
+            'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
+          )
+
+      if (wordlistsError) throw wordlistsError
+
+      const wordlistGroupIds = (wordlist) =>
+        (wordlist.wordlist_groups || []).map(
+          (link) => link.group_id
+        )
+
+      const wordlists =
+        groupId === 'all'
+          ? wordlistsRaw || []
+          : (wordlistsRaw || []).filter((wordlist) =>
+              wordlistGroupIds(wordlist).includes(groupId)
+            )
+
+      const wordlistIds = (
+        groupId === 'all' ? wordlistsRaw || [] : wordlists
+      ).map((wordlist) => wordlist.id)
+
+      let wordlistAttempts = []
+
+      if (wordlistIds.length) {
+        const {
+          data: wordlistAttemptsData,
+          error: wordlistAttemptsError,
+        } = await supabase
+          .from('wordlist_attempts')
+          .select(
+            'student_id, wordlist_id, percentage, created_at'
+          )
+          .in('wordlist_id', wordlistIds)
+
+        if (wordlistAttemptsError) throw wordlistAttemptsError
+        wordlistAttempts = wordlistAttemptsData || []
+      }
+
+      const wordlistAttemptsByStudent = new Map()
+
+      wordlistAttempts.forEach((attempt) => {
+        if (
+          !wordlistAttemptsByStudent.has(attempt.student_id)
+        ) {
+          wordlistAttemptsByStudent.set(
+            attempt.student_id,
+            []
+          )
+        }
+
+        wordlistAttemptsByStudent
+          .get(attempt.student_id)
+          .push(attempt)
+      })
+
+      /*
+       * ========================================================
        * 4. COMPUTE EVERY STUDENT'S STATS
        * ========================================================
        * Same computeDailyProgress() function the profile popup
@@ -524,6 +704,17 @@ export default function Leaderboard({
               )
             : homeworks || []
 
+        const relevantWordlists =
+          groupId === 'all'
+            ? (wordlistsRaw || []).filter((wordlist) =>
+                wordlistGroupIds(wordlist).some((gid) =>
+                  groupIdsByStudent
+                    .get(student.student_id)
+                    ?.has(gid)
+                )
+              )
+            : wordlists
+
         const {
           days,
           completed,
@@ -536,6 +727,10 @@ export default function Leaderboard({
             student.student_id
           ) || [],
           completionsByStudent.get(
+            student.student_id
+          ) || [],
+          relevantWordlists,
+          wordlistAttemptsByStudent.get(
             student.student_id
           ) || []
         )
@@ -633,6 +828,10 @@ export default function Leaderboard({
 
       let homeworks = allHomeworks || []
 
+      // Also reused below for word lists — hoisted out of the
+      // "all students" branch so both can filter by the same set.
+      let studentGroupIds = null
+
       /*
        * For "all students", only count homeworks from groups
        * this specific student actually belongs to — not every
@@ -649,7 +848,7 @@ export default function Leaderboard({
 
         if (memberError) throw memberError
 
-        const studentGroupIds = new Set(
+        studentGroupIds = new Set(
           (memberRows || []).map((row) => row.group_id)
         )
 
@@ -697,6 +896,55 @@ export default function Leaderboard({
 
       if (completionError) throw completionError
 
+      /*
+       * Same word-list scoping as loadLeaderboard() above, just for
+       * this one student.
+       */
+      const {
+        data: studentWordlistsRaw,
+        error: studentWordlistsError,
+      } = await supabase
+        .from('wordlists')
+        .select(
+          'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
+        )
+
+      if (studentWordlistsError) throw studentWordlistsError
+
+      const wordlists = (studentWordlistsRaw || []).filter(
+        (wordlist) => {
+          const linkedGroupIds = (
+            wordlist.wordlist_groups || []
+          ).map((link) => link.group_id)
+
+          return groupId === 'all'
+            ? linkedGroupIds.some((gid) =>
+                studentGroupIds?.has(gid)
+              )
+            : linkedGroupIds.includes(groupId)
+        }
+      )
+
+      const wordlistIds = wordlists.map(
+        (wordlist) => wordlist.id
+      )
+
+      let wordlistAttempts = []
+
+      if (wordlistIds.length) {
+        const {
+          data: wordlistAttemptsData,
+          error: wordlistAttemptsError,
+        } = await supabase
+          .from('wordlist_attempts')
+          .select('wordlist_id, percentage, created_at')
+          .eq('student_id', student.student_id)
+          .in('wordlist_id', wordlistIds)
+
+        if (wordlistAttemptsError) throw wordlistAttemptsError
+        wordlistAttempts = wordlistAttemptsData || []
+      }
+
       const {
         days,
         completed,
@@ -705,7 +953,9 @@ export default function Leaderboard({
       } = computeDailyProgress(
         homeworks,
         submissions || [],
-        historicalCompletions || []
+        historicalCompletions || [],
+        wordlists,
+        wordlistAttempts
       )
 
       const streak = calculateStreak(days)

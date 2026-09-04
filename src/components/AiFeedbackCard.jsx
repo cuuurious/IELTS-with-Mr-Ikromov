@@ -101,7 +101,7 @@ export default function AiFeedbackCard({
         )}
       </div>
 
-      <div className="rounded-2xl border border-line bg-panel-2 px-5 py-5 flex flex-col gap-4">
+      <div className="rounded-2xl border border-line bg-panel-2 px-5 py-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-14px_rgba(0,0,0,0.22)]">
 
         {/* OVERALL BAND — speaking only. Writing feedback has no
             numeric score anywhere in it, by design, so this whole
@@ -134,7 +134,7 @@ export default function AiFeedbackCard({
             {result.criteria.map((criterion, i) => (
               <div
                 key={`${criterion.name}-${i}`}
-                className="rounded-xl border border-line bg-panel px-3 py-2.5"
+                className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-paper">
@@ -205,7 +205,7 @@ export default function AiFeedbackCard({
                 {result.grammar_structures.map((item, i) => (
                   <div
                     key={i}
-                    className="rounded-xl border border-line bg-panel px-3 py-2.5"
+                    className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
                   >
                     <p className="text-sm font-medium text-paper">
                       {item.tip}
@@ -240,7 +240,7 @@ export default function AiFeedbackCard({
                 {result.useful_collocations.map((item, i) => (
                   <div
                     key={i}
-                    className="rounded-xl border border-line bg-panel px-3 py-2.5"
+                    className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
                   >
                     <p className="text-sm font-medium text-paper">
                       {item.tip}

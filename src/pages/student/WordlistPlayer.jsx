@@ -37,6 +37,19 @@ function meaningOf(item) {
   return item.definition || item.uzbek_translation || ''
 }
 
+// Whether meaningOf() above is showing an actual English definition or
+// had to fall back to the Uzbek translation (a collocation Merriam-
+// Webster doesn't have its own entry for, most commonly). Distractors
+// need to be picked from the SAME type as the correct answer — mixing
+// "to make or do something the same way as..." (a definition) in with
+// "bezovta qiluvchi tajriba" (a translation) as options for one
+// question makes it obvious which option is correct by its language
+// alone, instead of testing whether the student actually knows the
+// word.
+function meaningType(item) {
+  return item.definition ? 'definition' : 'translation'
+}
+
 function buildQuestions(items) {
   const usable = items.filter((item) => meaningOf(item))
 
@@ -46,9 +59,23 @@ function buildQuestions(items) {
     )
 
     const correctAnswer = meaningOf(item)
+    const targetType = meaningType(item)
+
+    // Prefer distractors of the same type (definition vs. translation)
+    // as the correct answer, so every option in a question reads the
+    // same way. Only fall back to the mixed pool if there simply
+    // aren't 3 other same-type items to draw from.
+    const sameTypePool = distractorPool.filter(
+      (it) => meaningType(it) === targetType
+    )
+
+    const pool =
+      sameTypePool.length >= 3
+        ? sameTypePool
+        : distractorPool
 
     const distractors = shuffle(
-      distractorPool
+      pool
     )
       .map(meaningOf)
       .filter(
@@ -196,7 +223,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
           <button
             onClick={() => setFlipped((f) => !f)}
             aria-label={flipped ? 'Show the word' : 'Reveal definition and translation'}
-            className="focus-ring relative w-full h-64 block"
+            className="focus-ring relative w-full h-72 block"
             style={{
               transformStyle: 'preserve-3d',
               transition: 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)',
@@ -212,23 +239,40 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
               <span className="text-mist text-xs font-mono mt-2">tap to reveal</span>
             </div>
 
-            {/* BACK — definition, translation, example */}
+            {/* BACK — definition, translation, example.
+                This used to have `overflow-y-auto` directly on this
+                same element — the one carrying `backfaceVisibility:
+                hidden` for the 3D flip. That combination is a known
+                mobile-Safari/Chrome bug: overflow scrolling silently
+                stops working (and stops clipping) on an element that
+                also has backface-visibility set inside a 3D transform,
+                so a longer definition/translation/example just spilled
+                out of the card and overlapped the Previous/Next
+                buttons below it, instead of scrolling or being cut off
+                cleanly. Fixed by keeping this outer element purely for
+                the 3D positioning (plus `.ticket`'s own `overflow:
+                hidden`, which — unlike a scrollable overflow-auto —
+                works fine here and acts as a hard safety clip), and
+                moving the actual scrolling to a plain nested div below
+                that isn't itself part of the 3D transform. */}
             <div
-              className="ticket rounded-xl absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center overflow-y-auto"
+              className="ticket rounded-xl absolute inset-0"
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
               }}
             >
-              {item.definition && (
-                <p className="text-paper">{item.definition}</p>
-              )}
-              <p className="text-brass font-medium">{item.uzbek_translation}</p>
-              {item.example_sentence && (
-                <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
-              )}
-              <span className="text-mist text-xs font-mono mt-2">tap to see word</span>
+              <div className="h-full w-full overflow-y-auto flex flex-col items-center justify-center gap-2 p-6 text-center">
+                {item.definition && (
+                  <p className="text-paper text-sm leading-5">{item.definition}</p>
+                )}
+                <p className="text-brass font-medium">{item.uzbek_translation}</p>
+                {item.example_sentence && (
+                  <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
+                )}
+                <span className="text-mist text-xs font-mono mt-2">tap to see word</span>
+              </div>
             </div>
           </button>
         </div>

@@ -647,11 +647,11 @@ function NewWordlistForm({
 
           <p className="text-mist text-xs">
             Maximum 250 words or collocations.
-            Each gets an English definition, an example sentence (both
-            from Merriam-Webster's Learner's Dictionary, when it has an
-            entry), and a Uzbek translation — collocations and phrases
-            don't always have their own dictionary entry, so you may
-            need to fill a few in by hand.
+            Each gets an English definition, an example sentence, and
+            a Uzbek translation — from Merriam-Webster's Learner's
+            Dictionary when it has an entry, and AI-generated when it
+            doesn't (most collocations/phrases aren't their own
+            dictionary headword). Review everything before publishing.
           </p>
 
           {error && (
@@ -691,12 +691,12 @@ function NewWordlistForm({
           <p className="text-mist text-xs">
             Review and edit the definitions,
             example sentences, and Uzbek
-            translations before publishing.
-            Students will see exactly what's
-            here — a blank field usually means
-            it's a collocation/phrase that
-            wasn't its own dictionary entry, so
-            it's worth filling in by hand.
+            translations before publishing —
+            students will see exactly what's
+            here. A field is only still blank if
+            neither the dictionary nor the AI
+            could fill it in; worth double-checking
+            those by hand.
           </p>
 
           <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">

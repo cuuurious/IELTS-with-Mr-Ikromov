@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionTypes'
@@ -31,6 +31,12 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [attachmentUrl, setAttachmentUrl] = useState(homework.attachment_url || null)
   const [attachmentName, setAttachmentName] = useState(homework.attachment_name || null)
   const [attachmentFile, setAttachmentFile] = useState(null)
+  const attachmentInputRef = useRef(null)
+
+  const clearAttachmentFile = () => {
+    setAttachmentFile(null)
+    if (attachmentInputRef.current) attachmentInputRef.current.value = ''
+  }
 
   // Writing Mock Test fields — only relevant, and only shown, for a
   // homework whose type was already set to writing_mock at creation.
@@ -43,6 +49,12 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [mockTask2Prompt, setMockTask2Prompt] = useState(homework.mock_task2_prompt || '')
   const [mockTask1Image, setMockTask1Image] = useState(null)
   const [mockTask1ImageUrl, setMockTask1ImageUrl] = useState(homework.mock_task1_image_url || null)
+  const mockTask1ImageInputRef = useRef(null)
+
+  const clearMockTask1Image = () => {
+    setMockTask1Image(null)
+    if (mockTask1ImageInputRef.current) mockTask1ImageInputRef.current.value = ''
+  }
 
   const toggleType = (value) => {
     setAllowedTypes((prev) => {
@@ -136,7 +148,18 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <form onSubmit={save} className="ticket rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+      {/* The .ticket class (its decorative rounded-corner notches) sets
+          overflow:hidden in plain CSS, which — being unlayered —
+          silently beats Tailwind's own overflow-y-auto utility no
+          matter which element it's put on. That was blocking scrolling
+          on this whole modal, cutting off the Save/Cancel buttons on
+          anything but a very tall screen. Splitting ticket styling
+          (outer, clips corners) from actual scrolling (inner form,
+          scrolls its own content) fixes it without touching .ticket
+          itself, which plenty of other non-scrolling modals still rely
+          on for that clipping. */}
+      <div className="ticket rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={save} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4">
         <div className="flex items-start justify-between">
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
           <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>
@@ -184,11 +207,25 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
               </div>
             )}
 
-            <input
-              type="file"
-              onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
-              className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel file:text-paper file:cursor-pointer"
-            />
+            {attachmentFile ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-paper truncate max-w-[220px]">{attachmentFile.name}</span>
+                <button
+                  type="button"
+                  onClick={clearAttachmentFile}
+                  className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel text-coral hover:bg-coral hover:text-white transition"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <input
+                ref={attachmentInputRef}
+                type="file"
+                onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+              />
+            )}
           </div>
         )}
 
@@ -232,7 +269,26 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                     </button>
                   </div>
                 )}
-                <input type="file" accept="image/*" onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)} className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer" />
+                {mockTask1Image ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-paper truncate max-w-[220px]">{mockTask1Image.name}</span>
+                    <button
+                      type="button"
+                      onClick={clearMockTask1Image}
+                      className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel text-coral hover:bg-coral hover:text-white transition"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    ref={mockTask1ImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
+                    className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                  />
+                )}
               </div>
             )}
 
@@ -257,6 +313,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         {error && <p className="text-coral text-sm">{error}</p>}
         <div className="flex gap-2 mt-2"><button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass">{saving ? 'Saving…' : 'Save changes'}</button><button type="button" onClick={onClose} className="focus-ring px-4 py-2 rounded-md border border-line text-mist hover:border-brass hover:text-brass transition-colors">Cancel</button></div>
       </form>
+      </div>
     </div>
   )
 }

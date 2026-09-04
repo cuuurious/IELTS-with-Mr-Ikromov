@@ -422,6 +422,26 @@ textarea::placeholder {
 }
 
 /* =========================================================
+   NATIVE CHECKBOXES / RADIOS
+   ========================================================= */
+
+/* Plain <input type="checkbox"/radio"> with no className anywhere in
+   the app (the "Include speaking recording" toggle, submission-type
+   pickers, the "I agree" checkbox on Register, etc.) render as the
+   browser's own tiny black-and-white square/dot — same flat,
+   out-of-place look the file-upload buttons had before those were
+   themed. `accent-color` recolors the native widget itself (check
+   mark, radio dot, focus ring) to match the app's brass/purple accent
+   without needing to rebuild every checkbox as a custom component. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-brass);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* =========================================================
    STATUS
    ========================================================= */
 
@@ -694,61 +714,6 @@ html[data-theme='dark'] textarea::placeholder,
 html:not([data-theme='light']) input::placeholder,
 html:not([data-theme='light']) textarea::placeholder {
   color: #89878f !important;
-}
-
-/* =========================================================
-   AUTH PAGES — ALWAYS LIGHT
-   Login, Register, Forgot Password, and Reset Password each
-   have their own fixed light design (white card, soft violet
-   accents) that isn't meant to react to the site's dark-mode
-   toggle at all — same idea as the h1–h4 fix above, which
-   exists for exactly this reason.
-
-   The DARK INPUTS rules just above were still bleeding into
-   them, though: every field was being forced to a flat dark
-   background regardless of theme, turning fields that are
-   supposed to be a soft off-white into plain black bars. These
-   rules restore each page's own intended input colors — scoped
-   to ".auth-light" (added to each of those four pages' outer
-   wrapper) and made more specific than the rules above so they
-   reliably win.
-   ========================================================= */
-
-html[data-theme='dark'] .auth-light input,
-html[data-theme='dark'] .auth-light textarea,
-html[data-theme='dark'] .auth-light select,
-html:not([data-theme='light']) .auth-light input,
-html:not([data-theme='light']) .auth-light textarea,
-html:not([data-theme='light']) .auth-light select {
-  background-color: #F8F9FC !important;
-  color: #171A31 !important;
-  border-color: #D9DCE8 !important;
-}
-
-html[data-theme='dark'] .auth-light input::placeholder,
-html[data-theme='dark'] .auth-light textarea::placeholder,
-html:not([data-theme='light']) .auth-light input::placeholder,
-html:not([data-theme='light']) .auth-light textarea::placeholder {
-  color: #AAB0C0 !important;
-}
-
-/*
- * The grey Username/Password fields (Full name and Recovery email
- * stayed the correct light color right next to them) weren't a
- * theme bug at all — that's the browser's own autofill styling.
- * Chrome/Safari paint a flat grey/blue tint behind any field they've
- * autofilled and ignore a plain background-color on it; the only
- * reliable way to override that is this inset box-shadow trick,
- * paired with a very long background-color transition so the
- * browser's own fill color never has time to visibly flash in.
- */
-.auth-light input:-webkit-autofill,
-.auth-light input:-webkit-autofill:hover,
-.auth-light input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #171A31;
-  -webkit-box-shadow: 0 0 0px 1000px #F8F9FC inset;
-  box-shadow: 0 0 0px 1000px #F8F9FC inset;
-  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* =========================================================
