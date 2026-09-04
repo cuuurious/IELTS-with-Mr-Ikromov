@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen lg:h-screen text-[#171A31] relative overflow-x-hidden lg:overflow-hidden flex flex-col"
+      className="auth-light min-h-screen lg:h-screen text-[#171A31] relative overflow-x-hidden lg:overflow-hidden flex flex-col"
       style={{
         background:
           'radial-gradient(circle at 75% 15%, rgba(113,104,255,0.16), transparent 30%), radial-gradient(circle at 12% 85%, rgba(69,214,208,0.10), transparent 28%), linear-gradient(135deg, #F7F8FC 0%, #EEF0FA 48%, #F9F9FC 100%)',
@@ -131,19 +131,11 @@ export default function Login() {
 
         <div className="flex items-center gap-3">
 
-          {/* Monogram badge instead of a second copy of his photo —
-              the quote card below already carries the real portrait,
-              so this stays a simple mark rather than a duplicate face. */}
-          <div
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-[16px] shrink-0 flex items-center justify-center shadow-[0_8px_25px_rgba(30,35,70,0.12)]"
-            style={{
-              background: 'linear-gradient(145deg, #8D88FF, #6258E8)',
-            }}
-          >
-            <span className="text-white font-bold text-[15px] sm:text-[17px] tracking-[-0.02em]">
-              JI
-            </span>
-          </div>
+          <img
+            src="/ielts.png"
+            alt="IELTS with Mr Jasur Ikromov"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-[16px] object-cover shadow-[0_8px_25px_rgba(30,35,70,0.12)]"
+          />
 
           <div>
 
@@ -220,7 +212,9 @@ export default function Login() {
             </p>
 
 
-            {/* From Mr Ikromov — his own words, not a stat to show off */}
+            {/* A motivational line, not a quote — no attribution, no
+                portrait. A small gradient mark carries the visual
+                weight the photo used to. */}
             <div
               className="mt-7 flex items-center gap-4 sm:gap-5 max-w-[560px] rounded-[22px] bg-white/70 backdrop-blur-sm px-5 py-4 sm:px-6 sm:py-5"
               style={{
@@ -229,26 +223,37 @@ export default function Login() {
               }}
             >
 
-              <img
-                src="/mrikromov.jpg"
-                alt="Mr Ikromov"
-                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-[18px] object-cover object-center shrink-0"
+              <div
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-[18px] shrink-0 flex items-center justify-center"
                 style={{
+                  background: 'linear-gradient(145deg, #918BFF, #45D6D0)',
                   boxShadow: '0 10px 25px rgba(30,35,70,0.18)',
                 }}
-              />
+              >
+
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-7 h-7 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z" />
+                  <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z" />
+                </svg>
+
+              </div>
 
               <div className="min-w-0">
 
-                <p
-                  className="text-[16px] sm:text-[18px] leading-snug text-[#20233D] font-semibold"
-                  style={{ fontStyle: 'italic' }}
-                >
-                  "Luck favors the prepared mind."
+                <p className="text-[16px] sm:text-[18px] leading-snug text-[#20233D] font-semibold">
+                  Luck favors the prepared mind.
                 </p>
 
-                <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-[#6258E8] tracking-[-0.01em]">
-                  — Mr Ikromov
+                <p className="mt-1 text-sm leading-snug text-[#626981]">
+                  Every band score is built through steady practice, honest feedback, and showing up again tomorrow.
                 </p>
 
               </div>

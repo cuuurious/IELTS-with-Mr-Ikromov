@@ -697,6 +697,42 @@ html:not([data-theme='light']) textarea::placeholder {
 }
 
 /* =========================================================
+   AUTH PAGES — ALWAYS LIGHT
+   Login, Register, Forgot Password, and Reset Password each
+   have their own fixed light design (white card, soft violet
+   accents) that isn't meant to react to the site's dark-mode
+   toggle at all — same idea as the h1–h4 fix above, which
+   exists for exactly this reason.
+
+   The DARK INPUTS rules just above were still bleeding into
+   them, though: every field was being forced to a flat dark
+   background regardless of theme, turning fields that are
+   supposed to be a soft off-white into plain black bars. These
+   rules restore each page's own intended input colors — scoped
+   to ".auth-light" (added to each of those four pages' outer
+   wrapper) and made more specific than the rules above so they
+   reliably win.
+   ========================================================= */
+
+html[data-theme='dark'] .auth-light input,
+html[data-theme='dark'] .auth-light textarea,
+html[data-theme='dark'] .auth-light select,
+html:not([data-theme='light']) .auth-light input,
+html:not([data-theme='light']) .auth-light textarea,
+html:not([data-theme='light']) .auth-light select {
+  background-color: #F8F9FC !important;
+  color: #171A31 !important;
+  border-color: #D9DCE8 !important;
+}
+
+html[data-theme='dark'] .auth-light input::placeholder,
+html[data-theme='dark'] .auth-light textarea::placeholder,
+html:not([data-theme='light']) .auth-light input::placeholder,
+html:not([data-theme='light']) .auth-light textarea::placeholder {
+  color: #AAB0C0 !important;
+}
+
+/* =========================================================
    PROGRESS TABLE
    ========================================================= */
 

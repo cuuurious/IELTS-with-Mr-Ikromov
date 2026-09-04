@@ -81,7 +81,7 @@ export default function Register() {
 
   return (
     <div
-      className="min-h-screen text-[#171A31] flex items-center justify-center px-4 py-10 relative overflow-hidden"
+      className="auth-light min-h-screen text-[#171A31] flex items-center justify-center px-4 py-10 relative overflow-hidden"
       style={{
         background:
           'radial-gradient(circle at 75% 15%, rgba(113,104,255,0.16), transparent 30%), radial-gradient(circle at 12% 85%, rgba(69,214,208,0.10), transparent 28%), linear-gradient(135deg, #F7F8FC 0%, #EEF0FA 48%, #F9F9FC 100%)',
@@ -152,8 +152,15 @@ export default function Register() {
                           background:
                             'linear-gradient(135deg, #6C63FF 0%, #5A50E8 100%)',
                           boxShadow: '0 6px 16px rgba(100,91,238,0.24)',
+                          color: '#ffffff',
                         }
-                      : undefined
+                      /* Set explicitly, not just via the text-[#7A8092]
+                         class — this tab was rendering unreadable
+                         (almost invisible) in dark mode because a
+                         site-wide "button { color: ... }" rule was
+                         winning over the class. An inline color always
+                         wins, so this can't get overridden again. */
+                      : { color: '#7A8092' }
                   }
                 >
                   {r}
@@ -268,6 +275,14 @@ export default function Register() {
                           ? 'border-[#6C63FF] bg-[#6C63FF]/10 text-[#6C63FF]'
                           : 'border-[#D9DCE8] text-[#7A8092] hover:border-[#6C63FF]/40'
                       }`}
+                      style={
+                        targetBand === band.value
+                          ? undefined
+                          /* Same fix as the Student/Teacher tabs above —
+                             an inline color so this can't go invisible
+                             in dark mode again. */
+                          : { color: '#7A8092' }
+                      }
                     >
                       <span className="text-lg leading-none">
                         {band.emoji}

@@ -134,7 +134,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7ff] text-[#17213f] relative overflow-hidden">
+    <div className="auth-light min-h-screen bg-[#f4f7ff] text-[#17213f] relative overflow-hidden">
 
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">

@@ -37,7 +37,7 @@ export default function ForgotPassword() {
 
   return (
     <div
-      className="min-h-screen lg:h-screen text-[#171A31] relative overflow-x-hidden lg:overflow-hidden flex flex-col"
+      className="auth-light min-h-screen lg:h-screen text-[#171A31] relative overflow-x-hidden lg:overflow-hidden flex flex-col"
       style={{
         background:
           'radial-gradient(circle at 75% 15%, rgba(113,104,255,0.16), transparent 30%), radial-gradient(circle at 12% 85%, rgba(69,214,208,0.10), transparent 28%), linear-gradient(135deg, #F7F8FC 0%, #EEF0FA 48%, #F9F9FC 100%)',
