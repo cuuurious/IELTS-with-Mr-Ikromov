@@ -61,8 +61,12 @@ export default function AiGradingSettings({ teacherId }) {
         <p className="text-mist text-sm mt-1">
           Upload your grading rubric as a PDF for each skill. When you
           turn on "Evaluate submissions with AI" on a homework, students
-          get a band score and feedback automatically, right when they
-          submit — scored strictly against the rubric you upload here.
+          get detailed feedback automatically, right when they submit —
+          strengths, specific things to improve, and personalized
+          grammar/collocation tips, all judged strictly against the
+          rubric you upload here. Speaking submissions also get a band
+          score, overall and per criterion; writing submissions get the
+          same depth of feedback without a numeric score attached.
         </p>
       </div>
 

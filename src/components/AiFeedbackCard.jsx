@@ -103,16 +103,21 @@ export default function AiFeedbackCard({
 
       <div className="rounded-2xl border border-line bg-panel-2 px-5 py-5 flex flex-col gap-4">
 
-        {/* OVERALL BAND */}
+        {/* OVERALL BAND — speaking only. Writing feedback has no
+            numeric score anywhere in it, by design, so this whole
+            block simply doesn't render when result.overall_band
+            isn't a number rather than showing a placeholder. */}
         <div className="flex items-center gap-4">
-          <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl bg-brass text-onbrass">
-            <span className="font-display text-2xl leading-none">
-              {formatBand(result.overall_band)}
-            </span>
-            <span className="text-[9px] font-mono uppercase tracking-wide opacity-80">
-              band
-            </span>
-          </div>
+          {typeof result.overall_band === 'number' && (
+            <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl bg-brass text-onbrass">
+              <span className="font-display text-2xl leading-none">
+                {formatBand(result.overall_band)}
+              </span>
+              <span className="text-[9px] font-mono uppercase tracking-wide opacity-80">
+                band
+              </span>
+            </div>
+          )}
 
           {result.summary && (
             <p className="text-sm text-paper-dim leading-6">
@@ -121,7 +126,9 @@ export default function AiFeedbackCard({
           )}
         </div>
 
-        {/* PER-CRITERION BANDS */}
+        {/* PER-CRITERION FEEDBACK — the band chip only shows up when
+            there's actually a number (speaking); writing criteria are
+            comment-only. */}
         {Array.isArray(result.criteria) && result.criteria.length > 0 && (
           <div className="grid sm:grid-cols-2 gap-2">
             {result.criteria.map((criterion, i) => (
@@ -133,9 +140,11 @@ export default function AiFeedbackCard({
                   <span className="text-xs font-medium text-paper">
                     {criterion.name}
                   </span>
-                  <span className="text-xs font-mono text-brass shrink-0">
-                    {formatBand(criterion.band)}
-                  </span>
+                  {typeof criterion.band === 'number' && (
+                    <span className="text-xs font-mono text-brass shrink-0">
+                      {formatBand(criterion.band)}
+                    </span>
+                  )}
                 </div>
 
                 {criterion.comment && (
@@ -183,6 +192,76 @@ export default function AiFeedbackCard({
             </div>
           </div>
         )}
+
+        {/* GRAMMAR STRUCTURES TO PRACTISE */}
+        {Array.isArray(result.grammar_structures) &&
+          result.grammar_structures.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
+                Grammar to practise
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {result.grammar_structures.map((item, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-line bg-panel px-3 py-2.5"
+                  >
+                    <p className="text-sm font-medium text-paper">
+                      {item.tip}
+                    </p>
+
+                    {item.example && (
+                      <p className="mt-1 text-sm text-paper-dim italic">
+                        “{item.example}”
+                      </p>
+                    )}
+
+                    {item.why && (
+                      <p className="mt-1 text-xs text-mist">
+                        {item.why}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {/* USEFUL COLLOCATIONS */}
+        {Array.isArray(result.useful_collocations) &&
+          result.useful_collocations.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
+                Collocations to use
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {result.useful_collocations.map((item, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-line bg-panel px-3 py-2.5"
+                  >
+                    <p className="text-sm font-medium text-paper">
+                      {item.tip}
+                    </p>
+
+                    {item.example && (
+                      <p className="mt-1 text-sm text-paper-dim italic">
+                        “{item.example}”
+                      </p>
+                    )}
+
+                    {item.why && (
+                      <p className="mt-1 text-xs text-mist">
+                        {item.why}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         {submission.ai_evaluated_at && (
           <div className="text-[10px] font-mono text-mist">

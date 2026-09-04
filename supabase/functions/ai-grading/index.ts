@@ -18,11 +18,17 @@ const corsHeaders = {
  *     "speaking") so every future evaluation can quote it directly.
  *
  *   action: "evaluate"
- *     Grades one submission — either by reading the essay photos
+ *     Evaluates one submission — either by reading the essay photos
  *     (writing) or by transcribing the three speaking recordings and
  *     grading the transcript (speaking) — strictly against whichever
  *     criteria text is on file for that skill, and writes the result
  *     onto the submissions row (ai_status / ai_result / ai_error).
+ *     Speaking still gets a numeric band, overall and per criterion.
+ *     Writing does NOT — by request, it's feedback-only: descriptive
+ *     per-criterion comments plus personalized grammar/collocation
+ *     tips, with no score attached. Both skills use the same uploaded
+ *     rubric/descriptors either way; only whether a number comes out
+ *     the other end differs.
  *     Callable by the student who owns the submission (this is what
  *     happens automatically right after they submit) or by the
  *     teacher (a manual "Re-run AI" button).
@@ -51,10 +57,60 @@ const TEXT_MODEL = Deno.env.get('OPENAI_TEXT_MODEL') || 'gpt-5.6-terra'
 const TRANSCRIBE_MODEL =
   Deno.env.get('OPENAI_TRANSCRIBE_MODEL') || 'gpt-transcribe'
 
-// Every evaluation — writing or speaking — comes back in this same
-// shape, whatever criterion names the teacher's own rubric happens to
-// use, so both chat components can render it identically.
-const EVALUATION_SCHEMA = {
+// A single "language tip" — used for both grammar_structures and
+// useful_collocations below. Deliberately more than just a string:
+// the point of this feature is tips that are actually usable, not a
+// generic list, so each one carries a worked example (ideally built
+// from the student's own topic/wording) and a one-line reason it
+// matters for THIS submission.
+const LANGUAGE_TIP_SCHEMA = {
+  type: 'object',
+  properties: {
+    tip: { type: 'string' },
+    example: { type: 'string' },
+    why: { type: 'string' },
+  },
+  required: ['tip', 'example', 'why'],
+  additionalProperties: false,
+}
+
+// Writing no longer gets a numeric band anywhere in this shape (see
+// buildWritingPrompt below for why) — criteria are name+comment only.
+// It still gets everything else, including the two new tip arrays.
+const WRITING_EVALUATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    criteria: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          comment: { type: 'string' },
+        },
+        required: ['name', 'comment'],
+        additionalProperties: false,
+      },
+    },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improvements: { type: 'array', items: { type: 'string' } },
+    grammar_structures: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+    useful_collocations: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+    summary: { type: 'string' },
+  },
+  required: [
+    'criteria',
+    'strengths',
+    'improvements',
+    'grammar_structures',
+    'useful_collocations',
+    'summary',
+  ],
+  additionalProperties: false,
+}
+
+// Speaking keeps bands, and now also gets the two tip arrays.
+const SPEAKING_EVALUATION_SCHEMA = {
   type: 'object',
   properties: {
     overall_band: { type: 'number' },
@@ -73,6 +129,8 @@ const EVALUATION_SCHEMA = {
     },
     strengths: { type: 'array', items: { type: 'string' } },
     improvements: { type: 'array', items: { type: 'string' } },
+    grammar_structures: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+    useful_collocations: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
     summary: { type: 'string' },
   },
   required: [
@@ -80,6 +138,8 @@ const EVALUATION_SCHEMA = {
     'criteria',
     'strengths',
     'improvements',
+    'grammar_structures',
+    'useful_collocations',
     'summary',
   ],
   additionalProperties: false,
@@ -279,6 +339,30 @@ const SCORING_DISCIPLINE = [
   "overall_band should be a genuine aggregate of the individual criterion bands you actually gave (following the rubric's own method for combining them if it states one; otherwise average the criteria and round the way the exam type normally does) — it should not be an independently-guessed number that the criteria are then forced to match.",
 ].join(' ')
 
+// Writing no longer gets a numeric band at all (the teacher's own
+// request — a single number was hiding more than it told the student,
+// and disagreements between the AI's number and the teacher's own
+// judgment were hard to act on). The criteria below are still the
+// same rubric/descriptors the teacher uploaded — use them as the
+// reference for what strong vs weak performance actually looks like
+// at each level, and write comments that make that level clear in
+// words, just never as a digit.
+const WRITING_DISCIPLINE = [
+  'Do NOT invent or output any numeric band score anywhere, for the overall response or for any individual criterion — the schema for writing has nowhere to put one; ignore any scoring scale in the criteria text below and use it only as a qualitative reference for what each level of performance looks like.',
+  'Write each criterion comment as genuine, evidence-based feedback: quote or closely paraphrase the actual sentence(s) that show the issue or strength, and describe the level of performance in the rubric\'s own descriptive language (e.g. "a wide range of vocabulary used flexibly" or "cohesion between sentences is sometimes mechanical") rather than compressing it into a score.',
+  'Evaluate every criterion the rubric lists, even briefly, so nothing is silently skipped just because there is no number attached to it.',
+].join(' ')
+
+// Shared by both writing and speaking. This is the actual ask from
+// this feature: not a generic "practise more grammar" list, but a
+// small, specific set of upgrades this particular student can use
+// next time, grounded in what they actually wrote or said.
+const LANGUAGE_TIPS_INSTRUCTION = [
+  'In grammar_structures, give 3 to 6 specific grammatical structures worth this student practising next — chosen because they would concretely raise THIS submission, not generic IELTS advice that could apply to anyone. For each one: name/describe the structure in "tip" (e.g. "a mixed conditional — \'If I had studied harder, I would be in a better job now\'", or "reduced relative clauses to combine short sentences"), write one natural example sentence built from the student\'s own topic or ideas (not a textbook example unrelated to their submission) in "example", and explain in "why" what specific error or missed opportunity in their own submission this addresses.',
+  'In useful_collocations, give 3 to 6 natural collocations or fixed phrases the student could use in place of the awkward, repeated, or overly literal wording they actually used. For each one: the collocation itself in "tip", a natural example sentence using it — ideally close to what the student was actually trying to say — in "example", and in "why" name the specific word or phrase from their submission it upgrades.',
+  'Every tip, in both lists, must be something this specific student can point to a specific moment in their own submission and say "this is for me" — not filler that could be pasted onto any other student\'s feedback unchanged.',
+].join(' ')
+
 function buildWritingPrompt(criteriaText, comment, files = []) {
   const submissionNote =
     files.length > 0
@@ -286,9 +370,9 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
       : "The attached images are photos or screenshots of the student's actual essay, in reading order. Some may be handwritten — read carefully and do your best with unclear handwriting rather than refusing to grade."
 
   return [
-    "You are an experienced IELTS examiner grading a student's written submission.",
+    "You are an experienced IELTS examiner giving a student detailed, actionable feedback on their written submission — this is feedback only, with no numeric score attached.",
     '',
-    "Grade STRICTLY according to the grading criteria below — it may be the standard IELTS Writing band descriptors, or the teacher's own custom rubric. Follow whatever criteria and scoring scale it describes, and use its own criterion names in your answer.",
+    "Base your feedback STRICTLY on the grading criteria below — it may be the standard IELTS Writing band descriptors, or the teacher's own custom rubric. Follow whatever criteria it describes, and use its own criterion names in your answer.",
     '',
     '=== GRADING CRITERIA ===',
     criteriaText,
@@ -299,7 +383,9 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
     '',
     'Give specific, constructive feedback a real examiner would write — reference actual sentences or issues where useful, not generic advice.',
     '',
-    SCORING_DISCIPLINE,
+    WRITING_DISCIPLINE,
+    '',
+    LANGUAGE_TIPS_INSTRUCTION,
   ]
     .filter(Boolean)
     .join('\n')
@@ -315,7 +401,7 @@ function buildSpeakingPrompt(criteriaText, transcripts, comment) {
     criteriaText,
     '=== END OF GRADING CRITERIA ===',
     '',
-    "Below are automatic transcripts of the student's recorded answers, Part 1 through 3. Minor transcription errors (misheard words, missing punctuation) are possible — judge fluency, coherence, vocabulary, and grammar from the words used, and do not penalize the student for likely transcription artifacts.",
+    "Below are automatic transcripts of the student's recorded answers, Part 1 through 3. Minor transcription errors (misheard words, missing punctuation) are possible — judge fluency, coherence, vocabulary, and grammar from the words used, and do not penalize the student for likely transcription artifacts. Pronunciation specifically cannot be reliably judged from a transcript alone — score it as a considered estimate based on what the transcript suggests (clarity of the words captured, self-corrections, etc.), and say so plainly in that criterion's comment rather than presenting it as a confident, precise measurement the way the other criteria can be.",
     '',
     transcripts.join('\n\n'),
     comment ? `\nThe student added this note for their teacher: "${comment}"` : '',
@@ -323,6 +409,8 @@ function buildSpeakingPrompt(criteriaText, transcripts, comment) {
     'Give specific, constructive feedback a real examiner would write.',
     '',
     SCORING_DISCIPLINE,
+    '',
+    LANGUAGE_TIPS_INSTRUCTION,
   ]
     .filter(Boolean)
     .join('\n')
@@ -597,9 +685,9 @@ Deno.serve(async (req) => {
             text: {
               format: {
                 type: 'json_schema',
-                name: 'band_evaluation',
+                name: 'speaking_evaluation',
                 strict: true,
-                schema: EVALUATION_SCHEMA,
+                schema: SPEAKING_EVALUATION_SCHEMA,
               },
             },
           })
@@ -647,9 +735,9 @@ Deno.serve(async (req) => {
             text: {
               format: {
                 type: 'json_schema',
-                name: 'band_evaluation',
+                name: 'writing_evaluation',
                 strict: true,
-                schema: EVALUATION_SCHEMA,
+                schema: WRITING_EVALUATION_SCHEMA,
               },
             },
           })
