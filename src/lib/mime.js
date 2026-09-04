@@ -12,6 +12,8 @@ const MIME_MAP = {
   gif: 'image/gif',
   webp: 'image/webp',
   svg: 'image/svg+xml',
+  heic: 'image/heic',
+  heif: 'image/heif',
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
   m4a: 'audio/mp4',

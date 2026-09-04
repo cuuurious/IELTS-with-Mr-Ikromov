@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
+import { compressImageIfNeeded } from '../../lib/compressImage'
+import { compressAudioIfNeeded } from '../../lib/compressAudio'
 import {
   buildAccept,
   matchesSubmissionType,
@@ -569,10 +571,23 @@ export default function HomeworkCard({
       const newFiles = []
 
       for (const file of files) {
+        // Shrinks phone photos/full-size screenshots, and separately
+        // any audio file, before they're uploaded at all — see
+        // compressImage.js / compressAudio.js. Each is a no-op for
+        // file types it doesn't apply to (so chaining both here is
+        // safe regardless of which kind of file this actually is),
+        // and both fall back to the original file untouched if
+        // compression itself fails for any reason, so this can only
+        // ever help.
+        const fileToUpload =
+          await compressAudioIfNeeded(
+            await compressImageIfNeeded(file)
+          )
+
         const url =
           await uploadFile(
-            file,
-            file.name
+            fileToUpload,
+            fileToUpload.name
           )
 
         const extension =
@@ -584,15 +599,8 @@ export default function HomeworkCard({
           file.type.startsWith(
             'image/'
           ) ||
-          [
-            'png',
-            'jpg',
-            'jpeg',
-            'gif',
-            'webp',
-            'svg',
-          ].includes(
-            extension
+          isImageExtension(
+            file.name
           )
 
         if (isImage) {
@@ -896,10 +904,18 @@ export default function HomeworkCard({
       setError('')
 
       try {
+        // Shrinks a large voice-memo upload (an iPhone Voice Memos
+        // export, say) before it's sent anywhere — see
+        // compressAudio.js. A no-op for anything already small, and
+        // falls back to the original file untouched if compression
+        // itself fails for any reason.
+        const fileToUpload =
+          await compressAudioIfNeeded(file)
+
         const url =
           await uploadFile(
-            file,
-            file.name ||
+            fileToUpload,
+            fileToUpload.name ||
               `${fileName}.mp3`
           )
 

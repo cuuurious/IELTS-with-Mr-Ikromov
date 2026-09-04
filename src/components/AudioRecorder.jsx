@@ -98,6 +98,11 @@ export default function AudioRecorder({
               echoCancellation: true,
               noiseSuppression: true,
               autoGainControl: true,
+              // A single speaker's voice doesn't need two channels —
+              // asking for mono directly from the mic halves the raw
+              // data the encoder even has to deal with, before
+              // audioBitsPerSecond below does anything.
+              channelCount: 1,
             },
           }
         )
@@ -129,17 +134,26 @@ export default function AudioRecorder({
           'audio/webm'
       }
 
+      /*
+       * Browsers default to a bitrate meant for music (often
+       * 128kbps+) — massive overkill for one person's spoken voice,
+       * and exactly what made longer speaking recordings slow or
+       * unreliable to upload. 40kbps opus is still very clear for
+       * speech, at roughly a third of the size or less.
+       */
+      const recorderOptions = {
+        audioBitsPerSecond: 40000,
+      }
+
+      if (mimeType) {
+        recorderOptions.mimeType = mimeType
+      }
+
       const recorder =
-        mimeType
-          ? new MediaRecorder(
-              stream,
-              {
-                mimeType,
-              }
-            )
-          : new MediaRecorder(
-              stream
-            )
+        new MediaRecorder(
+          stream,
+          recorderOptions
+        )
 
       mediaRecorderRef.current =
         recorder

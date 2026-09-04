@@ -20,7 +20,12 @@ export function extensionOf(name = '') {
   return name.includes('.') ? name.split('.').pop().toLowerCase() : ''
 }
 
-const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+// heic/heif included so an iPhone photo handed over in its native
+// format (rather than auto-converted to JPEG) is still recognized as
+// a picture instead of being rejected outright — compressImage.js
+// converts it to a universally-viewable JPEG before it's ever
+// uploaded, so nothing downstream needs to know HEIC exists at all.
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'heic', 'heif']
 
 // Used to decide whether a homework/mock attachment should be shown
 // inline as a picture (chart, screenshot, etc.) instead of just a
@@ -30,7 +35,7 @@ export function isImageExtension(name = '') {
 }
 
 export function matchesSubmissionType(file, type) {
-  if (type === 'image') return file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extensionOf(file.name))
+  if (type === 'image') return file.type.startsWith('image/') || IMAGE_EXTENSIONS.includes(extensionOf(file.name))
   if (type === 'other') return true
   return extensionOf(file.name) === type || (type === 'mp3' && file.type === 'audio/mpeg') || (type === 'wav' && file.type === 'audio/wav')
 }
