@@ -140,7 +140,7 @@ export default function Login() {
           <div>
 
             <div className="text-[16px] sm:text-[18px] font-semibold tracking-[-0.02em]">
-              IELTS with Mr Ikromov
+              IELTS with Mr Jasur Ikromov
             </div>
 
             <div className="text-[11px] sm:text-xs text-[#747A91] mt-0.5">
@@ -203,95 +203,44 @@ export default function Login() {
 
 
             <p className="mt-6 max-w-[560px] text-[16px] sm:text-[18px] leading-[1.5] text-[#626981] font-medium">
-              Keep practising. Keep improving. Keep moving
+              Start your IELTS journey with{' '}
+              <span className="text-[#171A31] font-bold">
+                Mr Jasur Ikromov
+              </span>
+              . Keep practising. Keep improving. Keep moving
               towards the IELTS band you are working for.
             </p>
 
 
-            {/* Achievement */}
-            <div className="mt-6 flex items-center gap-4">
+            {/* From Mr Ikromov — his own words, not a stat to show off */}
+            <div
+              className="mt-7 flex items-center gap-4 sm:gap-5 max-w-[560px] rounded-[22px] bg-white/70 backdrop-blur-sm px-5 py-4 sm:px-6 sm:py-5"
+              style={{
+                border: '1px solid rgba(214,217,234,0.9)',
+                boxShadow: '0 18px 50px rgba(39,44,82,0.06)',
+              }}
+            >
 
-              <div
-                className="relative w-[105px] h-[105px] rounded-[26px] bg-[#171C3A] text-white overflow-hidden shrink-0"
+              <img
+                src="/mrikromov.jpg"
+                alt="Mr Ikromov"
+                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-[18px] object-cover object-center shrink-0"
                 style={{
-                  boxShadow:
-                    '0 18px 45px rgba(27,32,75,0.16)',
+                  boxShadow: '0 10px 25px rgba(30,35,70,0.18)',
                 }}
-              >
+              />
 
-                <div className="absolute -right-5 -top-5 w-16 h-16 rounded-full bg-[#6C63FF]/30" />
+              <div className="min-w-0">
 
-                <div className="relative p-4">
-
-                  <div className="text-[9px] uppercase tracking-[0.15em] text-[#AEB5D3] font-bold">
-                    Target
-                  </div>
-
-                  <div className="text-[36px] leading-none font-bold mt-2 tracking-[-0.04em]">
-                    7.5
-                  </div>
-
-                  <div className="text-[10px] text-[#7FE0D9] mt-2 font-semibold">
-                    Keep moving ↑
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              <div className="flex-1 max-w-[330px]">
-
-                <div className="flex items-center justify-between mb-2">
-
-                  <span className="text-[10px] uppercase tracking-[0.13em] font-bold text-[#7A8096]">
-                    Your progress
-                  </span>
-
-                  <span className="text-xs font-bold text-[#6258E8]">
-                    7.5 target
-                  </span>
-
-                </div>
-
-                <div className="h-3 rounded-full bg-[#DDE0EF] overflow-hidden">
-
-                  <div
-                    className="h-full w-[78%] rounded-full"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, #45D6D0, #6C63FF)',
-                    }}
-                  />
-
-                </div>
-
-                <div className="flex justify-between mt-2 text-[9px] font-semibold text-[#969BAE]">
-                  <span>6.0</span>
-                  <span>6.5</span>
-                  <span>7.0</span>
-                  <span>7.5</span>
-                  <span>8.0</span>
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* Quote */}
-            <div className="mt-6 flex items-center gap-3">
-
-              <div className="w-1 h-10 rounded-full bg-[#FF6B6B]" />
-
-              <div>
-
-                <p className="text-[15px] sm:text-[16px] font-semibold text-[#343951]">
-                  Luck favours the prepared mind.
+                <p
+                  className="text-[16px] sm:text-[18px] leading-snug text-[#20233D] font-semibold"
+                  style={{ fontStyle: 'italic' }}
+                >
+                  "Luck comes to a prepared mind."
                 </p>
 
-                <p className="text-xs text-[#7C8297] mt-1">
-                  Prepare with purpose. Progress with confidence.
+                <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-[#6258E8] tracking-[-0.01em]">
+                  — Mr Ikromov
                 </p>
 
               </div>
