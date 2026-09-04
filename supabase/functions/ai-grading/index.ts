@@ -162,6 +162,56 @@ async function callOpenAiResponses(apiKey, body) {
   return json
 }
 
+// OpenAI's transcription endpoint works out the audio codec mostly
+// from the filename it's given in the multipart upload — so telling
+// it every recording is "<label>.webm" (which the code used to do,
+// unconditionally) breaks the moment the real file isn't webm: an
+// .m4a from an iPhone's Voice Memos upload, an .mp3/.wav/.ogg upload,
+// or even a live browser recording on a browser that doesn't actually
+// produce webm. OpenAI sees bytes that don't match the claimed
+// format and rejects them as "corrupted or unsupported" — which is
+// exactly the error students were hitting. These two helpers work out
+// the real extension instead of assuming one.
+function extensionFromUrl(url) {
+  try {
+    const pathname = new URL(url).pathname
+    const match = pathname.match(/\.([a-zA-Z0-9]+)$/)
+    return match ? match[1].toLowerCase() : null
+  } catch {
+    return null
+  }
+}
+
+function extensionFromContentType(contentType) {
+  if (!contentType) return null
+
+  const base = contentType.split(';')[0].trim().toLowerCase()
+
+  const map = {
+    'audio/webm': 'webm',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/m4a': 'm4a',
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/vnd.wave': 'wav',
+    'audio/ogg': 'ogg',
+    'audio/oga': 'oga',
+    'audio/opus': 'opus',
+    'audio/flac': 'flac',
+    'audio/x-flac': 'flac',
+    'audio/amr': 'amr',
+    'audio/3gpp': '3gp',
+    'audio/aac': 'aac',
+    'audio/x-aac': 'aac',
+  }
+
+  return map[base] || null
+}
+
 async function transcribeAudio(apiKey, url, label) {
   const audioRes = await fetch(url)
 
@@ -171,8 +221,19 @@ async function transcribeAudio(apiKey, url, label) {
 
   const blob = await audioRes.blob()
 
+  // Try the storage URL's own extension first (uploaded files keep
+  // their real name — .m4a, .mp3, .wav, .ogg — and recordings are
+  // always saved as .webm), then the response's content-type, then
+  // the blob's own reported type, and only fall back to .webm if none
+  // of those say otherwise.
+  const extension =
+    extensionFromUrl(url) ||
+    extensionFromContentType(audioRes.headers.get('content-type')) ||
+    extensionFromContentType(blob.type) ||
+    'webm'
+
   const form = new FormData()
-  form.append('file', blob, `${label}.webm`)
+  form.append('file', blob, `${label}.${extension}`)
   form.append('model', TRANSCRIBE_MODEL)
 
   const res = await fetch(OPENAI_TRANSCRIBE_URL, {

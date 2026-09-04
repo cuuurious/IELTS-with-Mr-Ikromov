@@ -224,6 +224,56 @@ const [loading, setLoading] =
     }
 
     load()
+
+    /*
+     * Re-sync when the tab comes back to the foreground.
+     *
+     * On phones (Samsung/Android in particular), switching to the
+     * camera or gallery to pick a photo and coming back doesn't
+     * always give this page a real reload — the browser can instead
+     * freeze the page and later restore it from a snapshot, or
+     * restore it from the back-forward cache. Either way, this
+     * effect never re-runs (activeGroup/profile.id haven't changed),
+     * so the screen keeps showing whatever it last had in memory —
+     * e.g. "not yet submitted" from just before an upload — even
+     * though the upload itself may have already finished on the
+     * server while the tab was away. Re-running `load()` whenever
+     * the tab becomes visible again (or is restored from that cache)
+     * catches the app back up to what actually happened.
+     */
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible') {
+        load()
+      }
+    }
+
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        load()
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisible
+    )
+
+    window.addEventListener(
+      'pageshow',
+      handlePageShow
+    )
+
+    return () => {
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisible
+      )
+
+      window.removeEventListener(
+        'pageshow',
+        handlePageShow
+      )
+    }
   }, [
     activeGroup,
     profile?.id,

@@ -13,6 +13,28 @@ import StampBadge, {
 } from '../../components/StampBadge'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
 
+// Maps what MediaRecorder actually reports back (via blob.type) to a
+// real file extension, so a browser recording gets saved and later
+// transcribed as what it actually is rather than being force-labelled
+// webm. Covers every container a browser realistically produces.
+function extensionForAudioMimeType(mimeType) {
+  if (!mimeType) return null
+
+  const base = mimeType.split(';')[0].trim().toLowerCase()
+
+  const map = {
+    'audio/webm': 'webm',
+    'audio/ogg': 'ogg',
+    'audio/mp4': 'm4a',
+    'audio/aac': 'aac',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+  }
+
+  return map[base] || null
+}
+
 // Fire-and-forget: asks the ai-grading Edge Function to evaluate a
 // just-submitted homework. Silently does nothing if the homework
 // doesn't have AI grading turned on — the function itself checks that
@@ -766,10 +788,22 @@ export default function HomeworkCard({
     setError('')
 
     try {
+      // The recorder asks for webm/opus but not every browser can
+      // actually produce it — Safari/iOS falls back to its own
+      // default (audio/mp4) instead. Naming the upload ".webm"
+      // regardless of what `blob.type` actually says was exactly why
+      // those recordings later failed AI transcription with "audio
+      // file might be corrupted or unsupported": the stored file was
+      // labelled webm while the bytes inside it were mp4. Pick the
+      // extension from the real recorded type instead, and only fall
+      // back to .webm if the browser didn't report one.
+      const recordedExtension =
+        extensionForAudioMimeType(blob.type) || 'webm'
+
       const url =
         await uploadFile(
           blob,
-          `${fileName}.webm`
+          `${fileName}.${recordedExtension}`
         )
 
       setSpeakingParts(

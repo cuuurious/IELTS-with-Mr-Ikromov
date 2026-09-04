@@ -484,9 +484,10 @@ export default function AudioRecorder({
        * Accept whatever voice-memo format a student's phone
        * actually produces (iPhone Voice Memos exports .m4a,
        * many Android/Telegram recorders export .ogg/.amr,
-       * etc.) — not just .mp3/.wav. This is what makes
-       * "upload a file instead of recording live" actually
-       * usable in practice.
+       * Samsung's own Voice Recorder app has shipped .3ga on
+       * some models/versions, etc.) — not just .mp3/.wav. This
+       * is what makes "upload a file instead of recording live"
+       * actually usable in practice.
        */
       const allowedExtensions = [
         'mp3',
@@ -502,6 +503,7 @@ export default function AudioRecorder({
         'wma',
         'amr',
         '3gp',
+        '3ga',
       ]
 
       const looksLikeAudio =
@@ -711,7 +713,7 @@ export default function AudioRecorder({
           <input
             ref={fileRef}
             type="file"
-            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.weba,.webm,.flac,.wma,.amr,.3gp"
+            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.weba,.webm,.flac,.wma,.amr,.3gp,.3ga"
             onChange={
               handleUpload
             }
