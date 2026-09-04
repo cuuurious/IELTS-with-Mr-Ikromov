@@ -27,6 +27,13 @@ export default function WritingMockTest({
   onSubmit,
   onClose,
 }) {
+  // The Task 1 chart image is deliberately shown small and inline
+  // (that's the whole point of it living here instead of a separate
+  // tab) — but small enough to read a prompt paragraph next to it is
+  // often too small to actually read the chart's numbers. This lets a
+  // click blow it up in place, without ever leaving this window.
+  const [imageLightboxOpen, setImageLightboxOpen] = useState(false)
+
   const mockEssay = submission?.mock_essay || {}
 
   const timeLimitMinutes =
@@ -354,13 +361,43 @@ export default function WritingMockTest({
                     )}
 
                     {image && (
-                      <img
-                        src={image}
-                        alt={`${TASK_MODE_LABELS[t]} chart`}
-                        className="mt-3 max-h-72 w-auto rounded-md border border-line object-contain"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageLightboxOpen(true)}
+                        className="focus-ring mt-3 block cursor-zoom-in"
+                        title="Click to enlarge"
+                      >
+                        <img
+                          src={image}
+                          alt={`${TASK_MODE_LABELS[t]} chart`}
+                          className="max-h-72 w-auto rounded-md border border-line object-contain"
+                        />
+                      </button>
                     )}
                   </div>
+                )}
+
+                {image && imageLightboxOpen && createPortal(
+                  <div
+                    className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 p-6"
+                    onClick={() => setImageLightboxOpen(false)}
+                  >
+                    <img
+                      src={image}
+                      alt={`${TASK_MODE_LABELS[t]} chart, enlarged`}
+                      className="max-h-full max-w-full rounded-lg border border-line object-contain"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setImageLightboxOpen(false)}
+                      className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
+                      title="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>,
+                  document.body
                 )}
 
                 <textarea

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import {
@@ -90,6 +91,7 @@ export default function HomeworkCard({
   const [savingComment, setSavingComment] = useState(false)
 
   const [mockTestOpen, setMockTestOpen] = useState(false)
+  const [task1ImageLightboxOpen, setTask1ImageLightboxOpen] = useState(false)
   const [startingMock, setStartingMock] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState(null)
 
@@ -1405,11 +1407,41 @@ export default function HomeworkCard({
                   <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 1 prompt</div>
                   <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task1_prompt}</p>
                   {homework.mock_task1_image_url && (
-                    <img
-                      src={homework.mock_task1_image_url}
-                      alt="Task 1 chart"
-                      className="mt-2 max-h-56 rounded-md border border-line object-contain"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setTask1ImageLightboxOpen(true)}
+                      className="focus-ring mt-2 block cursor-zoom-in"
+                      title="Click to enlarge"
+                    >
+                      <img
+                        src={homework.mock_task1_image_url}
+                        alt="Task 1 chart"
+                        className="max-h-56 rounded-md border border-line object-contain"
+                      />
+                    </button>
+                  )}
+
+                  {homework.mock_task1_image_url && task1ImageLightboxOpen && createPortal(
+                    <div
+                      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 p-6"
+                      onClick={() => setTask1ImageLightboxOpen(false)}
+                    >
+                      <img
+                        src={homework.mock_task1_image_url}
+                        alt="Task 1 chart, enlarged"
+                        className="max-h-full max-w-full rounded-lg border border-line object-contain"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setTask1ImageLightboxOpen(false)}
+                        className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
+                        title="Close"
+                      >
+                        ✕
+                      </button>
+                    </div>,
+                    document.body
                   )}
                 </div>
               )}
