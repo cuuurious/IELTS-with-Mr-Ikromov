@@ -5,6 +5,7 @@ import MessageActionMenu from './MessageActionMenu'
 import ReactionPicker from './ReactionPicker'
 import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
+import ConfirmModal from './ConfirmModal'
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
 
@@ -98,6 +99,8 @@ export default function Chat({
 
   const [highlightedMessageId, setHighlightedMessageId] =
     useState(null)
+
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
@@ -846,17 +849,19 @@ export default function Chat({
     setEditingText('')
   }
 
-  const deleteForEveryone = async (message) => {
+  const deleteForEveryone = (message) => {
     if (!canDeleteEveryone(message)) return
 
-    if (
-      !window.confirm(
-        'Delete this message for everyone?'
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Delete this message for everyone?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteForEveryone(message),
+    })
+  }
 
+  const doDeleteForEveryone = async (message) => {
     const { error: deleteError } = await supabase
       .from('messages')
       .delete()
@@ -867,17 +872,20 @@ export default function Chat({
     }
   }
 
-  const deleteForMe = async (message) => {
-    if (
-      !window.confirm(
-        `Remove this message from your side of the chat? ${
-          peerName || 'The other person'
-        } will still see it.`
-      )
-    ) {
-      return
-    }
+  const deleteForMe = (message) => {
+    setConfirmDialog({
+      title: 'Remove this message from your view?',
+      message: `Remove this message from your side of the chat? ${
+        peerName || 'The other person'
+      } will still see it.`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteForMe(message),
+    })
+  }
 
+  const doDeleteForMe = async (message) => {
     // Optimistic: hide it immediately, then persist the marker so it
     // stays hidden next time this chat loads.
     setHiddenIds((prev) => {
@@ -1215,25 +1223,28 @@ export default function Chat({
     startSelecting(message.id)
   }
 
-  const bulkDeleteForMe = async () => {
+  const bulkDeleteForMe = () => {
     const ids = [...selectedIds]
 
     if (!ids.length) return
 
-    if (
-      !window.confirm(
-        `Remove ${ids.length} message${
-          ids.length > 1 ? 's' : ''
-        } from your side of the chat? ${
-          peerName || 'The other person'
-        } will still see ${
-          ids.length > 1 ? 'them' : 'it'
-        }.`
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Remove these messages from your view?',
+      message: `Remove ${ids.length} message${
+        ids.length > 1 ? 's' : ''
+      } from your side of the chat? ${
+        peerName || 'The other person'
+      } will still see ${
+        ids.length > 1 ? 'them' : 'it'
+      }.`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doBulkDeleteForMe(ids),
+    })
+  }
 
+  const doBulkDeleteForMe = async (ids) => {
     setHiddenIds((prev) => {
       const next = new Set(prev)
       ids.forEach((id) => next.add(id))
@@ -1257,21 +1268,24 @@ export default function Chat({
     cancelSelecting()
   }
 
-  const bulkDeleteForEveryone = async () => {
+  const bulkDeleteForEveryone = () => {
     const ids = [...selectedIds]
 
     if (!ids.length) return
 
-    if (
-      !window.confirm(
-        `Delete ${ids.length} message${
-          ids.length > 1 ? 's' : ''
-        } for everyone?`
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Delete these messages for everyone?',
+      message: `Delete ${ids.length} message${
+        ids.length > 1 ? 's' : ''
+      } for everyone?`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doBulkDeleteForEveryone(ids),
+    })
+  }
 
+  const doBulkDeleteForEveryone = async (ids) => {
     const { error: bulkDeleteError } = await supabase
       .from('messages')
       .delete()
@@ -2131,6 +2145,17 @@ export default function Chat({
 
       </form>
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
 
     </div>
   )

@@ -13,12 +13,23 @@ function Gate() {
   const { session, profile, loading, profileLoading } = useAuth()
 
   // profileLoading covers every profile fetch, not just the first one
-  // (tab refocus, a silent token refresh). Without this, a fetch still
-  // in flight looked identical to "this account has no profile", which
-  // is what made "waiting for approval" flash for approved accounts —
-  // teachers included — instead of just staying on the loading screen
-  // until there's an actual answer.
-  if (loading || (session && profileLoading)) {
+  // (tab refocus, a silent token refresh — Supabase re-validates the
+  // session every time the tab regains focus, which fires this same
+  // "fetching the profile" state again). It's only meant to prevent
+  // "waiting for approval" flashing for an approved account while the
+  // very first fetch is still in flight.
+  //
+  // The `!profile` check below is what keeps that fix from also
+  // firing on every later background refresh: once a profile has
+  // already loaded once, LoadingScreen must never show again for it,
+  // because rendering LoadingScreen here unmounts the entire
+  // dashboard underneath it. Without `!profile`, switching tabs and
+  // coming back would blank the whole app to a loading screen and
+  // rebuild it from scratch every time — closing any open modal
+  // (including a student's in-progress Writing Mock Test) and
+  // resetting scroll position, exactly like a real page refresh, even
+  // though nothing about the session actually changed.
+  if (loading || (session && profileLoading && !profile)) {
     return <LoadingScreen />
   }
 

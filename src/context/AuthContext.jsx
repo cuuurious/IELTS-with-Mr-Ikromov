@@ -163,11 +163,17 @@ export function AuthProvider({ children }) {
     username,
     password,
     fullName,
-    role,
+    // Registration only ever creates student accounts. Jasur Ikromov is
+    // the only teacher on this site, so whatever "role" a caller passes
+    // in is ignored here — this is a second layer of protection behind
+    // Register.jsx no longer offering a teacher option at all, in case
+    // this function is ever called from somewhere else in the future.
     groupIds,
     contactEmail,
     targetBand,
   }) => {
+    const role = 'student'
+
     const normalizedUsername = username
       .trim()
       .toLowerCase()

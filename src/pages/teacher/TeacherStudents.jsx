@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
+import ConfirmModal from '../../components/ConfirmModal'
 
 export default function TeacherStudents({ onStartChat }) {
   const [students, setStudents] = useState([])
@@ -19,6 +20,7 @@ export default function TeacherStudents({ onStartChat }) {
   const [view, setView] = useState('all')
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [busyAction, setBusyAction] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -323,9 +325,12 @@ export default function TeacherStudents({ onStartChat }) {
         error
       )
 
-      alert(
-        `Couldn't add student to the group: ${error.message}`
-      )
+      setConfirmDialog({
+        title: "Couldn't add student",
+        message: `Couldn't add student to the group: ${error.message}`,
+        tone: 'coral',
+        hideCancel: true,
+      })
     } else if (data) {
       setMemberships((prev) => [...prev, data])
     }
@@ -333,15 +338,18 @@ export default function TeacherStudents({ onStartChat }) {
     setBusyAction('')
   }
 
-  const removeFromGroup = async (student, group) => {
-    if (
-      !window.confirm(
-        `Remove ${student.full_name} from "${group.name}"?\n\nTheir account will NOT be deleted.`
-      )
-    ) {
-      return
-    }
+  const removeFromGroup = (student, group) => {
+    setConfirmDialog({
+      title: `Remove ${student.full_name} from "${group.name}"?`,
+      message: 'Their account will NOT be deleted.',
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doRemoveFromGroup(student, group),
+    })
+  }
 
+  const doRemoveFromGroup = async (student, group) => {
     setBusyAction(
       `remove-${student.id}-${group.id}`
     )
@@ -358,9 +366,12 @@ export default function TeacherStudents({ onStartChat }) {
         error
       )
 
-      alert(
-        `Couldn't remove student from the group: ${error.message}`
-      )
+      setConfirmDialog({
+        title: "Couldn't remove student",
+        message: `Couldn't remove student from the group: ${error.message}`,
+        tone: 'coral',
+        hideCancel: true,
+      })
     } else {
       setMemberships((prev) =>
         prev.filter(
@@ -381,15 +392,19 @@ export default function TeacherStudents({ onStartChat }) {
    * homework submission, recording, and chat message, everywhere,
    * forever. Unrecoverable.
    */
-  const deleteStudentAccount = async (student) => {
-    const confirmation = window.prompt(
-      `This PERMANENTLY deletes ${student.full_name}'s entire account — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.\n\nType DELETE to confirm.`
-    )
+  const deleteStudentAccount = (student) => {
+    setConfirmDialog({
+      title: `Delete ${student.full_name}'s account permanently?`,
+      message: `This PERMANENTLY deletes ${student.full_name}'s entire account — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.`,
+      confirmLabel: 'Delete Account',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      requireTypedText: 'DELETE',
+      onConfirm: () => doDeleteStudentAccount(student),
+    })
+  }
 
-    if (confirmation !== 'DELETE') {
-      return
-    }
-
+  const doDeleteStudentAccount = async (student) => {
     setBusyAction(`delete-${student.id}`)
 
     try {
@@ -422,9 +437,12 @@ export default function TeacherStudents({ onStartChat }) {
         setSelectedStudent(null)
       }
     } catch (err) {
-      alert(
-        `Couldn't delete this account: ${err.message}`
-      )
+      setConfirmDialog({
+        title: "Couldn't delete this account",
+        message: err.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
     } finally {
       setBusyAction('')
     }
@@ -1037,6 +1055,17 @@ export default function TeacherStudents({ onStartChat }) {
           </div>,
           document.body
         )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
 
     </div>
   )

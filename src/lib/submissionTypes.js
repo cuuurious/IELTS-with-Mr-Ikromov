@@ -20,6 +20,15 @@ export function extensionOf(name = '') {
   return name.includes('.') ? name.split('.').pop().toLowerCase() : ''
 }
 
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
+
+// Used to decide whether a homework/mock attachment should be shown
+// inline as a picture (chart, screenshot, etc.) instead of just a
+// "download this file" link.
+export function isImageExtension(name = '') {
+  return IMAGE_EXTENSIONS.includes(extensionOf(name))
+}
+
 export function matchesSubmissionType(file, type) {
   if (type === 'image') return file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extensionOf(file.name))
   if (type === 'other') return true

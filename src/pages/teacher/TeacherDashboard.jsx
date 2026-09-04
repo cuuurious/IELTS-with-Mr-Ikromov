@@ -10,6 +10,7 @@ import TeacherGroupChats from './TeacherGroupChats'
 import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
+import TeacherAccounts from './TeacherAccounts'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -231,6 +232,17 @@ export default function TeacherDashboard() {
       key: 'chat',
       label: 'Chat',
     },
+    // Only Jasur Ikromov's account (profile.is_admin) can see this tab
+    // — see TeacherAccounts.jsx and the delete-teacher edge function,
+    // which both re-check this independently of the UI hiding it here.
+    ...(profile.is_admin
+      ? [
+          {
+            key: 'teacher-accounts',
+            label: 'Teacher accounts',
+          },
+        ]
+      : []),
   ]
 
   const handleTabChange = (nextTab) => {
@@ -308,6 +320,12 @@ export default function TeacherDashboard() {
           initialMessageId={
             notificationChat?.messageId
           }
+        />
+      )}
+
+      {tab === 'teacher-accounts' && profile.is_admin && (
+        <TeacherAccounts
+          currentTeacherId={profile.id}
         />
       )}
     </Layout>

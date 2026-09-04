@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
-import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
+import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES } from '../../lib/writingMock'
 
 function toLocalInputValue(iso) {
@@ -23,6 +23,14 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [maxFiles, setMaxFiles] = useState(homework.max_submission_files ?? 10)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Standard homework's optional teacher attachment — kept as plain
+  // url/name state (like the mock Task 1 image below) so "Remove" can
+  // just clear it locally; save() only uploads a replacement when a
+  // new file was actually picked.
+  const [attachmentUrl, setAttachmentUrl] = useState(homework.attachment_url || null)
+  const [attachmentName, setAttachmentName] = useState(homework.attachment_name || null)
+  const [attachmentFile, setAttachmentFile] = useState(null)
 
   // Writing Mock Test fields — only relevant, and only shown, for a
   // homework whose type was already set to writing_mock at creation.
@@ -72,6 +80,22 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         setMockTask1ImageUrl(nextMockTask1ImageUrl)
       }
 
+      let nextAttachmentUrl = attachmentUrl
+      let nextAttachmentName = attachmentName
+
+      if (!isMock && attachmentFile) {
+        const path = `${homework.created_by}/${homework.group_id}/${Date.now()}-${attachmentFile.name}`
+        const { error: attUpErr } = await supabase.storage
+          .from('homework-files')
+          .upload(path, attachmentFile, { contentType: guessMimeType(attachmentFile.name, attachmentFile.type) })
+        if (attUpErr) throw attUpErr
+        nextAttachmentUrl = supabase.storage.from('homework-files').getPublicUrl(path).data.publicUrl
+        nextAttachmentName = attachmentFile.name
+        setAttachmentUrl(nextAttachmentUrl)
+        setAttachmentName(nextAttachmentName)
+        setAttachmentFile(null)
+      }
+
       const patch = {
         title,
         description,
@@ -80,6 +104,8 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         allowed_submission_types: isMock ? homework.allowed_submission_types || [] : allowedTypes,
         min_submission_files: isMock ? homework.min_submission_files ?? 0 : minFiles,
         max_submission_files: isMock ? homework.max_submission_files ?? 0 : maxFiles,
+        attachment_url: isMock ? homework.attachment_url || null : nextAttachmentUrl,
+        attachment_name: isMock ? homework.attachment_name || null : nextAttachmentName,
       }
 
       if (isMock) {
@@ -115,6 +141,9 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
           <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>
         </div>
+        <div className="text-xs text-mist bg-panel-2 border border-line rounded-md px-3 py-2">
+          Type: <span className="text-paper font-medium">{isMock ? 'Writing Mock Test' : 'Standard (files / pictures)'}</span> — this can't be changed here. To turn this into a {isMock ? 'standard' : 'Writing Mock Test'} homework, delete it and post a new one.
+        </div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2" required />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring w-full min-h-[88px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
         <div className="grid sm:grid-cols-2 gap-3">
@@ -123,6 +152,45 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
             <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer"><input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} /> Include speaking recording</label>
           )}
         </div>
+
+        {!isMock && (
+          <div className="bg-panel-2 border border-line rounded-lg p-3">
+            <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">
+              Teacher attachment {attachmentUrl ? '(replace)' : '(optional)'}
+            </label>
+
+            {attachmentUrl && !attachmentFile && (
+              <div className="mb-2 flex flex-col gap-2">
+                {isImageExtension(attachmentName) && (
+                  <img src={attachmentUrl} alt={attachmentName || 'Attachment'} className="max-h-32 rounded-md border border-line object-contain" />
+                )}
+
+                <div className="flex items-center gap-3">
+                  <a href={attachmentUrl} target="_blank" rel="noreferrer" className="text-brass text-sm hover:underline truncate">
+                    📎 {attachmentName || 'Current attachment'}
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAttachmentUrl(null)
+                      setAttachmentName(null)
+                    }}
+                    className="focus-ring shrink-0 text-xs text-coral hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <input
+              type="file"
+              onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+              className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel file:text-paper file:cursor-pointer"
+            />
+          </div>
+        )}
 
         {isMock ? (
           <div className="bg-panel-2 border border-line rounded-lg p-3 flex flex-col gap-3">
@@ -153,7 +221,16 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                 <textarea value={mockTask1Prompt} onChange={(e) => setMockTask1Prompt(e.target.value)} rows={3} className="focus-ring w-full bg-panel border border-line rounded-md px-3 py-2 text-sm" />
                 <label className="text-xs uppercase tracking-wide text-mist font-mono block mt-2 mb-1">Task 1 chart / graph image {mockTask1ImageUrl ? '(replace)' : '(optional)'}</label>
                 {mockTask1ImageUrl && !mockTask1Image && (
-                  <img src={mockTask1ImageUrl} alt="Current Task 1 chart" className="max-h-32 rounded-md border border-line object-contain mb-2" />
+                  <div className="mb-2 flex flex-col gap-2">
+                    <img src={mockTask1ImageUrl} alt="Current Task 1 chart" className="max-h-32 rounded-md border border-line object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setMockTask1ImageUrl(null)}
+                      className="focus-ring w-fit text-xs text-coral hover:underline"
+                    >
+                      Remove image
+                    </button>
+                  </div>
                 )}
                 <input type="file" accept="image/*" onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)} className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer" />
               </div>

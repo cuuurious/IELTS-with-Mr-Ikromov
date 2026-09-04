@@ -5,6 +5,7 @@ import {
   buildAccept,
   matchesSubmissionType,
   extensionOf,
+  isImageExtension,
 } from '../../lib/submissionTypes'
 import AudioRecorder from '../../components/AudioRecorder'
 import StampBadge, {
@@ -57,34 +58,6 @@ const requestAiEvaluation = (submissionId, homework) => {
     .catch((err) => {
       console.error('AI evaluation request failed:', err)
     })
-}
-
-// Resubmitting an AI-graded task re-runs the (paid) AI evaluation and
-// throws away the previous feedback. Rather than let a stray click —
-// or an accidental wrong file, like the one that started this — burn
-// another AI request silently, this asks the student to actually look
-// at what they're about to send before it goes out. Only shown on a
-// RESUBMIT (the first submission never asks, so normal homework flow
-// stays exactly as fast as before).
-const confirmAiResubmission = ({ images = [], files = [], speaking = false }) => {
-  const what = speaking
-    ? 'your three speaking recordings'
-    : [
-        images.length
-          ? `${images.length} photo${images.length === 1 ? '' : 's'}`
-          : null,
-        files.length
-          ? files
-              .map((f) => f?.name || 'a file')
-              .join(', ')
-          : null,
-      ]
-        .filter(Boolean)
-        .join(' and ') || 'your files'
-
-  return window.confirm(
-    `You already submitted this — resubmitting will send ${what} to AI grading again and replace your current feedback.\n\nDouble check this is the right, final version before continuing. Submit again?`
-  )
 }
 
 const PARTS = [
@@ -232,6 +205,16 @@ export default function HomeworkCard({
     homework.enable_speaking &&
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
+
+  // Once a standard (non-mock) homework is submitted, the student can
+  // no longer touch it — no re-uploading, no deleting files, no
+  // re-recording speaking, no resubmit button. This matches how the
+  // Writing Mock Test already works after submit/time-up. The only
+  // way back in is the teacher's "Reset submissions" action, which
+  // clears status back to 'pending' and lets the student start fresh.
+  const submissionLocked = homework.enable_speaking
+    ? speakingAlreadySubmitted
+    : taskAlreadySubmitted
 
   /*
    * ============================================================
@@ -684,7 +667,7 @@ export default function HomeworkCard({
    */
 
   useEffect(() => {
-    if (!open) {
+    if (!open || submissionLocked) {
       return undefined
     }
 
@@ -724,6 +707,7 @@ export default function HomeworkCard({
     }
   }, [
     open,
+    submissionLocked,
     existingCount,
     maxFiles,
     minFiles,
@@ -737,6 +721,10 @@ export default function HomeworkCard({
    * ============================================================
    */
 
+  // Standard homework submission is one-way once it's locked in —
+  // this is only ever reachable while !taskAlreadySubmitted (the
+  // button that calls it is hidden once submitted), so there's no
+  // "resubmit" path to guard against here anymore.
   const handleTaskSubmit =
     async () => {
       setError('')
@@ -755,51 +743,44 @@ export default function HomeworkCard({
         return
       }
 
-      if (
-        homework?.ai_eval_enabled &&
-        taskAlreadySubmitted &&
-        !confirmAiResubmission({
-          images: existingImages,
-          files: existingFiles,
-        })
-      ) {
-        return
-      }
-
-      setUploading(true)
-
-      try {
-        /*
-         * First save the actual submission.
-         */
-        const saved = await upsertSubmission({
-          status: 'done',
-          submitted_at:
-            new Date().toISOString(),
-        })
-
-        /*
-         * Then record the homework completion.
-         *
-         * This is what the group leaderboard uses.
-         */
-        await markHomeworkCompleted()
-
-        requestAiEvaluation(saved?.id, homework)
-      } catch (err) {
-        console.error(
-          'Homework submission error:',
-          err
-        )
-
-        setError(
-          err?.message ||
-            'Failed to submit homework.'
-        )
-      } finally {
-        setUploading(false)
-      }
+      await doTaskSubmit()
     }
+
+  const doTaskSubmit = async () => {
+    setUploading(true)
+
+    try {
+      /*
+       * First save the actual submission.
+       */
+      const saved = await upsertSubmission({
+        status: 'done',
+        submitted_at:
+          new Date().toISOString(),
+      })
+
+      /*
+       * Then record the homework completion.
+       *
+       * This is what the group leaderboard uses.
+       */
+      await markHomeworkCompleted()
+
+      requestAiEvaluation(saved?.id, homework)
+    } catch (err) {
+      console.error(
+        'Homework submission error:',
+        err
+      )
+
+      setError(
+        err?.message ||
+          'Failed to submit homework.'
+      )
+    } finally {
+      setUploading(false)
+    }
+  }
 
   /*
    * ============================================================
@@ -995,54 +976,50 @@ export default function HomeworkCard({
         return
       }
 
-      if (
-        homework?.ai_eval_enabled &&
-        speakingAlreadySubmitted &&
-        !confirmAiResubmission({ speaking: true })
-      ) {
-        return
-      }
-
-      setUploading(true)
-
-      try {
-        /*
-         * First save the Speaking submission as DONE.
-         */
-        const saved = await upsertSubmission({
-          audio_part1_url:
-            speakingParts.audio_part1_url,
-          audio_part2_url:
-            speakingParts.audio_part2_url,
-          audio_part3_url:
-            speakingParts.audio_part3_url,
-          status: 'done',
-          submitted_at:
-            new Date().toISOString(),
-        })
-
-        /*
-         * Then create the completion record.
-         *
-         * This fixes the leaderboard counting issue.
-         */
-        await markHomeworkCompleted()
-
-        requestAiEvaluation(saved?.id, homework)
-      } catch (err) {
-        console.error(
-          'Speaking task submission error:',
-          err
-        )
-
-        setError(
-          err?.message ||
-            'Failed to submit speaking task.'
-        )
-      } finally {
-        setUploading(false)
-      }
+      await doSpeakingSubmit()
     }
+
+  const doSpeakingSubmit = async () => {
+    setUploading(true)
+
+    try {
+      /*
+       * First save the Speaking submission as DONE.
+       */
+      const saved = await upsertSubmission({
+        audio_part1_url:
+          speakingParts.audio_part1_url,
+        audio_part2_url:
+          speakingParts.audio_part2_url,
+        audio_part3_url:
+          speakingParts.audio_part3_url,
+        status: 'done',
+        submitted_at:
+          new Date().toISOString(),
+      })
+
+      /*
+       * Then create the completion record.
+       *
+       * This fixes the leaderboard counting issue.
+       */
+      await markHomeworkCompleted()
+
+      requestAiEvaluation(saved?.id, homework)
+    } catch (err) {
+      console.error(
+        'Speaking task submission error:',
+        err
+      )
+
+      setError(
+        err?.message ||
+          'Failed to submit speaking task.'
+      )
+    } finally {
+      setUploading(false)
+    }
+  }
 
   /*
    * ============================================================
@@ -1356,18 +1333,35 @@ export default function HomeworkCard({
           {/* TEACHER ATTACHMENT */}
 
           {homework.attachment_url && (
-            <a
-              href={
-                homework.attachment_url
-              }
-              target="_blank"
-              rel="noreferrer"
-              className="text-brass text-sm hover:underline w-fit"
-            >
-              📎{' '}
-              {homework.attachment_name ||
-                'Download attachment'}
-            </a>
+            <div className="flex flex-col gap-2">
+              {isImageExtension(homework.attachment_name) && (
+                <a
+                  href={homework.attachment_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-fit"
+                >
+                  <img
+                    src={homework.attachment_url}
+                    alt={homework.attachment_name || 'Attachment'}
+                    className="max-h-64 rounded-md border border-line object-contain"
+                  />
+                </a>
+              )}
+
+              <a
+                href={
+                  homework.attachment_url
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="text-brass text-sm hover:underline w-fit"
+              >
+                📎{' '}
+                {homework.attachment_name ||
+                  'Download attachment'}
+              </a>
+            </div>
           )}
 
           {/* =================================================
@@ -1484,51 +1478,51 @@ export default function HomeworkCard({
                 </label>
 
                 <p className="text-xs text-mist mt-1">
-                  {minFiles ===
-                  0
-                    ? 'Optional'
-                    : `Minimum ${minFiles}`}{' '}
-                  · Maximum{' '}
-                  {maxFiles} ·{' '}
-                  {existingCount}/
-                  {maxFiles}{' '}
-                  uploaded
+                  {submissionLocked
+                    ? 'Submitted — read only.'
+                    : `${minFiles === 0 ? 'Optional' : `Minimum ${minFiles}`} · Maximum ${maxFiles} · ${existingCount}/${maxFiles} uploaded`}
                 </p>
               </div>
 
-              <span className="text-xs text-brass font-mono">
-                {allowedTypes.join(
-                  ', '
-                )}
-              </span>
+              {!submissionLocked && (
+                <span className="text-xs text-brass font-mono">
+                  {allowedTypes.join(
+                    ', '
+                  )}
+                </span>
+              )}
             </div>
 
-            <input
-              ref={
-                fileInputRef
-              }
-              type="file"
-              accept={
-                accept
-              }
-              multiple
-              onChange={
-                handleFiles
-              }
-              className="focus-ring block mt-3 text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
-              disabled={
-                uploading ||
-                existingCount >=
-                  maxFiles
-              }
-            />
+            {!submissionLocked && (
+              <>
+                <input
+                  ref={
+                    fileInputRef
+                  }
+                  type="file"
+                  accept={
+                    accept
+                  }
+                  multiple
+                  onChange={
+                    handleFiles
+                  }
+                  className="focus-ring block mt-3 text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                  disabled={
+                    uploading ||
+                    existingCount >=
+                      maxFiles
+                  }
+                />
 
-            <p className="text-xs text-mist mt-2">
-              You can also
-              copy an image
-              and paste it here
-              (Ctrl/Cmd + V).
-            </p>
+                <p className="text-xs text-mist mt-2">
+                  You can also
+                  copy an image
+                  and paste it here
+                  (Ctrl/Cmd + V).
+                </p>
+              </>
+            )}
 
             {/* IMAGES */}
 
@@ -1563,17 +1557,19 @@ export default function HomeworkCard({
                         />
                       </a>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleScreenshotDelete(
-                            url
-                          )
-                        }
-                        className="focus-ring absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-coral text-paper text-xs disabled:opacity-40"
-                      >
-                        ×
-                      </button>
+                      {!submissionLocked && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleScreenshotDelete(
+                              url
+                            )
+                          }
+                          className="focus-ring absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-coral text-paper text-xs disabled:opacity-40"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
                   )
                 )}
@@ -1609,17 +1605,19 @@ export default function HomeworkCard({
                         }
                       </a>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleFileDelete(
-                            file
-                          )
-                        }
-                        className="focus-ring ml-auto text-coral disabled:opacity-40"
-                      >
-                        ×
-                      </button>
+                      {!submissionLocked && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleFileDelete(
+                              file
+                            )
+                          }
+                          className="focus-ring ml-auto text-coral disabled:opacity-40"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
                   )
                 )}
@@ -1634,86 +1632,88 @@ export default function HomeworkCard({
           {!homework.enable_speaking && (
             <div className="rounded-lg border border-line bg-panel-2 p-4">
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-
+              {taskAlreadySubmitted ? (
                 <div>
                   <div className="font-medium text-paper">
                     Homework submission
                   </div>
 
-                  <p className="text-xs text-mist mt-1">
-                    {taskAlreadySubmitted
-                      ? submittedLate
-                        ? 'Submitted after the deadline. Your teacher can see this was late. You can still make changes and click Update Submission to save them.'
-                        : 'Submitted to your teacher. You can still make changes and click Update Submission to save them.'
-                      : minFiles >
-                        0
-                      ? `Upload at least ${minFiles} file${
-                          minFiles ===
-                          1
-                            ? ''
-                            : 's'
-                        }, then click Submit Task.`
-                      : 'Complete your work, then click Submit Task.'}
+                  <p className="mt-2 text-xs">
+                    {submittedLate ? (
+                      <span className="text-amber">
+                        ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
+                      </span>
+                    ) : (
+                      <span className="text-brass">
+                        ✓ Submitted — {new Date(submission.submitted_at).toLocaleString()}.
+                      </span>
+                    )}
+                    {' '}This is locked — ask your teacher to reset it if you need to make changes.
                   </p>
                 </div>
+              ) : (
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 
-                <button
-                  type="button"
-                  onClick={
-                    handleTaskSubmit
-                  }
-                  disabled={
-                    uploading ||
-                    existingCount <
+                    <div>
+                      <div className="font-medium text-paper">
+                        Homework submission
+                      </div>
+
+                      <p className="text-xs text-mist mt-1">
+                        {minFiles >
+                        0
+                          ? `Upload at least ${minFiles} file${
+                              minFiles ===
+                              1
+                                ? ''
+                                : 's'
+                            }, then click Submit Task.`
+                          : 'Complete your work, then click Submit Task.'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={
+                        handleTaskSubmit
+                      }
+                      disabled={
+                        uploading ||
+                        existingCount <
+                          minFiles
+                      }
+                      className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {existingCount <
                       minFiles
-                  }
-                  className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {taskAlreadySubmitted
-                    ? 'Update Submission'
-                    : existingCount <
-                      minFiles
-                    ? `Upload ${
-                        minFiles -
-                        existingCount
-                      } more`
-                    : 'Submit Task'}
-                </button>
+                        ? `Upload ${
+                            minFiles -
+                            existingCount
+                          } more`
+                        : 'Submit Task'}
+                    </button>
 
-              </div>
+                  </div>
 
-              <div className="mt-3 text-xs">
-
-                {taskAlreadySubmitted ? (
-                  submittedLate ? (
-                    <span className="text-amber">
-                      ⏰ Submitted late. You
-                      can still edit and
-                      resubmit.
-                    </span>
-                  ) : (
-                    <span className="text-brass">
-                      ✓ Submitted to your
-                      teacher. You can still
-                      edit and resubmit.
-                    </span>
-                  )
-                ) : existingCount >=
-                  minFiles ? (
-                  <span className="text-brass">
-                    ✓ Your work is ready.
-                    Click Submit Task
-                    when you are finished.
-                  </span>
-                ) : (
-                  <span className="text-mist">
-                    Upload the required
-                    files before submitting.
-                  </span>
-                )}
-
-              </div>
+                  <div className="mt-3 text-xs">
+                    {existingCount >=
+                    minFiles ? (
+                      <span className="text-brass">
+                        ✓ Your work is ready.
+                        Click Submit Task
+                        when you are finished — this can't be
+                        changed afterward.
+                      </span>
+                    ) : (
+                      <span className="text-mist">
+                        Upload the required
+                        files before submitting.
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
 
             </div>
           )}
@@ -1725,133 +1725,161 @@ export default function HomeworkCard({
           {homework.enable_speaking && (
             <div className="flex flex-col gap-4">
 
-              <div className="grid sm:grid-cols-3 gap-3">
+              {speakingAlreadySubmitted ? (
+                <>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {PARTS.map((p) =>
+                      speakingParts[p.key] ? (
+                        <div
+                          key={p.key}
+                          className="rounded-lg border border-line bg-panel-2 p-3"
+                        >
+                          <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
+                            {p.label}
+                          </div>
+                          <audio
+                            controls
+                            src={speakingParts[p.key]}
+                            className="w-full"
+                          />
+                        </div>
+                      ) : null
+                    )}
+                  </div>
 
-                {PARTS.map(
-                  (
-                    p,
-                    idx
-                  ) => (
-                    <AudioRecorder
-                      key={
-                        p.key
-                      }
-                      label={
-                        p.label
-                      }
-                      existingUrl={
-                        speakingParts[
-                          p.key
-                        ]
-                      }
-                      uploading={
-                        uploading
-                      }
-                      onSaved={(
-                        blob
-                      ) =>
-                        handleAudio(
-                          blob,
-                          p.key,
-                          `part${
-                            idx +
-                            1
-                          }`
-                        )
-                      }
-                      onUpload={(
-                        file
-                      ) =>
-                        handleAudioUpload(
-                          file,
-                          p.key,
-                          `part${
-                            idx +
-                            1
-                          }`
-                        )
-                      }
-                      onDelete={() =>
-                        handleAudioDelete(
-                          p.key
-                        )
-                      }
-                    />
-                  )
-                )}
-
-              </div>
-
-              {/* SPEAKING SUBMIT */}
-
-              <div className="rounded-lg border border-line bg-panel-2 p-4">
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-
-                  <div>
+                  <div className="rounded-lg border border-line bg-panel-2 p-4">
                     <div className="font-medium text-paper">
                       Speaking submission
                     </div>
 
-                    <p className="text-xs text-mist mt-1">
-                      Complete all three parts,
-                      then click Submit Speaking
-                      Task.
+                    <p className="mt-2 text-xs">
+                      {submittedLate ? (
+                        <span className="text-amber">
+                          ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
+                        </span>
+                      ) : (
+                        <span className="text-brass">
+                          ✓ Submitted — {new Date(submission.submitted_at).toLocaleString()}.
+                        </span>
+                      )}
+                      {' '}This is locked — ask your teacher to reset it if you need to re-record.
                     </p>
                   </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid sm:grid-cols-3 gap-3">
 
-                  <button
-                    type="button"
-                    onClick={
-                      handleSpeakingSubmit
-                    }
-                    disabled={
-                      !allSpeakingPartsRecorded ||
-                      uploading
-                    }
-                    className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {speakingAlreadySubmitted
-                      ? 'Update Speaking Submission'
-                      : allSpeakingPartsRecorded
-                      ? 'Submit Speaking Task'
-                      : 'Complete All 3 Parts'}
-                  </button>
+                    {PARTS.map(
+                      (
+                        p,
+                        idx
+                      ) => (
+                        <AudioRecorder
+                          key={
+                            p.key
+                          }
+                          label={
+                            p.label
+                          }
+                          existingUrl={
+                            speakingParts[
+                              p.key
+                            ]
+                          }
+                          uploading={
+                            uploading
+                          }
+                          onSaved={(
+                            blob
+                          ) =>
+                            handleAudio(
+                              blob,
+                              p.key,
+                              `part${
+                                idx +
+                                1
+                              }`
+                            )
+                          }
+                          onUpload={(
+                            file
+                          ) =>
+                            handleAudioUpload(
+                              file,
+                              p.key,
+                              `part${
+                                idx +
+                                1
+                              }`
+                            )
+                          }
+                          onDelete={() =>
+                            handleAudioDelete(
+                              p.key
+                            )
+                          }
+                        />
+                      )
+                    )}
 
-                </div>
+                  </div>
 
-                <div className="mt-3 text-xs">
+                  {/* SPEAKING SUBMIT */}
 
-                  {speakingAlreadySubmitted ? (
-                    submittedLate ? (
-                      <span className="text-amber">
-                        ⏰ Submitted late. You
-                        can still edit and
-                        resubmit.
-                      </span>
-                    ) : (
-                      <span className="text-brass">
-                        ✓ Submitted to your
-                        teacher. You can still
-                        edit and resubmit.
-                      </span>
-                    )
-                  ) : allSpeakingPartsRecorded ? (
-                    <span className="text-brass">
-                      ✓ All three parts are
-                      ready. Click Submit
-                      Speaking Task.
-                    </span>
-                  ) : (
-                    <span className="text-mist">
-                      Complete Parts 1, 2,
-                      and 3 before submitting.
-                    </span>
-                  )}
+                  <div className="rounded-lg border border-line bg-panel-2 p-4">
 
-                </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 
-              </div>
+                      <div>
+                        <div className="font-medium text-paper">
+                          Speaking submission
+                        </div>
+
+                        <p className="text-xs text-mist mt-1">
+                          Complete all three parts,
+                          then click Submit Speaking
+                          Task.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={
+                          handleSpeakingSubmit
+                        }
+                        disabled={
+                          !allSpeakingPartsRecorded ||
+                          uploading
+                        }
+                        className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {allSpeakingPartsRecorded
+                          ? 'Submit Speaking Task'
+                          : 'Complete All 3 Parts'}
+                      </button>
+
+                    </div>
+
+                    <div className="mt-3 text-xs">
+                      {allSpeakingPartsRecorded ? (
+                        <span className="text-brass">
+                          ✓ All three parts are
+                          ready. Click Submit
+                          Speaking Task — this can't be
+                          changed afterward.
+                        </span>
+                      ) : (
+                        <span className="text-mist">
+                          Complete Parts 1, 2,
+                          and 3 before submitting.
+                        </span>
+                      )}
+                    </div>
+
+                  </div>
+                </>
+              )}
 
             </div>
           )}

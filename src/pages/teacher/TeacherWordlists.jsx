@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
+import ConfirmModal from '../../components/ConfirmModal'
 
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -8,6 +9,7 @@ export default function TeacherWordlists({ teacherId }) {
   const [lists, setLists] = useState([])
   const [creating, setCreating] = useState(false)
   const [viewingResults, setViewingResults] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   useEffect(() => {
     const loadGroups = async () => {
@@ -71,13 +73,18 @@ export default function TeacherWordlists({ teacherId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup, teacherId])
 
-  const deleteWordlist = async (list) => {
-    const confirmed = window.confirm(
-      `Delete \"${list.title}\" permanently?\n\nThis will delete the word list, its words, group assignments, and stored student results.`
-    )
+  const deleteWordlist = (list) => {
+    setConfirmDialog({
+      title: `Delete "${list.title}" permanently?`,
+      message: 'This will delete the word list, its words, group assignments, and stored student results.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteWordlist(list),
+    })
+  }
 
-    if (!confirmed) return
-
+  const doDeleteWordlist = async (list) => {
     try {
       const { error: attemptsError } = await supabase
         .from('wordlist_attempts')
@@ -115,9 +122,12 @@ export default function TeacherWordlists({ teacherId }) {
       await loadLists()
     } catch (err) {
       console.error('Word list deletion failed:', err)
-      alert(
-        `Could not delete the word list: ${err?.message || 'Unknown error'}`
-      )
+      setConfirmDialog({
+        title: "Couldn't delete this word list",
+        message: err?.message || 'Unknown error',
+        tone: 'coral',
+        hideCancel: true,
+      })
     }
   }
 
@@ -249,6 +259,17 @@ export default function TeacherWordlists({ teacherId }) {
           onClose={() => setViewingResults(null)}
         />
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
     </div>
   )
 }

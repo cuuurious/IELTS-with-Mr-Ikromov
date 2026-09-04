@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
 import SubmissionPanel from './SubmissionPanel'
 import EditHomeworkModal from './EditHomeworkModal'
+import ConfirmModal from '../../components/ConfirmModal'
 import { getSubmissionStatus } from '../../components/StampBadge'
 import { notifyGroup } from '../../lib/notify'
 
@@ -33,6 +34,7 @@ export default function GroupWorkspace({ teacherId }) {
 
   const [busyAction, setBusyAction] = useState('')
   const [studentSearch, setStudentSearch] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   /* =========================================================
      GROUPS
@@ -80,7 +82,12 @@ export default function GroupWorkspace({ teacherId }) {
       setGroups((prev) => [...prev, data])
       setActiveGroup(data.id)
     } else {
-      alert(`Couldn't create group: ${error.message}`)
+      setConfirmDialog({
+        title: "Couldn't create group",
+        message: error.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
     }
   }
 
@@ -111,7 +118,12 @@ export default function GroupWorkspace({ teacherId }) {
         )
       )
     } else {
-      alert(`Couldn't rename group: ${error.message}`)
+      setConfirmDialog({
+        title: "Couldn't rename group",
+        message: error.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
     }
 
     setRenamingId(null)
@@ -124,15 +136,19 @@ export default function GroupWorkspace({ teacherId }) {
      unrecoverable)
   ========================================================= */
 
-  const deleteGroup = async (group) => {
-    const confirmation = window.prompt(
-      `This PERMANENTLY deletes the group "${group.name}" — every student who is a member (their entire account, even other groups they belong to), every homework, submission and file, and the whole group chat. This cannot be undone.\n\nType DELETE to confirm.`
-    )
+  const deleteGroup = (group) => {
+    setConfirmDialog({
+      title: `Delete "${group.name}" permanently?`,
+      message: `This PERMANENTLY deletes the group "${group.name}" — every student who is a member (their entire account, even other groups they belong to), every homework, submission and file, and the whole group chat. This cannot be undone.`,
+      confirmLabel: 'Delete Group',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      requireTypedText: 'DELETE',
+      onConfirm: () => doDeleteGroup(group),
+    })
+  }
 
-    if (confirmation !== 'DELETE') {
-      return
-    }
-
+  const doDeleteGroup = async (group) => {
     setBusyAction(`delete-group-${group.id}`)
 
     try {
@@ -167,14 +183,20 @@ export default function GroupWorkspace({ teacherId }) {
         }
       }
 
-      alert(
-        data?.message ||
-          `Group "${group.name}" was deleted.`
-      )
+      setConfirmDialog({
+        title: 'Group deleted',
+        message:
+          data?.message ||
+          `Group "${group.name}" was deleted.`,
+        hideCancel: true,
+      })
     } catch (err) {
-      alert(
-        `Couldn't delete this group: ${err.message}`
-      )
+      setConfirmDialog({
+        title: "Couldn't delete this group",
+        message: err.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
     } finally {
       setBusyAction('')
     }
@@ -312,15 +334,18 @@ export default function GroupWorkspace({ teacherId }) {
      REMOVE STUDENT FROM GROUP
   ========================================================= */
 
-  const removeStudent = async (student) => {
-    if (
-      !window.confirm(
-        `Remove ${student.full_name} from this group? Their account, submissions, chat history, and other groups will NOT be deleted.`
-      )
-    ) {
-      return
-    }
+  const removeStudent = (student) => {
+    setConfirmDialog({
+      title: 'Remove student from this group?',
+      message: `Remove ${student.full_name} from this group? Their account, submissions, chat history, and other groups will NOT be deleted.`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doRemoveStudent(student),
+    })
+  }
 
+  const doRemoveStudent = async (student) => {
     setBusyAction(`remove-${student.id}`)
 
     try {
@@ -348,9 +373,12 @@ export default function GroupWorkspace({ teacherId }) {
         )
       )
     } catch (err) {
-      alert(
-        `Couldn't remove student from this group: ${err.message}`
-      )
+      setConfirmDialog({
+        title: "Couldn't remove student",
+        message: `Couldn't remove student from this group: ${err.message}`,
+        tone: 'coral',
+        hideCancel: true,
+      })
     } finally {
       setBusyAction('')
     }
@@ -386,15 +414,18 @@ export default function GroupWorkspace({ teacherId }) {
      DELETE HOMEWORK
   ========================================================= */
 
-  const deleteHomework = async (hw) => {
-    if (
-      !window.confirm(
-        `Delete "${hw.title}" completely? This permanently removes the homework, all student submissions, recordings, comments, and uploaded files. This cannot be undone.`
-      )
-    ) {
-      return
-    }
+  const deleteHomework = (hw) => {
+    setConfirmDialog({
+      title: `Delete "${hw.title}" completely?`,
+      message: 'This permanently removes the homework, all student submissions, recordings, comments, and uploaded files. This cannot be undone.',
+      confirmLabel: 'Delete Homework',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteHomework(hw),
+    })
+  }
 
+  const doDeleteHomework = async (hw) => {
     setBusyAction(`delete-${hw.id}`)
 
     try {
@@ -492,11 +523,12 @@ export default function GroupWorkspace({ teacherId }) {
         err
       )
 
-      alert(
-        `Couldn't delete this homework: ${
-          err?.message || 'Unknown error'
-        }`
-      )
+      setConfirmDialog({
+        title: "Couldn't delete this homework",
+        message: err?.message || 'Unknown error',
+        tone: 'coral',
+        hideCancel: true,
+      })
     } finally {
       setBusyAction('')
     }
@@ -506,15 +538,18 @@ export default function GroupWorkspace({ teacherId }) {
      RESET HOMEWORK
   ========================================================= */
 
-  const clearHomeworkContent = async (hw) => {
-    if (
-      !window.confirm(
-        `Reset "${hw.title}" for every student?\n\nAll uploaded screenshots, recordings and files for this homework will be permanently deleted. Students will see "Not yet" and can submit again.`
-      )
-    ) {
-      return
-    }
+  const clearHomeworkContent = (hw) => {
+    setConfirmDialog({
+      title: `Reset "${hw.title}" for every student?`,
+      message: 'All uploaded screenshots, recordings and files for this homework will be permanently deleted. Students will see "Not yet" and can submit again.',
+      confirmLabel: 'Reset Homework',
+      cancelLabel: 'Cancel',
+      tone: 'brass',
+      onConfirm: () => doClearHomeworkContent(hw),
+    })
+  }
 
+  const doClearHomeworkContent = async (hw) => {
     setBusyAction(`clear-${hw.id}`)
 
     try {
@@ -661,11 +696,12 @@ export default function GroupWorkspace({ teacherId }) {
         err
       )
 
-      alert(
-        `Couldn't reset this homework: ${
-          err?.message || 'Unknown error'
-        }`
-      )
+      setConfirmDialog({
+        title: "Couldn't reset this homework",
+        message: err?.message || 'Unknown error',
+        tone: 'coral',
+        hideCancel: true,
+      })
     } finally {
       setBusyAction('')
     }
@@ -960,11 +996,21 @@ export default function GroupWorkspace({ teacherId }) {
 		    }).then((result) => {
                       if (result?.ok) return
 
-                      alert(
-                        result?.reason === 'push'
-                          ? `"${hw.title}" was posted and students were notified in-app, but phone/desktop push notifications failed to send.`
-                          : `"${hw.title}" was posted, but students could not be notified — check your connection and let them know directly if needed.`
-                      )
+                      setConfirmDialog({
+                        title:
+                          result?.reason === 'push'
+                            ? 'Push notification failed'
+                            : "Students weren't notified",
+                        message:
+                          result?.reason === 'push'
+                            ? `"${hw.title}" was posted and students were notified in-app, but phone/desktop push notifications failed to send.`
+                            : `"${hw.title}" was posted, but students could not be notified in-app either — let them know directly if needed.` +
+                              (result?.detail
+                                ? `\n\nDetails: ${result.detail}`
+                                : ''),
+                        tone: 'coral',
+                        hideCancel: true,
+                      })
                     })
                   }}
                 />
@@ -1454,15 +1500,40 @@ export default function GroupWorkspace({ teacherId }) {
             }).then((result) => {
               if (result?.ok) return
 
-              alert(
-                result?.reason === 'push'
-                  ? `"${updated.title}" was updated and students were notified in-app, but phone/desktop push notifications failed to send.`
-                  : `"${updated.title}" was updated, but students could not be notified — check your connection and let them know directly if needed.`
-              )
+              setConfirmDialog({
+                title:
+                  result?.reason === 'push'
+                    ? 'Push notification failed'
+                    : "Students weren't notified",
+                message:
+                  result?.reason === 'push'
+                    ? `"${updated.title}" was updated and students were notified in-app, but phone/desktop push notifications failed to send.`
+                    : `"${updated.title}" was updated, but students could not be notified in-app either — let them know directly if needed.` +
+                      (result?.detail
+                        ? `\n\nDetails: ${result.detail}`
+                        : ''),
+                tone: 'coral',
+                hideCancel: true,
+              })
             })
           }}
         />
       )}
+
+      {/* =======================================================
+          CONFIRM DIALOG
+      ======================================================= */}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
 
     </div>
   )

@@ -11,7 +11,10 @@ import {
 export default function Register() {
   const { signUp } = useAuth()
   const navigate = useNavigate()
-  const [role, setRole] = useState('student')
+  // Registration only ever creates student accounts — Jasur Ikromov is
+  // the only teacher on this site, so there is no role picker here
+  // anymore. (See AuthContext.jsx's signUp(), which also refuses to
+  // create a teacher account as a second layer of protection.)
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -25,8 +28,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (role !== 'student') return
-
     supabase
       .from('groups')
       .select('id, name')
@@ -34,7 +35,7 @@ export default function Register() {
       .then(({ data, error }) => {
         if (!error) setGroups(data || [])
       })
-  }, [role])
+  }, [])
 
   const toggleGroup = (id) => {
     setSelectedGroups((prev) =>
@@ -50,7 +51,7 @@ export default function Register() {
     e.preventDefault()
     setError('')
 
-    if (role === 'student' && selectedGroups.length === 0) {
+    if (selectedGroups.length === 0) {
       setError('Choose at least one group.')
       return
     }
@@ -62,13 +63,10 @@ export default function Register() {
         username,
         password,
         fullName,
-        role,
+        role: 'student',
         groupIds: selectedGroups,
         contactEmail,
-        targetBand:
-          role === 'student'
-            ? targetBand
-            : undefined,
+        targetBand,
       })
 
       navigate('/app')
@@ -135,39 +133,6 @@ export default function Register() {
             className="px-6 sm:px-8 py-6 flex flex-col gap-4"
           >
 
-            <div className="flex gap-2 bg-[#F1F2F7] rounded-[12px] p-1">
-              {['student', 'teacher'].map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`focus-ring flex-1 py-2 rounded-[9px] text-sm font-semibold capitalize transition-all duration-200 ${
-                    role === r
-                      ? 'text-white'
-                      : 'text-[#7A8092] hover:text-[#30354D]'
-                  }`}
-                  style={
-                    role === r
-                      ? {
-                          background:
-                            'linear-gradient(135deg, #6C63FF 0%, #5A50E8 100%)',
-                          boxShadow: '0 6px 16px rgba(100,91,238,0.24)',
-                          color: '#ffffff',
-                        }
-                      /* Set explicitly, not just via the text-[#7A8092]
-                         class — this tab was rendering unreadable
-                         (almost invisible) in dark mode because a
-                         site-wide "button { color: ... }" rule was
-                         winning over the class. An inline color always
-                         wins, so this can't get overridden again. */
-                      : { color: '#7A8092' }
-                  }
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-
             <div>
               <label className="block text-sm font-bold text-[#30354D]">
                 Full name
@@ -222,8 +187,7 @@ export default function Register() {
               />
             </div>
 
-            {role === 'student' && (
-              <div>
+            <div>
                 <label className="block text-sm font-bold text-[#30354D]">
                   Your group(s) — choose up to 2
                 </label>
@@ -251,10 +215,8 @@ export default function Register() {
                   ))}
                 </div>
               </div>
-            )}
 
-            {role === 'student' && (
-              <div>
+            <div>
                 <label className="block text-sm font-bold text-[#30354D]">
                   Your target band
                 </label>
@@ -275,11 +237,11 @@ export default function Register() {
                           ? 'border-[#6C63FF] bg-[#6C63FF]/10 text-[#6C63FF]'
                           : 'border-[#D9DCE8] text-[#7A8092] hover:border-[#6C63FF]/40'
                       }`}
-                      /* Same fix as the Student/Teacher tabs above, for
-                         both states this time — an inline color so
-                         neither can go invisible again regardless of
-                         theme. (The selected chip was the one still
-                         missing this — its number was disappearing.) */
+                      /* Inline color (not just the class) for both
+                         states, so neither can go invisible in dark
+                         mode regardless of theme — a site-wide
+                         "button { color: ... }" rule was winning over
+                         the class here otherwise. */
                       style={
                         targetBand === band.value
                           ? { color: '#6C63FF' }
@@ -306,7 +268,6 @@ export default function Register() {
                   Account Settings.
                 </p>
               </div>
-            )}
 
             {error && (
               <div className="rounded-[12px] border border-[#F0C4C1] bg-[#FFF1F0] px-4 py-2.5">

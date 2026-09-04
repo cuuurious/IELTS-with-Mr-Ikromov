@@ -25,7 +25,16 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   // above. Students type a timed essay directly in the app instead of
   // uploading anything, so this whole block of state only matters
   // when homeworkType is 'writing_mock'.
-  const [homeworkType, setHomeworkType] = useState('standard')
+  //
+  // Starts as null (neither button highlighted) rather than defaulting
+  // to 'standard' — a teacher who never touches this toggle used to
+  // silently post a Standard homework even when they meant to post a
+  // Writing Mock Test, since "Standard" was already selected before
+  // they'd looked at it. submit() below refuses to post until one is
+  // explicitly picked, and homework type can never be changed after
+  // posting (see EditHomeworkModal), so this is the only place a wrong
+  // choice can be caught before it locks in.
+  const [homeworkType, setHomeworkType] = useState(null)
   const [mockTaskMode, setMockTaskMode] = useState(DEFAULT_MOCK_MODE)
   const [mockTimeLimit, setMockTimeLimit] = useState(
     DEFAULT_TIME_LIMITS[DEFAULT_MOCK_MODE]
@@ -39,8 +48,15 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
 
     // Speaking and Writing Mock Test are mutually exclusive homework
     // shapes — switching to one turns the other off rather than
-    // leaving a stale, hidden checkbox checked underneath.
-    if (type === 'writing_mock') setEnableSpeaking(false)
+    // leaving a stale, hidden checkbox checked underneath. The generic
+    // "teacher attachment" field is also hidden for a mock (it has its
+    // own Task 1 chart image field instead) — clear it too, so an
+    // already-picked file can't silently get uploaded once the field
+    // holding it is gone from view.
+    if (type === 'writing_mock') {
+      setEnableSpeaking(false)
+      setFile(null)
+    }
   }
 
   const chooseMockTaskMode = (mode) => {
@@ -71,6 +87,10 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
     setSaving(true)
     setError('')
     try {
+      if (!homeworkType) {
+        throw new Error('Choose a homework type — Standard or Writing Mock Test — before posting.')
+      }
+
       const isMock = homeworkType === 'writing_mock'
 
       if (!isMock) {
@@ -167,7 +187,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       setMinFiles(1)
       setMaxFiles(10)
       setFile(null)
-      setHomeworkType('standard')
+      setHomeworkType(null)
       setMockTaskMode(DEFAULT_MOCK_MODE)
       setMockTimeLimit(DEFAULT_TIME_LIMITS[DEFAULT_MOCK_MODE])
       setMockTask1Prompt('')
@@ -195,7 +215,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instructions for students (optional)" rows={3} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" />
 
       <div className="bg-panel-2 border border-line rounded-lg p-3">
-        <div className="text-sm font-medium mb-2">Homework type</div>
+        <div className="text-sm font-medium mb-1">Homework type</div>
+        <p className="text-xs text-mist mb-2">Pick one — this can't be changed once it's posted.</p>
         <div className="flex gap-2">
           <button
             type="button"
@@ -219,7 +240,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Deadline</label>
           <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm" />
         </div>
-        {homeworkType !== 'writing_mock' && (
+        {homeworkType === 'standard' && (
           <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer self-end">
             <input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} />
             Include speaking Part 1 / 2 / 3
@@ -235,7 +256,13 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         </span>
       </label>
 
-      {homeworkType === 'writing_mock' ? (
+      {!homeworkType && (
+        <p className="text-xs text-mist bg-panel-2 border border-line rounded-md px-3 py-2.5">
+          Choose a homework type above to continue.
+        </p>
+      )}
+
+      {homeworkType === 'writing_mock' && (
         <div className="bg-panel-2 border border-line rounded-lg p-3 flex flex-col gap-3">
 
           <div>
@@ -305,7 +332,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
             {mockTaskMode === 'full' && ' Both tasks share one continuous 60-minute-style timer, and students can switch between them freely, exactly like the real exam.'}
           </p>
         </div>
-      ) : (
+      )}
+
+      {homeworkType === 'standard' && (
         <div className="bg-panel-2 border border-line rounded-lg p-3">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div>
@@ -328,10 +357,12 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         </div>
       )}
 
-      <div>
-        <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Optional teacher attachment</label>
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer" />
-      </div>
+      {homeworkType === 'standard' && (
+        <div>
+          <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Optional teacher attachment</label>
+          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer" />
+        </div>
+      )}
       {error && <p className="text-coral text-sm">{error}</p>}
       <div className="flex gap-2">
         <button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50">{saving ? 'Posting…' : 'Post to group'}</button>

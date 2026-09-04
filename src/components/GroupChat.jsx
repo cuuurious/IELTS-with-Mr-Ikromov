@@ -5,6 +5,7 @@ import MessageActionMenu from './MessageActionMenu'
 import ReactionPicker from './ReactionPicker'
 import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
+import ConfirmModal from './ConfirmModal'
 
 const MAX_FILE_MB = 25
 
@@ -129,6 +130,8 @@ export default function GroupChat({
   const [recordedBlob, setRecordedBlob] = useState(null)
 
   const [highlightedMessageId, setHighlightedMessageId] = useState(null)
+
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
@@ -857,17 +860,19 @@ export default function GroupChat({
   const canDeleteEveryone = (message) =>
     message.sender_id === selfId || selfRole === 'teacher'
 
-  const deleteForEveryone = async (message) => {
+  const deleteForEveryone = (message) => {
     if (!canDeleteEveryone(message)) return
 
-    if (
-      !window.confirm(
-        'Delete this message for everyone?'
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Delete this message for everyone?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteForEveryone(message),
+    })
+  }
 
+  const doDeleteForEveryone = async (message) => {
     const { error } = await supabase
       .from('group_messages')
       .delete()
@@ -881,15 +886,18 @@ export default function GroupChat({
   // "Delete for me" is available to every member on any message — it
   // only hides it from this member's own view; everyone else still
   // sees it, same as Telegram.
-  const deleteForMe = async (message) => {
-    if (
-      !window.confirm(
-        'Remove this message from your view of the chat? Other members will still see it.'
-      )
-    ) {
-      return
-    }
+  const deleteForMe = (message) => {
+    setConfirmDialog({
+      title: 'Remove this message from your view?',
+      message: 'Remove this message from your view of the chat? Other members will still see it.',
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteForMe(message),
+    })
+  }
 
+  const doDeleteForMe = async (message) => {
     setHiddenIds((prev) => {
       const next = new Set(prev)
       next.add(message.id)
@@ -1231,23 +1239,26 @@ export default function GroupChat({
     startSelecting(message.id)
   }
 
-  const bulkDeleteForMe = async () => {
+  const bulkDeleteForMe = () => {
     const ids = [...selectedIds]
 
     if (!ids.length) return
 
-    if (
-      !window.confirm(
-        `Remove ${ids.length} message${
-          ids.length > 1 ? 's' : ''
-        } from your view of the chat? Other members will still see ${
-          ids.length > 1 ? 'them' : 'it'
-        }.`
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Remove these messages from your view?',
+      message: `Remove ${ids.length} message${
+        ids.length > 1 ? 's' : ''
+      } from your view of the chat? Other members will still see ${
+        ids.length > 1 ? 'them' : 'it'
+      }.`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doBulkDeleteForMe(ids),
+    })
+  }
 
+  const doBulkDeleteForMe = async (ids) => {
     setHiddenIds((prev) => {
       const next = new Set(prev)
       ids.forEach((id) => next.add(id))
@@ -1271,21 +1282,24 @@ export default function GroupChat({
     cancelSelecting()
   }
 
-  const bulkDeleteForEveryone = async () => {
+  const bulkDeleteForEveryone = () => {
     const ids = [...selectedIds]
 
     if (!ids.length) return
 
-    if (
-      !window.confirm(
-        `Delete ${ids.length} message${
-          ids.length > 1 ? 's' : ''
-        } for everyone?`
-      )
-    ) {
-      return
-    }
+    setConfirmDialog({
+      title: 'Delete these messages for everyone?',
+      message: `Delete ${ids.length} message${
+        ids.length > 1 ? 's' : ''
+      } for everyone?`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doBulkDeleteForEveryone(ids),
+    })
+  }
 
+  const doBulkDeleteForEveryone = async (ids) => {
     const { error } = await supabase
       .from('group_messages')
       .delete()
@@ -2509,6 +2523,17 @@ export default function GroupChat({
 
         </form>
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
 
     </div>
   )
