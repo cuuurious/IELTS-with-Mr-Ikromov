@@ -54,7 +54,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       <form onSubmit={save} className="ticket rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
-          <button type="button" onClick={onClose} className="focus-ring text-mist hover:text-paper text-xl leading-none">×</button>
+          <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>
         </div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2" required />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring w-full min-h-[88px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
@@ -72,7 +72,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           </div>
         </div>
         {error && <p className="text-coral text-sm">{error}</p>}
-        <div className="flex gap-2 mt-2"><button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50">{saving ? 'Saving…' : 'Save changes'}</button><button type="button" onClick={onClose} className="focus-ring px-4 py-2 rounded-md border border-line text-mist">Cancel</button></div>
+        <div className="flex gap-2 mt-2"><button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass">{saving ? 'Saving…' : 'Save changes'}</button><button type="button" onClick={onClose} className="focus-ring px-4 py-2 rounded-md border border-line text-mist hover:border-brass hover:text-brass transition-colors">Cancel</button></div>
       </form>
     </div>
   )
