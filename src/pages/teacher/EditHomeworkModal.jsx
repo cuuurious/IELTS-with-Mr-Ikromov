@@ -14,29 +14,18 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [description, setDescription] = useState(homework.description || '')
   const [dueDate, setDueDate] = useState(toLocalInputValue(homework.due_date))
   const [enableSpeaking, setEnableSpeaking] = useState(homework.enable_speaking)
-  const [aiEvalEnabled, setAiEvalEnabled] = useState(homework.ai_eval_enabled ?? false)
   const [allowedTypes, setAllowedTypes] = useState(homework.allowed_submission_types?.length ? homework.allowed_submission_types : ['image'])
   const [minFiles, setMinFiles] = useState(homework.min_submission_files ?? 1)
   const [maxFiles, setMaxFiles] = useState(homework.max_submission_files ?? 10)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Was previously special-cased so checking "Other file types" wiped
-  // out every other checked type (and vice versa) — meant to make
-  // "other" exclusive, but it actually just silently discarded
-  // whatever the teacher had already picked, so a real multi-select
-  // ("audio + video + other") collapsed down to whatever was clicked
-  // last. Now every checkbox is a plain, independent toggle; "other"
-  // combined with specific types is redundant (accepting "any file"
-  // already covers them) but harmless — buildAccept()/
-  // matchesSubmissionType() in lib/submissionTypes.js already treat
-  // "other" as "no restriction" regardless of what else is checked.
   const toggleType = (value) => {
-    setAllowedTypes((prev) =>
-      prev.includes(value)
-        ? prev.filter((x) => x !== value)
-        : [...prev, value]
-    )
+    setAllowedTypes((prev) => {
+      if (value === 'other') return prev.includes('other') ? prev.filter((x) => x !== 'other') : ['other']
+      const next = prev.filter((x) => x !== 'other')
+      return next.includes(value) ? next.filter((x) => x !== value) : [...next, value]
+    })
   }
 
   const save = async (e) => {
@@ -50,30 +39,13 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       description,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
       enable_speaking: enableSpeaking,
-      ai_eval_enabled: aiEvalEnabled,
       allowed_submission_types: allowedTypes,
       min_submission_files: minFiles,
       max_submission_files: maxFiles,
-    }).eq('id', homework.id).select().maybeSingle()
-    if (updErr) { setSaving(false); return setError(updErr.message) }
-
-    // maybeSingle() returns null instead of throwing when 0 rows come
-    // back — which can happen as a brief, harmless glitch (e.g. right
-    // after running a database migration) even though the update
-    // itself went through. Re-read the row by its known id before
-    // showing an error over something that actually worked.
-    let saved = data
-    if (!saved) {
-      const { data: refetched } = await supabase
-        .from('homeworks')
-        .select()
-        .eq('id', homework.id)
-        .maybeSingle()
-      saved = refetched
-    }
+    }).eq('id', homework.id).select().single()
     setSaving(false)
-    if (!saved) return setError('The change may not have saved — please check and try again if it looks wrong.')
-    onSaved(saved)
+    if (updErr) return setError(updErr.message)
+    onSaved(data)
     onClose()
   }
 
@@ -84,16 +56,12 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
           <button type="button" onClick={onClose} className="focus-ring text-mist hover:text-paper text-xl leading-none">×</button>
         </div>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" required />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2" required />
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring w-full min-h-[88px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
         <div className="grid sm:grid-cols-2 gap-3">
           <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm" />
           <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer"><input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} /> Include speaking recording</label>
         </div>
-        <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer">
-          <input type="checkbox" checked={aiEvalEnabled} onChange={(e) => setAiEvalEnabled(e.target.checked)} />
-          <span>Evaluate submissions with AI<span className="block text-xs text-mist font-normal mt-0.5">Graded automatically against your uploaded {enableSpeaking ? 'Speaking' : 'Writing'} criteria.</span></span>
-        </label>
         <div className="bg-panel-2 border border-line rounded-lg p-3">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div><div className="text-sm font-medium">Student upload rules</div><div className="text-xs text-mist">Allowed types and total file/picture count.</div></div>
