@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 function shuffle(arr) {
@@ -101,6 +101,22 @@ function buildQuestions(items) {
 // shows up, and a little pulse on whichever answer was just tapped.
 // Kept scoped to this component (a plain <style> tag) rather than
 // touching the shared stylesheet.
+//
+// The flip card used to be a REAL 3D flip (rotateY + perspective +
+// backface-visibility, two absolutely-positioned faces stacked on top
+// of each other). That turned out to be two rounds of cross-browser
+// rendering bugs in a row — first overflowing text bleeding past the
+// card because overflow clipping silently breaks on an element that
+// also has backface-visibility set, and then, after fixing that, the
+// card visibly squashing/dipping mid-animation because clipping a
+// container around a rotating 3D child clips part of its natural
+// perspective "bulge" while it's mid-turn. Both are real, documented
+// WebKit/Chromium quirks with 3D transforms — not something worth a
+// third round of chasing. wlp-flip below fakes the same "card flips
+// over" feeling with a plain 2D horizontal squash (scaleX 1 → 0 → 1,
+// swapping which side's content is showing at the invisible zero-width
+// midpoint) — no rotation, no perspective, no backface-visibility, so
+// none of that whole class of bug can happen here again.
 const ANIMATION_STYLES = `
 @keyframes wlp-pop {
   from { opacity: 0; transform: scale(0.94) translateY(6px); }
@@ -111,9 +127,20 @@ const ANIMATION_STYLES = `
   45% { transform: scale(1.04); }
   100% { transform: scale(1); }
 }
+@keyframes wlp-flip {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
 .wlp-pop { animation: wlp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
 .wlp-pulse { animation: wlp-pulse 0.28s ease-out; }
+.wlp-flip { animation: wlp-flip 0.36s ease; }
 `
+
+// How long the wlp-flip animation takes to visually reach zero width
+// (its exact midpoint) — the moment content is swapped, so the swap
+// itself is never actually seen, only the squash-and-unsquash.
+const FLIP_SWAP_DELAY_MS = 180
 
 function categoryFor(percentage) {
   if (percentage >= 90) return { label: 'Excellent!', tone: 'sage', note: 'Outstanding recall — these words are locked in.' }
@@ -126,6 +153,48 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
   const [mode, setMode] = useState('study') // 'study' | 'quiz' | 'results'
   const [cardIndex, setCardIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
+
+  // Retriggers the wlp-flip squash animation on every tap — changing a
+  // className alone doesn't restart a CSS animation that's already
+  // finished, but remounting the element via a changing `key` does.
+  const [flipAnimKey, setFlipAnimKey] = useState(0)
+  const flipTimeoutRef = useRef(null)
+
+  // Swaps the visible side exactly at the flip animation's invisible
+  // (zero-width) midpoint, so the change itself is never seen — only
+  // the squash-and-unsquash motion is.
+  const toggleFlip = () => {
+    setFlipAnimKey((key) => key + 1)
+
+    if (flipTimeoutRef.current) {
+      clearTimeout(flipTimeoutRef.current)
+    }
+
+    flipTimeoutRef.current = setTimeout(() => {
+      setFlipped((f) => !f)
+      flipTimeoutRef.current = null
+    }, FLIP_SWAP_DELAY_MS)
+  }
+
+  // Moving to a different word should show its front face immediately
+  // — no animation, and no leftover flip from the previous card
+  // arriving late.
+  const resetFlip = () => {
+    if (flipTimeoutRef.current) {
+      clearTimeout(flipTimeoutRef.current)
+      flipTimeoutRef.current = null
+    }
+
+    setFlipped(false)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (flipTimeoutRef.current) {
+        clearTimeout(flipTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const [questions, setQuestions] = useState([])
   const [qIndex, setQIndex] = useState(0)
@@ -215,74 +284,22 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
           </span>
         </div>
 
-        <div
-          key={cardIndex}
-          className="wlp-pop w-full max-w-sm overflow-hidden"
-          style={{ perspective: '1200px' }}
-        >
-          {/* Why this outer div needs its OWN `overflow-hidden` (this is
-              the actual fix — a previous attempt only moved things
-              around on the transformed elements below and the overlap
-              came right back):
-              Every element inside this card that has 3D transform
-              properties (backfaceVisibility / the flip rotation) is
-              part of a well-known WebKit/mobile-Safari-and-Chrome bug
-              where overflow clipping — `hidden`, not just `auto`/
-              `scroll` — silently stops working on THAT SAME element.
-              Both the front/back faces AND their `.ticket` styling
-              carry backfaceVisibility, so relying on `.ticket`'s own
-              `overflow: hidden` to contain overflowing text was
-              exactly the same broken combination, just with `hidden`
-              instead of `auto`. This wrapping div has no 3D transform
-              or backface-visibility of its own (only `perspective`,
-              which doesn't trigger the bug) — it's a completely
-              ordinary block, so its `overflow-hidden` reliably clips
-              anything the rotated children inside it try to spill
-              past its edges, on every browser. */}
+        <div key={cardIndex} className="wlp-pop w-full max-w-sm">
           <button
-            onClick={() => setFlipped((f) => !f)}
+            key={flipAnimKey}
+            onClick={toggleFlip}
             aria-label={flipped ? 'Show the word' : 'Reveal definition and translation'}
-            className="focus-ring relative w-full h-72 block"
-            style={{
-              transformStyle: 'preserve-3d',
-              transition: 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)',
-              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            }}
+            className="wlp-flip focus-ring ticket rounded-xl w-full min-h-[18rem] max-h-96 overflow-y-auto flex flex-col items-center justify-center gap-2 p-6 text-center"
           >
-            {/* FRONT — the word */}
-            <div
-              className="ticket rounded-xl absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center"
-              style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-            >
-              <span className="font-display text-3xl">{item.word}</span>
-              <span className="text-mist text-xs font-mono mt-2">tap to reveal</span>
-            </div>
-
-            {/* BACK — definition, translation, example.
-                This used to have `overflow-y-auto` directly on this
-                same element — the one carrying `backfaceVisibility:
-                hidden` for the 3D flip. That combination is a known
-                mobile-Safari/Chrome bug: overflow scrolling silently
-                stops working (and stops clipping) on an element that
-                also has backface-visibility set inside a 3D transform,
-                so a longer definition/translation/example just spilled
-                out of the card and overlapped the Previous/Next
-                buttons below it, instead of scrolling or being cut off
-                cleanly. Fixed by keeping this outer element purely for
-                the 3D positioning (plus `.ticket`'s own `overflow:
-                hidden`, which — unlike a scrollable overflow-auto —
-                works fine here and acts as a hard safety clip), and
-                moving the actual scrolling to a plain nested div below
-                that isn't itself part of the 3D transform. */}
-            <div
-              className="ticket rounded-xl absolute inset-0"
-              style={{
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-              }}
-            >
-              <div className="h-full w-full overflow-y-auto flex flex-col items-center justify-center gap-2 p-6 text-center">
+            {!flipped ? (
+              /* FRONT — the word */
+              <>
+                <span className="font-display text-3xl">{item.word}</span>
+                <span className="text-mist text-xs font-mono mt-2">tap to reveal</span>
+              </>
+            ) : (
+              /* BACK — definition, translation, example */
+              <>
                 {item.definition && (
                   <p className="text-paper text-sm leading-5">{item.definition}</p>
                 )}
@@ -291,8 +308,8 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
                   <p className="text-mist text-sm italic">"{item.example_sentence}"</p>
                 )}
                 <span className="text-mist text-xs font-mono mt-2">tap to see word</span>
-              </div>
-            </div>
+              </>
+            )}
           </button>
         </div>
 
@@ -300,7 +317,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
           <button
             onClick={() => {
               setCardIndex((i) => Math.max(0, i - 1))
-              setFlipped(false)
+              resetFlip()
             }}
             disabled={cardIndex === 0}
             className="focus-ring px-4 py-2 rounded-md border border-line text-sm disabled:opacity-30"
@@ -311,7 +328,7 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
             <button
               onClick={() => {
                 setCardIndex((i) => i + 1)
-                setFlipped(false)
+                resetFlip()
               }}
               className="focus-ring px-4 py-2 rounded-md border border-line text-sm hover:border-brass hover:text-brass"
             >
