@@ -43,6 +43,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [mockTask2Prompt, setMockTask2Prompt] = useState('')
   const [mockTask1Image, setMockTask1Image] = useState(null)
   const mockTask1ImageInputRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   // Clears the picked file AND resets the native input's own value —
   // just calling setMockTask1Image(null) alone left the browser still
@@ -54,6 +55,14 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
 
     if (mockTask1ImageInputRef.current) {
       mockTask1ImageInputRef.current.value = ''
+    }
+  }
+
+  const clearFile = () => {
+    setFile(null)
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -392,7 +401,28 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       {homeworkType === 'standard' && (
         <div>
           <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Optional teacher attachment</label>
-          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-panel-2 file:text-paper file:cursor-pointer" />
+
+          {file ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-paper truncate max-w-[220px]">
+                {file.name}
+              </span>
+              <button
+                type="button"
+                onClick={clearFile}
+                className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel-2 text-coral hover:bg-coral hover:text-white transition"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+            />
+          )}
         </div>
       )}
       {error && <p className="text-coral text-sm">{error}</p>}
