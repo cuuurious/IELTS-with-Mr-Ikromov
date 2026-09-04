@@ -217,9 +217,28 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
 
         <div
           key={cardIndex}
-          className="wlp-pop w-full max-w-sm"
+          className="wlp-pop w-full max-w-sm overflow-hidden"
           style={{ perspective: '1200px' }}
         >
+          {/* Why this outer div needs its OWN `overflow-hidden` (this is
+              the actual fix — a previous attempt only moved things
+              around on the transformed elements below and the overlap
+              came right back):
+              Every element inside this card that has 3D transform
+              properties (backfaceVisibility / the flip rotation) is
+              part of a well-known WebKit/mobile-Safari-and-Chrome bug
+              where overflow clipping — `hidden`, not just `auto`/
+              `scroll` — silently stops working on THAT SAME element.
+              Both the front/back faces AND their `.ticket` styling
+              carry backfaceVisibility, so relying on `.ticket`'s own
+              `overflow: hidden` to contain overflowing text was
+              exactly the same broken combination, just with `hidden`
+              instead of `auto`. This wrapping div has no 3D transform
+              or backface-visibility of its own (only `perspective`,
+              which doesn't trigger the bug) — it's a completely
+              ordinary block, so its `overflow-hidden` reliably clips
+              anything the rotated children inside it try to spill
+              past its edges, on every browser. */}
           <button
             onClick={() => setFlipped((f) => !f)}
             aria-label={flipped ? 'Show the word' : 'Reveal definition and translation'}
