@@ -131,11 +131,19 @@ export default function Login() {
 
         <div className="flex items-center gap-3">
 
-          <img
-            src="/ielts.png"
-            alt="IELTS with Mr Ikromov"
-            className="w-12 h-12 sm:w-14 sm:h-14 rounded-[16px] object-cover shadow-[0_8px_25px_rgba(30,35,70,0.12)]"
-          />
+          {/* Monogram badge instead of a second copy of his photo —
+              the quote card below already carries the real portrait,
+              so this stays a simple mark rather than a duplicate face. */}
+          <div
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-[16px] shrink-0 flex items-center justify-center shadow-[0_8px_25px_rgba(30,35,70,0.12)]"
+            style={{
+              background: 'linear-gradient(145deg, #8D88FF, #6258E8)',
+            }}
+          >
+            <span className="text-white font-bold text-[15px] sm:text-[17px] tracking-[-0.02em]">
+              JI
+            </span>
+          </div>
 
           <div>
 
@@ -236,7 +244,7 @@ export default function Login() {
                   className="text-[16px] sm:text-[18px] leading-snug text-[#20233D] font-semibold"
                   style={{ fontStyle: 'italic' }}
                 >
-                  "Luck comes to a prepared mind."
+                  "Luck favors the prepared mind."
                 </p>
 
                 <p className="mt-1.5 text-xs sm:text-[13px] font-bold text-[#6258E8] tracking-[-0.01em]">
