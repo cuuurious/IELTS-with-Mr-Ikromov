@@ -275,12 +275,14 @@ export default function Register() {
                           ? 'border-[#6C63FF] bg-[#6C63FF]/10 text-[#6C63FF]'
                           : 'border-[#D9DCE8] text-[#7A8092] hover:border-[#6C63FF]/40'
                       }`}
+                      /* Same fix as the Student/Teacher tabs above, for
+                         both states this time — an inline color so
+                         neither can go invisible again regardless of
+                         theme. (The selected chip was the one still
+                         missing this — its number was disappearing.) */
                       style={
                         targetBand === band.value
-                          ? undefined
-                          /* Same fix as the Student/Teacher tabs above —
-                             an inline color so this can't go invisible
-                             in dark mode again. */
+                          ? { color: '#6C63FF' }
                           : { color: '#7A8092' }
                       }
                     >
