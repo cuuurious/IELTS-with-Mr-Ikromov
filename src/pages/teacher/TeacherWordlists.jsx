@@ -763,22 +763,30 @@ return (
     </div>
 
     <div className="flex items-center gap-2 shrink-0">
-      <button
-        type="button"
-        onClick={() => setViewingResults(list)}
-        className="btn-secondary"
-      >
-        View results
-      </button>
+  <button
+    type="button"
+    onClick={() => setViewingResults(list)}
+    className="btn-secondary"
+  >
+    View results
+  </button>
 
-      <button
-        type="button"
-        onClick={() => deleteWordlist(list)}
-        className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
-      >
-        Delete
-      </button>
-    </div>
+  <button
+    type="button"
+    onClick={() => openEditWordlist(list)}
+    className="focus-ring px-3 py-2 rounded-lg border border-brass/40 text-brass hover:bg-brass/10 transition-colors"
+  >
+    Edit
+  </button>
+
+  <button
+    type="button"
+    onClick={() => deleteWordlist(list)}
+    className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
+  >
+    Delete
+  </button>
+</div>
   </div>
 ))}
 
