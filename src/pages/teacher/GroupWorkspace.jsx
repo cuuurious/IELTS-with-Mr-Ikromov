@@ -129,78 +129,113 @@ export default function GroupWorkspace({ teacherId }) {
     setRenamingId(null)
   }
 
-  /* =========================================================
-     DELETE GROUP
-     (permanently deletes the group, every homework in it, the
-     whole group chat, and every member's ENTIRE account —
-     unrecoverable)
-  ========================================================= */
+/* =========================================================
+   DELETE GROUP
+========================================================= */
 
-  const deleteGroup = (group) => {
-    setConfirmDialog({
-      title: `Delete "${group.name}" permanently?`,
-      message: `This PERMANENTLY deletes the group "${group.name}" — every student who is a member (their entire account, even other groups they belong to), every homework, submission and file, and the whole group chat. This cannot be undone.`,
-      confirmLabel: 'Delete Group',
-      cancelLabel: 'Cancel',
-      tone: 'coral',
-      requireTypedText: 'DELETE',
-      onConfirm: () => doDeleteGroup(group),
-    })
-  }
+const deleteGroup = (group) => {
+  setConfirmDialog({
+    title: `Delete "${group.name}" permanently?`,
+    message: `This permanently deletes "${group.name}", including its homework, submissions, files and group chat. Students who belong to another group will keep their accounts and will simply be removed from this group. Students who belong only to this group will have their accounts permanently deleted. Word lists shared with other groups will be kept. This cannot be undone.`,
+    confirmLabel: 'Delete Group',
+    cancelLabel: 'Cancel',
+    tone: 'coral',
+    requireTypedText: 'DELETE',
+    onConfirm: () => doDeleteGroup(group),
+  })
+}
 
-  const doDeleteGroup = async (group) => {
-    setBusyAction(`delete-group-${group.id}`)
+const doDeleteGroup = async (group) => {
+  setBusyAction(`delete-group-${group.id}`)
 
-    try {
-      const { data, error } =
-        await supabase.functions.invoke(
-          'delete-group',
-          {
-            body: { groupId: group.id },
-          }
-        )
+  try {
+    const {
+      data: refreshData,
+      error: refreshError,
+    } = await supabase.auth.refreshSession()
 
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
+    if (refreshError || !refreshData?.session) {
+      throw new Error(
+        'Your session has expired. Please log in again.'
+      )
+    }
 
-      const remaining = groups.filter(
-        (g) => g.id !== group.id
+    const { data, error } =
+      await supabase.functions.invoke(
+        'delete-group',
+        {
+          body: { groupId: group.id },
+        }
       )
 
-      setGroups(remaining)
+    if (error) {
+      let backendMessage = ''
 
-      if (activeGroup === group.id) {
-        const nextActive = remaining.length
-          ? remaining[0].id
-          : null
+      try {
+        if (error.context) {
+          const body =
+            await error.context.json()
 
-        setActiveGroup(nextActive)
-
-        if (!nextActive) {
-          setRoster([])
-          setHomeworks([])
-          setSubmissions({})
+          backendMessage =
+            body?.error ||
+            body?.message ||
+            ''
         }
+      } catch {
+        // Use the normal Supabase error below.
       }
 
-      setConfirmDialog({
-        title: 'Group deleted',
-        message:
-          data?.message ||
-          `Group "${group.name}" was deleted.`,
-        hideCancel: true,
-      })
-    } catch (err) {
-      setConfirmDialog({
-        title: "Couldn't delete this group",
-        message: err.message,
-        tone: 'coral',
-        hideCancel: true,
-      })
-    } finally {
-      setBusyAction('')
+      throw new Error(
+        backendMessage ||
+        error.message ||
+        'The group deletion service failed.'
+      )
     }
+
+    if (data?.error) {
+      throw new Error(data.error)
+    }
+
+    const remaining = groups.filter(
+      (g) => g.id !== group.id
+    )
+
+    setGroups(remaining)
+
+    if (activeGroup === group.id) {
+      const nextActive = remaining.length
+        ? remaining[0].id
+        : null
+
+      setActiveGroup(nextActive)
+
+      if (!nextActive) {
+        setRoster([])
+        setHomeworks([])
+        setSubmissions({})
+      }
+    }
+
+    setConfirmDialog({
+      title: 'Group deleted',
+      message:
+        data?.message ||
+        `Group "${group.name}" was deleted.`,
+      hideCancel: true,
+    })
+  } catch (err) {
+    setConfirmDialog({
+      title: "Couldn't delete this group",
+      message:
+        err?.message ||
+        'An unexpected error occurred while deleting the group.',
+      tone: 'coral',
+      hideCancel: true,
+    })
+  } finally {
+    setBusyAction('')
   }
+}
 
   /* =========================================================
      GROUP DATA
