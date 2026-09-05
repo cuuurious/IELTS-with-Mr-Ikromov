@@ -948,39 +948,53 @@ const doDeleteGroup = async (group) => {
                       </button>
 
                       <button
-                        type="button"
-                        onClick={() =>
-                          deleteGroup(group)
-                        }
-                        disabled={
-                          busyAction ===
-                          `delete-group-${group.id}`
-                        }
-                        className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40 ${
-                          activeGroup === group.id
-                            ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
-                            : 'text-mist hover:bg-coral/10 hover:text-coral'
-                        }`}
-                        title="Delete group permanently"
-                        aria-label="Delete group permanently"
-                      >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                        </svg>
-                      </button>
+  type="button"
+  onClick={() =>
+    deleteGroup(group)
+  }
+  disabled={
+    busyAction ===
+    `delete-group-${group.id}`
+  }
+  className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40 ${
+    activeGroup === group.id
+      ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
+      : 'text-mist hover:bg-coral/10 hover:text-coral'
+  }`}
+  title={
+    busyAction === `delete-group-${group.id}`
+      ? 'Deleting group...'
+      : 'Delete group permanently'
+  }
+  aria-label={
+    busyAction === `delete-group-${group.id}`
+      ? 'Deleting group'
+      : 'Delete group permanently'
+  }
+>
+  {busyAction === `delete-group-${group.id}` ? (
+    <span className="animate-pulse text-[9px] font-bold">
+      ...
+    </span>
+  ) : (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  )}
+</button>
 
                     </div>
                   )
