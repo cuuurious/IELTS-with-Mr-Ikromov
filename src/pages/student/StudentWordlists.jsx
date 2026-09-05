@@ -99,39 +99,75 @@ export default function StudentWordlists({
       }
 
       /*
-       * -----------------------------------------------------
-       * WORD LISTS
-       *
-       * completion_reset_at is important here.
-       * It tells us when the teacher last reset this list.
-       * -----------------------------------------------------
-       */
+ * -----------------------------------------------------
+ * WORD LISTS
+ *
+ * Word lists can belong to multiple groups through the
+ * wordlist_groups join table.
+ *
+ * We deliberately load the assignments first and then
+ * load the actual word lists. This avoids relying on a
+ * nested PostgREST filter which can behave inconsistently
+ * with RLS policies.
+ * -----------------------------------------------------
+ */
 
-      const {
-        data: wordlists,
-        error: wordlistError,
-      } = await supabase
-        .from('wordlists')
-        .select(
-          `
-            *,
-            wordlist_items(count),
-            wordlist_groups!inner(group_id)
-          `
-        )
-        .in(
-          'wordlist_groups.group_id',
-          groupIds
-        )
-        .order('created_at', {
-          ascending: false,
-        })
+const {
+  data: assignments,
+  error: assignmentsError,
+} = await supabase
+  .from('wordlist_groups')
+  .select('wordlist_id, group_id')
+  .in('group_id', groupIds)
 
-      if (wordlistError) {
-        throw wordlistError
-      }
+console.log('WORDLIST DEBUG')
+console.log('Student group IDs:', groupIds)
+console.log('Assignments returned:', assignments)
+console.error(
+  'Assignments error details:',
+  JSON.stringify(assignmentsError, null, 2)
+)
+if (assignmentsError) {
+  throw assignmentsError
+}
 
-      setLists(wordlists || [])
+const wordlistIds = [
+  ...new Set(
+    (assignments || []).map(
+      (row) => row.wordlist_id
+    )
+  ),
+]
+
+if (!wordlistIds.length) {
+  setLists([])
+  setMyAttempts({})
+  return
+}
+
+const {
+  data: wordlists,
+  error: wordlistError,
+} = await supabase
+  .from('wordlists')
+  .select(`
+    *,
+    wordlist_items(count)
+  `)
+  .in('id', wordlistIds)
+  .order('created_at', {
+    ascending: false,
+  })
+
+console.log('Wordlist IDs:', wordlistIds)
+console.log('Wordlists returned:', wordlists)
+console.log('Wordlists error:', wordlistError)
+
+if (wordlistError) {
+  throw wordlistError
+}
+
+setLists(wordlists || [])
 
       /*
        * -----------------------------------------------------
