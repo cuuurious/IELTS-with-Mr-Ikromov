@@ -11,6 +11,16 @@ export default function TeacherWordlists({ teacherId }) {
   const [viewingResults, setViewingResults] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
 
+  const [editingList, setEditingList] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editGroupIds, setEditGroupIds] = useState([])
+  const [editItems, setEditItems] = useState([])
+  
+  const [editLoading, setEditLoading] = useState(false)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editGenerating, setEditGenerating] = useState(false)
+  const [editError, setEditError] = useState('')
+
   useEffect(() => {
     const loadGroups = async () => {
       const { data, error } = await supabase
@@ -131,7 +141,538 @@ export default function TeacherWordlists({ teacherId }) {
     }
   }
 
-  return (
+
+const openEditWordlist = async (list) => {
+  setEditLoading(true)
+  setEditError('')
+  setEditingList(list)
+
+  try {
+    const [
+      { data: items, error: itemsError },
+      { data: links, error: linksError },
+    ] = await Promise.all([
+      supabase
+        .from('wordlist_items')
+        .select('*')
+        .eq('wordlist_id', list.id)
+        .order('position'),
+
+      supabase
+        .from('wordlist_groups')
+        .select('group_id')
+        .eq('wordlist_id', list.id),
+    ])
+
+    if (itemsError) throw itemsError
+    if (linksError) throw linksError
+
+    setEditTitle(list.title || '')
+
+    /*
+     * Some older lists may have their original
+     * group only in wordlists.group_id.
+     */
+    const assignedGroupIds = [
+      ...new Set([
+        list.group_id,
+        ...(links || []).map((link) => link.group_id),
+      ].filter(Boolean)),
+    ]
+
+    setEditGroupIds(assignedGroupIds)
+
+    setEditItems(
+      (items || []).map((item) => ({
+        id: item.id,
+        word: item.word || '',
+        definition: item.definition || '',
+        uzbek_translation:
+          item.uzbek_translation || '',
+        example_sentence:
+          item.example_sentence || '',
+        position: item.position,
+      }))
+    )
+  } catch (err) {
+    console.error(
+      'Failed to load word list for editing:',
+      err
+    )
+
+    setEditError(
+      err?.message ||
+        'Could not load this word list.'
+    )
+  } finally {
+    setEditLoading(false)
+  }
+}
+
+
+const closeEditWordlist = () => {
+  if (editSaving) return
+
+  setEditingList(null)
+  setEditTitle('')
+  setEditGroupIds([])
+  setEditItems([])
+  setEditError('')
+}
+
+const updateEditItem = (
+  index,
+  field,
+  value
+) => {
+  setEditItems((previous) =>
+    previous.map((item, itemIndex) =>
+      itemIndex === index
+        ? {
+            ...item,
+            [field]: value,
+          }
+        : item
+    )
+  )
+}
+
+
+const addEditItem = () => {
+  setEditItems((previous) => [
+    ...previous,
+    {
+      id: null,
+      word: '',
+      definition: '',
+      uzbek_translation: '',
+      example_sentence: '',
+      position: previous.length,
+    },
+  ])
+}
+
+const removeEditItem = (index) => {
+  setEditItems((previous) =>
+    previous.filter(
+      (_, itemIndex) => itemIndex !== index
+    )
+  )
+}
+
+const toggleEditGroup = (groupId) => {
+  setEditGroupIds((previous) => {
+    if (previous.includes(groupId)) {
+      return previous.filter(
+        (id) => id !== groupId
+      )
+    }
+
+    return [...previous, groupId]
+  })
+}
+
+const generateEditDetails = async () => {
+  const wordsToGenerate = editItems
+    .map((item) => item.word.trim())
+    .filter(Boolean)
+
+  if (!wordsToGenerate.length) {
+    setEditError(
+      'Add at least one word or collocation first.'
+    )
+    return
+  }
+
+  if (wordsToGenerate.length > 250) {
+    setEditError(
+      `You have ${wordsToGenerate.length} items. Please generate 250 words or fewer at a time.`
+    )
+    return
+  }
+
+  setEditGenerating(true)
+  setEditError('')
+
+  try {
+    const {
+      data: sessionData,
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      throw sessionError
+    }
+
+    const session = sessionData?.session
+
+    if (!session?.access_token) {
+      throw new Error(
+        'Your session has expired. Please log in again.'
+      )
+    }
+
+    const {
+      data,
+      error: functionError,
+    } = await supabase.functions.invoke(
+      'define-words',
+      {
+        body: {
+          words: wordsToGenerate,
+        },
+        headers: {
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+      }
+    )
+
+    if (functionError) {
+      throw new Error(
+        functionError.message ||
+          'The word definition service failed.'
+      )
+    }
+
+    if (
+      !data ||
+      !Array.isArray(data.results)
+    ) {
+      throw new Error(
+        'The definition service did not return a valid word list.'
+      )
+    }
+
+    const generatedByWord = new Map(
+      data.results.map((item) => [
+        (item?.word || '')
+          .trim()
+          .toLowerCase(),
+
+        {
+          definition:
+            item?.definition || '',
+          uzbek_translation:
+            item?.uzbek_translation || '',
+          example_sentence:
+            item?.example_sentence || '',
+        },
+      ])
+    )
+
+    setEditItems((previous) =>
+      previous.map((item) => {
+        const generated =
+          generatedByWord.get(
+            item.word.trim().toLowerCase()
+          )
+
+        if (!generated) {
+          return item
+        }
+
+        return {
+          ...item,
+
+          /*
+           * Keep manually entered information.
+           * Only fill fields that are blank.
+           */
+          definition:
+            item.definition ||
+            generated.definition,
+
+          uzbek_translation:
+            item.uzbek_translation ||
+            generated.uzbek_translation,
+
+          example_sentence:
+            item.example_sentence ||
+            generated.example_sentence,
+        }
+      })
+    )
+  } catch (err) {
+    console.error(
+      'Edit word detail generation failed:',
+      err
+    )
+
+    setEditError(
+      err?.message ||
+        'Could not generate word details.'
+    )
+  } finally {
+    setEditGenerating(false)
+  }
+}
+
+const saveEditWordlist = async () => {
+  if (!editingList) return
+
+  const cleanTitle = editTitle.trim()
+
+  if (!cleanTitle) {
+    setEditError('Please enter a title for the word list.')
+    return
+  }
+
+  const cleanItems = editItems
+    .map((item, index) => ({
+      ...item,
+      word: item.word.trim(),
+      definition: item.definition.trim(),
+      uzbek_translation:
+        item.uzbek_translation.trim(),
+      example_sentence:
+        item.example_sentence.trim(),
+      position: index,
+    }))
+    .filter((item) => item.word)
+
+  if (!cleanItems.length) {
+    setEditError(
+      'Add at least one word or collocation.'
+    )
+    return
+  }
+
+  if (!editGroupIds.length) {
+    setEditError(
+      'Select at least one group for this word list.'
+    )
+    return
+  }
+
+  setEditSaving(true)
+  setEditError('')
+
+  try {
+    /*
+     * 1. Update the word list title.
+     * The main group_id remains the first
+     * selected group.
+     */
+
+    const { error: listError } = await supabase
+      .from('wordlists')
+      .update({
+        title: cleanTitle,
+        group_id: editGroupIds[0],
+      })
+      .eq('id', editingList.id)
+      .eq('created_by', teacherId)
+
+    if (listError) throw listError
+
+
+    /*
+     * 2. Get the IDs of the words currently
+     * stored in the database.
+     */
+
+    const { data: existingItems, error: existingError } =
+      await supabase
+        .from('wordlist_items')
+        .select('id')
+        .eq('wordlist_id', editingList.id)
+
+    if (existingError) throw existingError
+
+    const existingIds = new Set(
+      (existingItems || []).map(
+        (item) => item.id
+      )
+    )
+
+
+    /*
+     * 3. Determine which existing words
+     * were removed by the teacher.
+     */
+
+    const keptExistingIds = new Set(
+      cleanItems
+        .filter(
+          (item) =>
+            item.id &&
+            existingIds.has(item.id)
+        )
+        .map((item) => item.id)
+    )
+
+    const removedIds = [...existingIds].filter(
+      (id) => !keptExistingIds.has(id)
+    )
+
+    if (removedIds.length) {
+      const { error: deleteItemsError } =
+        await supabase
+          .from('wordlist_items')
+          .delete()
+          .in('id', removedIds)
+
+      if (deleteItemsError) {
+        throw deleteItemsError
+      }
+    }
+
+
+    /*
+     * 4. Update existing words.
+     */
+
+    const existingToUpdate = cleanItems.filter(
+      (item) =>
+        item.id &&
+        existingIds.has(item.id)
+    )
+
+    for (const item of existingToUpdate) {
+      const { error: updateItemError } =
+        await supabase
+          .from('wordlist_items')
+          .update({
+            word: item.word,
+            definition: item.definition,
+            uzbek_translation:
+              item.uzbek_translation,
+            example_sentence:
+              item.example_sentence,
+            position: item.position,
+          })
+          .eq('id', item.id)
+          .eq(
+            'wordlist_id',
+            editingList.id
+          )
+
+      if (updateItemError) {
+        throw updateItemError
+      }
+    }
+
+
+    /*
+     * 5. Insert newly added words.
+     */
+
+    const newItems = cleanItems
+      .filter(
+        (item) =>
+          !item.id ||
+          !existingIds.has(item.id)
+      )
+      .map((item) => ({
+        wordlist_id: editingList.id,
+        word: item.word,
+        definition: item.definition,
+        uzbek_translation:
+          item.uzbek_translation,
+        example_sentence:
+          item.example_sentence,
+        position: item.position,
+      }))
+
+    if (newItems.length) {
+      const { error: insertItemsError } =
+        await supabase
+          .from('wordlist_items')
+          .insert(newItems)
+
+      if (insertItemsError) {
+        throw insertItemsError
+      }
+    }
+
+
+    /*
+     * 6. Replace group assignments.
+     */
+
+    const { error: deleteLinksError } =
+      await supabase
+        .from('wordlist_groups')
+        .delete()
+        .eq('wordlist_id', editingList.id)
+
+    if (deleteLinksError) {
+      throw deleteLinksError
+    }
+
+    const newLinks = editGroupIds.map(
+      (groupId) => ({
+        wordlist_id: editingList.id,
+        group_id: groupId,
+      })
+    )
+
+    const { error: insertLinksError } =
+      await supabase
+        .from('wordlist_groups')
+        .insert(newLinks)
+
+    if (insertLinksError) {
+      throw insertLinksError
+    }
+
+
+    /*
+     * 7. Delete old student attempts.
+     *
+     * Students must retake the updated list.
+     */
+
+    const { error: attemptsError } =
+      await supabase
+        .from('wordlist_attempts')
+        .delete()
+        .eq(
+          'wordlist_id',
+          editingList.id
+        )
+
+    if (attemptsError) {
+      throw attemptsError
+    }
+
+
+    /*
+     * 8. Reload the visible lists and close
+     * the editor.
+     */
+
+    await loadLists()
+
+    setEditingList(null)
+    setEditItems([])
+    setEditTitle('')
+    setEditGroupIds([])
+    setEditError('')
+
+    setConfirmDialog({
+      title: 'Word list updated',
+      message:
+        'The word list was successfully updated. Previous student results were cleared, so students can complete the updated list again.',
+      hideCancel: true,
+    })
+  } catch (err) {
+    console.error(
+      'Word list update failed:',
+      err
+    )
+
+    setEditError(
+      err?.message ||
+        'Could not save the word list changes.'
+    )
+  } finally {
+    setEditSaving(false)
+  }
+}
+
+return (
     <div className="flex flex-col gap-6">
 
       {groups.length === 0 && (
@@ -207,39 +748,39 @@ export default function TeacherWordlists({ teacherId }) {
 
             <div className="flex flex-col gap-3">
               {lists.map((list) => (
-                <div
-                  key={list.id}
-                  className="ticket p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                >
-                  <div className="min-w-0">
-                    <div className="font-display text-xl text-paper">
-                      {list.title}
-                    </div>
+  <div
+    key={list.id}
+    className="ticket p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+  >
+    <div className="min-w-0">
+      <div className="font-display text-xl text-paper">
+        {list.title}
+      </div>
 
-                    <div className="text-mist text-xs font-mono mt-1">
-                      {list.wordlist_items?.[0]?.count ?? 0} words · posted {new Date(list.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
+      <div className="text-mist text-xs font-mono mt-1">
+        {list.wordlist_items?.[0]?.count ?? 0} words · posted {new Date(list.created_at).toLocaleDateString()}
+      </div>
+    </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setViewingResults(list)}
-                      className="btn-secondary"
-                    >
-                      View results
-                    </button>
+    <div className="flex items-center gap-2 shrink-0">
+      <button
+        type="button"
+        onClick={() => setViewingResults(list)}
+        className="btn-secondary"
+      >
+        View results
+      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => deleteWordlist(list)}
-                      className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+      <button
+        type="button"
+        onClick={() => deleteWordlist(list)}
+        className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+))}
 
               {lists.length === 0 && (
                 <div className="surface rounded-xl p-8 text-center">
@@ -253,24 +794,395 @@ export default function TeacherWordlists({ teacherId }) {
         </>
       )}
 
-      {viewingResults && (
-        <ResultsModal
-          wordlist={viewingResults}
-          onClose={() => setViewingResults(null)}
-        />
-      )}
+      {editingList && (
+  <EditWordlistModal
+  wordlist={editingList}
+  groups={groups}
+  title={editTitle}
+  setTitle={setEditTitle}
+  groupIds={editGroupIds}
+  toggleGroup={toggleEditGroup}
+  items={editItems}
+  updateItem={updateEditItem}
+  addItem={addEditItem}
+  removeItem={removeEditItem}
+  onGenerate={generateEditDetails}
+  generating={editGenerating}
+  loading={editLoading}
+  saving={editSaving}
+  error={editError}
+  onSave={saveEditWordlist}
+  onClose={closeEditWordlist}
+/>
+)}
 
-      <ConfirmModal
-        open={Boolean(confirmDialog)}
-        {...confirmDialog}
-        onCancel={() => setConfirmDialog(null)}
-        onConfirm={() => {
-          const run = confirmDialog?.onConfirm
-          setConfirmDialog(null)
-          run?.()
-        }}
-      />
+{viewingResults && (
+  <ResultsModal
+    wordlist={viewingResults}
+    onClose={() => setViewingResults(null)}
+  />
+)}
+
+<ConfirmModal
+  open={Boolean(confirmDialog)}
+  {...confirmDialog}
+  onCancel={() => setConfirmDialog(null)}
+  onConfirm={() => {
+    const run = confirmDialog?.onConfirm
+    setConfirmDialog(null)
+    run?.()
+  }}
+/>
     </div>
+  )
+}
+
+/* ============================================================
+   EDIT WORD LIST
+   ============================================================
+*/
+
+function EditWordlistModal({
+  wordlist,
+  groups,
+  title,
+  setTitle,
+  groupIds,
+  toggleGroup,
+  items,
+  updateItem,
+  addItem,
+  removeItem,
+  onGenerate,
+  generating,
+  loading,
+  saving,
+  error,
+  onSave,
+  onClose,
+}) {  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:p-6">
+      <div className="surface my-4 w-full max-w-5xl rounded-2xl border border-line shadow-2xl">
+
+        {/* HEADER */}
+
+        <div className="flex items-start justify-between gap-4 border-b border-line p-5 sm:p-6">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+              Edit vocabulary
+            </div>
+
+            <h2 className="font-display text-2xl sm:text-3xl mt-1">
+              Edit word list
+            </h2>
+
+            <p className="text-sm text-mist mt-2">
+              Changes will require students to complete
+              the updated word list again.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:text-paper hover:border-brass disabled:opacity-40"
+            aria-label="Close editor"
+          >
+            ×
+          </button>
+        </div>
+
+
+        <div className="p-5 sm:p-6 flex flex-col gap-6">
+
+          {loading ? (
+            <div className="py-16 text-center text-mist">
+              Loading word list...
+            </div>
+          ) : (
+            <>
+
+              {/* TITLE */}
+
+              <div>
+                <label className="text-xs font-mono uppercase tracking-[0.14em] text-mist">
+                  Word list title
+                </label>
+
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) =>
+                    setTitle(e.target.value)
+                  }
+                  className="focus-ring mt-2 w-full rounded-xl border border-line bg-panel px-4 py-3 text-paper outline-none transition focus:border-brass"
+                  placeholder="e.g. Academic Vocabulary"
+                />
+              </div>
+
+
+              {/* GROUPS */}
+
+              <div>
+                <div className="text-xs font-mono uppercase tracking-[0.14em] text-mist mb-3">
+                  Assigned groups
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((group) => {
+                    const selected =
+                      groupIds.includes(group.id)
+
+                    return (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() =>
+                          toggleGroup(group.id)
+                        }
+                        className={`focus-ring rounded-lg border px-4 py-2 text-sm transition ${
+                          selected
+                            ? 'border-brass bg-brass text-onbrass'
+                            : 'border-line bg-panel text-mist hover:border-brass hover:text-paper'
+                        }`}
+                      >
+                        {selected ? '✓ ' : ''}
+                        {group.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+
+              {/* WORDS HEADER */}
+
+              <div className="flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-xs font-mono uppercase tracking-[0.14em] text-mist">
+                    Vocabulary items
+                  </div>
+
+                  <p className="text-sm text-mist mt-1">
+                    Edit existing words or add new ones.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+
+                  <button
+                    type="button"
+                    onClick={onGenerate}
+                    disabled={
+                      generating ||
+                      items.length === 0
+                    }
+                    className="btn-secondary disabled:opacity-50"
+                  >
+                    {generating
+                      ? 'Generating...'
+                      : '✨ Generate details'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="btn-primary"
+                  >
+                    + Add word
+                  </button>
+
+                </div>
+              </div>
+
+
+              {/* WORD ITEMS */}
+
+              <div className="flex flex-col gap-4">
+
+                {items.map((item, index) => (
+                  <div
+                    key={
+                      item.id ||
+                      `new-word-${index}`
+                    }
+                    className="rounded-2xl border border-line bg-panel p-4 sm:p-5"
+                  >
+
+                    <div className="flex items-center justify-between gap-3 mb-4">
+
+                      <div className="text-xs font-mono text-brass">
+                        ITEM {index + 1}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeItem(index)
+                        }
+                        className="focus-ring rounded-lg px-3 py-1.5 text-xs text-coral transition hover:bg-coral/10"
+                      >
+                        Remove
+                      </button>
+
+                    </div>
+
+
+                    <div className="grid gap-4">
+
+                      {/* WORD */}
+
+                      <div>
+                        <label className="text-xs text-mist">
+                          Word / collocation
+                        </label>
+
+                        <input
+                          type="text"
+                          value={item.word}
+                          onChange={(e) =>
+                            updateItem(
+                              index,
+                              'word',
+                              e.target.value
+                            )
+                          }
+                          className="focus-ring mt-1.5 w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper outline-none focus:border-brass"
+                          placeholder="Enter word or collocation"
+                        />
+                      </div>
+
+
+                      {/* DEFINITION */}
+
+                      <div>
+                        <label className="text-xs text-mist">
+                          Definition
+                        </label>
+
+                        <textarea
+                          value={item.definition}
+                          onChange={(e) =>
+                            updateItem(
+                              index,
+                              'definition',
+                              e.target.value
+                            )
+                          }
+                          rows={2}
+                          className="focus-ring mt-1.5 w-full resize-y rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper outline-none focus:border-brass"
+                          placeholder="Definition"
+                        />
+                      </div>
+
+
+                      {/* UZBEK */}
+
+                      <div>
+                        <label className="text-xs text-mist">
+                          Uzbek translation
+                        </label>
+
+                        <input
+                          type="text"
+                          value={
+                            item.uzbek_translation
+                          }
+                          onChange={(e) =>
+                            updateItem(
+                              index,
+                              'uzbek_translation',
+                              e.target.value
+                            )
+                          }
+                          className="focus-ring mt-1.5 w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper outline-none focus:border-brass"
+                          placeholder="Uzbek translation"
+                        />
+                      </div>
+
+
+                      {/* EXAMPLE */}
+
+                      <div>
+                        <label className="text-xs text-mist">
+                          Example sentence
+                        </label>
+
+                        <textarea
+                          value={
+                            item.example_sentence
+                          }
+                          onChange={(e) =>
+                            updateItem(
+                              index,
+                              'example_sentence',
+                              e.target.value
+                            )
+                          }
+                          rows={2}
+                          className="focus-ring mt-1.5 w-full resize-y rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper outline-none focus:border-brass"
+                          placeholder="Example sentence"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+
+
+                {items.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-mist">
+                    No words yet. Add a word to start
+                    building this list.
+                  </div>
+                )}
+
+              </div>
+
+
+              {/* ERROR */}
+
+              {error && (
+                <div className="rounded-xl border border-coral/30 bg-coral/10 px-4 py-3 text-sm text-coral">
+                  {error}
+                </div>
+              )}
+
+
+              {/* FOOTER */}
+
+              <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end">
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+
+                <button
+  type="button"
+  onClick={onSave}
+  disabled={saving || loading}
+  className="btn-primary disabled:opacity-50"
+>
+  {saving
+    ? 'Saving changes...'
+    : 'Save changes'}
+</button>
+
+              </div>
+
+            </>
+          )}
+
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }
 
