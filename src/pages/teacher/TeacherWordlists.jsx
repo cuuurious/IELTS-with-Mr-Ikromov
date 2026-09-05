@@ -320,70 +320,91 @@ function NewWordlistForm({
 
     try {
       const {
-        data: sessionData,
-      } =
-        await supabase.auth.getSession()
+  data: sessionData,
+  error: sessionError,
+} = await supabase.auth.getSession()
 
-      const token =
-        sessionData?.session
-          ?.access_token
+if (sessionError) {
+  throw sessionError
+}
 
-      if (!token) {
-        throw new Error(
-          'Your session has expired. Please log in again.'
-        )
-      }
+let session = sessionData?.session
 
-      const resp = await fetch(
-        'https://grdfwleehlgoooizyowz.supabase.co/functions/v1/define-words',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            words,
-          }),
-        }
-      )
+if (!session) {
+  throw new Error(
+    'Your session has expired. Please log in again.'
+  )
+}
 
-      const responseText =
-        await resp.text()
+/*
+ * Refresh only when the access token is close to expiring.
+ * Do not force-refresh every request.
+ */
+const expiresAt =
+  session.expires_at
+    ? session.expires_at * 1000
+    : 0
 
-      let data = null
+const expiresSoon =
+  expiresAt &&
+  expiresAt - Date.now() < 60 * 1000
 
-      if (responseText.trim()) {
-        try {
-          data =
-            JSON.parse(
-              responseText
-            )
-        } catch {
-          throw new Error(
-            `The translation service returned an invalid response (${resp.status}). Please try again.`
-          )
-        }
-      }
+if (expiresSoon) {
+  const {
+    data: refreshedData,
+    error: refreshError,
+  } = await supabase.auth.refreshSession()
 
-      if (!resp.ok) {
-        throw new Error(
-          data?.error ||
-            `Translation service failed (${resp.status}).`
-        )
-      }
+  if (refreshError) {
+    throw new Error(
+      'Your session has expired. Please log in again.'
+    )
+  }
 
-      if (
-        !data ||
-        !Array.isArray(
-          data.results
-        )
-      ) {
-        throw new Error(
-          'The translation service did not return a valid word list.'
-        )
-      }
+  session = refreshedData?.session
+
+  if (!session) {
+    throw new Error(
+      'Your session has expired. Please log in again.'
+    )
+  }
+}
+
+/*
+ * Use the Supabase client instead of manually calling fetch.
+ * This automatically handles the Edge Function request correctly.
+ */
+const {
+  data,
+  error: functionError,
+} = await supabase.functions.invoke(
+  'define-words',
+  {
+    body: {
+      words,
+    },
+    headers: {
+      Authorization:
+        `Bearer ${session.access_token}`,
+    },
+  }
+)
+
+if (functionError) {
+  throw new Error(
+    functionError.message ||
+      'Could not reach the word generation service.'
+  )
+}
+
+if (
+  !data ||
+  !Array.isArray(data.results)
+) {
+  throw new Error(
+    'The translation service did not return a valid word list.'
+  )
+}
 
       const cleanedResults =
         data.results.map(
