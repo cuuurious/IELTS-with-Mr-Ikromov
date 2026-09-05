@@ -205,22 +205,23 @@ Deno.serve(async (req) => {
       )
     }
 
-    /*
+        /*
      * ------------------------------------------------------------
-     * WORD LISTS — never deleted, only reassigned or blocked
+     * WORD LISTS
      * ------------------------------------------------------------
      *
-     * A word list has a primary `group_id` (its owning group) and
-     * may additionally be linked to other groups through the
-     * `wordlist_groups` table. Deleting the group would otherwise
-     * cascade-delete any word list whose primary group is this one
-     * — even if it's still actively linked to other groups.
+     * Word lists can belong to multiple groups through
+     * wordlist_groups.
      *
-     * So first: for every word list primarily owned by this group,
-     * try to hand ownership to another group it's already linked
-     * to. If a word list has no other group, refuse the whole
-     * deletion up front rather than losing it or guessing.
+     * If a list is shared with another group:
+     *   - keep the list
+     *   - move its primary group_id to another linked group
+     *
+     * If a list belongs only to this group:
+     *   - delete the list completely
+     *   - its items and attempts cascade-delete automatically
      */
+
     const {
       data: ownedWordlists,
       error: ownedWordlistsError,
@@ -233,12 +234,12 @@ Deno.serve(async (req) => {
       throw ownedWordlistsError
     }
 
+    const wordlistIdsToDelete: string[] = []
+
     const reassignments: {
       wordlistId: string
       newGroupId: string
     }[] = []
-
-    const blockedWordlists: string[] = []
 
     for (const wordlist of ownedWordlists || []) {
       const {
@@ -263,30 +264,13 @@ Deno.serve(async (req) => {
           newGroupId: alternateGroupId,
         })
       } else {
-        blockedWordlists.push(
-          wordlist.title || 'Untitled word list'
-        )
+        wordlistIdsToDelete.push(wordlist.id)
       }
     }
 
-    if (blockedWordlists.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error:
-            `Can't delete this group yet — these word lists only exist here and would be lost: ${blockedWordlists.join(
-              ', '
-            )}. Reassign them to another group or delete them from Word Lists first, then try again.`,
-        }),
-        {
-          status: 409,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
-    }
-
+    /*
+     * Reassign shared word lists before deleting the group.
+     */
     for (const reassignment of reassignments) {
       const {
         error: reassignError,
@@ -299,6 +283,23 @@ Deno.serve(async (req) => {
 
       if (reassignError) {
         throw reassignError
+      }
+    }
+
+    /*
+     * Delete word lists that belong exclusively to this group.
+     * wordlist_items and wordlist_attempts use ON DELETE CASCADE.
+     */
+    if (wordlistIdsToDelete.length > 0) {
+      const {
+        error: deleteWordlistsError,
+      } = await admin
+        .from('wordlists')
+        .delete()
+        .in('id', wordlistIdsToDelete)
+
+      if (deleteWordlistsError) {
+        throw deleteWordlistsError
       }
     }
 
