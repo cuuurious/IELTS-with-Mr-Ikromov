@@ -192,6 +192,8 @@ const openEditWordlist = async (list) => {
         example_sentence:
           item.example_sentence || '',
         position: item.position,
+        isNew: false,
+        clientId: item.id,
       }))
     )
   } catch (err) {
@@ -240,15 +242,21 @@ const updateEditItem = (
 
 const addEditItem = () => {
   setEditItems((previous) => [
-    ...previous,
     {
       id: null,
+      clientId:
+        typeof crypto !== 'undefined' &&
+        crypto.randomUUID
+          ? crypto.randomUUID()
+          : `new-${Date.now()}-${previous.length}`,
+      isNew: true,
       word: '',
       definition: '',
       uzbek_translation: '',
       example_sentence: '',
       position: previous.length,
     },
+    ...previous,
   ])
 }
 
@@ -273,23 +281,34 @@ const toggleEditGroup = (groupId) => {
 }
 
 const generateEditDetails = async () => {
-  const wordsToGenerate = editItems
-    .map((item) => item.word.trim())
-    .filter(Boolean)
+  /*
+   * Only generate details for words added during this edit session.
+   * Existing words are never sent again, so editing an old list does
+   * not overwrite or reprocess its original vocabulary.
+   */
+  const newItems = editItems.filter(
+    (item) =>
+      item.isNew &&
+      item.word.trim()
+  )
 
-  if (!wordsToGenerate.length) {
+  if (!newItems.length) {
     setEditError(
-      'Add at least one word or collocation first.'
+      'Add a new word or collocation first, then enter it before generating details.'
     )
     return
   }
 
-  if (wordsToGenerate.length > 250) {
+  if (newItems.length > 250) {
     setEditError(
-      `You have ${wordsToGenerate.length} items. Please generate 250 words or fewer at a time.`
+      `You have ${newItems.length} new items. Please generate 250 words or fewer at a time.`
     )
     return
   }
+
+  const wordsToGenerate = newItems.map(
+    (item) => item.word.trim()
+  )
 
   setEditGenerating(true)
   setEditError('')
@@ -349,7 +368,6 @@ const generateEditDetails = async () => {
         (item?.word || '')
           .trim()
           .toLowerCase(),
-
         {
           definition:
             item?.definition || '',
@@ -363,6 +381,13 @@ const generateEditDetails = async () => {
 
     setEditItems((previous) =>
       previous.map((item) => {
+        if (
+          !item.isNew ||
+          !item.word.trim()
+        ) {
+          return item
+        }
+
         const generated =
           generatedByWord.get(
             item.word.trim().toLowerCase()
@@ -374,19 +399,16 @@ const generateEditDetails = async () => {
 
         return {
           ...item,
-
           /*
-           * Keep manually entered information.
-           * Only fill fields that are blank.
+           * Keep any details the teacher already typed manually.
+           * Only fill fields that are still blank.
            */
           definition:
             item.definition ||
             generated.definition,
-
           uzbek_translation:
             item.uzbek_translation ||
             generated.uzbek_translation,
-
           example_sentence:
             item.example_sentence ||
             generated.example_sentence,
@@ -401,7 +423,7 @@ const generateEditDetails = async () => {
 
     setEditError(
       err?.message ||
-        'Could not generate word details.'
+        'Could not generate details for the new words.'
     )
   } finally {
     setEditGenerating(false)
@@ -973,7 +995,8 @@ function EditWordlistModal({
                   </div>
 
                   <p className="text-sm text-mist mt-1">
-                    Edit existing words or add new ones.
+                    Edit existing words or add new ones. Generation only
+                    processes words added during this editing session.
                   </p>
                 </div>
 
@@ -989,8 +1012,8 @@ function EditWordlistModal({
                     className="btn-secondary disabled:opacity-50"
                   >
                     {generating
-                      ? 'Generating...'
-                      : '✨ Generate details'}
+                      ? 'Generating details...'
+                      : '✨ Generate details for new words'}
                   </button>
 
                   <button
@@ -1013,6 +1036,7 @@ function EditWordlistModal({
                   <div
                     key={
                       item.id ||
+                      item.clientId ||
                       `new-word-${index}`
                     }
                     className="rounded-2xl border border-line bg-panel p-4 sm:p-5"
@@ -1020,8 +1044,16 @@ function EditWordlistModal({
 
                     <div className="flex items-center justify-between gap-3 mb-4">
 
-                      <div className="text-xs font-mono text-brass">
-                        ITEM {index + 1}
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-mono text-brass">
+                          ITEM {index + 1}
+                        </div>
+
+                        {item.isNew && (
+                          <span className="rounded-full border border-sage/30 bg-sage/10 px-2 py-0.5 text-[10px] font-mono text-sage">
+                            NEW
+                          </span>
+                        )}
                       </div>
 
                       <button
