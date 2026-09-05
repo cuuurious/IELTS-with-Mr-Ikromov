@@ -259,25 +259,85 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Deadline</label>
-          <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm" />
-        </div>
-        {homeworkType === 'standard' && (
-          <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer self-end">
-            <input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} />
-            Include speaking Part 1 / 2 / 3
-          </label>
-        )}
-      </div>
+  <div>
+    <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">
+      Deadline
+    </label>
 
-      <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer">
-        <input type="checkbox" checked={aiEvalEnabled} onChange={(e) => setAiEvalEnabled(e.target.checked)} />
-        <span>
-          Evaluate submissions with AI
-          <span className="block text-xs text-mist font-normal mt-0.5">Students get detailed feedback automatically when they submit, graded against your uploaded {enableSpeaking ? 'Speaking' : 'Writing'} criteria (set up under the "AI Grading" tab).</span>
+    <input
+      type="datetime-local"
+      value={dueDate}
+      onChange={(e) => setDueDate(e.target.value)}
+      className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+    />
+  </div>
+
+  {homeworkType === 'standard' && (
+    <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer self-end">
+      <input
+        type="checkbox"
+        checked={enableSpeaking}
+        onChange={(e) =>
+          setEnableSpeaking(e.target.checked)
+        }
+      />
+
+      <span>
+        Include speaking Part 1 / 2 / 3
+
+        <span className="block text-xs text-mist font-normal mt-0.5">
+          Students record their speaking answers directly
+          in the platform.
         </span>
-      </label>
+      </span>
+    </label>
+  )}
+</div>
+
+
+{homeworkType === 'standard' && (
+  <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-3 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={aiEvalEnabled}
+      onChange={(e) =>
+        setAiEvalEnabled(e.target.checked)
+      }
+    />
+
+    <span>
+      Evaluate submissions with AI
+
+      <span className="block text-xs text-mist font-normal mt-0.5">
+        {enableSpeaking
+          ? 'Speaking recordings will receive automatic IELTS Speaking feedback and band scoring.'
+          : 'Writing submissions and essays will receive automatic IELTS Writing feedback and band scoring.'}
+      </span>
+    </span>
+  </label>
+)}
+
+
+{homeworkType === 'writing_mock' && (
+  <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-3 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={aiEvalEnabled}
+      onChange={(e) =>
+        setAiEvalEnabled(e.target.checked)
+      }
+    />
+
+    <span>
+      Evaluate submissions with AI
+
+      <span className="block text-xs text-mist font-normal mt-0.5">
+        Students will receive automatic IELTS Writing
+        feedback and band scoring after completing the mock.
+      </span>
+    </span>
+  </label>
+)}
 
       {!homeworkType && (
         <p className="text-xs text-mist bg-panel-2 border border-line rounded-md px-3 py-2.5">
