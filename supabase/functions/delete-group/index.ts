@@ -648,25 +648,43 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error(
-      'delete-group error:',
-      error
-    )
+  console.error(
+    'delete-group error:',
+    error
+  )
 
-    return new Response(
-      JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Unexpected server error',
-      }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-  }
-})
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null
+        ? (
+            (error as {
+              message?: string
+              details?: string
+              hint?: string
+              code?: string
+            }).message ||
+            (error as {
+              details?: string
+            }).details ||
+            JSON.stringify(error)
+          )
+        : String(error)
+
+  return new Response(
+    JSON.stringify({
+      error: errorMessage,
+      details:
+        typeof error === 'object' && error !== null
+          ? error
+          : null,
+    }),
+    {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+}
