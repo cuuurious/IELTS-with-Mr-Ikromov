@@ -197,23 +197,58 @@ export function AuthProvider({ children }) {
     }
 
     if (existingUsername) {
-      throw new Error(
-        'That username is already taken. Please choose a different one.'
-      )
-    }
+  throw new Error(
+    'That username is already taken. Please choose a different one.'
+  )
+}
 
-    const email =
-      contactEmail?.trim().toLowerCase() ||
-      usernameToEmail(username)
+const email =
+  contactEmail?.trim().toLowerCase() ||
+  usernameToEmail(username)
 
-    const {
-      data,
-      error,
-    } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+/*
+ * Check whether this contact email is already attached
+ * to an existing student profile before creating a new
+ * Supabase Auth account.
+ *
+ * This prevents someone from registering multiple
+ * accounts using the same Gmail address.
+ */
+if (contactEmail?.trim()) {
+  const normalizedContactEmail =
+    contactEmail.trim().toLowerCase()
 
+  const {
+    data: existingEmail,
+    error: emailCheckError,
+  } = await supabase
+    .from('profiles')
+    .select('id, username, full_name')
+    .ilike(
+      'contact_email',
+      normalizedContactEmail
+    )
+    .maybeSingle()
+
+  if (emailCheckError) {
+    throw emailCheckError
+  }
+
+  if (existingEmail) {
+    throw new Error(
+      'An account with this email address already exists. Please log in instead or use a different email address.'
+    )
+  }
+}
+
+const {
+  data,
+  error,
+} = await supabase.auth.signUp({
+  email,
+  password,
+})
+     
     if (error) {
       throw error
     }
