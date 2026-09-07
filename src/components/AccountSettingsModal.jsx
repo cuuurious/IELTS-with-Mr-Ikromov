@@ -939,6 +939,29 @@ const deleteAccount = async () => {
           </div>
         )}
 
+
+        {/* ACCOUNT SESSION */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-line">
+          <div className="text-xs uppercase tracking-wide text-mist font-mono">
+            Account session
+          </div>
+
+          <p className="text-mist text-sm">
+            Sign out of your account on this device.
+          </p>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut()
+              onClose()
+            }}
+            className="focus-ring w-full rounded-md border border-line bg-panel-2 px-3 py-2.5 text-sm font-medium text-mist transition hover:border-brass hover:bg-brass/5 hover:text-brass"
+          >
+            Log out
+          </button>
+        </div>
+
         {/* DANGER ZONE */}
         {/*
           Self-delete is student-only. The database only auto-cleans up
