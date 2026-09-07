@@ -3,7 +3,10 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import AccountSettingsModal from './AccountSettingsModal'
-import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
+import {
+  getTargetBandInfo,
+  formatTargetBand,
+} from '../lib/targetBands'
 
 export default function Layout({
   tabs,
@@ -12,15 +15,50 @@ export default function Layout({
   children,
 }) {
   const { profile, signOut } = useAuth()
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const isTeacher = profile?.role === 'teacher'
+  const [settingsOpen, setSettingsOpen] =
+    useState(false)
+
+  const isTeacher =
+    profile?.role === 'teacher'
+
+  /*
+   * Extract pending approval count from the tab label.
+   *
+   * TeacherDashboard currently sends labels like:
+   * "Approvals (3)"
+   *
+   * We keep that existing system intact, but visually
+   * separate the count into a badge here.
+   */
+  const getTabDisplay = (tab) => {
+    if (tab.key !== 'approvals') {
+      return {
+        label: tab.label,
+        count: null,
+      }
+    }
+
+    const match =
+      tab.label?.match(
+        /^Approvals(?:\s*\((\d+)\))?$/
+      )
+
+    return {
+      label: 'Approvals',
+      count:
+        match?.[1]
+          ? Number(match[1])
+          : null,
+    }
+  }
 
   return (
     <div
       className="
         min-h-screen
-        flex flex-col
+        flex
+        flex-col
         text-paper
         bg-ink
         relative
@@ -36,13 +74,15 @@ export default function Layout({
         aria-hidden="true"
         className="
           pointer-events-none
-          fixed inset-0
+          fixed
+          inset-0
           overflow-hidden
           -z-0
         "
       >
 
         {/* Large lavender glow */}
+
         <div
           className="
             absolute
@@ -57,6 +97,7 @@ export default function Layout({
         />
 
         {/* Cyan glow */}
+
         <div
           className="
             absolute
@@ -71,6 +112,7 @@ export default function Layout({
         />
 
         {/* Soft angled line */}
+
         <div
           className="
             absolute
@@ -84,6 +126,7 @@ export default function Layout({
         />
 
         {/* Floating rounded square */}
+
         <div
           className="
             absolute
@@ -101,6 +144,7 @@ export default function Layout({
         />
 
         {/* Floating cyan shape */}
+
         <div
           className="
             absolute
@@ -115,6 +159,7 @@ export default function Layout({
         />
 
         {/* Floating coral shape */}
+
         <div
           className="
             absolute
@@ -137,20 +182,46 @@ export default function Layout({
 
       <header
         className="
-          sticky top-0 z-40
-          border-b border-line
-          bg-panel/80
+          sticky
+          top-0
+          z-40
+          border-b
+          border-line
+          bg-panel/85
           backdrop-blur-xl
         "
       >
 
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          className="
+            max-w-[1440px]
+            mx-auto
+            px-4
+            sm:px-6
+            lg:px-8
+          "
+        >
 
-          <div className="h-[76px] flex items-center justify-between gap-4">
+          <div
+            className="
+              h-[76px]
+              flex
+              items-center
+              justify-between
+              gap-4
+            "
+          >
 
             {/* BRAND */}
 
-            <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="
+                flex
+                items-center
+                gap-3
+                min-w-0
+              "
+            >
 
               <div className="relative shrink-0">
 
@@ -158,12 +229,15 @@ export default function Layout({
                   src="/mrikromov.jpg"
                   alt="IELTS with Mr Ikromov"
                   className="
-                    w-11 h-11
-                    sm:w-12 sm:h-12
+                    w-11
+                    h-11
+                    sm:w-12
+                    sm:h-12
                     rounded-[1rem]
                     object-cover
                     object-center
-                    border border-panel
+                    border
+                    border-panel
                     shadow-[0_8px_25px_rgba(30,35,70,0.12)]
                   "
                 />
@@ -184,11 +258,12 @@ export default function Layout({
 
               </div>
 
+
               <div className="min-w-0">
 
                 <div
                   className="
-                    text-[17px]
+                    text-[16px]
                     sm:text-[19px]
                     leading-tight
                     font-semibold
@@ -199,6 +274,7 @@ export default function Layout({
                 >
                   IELTS with Mr Ikromov
                 </div>
+
 
                 <div
                   className="
@@ -223,12 +299,22 @@ export default function Layout({
 
             {/* RIGHT CONTROLS */}
 
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div
+              className="
+                flex
+                items-center
+                gap-1.5
+                sm:gap-2
+                shrink-0
+              "
+            >
+
+              {/* User name */}
 
               <span
                 className="
                   hidden
-                  lg:block
+                  xl:block
                   text-sm
                   text-mist
                   mr-1
@@ -239,43 +325,59 @@ export default function Layout({
                 {profile?.full_name}
               </span>
 
-              {!isTeacher && profile?.target_band != null && (
-                <button
-                  type="button"
-                  onClick={() => setSettingsOpen(true)}
-                  title="Change your target band in Account Settings"
-                  className="
-                    focus-ring
-                    hidden
-                    sm:flex
-                    items-center
-                    gap-1
-                    rounded-full
-                    border border-line
-                    bg-panel/80
-                    shadow-sm
-                    px-2.5 py-1
-                    text-xs font-semibold
-                    text-brass
-                    hover:border-brass
-                    transition-colors
-                  "
-                >
-                  <span>
-                    {
-                      getTargetBandInfo(
-                        profile.target_band
-                      ).emoji
+
+              {/* Student target band */}
+
+              {!isTeacher &&
+                profile?.target_band != null && (
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSettingsOpen(true)
                     }
-                  </span>
-                  <span>
-                    Target{' '}
-                    {formatTargetBand(
-                      profile.target_band
-                    )}
-                  </span>
-                </button>
-              )}
+                    title="Change your target band"
+                    className="
+                      focus-ring
+                      hidden
+                      lg:flex
+                      items-center
+                      gap-1
+                      rounded-full
+                      border
+                      border-line
+                      bg-panel/80
+                      shadow-sm
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-semibold
+                      text-brass
+                      hover:border-brass
+                      transition-colors
+                    "
+                  >
+
+                    <span>
+                      {
+                        getTargetBandInfo(
+                          profile.target_band
+                        ).emoji
+                      }
+                    </span>
+
+                    <span>
+                      Target{' '}
+                      {
+                        formatTargetBand(
+                          profile.target_band
+                        )
+                      }
+                    </span>
+
+                  </button>
+
+                )}
 
 
               {/* Theme */}
@@ -283,7 +385,8 @@ export default function Layout({
               <div
                 className="
                   rounded-full
-                  border border-line
+                  border
+                  border-line
                   bg-panel/80
                   shadow-sm
                 "
@@ -297,12 +400,15 @@ export default function Layout({
               <div
                 className="
                   rounded-full
-                  border border-line
+                  border
+                  border-line
                   bg-panel/80
                   shadow-sm
                 "
               >
-                <NotificationBell profile={profile} />
+                <NotificationBell
+                  profile={profile}
+                />
               </div>
 
 
@@ -310,14 +416,20 @@ export default function Layout({
 
               <button
                 type="button"
-                onClick={() => setSettingsOpen(true)}
+                onClick={() =>
+                  setSettingsOpen(true)
+                }
                 className="
                   focus-ring
-                  w-9 h-9
+                  w-9
+                  h-9
                   rounded-full
-                  border border-line
+                  border
+                  border-line
                   bg-panel/80
-                  flex items-center justify-center
+                  flex
+                  items-center
+                  justify-center
                   text-mist
                   hover:text-brass
                   hover:border-brass/50
@@ -340,26 +452,35 @@ export default function Layout({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <circle cx="12" cy="12" r="3" />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+
                   <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1.51 1v.09a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+
                 </svg>
 
               </button>
 
 
-              {/* Logout */}
+              {/* Logout desktop */}
 
               <button
                 type="button"
                 onClick={signOut}
                 className="
                   focus-ring
-                  hidden sm:inline-flex
-                  items-center justify-center
+                  hidden
+                  md:inline-flex
+                  items-center
+                  justify-center
                   h-9
                   px-3.5
                   rounded-[0.7rem]
-                  border border-line
+                  border
+                  border-line
                   bg-panel/80
                   text-sm
                   font-medium
@@ -396,21 +517,28 @@ export default function Layout({
             z-30
             px-3
             pt-3
+            pb-1
           "
         >
 
-          <div className="max-w-[1440px] mx-auto">
+          <div
+            className="
+              max-w-[1440px]
+              mx-auto
+            "
+          >
 
             <div
               className="
-                inline-flex
+                flex
                 max-w-full
                 items-center
                 gap-1
                 overflow-x-auto
                 rounded-[1.15rem]
-                border border-line
-                bg-panel/75
+                border
+                border-line
+                bg-panel/80
                 backdrop-blur-xl
                 p-1.5
                 shadow-[0_10px_35px_rgba(0,0,0,0.12)]
@@ -418,23 +546,36 @@ export default function Layout({
               "
             >
 
-              {tabs.map((t) => {
+              {tabs.map((tab) => {
 
                 const active =
-                  activeTab === t.key
+                  activeTab === tab.key
+
+                const {
+                  label,
+                  count,
+                } = getTabDisplay(tab)
+
+                const hasPending =
+                  tab.key === 'approvals' &&
+                  count &&
+                  count > 0
 
                 return (
 
                   <button
                     type="button"
-                    key={t.key}
+                    key={tab.key}
                     onClick={() =>
-                      onTabChange(t.key)
+                      onTabChange(tab.key)
                     }
                     className={`
                       focus-ring
                       relative
                       shrink-0
+                      inline-flex
+                      items-center
+                      gap-2
                       px-4
                       py-2.5
                       rounded-[0.85rem]
@@ -453,24 +594,70 @@ export default function Layout({
                             to-lavender
                             shadow-[0_7px_18px_rgba(101,89,236,0.25)]
                           `
-                          : `
-                            text-mist
-                            hover:text-paper
-                            hover:bg-panel-2
-                          `
+                          : hasPending
+                            ? `
+                              text-paper
+                              bg-coral/10
+                              border
+                              border-coral/30
+                              hover:bg-coral/15
+                            `
+                            : `
+                              text-mist
+                              hover:text-paper
+                              hover:bg-panel-2
+                            `
                       }
                     `}
                   >
-                    {t.label}
 
-                    {/* Notification count for approvals */}
+                    <span>
+                      {label}
+                    </span>
 
-                    {t.key === 'approvals' &&
-                      pendingCountSafe(t.label) && null}
+
+                    {/* Pending approval badge */}
+
+                    {hasPending && (
+
+                      <span
+                        className={`
+                          min-w-[20px]
+                          h-5
+                          px-1.5
+                          rounded-full
+                          inline-flex
+                          items-center
+                          justify-center
+                          text-[10px]
+                          font-bold
+                          leading-none
+
+                          ${
+                            active
+                              ? `
+                                bg-panel/25
+                                text-onbrass
+                              `
+                              : `
+                                bg-coral
+                                text-white
+                                shadow-[0_2px_8px_rgba(239,107,107,0.35)]
+                              `
+                          }
+                        `}
+                      >
+                        {count > 99
+                          ? '99+'
+                          : count}
+                      </span>
+
+                    )}
 
                   </button>
 
                 )
+
               })}
 
             </div>
@@ -486,7 +673,13 @@ export default function Layout({
           MAIN CONTENT
           ===================================================== */}
 
-      <main className="flex-1 relative z-10">
+      <main
+        className="
+          flex-1
+          relative
+          z-10
+        "
+      >
 
         <div
           className="
@@ -510,27 +703,89 @@ export default function Layout({
 
 
       {/* =====================================================
+          MOBILE LOGOUT
+          ===================================================== */}
+
+      <div
+        className="
+          md:hidden
+          px-4
+          pb-5
+          relative
+          z-10
+        "
+      >
+
+        <div
+          className="
+            max-w-[1440px]
+            mx-auto
+          "
+        >
+
+          <button
+            type="button"
+            onClick={signOut}
+            className="
+              focus-ring
+              w-full
+              flex
+              items-center
+              justify-center
+              gap-2
+              py-3
+              rounded-xl
+              border
+              border-line
+              bg-panel/80
+              text-sm
+              font-medium
+              text-mist
+              hover:text-coral
+              hover:border-coral/40
+              hover:bg-coral/5
+              transition-all
+            "
+          >
+
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+
+            Log out
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
           ACCOUNT SETTINGS
           ===================================================== */}
 
       {settingsOpen && (
+
         <AccountSettingsModal
           onClose={() =>
             setSettingsOpen(false)
           }
         />
+
       )}
 
     </div>
   )
-}
-
-
-/*
- * Kept deliberately harmless.
- * Approval counts are already included in the tab label
- * by TeacherDashboard, so no extra notification UI is needed.
- */
-function pendingCountSafe() {
-  return false
 }
