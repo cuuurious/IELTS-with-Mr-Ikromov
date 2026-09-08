@@ -116,7 +116,7 @@ const [viewingImage, setViewingImage] = useState(null)
   </section>
 )}
 
-            {/* UPLOADED FILES */}
+                        {/* UPLOADED FILES */}
             {submission?.submission_files?.length > 0 && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
@@ -128,23 +128,60 @@ const [viewingImage, setViewingImage] = useState(null)
                 </div>
 
                 <div className="grid gap-2">
-                  {submission.submission_files.map((file, i) => (
-                    <a
-                      key={file?.url || i}
-                      href={file?.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
-                        📎
-                      </span>
+                  {submission.submission_files.map((file, i) => {
+                    const fileName = file?.name || 'Uploaded file'
+                    const fileUrl = file?.url || ''
 
-                      <span className="min-w-0 truncate">
-                        {file?.name || 'Uploaded file'}
-                      </span>
-                    </a>
-                  ))}
+                    const isImage =
+                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(
+                        fileName
+                      ) ||
+                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(
+                        fileUrl
+                      )
+
+                    if (isImage) {
+                      return (
+                        <button
+                          key={fileUrl || i}
+                          type="button"
+                          onClick={() =>
+                            setViewingImage({
+                              url: fileUrl,
+                              alt: fileName,
+                            })
+                          }
+                          className="flex w-full items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-left text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                        >
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
+                            🖼️
+                          </span>
+
+                          <span className="min-w-0 truncate">
+                            {fileName}
+                          </span>
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <a
+                        key={fileUrl || i}
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
+                          📎
+                        </span>
+
+                        <span className="min-w-0 truncate">
+                          {fileName}
+                        </span>
+                      </a>
+                    )
+                  })}
                 </div>
               </section>
             )}
