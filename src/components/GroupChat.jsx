@@ -77,9 +77,28 @@ export default function GroupChat({
   initialMessageId = null,
 }) {
   const [messages, setMessages] = useState([])
-  const [profiles, setProfiles] = useState({})
-  const [reactions, setReactions] = useState({})
-  const [actions, setActions] = useState([])
+const [profiles, setProfiles] = useState({})
+const [reactions, setReactions] = useState({})
+const [actions, setActions] = useState([])
+
+/*
+ * Telegram-style read receipts.
+ *
+ * Shape:
+ * {
+ *   [messageId]: [
+ *     { id, message_id, user_id, read_at }
+ *   ]
+ * }
+ */
+const [messageReads, setMessageReads] = useState({})
+
+/*
+ * When the sender clicks the ticks, this stores the message whose
+ * "Read by" panel is currently open.
+ */
+const [readDetailsMessage, setReadDetailsMessage] =
+  useState(null)
 
   // Messages this member has hidden from their own view only —
   // "Delete for me". The row stays for everyone else in the group.
@@ -206,6 +225,138 @@ export default function GroupChat({
     )
   }
 
+/*
+ * ============================================================
+ * READ RECEIPTS
+ * ============================================================
+ */
+
+const loadMessageReads = async (messageRows) => {
+  const ids = (messageRows || [])
+    .map((message) => message.id)
+    .filter(Boolean)
+
+  if (!ids.length) {
+    setMessageReads({})
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('group_message_reads')
+    .select('*')
+    .in('message_id', ids)
+
+  if (error) {
+    console.error(
+      'Read receipt loading error:',
+      error
+    )
+    return
+  }
+
+  const grouped = {}
+
+  ;(data || []).forEach((read) => {
+    if (!grouped[read.message_id]) {
+      grouped[read.message_id] = []
+    }
+
+    grouped[read.message_id].push(read)
+  })
+
+  setMessageReads(grouped)
+
+  await loadProfiles(
+    (data || []).map((read) => read.user_id)
+  )
+}
+
+/*
+ * Mark every visible message from other people as read.
+ *
+ * Own messages are never inserted here because a sender obviously
+ * should not count as having "read" their own message.
+ *
+ * upsert + the unique message_id/user_id constraint means repeatedly
+ * opening the group cannot create duplicate receipts.
+ */
+const markMessagesAsRead = async (messageRows) => {
+  if (!selfId) return
+
+  const unreadMessages = (messageRows || []).filter(
+    (message) =>
+      message.sender_id !== selfId &&
+      !hiddenIds.has(message.id)
+  )
+
+  if (!unreadMessages.length) return
+
+  const rows = unreadMessages.map((message) => ({
+    message_id: message.id,
+    user_id: selfId,
+  }))
+
+  const { error } = await supabase
+    .from('group_message_reads')
+    .upsert(rows, {
+      onConflict: 'message_id,user_id',
+      ignoreDuplicates: true,
+    })
+
+  if (error) {
+    console.error(
+      'Could not mark group messages as read:',
+      error
+    )
+  }
+}
+
+/*
+ * ============================================================
+ * TELEGRAM-STYLE MESSAGE STATUS
+ * ============================================================
+ */
+
+const readsForMessage = (messageId) =>
+  messageReads[messageId] || []
+
+const hasBeenRead = (message) =>
+  readsForMessage(message.id).some(
+    (read) => read.user_id !== message.sender_id
+  )
+
+const readersForMessage = (message) =>
+  readsForMessage(message.id)
+    .filter(
+      (read) => read.user_id !== message.sender_id
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.read_at) -
+        new Date(a.read_at)
+    )
+
+const readerName = (userId) =>
+  userId === selfId
+    ? 'You'
+    : profiles[userId]?.full_name ||
+      profiles[userId]?.username ||
+      'Member'
+
+const formatReadTime = (value) => {
+  if (!value) return ''
+
+  return new Date(value).toLocaleString(
+    [],
+    {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  )
+}
+
   const loadMessages = async () => {
     if (!groupId) return
 
@@ -226,11 +377,15 @@ export default function GroupChat({
 
     setMessages(rows)
 
-    await loadProfiles(
-      rows.map((message) => message.sender_id)
-    )
+await loadProfiles(
+  rows.map((message) => message.sender_id)
+)
 
-    await loadReactions(rows)
+await loadReactions(rows)
+
+await loadMessageReads(rows)
+
+await markMessagesAsRead(rows)
   }
 
   const loadHiddenForMe = async () => {
@@ -341,14 +496,22 @@ export default function GroupChat({
           const message = payload.new
 
           setMessages((prev) => {
-            if (prev.some((m) => m.id === message.id)) {
-              return prev
-            }
+  if (prev.some((m) => m.id === message.id)) {
+    return prev
+  }
 
-            return [...prev, message]
-          })
+  return [...prev, message]
+})
 
-          await loadProfiles([message.sender_id])
+await loadProfiles([message.sender_id])
+
+/*
+ * If this is somebody else's newly received message and the group
+ * is currently open, mark it as read immediately.
+ */
+if (message.sender_id !== selfId) {
+  await markMessagesAsRead([message])
+}
         }
       )
 
@@ -441,6 +604,42 @@ export default function GroupChat({
           }))
         }
       )
+
+      .on(
+  'postgres_changes',
+  {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'group_message_reads',
+  },
+  async (payload) => {
+    const read = payload.new
+
+    setMessageReads((prev) => {
+      const existing =
+        prev[read.message_id] || []
+
+      if (
+        existing.some(
+          (item) => item.id === read.id
+        )
+      ) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        [read.message_id]: [
+          ...existing,
+          read,
+        ],
+      }
+    })
+
+    await loadProfiles([read.user_id])
+  }
+)
+
 
       .on(
         'postgres_changes',
