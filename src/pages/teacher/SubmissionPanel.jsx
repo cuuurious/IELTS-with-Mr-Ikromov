@@ -11,6 +11,7 @@ export default function SubmissionPanel({
   onClose,
 }) {
   const [reEvaluating, setReEvaluating] = useState(false)
+const [viewingImage, setViewingImage] = useState(null)
 
   const reEvaluate = async () => {
     if (!submission?.id || reEvaluating) return
@@ -82,36 +83,38 @@ export default function SubmissionPanel({
               </div>
             )}
 
-            {/* SCREENSHOTS */}
-            {submission?.screenshot_urls?.length > 0 && (
-              <section>
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+           {/* SCREENSHOTS */}
+{submission?.screenshot_urls?.length > 0 && (
+  <section>
+    <div className="mb-3 flex items-center gap-2">
+      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
 
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                    Screenshots
-                  </div>
-                </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+        Screenshots
+      </div>
+    </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {submission.screenshot_urls.map((url, i) => (
-                    <a
-                      key={url || i}
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group overflow-hidden rounded-2xl border border-line bg-panel-2 transition hover:border-accent/40"
-                    >
-                      <img
-                        src={url}
-                        alt={`Screenshot ${i + 1}`}
-                        className="aspect-square h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
-                      />
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {submission.screenshot_urls.map((url, i) => (
+        <button
+          key={url || i}
+          type="button"
+          onClick={() => setViewingImage({
+            url,
+            alt: `Screenshot ${i + 1}`,
+          })}
+          className="group overflow-hidden rounded-2xl border border-line bg-panel-2 text-left transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40"
+        >
+          <img
+            src={url}
+            alt={`Screenshot ${i + 1}`}
+            className="aspect-square h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+          />
+        </button>
+      ))}
+    </div>
+  </section>
+)}
 
             {/* UPLOADED FILES */}
             {submission?.submission_files?.length > 0 && (
@@ -272,11 +275,39 @@ export default function SubmissionPanel({
                   submission.submitted_at
                 ).toLocaleString()}
               </div>
-            )}
+                        )}
 
           </div>
         </div>
       </div>
+
+      {viewingImage && (
+        <div
+          className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/85 p-4 sm:p-8"
+          onClick={() => setViewingImage(null)}
+        >
+          <div
+            className="relative flex h-full w-full max-w-6xl items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setViewingImage(null)}
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-2xl text-white backdrop-blur transition hover:bg-black/90"
+              aria-label="Close image"
+            >
+              ×
+            </button>
+
+            <img
+              src={viewingImage.url}
+              alt={viewingImage.alt}
+              className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   )
 
