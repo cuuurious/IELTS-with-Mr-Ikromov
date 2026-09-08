@@ -93,6 +93,9 @@ const [actions, setActions] = useState([])
  */
 const [messageReads, setMessageReads] = useState({})
 
+const [openReadMessageId, setOpenReadMessageId] =
+  useState(null)
+
 /*
  * When the sender clicks the ticks, this stores the message whose
  * "Read by" panel is currently open.
@@ -1971,7 +1974,27 @@ if (message.sender_id !== selfId) {
 
             const selected = selectedIds.has(message.id)
 
-            return (
+const readers =
+  messageReads[message.id] || []
+
+const hasBeenRead =
+  mine && readers.length > 0
+
+const readProfiles = readers
+  .map((reader) => {
+    const readerId =
+      typeof reader === 'string'
+        ? reader
+        : reader?.user_id
+
+    return {
+      id: readerId,
+      profile: profiles[readerId],
+    }
+  })
+  .filter((reader) => reader.id)
+
+return (
               <Fragment key={message.id}>
 
                 {dateChanged && (
@@ -2099,39 +2122,167 @@ if (message.sender_id !== selfId) {
 
                   <div className="px-1 mb-1 flex items-center gap-2 text-[11px]">
 
-                    {messagePinned && (
-                      <span
-                        className="text-brass"
-                        title="Pinned"
-                      >
-                        📌
-                      </span>
-                    )}
+  {messagePinned && (
+    <span
+      className="text-brass"
+      title="Pinned"
+    >
+      📌
+    </span>
+  )}
 
-                    <span className="text-mist">
-                      {new Date(
-                        message.created_at
-                      ).toLocaleTimeString(
-                        [],
-                        {
-                          hour:
-                            '2-digit',
-                          minute:
-                            '2-digit',
-                        }
-                      )}
-                    </span>
+  <span className="text-mist">
+    {new Date(
+      message.created_at
+    ).toLocaleTimeString(
+      [],
+      {
+        hour: '2-digit',
+        minute: '2-digit',
+      }
+    )}
+  </span>
 
-                    <button
-                      type="button"
-                      onClick={(e) => openMessageMenu(e, message)}
-                      className="ml-auto px-1 leading-none text-mist hover:text-brass"
-                      aria-label="Message options"
-                    >
-                      ⋯
-                    </button>
+  {mine && (
+    <button
+      type="button"
+      onClick={() => {
+        if (hasBeenRead) {
+          setOpenReadMessageId((current) =>
+            String(current) === String(message.id)
+              ? null
+              : message.id
+          )
+        }
+      }}
+      className={`font-semibold tracking-[-2px] transition ${
+        hasBeenRead
+          ? 'text-purple-500 hover:text-purple-600 cursor-pointer'
+          : 'text-mist cursor-default'
+      }`}
+      title={
+        hasBeenRead
+          ? `${readers.length} ${
+              readers.length === 1
+                ? 'person has'
+                : 'people have'
+            } read this message`
+          : 'Sent'
+      }
+      aria-label={
+        hasBeenRead
+          ? 'Show message readers'
+          : 'Message sent'
+      }
+    >
+      {hasBeenRead ? '✓✓' : '✓'}
+    </button>
+  )}
 
+  <button
+    type="button"
+    onClick={(e) => openMessageMenu(e, message)}
+    className="ml-auto px-1 leading-none text-mist hover:text-brass"
+    aria-label="Message options"
+  >
+    ⋯
+  </button>
+
+</div>
+
+{mine &&
+  String(openReadMessageId) ===
+    String(message.id) && (
+    <div className="mb-2 w-full rounded-xl border border-purple-300/30 bg-panel-2 shadow-lg overflow-hidden">
+
+      <div className="px-3 py-2 border-b border-line flex items-center justify-between">
+        <div>
+          <div className="text-xs font-semibold text-paper">
+            Read by
+          </div>
+
+          <div className="text-[10px] text-mist">
+            {readProfiles.length} {
+              readProfiles.length === 1
+                ? 'person'
+                : 'people'
+            }
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setOpenReadMessageId(null)
+          }
+          className="text-mist hover:text-purple-500 text-sm"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      {readProfiles.length === 0 ? (
+        <div className="px-3 py-3 text-xs text-mist">
+          Nobody has read this message yet.
+        </div>
+      ) : (
+        <div className="max-h-48 overflow-y-auto">
+          {readProfiles.map((reader) => {
+            const person =
+              reader.profile
+
+            const readerName =
+              person?.full_name ||
+              person?.username ||
+              'Unknown member'
+
+            const readerInitial =
+              String(readerName)
+                .charAt(0)
+                .toUpperCase()
+
+            return (
+              <button
+                key={reader.id}
+                type="button"
+                onClick={() => {
+                  setViewingProfileId(reader.id)
+                  setOpenReadMessageId(null)
+                }}
+                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-purple-500/10 transition"
+              >
+                {person?.avatar_url ? (
+                  <img
+                    src={person.avatar_url}
+                    alt={readerName}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center text-xs font-semibold">
+                    {readerInitial}
                   </div>
+                )}
+
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-paper truncate">
+                    {readerName}
+                  </div>
+
+                  {person?.role && (
+                    <div className="text-[10px] text-mist capitalize">
+                      {person.role}
+                    </div>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+    </div>
+  )}
 
                   <div
                     onPointerDown={
