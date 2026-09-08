@@ -5,32 +5,6 @@ import {
 } from "https://esm.sh/@supabase/supabase-js@2"
 
 
-/*
- * ============================================================
- * DEFINE WORDS
- * ============================================================
- *
- * Simple architecture:
- *
- * Browser
- *    ↓
- * Supabase Edge Function
- *    ↓
- * OpenAI
- *    ↓
- * Structured results
- *    ↓
- * Browser
- *
- * No dictionary APIs.
- * No translation APIs.
- * No per-word external requests.
- *
- * One batch = one OpenAI request.
- * ============================================================
- */
-
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -62,7 +36,6 @@ function json(
  * ============================================================
  */
 
-
 const OPENAI_URL =
   "https://api.openai.com/v1/responses"
 
@@ -77,16 +50,48 @@ const MAX_WORDS = 250
 
 /*
  * ============================================================
- * HELPERS
+ * TYPES
  * ============================================================
  */
 
+type VocabularyResult = {
+  word: string
+  definition: string
+  example_sentence: string
+  uzbek_translation: string
+}
+
+
+/*
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
 
 function cleanWord(
   value: unknown
 ): string {
   return String(value || "")
+
+    // Remove bullet characters.
+    .replace(
+      /^[•●▪▫◦‣⁃]+[\s]*/,
+      ""
+    )
+
+    // Remove common list numbering.
+    // Examples:
+    // 1. word
+    // 1) word
+    // (1) word
+    .replace(
+      /^\(?\d+\)?[.)\-:]\s*/,
+      ""
+    )
+
+    // Normalize spaces.
     .replace(/\s+/g, " ")
+
     .trim()
 }
 
@@ -107,7 +112,6 @@ function sleep(
  * ============================================================
  */
 
-
 function extractOutputText(
   payload: any
 ): string {
@@ -120,10 +124,12 @@ function extractOutputText(
     return payload.output_text.trim()
   }
 
+
   const output =
     Array.isArray(payload?.output)
       ? payload.output
       : []
+
 
   for (const item of output) {
 
@@ -132,13 +138,12 @@ function extractOutputText(
       Array.isArray(item.content)
     ) {
 
-      for (
-        const part of item.content
-      ) {
+      for (const part of item.content) {
 
         if (
           part?.type === "output_text" &&
-          typeof part?.text === "string"
+          typeof part?.text === "string" &&
+          part.text.trim()
         ) {
           return part.text.trim()
         }
@@ -149,26 +154,34 @@ function extractOutputText(
 
   }
 
+
   throw new Error(
     "OpenAI returned no readable text."
   )
+
 }
 
 
 /*
  * ============================================================
- * STRICT RESULT VALIDATION
+ * RESULT VALIDATION
+ * ============================================================
+ *
+ * This deliberately does NOT fail the entire
+ * generation if OpenAI misses one item.
+ *
+ * Previously:
+ *
+ * 60 requested
+ * 59 generated correctly
+ * 1 mismatch
+ * ↓
+ * Entire request failed
+ *
+ * Now valid results are returned.
+ * Missing items are logged only.
  * ============================================================
  */
-
-
-type VocabularyResult = {
-  word: string
-  definition: string
-  example_sentence: string
-  uzbek_translation: string
-}
-
 
 function validateResults(
   results: unknown,
@@ -181,10 +194,12 @@ function validateResults(
     )
   }
 
+
   const byWord = new Map<
     string,
     VocabularyResult
   >()
+
 
   for (const item of results) {
 
@@ -192,15 +207,20 @@ function validateResults(
       cleanWord(item?.word)
 
     const definition =
-      cleanWord(item?.definition)
+      String(
+        item?.definition || ""
+      ).trim()
 
     const example =
-      cleanWord(item?.example_sentence)
+      String(
+        item?.example_sentence || ""
+      ).trim()
 
     const translation =
-      cleanWord(
-        item?.uzbek_translation
-      )
+      String(
+        item?.uzbek_translation || ""
+      ).trim()
+
 
     if (
       !word ||
@@ -210,6 +230,7 @@ function validateResults(
     ) {
       continue
     }
+
 
     byWord.set(
       word.toLowerCase(),
@@ -225,63 +246,100 @@ function validateResults(
   }
 
 
+  const finalResults: VocabularyResult[] =
+    []
+
+
+  const missingWords: string[] =
+    []
+
+
   /*
-   * Preserve the exact order and spelling
-   * submitted by the teacher.
+   * Match results using cleaned versions.
+   *
+   * This prevents:
+   *
+   * "• access"
+   *
+   * from failing to match:
+   *
+   * "access"
    */
 
-  const finalResults =
-    requestedWords.map(
-      (originalWord) => {
+  for (
+    const originalWord of requestedWords
+  ) {
 
-        const generated =
-          byWord.get(
-            originalWord.toLowerCase()
-          )
-
-        if (!generated) {
-          return null
-        }
-
-        return {
-          ...generated,
-          word: originalWord,
-        }
-
-      }
-    )
+    const cleanedOriginal =
+      cleanWord(originalWord)
 
 
-  const missing =
-    requestedWords.filter(
-      (_, index) =>
-        !finalResults[index]
-    )
+    const generated =
+      byWord.get(
+        cleanedOriginal.toLowerCase()
+      )
 
 
-  if (missing.length) {
+    if (generated) {
 
-    throw new Error(
-      `OpenAI did not return complete information for: ${missing
-        .slice(0, 10)
-        .join(", ")}`
+      finalResults.push({
+        ...generated,
+
+        // Preserve the teacher's cleaned
+        // original vocabulary item.
+        word: cleanedOriginal,
+      })
+
+    } else {
+
+      missingWords.push(
+        cleanedOriginal
+      )
+
+    }
+
+  }
+
+
+  /*
+   * Log missing items but do NOT destroy
+   * all successfully generated results.
+   */
+
+  if (missingWords.length) {
+
+    console.warn(
+      "OpenAI did not return complete information for:",
+      missingWords
     )
 
   }
 
 
-  return finalResults.filter(
-    Boolean
-  ) as VocabularyResult[]
+  /*
+   * Only fail if literally nothing usable
+   * was generated.
+   */
+
+  if (!finalResults.length) {
+
+    throw new Error(
+      "OpenAI did not return usable vocabulary results."
+    )
+
+  }
+
+
+  return finalResults
+
 }
 
 
 /*
  * ============================================================
- * OPENAI REQUEST
+ * PROMPT
  * ============================================================
  */
-
 
 function buildPrompt(
   words: string[]
@@ -290,49 +348,40 @@ function buildPrompt(
   return `
 You create high-quality IELTS vocabulary cards for Uzbek-speaking English learners.
 
-Generate information for EVERY item in the list below.
+Generate information for EVERY vocabulary item below.
 
-CRITICAL RULES:
+IMPORTANT RULES:
 
-1. Treat each submitted line as one complete vocabulary item.
+1. Treat every submitted item as one complete vocabulary item.
 
 2. NEVER split multi-word expressions.
 
-For example:
-- "take into account" must be defined as the complete phrase.
-- "play a crucial role" must remain the complete phrase.
-- "in the long run" must remain the complete phrase.
+Examples:
 
-3. Preserve the exact original spelling of every submitted item.
+"take into account"
+must be treated as one complete phrase.
 
-4. Give a clear, accurate English definition suitable for IELTS students.
+"play a crucial role"
+must remain one complete phrase.
 
-5. Write one natural example sentence using the exact word or phrase.
+"in the long run"
+must remain one complete phrase.
+
+3. Use the exact vocabulary item provided.
+
+4. Give a clear, accurate English definition suitable for IELTS learners.
+
+5. Write one natural example sentence that correctly uses the exact word or phrase.
 
 6. Provide a natural Uzbek translation.
 
-7. Use Uzbek, NOT Russian.
+7. Use Uzbek only, NOT Russian.
 
 8. Do not invent meanings.
 
-9. Do not explain individual words inside a phrase when the full phrase has its own meaning.
+9. Do not define individual words separately when a complete phrase has its own meaning.
 
-10. Return EVERY submitted item exactly once.
-
-Return ONLY valid JSON.
-
-Required format:
-
-{
-  "results": [
-    {
-      "word": "exact original item",
-      "definition": "clear English definition",
-      "example_sentence": "natural example sentence",
-      "uzbek_translation": "natural Uzbek translation"
-    }
-  ]
-}
+10. Return every submitted item exactly once.
 
 VOCABULARY ITEMS:
 
@@ -349,23 +398,22 @@ ${words
 
 /*
  * ============================================================
- * OPENAI CALL WITH RETRY
+ * OPENAI REQUEST
  * ============================================================
  */
-
 
 async function callOpenAI(
   apiKey: string,
   words: string[]
-) {
+): Promise<VocabularyResult[]> {
 
   const prompt =
     buildPrompt(words)
 
 
   /*
-   * Two attempts are enough for temporary
-   * network / 429 / 5xx failures.
+   * Retry only actual temporary API/network
+   * failures.
    */
 
   const maxAttempts = 2
@@ -412,7 +460,9 @@ async function callOpenAI(
 
             body: JSON.stringify({
 
-              model: TEXT_MODEL,
+              model:
+                TEXT_MODEL,
+
 
               input: [
                 {
@@ -420,35 +470,44 @@ async function callOpenAI(
 
                   content: [
                     {
-                      type: "input_text",
+                      type:
+                        "input_text",
 
-                      text: prompt,
+                      text:
+                        prompt,
                     },
                   ],
                 },
               ],
 
+
               text: {
                 format: {
-                  type: "json_schema",
+                  type:
+                    "json_schema",
 
                   name:
                     "vocabulary_results",
 
-                  strict: true,
+                  strict:
+                    true,
 
                   schema: {
-                    type: "object",
+
+                    type:
+                      "object",
 
                     properties: {
 
                       results: {
 
-                        type: "array",
+                        type:
+                          "array",
 
                         items: {
 
-                          type: "object",
+                          type:
+                            "object",
 
                           properties: {
 
@@ -525,9 +584,7 @@ async function callOpenAI(
       let payload: any = null
 
 
-      if (
-        responseText.trim()
-      ) {
+      if (responseText.trim()) {
 
         try {
 
@@ -554,10 +611,6 @@ async function callOpenAI(
           payload?.message ||
           `OpenAI request failed with HTTP ${response.status}.`
 
-
-        /*
-         * Retry temporary errors only.
-         */
 
         const retryable =
           response.status === 429 ||
@@ -623,20 +676,15 @@ async function callOpenAI(
 
       const message =
         error instanceof Error
-          ? error.message
-          : String(error)
+          ? error.message.toLowerCase()
+          : String(error).toLowerCase()
 
 
       const retryable =
-        message.includes(
-          "abort"
-        ) ||
-        message.includes(
-          "network"
-        ) ||
-        message.includes(
-          "fetch"
-        )
+        message.includes("abort") ||
+        message.includes("network") ||
+        message.includes("fetch") ||
+        message.includes("timeout")
 
 
       if (
@@ -660,23 +708,29 @@ async function callOpenAI(
   }
 
 
-  throw lastError ||
+  throw (
+    lastError ||
     new Error(
       "OpenAI generation failed."
     )
+  )
 
 }
 
 
 /*
  * ============================================================
- * MAIN FUNCTION
+ * MAIN EDGE FUNCTION
  * ============================================================
  */
 
-
 Deno.serve(
   async (req) => {
+
+
+    /*
+     * CORS
+     */
 
     if (
       req.method === "OPTIONS"
@@ -692,6 +746,10 @@ Deno.serve(
 
     }
 
+
+    /*
+     * METHOD CHECK
+     */
 
     if (
       req.method !== "POST"
@@ -710,12 +768,10 @@ Deno.serve(
 
     try {
 
-      /*
-       * --------------------------------------------------------
-       * ENVIRONMENT
-       * --------------------------------------------------------
-       */
 
+      /*
+       * ENVIRONMENT
+       */
 
       const supabaseUrl =
         Deno.env.get(
@@ -773,11 +829,8 @@ Deno.serve(
 
 
       /*
-       * --------------------------------------------------------
        * AUTHENTICATION
-       * --------------------------------------------------------
        */
-
 
       const authHeader =
         req.headers.get(
@@ -837,11 +890,8 @@ Deno.serve(
 
 
       /*
-       * --------------------------------------------------------
        * REQUEST BODY
-       * --------------------------------------------------------
        */
-
 
       let body: any
 
@@ -908,12 +958,12 @@ Deno.serve(
 
 
       /*
-       * Remove exact duplicates while preserving
-       * the original order.
+       * REMOVE DUPLICATES
        */
 
       const uniqueWords: string[] =
         []
+
 
       const seen =
         new Set<string>()
@@ -925,6 +975,7 @@ Deno.serve(
 
         const key =
           word.toLowerCase()
+
 
         if (!seen.has(key)) {
 
@@ -938,11 +989,8 @@ Deno.serve(
 
 
       /*
-       * --------------------------------------------------------
        * GENERATE
-       * --------------------------------------------------------
        */
-
 
       console.log(
         `Generating vocabulary for ${uniqueWords.length} items using ${TEXT_MODEL}.`
@@ -981,12 +1029,6 @@ Deno.serve(
           ? error.message
           : "Unknown server error."
 
-
-      /*
-       * Return a meaningful message to the
-       * frontend instead of a mysterious
-       * non-2xx Supabase error.
-       */
 
       return json(
         {
