@@ -5,14 +5,7 @@ import {
   useState,
   useCallback,
 } from 'react'
-import {
-  supabase,
-  usernameToEmail,
-} from '../lib/supabaseClient'
-import {
-  DEFAULT_TARGET_BAND,
-  isValidTargetBand,
-} from '../lib/targetBands'
+import { supabase } from '../lib/supabaseClient'
 
 const AuthContext = createContext(null)
 
@@ -172,175 +165,84 @@ export function AuthProvider({ children }) {
     contactEmail,
     targetBand,
   }) => {
-    const role = 'student'
-
     const normalizedUsername = username
       .trim()
       .toLowerCase()
 
-    // Check this up front, before creating any auth account. The most
-    // common reason the profile insert below used to fail was a
-    // duplicate username — catching it here means we never create an
-    // orphaned login for it in the first place, and the person gets a
-    // clear, specific error instead of a raw database message.
+    // Sign-up now happens as ONE server-side step (see the
+    // create-student-account edge function) instead of the separate
+    // browser round-trips this used to be (create the login, check
+    // the username, check the contact email, insert the profile).
+    // That old shape meant a lost connection or a closed tab partway
+    // through could strand a real auth account with no profile behind
+    // it — permanently blocking that username, since its derived
+    // email would already be "registered" with nothing usable behind
+    // it. Doing all of it in one request server-side means that can't
+    // happen anymore, and it also automatically cleans up any account
+    // that got stranded that way before this fix, the next time that
+    // username is tried again. The username-taken and
+    // email-already-used checks now happen inside that same function
+    // too, using the admin client, so they can't be skipped or raced.
     const {
-      data: existingUsername,
-      error: usernameCheckError,
-    } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', normalizedUsername)
-      .maybeSingle()
-
-    if (usernameCheckError) {
-      throw usernameCheckError
-    }
-
-    if (existingUsername) {
-  throw new Error(
-    'That username is already taken. Please choose a different one.'
-  )
-}
-
-const email =
-  contactEmail?.trim().toLowerCase() ||
-  usernameToEmail(username)
-
-/*
- * Check whether this contact email is already attached
- * to an existing student profile before creating a new
- * Supabase Auth account.
- *
- * This prevents someone from registering multiple
- * accounts using the same Gmail address.
- */
-if (contactEmail?.trim()) {
-  const normalizedContactEmail =
-    contactEmail.trim().toLowerCase()
-
-  const {
-    data: existingEmail,
-    error: emailCheckError,
-  } = await supabase
-    .from('profiles')
-    .select('id, username, full_name')
-    .ilike(
-      'contact_email',
-      normalizedContactEmail
+      data,
+      error,
+    } = await supabase.functions.invoke(
+      'create-student-account',
+      {
+        body: {
+          username: normalizedUsername,
+          password,
+          fullName,
+          contactEmail,
+          targetBand,
+          groupIds,
+        },
+      }
     )
-    .maybeSingle()
 
-  if (emailCheckError) {
-    throw emailCheckError
-  }
-
-  if (existingEmail) {
-    throw new Error(
-      'An account with this email address already exists. Please log in instead or use a different email address.'
-    )
-  }
-}
-
-const {
-  data,
-  error,
-} = await supabase.auth.signUp({
-  email,
-  password,
-})
-     
     if (error) {
-      throw error
-    }
+      // supabase.functions.invoke() wraps a non-2xx response in a
+      // generic error whose real message (the friendly one the
+      // function sent back, e.g. "That username is already taken")
+      // lives on error.context, not error.message.
+      let message = error.message
 
-    const userId = data.user?.id
+      try {
+        const body = await error.context?.json?.()
+        if (body?.error) {
+          message = body.error
+        }
+      } catch {
+        // Ignore — fall back to error.message below.
+      }
 
-    if (!userId) {
       throw new Error(
-        'Sign up did not return a user. Please try logging in.'
+        message || 'Sign up failed. Please try again.'
       )
     }
 
+    if (!data?.userId || !data?.email) {
+      throw new Error(
+        'Sign up did not return a new account. Please try logging in.'
+      )
+    }
+
+    // The account and profile now both exist server-side — this is
+    // exactly the same call the normal login screen makes, just with
+    // the credentials the person just chose, so the browser ends up
+    // signed in the ordinary way.
     const {
-      error: profileError,
-    } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        full_name: fullName,
-        username: normalizedUsername,
-        role,
-        status:
-          role === 'teacher'
-            ? 'pending'
-            : 'pending',
-        contact_email:
-          contactEmail?.trim() || null,
-        // Target band isn't meaningful for a teacher account. For a
-        // student, fall back to the default rather than trusting
-        // whatever the form sent — isValidTargetBand also guards
-        // against someone bypassing the UI and posting an out-of-
-        // range value directly.
-        target_band:
-          role === 'student'
-            ? isValidTargetBand(targetBand)
-              ? Number(targetBand)
-              : DEFAULT_TARGET_BAND
-            : null,
-      })
+      error: signInError,
+    } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password,
+    })
 
-    if (profileError) {
-      // The auth account was created above, but the profile row that
-      // makes it actually usable failed to save. Left alone, this
-      // permanently strands the username (the derived email is now
-      // "already registered", but there's no working account behind
-      // it). Ask the server to delete the orphaned auth account we
-      // just created — using this brand-new account's own session,
-      // which is exactly why the sign-up flow keeps it signed in
-      // instead of signing out on error — so the username is free
-      // again immediately. This is a best-effort cleanup: if it also
-      // fails (e.g. no network), we still surface the original error
-      // below rather than hiding it.
-      try {
-        await supabase.functions.invoke(
-          'rollback-failed-signup'
-        )
-      } catch (rollbackError) {
-        console.error(
-          'Could not roll back the failed sign-up:',
-          rollbackError
-        )
-      }
-
-      await supabase.auth.signOut()
-
-      throw profileError
+    if (signInError) {
+      throw signInError
     }
 
-    if (
-      role === 'student' &&
-      groupIds?.length
-    ) {
-      const rows =
-        groupIds.map(
-          (group_id) => ({
-            group_id,
-            student_id: userId,
-          })
-        )
-
-      const {
-        error: gmError,
-      } = await supabase
-        .from('group_members')
-        .insert(rows)
-
-      if (gmError) {
-        throw gmError
-      }
-    }
-
-    await loadProfile(userId)
+    await loadProfile(data.userId)
 
     return data
   }

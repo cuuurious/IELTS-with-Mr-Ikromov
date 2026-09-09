@@ -37,3 +37,8 @@ entrypoint = "./functions/rollback-failed-signup/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/change-password/index.ts"
+
+[functions.create-student-account]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/create-student-account/index.ts"
