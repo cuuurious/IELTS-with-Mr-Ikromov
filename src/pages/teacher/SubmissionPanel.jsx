@@ -304,7 +304,7 @@ const [viewingImage, setViewingImage] = useState(null)
               </section>
             )}
 
-            {/* SUBMITTED TIME */}
+                        {/* SUBMITTED TIME */}
             {submission?.submitted_at && (
               <div className="border-t border-line pt-4 font-mono text-[10px] uppercase tracking-[0.12em] text-mist">
                 Submitted{' '}
@@ -312,39 +312,40 @@ const [viewingImage, setViewingImage] = useState(null)
                   submission.submitted_at
                 ).toLocaleString()}
               </div>
-                        )}
-
+            )}
           </div>
         </div>
-      </div>
 
-      {viewingImage && (
-        <div
-          className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/85 p-4 sm:p-8"
-          onClick={() => setViewingImage(null)}
-        >
+        {viewingImage && (
           <div
-            className="relative flex h-full w-full max-w-6xl items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              setViewingImage(null)
+            }}
           >
-            <button
-              type="button"
-              onClick={() => setViewingImage(null)}
-              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-2xl text-white backdrop-blur transition hover:bg-black/90"
-              aria-label="Close image"
+            <div
+              className="relative flex max-h-[92vh] max-w-[92vw] items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-              ×
-            </button>
+              <img
+                src={viewingImage.url}
+                alt={viewingImage.alt}
+                className="max-h-[92vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
+              />
 
-            <img
-              src={viewingImage.url}
-              alt={viewingImage.alt}
-              className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
-            />
+              <button
+                type="button"
+                onClick={() => setViewingImage(null)}
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-xl text-white/80 backdrop-blur-md transition hover:bg-black/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                aria-label="Close image"
+              >
+                ×
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
+        )}
+      </div>
     </div>
   )
 
