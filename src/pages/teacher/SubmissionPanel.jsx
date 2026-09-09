@@ -1,3 +1,7 @@
+import {
+  TransformWrapper,
+  TransformComponent,
+} from 'react-zoom-pan-pinch'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
@@ -316,35 +320,92 @@ const [viewingImage, setViewingImage] = useState(null)
           </div>
         </div>
 
-        {viewingImage && (
-          <div
-            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              setViewingImage(null)
-            }}
-          >
-            <div
-              className="relative flex max-h-[92vh] max-w-[92vw] items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={viewingImage.url}
-                alt={viewingImage.alt}
-                className="max-h-[92vh] max-w-[92vw] rounded-xl object-contain shadow-2xl"
-              />
+       {viewingImage && (
+  <div
+    className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+    onClick={() => setViewingImage(null)}
+  >
+    <div
+      className="relative h-full w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <TransformWrapper
+        initialScale={1}
+        minScale={0.8}
+        maxScale={5}
+        centerOnInit
+        wheel={{
+          step: 0.15,
+        }}
+        doubleClick={{
+          mode: 'toggle',
+        }}
+        pinch={{
+          step: 5,
+        }}
+      >
+        {({
+          zoomIn,
+          zoomOut,
+          resetTransform,
+        }) => (
+          <>
+            {/* Controls */}
+            <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={zoomOut}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-xl text-white backdrop-blur-md transition hover:bg-black/90"
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+
+              <button
+                type="button"
+                onClick={resetTransform}
+                className="flex h-10 min-w-10 items-center justify-center rounded-full bg-black/60 px-3 text-sm text-white backdrop-blur-md transition hover:bg-black/90"
+                aria-label="Reset zoom"
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={zoomIn}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-xl text-white backdrop-blur-md transition hover:bg-black/90"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
 
               <button
                 type="button"
                 onClick={() => setViewingImage(null)}
-                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-xl text-white/80 backdrop-blur-md transition hover:bg-black/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-2xl text-white backdrop-blur-md transition hover:bg-black/90"
                 aria-label="Close image"
               >
                 ×
               </button>
             </div>
-          </div>
+
+            <TransformComponent
+              wrapperClass="!w-full !h-full"
+              contentClass="!w-full !h-full flex items-center justify-center"
+            >
+              <img
+                src={viewingImage.url}
+                alt={viewingImage.alt}
+                className="max-h-[92vh] max-w-[92vw] select-none object-contain"
+                draggable={false}
+              />
+            </TransformComponent>
+          </>
         )}
+      </TransformWrapper>
+    </div>
+  </div>
+)}
       </div>
     </div>
   )
