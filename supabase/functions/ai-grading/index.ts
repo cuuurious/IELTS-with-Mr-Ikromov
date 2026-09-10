@@ -76,21 +76,22 @@ const LANGUAGE_TIP_SCHEMA = {
   additionalProperties: false,
 }
 
-// Writing no longer gets a numeric band anywhere in this shape (see
-// buildWritingPrompt below for why) — criteria are name+comment only.
-// It still gets everything else, including the two new tip arrays.
+// Writing gets an overall band and a band for each IELTS criterion,
+// while retaining all of the detailed feedback and language tips.
 const WRITING_EVALUATION_SCHEMA = {
   type: 'object',
   properties: {
+    overall_band: { type: 'number' },
     criteria: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           name: { type: 'string' },
+          band: { type: 'number' },
           comment: { type: 'string' },
         },
-        required: ['name', 'comment'],
+        required: ['name', 'band', 'comment'],
         additionalProperties: false,
       },
     },
@@ -101,6 +102,7 @@ const WRITING_EVALUATION_SCHEMA = {
     summary: { type: 'string' },
   },
   required: [
+    'overall_band',
     'criteria',
     'strengths',
     'improvements',
@@ -341,18 +343,15 @@ const SCORING_DISCIPLINE = [
   "overall_band should be a genuine aggregate of the individual criterion bands you actually gave (following the rubric's own method for combining them if it states one; otherwise average the criteria and round the way the exam type normally does) — it should not be an independently-guessed number that the criteria are then forced to match.",
 ].join(' ')
 
-// Writing no longer gets a numeric band at all (the teacher's own
-// request — a single number was hiding more than it told the student,
-// and disagreements between the AI's number and the teacher's own
-// judgment were hard to act on). The criteria below are still the
-// same rubric/descriptors the teacher uploaded — use them as the
-// reference for what strong vs weak performance actually looks like
-// at each level, and write comments that make that level clear in
-// words, just never as a digit.
+// Writing uses the same criterion-by-criterion scoring discipline as Speaking,
+// while still returning the detailed comments and language tips that were added later.
 const WRITING_DISCIPLINE = [
-  'Do NOT invent or output any numeric band score anywhere, for the overall response or for any individual criterion — the schema for writing has nowhere to put one; ignore any scoring scale in the criteria text below and use it only as a qualitative reference for what each level of performance looks like.',
-  'Write each criterion comment as genuine, evidence-based feedback: quote or closely paraphrase the actual sentence(s) that show the issue or strength, and describe the level of performance in the rubric\'s own descriptive language (e.g. "a wide range of vocabulary used flexibly" or "cohesion between sentences is sometimes mechanical") rather than compressing it into a score.',
-  'Evaluate every criterion the rubric lists, even briefly, so nothing is silently skipped just because there is no number attached to it.',
+  'Give a numeric band for the overall writing response and a numeric band for every writing criterion in the rubric. If the rubric is standard IELTS Writing, the expected criteria are Task Achievement/Task Response, Coherence & Cohesion, Lexical Resource, and Grammatical Range & Accuracy; if the teacher uploaded a custom rubric, use its actual criterion names.',
+  'Score every criterion independently. Evaluate and decide the band for each criterion using ONLY the evidence relevant to that specific criterion, one at a time — do not decide a single overall impression first and then copy it into every criterion.',
+  'Use the full scoring scale described by the uploaded criteria, including half-band scores where the rubric allows them. Do not round each criterion to a whole number or default to a safe middle score.',
+  'The overall_band must be a genuine aggregate of the individual criterion bands you actually gave. For standard IELTS Writing, calculate the overall Writing band from the four criterion scores using IELTS weighting/rounding; do not invent an unrelated overall number.',
+  'Write each criterion comment as genuine, evidence-based feedback: quote or closely paraphrase actual sentence(s) that show the issue or strength, and explain why the evidence supports that criterion band.',
+  'Evaluate every criterion the rubric lists, so nothing is silently skipped. The numeric band must appear in the band field, while the comment remains detailed and actionable.',
 ].join(' ')
 
 // Shared by both writing and speaking. This is the actual ask from
@@ -372,7 +371,7 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
       : "The attached images are photos or screenshots of the student's actual essay, in reading order. Some may be handwritten — read carefully and do your best with unclear handwriting rather than refusing to grade."
 
   return [
-    "You are an experienced IELTS examiner giving a student detailed, actionable feedback on their written submission — this is feedback only, with no numeric score attached.",
+    "You are an experienced IELTS examiner giving a student detailed, actionable feedback and an IELTS-style numeric band score for their written submission.",
     '',
     "Base your feedback STRICTLY on the grading criteria below — it may be the standard IELTS Writing band descriptors, or the teacher's own custom rubric. Follow whatever criteria it describes, and use its own criterion names in your answer.",
     '',
@@ -396,7 +395,7 @@ function buildWritingPrompt(criteriaText, comment, files = []) {
 // Writing Mock Test submissions are typed directly in the app (see
 // the "Writing Mock Test" homework type) instead of uploaded as
 // photos/files, so they get their own prompt builder — same rubric,
-// same no-numeric-score policy (WRITING_DISCIPLINE below still
+// the same numeric scoring policy (WRITING_DISCIPLINE below still
 // applies), just built from typed task text plus whichever task
 // prompt(s) the teacher set instead of image content.
 function buildWritingMockPrompt(criteriaText, comment, mockEssay, homework) {
@@ -442,7 +441,7 @@ function buildWritingMockPrompt(criteriaText, comment, mockEssay, homework) {
       : ''
 
   return [
-    'You are an experienced IELTS examiner giving a student detailed, actionable feedback on a TIMED MOCK WRITING TEST they just completed inside the app — this is feedback only, with no numeric score attached. The text below is exactly what the student typed, under time pressure and without the ability to paste — judge it as a real timed first-draft response, not a polished essay.',
+    'You are an experienced IELTS examiner giving a student detailed, actionable feedback on a TIMED MOCK WRITING TEST they just completed inside the app — provide both detailed feedback and a numeric band score. The text below is exactly what the student typed, under time pressure and without the ability to paste — judge it as a real timed first-draft response, not a polished essay.',
     '',
     "Base your feedback STRICTLY on the grading criteria below — it may be the standard IELTS Writing band descriptors, or the teacher's own custom rubric. Follow whatever criteria it describes, and use its own criterion names in your answer.",
     '',
