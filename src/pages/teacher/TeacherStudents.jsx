@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 import ConfirmModal from '../../components/ConfirmModal'
+import ResetStudentPasswordModal from '../../components/ResetStudentPasswordModal'
 
 export default function TeacherStudents({ onStartChat }) {
   const [students, setStudents] = useState([])
@@ -21,6 +22,8 @@ export default function TeacherStudents({ onStartChat }) {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [busyAction, setBusyAction] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
+  const [resetPasswordStudent, setResetPasswordStudent] =
+    useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -1024,6 +1027,18 @@ export default function TeacherStudents({ onStartChat }) {
 
                 <div className="flex items-center gap-2">
 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setResetPasswordStudent(
+                        selectedStudent
+                      )
+                    }
+                    className="focus-ring rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-mist transition hover:border-brass hover:text-brass"
+                  >
+                    🔑 Reset password
+                  </button>
+
                   {onStartChat && (
                     <button
                       type="button"
@@ -1065,6 +1080,11 @@ export default function TeacherStudents({ onStartChat }) {
           setConfirmDialog(null)
           run?.()
         }}
+      />
+
+      <ResetStudentPasswordModal
+        student={resetPasswordStudent}
+        onClose={() => setResetPasswordStudent(null)}
       />
 
     </div>
