@@ -18,6 +18,26 @@ export default function GroupWorkspace({ teacherId }) {
   const activeGroupRef = useRef(activeGroup)
   activeGroupRef.current = activeGroup
 
+  // Two-screen navigation: 'groups' is the folder-style overview (a
+  // grid of group tiles), 'detail' is the full-screen view for one
+  // group's roster and homework. Opening a group is a deliberate
+  // click into it, and there's an explicit way back — instead of
+  // every group's homework table living permanently on the same
+  // screen as the group picker.
+  const [screen, setScreen] = useState('groups')
+
+  // Lightweight per-group counts (students, assignments) shown on
+  // each tile in the overview grid. Loaded once — in bulk, for every
+  // group at once — right after the group list loads, specifically
+  // so opening the overview never has to run the full roster +
+  // homework + submissions fetch (loadGroupData below) for every
+  // group just to show a number on a card.
+  const [groupCounts, setGroupCounts] = useState({})
+
+  // Whether the "add a group" tile is showing its input yet, or just
+  // its "+ New group" prompt.
+  const [composingGroup, setComposingGroup] = useState(false)
+
   const [newGroupName, setNewGroupName] = useState('')
   const [creating, setCreating] = useState(false)
 
@@ -47,10 +67,55 @@ export default function GroupWorkspace({ teacherId }) {
       .order('created_at')
 
     setGroups(data || [])
+    loadGroupCounts(data || [])
 
     if (!activeGroup && data?.length) {
       setActiveGroup(data[0].id)
     }
+  }
+
+  // One bulk query per table (not one per group) so a teacher with
+  // many groups doesn't turn a single page load into a burst of tiny
+  // requests — the exact kind of pile-up worth avoiding.
+  const loadGroupCounts = async (groupList) => {
+    if (!groupList?.length) {
+      setGroupCounts({})
+      return
+    }
+
+    const groupIds = groupList.map((group) => group.id)
+
+    const [{ data: members }, { data: hw }] = await Promise.all([
+      supabase
+        .from('group_members')
+        .select('group_id, profiles!inner(status)')
+        .in('group_id', groupIds)
+        .eq('profiles.status', 'approved'),
+      supabase
+        .from('homeworks')
+        .select('group_id')
+        .in('group_id', groupIds),
+    ])
+
+    const counts = {}
+
+    groupIds.forEach((id) => {
+      counts[id] = { students: 0, tasks: 0 }
+    })
+
+    ;(members || []).forEach((member) => {
+      if (counts[member.group_id]) {
+        counts[member.group_id].students += 1
+      }
+    })
+
+    ;(hw || []).forEach((homework) => {
+      if (counts[homework.group_id]) {
+        counts[homework.group_id].tasks += 1
+      }
+    })
+
+    setGroupCounts(counts)
   }
 
   useEffect(() => {
@@ -58,6 +123,51 @@ export default function GroupWorkspace({ teacherId }) {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const openGroup = (groupId) => {
+    setActiveGroup(groupId)
+    setScreen('detail')
+  }
+
+  const backToGroups = () => {
+    // The roster/homework counts for the group just visited are
+    // already sitting in state from loadGroupData — reuse them to
+    // keep that tile's numbers current on the overview instead of
+    // re-fetching everything just to show a card.
+    if (activeGroup) {
+      setGroupCounts((prev) => ({
+        ...prev,
+        [activeGroup]: {
+          students: roster.length,
+          tasks: homeworks.length,
+        },
+      }))
+    }
+
+    setScreen('groups')
+  }
+
+  /*
+   * Each group gets a stable, distinct color (cycling through the
+   * design system's accent palette by the group's position in the
+   * list) so tiles — and the header of the group you've opened — are
+   * easy to tell apart at a glance instead of all reading as the same
+   * neutral purple block. Mirrors the same approach already used for
+   * group chips on the Students page.
+   */
+  const groupAccentPalette = [
+    { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/30' },
+    { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/30' },
+    { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/30' },
+    { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/30' },
+    { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/30' },
+  ]
+
+  const getGroupAccent = (groupId) => {
+    const index = groups.findIndex((group) => group.id === groupId)
+    const safeIndex = index === -1 ? 0 : index
+    return groupAccentPalette[safeIndex % groupAccentPalette.length]
+  }
 
   const createGroup = async (e) => {
     e.preventDefault()
@@ -79,8 +189,13 @@ export default function GroupWorkspace({ teacherId }) {
 
     if (!error) {
       setNewGroupName('')
+      setComposingGroup(false)
       setGroups((prev) => [...prev, data])
-      setActiveGroup(data.id)
+      setGroupCounts((prev) => ({
+        ...prev,
+        [data.id]: { students: 0, tasks: 0 },
+      }))
+      openGroup(data.id)
     } else {
       setConfirmDialog({
         title: "Couldn't create group",
@@ -129,113 +244,88 @@ export default function GroupWorkspace({ teacherId }) {
     setRenamingId(null)
   }
 
-/* =========================================================
-   DELETE GROUP
-========================================================= */
+  /* =========================================================
+     DELETE GROUP
+     (permanently deletes the group, every homework in it, the
+     whole group chat, and every member's ENTIRE account —
+     unrecoverable)
+  ========================================================= */
 
-const deleteGroup = (group) => {
-  setConfirmDialog({
-    title: `Delete "${group.name}" permanently?`,
-    message: `This permanently deletes "${group.name}", including its homework, submissions, files and group chat. Students who belong to another group will keep their accounts and will simply be removed from this group. Students who belong only to this group will have their accounts permanently deleted. Word lists shared with other groups will be kept. This cannot be undone.`,
-    confirmLabel: 'Delete Group',
-    cancelLabel: 'Cancel',
-    tone: 'coral',
-    requireTypedText: 'DELETE',
-    onConfirm: () => doDeleteGroup(group),
-  })
-}
-
-const doDeleteGroup = async (group) => {
-  setBusyAction(`delete-group-${group.id}`)
-
-  try {
-    const {
-      data: refreshData,
-      error: refreshError,
-    } = await supabase.auth.refreshSession()
-
-    if (refreshError || !refreshData?.session) {
-      throw new Error(
-        'Your session has expired. Please log in again.'
-      )
-    }
-
-    const { data, error } =
-      await supabase.functions.invoke(
-        'delete-group',
-        {
-          body: { groupId: group.id },
-        }
-      )
-
-    if (error) {
-      let backendMessage = ''
-
-      try {
-        if (error.context) {
-          const body =
-            await error.context.json()
-
-          backendMessage =
-            body?.error ||
-            body?.message ||
-            ''
-        }
-      } catch {
-        // Use the normal Supabase error below.
-      }
-
-      throw new Error(
-        backendMessage ||
-        error.message ||
-        'The group deletion service failed.'
-      )
-    }
-
-    if (data?.error) {
-      throw new Error(data.error)
-    }
-
-    const remaining = groups.filter(
-      (g) => g.id !== group.id
-    )
-
-    setGroups(remaining)
-
-    if (activeGroup === group.id) {
-      const nextActive = remaining.length
-        ? remaining[0].id
-        : null
-
-      setActiveGroup(nextActive)
-
-      if (!nextActive) {
-        setRoster([])
-        setHomeworks([])
-        setSubmissions({})
-      }
-    }
-
+  const deleteGroup = (group) => {
     setConfirmDialog({
-      title: 'Group deleted',
-      message:
-        data?.message ||
-        `Group "${group.name}" was deleted.`,
-      hideCancel: true,
-    })
-  } catch (err) {
-    setConfirmDialog({
-      title: "Couldn't delete this group",
-      message:
-        err?.message ||
-        'An unexpected error occurred while deleting the group.',
+      title: `Delete "${group.name}" permanently?`,
+      message: `This PERMANENTLY deletes the group "${group.name}" — every student who is a member (their entire account, even other groups they belong to), every homework, submission and file, and the whole group chat. This cannot be undone.`,
+      confirmLabel: 'Delete Group',
+      cancelLabel: 'Cancel',
       tone: 'coral',
-      hideCancel: true,
+      requireTypedText: 'DELETE',
+      onConfirm: () => doDeleteGroup(group),
     })
-  } finally {
-    setBusyAction('')
   }
-}
+
+  const doDeleteGroup = async (group) => {
+    setBusyAction(`delete-group-${group.id}`)
+
+    try {
+      const { data, error } =
+        await supabase.functions.invoke(
+          'delete-group',
+          {
+            body: { groupId: group.id },
+          }
+        )
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      const remaining = groups.filter(
+        (g) => g.id !== group.id
+      )
+
+      setGroups(remaining)
+
+      setGroupCounts((prev) => {
+        const next = { ...prev }
+        delete next[group.id]
+        return next
+      })
+
+      if (activeGroup === group.id) {
+        const nextActive = remaining.length
+          ? remaining[0].id
+          : null
+
+        setActiveGroup(nextActive)
+        // Deleting the group you're currently looking at should send
+        // you back to the overview rather than silently swapping in
+        // a different group's homework underneath you.
+        setScreen('groups')
+
+        if (!nextActive) {
+          setRoster([])
+          setHomeworks([])
+          setSubmissions({})
+        }
+      }
+
+      setConfirmDialog({
+        title: 'Group deleted',
+        message:
+          data?.message ||
+          `Group "${group.name}" was deleted.`,
+        hideCancel: true,
+      })
+    } catch (err) {
+      setConfirmDialog({
+        title: "Couldn't delete this group",
+        message: err.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
+    } finally {
+      setBusyAction('')
+    }
+  }
 
   /* =========================================================
      GROUP DATA
@@ -250,6 +340,7 @@ const doDeleteGroup = async (group) => {
     const requestedGroup = activeGroup
 
     if (!requestedGroup) return
+    if (screen !== 'detail') return
 
     // Was previously three round trips run one after another (each
     // waiting on the last), which is exactly why switching groups
@@ -316,7 +407,7 @@ const doDeleteGroup = async (group) => {
     setStudentSearch('')
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroup])
+  }, [activeGroup, screen])
 
   /*
    * ============================================================
@@ -330,7 +421,10 @@ const doDeleteGroup = async (group) => {
    */
 
   useEffect(() => {
-    if (!activeGroup) return
+    // No point holding a realtime channel open for a group's
+    // submissions while the teacher isn't even looking at that
+    // group's screen.
+    if (!activeGroup || screen !== 'detail') return
 
     const channel = supabase
       .channel(`teacher-submissions-${activeGroup}`)
@@ -363,7 +457,7 @@ const doDeleteGroup = async (group) => {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [activeGroup])
+  }, [activeGroup, screen])
 
   /* =========================================================
      REMOVE STUDENT FROM GROUP
@@ -775,311 +869,394 @@ const doDeleteGroup = async (group) => {
   ========================================================= */
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
 
       {/* =====================================================
-          EMPTY STATE
+          GROUPS OVERVIEW — a folder-style grid of every group.
+          Opening one is a deliberate click into a full-screen
+          detail view (below), not a permanent panel that lives
+          next to the group picker.
       ===================================================== */}
 
-      {!activeGroup && (
-        <section className="relative overflow-hidden rounded-[28px] border border-line bg-panel">
-          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-cyan-300/10 blur-3xl" />
+      {screen === 'groups' && (
+        <div className="space-y-6">
 
-          <div className="relative px-7 py-12 sm:px-12 sm:py-14">
-
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                Examiner desk
-              </span>
-            </div>
-
-            <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-paper sm:text-4xl">
               Groups & homework
             </h1>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-mist sm:text-base">
-              Manage your groups, post assignments, and review your students' progress.
+            <p className="mt-2 max-w-xl text-sm leading-6 text-mist sm:text-base">
+              Open a group to post homework and see who's done it.
             </p>
-
           </div>
-        </section>
+
+          {groups.length === 0 ? (
+
+            <div className="rounded-3xl border-2 border-dashed border-line px-6 py-16 text-center">
+
+              <div className="font-display text-2xl text-paper">
+                No groups yet
+              </div>
+
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-mist">
+                Create a group to start posting homework and tracking who's done it.
+              </p>
+
+              <form
+                onSubmit={createGroup}
+                className="mx-auto mt-6 flex h-12 max-w-sm overflow-hidden rounded-xl border border-line bg-panel"
+              >
+                <input
+                  value={newGroupName}
+                  onChange={(e) =>
+                    setNewGroupName(e.target.value)
+                  }
+                  placeholder="Group name"
+                  className="focus-ring w-full bg-transparent px-4 text-sm text-paper placeholder:text-mist/70 outline-none"
+                />
+
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="focus-ring shrink-0 border-l border-accent/20 bg-accent px-5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
+                >
+                  {creating ? 'Adding…' : 'Create'}
+                </button>
+              </form>
+
+            </div>
+
+          ) : (
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+              {groups.map((group) => {
+                const accent = getGroupAccent(group.id)
+                const counts = groupCounts[group.id] || { students: 0, tasks: 0 }
+                const isRenaming = renamingId === group.id
+
+                return (
+                  <div
+                    key={group.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => !isRenaming && openGroup(group.id)}
+                    onKeyDown={(e) => {
+                      if (isRenaming) return
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openGroup(group.id)
+                      }
+                    }}
+                    className="focus-ring group relative flex flex-col justify-between rounded-3xl border border-line bg-panel p-6 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-xl hover:shadow-black/5 cursor-pointer"
+                  >
+
+                    <div className="flex items-start justify-between gap-3">
+
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold ${accent.bg} ${accent.text}`}
+                      >
+                        {group.name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            startRename(group)
+                          }}
+                          className="focus-ring flex h-8 w-8 items-center justify-center rounded-lg text-xs text-mist opacity-0 transition hover:bg-panel-2 hover:text-accent group-hover:opacity-100 focus-visible:opacity-100"
+                          title="Rename group"
+                          aria-label="Rename group"
+                        >
+                          ✎
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteGroup(group)
+                          }}
+                          disabled={
+                            busyAction === `delete-group-${group.id}`
+                          }
+                          className="focus-ring flex h-8 w-8 items-center justify-center rounded-lg text-mist opacity-0 transition hover:bg-coral/10 hover:text-coral group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-40"
+                          title="Delete group permanently"
+                          aria-label="Delete group permanently"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                    <div className="mt-5">
+
+                      {isRenaming ? (
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => saveRename(group.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveRename(group.id)
+                            if (e.key === 'Escape') setRenamingId(null)
+                          }}
+                          className="focus-ring w-full rounded-lg border border-accent bg-panel-2 px-2.5 py-1.5 font-display text-xl text-paper outline-none"
+                        />
+                      ) : (
+                        <div className="truncate font-display text-xl font-semibold text-paper">
+                          {group.name}
+                        </div>
+                      )}
+
+                      <div className="mt-2 flex items-center gap-2.5 text-sm text-mist">
+                        <span>
+                          <strong className="font-semibold text-paper">{counts.students}</strong>{' '}
+                          {counts.students === 1 ? 'student' : 'students'}
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-line" />
+                        <span>
+                          <strong className="font-semibold text-paper">{counts.tasks}</strong>{' '}
+                          {counts.tasks === 1 ? 'assignment' : 'assignments'}
+                        </span>
+                      </div>
+
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-1.5 text-sm font-medium text-mist transition group-hover:text-accent">
+                      Open
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition group-hover:translate-x-0.5">
+                        <path d="M5 12h14" />
+                        <path d="M12 5l7 7-7 7" />
+                      </svg>
+                    </div>
+
+                  </div>
+                )
+              })}
+
+              {/* New-group tile — same footprint as a real group card */}
+              <form
+                onSubmit={createGroup}
+                className="flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-line p-6 text-center transition hover:border-accent/40"
+              >
+
+                {composingGroup ? (
+                  <>
+                    <input
+                      autoFocus
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setComposingGroup(false)
+                          setNewGroupName('')
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!newGroupName.trim()) setComposingGroup(false)
+                      }}
+                      placeholder="Group name"
+                      className="focus-ring w-full max-w-[14rem] rounded-lg border border-line bg-panel-2 px-3 py-2 text-center text-sm text-paper placeholder:text-mist/70 outline-none"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={creating || !newGroupName.trim()}
+                      className="focus-ring rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
+                    >
+                      {creating ? 'Adding…' : 'Create group'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setComposingGroup(true)}
+                    className="focus-ring flex flex-col items-center gap-2 text-mist transition hover:text-accent"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-xl">
+                      +
+                    </span>
+                    <span className="text-sm font-medium">New group</span>
+                  </button>
+                )}
+
+              </form>
+
+            </div>
+
+          )}
+
+        </div>
       )}
 
-      {activeGroup && (
+      {/* =====================================================
+          GROUP DETAIL — full-screen view for one group, opened
+          by clicking its tile above.
+      ===================================================== */}
+
+      {screen === 'detail' && activeGroupObj && (
         <>
+
+          <button
+            type="button"
+            onClick={backToGroups}
+            className="focus-ring inline-flex items-center gap-1.5 text-sm font-medium text-mist transition hover:text-accent"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+            All groups
+          </button>
 
           {/* =================================================
               HERO
           ================================================= */}
 
-          <section className="relative overflow-hidden rounded-2xl border border-line bg-panel">
+          {(() => {
+            const accent = getGroupAccent(activeGroup)
 
-            <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
-            <div className="absolute -bottom-14 left-1/3 h-32 w-32 rounded-full bg-cyan-300/10 blur-3xl" />
+            return (
+              <section className="rounded-2xl border border-line bg-panel px-5 py-4 sm:px-7 sm:py-5">
 
-            <div className="relative px-5 py-4 sm:px-7 sm:py-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3.5">
 
-                <div className="flex min-w-0 items-center gap-3">
-
-                  <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1">
-
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                      Examiner desk
-                    </span>
-
-                  </div>
-
-                  <h1 className="truncate font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
-                    {activeGroupObj?.name || 'Group'}
-                  </h1>
-
-                </div>
-
-                <div className="flex shrink-0 items-center gap-4">
-
-                  <div>
-                    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-mist">
-                      Students
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold ${accent.bg} ${accent.text}`}>
+                      {activeGroupObj?.name?.charAt(0)?.toUpperCase() || '?'}
                     </div>
 
-                    <div className="mt-0.5 font-display text-lg text-paper">
-                      {roster.length}
+                    <div className="min-w-0">
+
+                      {renamingId === activeGroup ? (
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => saveRename(activeGroup)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveRename(activeGroup)
+                            if (e.key === 'Escape') setRenamingId(null)
+                          }}
+                          className="focus-ring rounded-lg border border-accent bg-panel-2 px-2.5 py-1 font-display text-xl text-paper outline-none sm:text-2xl"
+                        />
+                      ) : (
+                        <h1 className="truncate font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
+                          {activeGroupObj?.name || 'Group'}
+                        </h1>
+                      )}
+
+                      <div className="mt-1 flex items-center gap-2.5 text-sm text-mist">
+                        <span>{roster.length} {roster.length === 1 ? 'student' : 'students'}</span>
+                        <span className="h-1 w-1 rounded-full bg-line" />
+                        <span>{homeworks.length} {homeworks.length === 1 ? 'assignment' : 'assignments'}</span>
+                      </div>
+
                     </div>
-                  </div>
-
-                  <div className="h-10 min-w-12 rounded-xl border border-accent/25 bg-accent/10 px-3 flex flex-col items-center justify-center">
-
-                    <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-mist">
-                      Tasks
-                    </span>
-
-                    <span className="font-display text-sm leading-none text-accent">
-                      {homeworks.length}
-                    </span>
 
                   </div>
 
-                </div>
+                  <div className="flex shrink-0 items-center gap-2">
 
-              </div>
-
-            </div>
-          </section>
-
-
-          {/* =================================================
-              GROUP CONTROLS
-          ================================================= */}
-
-          <section>
-
-            <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-              Your groups
-            </div>
-
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-
-                {groups.map((group) =>
-                  renamingId === group.id ? (
-                    <input
-                      key={group.id}
-                      autoFocus
-                      value={renameValue}
-                      onChange={(e) =>
-                        setRenameValue(e.target.value)
-                      }
-                      onBlur={() =>
-                        saveRename(group.id)
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          saveRename(group.id)
-                        }
-
-                        if (e.key === 'Escape') {
-                          setRenamingId(null)
-                        }
-                      }}
-                      className="focus-ring h-11 w-40 rounded-xl border border-accent bg-panel px-3 text-sm text-paper outline-none"
-                    />
-                  ) : (
-                    <div
-                      key={group.id}
-                      className={`flex h-11 items-center overflow-hidden rounded-xl border transition-all ${
-                        activeGroup === group.id
-                          ? 'border-accent bg-accent text-onaccent shadow-lg shadow-accent/15'
-                          : 'border-line bg-panel text-mist hover:border-accent/35 hover:text-paper'
-                      }`}
+                    <button
+                      type="button"
+                      onClick={() => startRename(activeGroupObj)}
+                      className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-panel-2 hover:text-accent"
+                      title="Rename group"
+                      aria-label="Rename group"
                     >
+                      ✎
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveGroup(group.id)
-                        }
-                        className="focus-ring h-full px-4 text-sm font-medium"
-                      >
-                        {group.name}
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteGroup(activeGroupObj)}
+                      disabled={busyAction === `delete-group-${activeGroup}`}
+                      className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg text-mist transition hover:bg-coral/10 hover:text-coral disabled:opacity-40"
+                      title="Delete group permanently"
+                      aria-label="Delete group permanently"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                      </svg>
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startRename(group)
-                        }
-                        className={`focus-ring flex h-7 w-7 items-center justify-center rounded-lg text-xs transition ${
-                          activeGroup === group.id
-                            ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
-                            : 'text-mist hover:bg-panel-2 hover:text-accent'
-                        }`}
-                        title="Rename group"
-                        aria-label="Rename group"
-                      >
-                        ✎
-                      </button>
+                    <div className="ml-1">
+                      <PostHomeworkForm
+                        groupId={activeGroup}
+                        teacherId={teacherId}
+                        onPosted={(hw) => {
+                          setHomeworks((prev) => [
+                            hw,
+                            ...prev,
+                          ])
 
-                      <button
-  type="button"
-  onClick={() =>
-    deleteGroup(group)
-  }
-  disabled={
-    busyAction ===
-    `delete-group-${group.id}`
-  }
-  className={`focus-ring mr-2 flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40 ${
-    activeGroup === group.id
-      ? 'text-onaccent/70 hover:bg-white/10 hover:text-onaccent'
-      : 'text-mist hover:bg-coral/10 hover:text-coral'
-  }`}
-  title={
-    busyAction === `delete-group-${group.id}`
-      ? 'Deleting group...'
-      : 'Delete group permanently'
-  }
-  aria-label={
-    busyAction === `delete-group-${group.id}`
-      ? 'Deleting group'
-      : 'Delete group permanently'
-  }
->
-  {busyAction === `delete-group-${group.id}` ? (
-    <span className="animate-pulse text-[9px] font-bold">
-      ...
-    </span>
-  ) : (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-    </svg>
-  )}
-</button>
+                          notifyGroup({
+    			groupId: activeGroup,
+    			type: 'homework_new',
+    			title: 'New homework posted',
+    			body: hw.title,
+    			link: `homework:${hw.id}`,
+  		    }).then((result) => {
+                            if (result?.ok) return
 
+                            // A push-only failure means students already
+                            // got the in-app notification (the part that
+                            // actually matters) — the phone/desktop push is
+                            // a secondary channel on top of that, and isn't
+                            // worth interrupting the teacher for every
+                            // single time it doesn't go through. Only a
+                            // full failure (nobody told anything) surfaces
+                            // a popup.
+                            if (result?.reason === 'push') {
+                              console.warn(
+                                `Push notification failed for "${hw.title}":`,
+                                result?.detail
+                              )
+                              return
+                            }
+
+                            setConfirmDialog({
+                              title: "Students weren't notified",
+                              message:
+                                `"${hw.title}" was posted, but students could not be notified in-app either — let them know directly if needed.` +
+                                (result?.detail
+                                  ? `\n\nDetails: ${result.detail}`
+                                  : ''),
+                              tone: 'coral',
+                              hideCancel: true,
+                            })
+                          })
+                        }}
+                      />
                     </div>
-                  )
-                )}
 
-                <form
-                  onSubmit={createGroup}
-                  className="flex h-11 overflow-hidden rounded-xl border border-line bg-panel"
-                >
+                  </div>
 
-                  <input
-                    value={newGroupName}
-                    onChange={(e) =>
-                      setNewGroupName(e.target.value)
-                    }
-                    placeholder="New group name"
-                    className="focus-ring w-36 bg-transparent px-3 text-sm text-paper placeholder:text-mist/70 outline-none sm:w-44"
-                  />
+                </div>
 
-                  <button
-                    type="submit"
-                    disabled={creating}
-                    className="focus-ring border-l border-accent/20 bg-accent px-5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
-                  >
-                    {creating ? 'Adding…' : 'Add'}
-                  </button>
-
-                </form>
-
-              </div>
-
-              <div className="shrink-0">
-                <PostHomeworkForm
-                  groupId={activeGroup}
-                  teacherId={teacherId}
-                  onPosted={(hw) => {
-                    setHomeworks((prev) => [
-                      hw,
-                      ...prev,
-                    ])
-
-                    notifyGroup({
-  			groupId: activeGroup,
-  			type: 'homework_new',
-  			title: 'New homework posted',
-  			body: hw.title,
-  			link: `homework:${hw.id}`,
-		    }).then((result) => {
-                      if (result?.ok) return
-
-                      // A push-only failure means students already
-                      // got the in-app notification (the part that
-                      // actually matters) — the phone/desktop push is
-                      // a secondary channel on top of that, and isn't
-                      // worth interrupting the teacher for every
-                      // single time it doesn't go through. Only a
-                      // full failure (nobody told anything) surfaces
-                      // a popup.
-                      if (result?.reason === 'push') {
-                        console.warn(
-                          `Push notification failed for "${hw.title}":`,
-                          result?.detail
-                        )
-                        return
-                      }
-
-                      setConfirmDialog({
-                        title: "Students weren't notified",
-                        message:
-                          `"${hw.title}" was posted, but students could not be notified in-app either — let them know directly if needed.` +
-                          (result?.detail
-                            ? `\n\nDetails: ${result.detail}`
-                            : ''),
-                        tone: 'coral',
-                        hideCancel: true,
-                      })
-                    })
-                  }}
-                />
-              </div>
-
-            </div>
-
-          </section>
-
+              </section>
+            )
+          })()}
 
           {/* =================================================
               STUDENT PROGRESS TITLE
