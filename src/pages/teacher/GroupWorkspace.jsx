@@ -1119,12 +1119,14 @@ export default function GroupWorkspace({ teacherId }) {
           <button
             type="button"
             onClick={backToGroups}
-            className="focus-ring inline-flex items-center gap-1.5 text-sm font-medium text-mist transition hover:text-accent"
+            className="focus-ring group inline-flex items-center gap-2 rounded-full border border-line bg-panel py-1.5 pl-1.5 pr-4 text-sm font-medium text-paper-dim shadow-[0_6px_16px_-10px_rgba(0,0,0,0.6)] transition hover:border-accent/40 hover:text-accent"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" />
-              <path d="M12 19l-7-7 7-7" />
-            </svg>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-panel-2 text-mist transition group-hover:bg-accent/15 group-hover:text-accent">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
+            </span>
             All groups
           </button>
 
