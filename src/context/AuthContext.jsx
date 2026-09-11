@@ -202,17 +202,44 @@ export function AuthProvider({ children }) {
           return
         }
 
-        /*
-         * Normal authentication events. This also fires on the very
-         * first load (Supabase re-announces the existing session
-         * here too, alongside initializeAuth() above) and again on
-         * every silent token refresh — none of those should touch
-         * `loading`, since that's reserved for the one-time "have we
-         * checked yet at all" gate. `loadProfile` tracks its own busy
-         * state via `profileLoading` instead.
-         */
         setIsRecoveringPassword(false)
         setSession(sess)
+
+        /*
+         * event === 'INITIAL_SESSION' fires immediately on every single
+         * page load, re-announcing the exact same session
+         * initializeAuth() above just finished checking a moment
+         * earlier. event === 'TOKEN_REFRESHED' fires every time a
+         * signed-in student's access token silently renews in the
+         * background — by default about once an hour, for as long as
+         * their tab stays open. Neither one means the STUDENT'S ROW in
+         * `profiles` needs re-fetching — nothing about their profile
+         * changes just because their token renewed.
+         *
+         * This used to call loadProfile() on both of those anyway,
+         * which meant two things: (1) every page load queried
+         * `profiles` twice at once — here, and from initializeAuth —
+         * for zero benefit, and (2) far more seriously, any group of
+         * students whose tokens happen to be in sync (e.g. everyone who
+         * logged in around the start of the same class) would all have
+         * their tokens quietly refresh within moments of each other,
+         * roughly an hour later, each one firing an extra, completely
+         * unnecessary `profiles` query at the same time. A burst like
+         * that — dozens of students at once, on phones and laptops,
+         * with nothing the student actually did to trigger it — is
+         * exactly the kind of spike that can tip a project into
+         * genuine timeouts for a lot of people simultaneously, which is
+         * what "Could not load profile: ...taking too long" happening
+         * to many students at once actually looks like from the
+         * server's side. Only a real sign-in (a new login) or sign-out
+         * actually needs to touch the profile.
+         */
+        if (
+          event === 'INITIAL_SESSION' ||
+          event === 'TOKEN_REFRESHED'
+        ) {
+          return
+        }
 
         if (sess?.user?.id) {
           await loadProfile(
