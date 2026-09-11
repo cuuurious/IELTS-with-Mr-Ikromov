@@ -25,6 +25,14 @@ export default function TeacherStudents({ onStartChat }) {
   const [resetPasswordStudent, setResetPasswordStudent] =
     useState(null)
 
+  // Bulk selection — scoped to whatever the current search/filters are
+  // showing. Cleared whenever those change (below) so a teacher can
+  // never end up with students selected that they can no longer see,
+  // which would make "12 selected" on screen a mystery.
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [bulkGroupChoice, setBulkGroupChoice] = useState('')
+  const [bulkBusy, setBulkBusy] = useState(false)
+
   const loadData = async () => {
     setLoading(true)
     setError('')
@@ -298,6 +306,25 @@ export default function TeacherStudents({ onStartChat }) {
     groupById,
   ])
 
+  useEffect(() => {
+    setSelectedIds(new Set())
+    setBulkGroupChoice('')
+  }, [search, groupFilter, statusFilter, sortBy, view])
+
+  const toggleSelected = (studentId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+
+      if (next.has(studentId)) {
+        next.delete(studentId)
+      } else {
+        next.add(studentId)
+      }
+
+      return next
+    })
+  }
+
   const addToGroup = async (student, groupId) => {
     if (!groupId) return
 
@@ -458,6 +485,150 @@ export default function TeacherStudents({ onStartChat }) {
     setSortBy('name-asc')
   }
 
+  /* =========================================================
+     BULK ACTIONS
+     Scoped to selectedIds, which is always a subset of whatever
+     search/filters currently have on screen.
+  ========================================================= */
+
+  const selectedStudentsList = useMemo(
+    () => students.filter((student) => selectedIds.has(student.id)),
+    [students, selectedIds]
+  )
+
+  const selectedNotApprovedCount = useMemo(
+    () =>
+      selectedStudentsList.filter(
+        (student) => student.status !== 'approved'
+      ).length,
+    [selectedStudentsList]
+  )
+
+  const bulkApprove = () => {
+    const ids = selectedStudentsList
+      .filter((student) => student.status !== 'approved')
+      .map((student) => student.id)
+
+    if (!ids.length) return
+
+    setConfirmDialog({
+      title: `Approve ${ids.length} student${ids.length === 1 ? '' : 's'}?`,
+      message: `${ids.length === 1 ? 'This student' : 'These students'} will be able to sign in and see their homework.`,
+      confirmLabel: 'Approve',
+      cancelLabel: 'Cancel',
+      onConfirm: () => doBulkApprove(ids),
+    })
+  }
+
+  const doBulkApprove = async (ids) => {
+    setBulkBusy(true)
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ status: 'approved' })
+      .in('id', ids)
+      .select(
+        'id, full_name, username, contact_email, role, status, created_at, target_band, bio, avatar_url'
+      )
+
+    if (error) {
+      console.error('Bulk approve failed:', error)
+
+      setConfirmDialog({
+        title: "Couldn't approve these students",
+        message: error.message,
+        tone: 'coral',
+        hideCancel: true,
+      })
+    } else {
+      const updatedById = Object.fromEntries(
+        (data || []).map((student) => [student.id, student])
+      )
+
+      setStudents((prev) =>
+        prev.map((student) => updatedById[student.id] || student)
+      )
+
+      setSelectedIds(new Set())
+    }
+
+    setBulkBusy(false)
+  }
+
+  const bulkAddToGroup = () => {
+    if (!bulkGroupChoice) return
+
+    const targetGroup = groups.find(
+      (group) => group.id === bulkGroupChoice
+    )
+
+    if (!targetGroup) return
+
+    const alreadyIn = new Set(
+      selectedStudentsList
+        .filter((student) =>
+          (membershipsByStudent[student.id] || []).includes(
+            bulkGroupChoice
+          )
+        )
+        .map((student) => student.id)
+    )
+
+    const toAdd = selectedStudentsList.filter(
+      (student) => !alreadyIn.has(student.id)
+    )
+
+    if (!toAdd.length) {
+      setConfirmDialog({
+        title: 'Nothing to add',
+        message: `Every selected student is already in "${targetGroup.name}".`,
+        hideCancel: true,
+      })
+      return
+    }
+
+    setConfirmDialog({
+      title: `Add ${toAdd.length} student${toAdd.length === 1 ? '' : 's'} to "${targetGroup.name}"?`,
+      message: alreadyIn.size
+        ? `${alreadyIn.size} of your selected students ${alreadyIn.size === 1 ? 'is' : 'are'} already in this group and will be skipped.`
+        : undefined,
+      confirmLabel: 'Add',
+      cancelLabel: 'Cancel',
+      onConfirm: () => doBulkAddToGroup(toAdd, targetGroup),
+    })
+  }
+
+  const doBulkAddToGroup = async (studentsToAdd, group) => {
+    setBulkBusy(true)
+
+    const { data, error } = await supabase
+      .from('group_members')
+      .insert(
+        studentsToAdd.map((student) => ({
+          student_id: student.id,
+          group_id: group.id,
+        }))
+      )
+      .select()
+
+    if (error) {
+      console.error('Bulk add to group failed:', error)
+
+      setConfirmDialog({
+        title: "Couldn't add these students",
+        message: `Couldn't add students to "${group.name}": ${error.message}`,
+        tone: 'coral',
+        hideCancel: true,
+      })
+    } else {
+      setMemberships((prev) => [...prev, ...(data || [])])
+      setSelectedIds(new Set())
+      setBulkGroupChoice('')
+    }
+
+    setBulkBusy(false)
+  }
+
   if (loading) {
     return (
       <p className="text-mist">
@@ -487,8 +658,10 @@ export default function TeacherStudents({ onStartChat }) {
           </p>
         </div>
 
-        <div className="text-mist text-sm font-mono">
-          {students.length} total
+        <div className="flex h-9 items-center gap-1.5 rounded-full border border-line bg-panel px-3.5 text-sm font-mono text-mist shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+          <strong className="font-semibold text-paper">{students.length}</strong>
+          total
         </div>
       </div>
 
@@ -497,10 +670,10 @@ export default function TeacherStudents({ onStartChat }) {
         <button
           type="button"
           onClick={() => setView('all')}
-          className={`focus-ring px-3 py-2 rounded-md text-sm ${
+          className={`focus-ring px-3.5 py-2 rounded-full text-sm font-medium transition ${
             view === 'all'
-              ? 'bg-brass text-onbrass'
-              : 'bg-panel-2 text-mist hover:text-paper'
+              ? 'bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
+              : 'border border-line bg-panel text-mist hover:text-paper'
           }`}
         >
           All Students ({students.length})
@@ -511,10 +684,10 @@ export default function TeacherStudents({ onStartChat }) {
           onClick={() =>
             setView('without-group')
           }
-          className={`focus-ring px-3 py-2 rounded-md text-sm ${
+          className={`focus-ring px-3.5 py-2 rounded-full text-sm font-medium transition ${
             view === 'without-group'
-              ? 'bg-brass text-onbrass'
-              : 'bg-panel-2 text-mist hover:text-paper'
+              ? 'bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
+              : 'border border-line bg-panel text-mist hover:text-paper'
           }`}
         >
           Without a group (
@@ -614,13 +787,40 @@ export default function TeacherStudents({ onStartChat }) {
 
         <div className="flex items-center justify-between gap-2 flex-wrap">
 
-          <span className="text-mist text-xs font-mono">
+          <label className="focus-ring flex items-center gap-2 text-mist text-xs font-mono cursor-pointer">
+            <input
+              type="checkbox"
+              checked={
+                filteredStudents.length > 0 &&
+                filteredStudents.every((student) =>
+                  selectedIds.has(student.id)
+                )
+              }
+              onChange={() => {
+                const allVisibleSelected =
+                  filteredStudents.length > 0 &&
+                  filteredStudents.every((student) =>
+                    selectedIds.has(student.id)
+                  )
+
+                setSelectedIds(
+                  allVisibleSelected
+                    ? new Set()
+                    : new Set(
+                        filteredStudents.map(
+                          (student) => student.id
+                        )
+                      )
+                )
+              }}
+              className="h-3.5 w-3.5 accent-brass"
+            />
             Showing {filteredStudents.length}{' '}
             student
             {filteredStudents.length === 1
               ? ''
               : 's'}
-          </span>
+          </label>
 
           {(search ||
             groupFilter !== 'all' ||
@@ -638,6 +838,67 @@ export default function TeacherStudents({ onStartChat }) {
         </div>
 
       </div>
+
+      {/* =====================================================
+          BULK ACTION BAR — only appears once something's selected
+      ===================================================== */}
+
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brass/30 bg-brass/10 px-4 py-3">
+
+          <span className="text-sm font-semibold text-paper">
+            {selectedIds.size} selected
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="focus-ring text-xs text-mist hover:text-paper hover:underline"
+          >
+            Clear
+          </button>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+
+            <button
+              type="button"
+              onClick={bulkApprove}
+              disabled={bulkBusy || selectedNotApprovedCount === 0}
+              className="focus-ring rounded-full bg-sage px-4 py-1.5 text-sm font-semibold text-onbrass transition hover:brightness-105 disabled:opacity-40"
+            >
+              {selectedNotApprovedCount > 0
+                ? `Approve ${selectedNotApprovedCount}`
+                : 'Approve'}
+            </button>
+
+            <div className="flex overflow-hidden rounded-full border border-line bg-panel">
+              <select
+                value={bulkGroupChoice}
+                onChange={(e) => setBulkGroupChoice(e.target.value)}
+                className="focus-ring bg-transparent px-3 py-1.5 text-sm text-paper"
+              >
+                <option value="">Add to group…</option>
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={bulkAddToGroup}
+                disabled={bulkBusy || !bulkGroupChoice}
+                className="focus-ring border-l border-line px-4 text-sm font-semibold text-brass transition hover:bg-brass/10 disabled:opacity-40"
+              >
+                Add
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
       {filteredStudents.length === 0 ? (
         <div className="ticket rounded-lg p-6 text-center">
@@ -657,53 +918,124 @@ export default function TeacherStudents({ onStartChat }) {
 
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
 
           {filteredStudents.map((student) => {
             const studentGroups =
               getStudentGroups(student.id)
 
+            const isSelected = selectedIds.has(student.id)
+
             return (
               <div
                 key={student.id}
-                className="ticket rounded-lg p-4"
+                className={`ticket rounded-xl px-3.5 py-3 transition ${
+                  isSelected
+                    ? 'ring-2 ring-brass/50'
+                    : ''
+                }`}
               >
 
-                <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex flex-wrap items-center gap-3">
 
-                  <div className="min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() =>
+                      toggleSelected(student.id)
+                    }
+                    aria-label={`Select ${student.full_name}`}
+                    className="h-4 w-4 shrink-0 accent-brass"
+                  />
 
-                    <div className="font-display text-lg text-paper">
-                      {student.full_name}
-                    </div>
-
-                    <div className="text-mist text-sm font-mono">
-                      @{student.username}
-                    </div>
-
-                    {student.contact_email && (
-                      <div className="text-mist text-xs mt-1">
-                        {student.contact_email}
-                      </div>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-sm font-semibold text-paper shadow-[0_4px_10px_-4px_rgba(0,0,0,0.35)]">
+                    {student.avatar_url ? (
+                      <img
+                        src={student.avatar_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      String(
+                        student.full_name ||
+                          student.username ||
+                          '?'
+                      )
+                        .charAt(0)
+                        .toUpperCase()
                     )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="truncate font-display text-[15px] text-paper">
+                        {student.full_name}
+                      </span>
+
+                      <span className="shrink-0 text-mist text-xs font-mono">
+                        @{student.username}
+                      </span>
+                    </div>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+
+                      {studentGroups.length === 0 ? (
+                        <span className="text-mist text-xs">
+                          No group
+                        </span>
+                      ) : (
+                        studentGroups.map((group) => {
+                          const chip = getGroupChipStyle(group.id)
+
+                          return (
+                            <span
+                              key={group.id}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
+                            >
+                              {group.name}
+
+                              <button
+                                type="button"
+                                disabled={
+                                  busyAction ===
+                                  `remove-${student.id}-${group.id}`
+                                }
+                                onClick={() =>
+                                  removeFromGroup(
+                                    student,
+                                    group
+                                  )
+                                }
+                                className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
+                                title="Remove from group"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          )
+                        })
+                      )}
+
+                    </div>
 
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
 
                     {student.target_band != null && (
-                      <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-brass/40 bg-brass/10 text-brass">
+                      <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-brass/40 bg-brass/10 text-brass">
                         <span>
                           {getTargetBandInfo(student.target_band).emoji}
                         </span>
                         <span>
-                          Target {formatTargetBand(student.target_band)}
+                          {formatTargetBand(student.target_band)}
                         </span>
                       </span>
                     )}
 
                     <span
-                      className={`text-xs px-2 py-1 rounded-md ${
+                      className={`text-xs px-2 py-1 rounded-full ${
                         student.status === 'approved'
                           ? 'bg-sage text-onbrass'
                           : student.status === 'pending'
@@ -716,111 +1048,61 @@ export default function TeacherStudents({ onStartChat }) {
 
                   </div>
 
-                </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
 
-                <div className="mt-4">
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        const groupId = e.target.value
 
-                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
-                    Groups
-                  </div>
-
-                  {studentGroups.length === 0 ? (
-                    <span className="text-mist text-sm">
-                      No group
-                    </span>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-
-                      {studentGroups.map((group) => {
-                        const chip = getGroupChipStyle(group.id)
-
-                        return (
-                          <div
-                            key={group.id}
-                            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-sm font-medium ${chip.border} ${chip.bg} ${chip.text}`}
-                          >
-                            <span>
-                              {group.name}
-                            </span>
-
-                            <button
-                              type="button"
-                              disabled={
-                                busyAction ===
-                                `remove-${student.id}-${group.id}`
-                              }
-                              onClick={() =>
-                                removeFromGroup(
-                                  student,
-                                  group
-                                )
-                              }
-                              className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
-                              title="Remove from group"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        )
-                      })}
-
-                    </div>
-                  )}
-
-                </div>
-
-                <div className="mt-4 flex items-center gap-2 flex-wrap">
-
-                  <select
-                    defaultValue=""
-                    onChange={(e) => {
-                      const groupId = e.target.value
-
-                      if (groupId) {
-                        addToGroup(
-                          student,
-                          groupId
-                        )
-                      }
-
-                      e.target.value = ''
-                    }}
-                    disabled={
-                      student.status !== 'approved'
-                    }
-                    className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper disabled:opacity-40"
-                  >
-                    <option value="">
-                      Add to group…
-                    </option>
-
-                    {groups
-                      .filter(
-                        (group) =>
-                          !studentGroups.some(
-                            (g) =>
-                              g.id === group.id
+                        if (groupId) {
+                          addToGroup(
+                            student,
+                            groupId
                           )
-                      )
-                      .map((group) => (
-                        <option
-                          key={group.id}
-                          value={group.id}
-                        >
-                          {group.name}
-                        </option>
-                      ))}
-                  </select>
+                        }
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedStudent(student)
-                    }
-                    className="focus-ring px-3 py-2 rounded-md border border-line text-sm text-mist hover:text-paper"
-                  >
-                    View details
-                  </button>
+                        e.target.value = ''
+                      }}
+                      disabled={
+                        student.status !== 'approved'
+                      }
+                      title="Add to group"
+                      className="focus-ring bg-panel-2 border border-line rounded-full px-2.5 py-1.5 text-xs text-paper disabled:opacity-40"
+                    >
+                      <option value="">
+                        Add to group…
+                      </option>
+
+                      {groups
+                        .filter(
+                          (group) =>
+                            !studentGroups.some(
+                              (g) =>
+                                g.id === group.id
+                            )
+                        )
+                        .map((group) => (
+                          <option
+                            key={group.id}
+                            value={group.id}
+                          >
+                            {group.name}
+                          </option>
+                        ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedStudent(student)
+                      }
+                      className="focus-ring px-2.5 py-1.5 rounded-full border border-line text-xs text-mist transition hover:border-brass/40 hover:text-brass"
+                    >
+                      Details
+                    </button>
+
+                  </div>
 
                 </div>
 
