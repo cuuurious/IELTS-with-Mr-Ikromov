@@ -9,10 +9,49 @@ import { supabase } from '../lib/supabaseClient'
 
 const AuthContext = createContext(null)
 
+// Neither initializeAuth() nor loadProfile() below used to have a
+// timeout or a try/catch around their Supabase calls. That was fine
+// as long as those calls always either succeeded or failed fast — but
+// if one ever hangs (a slow/unstable connection, or Supabase itself
+// briefly struggling) it hangs FOREVER, because nothing ever runs the
+// setLoading(false) / setProfileLoading(false) that lets the app past
+// its "Just a moment…" screen. That's exactly what a stuck-forever
+// loading screen that survives a refresh, a private window, and even
+// a different browser looks like — it isn't a caching problem at all,
+// it's the exact same request hanging the exact same way every time.
+// Racing every such call against a timeout guarantees the app always
+// moves on to a real error state (with a Retry button) instead of
+// staying frozen indefinitely.
+const AUTH_TIMEOUT_MS = 15000
+
+function withTimeout(promise, ms, message) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(message))
+    }, ms)
+
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        clearTimeout(timer)
+        reject(error)
+      }
+    )
+  })
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Set whenever the initial session check or a profile fetch fails
+  // or times out, so Gate() in App.jsx can show a real "something went
+  // wrong, try again" screen instead of hanging on the spinner forever
+  // or silently pretending everything is fine.
+  const [authError, setAuthError] = useState('')
   // Separate from `loading` (which only covers the very first check of
   // "is anyone signed in"). This covers every later profile (re)fetch —
   // on the initial load, when the tab regains focus, when Supabase
@@ -35,69 +74,108 @@ export function AuthProvider({ children }) {
     }
 
     setProfileLoading(true)
+    setAuthError('')
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle()
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle(),
+        AUTH_TIMEOUT_MS,
+        'Loading your profile is taking too long. Please check your connection and try again.'
+      )
 
-    if (error) {
-      console.error(error)
+      if (error) {
+        throw error
+      }
+
+      setProfile(data || null)
+    } catch (err) {
+      // Whatever the cause — a network drop, a timeout, Supabase
+      // itself erroring — this must never leave profileLoading stuck
+      // at true. That was the actual bug behind a loading screen that
+      // never went away even after a refresh or a different browser:
+      // the exact same request failing the exact same way every time,
+      // with nothing here to catch it and let the app move on.
+      console.error('Could not load profile:', err)
+
+      setProfile(null)
+      setAuthError(
+        err?.message ||
+          'Could not load your profile. Please try again.'
+      )
+    } finally {
+      setProfileLoading(false)
     }
-
-    setProfile(data || null)
-    setProfileLoading(false)
   }, [])
 
   useEffect(() => {
     let mounted = true
 
     const initializeAuth = async () => {
-      const {
-        data,
-        error,
-      } = await supabase.auth.getSession()
+      try {
+        const {
+          data,
+          error,
+        } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'Checking your sign-in is taking too long. Please check your connection and try again.'
+        )
 
-      if (!mounted) return
+        if (!mounted) return
 
-      if (error) {
+        if (error) {
+          throw error
+        }
+
+        const initialSession = data?.session || null
+
+        setSession(initialSession)
+
+        /*
+         * Password recovery has its own route and its own
+         * session handling. Do not load the normal profile
+         * while the user is on /reset-password.
+         */
+        const recoveryRoute =
+          window.location.pathname === '/reset-password'
+
+        if (recoveryRoute) {
+          setIsRecoveringPassword(true)
+          setProfile(null)
+        } else if (initialSession?.user?.id) {
+          await loadProfile(
+            initialSession.user.id
+          )
+        } else {
+          setProfile(null)
+        }
+      } catch (err) {
+        // Same reasoning as loadProfile's catch below: whatever fails
+        // here, `loading` must still clear so the app never gets
+        // stuck on the "Just a moment…" screen forever — that's worse
+        // than just falling back to the login screen, which the
+        // person can always retry from.
+        if (!mounted) return
+
         console.error(
           'Could not get auth session:',
-          error
+          err
         )
 
         setSession(null)
         setProfile(null)
-        setLoading(false)
-        return
-      }
-
-      const initialSession = data?.session || null
-
-      setSession(initialSession)
-
-      /*
-       * Password recovery has its own route and its own
-       * session handling. Do not load the normal profile
-       * while the user is on /reset-password.
-       */
-      const recoveryRoute =
-        window.location.pathname === '/reset-password'
-
-      if (recoveryRoute) {
-        setIsRecoveringPassword(true)
-        setProfile(null)
-      } else if (initialSession?.user?.id) {
-        await loadProfile(
-          initialSession.user.id
+        setAuthError(
+          err?.message ||
+            'Could not check your sign-in. Please try again.'
         )
-      } else {
-        setProfile(null)
-      }
-
-      if (mounted) {
-        setLoading(false)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
@@ -354,6 +432,7 @@ export function AuthProvider({ children }) {
         profile,
         loading,
         profileLoading,
+        authError,
         isRecoveringPassword,
         signUp,
         signIn,

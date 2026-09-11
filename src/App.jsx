@@ -10,7 +10,14 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import TeacherDashboard from './pages/teacher/TeacherDashboard'
 
 function Gate() {
-  const { session, profile, loading, profileLoading } = useAuth()
+  const {
+    session,
+    profile,
+    loading,
+    profileLoading,
+    authError,
+    refreshProfile,
+  } = useAuth()
 
   // profileLoading covers every profile fetch, not just the first one
   // (tab refocus, a silent token refresh — Supabase re-validates the
@@ -31,6 +38,24 @@ function Gate() {
   // though nothing about the session actually changed.
   if (loading || (session && profileLoading && !profile)) {
     return <LoadingScreen />
+  }
+
+  // AuthContext now always gives up after 15 seconds instead of
+  // hanging forever on a stuck network request (see AuthContext.jsx),
+  // but giving up still has to land somewhere other than silently
+  // rendering a broken dashboard. If there's a session but loading it
+  // just failed and there's still no profile, show a real "something
+  // went wrong" screen with a way to try again — this is the fix for
+  // the freeze that used to survive a refresh, a private window, and
+  // even a different browser: same request, same failure, every time,
+  // with no way back in before this existed.
+  if (session && authError && !profile) {
+    return (
+      <LoadingScreen
+        label={authError}
+        onRetry={refreshProfile}
+      />
+    )
   }
 
   if (!session) {

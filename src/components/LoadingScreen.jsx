@@ -12,6 +12,13 @@
  */
 export default function LoadingScreen({
   label = 'Just a moment — getting everything ready for you…',
+  // Set only when a real, timed-out or failed load needs a way out —
+  // see App.jsx's Gate(). Showing a button here (instead of just
+  // leaving the spinner running) is what turns a hung request into a
+  // recoverable moment instead of a screen that never changes no
+  // matter how many times someone reloads it.
+  onRetry,
+  retryLabel = 'Try again',
 }) {
   return (
     <div
@@ -88,6 +95,16 @@ export default function LoadingScreen({
           <div className="mt-1.5 text-sm text-[#747A91] max-w-[260px]">
             {label}
           </div>
+
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="focus-ring mt-4 rounded-full bg-[#6C63FF] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+            >
+              {retryLabel}
+            </button>
+          )}
         </div>
 
       </div>
