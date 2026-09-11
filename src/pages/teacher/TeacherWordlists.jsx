@@ -695,11 +695,11 @@ const saveEditWordlist = async () => {
 }
 
 const wordlistAccentPalette = [
-    { bg: 'bg-sage/15', text: 'text-sage' },
-    { bg: 'bg-coral/15', text: 'text-coral' },
-    { bg: 'bg-cyan/15', text: 'text-cyan' },
-    { bg: 'bg-brass/15', text: 'text-brass' },
-    { bg: 'bg-lavender/15', text: 'text-lavender' },
+    { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
+    { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
+    { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
+    { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
+    { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
   ]
 
   const getWordlistBadge = (title) => {
@@ -723,68 +723,71 @@ const wordlistAccentPalette = [
         <>
 
           {/* =================================================
-              HEADER — title + create button live together, not
-              a floating button with no visual relationship to
-              the section it belongs to.
+              HEADER — title, description, group filter, and the
+              create button all live inside one bounded card, so
+              the button reads as part of this toolbar instead of
+              a button floating alone out in empty page space.
           ================================================= */}
 
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="ticket rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
 
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-                Vocabulary
+            <div className="flex flex-wrap items-center justify-between gap-4">
+
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+                  Vocabulary
+                </div>
+
+                <h2 className="font-display text-2xl sm:text-3xl mt-1">
+                  Word lists
+                </h2>
+
+                <p className="text-sm text-mist mt-1.5 max-w-md">
+                  Vocabulary sets your students review and get quizzed on, grouped by class.
+                </p>
               </div>
 
-              <h2 className="font-display text-2xl sm:text-3xl mt-1">
-                Word lists
-              </h2>
+              {activeGroup && !creating && (
+                <button
+                  type="button"
+                  onClick={() => setCreating(true)}
+                  className="btn-primary shrink-0 shadow-[0_10px_24px_-10px_rgba(117,101,223,0.55)]"
+                >
+                  + New word list
+                </button>
+              )}
 
-              <p className="text-sm text-mist mt-1.5 max-w-md">
-                Vocabulary sets your students review and get quizzed on, grouped by class.
-              </p>
             </div>
 
-            {activeGroup && !creating && (
-              <button
-                type="button"
-                onClick={() => setCreating(true)}
-                className="btn-primary shrink-0 shadow-[0_10px_24px_-10px_rgba(117,101,223,0.55)]"
-              >
-                + New word list
-              </button>
-            )}
+            <div className="border-t border-line pt-4">
 
-          </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2.5">
+                Group
+              </div>
 
-          {/* =================================================
-              GROUP FILTER
-          ================================================= */}
+              <div className="flex gap-2 flex-wrap">
+                {groups.map((group, index) => {
+                  const active = activeGroup === group.id
+                  const accent = wordlistAccentPalette[index % wordlistAccentPalette.length]
 
-          <div>
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => setActiveGroup(group.id)}
+                      className={`focus-ring inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                        active
+                          ? `${accent.border} ${accent.bg} ${accent.text} shadow-[0_6px_16px_-8px_rgba(0,0,0,0.3)]`
+                          : 'border-line bg-panel-2 text-mist hover:border-line hover:text-paper'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${accent.dot}`} />
+                      {group.name}
+                    </button>
+                  )
+                })}
+              </div>
 
-            <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
-              Group
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              {groups.map((group) => {
-                const active = activeGroup === group.id
-
-                return (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => setActiveGroup(group.id)}
-                    className={`focus-ring px-4 py-2 rounded-full text-sm font-medium border transition ${
-                      active
-                        ? 'border-brass bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
-                        : 'border-line bg-panel text-mist hover:text-paper hover:border-brass/50'
-                    }`}
-                  >
-                    {group.name}
-                  </button>
-                )
-              })}
             </div>
 
           </div>
