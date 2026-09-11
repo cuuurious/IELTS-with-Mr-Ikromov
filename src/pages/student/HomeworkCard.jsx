@@ -253,6 +253,15 @@ export default function HomeworkCard({
     submission?.status === 'done' &&
     Boolean(submission?.submitted_at)
 
+  // The whole point of a mock test is exam conditions — the student
+  // shouldn't be able to read Task 1 / Task 2 (or peek at the Task 1
+  // chart) before the clock actually starts, the same way a real
+  // IELTS test paper stays closed until it begins. Reveal the real
+  // content only once they've actually started (or already finished)
+  // — before that, show a locked placeholder instead.
+  const revealMockContent =
+    mockStarted || mockAlreadySubmitted
+
   /*
    * ============================================================
    * UPSERT SUBMISSION
@@ -1419,54 +1428,72 @@ export default function HomeworkCard({
               </div>
 
               {(homework.mock_task_mode === 'task1' || homework.mock_task_mode === 'full') && homework.mock_task1_prompt && (
-                <div className="rounded-md border border-line bg-panel px-3 py-2.5">
-                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 1 prompt</div>
-                  <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task1_prompt}</p>
-                  {homework.mock_task1_image_url && (
-                    <button
-                      type="button"
-                      onClick={() => setTask1ImageLightboxOpen(true)}
-                      className="focus-ring mt-2 block cursor-zoom-in"
-                      title="Click to enlarge"
-                    >
-                      <img
-                        src={homework.mock_task1_image_url}
-                        alt="Task 1 chart"
-                        className="max-h-56 rounded-md border border-line object-contain"
-                      />
-                    </button>
-                  )}
-
-                  {homework.mock_task1_image_url && task1ImageLightboxOpen && createPortal(
-                    <div
-                      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 p-6"
-                      onClick={() => setTask1ImageLightboxOpen(false)}
-                    >
-                      <img
-                        src={homework.mock_task1_image_url}
-                        alt="Task 1 chart, enlarged"
-                        className="max-h-full max-w-full rounded-lg border border-line object-contain"
-                      />
-
+                revealMockContent ? (
+                  <div className="rounded-md border border-line bg-panel px-3 py-2.5">
+                    <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 1 prompt</div>
+                    <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task1_prompt}</p>
+                    {homework.mock_task1_image_url && (
                       <button
                         type="button"
-                        onClick={() => setTask1ImageLightboxOpen(false)}
-                        className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
-                        title="Close"
+                        onClick={() => setTask1ImageLightboxOpen(true)}
+                        className="focus-ring mt-2 block cursor-zoom-in"
+                        title="Click to enlarge"
                       >
-                        ✕
+                        <img
+                          src={homework.mock_task1_image_url}
+                          alt="Task 1 chart"
+                          className="max-h-56 rounded-md border border-line object-contain"
+                        />
                       </button>
-                    </div>,
-                    document.body
-                  )}
-                </div>
+                    )}
+
+                    {homework.mock_task1_image_url && task1ImageLightboxOpen && createPortal(
+                      <div
+                        className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 p-6"
+                        onClick={() => setTask1ImageLightboxOpen(false)}
+                      >
+                        <img
+                          src={homework.mock_task1_image_url}
+                          alt="Task 1 chart, enlarged"
+                          className="max-h-full max-w-full rounded-lg border border-line object-contain"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setTask1ImageLightboxOpen(false)}
+                          className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
+                          title="Close"
+                        >
+                          ✕
+                        </button>
+                      </div>,
+                      document.body
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed border-line bg-panel px-3 py-2.5 flex items-center gap-2">
+                    <span className="text-mist">🔒</span>
+                    <span className="text-sm text-mist">
+                      Task 1 prompt is hidden until you start the test
+                    </span>
+                  </div>
+                )
               )}
 
               {(homework.mock_task_mode === 'task2' || homework.mock_task_mode === 'full') && homework.mock_task2_prompt && (
-                <div className="rounded-md border border-line bg-panel px-3 py-2.5">
-                  <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 2 prompt</div>
-                  <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task2_prompt}</p>
-                </div>
+                revealMockContent ? (
+                  <div className="rounded-md border border-line bg-panel px-3 py-2.5">
+                    <div className="text-xs uppercase tracking-wide text-mist font-mono mb-1">Task 2 prompt</div>
+                    <p className="text-sm text-paper-dim whitespace-pre-wrap">{homework.mock_task2_prompt}</p>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed border-line bg-panel px-3 py-2.5 flex items-center gap-2">
+                    <span className="text-mist">🔒</span>
+                    <span className="text-sm text-mist">
+                      Task 2 prompt is hidden until you start the test
+                    </span>
+                  </div>
+                )
               )}
 
               {mockAlreadySubmitted ? (
