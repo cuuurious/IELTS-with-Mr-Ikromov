@@ -694,7 +694,21 @@ const saveEditWordlist = async () => {
   }
 }
 
-return (
+const wordlistAccentPalette = [
+    { bg: 'bg-sage/15', text: 'text-sage' },
+    { bg: 'bg-coral/15', text: 'text-coral' },
+    { bg: 'bg-cyan/15', text: 'text-cyan' },
+    { bg: 'bg-brass/15', text: 'text-brass' },
+    { bg: 'bg-lavender/15', text: 'text-lavender' },
+  ]
+
+  const getWordlistBadge = (title) => {
+    const unitMatch = title?.match(/unit\s*(\d+)/i)
+    if (unitMatch) return unitMatch[1]
+    return (title || '?').trim().charAt(0).toUpperCase() || '?'
+  }
+
+  return (
     <div className="flex flex-col gap-6">
 
       {groups.length === 0 && (
@@ -706,31 +720,81 @@ return (
       )}
 
       {groups.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {groups.map((group) => {
-            const active = activeGroup === group.id
+        <>
 
-            return (
+          {/* =================================================
+              HEADER — title + create button live together, not
+              a floating button with no visual relationship to
+              the section it belongs to.
+          ================================================= */}
+
+          <div className="flex flex-wrap items-start justify-between gap-4">
+
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
+                Vocabulary
+              </div>
+
+              <h2 className="font-display text-2xl sm:text-3xl mt-1">
+                Word lists
+              </h2>
+
+              <p className="text-sm text-mist mt-1.5 max-w-md">
+                Vocabulary sets your students review and get quizzed on, grouped by class.
+              </p>
+            </div>
+
+            {activeGroup && !creating && (
               <button
-                key={group.id}
                 type="button"
-                onClick={() => setActiveGroup(group.id)}
-                className={`focus-ring px-4 py-2 rounded-lg text-sm border transition-colors ${
-                  active
-                    ? 'bg-brass text-onbrass border-brass font-medium'
-                    : 'bg-panel border-line text-mist hover:text-paper hover:border-brass'
-                }`}
+                onClick={() => setCreating(true)}
+                className="btn-primary shrink-0 shadow-[0_10px_24px_-10px_rgba(117,101,223,0.55)]"
               >
-                {group.name}
+                + New word list
               </button>
-            )
-          })}
-        </div>
+            )}
+
+          </div>
+
+          {/* =================================================
+              GROUP FILTER
+          ================================================= */}
+
+          <div>
+
+            <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
+              Group
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {groups.map((group) => {
+                const active = activeGroup === group.id
+
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => setActiveGroup(group.id)}
+                    className={`focus-ring px-4 py-2 rounded-full text-sm font-medium border transition ${
+                      active
+                        ? 'border-brass bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
+                        : 'border-line bg-panel text-mist hover:text-paper hover:border-brass/50'
+                    }`}
+                  >
+                    {group.name}
+                  </button>
+                )
+              })}
+            </div>
+
+          </div>
+
+        </>
       )}
 
       {activeGroup && (
         <>
-          {creating ? (
+          {creating && (
             <NewWordlistForm
               groups={groups}
               groupIds={[activeGroup]}
@@ -741,86 +805,122 @@ return (
               }}
               onCancel={() => setCreating(false)}
             />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="btn-primary w-fit"
-            >
-              + New word list
-            </button>
           )}
 
-          <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-                  Vocabulary
-                </div>
+          {!creating && (
+            <section className="flex flex-col gap-4">
 
-                <h2 className="font-display text-2xl sm:text-3xl mt-1">
-                  Word lists
-                </h2>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-mono text-mist">
+                  {lists.length} list{lists.length === 1 ? '' : 's'} for this group
+                </span>
               </div>
 
-              <div className="text-xs font-mono text-mist border border-line rounded-full px-3 py-1.5">
-                {lists.length} list{lists.length === 1 ? '' : 's'}
-              </div>
-            </div>
+              {lists.length === 0 ? (
 
-            <div className="flex flex-col gap-3">
-              {lists.map((list) => (
-  <div
-    key={list.id}
-    className="ticket p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-  >
-    <div className="min-w-0">
-      <div className="font-display text-xl text-paper">
-        {list.title}
-      </div>
-
-      <div className="text-mist text-xs font-mono mt-1">
-        {list.wordlist_items?.[0]?.count ?? 0} words · posted {new Date(list.created_at).toLocaleDateString()}
-      </div>
-    </div>
-
-    <div className="flex items-center gap-2 shrink-0">
-  <button
-    type="button"
-    onClick={() => setViewingResults(list)}
-    className="btn-secondary"
-  >
-    View results
-  </button>
-
-  <button
-    type="button"
-    onClick={() => openEditWordlist(list)}
-    className="focus-ring px-3 py-2 rounded-lg border border-brass/40 text-brass hover:bg-brass/10 transition-colors"
-  >
-    Edit
-  </button>
-
-  <button
-    type="button"
-    onClick={() => deleteWordlist(list)}
-    className="focus-ring px-3 py-2 rounded-lg border border-coral/40 text-coral hover:bg-coral/10 transition-colors"
-  >
-    Delete
-  </button>
-</div>
-  </div>
-))}
-
-              {lists.length === 0 && (
-                <div className="surface rounded-xl p-8 text-center">
+                <div className="rounded-2xl border-2 border-dashed border-line p-8 text-center">
                   <p className="text-mist text-sm">
                     No word lists for this group yet.
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setCreating(true)}
+                    className="focus-ring mt-3 text-sm font-semibold text-brass hover:underline"
+                  >
+                    + Create your first word list
+                  </button>
                 </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+                  {lists.map((list, index) => {
+                    const accent = wordlistAccentPalette[index % wordlistAccentPalette.length]
+
+                    return (
+                      <div
+                        key={list.id}
+                        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:border-brass/40 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]"
+                      >
+
+                        <div
+                          aria-hidden="true"
+                          className={`pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full ${accent.bg} blur-3xl`}
+                        />
+
+                        <div className="relative flex items-start gap-3">
+
+                          <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-base font-semibold shadow-[0_6px_14px_-6px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}
+                          >
+                            {getWordlistBadge(list.title)}
+                          </div>
+
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <div className="font-display text-lg leading-snug text-paper">
+                              {list.title}
+                            </div>
+
+                            <div className="text-mist text-xs font-mono mt-1">
+                              {list.wordlist_items?.[0]?.count ?? 0} words · {new Date(list.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+
+                        </div>
+
+                        <div className="relative mt-4 flex items-center gap-2 border-t border-line pt-3.5">
+
+                          <button
+                            type="button"
+                            onClick={() => setViewingResults(list)}
+                            className="btn-secondary flex-1 text-center"
+                          >
+                            View results
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openEditWordlist(list)}
+                            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:border-brass/40 hover:bg-brass/10 hover:text-brass"
+                            title="Edit word list"
+                            aria-label="Edit word list"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteWordlist(list)}
+                            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:border-coral/40 hover:bg-coral/10 hover:text-coral"
+                            title="Delete word list"
+                            aria-label="Delete word list"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+
+                        </div>
+
+                      </div>
+                    )
+                  })}
+
+                </div>
+
               )}
-            </div>
-          </section>
+
+            </section>
+          )}
         </>
       )}
 
