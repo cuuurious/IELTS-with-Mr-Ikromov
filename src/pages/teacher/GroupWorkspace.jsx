@@ -949,13 +949,18 @@ export default function GroupWorkspace({ teacherId }) {
                         openGroup(group.id)
                       }
                     }}
-                    className="focus-ring group relative flex flex-col justify-between rounded-3xl border border-line bg-panel p-6 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-xl hover:shadow-black/5 cursor-pointer"
+                    className="focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-line bg-gradient-to-b from-panel-2 to-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer"
                   >
 
-                    <div className="flex items-start justify-between gap-3">
+                    <div
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full ${accent.bg} blur-3xl`}
+                    />
+
+                    <div className="relative flex items-start justify-between gap-3">
 
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold ${accent.bg} ${accent.text}`}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}
                       >
                         {group.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
@@ -1001,7 +1006,7 @@ export default function GroupWorkspace({ teacherId }) {
 
                     </div>
 
-                    <div className="mt-5">
+                    <div className="relative mt-5">
 
                       {isRenaming ? (
                         <input
@@ -1036,7 +1041,7 @@ export default function GroupWorkspace({ teacherId }) {
 
                     </div>
 
-                    <div className="mt-5 flex items-center gap-1.5 text-sm font-medium text-mist transition group-hover:text-accent">
+                    <div className="relative mt-5 flex items-center gap-1.5 text-sm font-medium text-mist transition group-hover:text-accent">
                       Open
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition group-hover:translate-x-0.5">
                         <path d="M5 12h14" />
@@ -1131,13 +1136,18 @@ export default function GroupWorkspace({ teacherId }) {
             const accent = getGroupAccent(activeGroup)
 
             return (
-              <section className="rounded-2xl border border-line bg-panel px-5 py-4 sm:px-7 sm:py-5">
+              <section className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel px-5 py-4 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] sm:px-7 sm:py-5">
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full ${accent.bg} blur-3xl`}
+                />
+
+                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                   <div className="flex min-w-0 items-center gap-3.5">
 
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold ${accent.bg} ${accent.text}`}>
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}>
                       {activeGroupObj?.name?.charAt(0)?.toUpperCase() || '?'}
                     </div>
 
