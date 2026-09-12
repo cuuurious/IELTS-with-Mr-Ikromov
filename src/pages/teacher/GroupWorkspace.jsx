@@ -173,17 +173,17 @@ export default function GroupWorkspace({ teacherId }) {
   // character (7), so showing just charAt(0) made every one of those
   // badges read identically once there were more than a handful of
   // numbered groups. A purely numeric name shows in full instead so
-  // each one is distinct again — prefixed with "№" rather than left
-  // bare, so the badge reads as "group number 73" sitting next to the
-  // title, instead of looking like the "73" title got copied into the
-  // badge too. Text names ("EL STARS") keep the single-letter
-  // monogram — there's no bare-repeat problem there since "E" is
-  // already a genuine abbreviation, not a copy of the full name.
+  // each one is distinct again. The title line right below is hidden
+  // for these groups (see the two spots that render group.name next
+  // to this badge) since it would just repeat this exact text — so
+  // the badge stays plain, with nothing else on screen duplicating
+  // it. Text names ("EL STARS") keep the single-letter monogram AND
+  // their title line, since "E" is an abbreviation, not a copy.
   const getGroupBadge = (name) => {
     const trimmed = (name || '').trim()
 
     if (!trimmed) return '?'
-    if (/^\d+$/.test(trimmed)) return `№${trimmed}`
+    if (/^\d+$/.test(trimmed)) return trimmed
 
     return trimmed.charAt(0).toUpperCase()
   }
@@ -1045,9 +1045,17 @@ export default function GroupWorkspace({ teacherId }) {
                           className="focus-ring w-full rounded-lg border border-accent bg-panel-2 px-2.5 py-1.5 font-display text-xl text-paper outline-none"
                         />
                       ) : (
-                        <div className="truncate font-display text-xl font-semibold text-paper">
-                          {group.name}
-                        </div>
+                        // A purely numeric name is already shown in
+                        // full in the badge above (see getGroupBadge)
+                        // — repeating it here as a second line was
+                        // the exact same text twice. Text names still
+                        // need this line, since their badge is only
+                        // the first letter, not the full name.
+                        !/^\d+$/.test((group.name || '').trim()) && (
+                          <div className="truncate font-display text-xl font-semibold text-paper">
+                            {group.name}
+                          </div>
+                        )
                       )}
 
                       <div className="mt-2 flex items-center gap-2.5 text-sm text-mist">
@@ -1196,6 +1204,15 @@ export default function GroupWorkspace({ teacherId }) {
                           }}
                           className="focus-ring rounded-lg border border-accent bg-panel-2 px-2.5 py-1 font-display text-xl text-paper outline-none sm:text-2xl"
                         />
+                      ) : /^\d+$/.test((activeGroupObj?.name || '').trim()) ? (
+                        // Same numeric name is already shown in full
+                        // in the badge to the left — kept as a real
+                        // (if visually hidden) heading rather than
+                        // dropped outright, so the page still has a
+                        // proper title for screen readers.
+                        <h1 className="sr-only">
+                          {activeGroupObj?.name || 'Group'}
+                        </h1>
                       ) : (
                         <h1 className="truncate font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
                           {activeGroupObj?.name || 'Group'}
