@@ -172,14 +172,18 @@ export default function GroupWorkspace({ teacherId }) {
   // Groups named like "71", "72", "73"... all share the same first
   // character (7), so showing just charAt(0) made every one of those
   // badges read identically once there were more than a handful of
-  // numbered groups. A purely numeric name shows in full instead — it
-  // stays short (class numbers, not IDs) and each one is distinct
-  // again. Text names ("EL STARS") keep the single-letter monogram.
+  // numbered groups. A purely numeric name shows in full instead so
+  // each one is distinct again — prefixed with "№" rather than left
+  // bare, so the badge reads as "group number 73" sitting next to the
+  // title, instead of looking like the "73" title got copied into the
+  // badge too. Text names ("EL STARS") keep the single-letter
+  // monogram — there's no bare-repeat problem there since "E" is
+  // already a genuine abbreviation, not a copy of the full name.
   const getGroupBadge = (name) => {
     const trimmed = (name || '').trim()
 
     if (!trimmed) return '?'
-    if (/^\d+$/.test(trimmed)) return trimmed
+    if (/^\d+$/.test(trimmed)) return `№${trimmed}`
 
     return trimmed.charAt(0).toUpperCase()
   }
