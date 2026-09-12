@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -6,7 +6,17 @@ import ConfirmModal from '../../components/ConfirmModal'
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
   const [activeGroup, setActiveGroup] = useState(null)
-  const [lists, setLists] = useState([])
+
+  // Every word list this teacher owns, and every group it's linked to
+  // (across ALL groups, not just the active tab) — fetched together
+  // once, instead of the old approach of re-fetching the teacher's
+  // entire word list collection PLUS a links query every single time
+  // a different group tab was clicked. Switching tabs is now just a
+  // client-side filter of what's already in memory (see `lists`
+  // below), with zero network requests.
+  const [ownedLists, setOwnedLists] = useState([])
+  const [groupLinks, setGroupLinks] = useState([])
+
   const [creating, setCreating] = useState(false)
   const [viewingResults, setViewingResults] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
@@ -43,45 +53,74 @@ export default function TeacherWordlists({ teacherId }) {
     loadGroups()
   }, [activeGroup])
 
-  const loadLists = async () => {
-    if (!activeGroup || !teacherId) return
+  const loadWordlistsData = async () => {
+    if (!teacherId) return
 
-    const { data: ownedLists, error: listsError } = await supabase
-      .from('wordlists')
-      .select('*, wordlist_items(count)')
-      .eq('created_by', teacherId)
-      .order('created_at', { ascending: false })
+    const { data: ownedListsData, error: listsError } =
+      await supabase
+        .from('wordlists')
+        .select('*, wordlist_items(count)')
+        .eq('created_by', teacherId)
+        .order('created_at', { ascending: false })
 
     if (listsError) {
       console.error('Failed to load word lists:', listsError)
-      setLists([])
+      setOwnedLists([])
+      setGroupLinks([])
       return
     }
 
+    setOwnedLists(ownedListsData || [])
+
+    const ownedListIds = (ownedListsData || []).map(
+      (list) => list.id
+    )
+
+    if (!ownedListIds.length) {
+      setGroupLinks([])
+      return
+    }
+
+    // Every link for every one of this teacher's word lists, in one
+    // shot — not just the active group's — so switching tabs
+    // afterwards never has to ask the server again.
     const { data: links, error: linksError } = await supabase
       .from('wordlist_groups')
       .select('wordlist_id, group_id')
-      .eq('group_id', activeGroup)
+      .in('wordlist_id', ownedListIds)
 
     if (linksError) {
       console.error('Failed to load word list group assignments:', linksError)
+      setGroupLinks([])
+      return
     }
 
-    const linkedIds = new Set(
-      (links || []).map((link) => link.wordlist_id)
-    )
-
-    const visible = (ownedLists || []).filter((list) =>
-      linkedIds.has(list.id) || list.group_id === activeGroup
-    )
-
-    setLists(visible)
+    setGroupLinks(links || [])
   }
 
   useEffect(() => {
-    loadLists()
+    loadWordlistsData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroup, teacherId])
+  }, [teacherId])
+
+  // The list shown for whichever group tab is active — purely a
+  // client-side filter of ownedLists/groupLinks, so clicking between
+  // group tabs is instant and never triggers a fetch.
+  const lists = useMemo(() => {
+    if (!activeGroup) return []
+
+    const linkedIds = new Set(
+      groupLinks
+        .filter((link) => link.group_id === activeGroup)
+        .map((link) => link.wordlist_id)
+    )
+
+    return ownedLists.filter(
+      (list) =>
+        linkedIds.has(list.id) ||
+        list.group_id === activeGroup
+    )
+  }, [ownedLists, groupLinks, activeGroup])
 
   const deleteWordlist = (list) => {
     setConfirmDialog({
@@ -129,7 +168,7 @@ export default function TeacherWordlists({ teacherId }) {
         setViewingResults(null)
       }
 
-      await loadLists()
+      await loadWordlistsData()
     } catch (err) {
       console.error('Word list deletion failed:', err)
       setConfirmDialog({
@@ -665,7 +704,7 @@ const saveEditWordlist = async () => {
      * the editor.
      */
 
-    await loadLists()
+    await loadWordlistsData()
 
     setEditingList(null)
     setEditItems([])
@@ -804,7 +843,7 @@ const wordlistAccentPalette = [
               teacherId={teacherId}
               onDone={() => {
                 setCreating(false)
-                loadLists()
+                loadWordlistsData()
               }}
               onCancel={() => setCreating(false)}
             />

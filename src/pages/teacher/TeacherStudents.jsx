@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
@@ -33,6 +33,38 @@ export default function TeacherStudents({ onStartChat }) {
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [bulkGroupChoice, setBulkGroupChoice] = useState('')
   const [bulkBusy, setBulkBusy] = useState(false)
+
+  // Whether the very first load has finished. `loading` gets flipped
+  // back to true on every subsequent background refresh too (a
+  // realtime event on ANY student's profile, group, or membership —
+  // see the subscription below) — without this, that turned every one
+  // of those refreshes into the whole page (table, search, filters,
+  // everything) blanking out to a bare "Loading students…" line and
+  // popping back a moment later. With ~230 students and any change to
+  // any one of them (a new signup, an edited bio, a group move)
+  // qualifying, that flash could happen constantly. Only the true
+  // first load should show that full-page state now; a background
+  // refresh instead shows a small, quiet "Updating…" next to the
+  // count (below) and otherwise leaves whatever's on screen alone.
+  const hasLoadedOnceRef = useRef(false)
+
+  // Bursts of realtime events (bulk-approving students, a big group
+  // move) used to each trigger their own full loadData() call — a
+  // pile of redundant, overlapping requests instead of one. This
+  // collapses any events arriving within 500ms of each other into a
+  // single refresh once things settle.
+  const reloadTimeoutRef = useRef(null)
+
+  const scheduleReload = () => {
+    if (reloadTimeoutRef.current) {
+      clearTimeout(reloadTimeoutRef.current)
+    }
+
+    reloadTimeoutRef.current = setTimeout(() => {
+      reloadTimeoutRef.current = null
+      loadData()
+    }, 500)
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -119,6 +151,7 @@ export default function TeacherStudents({ onStartChat }) {
       setMemberships([])
     } finally {
       setLoading(false)
+      hasLoadedOnceRef.current = true
     }
   }
 
@@ -134,7 +167,7 @@ export default function TeacherStudents({ onStartChat }) {
           schema: 'public',
           table: 'profiles',
         },
-        () => loadData()
+        () => scheduleReload()
       )
       .on(
         'postgres_changes',
@@ -143,7 +176,7 @@ export default function TeacherStudents({ onStartChat }) {
           schema: 'public',
           table: 'group_members',
         },
-        () => loadData()
+        () => scheduleReload()
       )
       .on(
         'postgres_changes',
@@ -152,13 +185,18 @@ export default function TeacherStudents({ onStartChat }) {
           schema: 'public',
           table: 'groups',
         },
-        () => loadData()
+        () => scheduleReload()
       )
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
+
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const membershipsByStudent = useMemo(() => {
@@ -630,7 +668,7 @@ export default function TeacherStudents({ onStartChat }) {
     setBulkBusy(false)
   }
 
-  if (loading) {
+  if (loading && !hasLoadedOnceRef.current) {
     return (
       <p className="text-mist">
         Loading students…
@@ -659,10 +697,18 @@ export default function TeacherStudents({ onStartChat }) {
           </p>
         </div>
 
-        <div className="flex h-9 items-center gap-1.5 rounded-full border border-line bg-panel px-3.5 text-sm font-mono text-mist shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]">
-          <span className="h-1.5 w-1.5 rounded-full bg-sage" />
-          <strong className="font-semibold text-paper">{students.length}</strong>
-          total
+        <div className="flex items-center gap-2">
+          {loading && (
+            <span className="text-mist text-xs font-mono">
+              Updating…
+            </span>
+          )}
+
+          <div className="flex h-9 items-center gap-1.5 rounded-full border border-line bg-panel px-3.5 text-sm font-mono text-mist shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+            <strong className="font-semibold text-paper">{students.length}</strong>
+            total
+          </div>
         </div>
       </div>
 

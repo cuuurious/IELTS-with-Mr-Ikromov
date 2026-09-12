@@ -49,6 +49,23 @@ export default function GroupWorkspace({ teacherId }) {
   const [submissions, setSubmissions] = useState({})
   const [groupDataLoading, setGroupDataLoading] = useState(false)
 
+  // Whether what's on screen is a group's last known roster/homework/
+  // submissions while a fresh copy loads quietly behind it, as opposed
+  // to groupDataLoading (there's genuinely nothing to show yet). Lets a
+  // group you've already opened this session redisplay instantly on a
+  // revisit instead of dimming the table and saying "Loading this
+  // group…" every single time — see groupDataCacheRef below.
+  const [refreshingGroup, setRefreshingGroup] = useState(false)
+
+  // Last known roster/homeworks/submissions per group, kept current by
+  // the mirroring effect further down (it fires after every state
+  // change to any of the three, for whichever group is active) —
+  // rather than this needing to be updated by hand at every place in
+  // this file that already calls setRoster/setHomeworks/setSubmissions
+  // (posting homework, editing it, a realtime submission update, and
+  // so on).
+  const groupDataCacheRef = useRef({})
+
   const [viewing, setViewing] = useState(null)
   const [editingHomework, setEditingHomework] = useState(null)
 
@@ -309,6 +326,8 @@ export default function GroupWorkspace({ teacherId }) {
         return next
       })
 
+      delete groupDataCacheRef.current[group.id]
+
       if (activeGroup === group.id) {
         const nextActive = remaining.length
           ? remaining[0].id
@@ -361,15 +380,29 @@ export default function GroupWorkspace({ teacherId }) {
     if (!requestedGroup) return
     if (screen !== 'detail') return
 
-    // Was previously three round trips run one after another (each
-    // waiting on the last), which is exactly why switching groups
-    // felt slow and, worse, left the PREVIOUS group's roster and
-    // homework sitting on screen — unchanged and with nothing telling
-    // you it was stale — for the entire time all three were loading.
-    // Running them together roughly triples the speed, and
-    // groupDataLoading (set below, cleared once real data lands) is
-    // what tells the table to visibly dim instead of quietly lying.
-    setGroupDataLoading(true)
+    const cached = groupDataCacheRef.current[requestedGroup]
+
+    if (cached) {
+      // Already have this group's data from earlier this session —
+      // show it right away (no dimmed table, no "Loading this
+      // group…") while a fresh copy loads quietly underneath.
+      setRoster(cached.roster)
+      setHomeworks(cached.homeworks)
+      setSubmissions(cached.submissions)
+      setGroupDataLoading(false)
+      setRefreshingGroup(true)
+    } else {
+      // Genuinely nothing to show for this group yet. Was previously
+      // three round trips run one after another (each waiting on the
+      // last), which is exactly why switching groups felt slow and,
+      // worse, left the PREVIOUS group's roster and homework sitting
+      // on screen — unchanged and with nothing telling you it was
+      // stale — for the entire time all three were loading. Running
+      // them together roughly triples the speed, and
+      // groupDataLoading (cleared once real data lands) is what tells
+      // the table to visibly dim instead of quietly lying.
+      setGroupDataLoading(true)
+    }
 
     const [
       { data: members },
@@ -401,13 +434,11 @@ export default function GroupWorkspace({ teacherId }) {
     // that gets to turn loading back off, below.
     if (requestedGroup !== activeGroupRef.current) return
 
-    setRoster(
-      (members || [])
-        .map((member) => member.profiles)
-        .filter(Boolean)
-    )
+    const nextRoster = (members || [])
+      .map((member) => member.profiles)
+      .filter(Boolean)
 
-    setHomeworks(hw || [])
+    const nextHomeworks = hw || []
 
     const map = {}
 
@@ -417,9 +448,27 @@ export default function GroupWorkspace({ teacherId }) {
       ] = submission
     })
 
+    setRoster(nextRoster)
+    setHomeworks(nextHomeworks)
     setSubmissions(map)
     setGroupDataLoading(false)
+    setRefreshingGroup(false)
   }
+
+  // Keeps groupDataCacheRef current for whichever group is active,
+  // automatically, from every place in this file that changes roster/
+  // homeworks/submissions — the fetch above, a realtime submission
+  // update, posting/editing/deleting homework, removing a student, and
+  // so on — without each of those needing to know the cache exists.
+  useEffect(() => {
+    if (!activeGroup || screen !== 'detail') return
+
+    groupDataCacheRef.current[activeGroup] = {
+      roster,
+      homeworks,
+      submissions,
+    }
+  }, [activeGroup, screen, roster, homeworks, submissions])
 
   useEffect(() => {
     loadGroupData()
@@ -1335,7 +1384,7 @@ export default function GroupWorkspace({ teacherId }) {
                 <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                   <span
                     className={`h-1.5 w-1.5 rounded-full bg-accent ${
-                      groupDataLoading ? 'animate-pulse' : ''
+                      groupDataLoading || refreshingGroup ? 'animate-pulse' : ''
                     }`}
                   />
                   Assignments
@@ -1353,8 +1402,11 @@ export default function GroupWorkspace({ teacherId }) {
                 </div>
               ) : (
                 <div className="hidden rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist sm:block">
-                  {homeworks.length} assignment
-                  {homeworks.length === 1 ? '' : 's'}
+                  {refreshingGroup
+                    ? 'Refreshing…'
+                    : `${homeworks.length} assignment${
+                        homeworks.length === 1 ? '' : 's'
+                      }`}
                 </div>
               )}
 

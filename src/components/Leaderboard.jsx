@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
@@ -22,6 +22,25 @@ export default function Leaderboard({
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
+
+  // Whether the currently-shown rows are the last known good result for
+  // this group while a fresh copy loads underneath — as opposed to
+  // rows === null, which means there is genuinely nothing to show yet.
+  const [refreshing, setRefreshing] = useState(false)
+
+  // Every switch between group tabs (or back to "All Students") used to
+  // blank the whole list back to "Loading..." and re-run this page's
+  // full set of queries from scratch, even for a group just visited a
+  // moment ago. This keeps the last computed rows per group so
+  // revisiting one is instant — the fresh numbers still load right
+  // behind it (see `refreshing` above), they just don't block the view.
+  const rowsCacheRef = useRef({})
+
+  // Lets an in-flight fetch recognize that the teacher has since
+  // switched to a different group/tab, so a slower, older request can't
+  // land after a faster, newer one and overwrite it with stale rows.
+  const groupIdRef = useRef(groupId)
+  groupIdRef.current = groupId
 
   const [dailyProgress, setDailyProgress] = useState([])
   const [loadingDaily, setLoadingDaily] = useState(false)
@@ -439,34 +458,86 @@ export default function Leaderboard({
   const loadLeaderboard = async () => {
     if (!groupId) return
 
+    // Snapshot which group/tab this call is for. If the teacher taps
+    // another tab before this round of requests comes back, this call's
+    // (now stale) result gets discarded below instead of landing after
+    // — and overwriting — the newer tab's rows.
+    const requestedGroup = groupId
+
     setError('')
 
     try {
       /*
        * ========================================================
-       * 1. ROSTER
+       * 1, 2 & 3.5 — ROSTER, HOMEWORKS, WORD LISTS, IN PARALLEL
        * ========================================================
-       * For "all students" we also need each student's own
-       * group memberships, so that when we total up their
-       * homeworks below we only count homeworks from groups
-       * they're actually in — not every homework that exists
-       * for every group in the school.
+       * None of these three depend on each other's results — the
+       * roster, the homeworks in scope, and every word list in the
+       * school — so there's no reason to fetch them one after
+       * another. (For "All Students", the roster itself is two
+       * more independent requests — profiles and memberships —
+       * bundled into the same parallel batch below.) This alone
+       * turns what used to be several sequential round trips into
+       * one, which is exactly why switching between group tabs
+       * here felt sluggish.
        * ========================================================
        */
+
+      let homeworkQuery = supabase
+        .from('homeworks')
+        .select('id, title, due_date, created_at, group_id')
+
+      if (requestedGroup !== 'all') {
+        homeworkQuery = homeworkQuery.eq(
+          'group_id',
+          requestedGroup
+        )
+      }
+
+      const rosterQuery =
+        requestedGroup === 'all'
+          ? Promise.all([
+              supabase
+                .from('profiles')
+                .select(
+                  'id, full_name, username, contact_email, status, target_band, avatar_url'
+                )
+                .eq('role', 'student'),
+              supabase
+                .from('group_members')
+                .select('student_id, group_id'),
+            ])
+          : supabase
+              .from('group_members')
+              .select(
+                'student_id, profiles(id, full_name, username, contact_email, status, target_band, avatar_url)'
+              )
+              .eq('group_id', requestedGroup)
+
+      const wordlistsQuery = supabase
+        .from('wordlists')
+        .select(
+          'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
+        )
+
+      const [rosterResult, homeworksResult, wordlistsResult] =
+        await Promise.all([
+          rosterQuery,
+          homeworkQuery,
+          wordlistsQuery,
+        ])
 
       let studentRows = []
       const groupIdsByStudent = new Map()
 
-      if (groupId === 'all') {
-        const { data: profilesData, error: profilesError } =
-          await supabase
-            .from('profiles')
-            .select(
-              'id, full_name, username, contact_email, status, target_band, avatar_url'
-            )
-            .eq('role', 'student')
+      if (requestedGroup === 'all') {
+        const [
+          { data: profilesData, error: profilesError },
+          { data: memberRows, error: memberError },
+        ] = rosterResult
 
         if (profilesError) throw profilesError
+        if (memberError) throw memberError
 
         studentRows = (profilesData || []).map((p) => ({
           student_id: p.id,
@@ -477,13 +548,6 @@ export default function Leaderboard({
           target_band: p.target_band,
           avatar_url: p.avatar_url,
         }))
-
-        const { data: memberRows, error: memberError } =
-          await supabase
-            .from('group_members')
-            .select('student_id, group_id')
-
-        if (memberError) throw memberError
 
         ;(memberRows || []).forEach((row) => {
           if (!groupIdsByStudent.has(row.student_id)) {
@@ -499,12 +563,7 @@ export default function Leaderboard({
         })
       } else {
         const { data: memberRows, error: memberError } =
-          await supabase
-            .from('group_members')
-            .select(
-              'student_id, profiles(id, full_name, username, contact_email, status, target_band, avatar_url)'
-            )
-            .eq('group_id', groupId)
+          rosterResult
 
         if (memberError) throw memberError
 
@@ -521,25 +580,8 @@ export default function Leaderboard({
           }))
       }
 
-      /*
-       * ========================================================
-       * 2. HOMEWORKS IN SCOPE
-       * ========================================================
-       */
-
-      let homeworkQuery = supabase
-        .from('homeworks')
-        .select('id, title, due_date, created_at, group_id')
-
-      if (groupId !== 'all') {
-        homeworkQuery = homeworkQuery.eq(
-          'group_id',
-          groupId
-        )
-      }
-
       const { data: homeworks, error: homeworksError } =
-        await homeworkQuery
+        homeworksResult
 
       if (homeworksError) throw homeworksError
 
@@ -547,38 +589,76 @@ export default function Leaderboard({
         (homework) => homework.id
       )
 
+      const { data: wordlistsRaw, error: wordlistsError } =
+        wordlistsResult
+
+      if (wordlistsError) throw wordlistsError
+
+      const wordlistGroupIds = (wordlist) =>
+        (wordlist.wordlist_groups || []).map(
+          (link) => link.group_id
+        )
+
+      const wordlists =
+        requestedGroup === 'all'
+          ? wordlistsRaw || []
+          : (wordlistsRaw || []).filter((wordlist) =>
+              wordlistGroupIds(wordlist).includes(
+                requestedGroup
+              )
+            )
+
+      const wordlistIds = (
+        requestedGroup === 'all'
+          ? wordlistsRaw || []
+          : wordlists
+      ).map((wordlist) => wordlist.id)
+
       /*
        * ========================================================
-       * 3. SUBMISSIONS + COMPLETIONS FOR EVERYONE, ONE SHOT
+       * SUBMISSIONS + COMPLETIONS + WORD LIST ATTEMPTS
+       * ========================================================
+       * Each of these depends on the IDs fetched just above, but
+       * not on one another — another independent trio, so they
+       * run together instead of one after another too.
        * ========================================================
        */
 
-      let submissions = []
-      let completions = []
+      const [subResult, compResult, attemptsResult] =
+        await Promise.all([
+          homeworkIds.length
+            ? supabase
+                .from('submissions')
+                .select(
+                  'student_id, homework_id, status, submitted_at'
+                )
+                .in('homework_id', homeworkIds)
+            : Promise.resolve({ data: [] }),
+          homeworkIds.length
+            ? supabase
+                .from('homework_completions')
+                .select(
+                  'student_id, homework_id, completed_at'
+                )
+                .in('homework_id', homeworkIds)
+            : Promise.resolve({ data: [] }),
+          wordlistIds.length
+            ? supabase
+                .from('wordlist_attempts')
+                .select(
+                  'student_id, wordlist_id, percentage, created_at'
+                )
+                .in('wordlist_id', wordlistIds)
+            : Promise.resolve({ data: [] }),
+        ])
 
-      if (homeworkIds.length) {
-        const { data: subData, error: subError } =
-          await supabase
-            .from('submissions')
-            .select(
-              'student_id, homework_id, status, submitted_at'
-            )
-            .in('homework_id', homeworkIds)
+      if (subResult.error) throw subResult.error
+      if (compResult.error) throw compResult.error
+      if (attemptsResult.error) throw attemptsResult.error
 
-        if (subError) throw subError
-        submissions = subData || []
-
-        const { data: compData, error: compError } =
-          await supabase
-            .from('homework_completions')
-            .select(
-              'student_id, homework_id, completed_at'
-            )
-            .in('homework_id', homeworkIds)
-
-        if (compError) throw compError
-        completions = compData || []
-      }
+      const submissions = subResult.data || []
+      const completions = compResult.data || []
+      const wordlistAttempts = attemptsResult.data || []
 
       const submissionsByStudent = new Map()
 
@@ -613,60 +693,6 @@ export default function Leaderboard({
           .get(completion.student_id)
           .push(completion)
       })
-
-      /*
-       * ========================================================
-       * 3.5 WORD LISTS IN SCOPE, + EVERYONE'S ATTEMPTS
-       * ========================================================
-       * A word list can be assigned to several groups at once (the
-       * wordlist_groups join table), unlike a homework's single
-       * group_id — so this always fetches every word list along
-       * with which group(s) it's linked to, then narrows down to
-       * "in scope" the same way homeworks are narrowed down above.
-       * ========================================================
-       */
-
-      const { data: wordlistsRaw, error: wordlistsError } =
-        await supabase
-          .from('wordlists')
-          .select(
-            'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
-          )
-
-      if (wordlistsError) throw wordlistsError
-
-      const wordlistGroupIds = (wordlist) =>
-        (wordlist.wordlist_groups || []).map(
-          (link) => link.group_id
-        )
-
-      const wordlists =
-        groupId === 'all'
-          ? wordlistsRaw || []
-          : (wordlistsRaw || []).filter((wordlist) =>
-              wordlistGroupIds(wordlist).includes(groupId)
-            )
-
-      const wordlistIds = (
-        groupId === 'all' ? wordlistsRaw || [] : wordlists
-      ).map((wordlist) => wordlist.id)
-
-      let wordlistAttempts = []
-
-      if (wordlistIds.length) {
-        const {
-          data: wordlistAttemptsData,
-          error: wordlistAttemptsError,
-        } = await supabase
-          .from('wordlist_attempts')
-          .select(
-            'student_id, wordlist_id, percentage, created_at'
-          )
-          .in('wordlist_id', wordlistIds)
-
-        if (wordlistAttemptsError) throw wordlistAttemptsError
-        wordlistAttempts = wordlistAttemptsData || []
-      }
 
       const wordlistAttemptsByStudent = new Map()
 
@@ -772,30 +798,56 @@ export default function Leaderboard({
         )
       })
 
-      setRows(
-        sortedRows.map((row, index) => ({
-          ...row,
-          rank: index + 1,
-        }))
-      )
+      const finalRows = sortedRows.map((row, index) => ({
+        ...row,
+        rank: index + 1,
+      }))
+
+      // The teacher has since switched to a different group/tab — this
+      // response is for a tab that's no longer showing, so it's
+      // dropped rather than clobbering whatever that newer tab already
+      // loaded (or is still loading).
+      if (requestedGroup !== groupIdRef.current) return
+
+      rowsCacheRef.current[requestedGroup] = finalRows
+      setRows(finalRows)
+      setRefreshing(false)
     } catch (err) {
       console.error('Leaderboard error:', err)
-      setError(
-        err?.message || 'Failed to load the leaderboard.'
-      )
+
+      if (requestedGroup === groupIdRef.current) {
+        setError(
+          err?.message || 'Failed to load the leaderboard.'
+        )
+        setRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
     if (!groupId) return
 
-    setRows(null)
     setError('')
     setSelectedStudent(null)
     setDailyProgress([])
     setDailyError('')
 
+    // A tab visited earlier this session shows its last known rows
+    // immediately — no blank "Loading..." screen — while a fresh copy
+    // loads quietly behind it (see the `refreshing` note above). A
+    // tab with no cached rows yet still shows the honest loading state.
+    const cached = rowsCacheRef.current[groupId]
+
+    if (cached) {
+      setRows(cached)
+      setRefreshing(true)
+    } else {
+      setRows(null)
+      setRefreshing(false)
+    }
+
     loadLeaderboard()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId])
 
   const loadDailyProgress = async (student) => {
@@ -1202,6 +1254,11 @@ export default function Leaderboard({
 
   return (
     <div className="flex flex-col gap-3">
+      {refreshing && (
+        <div className="text-mist text-xs font-mono -mb-1">
+          Refreshing…
+        </div>
+      )}
       {rows.map((student) => {
         const isTopRank = student.rank === 1
         const isHighlighted =
