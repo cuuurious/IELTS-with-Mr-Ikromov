@@ -1,12 +1,12 @@
-import {
-  TransformWrapper,
-  TransformComponent,
-} from 'react-zoom-pan-pinch'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
 import { countWords } from '../../lib/writingMock'
+
+const ZOOM_MIN = 1
+const ZOOM_MAX = 4
+const ZOOM_STEP = 0.5
 
 export default function SubmissionPanel({
   studentName,
@@ -15,7 +15,106 @@ export default function SubmissionPanel({
   onClose,
 }) {
   const [reEvaluating, setReEvaluating] = useState(false)
-const [viewingImage, setViewingImage] = useState(null)
+
+  /*
+   * ============================================================
+   * SCREENSHOT ZOOM VIEWER
+   *
+   * Clicking a submitted screenshot used to just open the raw image
+   * in a new browser tab — no zoom, no controls, nothing. This is an
+   * in-app viewer instead: a proper toolbar (not floating buttons on
+   * top of the image itself, which can blend into whatever the
+   * screenshot happens to show underneath — a dark browser window,
+   * for instance) plus click/drag-to-pan once zoomed in.
+   * ============================================================
+   */
+
+  const [previewIndex, setPreviewIndex] = useState(null)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef(null)
+
+  const screenshotUrls = submission?.screenshot_urls || []
+  const previewOpen = previewIndex !== null && screenshotUrls.length > 0
+
+  const openPreview = (index) => {
+    setPreviewIndex(index)
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
+  const closePreview = () => {
+    setPreviewIndex(null)
+  }
+
+  const goToPreview = (index) => {
+    const total = screenshotUrls.length
+    setPreviewIndex(((index % total) + total) % total)
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
+  const zoomIn = () =>
+    setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))
+
+  const zoomOut = () =>
+    setZoom((z) => {
+      const next = Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2))
+      if (next === ZOOM_MIN) setPan({ x: 0, y: 0 })
+      return next
+    })
+
+  const resetZoom = () => {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
+  const handleImageMouseDown = (e) => {
+    if (zoom <= 1) return
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: pan.x,
+      originY: pan.y,
+    }
+    setIsDragging(true)
+  }
+
+  const handleImageMouseMove = (e) => {
+    if (!dragRef.current) return
+    setPan({
+      x: dragRef.current.originX + (e.clientX - dragRef.current.startX),
+      y: dragRef.current.originY + (e.clientY - dragRef.current.startY),
+    })
+  }
+
+  const stopDragging = () => {
+    dragRef.current = null
+    setIsDragging(false)
+  }
+
+  // Keyboard support only while the viewer is actually open — Escape
+  // closes it, arrow keys page through the other screenshots so a
+  // teacher can flip through a whole submission without reaching for
+  // the mouse each time.
+  useEffect(() => {
+    if (!previewOpen) return
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closePreview()
+      } else if (e.key === 'ArrowLeft' && screenshotUrls.length > 1) {
+        goToPreview(previewIndex - 1)
+      } else if (e.key === 'ArrowRight' && screenshotUrls.length > 1) {
+        goToPreview(previewIndex + 1)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewOpen, previewIndex])
 
   const reEvaluate = async () => {
     if (!submission?.id || reEvaluating) return
@@ -87,40 +186,37 @@ const [viewingImage, setViewingImage] = useState(null)
               </div>
             )}
 
-           {/* SCREENSHOTS */}
-{submission?.screenshot_urls?.length > 0 && (
-  <section>
-    <div className="mb-3 flex items-center gap-2">
-      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            {/* SCREENSHOTS */}
+            {submission?.screenshot_urls?.length > 0 && (
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
 
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-        Screenshots
-      </div>
-    </div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+                    Screenshots
+                  </div>
+                </div>
 
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {submission.screenshot_urls.map((url, i) => (
-        <button
-          key={url || i}
-          type="button"
-          onClick={() => setViewingImage({
-            url,
-            alt: `Screenshot ${i + 1}`,
-          })}
-          className="group overflow-hidden rounded-2xl border border-line bg-panel-2 text-left transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40"
-        >
-          <img
-            src={url}
-            alt={`Screenshot ${i + 1}`}
-            className="aspect-square h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
-          />
-        </button>
-      ))}
-    </div>
-  </section>
-)}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {submission.screenshot_urls.map((url, i) => (
+                    <button
+                      key={url || i}
+                      type="button"
+                      onClick={() => openPreview(i)}
+                      className="focus-ring group overflow-hidden rounded-2xl border border-line bg-panel-2 text-left transition hover:border-accent/40"
+                    >
+                      <img
+                        src={url}
+                        alt={`Screenshot ${i + 1}`}
+                        className="aspect-square h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
-                        {/* UPLOADED FILES */}
+            {/* UPLOADED FILES */}
             {submission?.submission_files?.length > 0 && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
@@ -132,60 +228,23 @@ const [viewingImage, setViewingImage] = useState(null)
                 </div>
 
                 <div className="grid gap-2">
-                  {submission.submission_files.map((file, i) => {
-                    const fileName = file?.name || 'Uploaded file'
-                    const fileUrl = file?.url || ''
+                  {submission.submission_files.map((file, i) => (
+                    <a
+                      key={file?.url || i}
+                      href={file?.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
+                        📎
+                      </span>
 
-                    const isImage =
-                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(
-                        fileName
-                      ) ||
-                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(
-                        fileUrl
-                      )
-
-                    if (isImage) {
-                      return (
-                        <button
-                          key={fileUrl || i}
-                          type="button"
-                          onClick={() =>
-                            setViewingImage({
-                              url: fileUrl,
-                              alt: fileName,
-                            })
-                          }
-                          className="flex w-full items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-left text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5 focus:outline-none focus:ring-2 focus:ring-accent/40"
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
-                            🖼️
-                          </span>
-
-                          <span className="min-w-0 truncate">
-                            {fileName}
-                          </span>
-                        </button>
-                      )
-                    }
-
-                    return (
-                      <a
-                        key={fileUrl || i}
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
-                          📎
-                        </span>
-
-                        <span className="min-w-0 truncate">
-                          {fileName}
-                        </span>
-                      </a>
-                    )
-                  })}
+                      <span className="min-w-0 truncate">
+                        {file?.name || 'Uploaded file'}
+                      </span>
+                    </a>
+                  ))}
                 </div>
               </section>
             )}
@@ -308,7 +367,7 @@ const [viewingImage, setViewingImage] = useState(null)
               </section>
             )}
 
-                        {/* SUBMITTED TIME */}
+            {/* SUBMITTED TIME */}
             {submission?.submitted_at && (
               <div className="border-t border-line pt-4 font-mono text-[10px] uppercase tracking-[0.12em] text-mist">
                 Submitted{' '}
@@ -317,96 +376,149 @@ const [viewingImage, setViewingImage] = useState(null)
                 ).toLocaleString()}
               </div>
             )}
+
           </div>
         </div>
+      </div>
 
-       {viewingImage && (
-  <div
-    className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-    onClick={() => setViewingImage(null)}
-  >
-    <div
-      className="relative h-full w-full"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <TransformWrapper
-        initialScale={1}
-        minScale={0.8}
-        maxScale={5}
-        centerOnInit
-        wheel={{
-          step: 0.15,
-        }}
-        doubleClick={{
-          mode: 'toggle',
-        }}
-        pinch={{
-          step: 5,
-        }}
-      >
-        {({
-          zoomIn,
-          zoomOut,
-          resetTransform,
-        }) => (
-          <>
-            {/* Controls */}
-            <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+      {/* SCREENSHOT ZOOM VIEWER */}
+      {previewOpen && (
+        <div
+          className="fixed inset-0 z-[100000] flex flex-col bg-black/90"
+          onClick={closePreview}
+        >
+          {/* Toolbar — a solid, opaque bar rather than buttons
+              floating directly on the image, so it always reads
+              clearly no matter what the screenshot itself shows
+              underneath (including another dark window). */}
+          <div
+            className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-panel px-4 py-3 sm:px-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="font-mono text-xs text-mist">
+              {screenshotUrls.length > 1
+                ? `Screenshot ${previewIndex + 1} of ${screenshotUrls.length}`
+                : 'Screenshot'}
+            </div>
+
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={zoomOut}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-xl text-white backdrop-blur-md transition hover:bg-black/90"
+                disabled={zoom <= ZOOM_MIN}
+                title="Zoom out"
                 aria-label="Zoom out"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
-                −
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M21 21l-4.35-4.35" />
+                  <path d="M8 11h6" />
+                </svg>
               </button>
 
               <button
                 type="button"
-                onClick={resetTransform}
-                className="flex h-10 min-w-10 items-center justify-center rounded-full bg-black/60 px-3 text-sm text-white backdrop-blur-md transition hover:bg-black/90"
-                aria-label="Reset zoom"
+                onClick={resetZoom}
+                disabled={zoom === 1 && pan.x === 0 && pan.y === 0}
+                className="focus-ring rounded-full border border-line bg-panel-2 px-3 py-1.5 font-mono text-xs text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
-                Reset
+                {Math.round(zoom * 100)}% · Reset
               </button>
 
               <button
                 type="button"
                 onClick={zoomIn}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-xl text-white backdrop-blur-md transition hover:bg-black/90"
+                disabled={zoom >= ZOOM_MAX}
+                title="Zoom in"
                 aria-label="Zoom in"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
-                +
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M21 21l-4.35-4.35" />
+                  <path d="M11 8v6" />
+                  <path d="M8 11h6" />
+                </svg>
               </button>
+
+              <div className="mx-1 h-6 w-px bg-line" />
 
               <button
                 type="button"
-                onClick={() => setViewingImage(null)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-2xl text-white backdrop-blur-md transition hover:bg-black/90"
-                aria-label="Close image"
+                onClick={closePreview}
+                title="Close"
+                aria-label="Close"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-coral/50 hover:text-coral"
               >
-                ×
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
               </button>
             </div>
+          </div>
 
-            <TransformComponent
-              wrapperClass="!w-full !h-full"
-              contentClass="!w-full !h-full flex items-center justify-center"
-            >
-              <img
-                src={viewingImage.url}
-                alt={viewingImage.alt}
-                className="max-h-[92vh] max-w-[92vw] select-none object-contain"
-                draggable={false}
-              />
-            </TransformComponent>
-          </>
-        )}
-      </TransformWrapper>
-    </div>
-  </div>
-)}
-      </div>
+          {/* IMAGE */}
+          <div
+            className="relative flex flex-1 items-center justify-center overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={screenshotUrls[previewIndex]}
+              alt={`Screenshot ${previewIndex + 1}`}
+              draggable={false}
+              onMouseDown={handleImageMouseDown}
+              onMouseMove={handleImageMouseMove}
+              onMouseUp={stopDragging}
+              onMouseLeave={stopDragging}
+              onClick={() => zoom === 1 && zoomIn()}
+              onDoubleClick={() => (zoom > 1 ? resetZoom() : zoomIn())}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transition: isDragging ? 'none' : 'transform 120ms ease',
+                cursor:
+                  zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+              }}
+              className="max-h-full max-w-full select-none object-contain"
+            />
+
+            {screenshotUrls.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goToPreview(previewIndex - 1)
+                  }}
+                  title="Previous screenshot"
+                  aria-label="Previous screenshot"
+                  className="focus-ring absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-panel/90 text-paper shadow-lg transition hover:border-accent/40"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goToPreview(previewIndex + 1)
+                  }}
+                  title="Next screenshot"
+                  aria-label="Next screenshot"
+                  className="focus-ring absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-panel/90 text-paper shadow-lg transition hover:border-accent/40"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 

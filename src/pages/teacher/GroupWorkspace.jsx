@@ -169,6 +169,21 @@ export default function GroupWorkspace({ teacherId }) {
     return groupAccentPalette[safeIndex % groupAccentPalette.length]
   }
 
+  // Groups named like "71", "72", "73"... all share the same first
+  // character (7), so showing just charAt(0) made every one of those
+  // badges read identically once there were more than a handful of
+  // numbered groups. A purely numeric name shows in full instead — it
+  // stays short (class numbers, not IDs) and each one is distinct
+  // again. Text names ("EL STARS") keep the single-letter monogram.
+  const getGroupBadge = (name) => {
+    const trimmed = (name || '').trim()
+
+    if (!trimmed) return '?'
+    if (/^\d+$/.test(trimmed)) return trimmed
+
+    return trimmed.charAt(0).toUpperCase()
+  }
+
   const createGroup = async (e) => {
     e.preventDefault()
 
@@ -960,9 +975,13 @@ export default function GroupWorkspace({ teacherId }) {
                     <div className="relative flex items-start justify-between gap-3">
 
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display font-semibold shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${
+                          getGroupBadge(group.name).length > 1
+                            ? 'text-base'
+                            : 'text-lg'
+                        } ${accent.bg} ${accent.text}`}
                       >
-                        {group.name?.charAt(0)?.toUpperCase() || '?'}
+                        {getGroupBadge(group.name)}
                       </div>
 
                       <div className="flex shrink-0 items-center gap-1">
@@ -1149,8 +1168,14 @@ export default function GroupWorkspace({ teacherId }) {
 
                   <div className="flex min-w-0 items-center gap-3.5">
 
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-semibold shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}>
-                      {activeGroupObj?.name?.charAt(0)?.toUpperCase() || '?'}
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display font-semibold shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${
+                        getGroupBadge(activeGroupObj?.name).length > 1
+                          ? 'text-base'
+                          : 'text-lg'
+                      } ${accent.bg} ${accent.text}`}
+                    >
+                      {getGroupBadge(activeGroupObj?.name)}
                     </div>
 
                     <div className="min-w-0">
