@@ -1,37 +1,33 @@
 // supabase/functions/define-words/index.ts
 
-import {
-  createClient,
-} from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-/*
- * DEFINE WORDS
- *
- * Reliable architecture:
- *
- * Browser
- *   -> Supabase Edge Function
- *   -> OpenAI only
- *   -> Browser
- *
- * No dictionary APIs.
- * No translation APIs.
- * No per-word external services.
- *
- * The input is split into small batches so one imperfect model response
- * cannot destroy an entire 60-word list. Missing items are retried
- * automatically and only the missing items are regenerated.
- */
+// Definitions/example sentences come from Merriam-Webster's Learner's
+// Dictionary first (fetchMwEntry below) — it's the authoritative,
+// human-written source, so it's always tried first and always wins
+// when it has an entry. But a lot of collocations/phrases ("trial and
+// error", "unsettling experience") simply aren't their own headword
+// there. For anything MW/MyMemory couldn't fill in, this now makes
+// ONE batched call to OpenAI (reusing the same OPENAI_API_KEY secret
+// the ai-grading function already needs — nothing new to configure if
+// that's already set up) asking it to write the missing
+// definition/example/translation itself. See generateWithAi() below.
+//
+// Deploy with: npx supabase functions deploy define-words
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods":
+    "POST, OPTIONS",
   "Content-Type": "application/json",
 }
 
-function json(data: unknown, status = 200) {
+function json(
+  data: unknown,
+  status = 200
+) {
   return new Response(
     JSON.stringify(data),
     {
@@ -41,559 +37,810 @@ function json(data: unknown, status = 200) {
   )
 }
 
-const OPENAI_URL =
-  "https://api.openai.com/v1/responses"
-
-const TEXT_MODEL =
-  Deno.env.get("OPENAI_TEXT_MODEL") ||
-  "gpt-5.6-terra"
-
-const MAX_WORDS = 250
-
-// 25 is deliberately conservative. It is much more reliable than asking
-// one response to produce 60–250 complete vocabulary cards at once.
-const BATCH_SIZE = 25
-
-const MAX_BATCH_ATTEMPTS = 3
-const REQUEST_TIMEOUT_MS = 120000
-
-type VocabularyResult = {
-  word: string
-  definition: string
-  example_sentence: string
-  uzbek_translation: string
+// Strips a leading list marker off one submitted line — "1.", "12)",
+// "3 -", or a bullet glyph like •/‣/◦/●/○/▪/▸ — before it's treated as
+// a word or collocation. A word list pasted in from a numbered
+// source (or two of them back to back, with the numbering restarting
+// partway through) can arrive here with the number baked right into
+// the string ("1. abandon"), which both pollutes the saved word
+// itself and is a very plausible reason a dictionary/AI lookup for
+// that "word" fails outright. This mirrors the same cleanup already
+// done client-side before words are sent here, kept here too so any
+// caller gets the same protection. A real hyphenated word at the
+// start of a line (e.g. "-year-old") is left alone — the dash/
+// asterisk bullet pattern only matches when a space follows it.
+function stripListMarker(value: string) {
+  return value
+    .replace(/^\s*\(?\d{1,4}\)?[.):\-]\s*/, "")
+    .replace(/^\s*[•‣◦▪▸●○∙·]\s*/, "")
+    .replace(/^\s*[-*]\s+/, "")
+    .trim()
 }
 
-type IndexedVocabularyResult =
-  VocabularyResult & {
-    index: number
+function cleanWord(value: unknown) {
+  return stripListMarker(
+    String(value || "")
+      .replace(/\s+/g, " ")
+      .trim()
+  )
+}
+
+/*
+ * Decode HTML entities returned by translation services.
+ *
+ * Examples:
+ * &#39;  -> '
+ * &#x27;  -> '
+ * &amp;   -> &
+ * &quot;  -> "
+ * &lt;    -> <
+ * &gt;    -> >
+ * &nbsp;  -> space
+ */
+function decodeHtmlEntities(
+  value: string
+) {
+  let result = String(value || "")
+
+  const namedEntities: Record<
+    string,
+    string
+  > = {
+    "&nbsp;": " ",
+    "&amp;": "&",
+    "&quot;": '"',
+    "&apos;": "'",
+    "&#39;": "'",
+    "&#x27;": "'",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&ndash;": "–",
+    "&mdash;": "—",
+    "&hellip;": "…",
   }
 
-function cleanText(value: unknown): string {
-  return String(value ?? "")
+  for (
+    const [entity, replacement]
+    of Object.entries(namedEntities)
+  ) {
+    result = result.replace(
+      new RegExp(
+        entity.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          "\\$&"
+        ),
+        "gi"
+      ),
+      replacement
+    )
+  }
+
+  /*
+   * Decimal entities:
+   * &#39;
+   * &#160;
+   */
+  result = result.replace(
+    /&#(\d+);/g,
+    (_, decimal) => {
+      const codePoint =
+        Number(decimal)
+
+      try {
+        return String.fromCodePoint(
+          codePoint
+        )
+      } catch {
+        return ""
+      }
+    }
+  )
+
+  /*
+   * Hexadecimal entities:
+   * &#x27;
+   * &#x2019;
+   */
+  result = result.replace(
+    /&#x([0-9a-f]+);/gi,
+    (_, hexadecimal) => {
+      const codePoint =
+        parseInt(
+          hexadecimal,
+          16
+        )
+
+      try {
+        return String.fromCodePoint(
+          codePoint
+        )
+      } catch {
+        return ""
+      }
+    }
+  )
+
+  return result
     .replace(/\s+/g, " ")
     .trim()
 }
 
-function normalize(value: unknown): string {
-  return cleanText(value).toLowerCase()
-}
-
-function sleep(milliseconds: number) {
-  return new Promise(
-    (resolve) => setTimeout(resolve, milliseconds)
-  )
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const result: T[][] = []
-
-  for (let i = 0; i < items.length; i += size) {
-    result.push(items.slice(i, i + size))
+function cleanTranslation(
+  value: unknown
+) {
+  if (!value) {
+    return null
   }
 
-  return result
+  let cleaned =
+    decodeHtmlEntities(
+      String(value)
+    )
+
+  /*
+   * Some APIs can escape entities more than once.
+   */
+  if (
+    /&(?:#\d+|#x[0-9a-f]+|amp|quot|apos|nbsp|lt|gt);/i.test(
+      cleaned
+    )
+  ) {
+    cleaned =
+      decodeHtmlEntities(
+        cleaned
+      )
+  }
+
+  cleaned = cleaned
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!cleaned) {
+    return null
+  }
+
+  /*
+   * Ignore obvious translation-service errors.
+   */
+  if (
+    /no translation found|invalid|must be less|quota|error/i.test(
+      cleaned
+    )
+  ) {
+    return null
+  }
+
+  return cleaned
 }
 
+/*
+ * Strip Merriam-Webster's internal markup tokens out of definition
+ * text (their API returns strings like "{bc}to make {it}less{/it}
+ * severe" instead of plain text). This only needs to handle what
+ * actually shows up in `shortdef` — the short, already-simplified
+ * definitions this function uses — not the full formatting language
+ * MW uses in the long-form `def`/`sseq` structure.
+ */
+function cleanMwText(value: unknown) {
+  let text = String(value || "")
+
+  // Paired tokens: keep the text inside them.
+  text = text.replace(
+    /\{(it|b|wi|inf|sup|gloss|qword|parahw|phrase)\}(.*?)\{\/\1\}/g,
+    "$2"
+  )
+
+  // {sx|word||} / {a_link|word} / {d_link|text|...} -- cross-references
+  // and links. Keep just the display word/text (first piece).
+  text = text.replace(
+    /\{(?:sx|a_link|d_link|i_link|et_link|mat|dxt)\|([^|}]*)[^}]*\}/g,
+    "$1"
+  )
+
+  // {bc} is a "bold colon" used to separate sense groups.
+  text = text.replace(/\{bc\}/g, ": ")
+
+  text = text
+    .replace(/\{ldquo\}/g, "“")
+    .replace(/\{rdquo\}/g, "”")
+
+  // Anything else ({dx}, {sxn}, closing tags that slipped through, etc.)
+  // -- just drop it, it's formatting metadata, not content.
+  text = text.replace(/\{\/?[a-z_]+[^}]*\}/gi, "")
+
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/^[:;\s]+/, "")
+    .trim()
+}
+
+/*
+ * Merriam-Webster's entries nest example sentences ("verbal
+ * illustrations") deep inside their sense structure, under a "vis"
+ * array wherever it happens to occur -- rather than model that whole
+ * nested shape, just walk the entry looking for any ["vis", [...]]
+ * pair and use its first example. {wi}...{/wi} inside the example
+ * (marking where the headword itself appears) gets unwrapped to plain
+ * text by cleanMwText, same as everything else.
+ */
+function extractFirstExample(node: unknown): string | null {
+  if (!node || typeof node !== "object") {
+    return null
+  }
+
+  if (Array.isArray(node)) {
+    if (node[0] === "vis" && Array.isArray(node[1])) {
+      for (const illustration of node[1]) {
+        const text = cleanMwText(
+          (illustration as any)?.t
+        )
+
+        if (text) {
+          return text
+        }
+      }
+    }
+
+    for (const child of node) {
+      const found = extractFirstExample(child)
+
+      if (found) {
+        return found
+      }
+    }
+
+    return null
+  }
+
+  for (const key of Object.keys(node as object)) {
+    const found = extractFirstExample(
+      (node as Record<string, unknown>)[key]
+    )
+
+    if (found) {
+      return found
+    }
+  }
+
+  return null
+}
+
+/*
+ * Merriam-Webster Learner's Dictionary API.
+ *
+ * https://www.dictionaryapi.com/products/api-learners-dictionary
+ *
+ * A real, non-technical-friendly gotcha this has to handle: when there
+ * is no exact entry for what was queried, MW does NOT return an error
+ * or an empty array -- it returns HTTP 200 with an array of plain
+ * spelling-suggestion STRINGS instead of definition objects. A lot of
+ * collocations (e.g. "take into account") aren't their own headword --
+ * they're nested inside a related word's entry -- so this shows up a
+ * lot for multi-word phrases specifically. Treat that case the same as
+ * "no definition found" rather than showing a suggestion as if it were
+ * a definition.
+ */
+async function fetchMwEntry(
+  word: string,
+  apiKey: string
+): Promise<{ definition: string | null; example: string | null }> {
+  const empty = { definition: null, example: null }
+
+  try {
+    const url =
+      `https://www.dictionaryapi.com/api/v3/references/learners/json/${encodeURIComponent(
+        word
+      )}?key=${apiKey}`
+
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      console.error(
+        `Merriam-Webster returned ${response.status} for "${word}"`
+      )
+
+      return empty
+    }
+
+    let data: any
+
+    try {
+      data = await response.json()
+    } catch {
+      console.error(
+        `Invalid JSON from Merriam-Webster for "${word}"`
+      )
+
+      return empty
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return empty
+    }
+
+    /*
+     * No exact entry -- just spelling suggestions as plain strings.
+     */
+    if (typeof data[0] === "string") {
+      return empty
+    }
+
+    /*
+     * Ambiguous headwords (e.g. "bear" the verb vs. the noun) can come
+     * back as several entries. Prefer the one whose id actually matches
+     * what was queried over whatever MW happened to sort first.
+     */
+    const normalizedWord = word.toLowerCase()
+
+    const bestEntry =
+      data.find((entry: any) => {
+        const id = String(entry?.meta?.id || "")
+          .toLowerCase()
+          .split(":")[0]
+
+        return id === normalizedWord
+      }) || data[0]
+
+    const shortdefs = Array.isArray(bestEntry?.shortdef)
+      ? bestEntry.shortdef
+      : []
+
+    /*
+     * A word list entry is a flashcard, not a dictionary page -- the
+     * first sense or two is plenty, and keeps entries readable.
+     */
+    const cleaned = shortdefs
+      .slice(0, 2)
+      .map((sense: string) => cleanMwText(sense))
+      .filter(Boolean)
+
+    const example = extractFirstExample(bestEntry)
+
+    return {
+      definition: cleaned.length ? cleaned.join("; ") : null,
+      example,
+    }
+  } catch (error) {
+    console.error(
+      `Definition lookup failed for "${word}":`,
+      error
+    )
+
+    return empty
+  }
+}
+
+async function fetchTranslation(
+  word: string
+) {
+  try {
+    const url =
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+        word
+      )}&langpair=en|uz`
+
+    const response =
+      await fetch(url)
+
+    if (!response.ok) {
+      console.error(
+        `MyMemory returned ${response.status} for "${word}"`
+      )
+
+      return null
+    }
+
+    const text =
+      await response.text()
+
+    if (!text.trim()) {
+      console.error(
+        `MyMemory returned an empty response for "${word}"`
+      )
+
+      return null
+    }
+
+    let data: any
+
+    try {
+      data = JSON.parse(text)
+    } catch {
+      console.error(
+        `Invalid JSON from MyMemory for "${word}":`,
+        text.slice(0, 500)
+      )
+
+      return null
+    }
+
+    const translated =
+      data?.responseData
+        ?.translatedText
+
+    if (!translated) {
+      return null
+    }
+
+    const cleaned =
+      cleanTranslation(
+        translated
+      )
+
+    if (!cleaned) {
+      return null
+    }
+
+    /*
+     * If MyMemory simply returned the English input,
+     * treat that as a failed translation.
+     */
+    if (
+      cleaned.toLowerCase() ===
+      word.toLowerCase()
+    ) {
+      return null
+    }
+
+    return cleaned
+  } catch (error) {
+    console.error(
+      `Translation failed for "${word}":`,
+      error
+    )
+
+    return null
+  }
+}
+
+/*
+ * ============================================================
+ * AI FALLBACK — for definitions/examples/translations that the
+ * dictionary and translation service above couldn't provide.
+ * ============================================================
+ */
+
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+
+// Same override mechanism as ai-grading's TEXT_MODEL — if OpenAI ever
+// retires this model name, set the secret instead of editing code:
+//   npx supabase secrets set OPENAI_TEXT_MODEL=<new model name>
+const TEXT_MODEL =
+  Deno.env.get("OPENAI_TEXT_MODEL") || "gpt-5.6-terra"
+
+const WORD_ENRICHMENT_SCHEMA = {
+  type: "object",
+  properties: {
+    words: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          word: { type: "string" },
+          definition: { type: "string" },
+          example_sentence: { type: "string" },
+          uzbek_translation: { type: "string" },
+        },
+        required: [
+          "word",
+          "definition",
+          "example_sentence",
+          "uzbek_translation",
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["words"],
+  additionalProperties: false,
+}
+
+// The Responses API sometimes hands back a convenience `output_text`
+// field, and always hands back the full `output` array — walk both so
+// this doesn't break if OpenAI stops sending the convenience field.
+// (Same helper as ai-grading/index.ts.)
 function extractOutputText(payload: any): string {
   if (
     typeof payload?.output_text === "string" &&
-    payload.output_text.trim()
+    payload.output_text
   ) {
-    return payload.output_text.trim()
+    return payload.output_text
   }
 
-  const output = Array.isArray(payload?.output)
+  const items = Array.isArray(payload?.output)
     ? payload.output
     : []
 
-  for (const item of output) {
-    if (
-      item?.type === "message" &&
-      Array.isArray(item?.content)
-    ) {
+  for (const item of items) {
+    if (item?.type === "message" && Array.isArray(item.content)) {
       for (const part of item.content) {
         if (
           part?.type === "output_text" &&
-          typeof part?.text === "string" &&
-          part.text.trim()
+          typeof part.text === "string"
         ) {
-          return part.text.trim()
+          return part.text
         }
       }
     }
   }
 
-  throw new Error(
-    "OpenAI returned no readable output."
-  )
+  throw new Error("The AI did not return any text.")
 }
 
-function buildPrompt(
-  items: { index: number; word: string }[]
-) {
-  return `
-You create accurate IELTS vocabulary cards for Uzbek-speaking English learners.
+// Structured Outputs (strict json_schema) should already guarantee
+// clean JSON — this is just a safety net.
+function parseJsonLoose(text: string): any {
+  try {
+    return JSON.parse(text)
+  } catch {
+    // fall through
+  }
 
-Generate information for EVERY numbered item below.
+  const match = text.match(/\{[\s\S]*\}/)
 
-IMPORTANT RULES:
+  if (match) {
+    try {
+      return JSON.parse(match[0])
+    } catch {
+      // fall through
+    }
+  }
 
-1. Each numbered item is one complete vocabulary item.
-
-2. NEVER split multi-word expressions into individual words.
-
-Examples:
-- "take into account" must be defined as the complete phrase.
-- "play a crucial role" must remain the complete phrase.
-- "in the long run" must remain the complete phrase.
-
-3. Keep the meaning appropriate to the complete word or phrase.
-
-4. Use a clear, accurate English definition suitable for IELTS students.
-
-5. Write exactly one natural example sentence.
-
-6. Provide a natural Uzbek translation in Uzbek Latin script.
-Do NOT use Russian.
-
-7. Do not invent meanings.
-
-8. Return every requested index exactly once.
-
-9. The "word" field must preserve the original item exactly as supplied.
-
-10. Do not add explanations, notes, markdown, or extra fields.
-
-REQUESTED ITEMS:
-
-${items
-  .map(
-    (item) =>
-      `${item.index}. ${item.word}`
-  )
-  .join("\n")}
-`
+  throw new Error("Could not read the AI's response as JSON.")
 }
 
-function responseSchema() {
-  return {
-    type: "object",
-    properties: {
-      results: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            index: {
-              type: "integer",
+function buildEnrichmentPrompt(words: string[]) {
+  return [
+    "You are helping build IELTS vocabulary flashcards for Uzbek-speaking students.",
+    "",
+    'A dictionary lookup already failed for these English words or collocations — most likely because a multi-word phrase like "trial and error" simply isn\'t its own dictionary headword.',
+    "",
+    "For EACH one below, write:",
+    '- "definition": a short, clear English definition in plain learner\'s-dictionary style (one sentence, no jargon, no repeating the headword itself as the first word of the definition).',
+    '- "example_sentence": one natural sentence that actually uses the word/collocation, written exactly as given.',
+    '- "uzbek_translation": an accurate, natural Uzbek translation (a short phrase, not a full sentence).',
+    "",
+    "Return ALL of them, in this exact order, with the word spelled exactly as given:",
+    ...words.map((word, i) => `${i + 1}. ${word}`),
+  ].join("\n")
+}
+
+async function generateWithAi(
+  words: string[],
+  apiKey: string
+): Promise<
+  Array<{
+    word: string
+    definition: string
+    example_sentence: string
+    uzbek_translation: string
+  }>
+> {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: TEXT_MODEL,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: buildEnrichmentPrompt(words),
             },
-            word: {
-              type: "string",
-            },
-            definition: {
-              type: "string",
-            },
-            example_sentence: {
-              type: "string",
-            },
-            uzbek_translation: {
-              type: "string",
-            },
-          },
-          required: [
-            "index",
-            "word",
-            "definition",
-            "example_sentence",
-            "uzbek_translation",
           ],
-          additionalProperties: false,
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "word_enrichment",
+          strict: true,
+          schema: WORD_ENRICHMENT_SCHEMA,
         },
       },
-    },
-    required: ["results"],
-    additionalProperties: false,
-  }
-}
+    }),
+  })
 
-function parseResults(
-  rawResults: unknown,
-  requested: { index: number; word: string }[]
-): Map<number, VocabularyResult> {
-  const valid = new Map<number, VocabularyResult>()
+  const json = await response.json()
 
-  if (!Array.isArray(rawResults)) {
-    return valid
-  }
-
-  const requestedByIndex = new Map(
-    requested.map((item) => [
-      item.index,
-      item,
-    ])
-  )
-
-  for (const raw of rawResults) {
-    const index = Number(raw?.index)
-    const requestedItem =
-      requestedByIndex.get(index)
-
-    if (!requestedItem) {
-      continue
-    }
-
-    const definition =
-      cleanText(raw?.definition)
-
-    const example =
-      cleanText(raw?.example_sentence)
-
-    const translation =
-      cleanText(raw?.uzbek_translation)
-
-    if (
-      !definition ||
-      !example ||
-      !translation
-    ) {
-      continue
-    }
-
-    valid.set(index, {
-      // Always preserve the teacher's exact original item.
-      word: requestedItem.word,
-      definition,
-      example_sentence: example,
-      uzbek_translation: translation,
-    })
-  }
-
-  return valid
-}
-
-async function requestOpenAI(
-  apiKey: string,
-  requested: { index: number; word: string }[]
-): Promise<Map<number, VocabularyResult>> {
-  const controller =
-    new AbortController()
-
-  const timeout = setTimeout(
-    () => controller.abort(),
-    REQUEST_TIMEOUT_MS
-  )
-
-  try {
-    const response = await fetch(
-      OPENAI_URL,
-      {
-        method: "POST",
-
-        headers: {
-          Authorization:
-            `Bearer ${apiKey}`,
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          model: TEXT_MODEL,
-
-          input: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: buildPrompt(requested),
-                },
-              ],
-            },
-          ],
-
-          text: {
-            format: {
-              type: "json_schema",
-              name: "vocabulary_results",
-              strict: true,
-              schema: responseSchema(),
-            },
-          },
-        }),
-
-        signal: controller.signal,
-      }
+  if (!response.ok) {
+    throw new Error(
+      json?.error?.message ||
+        `OpenAI request failed (${response.status}).`
     )
-
-    const responseText =
-      await response.text()
-
-    let payload: any = null
-
-    try {
-      payload = responseText
-        ? JSON.parse(responseText)
-        : null
-    } catch {
-      throw new Error(
-        `OpenAI returned invalid JSON (HTTP ${response.status}).`
-      )
-    }
-
-    if (!response.ok) {
-      const message =
-        payload?.error?.message ||
-        payload?.message ||
-        `OpenAI request failed with HTTP ${response.status}.`
-
-      const error = new Error(message)
-
-      ;(error as any).status =
-        response.status
-
-      throw error
-    }
-
-    // A Responses API request can be technically 200 but still incomplete.
-    // Treat it as retryable rather than pretending the whole function failed.
-    if (
-      payload?.status &&
-      payload.status !== "completed"
-    ) {
-      throw new Error(
-        payload?.incomplete_details?.reason ||
-        `OpenAI response ended with status: ${payload.status}`
-      )
-    }
-
-    const outputText =
-      extractOutputText(payload)
-
-    let parsed: any
-
-    try {
-      parsed = JSON.parse(outputText)
-    } catch {
-      throw new Error(
-        "OpenAI returned malformed structured data."
-      )
-    }
-
-    return parseResults(
-      parsed?.results,
-      requested
-    )
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
-function isRetryable(error: unknown): boolean {
-  const status =
-    Number((error as any)?.status || 0)
-
-  if (
-    status === 408 ||
-    status === 409 ||
-    status === 429 ||
-    status >= 500
-  ) {
-    return true
   }
 
-  const message =
-    error instanceof Error
-      ? error.message.toLowerCase()
-      : String(error).toLowerCase()
+  const parsed = parseJsonLoose(extractOutputText(json))
 
-  return (
-    message.includes("abort") ||
-    message.includes("network") ||
-    message.includes("fetch") ||
-    message.includes("timeout") ||
-    message.includes("incomplete") ||
-    message.includes("malformed")
-  )
+  return Array.isArray(parsed?.words) ? parsed.words : []
 }
+
+// The exact fallback string enrichWord() below uses when MyMemory
+// couldn't translate something — used to tell "the AI actually
+// translated this" apart from "nothing has translated this yet".
+const UNTRANSLATED_PLACEHOLDER =
+  "Translation not found — please review this item manually."
 
 /*
- * Generate a batch without ever rejecting successful items just because
- * another item was missing. Missing items are requested again separately.
+ * Process several words concurrently,
+ * while keeping the number of simultaneous
+ * external API requests under control.
  */
-async function generateBatch(
-  apiKey: string,
-  batch: { index: number; word: string }[]
-): Promise<Map<number, VocabularyResult>> {
-  const completed =
-    new Map<number, VocabularyResult>()
+async function mapWithConcurrency<T>(
+  items: string[],
+  limit: number,
+  fn: (item: string) => Promise<T>
+) {
+  const results =
+    new Array<T>(items.length)
 
-  let pending = [...batch]
-  let lastError: unknown = null
+  let next = 0
 
-  for (
-    let attempt = 1;
-    attempt <= MAX_BATCH_ATTEMPTS &&
-    pending.length > 0;
-    attempt++
-  ) {
-    try {
-      console.log(
-        `define-words: attempt ${attempt}, requesting ${pending.length} item(s).`
-      )
-
-      const received =
-        await requestOpenAI(
-          apiKey,
-          pending
-        )
-
-      for (const [index, result] of received) {
-        completed.set(index, result)
-      }
-
-      pending = pending.filter(
-        (item) => !completed.has(item.index)
-      )
-
-      if (pending.length === 0) {
-        break
-      }
-
-      console.warn(
-        `define-words: ${pending.length} item(s) missing after attempt ${attempt}; retrying only those items.`
-      )
-
-      if (attempt < MAX_BATCH_ATTEMPTS) {
-        await sleep(700 * attempt)
-      }
-    } catch (error) {
-      lastError = error
-
-      console.warn(
-        `define-words: attempt ${attempt} failed:`,
-        error
-      )
+  async function worker() {
+    while (true) {
+      const index = next++
 
       if (
-        !isRetryable(error) ||
-        attempt === MAX_BATCH_ATTEMPTS
+        index >= items.length
       ) {
         break
       }
 
-      await sleep(1200 * attempt)
-    }
-  }
-
-  /*
-   * Final rescue: individual requests for anything still missing.
-   * This is rare, but it prevents one bad item from destroying a
-   * whole list.
-   */
-  const stillMissing =
-    batch.filter(
-      (item) => !completed.has(item.index)
-    )
-
-  for (const item of stillMissing) {
-    try {
-      const rescued =
-        await requestOpenAI(
-          apiKey,
-          [item]
+      try {
+        results[index] =
+          await fn(
+            items[index]
+          )
+      } catch (error) {
+        console.error(
+          `Failed to process "${items[index]}":`,
+          error
         )
 
-      const result =
-        rescued.get(item.index)
-
-      if (result) {
-        completed.set(
-          item.index,
-          result
-        )
+        results[index] =
+          null as T
       }
-    } catch (error) {
-      console.error(
-        `define-words: final rescue failed for "${item.word}":`,
-        error
-      )
-      lastError = error
     }
   }
 
-  const unresolved =
-    batch.filter(
-      (item) => !completed.has(item.index)
+  const workerCount =
+    Math.min(
+      limit,
+      items.length
     )
 
-  if (unresolved.length) {
-    const names = unresolved
-      .slice(0, 10)
-      .map((item) => item.word)
-      .join(", ")
-
-    throw new Error(
-      `The AI could not complete ${unresolved.length} item(s): ${names}`
+  const workers =
+    Array.from(
+      {
+        length:
+          workerCount,
+      },
+      () => worker()
     )
-  }
 
-  return completed
+  await Promise.all(
+    workers
+  )
+
+  return results
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(
-      "ok",
-      { headers: corsHeaders }
-    )
+async function enrichWord(
+  word: string,
+  mwApiKey: string | null
+) {
+  const [translation, mwEntry] = await Promise.all([
+    fetchTranslation(word),
+    mwApiKey
+      ? fetchMwEntry(word, mwApiKey)
+      : Promise.resolve({ definition: null, example: null }),
+  ])
+
+  return {
+    word,
+
+    /*
+     * Merriam-Webster's Learner's Dictionary. Collocations/phrases that
+     * aren't their own headword there (a real limitation of using a
+     * traditional dictionary for this) simply come back empty here --
+     * the AI fallback pass in Deno.serve() below fills in anything
+     * still blank after this, when an OpenAI key is configured.
+     */
+    definition: mwEntry.definition || "",
+
+    uzbek_translation:
+      translation || UNTRANSLATED_PLACEHOLDER,
+
+    /*
+     * A real example sentence straight from the dictionary entry, when
+     * MW has one on file for this sense. Left blank (same graceful
+     * fallback as definition) when there isn't one -- filled in by the
+     * AI fallback pass below, same as definition.
+     */
+    example_sentence: mwEntry.example || "",
   }
+}
 
-  if (req.method !== "POST") {
-    return json(
-      {
-        error: "Method not allowed.",
-      },
-      405
-    )
-  }
-
-  try {
-    const supabaseUrl =
-      Deno.env.get("SUPABASE_URL")
-
-    const anonKey =
-      Deno.env.get("SUPABASE_ANON_KEY")
-
-    const openaiKey =
-      Deno.env.get("OPENAI_API_KEY")
+Deno.serve(
+  async (req) => {
+    /*
+     * Browser CORS preflight.
+     */
+    if (
+      req.method === "OPTIONS"
+    ) {
+      return new Response(
+        "ok",
+        {
+          headers:
+            corsHeaders,
+          status: 200,
+        }
+      )
+    }
 
     if (
-      !supabaseUrl ||
-      !anonKey ||
-      !openaiKey
+      req.method !== "POST"
     ) {
-      console.error(
-        "define-words server configuration is incomplete."
-      )
-
       return json(
         {
           error:
-            "The word generation service is not configured correctly.",
+            "Method not allowed",
+        },
+        405
+      )
+    }
+
+    /*
+     * Supabase Edge Function environment.
+     */
+    const supabaseUrl =
+      Deno.env.get(
+        "SUPABASE_URL"
+      )
+
+    const supabaseAnonKey =
+      Deno.env.get(
+        "SUPABASE_ANON_KEY"
+      )
+
+    if (
+      !supabaseUrl ||
+      !supabaseAnonKey
+    ) {
+      return json(
+        {
+          error:
+            "Supabase environment variables are missing.",
         },
         500
       )
     }
 
+    /*
+     * Require an authenticated Supabase user.
+     */
     const authHeader =
-      req.headers.get("Authorization")
+      req.headers.get(
+        "Authorization"
+      ) || ""
 
-    if (!authHeader) {
+    const token =
+      authHeader.replace(
+        /^Bearer\s+/i,
+        ""
+      )
+
+    if (!token) {
       return json(
         {
           error:
-            "You must be logged in.",
+            "Missing authentication token.",
         },
         401
       )
@@ -602,12 +849,12 @@ Deno.serve(async (req) => {
     const supabase =
       createClient(
         supabaseUrl,
-        anonKey,
+        supabaseAnonKey,
         {
           global: {
             headers: {
               Authorization:
-                authHeader,
+                `Bearer ${token}`,
             },
           },
         }
@@ -616,7 +863,10 @@ Deno.serve(async (req) => {
     const {
       data: userData,
       error: userError,
-    } = await supabase.auth.getUser()
+    } =
+      await supabase.auth.getUser(
+        token
+      )
 
     if (
       userError ||
@@ -625,16 +875,20 @@ Deno.serve(async (req) => {
       return json(
         {
           error:
-            "Your login session has expired. Please log in again.",
+            "Invalid or expired session.",
         },
         401
       )
     }
 
+    /*
+     * Read request body.
+     */
     let body: any
 
     try {
-      body = await req.json()
+      body =
+        await req.json()
     } catch {
       return json(
         {
@@ -645,162 +899,191 @@ Deno.serve(async (req) => {
       )
     }
 
-    const rawWords =
-      Array.isArray(body?.words)
+    /*
+     * Extract and clean words.
+     */
+    let words =
+      Array.isArray(
+        body?.words
+      )
         ? body.words
+            .map(cleanWord)
+            .filter(Boolean)
         : []
 
-    const cleanedWords =
-      rawWords
-        .map(cleanText)
-        .filter(Boolean)
+    /*
+     * Remove duplicates while preserving
+     * the teacher's original order.
+     */
+    const seen =
+      new Set<string>()
 
-    if (!cleanedWords.length) {
+    words =
+      words.filter(
+        (word: string) => {
+          const key =
+            word.toLowerCase()
+
+          if (
+            seen.has(key)
+          ) {
+            return false
+          }
+
+          seen.add(key)
+
+          return true
+        }
+      )
+
+    if (!words.length) {
       return json(
         {
           error:
-            "Please provide at least one word or phrase.",
+            "No words provided.",
         },
         400
       )
     }
 
+    /*
+     * Maximum 250 words/collocations.
+     */
     if (
-      cleanedWords.length >
-      MAX_WORDS
+      words.length > 250
     ) {
       return json(
         {
           error:
-            `Please generate ${MAX_WORDS} words or fewer at a time.`,
+            "Please send 250 words or fewer at a time.",
         },
         400
       )
     }
 
     /*
-     * Remove exact duplicates while preserving order.
+     * Merriam-Webster's free Learner's Dictionary API key. Set with:
+     *   npx supabase secrets set MERRIAM_WEBSTER_API_KEY=xxxxx
+     *
+     * Missing key is not a hard error -- definitions just come back
+     * empty (same as before this was added) so translations still work
+     * even if this hasn't been configured yet.
      */
-    const uniqueWords: string[] = []
-    const seen = new Set<string>()
+    const mwApiKey =
+      Deno.env.get("MERRIAM_WEBSTER_API_KEY") || null
 
-    for (const word of cleanedWords) {
-      const key = normalize(word)
-
-      if (!seen.has(key)) {
-        seen.add(key)
-        uniqueWords.push(word)
-      }
-    }
-
-    const indexedItems =
-      uniqueWords.map(
-        (word, index) => ({
-          index,
-          word,
-        })
+    if (!mwApiKey) {
+      console.error(
+        "MERRIAM_WEBSTER_API_KEY is not set — definitions will be left blank. Run: npx supabase secrets set MERRIAM_WEBSTER_API_KEY=xxxxx"
       )
-
-    const batches =
-      chunk(
-        indexedItems,
-        BATCH_SIZE
-      )
-
-    console.log(
-      `define-words: generating ${indexedItems.length} item(s) in ${batches.length} batch(es) using ${TEXT_MODEL}.`
-    )
-
-    const allResults =
-      new Map<number, VocabularyResult>()
-
-    /*
-     * Sequential batches are intentional. This keeps cost predictable and
-     * avoids rate-limit spikes. Typical 60-word lists become 3 requests.
-     */
-    for (
-      let batchNumber = 0;
-      batchNumber < batches.length;
-      batchNumber++
-    ) {
-      const batch =
-        batches[batchNumber]
-
-      console.log(
-        `define-words: starting batch ${batchNumber + 1}/${batches.length}.`
-      )
-
-      const batchResults =
-        await generateBatch(
-          openaiKey,
-          batch
-        )
-
-      for (
-        const [index, result] of batchResults
-      ) {
-        allResults.set(index, result)
-      }
     }
 
     const results =
-      indexedItems.map(
-        (item) =>
-          allResults.get(item.index)
+      await mapWithConcurrency(
+        words,
+        5,
+        (word: string) => enrichWord(word, mwApiKey)
       )
 
-    const missing =
-      indexedItems.filter(
-        (_, index) => !results[index]
-      )
+    /*
+     * --------------------------------------------------------
+     * AI FALLBACK
+     * --------------------------------------------------------
+     * Reuses the OPENAI_API_KEY secret ai-grading already needs — if
+     * that's already configured for this project, this needs nothing
+     * new. Missing key (or the AI call itself failing) is NOT a hard
+     * error: this whole block is best-effort, and a blank field left
+     * for the teacher to fill in by hand is exactly what happened
+     * before this feature existed, so there's nothing to break.
+     */
+    const openaiKey =
+      Deno.env.get("OPENAI_API_KEY") || null
 
-    if (missing.length) {
-      // This should only be reachable after all retries and rescue attempts.
+    if (!openaiKey) {
       console.error(
-        "define-words unresolved items:",
-        missing
+        "OPENAI_API_KEY is not set — collocations/phrases the dictionary couldn't define will be left blank instead of AI-generated. Run: npx supabase secrets set OPENAI_API_KEY=sk-..."
       )
+    } else {
+      const needsAi = results
+        .map((result, index) => ({ result, index }))
+        .filter(
+          ({ result }) =>
+            result &&
+            (!result.definition ||
+              !result.example_sentence ||
+              result.uzbek_translation ===
+                UNTRANSLATED_PLACEHOLDER)
+        )
 
-      return json(
-        {
-          error:
-            "Generation could not be completed for every item. Please retry the list.",
-          results: results.filter(
-            Boolean
-          ),
-          failed_words: missing.map(
-            (item) => item.word
-          ),
-        },
-        200
-      )
+      if (needsAi.length) {
+        try {
+          const aiWords = needsAi.map(
+            ({ result }) => result.word
+          )
+
+          const aiResults = await generateWithAi(
+            aiWords,
+            openaiKey
+          )
+
+          const aiByWord = new Map(
+            aiResults.map((item) => [
+              String(item?.word || "").toLowerCase(),
+              item,
+            ])
+          )
+
+          needsAi.forEach(({ result, index }) => {
+            const aiItem = aiByWord.get(
+              result.word.toLowerCase()
+            )
+
+            if (!aiItem) return
+
+            if (
+              !result.definition &&
+              aiItem.definition
+            ) {
+              results[index] = {
+                ...results[index],
+                definition: aiItem.definition,
+              }
+            }
+
+            if (
+              !result.example_sentence &&
+              aiItem.example_sentence
+            ) {
+              results[index] = {
+                ...results[index],
+                example_sentence:
+                  aiItem.example_sentence,
+              }
+            }
+
+            if (
+              result.uzbek_translation ===
+                UNTRANSLATED_PLACEHOLDER &&
+              aiItem.uzbek_translation
+            ) {
+              results[index] = {
+                ...results[index],
+                uzbek_translation:
+                  aiItem.uzbek_translation,
+              }
+            }
+          })
+        } catch (error) {
+          console.error(
+            "AI definition fallback failed — leaving blanks for manual entry:",
+            error
+          )
+        }
+      }
     }
-
-    console.log(
-      `define-words: completed ${results.length} item(s) successfully.`
-    )
 
     return json({
       results,
     })
-  } catch (error) {
-    console.error(
-      "define-words failed:",
-      error
-    )
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unknown server error."
-
-    /*
-     * Genuine server failures still return an error status so they are not
-     * silently mistaken for successful generation.
-     */
-    return json(
-      { error: message },
-      500
-    )
   }
-})
+)

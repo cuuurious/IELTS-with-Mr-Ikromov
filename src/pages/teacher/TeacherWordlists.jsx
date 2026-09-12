@@ -3,6 +3,41 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
 
+// Same rotation used everywhere else in the app (Groups & homework,
+// Students, Leaderboards, Group chats) — keyed by a group's position
+// in the same created_at-ordered list every one of those pages
+// fetches, so a given group carries the same color everywhere.
+// Module-level (not just inside TeacherWordlists below) so
+// ResultsModal, further down this file, can use the exact same
+// colors when it separates one word list's results out by group.
+// Strips a leading list marker off one pasted line — "1.", "12)",
+// "3 -", or a bullet glyph like •/‣/◦/●/○/▪/▸ — before it's treated as
+// a word or collocation. Word lists are often pasted in from a
+// numbered source, and sometimes from TWO of them back to back (the
+// numbering restarting partway down, e.g. 1–54 then 1 again) — without
+// this, the number/bullet was being sent along as if it were part of
+// the word itself ("1. abandon"), which is what a teacher actually
+// saw baked into a generated list, and is also a very plausible cause
+// of the AI/dictionary lookup failing outright for some of those
+// lines. A real hyphenated word at the start of a line (e.g.
+// "-year-old") is left alone — the dash-bullet pattern only matches
+// when a space follows the dash/asterisk.
+function stripListMarker(line) {
+  return String(line || '')
+    .replace(/^\s*\(?\d{1,4}\)?[.):\-]\s*/, '')
+    .replace(/^\s*[•‣◦▪▸●○∙·]\s*/, '')
+    .replace(/^\s*[-*]\s+/, '')
+    .trim()
+}
+
+const groupAccentPalette = [
+  { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
+  { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
+  { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
+  { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
+  { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
+]
+
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
   const [activeGroup, setActiveGroup] = useState(null)
@@ -321,11 +356,26 @@ const toggleEditGroup = (groupId) => {
 
 const generateEditDetails = async () => {
   /*
+   * Clean up any numbering/bullet a new word may have picked up (e.g.
+   * pasting "1. abandon" straight into a single word field) before
+   * anything else uses it — so the text sent to the AI, the text it's
+   * matched back up against below, and the text actually saved all
+   * agree on the same clean word.
+   */
+  const cleanedItems = editItems.map((item) =>
+    item.isNew
+      ? { ...item, word: stripListMarker(item.word) }
+      : item
+  )
+
+  setEditItems(cleanedItems)
+
+  /*
    * Only generate details for words added during this edit session.
    * Existing words are never sent again, so editing an old list does
    * not overwrite or reprocess its original vocabulary.
    */
-  const newItems = editItems.filter(
+  const newItems = cleanedItems.filter(
     (item) =>
       item.isNew &&
       item.word.trim()
@@ -733,14 +783,6 @@ const saveEditWordlist = async () => {
   }
 }
 
-const wordlistAccentPalette = [
-    { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
-    { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
-    { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
-    { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
-    { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
-  ]
-
   const getWordlistBadge = (title) => {
     const unitMatch = title?.match(/unit\s*(\d+)/i)
     if (unitMatch) return unitMatch[1]
@@ -807,7 +849,7 @@ const wordlistAccentPalette = [
               <div className="flex gap-2 flex-wrap">
                 {groups.map((group, index) => {
                   const active = activeGroup === group.id
-                  const accent = wordlistAccentPalette[index % wordlistAccentPalette.length]
+                  const accent = groupAccentPalette[index % groupAccentPalette.length]
 
                   return (
                     <button
@@ -879,7 +921,7 @@ const wordlistAccentPalette = [
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
                   {lists.map((list, index) => {
-                    const accent = wordlistAccentPalette[index % wordlistAccentPalette.length]
+                    const accent = groupAccentPalette[index % groupAccentPalette.length]
 
                     return (
                       <div
@@ -991,6 +1033,7 @@ const wordlistAccentPalette = [
 {viewingResults && (
   <ResultsModal
     wordlist={viewingResults}
+    allGroups={groups}
     onClose={() => setViewingResults(null)}
   />
 )}
@@ -1392,7 +1435,7 @@ function NewWordlistForm({
   const generate = async () => {
     const words = rawWords
       .split('\n')
-      .map((word) => word.trim())
+      .map((word) => stripListMarker(word))
       .filter(Boolean)
 
     if (!words.length) {
@@ -1931,31 +1974,137 @@ if (
    RESULTS MODAL
    ============================================================ */
 
+// The actual score table for one set of attempts — pulled out so the
+// results modal below can render it once for a single-group list, or
+// once per group section for a list shared across several groups,
+// without duplicating this markup.
+function AttemptsTable({ attempts }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-line">
+      <table className="w-full min-w-[720px] border-collapse">
+        <thead>
+          <tr className="bg-panel-2 border-b border-line">
+            <th className="px-5 py-3.5 text-left text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+              Student
+            </th>
+
+            <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+              Score
+            </th>
+
+            <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+              Correct
+            </th>
+
+            <th className="px-5 py-3.5 text-right text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
+              Completed
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {attempts.map((attempt) => (
+            <tr
+              key={attempt.id}
+              className="border-b border-line last:border-b-0 hover:bg-panel-2/70 transition-colors"
+            >
+              <td className="px-5 py-4">
+                <div className="font-medium text-paper">
+                  {attempt.profiles?.full_name ||
+                    attempt.profiles?.username ||
+                    'Student'}
+                </div>
+
+                {attempt.profiles?.username && (
+                  <div className="text-xs text-mist font-mono mt-0.5">
+                    @{attempt.profiles.username}
+                  </div>
+                )}
+              </td>
+
+              <td className="px-5 py-4 text-center">
+                <span
+                  className={`inline-flex min-w-[64px] justify-center rounded-full px-3 py-1 font-mono text-sm font-medium ${
+                    attempt.percentage >= 90
+                      ? 'bg-sage/10 text-sage'
+                      : attempt.percentage >= 70
+                        ? 'bg-brass/10 text-brass'
+                        : 'bg-coral/10 text-coral'
+                  }`}
+                >
+                  {attempt.percentage}%
+                </span>
+              </td>
+
+              <td className="px-5 py-4 text-center">
+                <span className="font-mono text-sm text-paper">
+                  {attempt.score}/{attempt.total}
+                </span>
+              </td>
+
+              <td className="px-5 py-4 text-right">
+                <span className="text-xs text-mist font-mono whitespace-nowrap">
+                  {new Date(attempt.created_at).toLocaleString([], {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function ResultsModal({
   wordlist,
+  allGroups,
   onClose,
 }) {
   const [attempts, setAttempts] =
     useState(null)
 
+  // Which of this word list's assigned groups each attempt's student
+  // actually belongs to — see the big comment on `sections` below for
+  // why this exists at all.
+  const [groupIdByStudent, setGroupIdByStudent] = useState({})
+  const [assignedGroupIds, setAssignedGroupIds] = useState([])
+
   useEffect(() => {
     const loadAttempts = async () => {
-      const { data, error } =
-        await supabase
+      /*
+       * A word list can be posted to more than one group at once
+       * (the "Assign to groups" checklist when creating/editing a
+       * list). Every one of those groups' students shares the same
+       * wordlist_attempts rows — there's no per-group split in the
+       * data itself — so without resolving each attempt back to a
+       * group, this modal used to show every group's students in one
+       * flat, unlabeled list. Two classes' worth of names all mixed
+       * together with no way to tell who was in which group is
+       * exactly the "mixed up" symptom reported — this resolves and
+       * displays that grouping instead of dropping it.
+       */
+
+      const [
+        { data, error },
+        { data: links, error: linksError },
+      ] = await Promise.all([
+        supabase
           .from('wordlist_attempts')
-          .select(
-            '*, profiles(full_name, username)'
-          )
-          .eq(
-            'wordlist_id',
-            wordlist.id
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false,
-            }
-          )
+          .select('*, profiles(full_name, username)')
+          .eq('wordlist_id', wordlist.id)
+          .order('created_at', { ascending: false }),
+
+        supabase
+          .from('wordlist_groups')
+          .select('group_id')
+          .eq('wordlist_id', wordlist.id),
+      ])
 
       if (error) {
         console.error(
@@ -1964,11 +2113,125 @@ function ResultsModal({
         )
       }
 
+      if (linksError) {
+        console.error(
+          'Failed to load word list group assignments:',
+          linksError
+        )
+      }
+
+      // Some older lists may only have their original group in
+      // wordlists.group_id rather than also being duplicated into
+      // wordlist_groups — same fallback used when editing a list.
+      const groupIds = [
+        ...new Set(
+          [
+            wordlist.group_id,
+            ...(links || []).map((link) => link.group_id),
+          ].filter(Boolean)
+        ),
+      ]
+
+      setAssignedGroupIds(groupIds)
+
+      let membershipMap = {}
+
+      if (groupIds.length) {
+        const {
+          data: members,
+          error: membersError,
+        } = await supabase
+          .from('group_members')
+          .select('student_id, group_id')
+          .in('group_id', groupIds)
+
+        if (membersError) {
+          console.error(
+            'Failed to load group memberships for results:',
+            membersError
+          )
+        } else {
+          ;(members || []).forEach((member) => {
+            // If a student is somehow in more than one of this list's
+            // assigned groups, keep the first match — good enough to
+            // put them in a section rather than needing to be in
+            // every matching one.
+            if (!(member.student_id in membershipMap)) {
+              membershipMap[member.student_id] = member.group_id
+            }
+          })
+        }
+      }
+
+      setGroupIdByStudent(membershipMap)
       setAttempts(data || [])
     }
 
     loadAttempts()
-  }, [wordlist.id])
+  }, [wordlist.id, wordlist.group_id])
+
+  // Attempts bucketed by the group each student belongs to, in the
+  // same order groups appear everywhere else in the app — so two
+  // classes sharing one word list show up as two clearly separated,
+  // clearly labeled sections instead of one jumbled table. A student
+  // no longer in any of this list's assigned groups (removed since
+  // taking it) still shows up, under its own honest "No group on
+  // record" section, rather than silently disappearing.
+  const sections = useMemo(() => {
+    if (!attempts) return []
+
+    const groupsInOrder = (allGroups || []).filter((group) =>
+      assignedGroupIds.includes(group.id)
+    )
+
+    const byGroupId = new Map(
+      groupsInOrder.map((group) => [group.id, group])
+    )
+
+    const buckets = new Map()
+
+    const ensureBucket = (groupId, groupName) => {
+      if (!buckets.has(groupId)) {
+        buckets.set(groupId, {
+          groupId,
+          groupName,
+          attempts: [],
+        })
+      }
+
+      return buckets.get(groupId)
+    }
+
+    attempts.forEach((attempt) => {
+      const resolvedGroupId =
+        groupIdByStudent[attempt.student_id]
+
+      const group = resolvedGroupId
+        ? byGroupId.get(resolvedGroupId)
+        : null
+
+      const bucket = group
+        ? ensureBucket(group.id, group.name)
+        : ensureBucket('__none__', 'No group on record')
+
+      bucket.attempts.push(attempt)
+    })
+
+    const ordered = groupsInOrder
+      .map((group) => buckets.get(group.id))
+      .filter(Boolean)
+
+    if (buckets.has('__none__')) {
+      ordered.push(buckets.get('__none__'))
+    }
+
+    return ordered
+  }, [attempts, groupIdByStudent, assignedGroupIds, allGroups])
+
+  // Only worth showing group sections at all when this list actually
+  // spans more than one of them — a single-group list's results stay
+  // a plain, unsectioned table exactly as before.
+  const showGroupSections = sections.length > 1
 
   if (
     typeof document === 'undefined'
@@ -2045,104 +2308,50 @@ function ResultsModal({
             </div>
           )}
 
-          {attempts?.length > 0 && (
-            <div className="overflow-x-auto rounded-xl border border-line">
-              <table className="w-full min-w-[720px] border-collapse">
-                <thead>
-                  <tr className="bg-panel-2 border-b border-line">
-                    <th className="px-5 py-3.5 text-left text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-                      Student
-                    </th>
+          {attempts?.length > 0 && !showGroupSections && (
+            <AttemptsTable attempts={attempts} />
+          )}
 
-                    <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-                      Score
-                    </th>
+          {attempts?.length > 0 && showGroupSections && (
+            <div className="flex flex-col gap-6">
+              {sections.map((section) => {
+                const groupIndex = (allGroups || []).findIndex(
+                  (group) => group.id === section.groupId
+                )
 
-                    <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-                      Correct
-                    </th>
+                const accent =
+                  groupIndex >= 0
+                    ? groupAccentPalette[
+                        groupIndex % groupAccentPalette.length
+                      ]
+                    : {
+                        dot: 'bg-mist',
+                        text: 'text-mist',
+                      }
 
-                    <th className="px-5 py-3.5 text-right text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-                      Completed
-                    </th>
-                  </tr>
-                </thead>
+                return (
+                  <div key={section.groupId}>
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span
+                        className={`h-2 w-2 rounded-full ${accent.dot}`}
+                      />
 
-                <tbody>
-                  {attempts.map(
-                    (attempt) => (
-                      <tr
-                        key={attempt.id}
-                        className="border-b border-line last:border-b-0 hover:bg-panel-2/70 transition-colors"
-                      >
-                        <td className="px-5 py-4">
-                          <div className="font-medium text-paper">
-                            {
-                              attempt
-                                .profiles
-                                ?.full_name ||
-                              attempt
-                                .profiles
-                                ?.username ||
-                              'Student'
-                            }
-                          </div>
+                      <span className="font-display text-base text-paper">
+                        {section.groupName}
+                      </span>
 
-                          {attempt.profiles
-                            ?.username && (
-                            <div className="text-xs text-mist font-mono mt-0.5">
-                              @
-                              {
-                                attempt
-                                  .profiles
-                                  .username
-                              }
-                            </div>
-                          )}
-                        </td>
+                      <span className="text-xs font-mono text-mist">
+                        {section.attempts.length}{' '}
+                        {section.attempts.length === 1
+                          ? 'student'
+                          : 'students'}
+                      </span>
+                    </div>
 
-                        <td className="px-5 py-4 text-center">
-                          <span
-                            className={`inline-flex min-w-[64px] justify-center rounded-full px-3 py-1 font-mono text-sm font-medium ${
-                              attempt.percentage >= 90
-                                ? 'bg-sage/10 text-sage'
-                                : attempt.percentage >= 70
-                                  ? 'bg-brass/10 text-brass'
-                                  : 'bg-coral/10 text-coral'
-                            }`}
-                          >
-                            {attempt.percentage}%
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-center">
-                          <span className="font-mono text-sm text-paper">
-                            {attempt.score}/
-                            {attempt.total}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-right">
-                          <span className="text-xs text-mist font-mono whitespace-nowrap">
-                            {new Date(
-                              attempt.created_at
-                            ).toLocaleString(
-                              [],
-                              {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              }
-                            )}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
+                    <AttemptsTable attempts={section.attempts} />
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
