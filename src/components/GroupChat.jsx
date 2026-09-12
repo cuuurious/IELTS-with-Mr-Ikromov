@@ -77,31 +77,9 @@ export default function GroupChat({
   initialMessageId = null,
 }) {
   const [messages, setMessages] = useState([])
-const [profiles, setProfiles] = useState({})
-const [reactions, setReactions] = useState({})
-const [actions, setActions] = useState([])
-
-/*
- * Telegram-style read receipts.
- *
- * Shape:
- * {
- *   [messageId]: [
- *     { id, message_id, user_id, read_at }
- *   ]
- * }
- */
-const [messageReads, setMessageReads] = useState({})
-
-const [openReadMessageId, setOpenReadMessageId] =
-  useState(null)
-
-/*
- * When the sender clicks the ticks, this stores the message whose
- * "Read by" panel is currently open.
- */
-const [readDetailsMessage, setReadDetailsMessage] =
-  useState(null)
+  const [profiles, setProfiles] = useState({})
+  const [reactions, setReactions] = useState({})
+  const [actions, setActions] = useState([])
 
   // Messages this member has hidden from their own view only —
   // "Delete for me". The row stays for everyone else in the group.
@@ -228,138 +206,6 @@ const [readDetailsMessage, setReadDetailsMessage] =
     )
   }
 
-/*
- * ============================================================
- * READ RECEIPTS
- * ============================================================
- */
-
-const loadMessageReads = async (messageRows) => {
-  const ids = (messageRows || [])
-    .map((message) => message.id)
-    .filter(Boolean)
-
-  if (!ids.length) {
-    setMessageReads({})
-    return
-  }
-
-  const { data, error } = await supabase
-    .from('group_message_reads')
-    .select('*')
-    .in('message_id', ids)
-
-  if (error) {
-    console.error(
-      'Read receipt loading error:',
-      error
-    )
-    return
-  }
-
-  const grouped = {}
-
-  ;(data || []).forEach((read) => {
-    if (!grouped[read.message_id]) {
-      grouped[read.message_id] = []
-    }
-
-    grouped[read.message_id].push(read)
-  })
-
-  setMessageReads(grouped)
-
-  await loadProfiles(
-    (data || []).map((read) => read.user_id)
-  )
-}
-
-/*
- * Mark every visible message from other people as read.
- *
- * Own messages are never inserted here because a sender obviously
- * should not count as having "read" their own message.
- *
- * upsert + the unique message_id/user_id constraint means repeatedly
- * opening the group cannot create duplicate receipts.
- */
-const markMessagesAsRead = async (messageRows) => {
-  if (!selfId) return
-
-  const unreadMessages = (messageRows || []).filter(
-    (message) =>
-      message.sender_id !== selfId &&
-      !hiddenIds.has(message.id)
-  )
-
-  if (!unreadMessages.length) return
-
-  const rows = unreadMessages.map((message) => ({
-    message_id: message.id,
-    user_id: selfId,
-  }))
-
-  const { error } = await supabase
-    .from('group_message_reads')
-    .upsert(rows, {
-      onConflict: 'message_id,user_id',
-      ignoreDuplicates: true,
-    })
-
-  if (error) {
-    console.error(
-      'Could not mark group messages as read:',
-      error
-    )
-  }
-}
-
-/*
- * ============================================================
- * TELEGRAM-STYLE MESSAGE STATUS
- * ============================================================
- */
-
-const readsForMessage = (messageId) =>
-  messageReads[messageId] || []
-
-const hasBeenRead = (message) =>
-  readsForMessage(message.id).some(
-    (read) => read.user_id !== message.sender_id
-  )
-
-const readersForMessage = (message) =>
-  readsForMessage(message.id)
-    .filter(
-      (read) => read.user_id !== message.sender_id
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.read_at) -
-        new Date(a.read_at)
-    )
-
-const readerName = (userId) =>
-  userId === selfId
-    ? 'You'
-    : profiles[userId]?.full_name ||
-      profiles[userId]?.username ||
-      'Member'
-
-const formatReadTime = (value) => {
-  if (!value) return ''
-
-  return new Date(value).toLocaleString(
-    [],
-    {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  )
-}
-
   const loadMessages = async () => {
     if (!groupId) return
 
@@ -380,15 +226,11 @@ const formatReadTime = (value) => {
 
     setMessages(rows)
 
-await loadProfiles(
-  rows.map((message) => message.sender_id)
-)
+    await loadProfiles(
+      rows.map((message) => message.sender_id)
+    )
 
-await loadReactions(rows)
-
-await loadMessageReads(rows)
-
-await markMessagesAsRead(rows)
+    await loadReactions(rows)
   }
 
   const loadHiddenForMe = async () => {
@@ -499,22 +341,14 @@ await markMessagesAsRead(rows)
           const message = payload.new
 
           setMessages((prev) => {
-  if (prev.some((m) => m.id === message.id)) {
-    return prev
-  }
+            if (prev.some((m) => m.id === message.id)) {
+              return prev
+            }
 
-  return [...prev, message]
-})
+            return [...prev, message]
+          })
 
-await loadProfiles([message.sender_id])
-
-/*
- * If this is somebody else's newly received message and the group
- * is currently open, mark it as read immediately.
- */
-if (message.sender_id !== selfId) {
-  await markMessagesAsRead([message])
-}
+          await loadProfiles([message.sender_id])
         }
       )
 
@@ -607,42 +441,6 @@ if (message.sender_id !== selfId) {
           }))
         }
       )
-
-      .on(
-  'postgres_changes',
-  {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'group_message_reads',
-  },
-  async (payload) => {
-    const read = payload.new
-
-    setMessageReads((prev) => {
-      const existing =
-        prev[read.message_id] || []
-
-      if (
-        existing.some(
-          (item) => item.id === read.id
-        )
-      ) {
-        return prev
-      }
-
-      return {
-        ...prev,
-        [read.message_id]: [
-          ...existing,
-          read,
-        ],
-      }
-    })
-
-    await loadProfiles([read.user_id])
-  }
-)
-
 
       .on(
         'postgres_changes',
@@ -1692,8 +1490,13 @@ if (message.sender_id !== selfId) {
       canDeleteEveryone(message)
     )
 
+  const groupInitial = String(groupName || 'G')
+    .trim()
+    .charAt(0)
+    .toUpperCase() || 'G'
+
   return (
-    <div className="group-chat-shell flex flex-col h-[36rem] bg-panel border border-line rounded-2xl overflow-hidden shadow-lg">
+    <div className="group-chat-shell flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
 
       <ProfileModal
         userId={viewingProfileId}
@@ -1785,19 +1588,32 @@ if (message.sender_id !== selfId) {
         />
       )}
 
-      <div className="px-4 py-3 border-b border-line bg-panel-2/70 flex items-center justify-between">
+      <div className="relative flex items-center justify-between gap-3 overflow-hidden border-b border-line bg-panel-2/70 px-4 py-3">
 
-        <div>
-          <div className="font-display text-lg">
-            {groupName || 'Group chat'}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 blur-3xl"
+        />
+
+        <div className="relative flex min-w-0 items-center gap-3">
+
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
+            {groupInitial}
           </div>
 
-          <div className="text-xs text-mist">
-            Shared conversation · messages can be removed for everyone
+          <div className="min-w-0">
+            <div className="font-display text-lg truncate">
+              {groupName || 'Group chat'}
+            </div>
+
+            <div className="text-xs text-mist">
+              Shared conversation · messages can be removed for everyone
+            </div>
           </div>
+
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="relative flex items-center gap-2 shrink-0">
 
           <button
             type="button"
@@ -1806,7 +1622,11 @@ if (message.sender_id !== selfId) {
                 ? cancelSelecting()
                 : setSelectMode(true)
             }
-            className="focus-ring text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
+            className={`focus-ring rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
+              selectMode
+                ? 'border-coral/50 bg-coral/10 text-coral'
+                : 'border-line text-mist hover:border-brass hover:text-brass'
+            }`}
           >
             {selectMode ? 'Cancel' : 'Select'}
           </button>
@@ -1819,7 +1639,11 @@ if (message.sender_id !== selfId) {
                   (value) => !value
                 )
               }
-              className="focus-ring text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
+              className={`focus-ring rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
+                showActions
+                  ? 'border-brass/50 bg-brass/15 text-brass'
+                  : 'border-line text-mist hover:border-brass hover:text-brass'
+              }`}
             >
               {showActions
                 ? 'Hide activity'
@@ -1844,7 +1668,7 @@ if (message.sender_id !== selfId) {
         const pinnedSender = profiles[pinnedMessage.sender_id]
 
         return (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-line bg-panel-2/60">
+          <div className="flex items-center gap-2 border-b border-l-2 border-line border-l-brass bg-brass/5 px-4 py-2">
 
             <button
               type="button"
@@ -1974,27 +1798,7 @@ if (message.sender_id !== selfId) {
 
             const selected = selectedIds.has(message.id)
 
-const readers =
-  messageReads[message.id] || []
-
-const hasBeenRead =
-  mine && readers.length > 0
-
-const readProfiles = readers
-  .map((reader) => {
-    const readerId =
-      typeof reader === 'string'
-        ? reader
-        : reader?.user_id
-
-    return {
-      id: readerId,
-      profile: profiles[readerId],
-    }
-  })
-  .filter((reader) => reader.id)
-
-return (
+            return (
               <Fragment key={message.id}>
 
                 {dateChanged && (
@@ -2073,7 +1877,7 @@ return (
                           />
                         ) : (
                           <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass ${accent.avatarBg}`}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass shadow-[0_3px_8px_-2px_rgba(0,0,0,0.4)] ${accent.avatarBg}`}
                           >
                             {initial}
                           </div>
@@ -2122,167 +1926,39 @@ return (
 
                   <div className="px-1 mb-1 flex items-center gap-2 text-[11px]">
 
-  {messagePinned && (
-    <span
-      className="text-brass"
-      title="Pinned"
-    >
-      📌
-    </span>
-  )}
+                    {messagePinned && (
+                      <span
+                        className="text-brass"
+                        title="Pinned"
+                      >
+                        📌
+                      </span>
+                    )}
 
-  <span className="text-mist">
-    {new Date(
-      message.created_at
-    ).toLocaleTimeString(
-      [],
-      {
-        hour: '2-digit',
-        minute: '2-digit',
-      }
-    )}
-  </span>
+                    <span className="text-mist">
+                      {new Date(
+                        message.created_at
+                      ).toLocaleTimeString(
+                        [],
+                        {
+                          hour:
+                            '2-digit',
+                          minute:
+                            '2-digit',
+                        }
+                      )}
+                    </span>
 
-  {mine && (
-    <button
-      type="button"
-      onClick={() => {
-        if (hasBeenRead) {
-          setOpenReadMessageId((current) =>
-            String(current) === String(message.id)
-              ? null
-              : message.id
-          )
-        }
-      }}
-      className={`font-semibold tracking-[-2px] transition ${
-        hasBeenRead
-          ? 'text-purple-500 hover:text-purple-600 cursor-pointer'
-          : 'text-mist cursor-default'
-      }`}
-      title={
-        hasBeenRead
-          ? `${readers.length} ${
-              readers.length === 1
-                ? 'person has'
-                : 'people have'
-            } read this message`
-          : 'Sent'
-      }
-      aria-label={
-        hasBeenRead
-          ? 'Show message readers'
-          : 'Message sent'
-      }
-    >
-      {hasBeenRead ? '✓✓' : '✓'}
-    </button>
-  )}
+                    <button
+                      type="button"
+                      onClick={(e) => openMessageMenu(e, message)}
+                      className="ml-auto px-1 leading-none text-mist hover:text-brass"
+                      aria-label="Message options"
+                    >
+                      ⋯
+                    </button>
 
-  <button
-    type="button"
-    onClick={(e) => openMessageMenu(e, message)}
-    className="ml-auto px-1 leading-none text-mist hover:text-brass"
-    aria-label="Message options"
-  >
-    ⋯
-  </button>
-
-</div>
-
-{mine &&
-  String(openReadMessageId) ===
-    String(message.id) && (
-    <div className="mb-2 w-full rounded-xl border border-purple-300/30 bg-panel-2 shadow-lg overflow-hidden">
-
-      <div className="px-3 py-2 border-b border-line flex items-center justify-between">
-        <div>
-          <div className="text-xs font-semibold text-paper">
-            Read by
-          </div>
-
-          <div className="text-[10px] text-mist">
-            {readProfiles.length} {
-              readProfiles.length === 1
-                ? 'person'
-                : 'people'
-            }
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            setOpenReadMessageId(null)
-          }
-          className="text-mist hover:text-purple-500 text-sm"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </div>
-
-      {readProfiles.length === 0 ? (
-        <div className="px-3 py-3 text-xs text-mist">
-          Nobody has read this message yet.
-        </div>
-      ) : (
-        <div className="max-h-48 overflow-y-auto">
-          {readProfiles.map((reader) => {
-            const person =
-              reader.profile
-
-            const readerName =
-              person?.full_name ||
-              person?.username ||
-              'Unknown member'
-
-            const readerInitial =
-              String(readerName)
-                .charAt(0)
-                .toUpperCase()
-
-            return (
-              <button
-                key={reader.id}
-                type="button"
-                onClick={() => {
-                  setViewingProfileId(reader.id)
-                  setOpenReadMessageId(null)
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-purple-500/10 transition"
-              >
-                {person?.avatar_url ? (
-                  <img
-                    src={person.avatar_url}
-                    alt={readerName}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center text-xs font-semibold">
-                    {readerInitial}
                   </div>
-                )}
-
-                <div className="min-w-0">
-                  <div className="text-xs font-medium text-paper truncate">
-                    {readerName}
-                  </div>
-
-                  {person?.role && (
-                    <div className="text-[10px] text-mist capitalize">
-                      {person.role}
-                    </div>
-                  )}
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-    </div>
-  )}
 
                   <div
                     onPointerDown={
@@ -2336,10 +2012,10 @@ return (
                           ? 'none'
                           : 'transform 160ms ease',
                     }}
-                    className={`relative rounded-2xl px-3 py-2.5 shadow-sm select-none ${
+                    className={`relative rounded-2xl px-3 py-2.5 select-none ${
                       mine
-                        ? 'bg-brass text-onbrass rounded-tr-md'
-                        : 'bg-panel-2 text-paper rounded-tl-md border border-line'
+                        ? 'rounded-tr-md bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
+                        : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
                     }`}
                   >
 
@@ -2693,7 +2369,7 @@ return (
       )}
 
       {recordedBlob && (
-        <div className="px-3 py-2 border-t border-line flex items-center gap-2">
+        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 px-3 py-2.5">
 
           {recordingKind === 'video' ? (
             <video
@@ -2716,7 +2392,7 @@ return (
             onClick={
               discardRecording
             }
-            className="text-xs border border-line rounded-md px-2 py-1"
+            className="focus-ring shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-coral hover:text-coral"
           >
             Discard
           </button>
@@ -2727,7 +2403,7 @@ return (
               sendRecording
             }
             disabled={uploading}
-            className="text-xs bg-brass text-onbrass rounded-md px-3 py-1"
+            className="focus-ring shrink-0 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
           >
             {uploading
               ? 'Sending...'
@@ -2738,11 +2414,28 @@ return (
       )}
 
       {recording && (
-        <div className="px-3 py-2 border-t border-line flex items-center gap-3 text-sm text-coral">
+        <div className="flex items-center gap-3 border-t border-line bg-coral/5 px-4 py-2.5 text-sm text-coral">
 
-          <span className="w-2 h-2 rounded-full bg-coral animate-pulse" />
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-coral" />
+          </span>
 
-          {recordingKind === 'video' ? '📹' : '🎤'} Recording{' '}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+            {recordingKind === 'video' ? (
+              <>
+                <rect x="2" y="6" width="14" height="12" rx="2" />
+                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
+              </>
+            ) : (
+              <>
+                <rect x="9" y="2" width="6" height="11" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+              </>
+            )}
+          </svg>
+
+          Recording{' '}
           {formatSeconds(
             recordSeconds
           )}
@@ -2752,7 +2445,7 @@ return (
             onClick={
               stopRecording
             }
-            className="ml-auto text-xs border border-coral rounded-md px-3 py-1"
+            className="focus-ring ml-auto shrink-0 rounded-full border border-coral/50 px-3 py-1.5 text-xs transition hover:bg-coral hover:text-paper"
           >
             Stop
           </button>
@@ -2761,7 +2454,7 @@ return (
       )}
 
       {selectMode && (
-        <div className="flex items-center gap-2 p-3 border-t border-line">
+        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3">
 
           <span className="text-sm text-mist">
             {selectedIds.size} selected
@@ -2771,7 +2464,7 @@ return (
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-line text-mist hover:text-paper"
+              className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:text-paper"
             >
               Cancel
             </button>
@@ -2780,7 +2473,7 @@ return (
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-coral text-coral disabled:opacity-40"
+              className="focus-ring rounded-full border border-coral/50 px-3 py-1.5 text-xs text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -2790,7 +2483,7 @@ return (
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring text-xs px-3 py-1.5 rounded-md bg-coral text-onbrass disabled:opacity-40"
+                className="focus-ring rounded-full bg-coral px-3 py-1.5 text-xs text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -2806,7 +2499,7 @@ return (
         <form
           onSubmit={send}
           onPaste={handlePaste}
-          className="p-3 border-t border-line flex items-center gap-2"
+          className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3"
         >
 
           <input
@@ -2824,9 +2517,11 @@ return (
             }
             disabled={uploading}
             title="Send photo, video or audio"
-            className="focus-ring w-10 h-10 rounded-lg border border-line text-mist hover:text-brass hover:border-brass disabled:opacity-40"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
           >
-            📎
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+              <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
           </button>
 
           <button
@@ -2834,9 +2529,14 @@ return (
             onClick={() => startRecording('audio')}
             disabled={uploading}
             title="Record voice message"
-            className="focus-ring w-10 h-10 rounded-lg border border-line text-mist hover:text-brass hover:border-brass disabled:opacity-40"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
           >
-            🎤
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+              <rect x="9" y="2" width="6" height="11" rx="3" />
+              <path d="M5 10a7 7 0 0 0 14 0" />
+              <path d="M12 17v4" />
+              <path d="M9 21h6" />
+            </svg>
           </button>
 
           <button
@@ -2844,9 +2544,12 @@ return (
             onClick={() => startRecording('video')}
             disabled={uploading}
             title="Record video message"
-            className="focus-ring w-10 h-10 rounded-lg border border-line text-mist hover:text-brass hover:border-brass disabled:opacity-40"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
           >
-            📹
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+              <rect x="2" y="6" width="14" height="12" rx="2" />
+              <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
+            </svg>
           </button>
 
           <input
@@ -2856,7 +2559,7 @@ return (
               setText(e.target.value)
             }
             placeholder="Write a message..."
-            className="focus-ring flex-1 min-w-0 bg-panel-2 border border-line rounded-lg px-3 py-2.5 text-sm text-paper placeholder:text-mist"
+            className="focus-ring flex-1 min-w-0 rounded-full border border-line bg-panel px-4 py-2.5 text-sm text-paper shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)] placeholder:text-mist"
           />
 
           <button
@@ -2866,9 +2569,13 @@ return (
               uploading ||
               !text.trim()
             }
-            className="focus-ring px-4 py-2.5 rounded-lg bg-brass text-onbrass font-medium disabled:opacity-40"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
+            aria-label="Send message"
           >
-            Send
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+              <path d="M22 2L11 13" />
+              <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
           </button>
 
         </form>
