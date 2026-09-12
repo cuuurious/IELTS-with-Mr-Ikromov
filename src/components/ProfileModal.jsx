@@ -4,6 +4,7 @@ import {
   getTargetBandInfo,
   formatTargetBand,
 } from '../lib/targetBands'
+import TargetBandIcon from './TargetBandIcon'
 
 /*
  * A read-only "tap someone's name to see their profile" popup, used
@@ -193,8 +194,8 @@ export default function ProfileModal({
                     Target band
                   </div>
 
-                  <p className="text-sm text-brass">
-                    {targetInfo.emoji}{' '}
+                  <p className="flex items-center gap-1.5 text-sm text-brass">
+                    <TargetBandIcon value={profile.target_band} className="h-4 w-4" />
                     {formatTargetBand(profile.target_band)}
                     {' — '}
                     {targetInfo.label}

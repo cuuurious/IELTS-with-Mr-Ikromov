@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
-import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
+import { formatTargetBand } from '../lib/targetBands'
+import TargetBandIcon from './TargetBandIcon'
 
 // A word list now counts toward a student's homework completion
 // percentage, but only once they've actually scored well on it — not
@@ -1290,8 +1291,8 @@ export default function Leaderboard({
                 )}
 
                 {isTeacher && student.target_band != null && (
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('target')}`}>
-                    {getTargetBandInfo(student.target_band).emoji}{' '}
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('target')}`}>
+                    <TargetBandIcon value={student.target_band} className="h-3 w-3" />
                     Target {formatTargetBand(student.target_band)}
                   </span>
                 )}
@@ -1455,13 +1456,9 @@ export default function Leaderboard({
 
                   {isTeacher &&
                     selectedStudent.target_band != null && (
-                      <div className="rounded-lg border border-brass/40 bg-brass/10 px-3 py-2 text-sm text-brass">
+                      <div className="flex items-center gap-1.5 rounded-lg border border-brass/40 bg-brass/10 px-3 py-2 text-sm text-brass">
+                        <TargetBandIcon value={selectedStudent.target_band} className="h-4 w-4" />
                         <span>
-                          {
-                            getTargetBandInfo(
-                              selectedStudent.target_band
-                            ).emoji
-                          }{' '}
                           Target{' '}
                           {formatTargetBand(
                             selectedStudent.target_band

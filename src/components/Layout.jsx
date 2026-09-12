@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import AccountSettingsModal from './AccountSettingsModal'
-import { getTargetBandInfo, formatTargetBand } from '../lib/targetBands'
+import { formatTargetBand } from '../lib/targetBands'
+import TargetBandIcon from './TargetBandIcon'
 
 export default function Layout({
   tabs,
@@ -11,7 +12,7 @@ export default function Layout({
   onTabChange,
   children,
 }) {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const isTeacher = profile?.role === 'teacher'
@@ -261,13 +262,7 @@ export default function Layout({
                     transition-colors
                   "
                 >
-                  <span>
-                    {
-                      getTargetBandInfo(
-                        profile.target_band
-                      ).emoji
-                    }
-                  </span>
+                  <TargetBandIcon value={profile.target_band} className="h-3.5 w-3.5" />
                   <span>
                     Target{' '}
                     {formatTargetBand(
@@ -346,6 +341,33 @@ export default function Layout({
 
               </button>
 
+
+              {/* Logout */}
+
+              <button
+                type="button"
+                onClick={signOut}
+                className="
+                  focus-ring
+                  hidden sm:inline-flex
+                  items-center justify-center
+                  h-9
+                  px-3.5
+                  rounded-[0.7rem]
+                  border border-line
+                  bg-panel/80
+                  text-sm
+                  font-medium
+                  text-mist
+                  hover:text-brass
+                  hover:border-brass/50
+                  hover:bg-brass/10
+                  transition-all
+                  duration-200
+                "
+              >
+                Log out
+              </button>
 
             </div>
 
