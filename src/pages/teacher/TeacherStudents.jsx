@@ -34,6 +34,13 @@ export default function TeacherStudents({ onStartChat }) {
   const [bulkGroupChoice, setBulkGroupChoice] = useState('')
   const [bulkBusy, setBulkBusy] = useState(false)
 
+  // { done, total } while a bulk delete is running, else null — each
+  // account is a separate destructive request to the delete-student
+  // function (storage cleanup + an auth deletion), so 50 of them
+  // takes a real, visible stretch of time, and a silent "Deleting…"
+  // with no sense of progress reads as hung.
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(null)
+
   // Whether the very first load has finished. `loading` gets flipped
   // back to true on every subsequent background refresh too (a
   // realtime event on ANY student's profile, group, or membership —
@@ -668,6 +675,129 @@ export default function TeacherStudents({ onStartChat }) {
     setBulkBusy(false)
   }
 
+  /*
+   * Permanently deletes every selected student's account in one go —
+   * the same irreversible per-account delete as deleteStudentAccount
+   * above, just looped over the whole selection so a teacher clearing
+   * out ~50 old accounts only has to type "DELETE" once instead of
+   * once per student.
+   */
+  const bulkDelete = () => {
+    const targets = selectedStudentsList
+
+    if (!targets.length) return
+
+    setConfirmDialog({
+      title: `Permanently delete ${targets.length} student account${targets.length === 1 ? '' : 's'}?`,
+      message: `This PERMANENTLY deletes ${targets.length === 1 ? 'this account' : 'these accounts'} — every group, homework submission, recording, and chat message, everywhere, forever. This cannot be undone.`,
+      confirmLabel: `Delete ${targets.length} account${targets.length === 1 ? '' : 's'}`,
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      requireTypedText: 'DELETE',
+      onConfirm: () => doBulkDelete(targets),
+    })
+  }
+
+  const doBulkDelete = async (studentsToDelete) => {
+    setBulkBusy(true)
+    setBulkDeleteProgress({ done: 0, total: studentsToDelete.length })
+
+    const deletedIds = []
+    const failures = []
+
+    // Each deletion is its own destructive Edge Function call (storage
+    // cleanup + an auth deletion), so firing all ~50 at once would be
+    // a burst of simultaneous destructive requests, and doing them one
+    // at a time would be needlessly slow. A small worker pool — same
+    // pattern as the concurrency limiter already used server-side for
+    // AI word lookups — runs a batch at a time instead.
+    const CONCURRENCY = 10
+    let nextIndex = 0
+
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex
+        nextIndex += 1
+        if (index >= studentsToDelete.length) return
+
+        const student = studentsToDelete[index]
+
+        try {
+          const { data, error } = await supabase.functions.invoke(
+            'delete-student',
+            { body: { studentId: student.id } }
+          )
+
+          if (error) throw error
+          if (data?.error) throw new Error(data.error)
+
+          deletedIds.push(student.id)
+        } catch (err) {
+          console.error(
+            `Bulk delete failed for ${student.full_name}:`,
+            err
+          )
+          failures.push({ student, message: err.message })
+        }
+
+        setBulkDeleteProgress((prev) => ({
+          done: (prev?.done || 0) + 1,
+          total: studentsToDelete.length,
+        }))
+      }
+    }
+
+    await Promise.all(
+      Array.from(
+        { length: Math.min(CONCURRENCY, studentsToDelete.length) },
+        worker
+      )
+    )
+
+    const deletedSet = new Set(deletedIds)
+
+    setStudents((prev) =>
+      prev.filter((student) => !deletedSet.has(student.id))
+    )
+
+    setMemberships((prev) =>
+      prev.filter(
+        (membership) => !deletedSet.has(membership.student_id)
+      )
+    )
+
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      deletedSet.forEach((id) => next.delete(id))
+      return next
+    })
+
+    if (selectedStudent && deletedSet.has(selectedStudent.id)) {
+      setSelectedStudent(null)
+    }
+
+    setBulkDeleteProgress(null)
+    setBulkBusy(false)
+
+    if (failures.length) {
+      setConfirmDialog({
+        title:
+          deletedIds.length > 0
+            ? `Deleted ${deletedIds.length}, but ${failures.length} failed`
+            : `Couldn't delete ${failures.length === 1 ? 'this account' : 'these accounts'}`,
+        message:
+          deletedIds.length > 0
+            ? 'These accounts were not deleted:'
+            : undefined,
+        points: failures.map(
+          (f) => `${f.student.full_name}: ${f.message}`
+        ),
+        tone: 'coral',
+        hideCancel: true,
+      })
+    }
+  }
+
   if (loading && !hasLoadedOnceRef.current) {
     return (
       <p className="text-mist">
@@ -942,7 +1072,23 @@ export default function TeacherStudents({ onStartChat }) {
               </button>
             </div>
 
+            <button
+              type="button"
+              onClick={bulkDelete}
+              disabled={bulkBusy}
+              className="focus-ring rounded-full border border-coral px-4 py-1.5 text-sm font-semibold text-coral transition hover:bg-coral/10 disabled:opacity-40"
+            >
+              Delete {selectedIds.size}
+            </button>
+
           </div>
+
+          {bulkDeleteProgress && (
+            <div className="w-full text-xs font-mono text-coral">
+              Deleting {bulkDeleteProgress.done}/
+              {bulkDeleteProgress.total}…
+            </div>
+          )}
 
         </div>
       )}
