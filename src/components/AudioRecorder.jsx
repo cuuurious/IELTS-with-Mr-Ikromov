@@ -26,6 +26,26 @@ export default function AudioRecorder({
   const [recordingSize, setRecordingSize] =
     useState(0)
 
+  /*
+   * True from the moment "Stop" is pressed until the browser has
+   * actually finished encoding the recording AND the parent's save
+   * (upload + submission upsert) has completed.
+   *
+   * Without this, there is a real gap after Stop is clicked: React
+   * flips `recording` to false immediately, but `previewUrl` (which
+   * drives `hasTake`) isn't set until the MediaRecorder's `onstop`
+   * event fires — and on some phones/browsers, finalizing a longer
+   * recording's webm container can itself take a few seconds. During
+   * that gap the UI had nothing to show, so it fell through to the
+   * "!recording && !hasTake" case and re-rendered the ORIGINAL
+   * "🎙 Start recording" button. Students saw that flash and assumed
+   * the app had frozen or lost their recording — this is almost
+   * certainly the "takes a long time after pressing Stop" complaint,
+   * since it makes an already-slow save look broken on top of slow.
+   */
+  const [finishing, setFinishing] =
+    useState(false)
+
   const mediaRecorderRef =
     useRef(null)
 
@@ -256,6 +276,12 @@ export default function AudioRecorder({
 
           chunksRef.current =
             []
+
+          // Only now — after the save has actually finished (or
+          // failed) — is it safe to let the button row show
+          // anything other than "finishing up". See the state
+          // declaration above for why this matters.
+          setFinishing(false)
         }
       }
 
@@ -284,6 +310,7 @@ export default function AudioRecorder({
 
         setRecording(false)
         setPaused(false)
+        setFinishing(false)
       }
 
       /*
@@ -434,6 +461,7 @@ export default function AudioRecorder({
 
     setRecording(false)
     setPaused(false)
+    setFinishing(true)
 
     /*
      * requestData() makes sure the
@@ -617,7 +645,8 @@ export default function AudioRecorder({
       ===================================================== */}
 
       {!recording &&
-        !hasTake && (
+        !hasTake &&
+        !finishing && (
           <button
             type="button"
             onClick={start}
@@ -625,6 +654,26 @@ export default function AudioRecorder({
             className="focus-ring px-3 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
           >
             🎙 Start recording
+          </button>
+        )}
+
+      {/* =====================================================
+          FINISHING UP
+          (Stop was pressed — the browser is still encoding the
+          recording and/or it's being saved. Shown instead of
+          letting the UI fall back to "Start recording" or a
+          stale preview, which is what made saves look stuck.)
+      ===================================================== */}
+
+      {!recording &&
+        finishing && (
+          <button
+            type="button"
+            disabled
+            className="focus-ring px-3 py-2 rounded-md bg-brass/40 text-onbrass font-medium opacity-70 flex items-center justify-center gap-2"
+          >
+            <span className="h-3.5 w-3.5 rounded-full border-2 border-onbrass/40 border-t-onbrass animate-spin" />
+            Finishing up…
           </button>
         )}
 
@@ -669,7 +718,8 @@ export default function AudioRecorder({
       ===================================================== */}
 
       {!recording &&
-        hasTake && (
+        hasTake &&
+        !finishing && (
           <>
             <audio
               controls
@@ -722,7 +772,8 @@ export default function AudioRecorder({
           FILE UPLOAD
       ===================================================== */}
 
-      {!recording && (
+      {!recording &&
+        !finishing && (
         <>
           <input
             ref={fileRef}
@@ -753,7 +804,8 @@ export default function AudioRecorder({
           SAVING
       ===================================================== */}
 
-      {uploading && (
+      {uploading &&
+        !finishing && (
         <span className="text-mist text-xs font-mono">
           saving…
         </span>

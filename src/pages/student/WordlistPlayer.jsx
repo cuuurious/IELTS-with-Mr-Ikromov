@@ -142,6 +142,22 @@ const ANIMATION_STYLES = `
 // itself is never actually seen, only the squash-and-unsquash.
 const FLIP_SWAP_DELAY_MS = 180
 
+// How often in-progress study/quiz state is checkpointed to
+// localStorage. Kept short (2s) because the whole point is that an
+// interruption — the phone locking, the browser tab getting killed in
+// the background, an accidental refresh — should cost at most a
+// couple of seconds of progress, not the entire list.
+const AUTOSAVE_INTERVAL_MS = 2000
+
+// Saved progress older than this is treated as abandoned rather than
+// resumed — mainly so a half-finished attempt from weeks ago doesn't
+// unexpectedly reappear.
+const AUTOSAVE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
+
+function progressKeyFor(studentId, wordlistId) {
+  return `ielts-wordlist-progress:${studentId}:${wordlistId}`
+}
+
 function categoryFor(percentage) {
   if (percentage >= 90) return { label: 'Excellent!', tone: 'sage', note: 'Outstanding recall — these words are locked in.' }
   if (percentage >= 70) return { label: 'Good job', tone: 'brass', note: 'Solid work. A quick review of the missed ones will make it perfect.' }
@@ -203,14 +219,205 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState(null)
 
+  // Whether we just restored an in-progress attempt from a previous
+  // visit, so a small "picked up where you left off" note can be
+  // shown once, instead of the resume happening silently.
+  const [resumed, setResumed] = useState(false)
+
+  const progressKey = progressKeyFor(
+    studentId,
+    wordlist.id
+  )
+
   useEffect(() => {
     supabase
       .from('wordlist_items')
       .select('*')
       .eq('wordlist_id', wordlist.id)
       .order('position')
-      .then(({ data }) => setItems(data || []))
+      .then(({ data }) => {
+        const loadedItems = data || []
+        setItems(loadedItems)
+
+        /*
+         * -----------------------------------------------------
+         * RESUME AUTOSAVED PROGRESS
+         * -----------------------------------------------------
+         *
+         * Only trusted if it still lines up with what's actually
+         * here right now — the word count, and (for a quiz) the
+         * exact words the saved questions were built from — and if
+         * the teacher hasn't reset this list since it was saved.
+         * Anything that doesn't check out is discarded rather than
+         * risking a broken resume.
+         */
+        try {
+          const raw = localStorage.getItem(
+            progressKey
+          )
+
+          if (!raw) return
+
+          const saved = JSON.parse(raw)
+
+          const resetAt =
+            wordlist.completion_reset_at ||
+            null
+
+          const isFromBeforeReset =
+            saved.resetAt !== resetAt
+
+          const isTooOld =
+            !saved.savedAt ||
+            Date.now() - saved.savedAt >
+              AUTOSAVE_MAX_AGE_MS
+
+          if (
+            isFromBeforeReset ||
+            isTooOld
+          ) {
+            localStorage.removeItem(
+              progressKey
+            )
+            return
+          }
+
+          if (
+            saved.mode === 'study' &&
+            Number.isInteger(
+              saved.cardIndex
+            ) &&
+            saved.cardIndex > 0 &&
+            saved.cardIndex <
+              loadedItems.length
+          ) {
+            setCardIndex(
+              saved.cardIndex
+            )
+            setResumed(true)
+          } else if (
+            saved.mode === 'quiz' &&
+            Array.isArray(
+              saved.questions
+            ) &&
+            saved.questions.length >
+              0 &&
+            Array.isArray(saved.detail)
+          ) {
+            const currentWords = new Set(
+              loadedItems.map(
+                (item) => item.word
+              )
+            )
+
+            const stillValid =
+              saved.questions.every(
+                (q) =>
+                  currentWords.has(
+                    q.word
+                  )
+              )
+
+            if (
+              stillValid &&
+              saved.qIndex >= 0 &&
+              saved.qIndex <
+                saved.questions.length
+            ) {
+              setQuestions(
+                saved.questions
+              )
+              setQIndex(saved.qIndex)
+              setDetail(saved.detail)
+              setMode('quiz')
+              setResumed(true)
+            } else {
+              localStorage.removeItem(
+                progressKey
+              )
+            }
+          }
+        } catch {
+          // Corrupt or unreadable autosave — ignore it and start fresh
+          // rather than let a bad localStorage entry break the page.
+        }
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordlist.id])
+
+  /*
+   * -----------------------------------------------------------
+   * AUTOSAVE
+   * -----------------------------------------------------------
+   *
+   * Checkpoints study/quiz progress to localStorage roughly every
+   * 2 seconds so an interruption — the app closing, the phone
+   * locking, a lost connection — costs at most a couple of seconds
+   * of progress instead of the whole list. A ref (rather than the
+   * interval depending on every piece of state) keeps this to one
+   * timer for the life of the component, always reading the latest
+   * values when it fires.
+   */
+
+  const progressSnapshotRef = useRef(
+    null
+  )
+
+  useEffect(() => {
+    progressSnapshotRef.current = {
+      mode,
+      cardIndex,
+      qIndex,
+      detail,
+      questions,
+    }
+  })
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const snapshot =
+        progressSnapshotRef.current
+
+      if (!snapshot) return
+
+      // Nothing worth saving yet, and nothing to save once the
+      // attempt is already complete — the real result is in the
+      // database by then.
+      if (
+        snapshot.mode !== 'study' &&
+        snapshot.mode !== 'quiz'
+      ) {
+        return
+      }
+
+      if (
+        snapshot.mode === 'study' &&
+        snapshot.cardIndex === 0
+      ) {
+        return
+      }
+
+      try {
+        localStorage.setItem(
+          progressKey,
+          JSON.stringify({
+            ...snapshot,
+            resetAt:
+              wordlist.completion_reset_at ||
+              null,
+            savedAt: Date.now(),
+          })
+        )
+      } catch {
+        // Private browsing / storage disabled / storage full —
+        // autosave just silently doesn't happen this tick.
+      }
+    }, AUTOSAVE_INTERVAL_MS)
+
+    return () =>
+      clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressKey])
 
   const startQuiz = () => {
     setQuestions(buildQuestions(items))
@@ -248,6 +455,14 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
         setSaving(false)
         setResult({ score, total, percentage, detail: newDetail })
         setMode('results')
+
+        // The real result now lives in the database — the autosaved
+        // in-progress copy would only be stale from here on.
+        try {
+          localStorage.removeItem(progressKey)
+        } catch {
+          // Ignore — nothing to clean up if storage isn't available.
+        }
       }
     }, 600)
   }
@@ -283,6 +498,12 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
             {cardIndex + 1} / {items.length}
           </span>
         </div>
+
+        {resumed && (
+          <div className="text-sage text-xs font-mono -mt-1">
+            Picked up where you left off
+          </div>
+        )}
 
         <div key={cardIndex} className="wlp-pop w-full max-w-sm">
           <button
@@ -356,6 +577,11 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
         <span className="text-mist text-xs font-mono">
           Question {qIndex + 1} / {questions.length}
         </span>
+        {resumed && (
+          <div className="text-sage text-xs font-mono -mt-2">
+            Picked up where you left off
+          </div>
+        )}
         <div key={qIndex} className="wlp-pop ticket rounded-xl w-full max-w-sm p-6 flex flex-col gap-4">
           <p className="text-mist text-sm">What does this mean?</p>
          <p className="font-display text-2xl text-center">
