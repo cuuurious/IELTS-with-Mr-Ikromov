@@ -727,15 +727,25 @@ html:not([data-theme='light']) textarea::placeholder {
   border: 1px solid var(--color-line);
   border-radius: 22px;
 
-  background: var(--color-panel);
+  /*
+   * Was a flat var(--color-panel) fill with a shadow tinted by
+   * --color-paper — paper is the app's TEXT color, which is dark in
+   * light theme (fine, if faint) but near-white in dark theme, so
+   * that "shadow" was actually a pale halo there instead of depth.
+   * A subtle top-to-bottom gradient plus a real dark shadow (same
+   * literal rgba(20,20,25,…) used by .ticket elsewhere) makes this
+   * read as a raised card in both themes instead of a flat box.
+   */
+  background:
+    linear-gradient(
+      to bottom,
+      var(--color-panel-2),
+      var(--color-panel)
+    );
 
   box-shadow:
-    0 16px 44px
-    color-mix(
-      in srgb,
-      var(--color-paper) 7%,
-      transparent
-    );
+    0 24px 60px -20px rgba(20, 20, 25, .35),
+    0 2px 6px rgba(20, 20, 25, .08);
 }
 
 .progress-table-scroll {
@@ -872,6 +882,21 @@ html:not([data-theme='light']) textarea::placeholder {
 
   align-items: center;
   gap: 1px;
+
+  /*
+   * Hidden until this column's header is hovered/focused — at rest,
+   * three icon buttons sitting permanently next to every homework
+   * title crowded the heading and read as visual noise on a table
+   * that can have half a dozen+ columns. Keyboard users still reach
+   * them via :focus-within, so nothing becomes unreachable.
+   */
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.progress-homework-header:hover .progress-homework-actions,
+.progress-homework-header:focus-within .progress-homework-actions {
+  opacity: 1;
 }
 
 .progress-action {
@@ -1142,10 +1167,20 @@ html:not([data-theme='light']) textarea::placeholder {
   overflow-wrap: break-word;
 }
 
-.progress-student-username {
-  width: 100%;
+.progress-student-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
+  width: 100%;
   margin-top: 3px;
+  gap: 8px;
+}
+
+.progress-student-username {
+  min-width: 0;
+  flex: 1 1 auto;
+
   overflow: hidden;
 
   color: var(--color-mist);
@@ -1156,6 +1191,46 @@ html:not([data-theme='light']) textarea::placeholder {
 
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * A per-student "3/5" tally so a teacher can scan down this one
+ * column to see who's behind, instead of reading every cell across
+ * a wide row of homework columns. Neutral by default; turns sage
+ * (same color as a "DONE" pill) once every assignment is in.
+ */
+.progress-student-summary {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  height: 18px;
+  padding: 0 7px;
+
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+
+  background:
+    color-mix(in srgb, var(--color-mist) 12%, transparent);
+
+  color: var(--color-mist);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.progress-student-summary-complete {
+  border-color:
+    color-mix(in srgb, var(--color-sage) 35%, var(--color-line));
+
+  background:
+    color-mix(in srgb, var(--color-sage) 14%, transparent);
+
+  color: var(--color-sage);
 }
 
 .progress-remove {
@@ -1438,11 +1513,12 @@ html:not([data-theme='light']) textarea::placeholder {
 
 html[data-theme='light']
 .progress-table-shell {
-  background: #fffdfa;
+  background: linear-gradient(to bottom, #f1efe9, #fffdfa);
   border-color: #dedbd3;
 
   box-shadow:
-    0 18px 55px rgba(80, 75, 130, .06);
+    0 20px 50px -20px rgba(20, 20, 25, .18),
+    0 2px 6px rgba(20, 20, 25, .06);
 }
 
 html[data-theme='light']
@@ -1519,7 +1595,7 @@ html[data-theme='dark']
 .progress-table-shell,
 html:not([data-theme='light'])
 .progress-table-shell {
-  background: #26262b;
+  background: linear-gradient(to bottom, #2d2d33, #26262b);
   border-color: #3b3b43;
 }
 
@@ -1582,6 +1658,24 @@ html:not([data-theme='light'])
 .progress-action {
   background: rgba(243, 241, 235, .07) !important;
   color: #9b99a0 !important;
+}
+
+/*
+ * Once a deadline has actually passed, the date itself is the
+ * fastest signal a teacher can scan for — no need to open the
+ * column or count red pills to notice it's overdue. Placed after
+ * both theme blocks above (rather than back with the base
+ * .progress-due-date rule) on purpose: this and their color rules
+ * are tied on specificity and both use !important, so with equal
+ * specificity the LATER rule in the file wins — this has to come
+ * after them to actually take effect in either theme.
+ */
+.progress-due-date-overdue,
+html[data-theme='light'] .progress-due-date-overdue,
+html[data-theme='dark'] .progress-due-date-overdue,
+html:not([data-theme='light']) .progress-due-date-overdue {
+  color: var(--color-coral) !important;
+  font-weight: 700;
 }
 
 /* =========================================================

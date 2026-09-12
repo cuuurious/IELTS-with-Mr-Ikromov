@@ -1531,7 +1531,13 @@ export default function GroupWorkspace({ teacherId }) {
                             </div>
 
                             {hw.due_date && (
-                              <div className="progress-due-date">
+                              <div
+                                className={`progress-due-date ${
+                                  new Date(hw.due_date) < new Date()
+                                    ? 'progress-due-date-overdue'
+                                    : ''
+                                }`}
+                              >
                                 due{' '}
                                 {new Date(
                                   hw.due_date
@@ -1549,7 +1555,39 @@ export default function GroupWorkspace({ teacherId }) {
 
                     <tbody>
 
-                      {filteredRoster.map((student) => (
+                      {filteredRoster.map((student) => {
+
+                        // Same statuses the row's own cells compute
+                        // below, just tallied once so the teacher can
+                        // scan this one badge instead of reading every
+                        // cell in the row. "late" still counts as
+                        // completed — the work came in, just after the
+                        // deadline — matching the amber "LATE" pill
+                        // rather than treating it like nothing happened.
+                        const completedCount = homeworks.filter(
+                          (hw) => {
+                            const sub =
+                              submissions[
+                                `${hw.id}_${student.id}`
+                              ]
+
+                            const status = getSubmissionStatus(
+                              sub,
+                              hw.due_date
+                            )
+
+                            return (
+                              status === 'done' ||
+                              status === 'late'
+                            )
+                          }
+                        ).length
+
+                        const allComplete =
+                          homeworks.length > 0 &&
+                          completedCount === homeworks.length
+
+                        return (
 
                         <tr
                           key={student.id}
@@ -1572,8 +1610,25 @@ export default function GroupWorkspace({ teacherId }) {
                                   {student.full_name}
                                 </div>
 
-                                <div className="progress-student-username">
-                                  @{student.username}
+                                <div className="progress-student-meta">
+
+                                  <div className="progress-student-username">
+                                    @{student.username}
+                                  </div>
+
+                                  {homeworks.length > 0 && (
+                                    <span
+                                      className={`progress-student-summary ${
+                                        allComplete
+                                          ? 'progress-student-summary-complete'
+                                          : ''
+                                      }`}
+                                      title={`${completedCount} of ${homeworks.length} assignments completed`}
+                                    >
+                                      {completedCount}/{homeworks.length}
+                                    </span>
+                                  )}
+
                                 </div>
 
                               </div>
@@ -1694,7 +1749,8 @@ export default function GroupWorkspace({ teacherId }) {
 
                         </tr>
 
-                      ))}
+                        )
+                      })}
 
                     </tbody>
 
