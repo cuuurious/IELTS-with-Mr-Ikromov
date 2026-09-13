@@ -43,6 +43,28 @@ function withTimeout(promise, ms, message) {
   })
 }
 
+// A stale access token — "JWT expired", PostgREST code PGRST301, or a
+// plain 401 — isn't a real failure the way a network drop or a genuine
+// server error is. It just means the token went stale while the tab
+// was backgrounded or the laptop was asleep long enough that
+// Supabase's own background refresh timer never got to run. This is
+// what a "JWT expired" screen with a "Try again" button that never
+// actually works looked like before this existed: loadProfile() below
+// used to just retry the SAME query with the SAME stale token on every
+// click, so it failed the exact same way forever. Recognizing this
+// specific case lets loadProfile() force one real token refresh before
+// giving up.
+function isAuthTokenError(err) {
+  const message = String(err?.message || '').toLowerCase()
+
+  return (
+    message.includes('jwt') ||
+    message.includes('token is expired') ||
+    err?.status === 401 ||
+    err?.code === 'PGRST301'
+  )
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -67,6 +89,24 @@ export function AuthProvider({ children }) {
       window.location.pathname === '/reset-password'
     )
 
+  const fetchProfileRow = useCallback(async (userId) => {
+    const { data, error } = await withTimeout(
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle(),
+      AUTH_TIMEOUT_MS,
+      'Loading your profile is taking too long. Please check your connection and try again.'
+    )
+
+    if (error) {
+      throw error
+    }
+
+    setProfile(data || null)
+  }, [])
+
   const loadProfile = useCallback(async (userId) => {
     if (!userId) {
       setProfile(null)
@@ -77,22 +117,50 @@ export function AuthProvider({ children }) {
     setAuthError('')
 
     try {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle(),
-        AUTH_TIMEOUT_MS,
-        'Loading your profile is taking too long. Please check your connection and try again.'
-      )
+      await fetchProfileRow(userId)
+    } catch (err) {
+      // A stale access token surfaces here as a real query error (most
+      // often the literal string "JWT expired"), not something
+      // Supabase already recovered from on its own — its background
+      // refresh timer only runs while the tab is active, so a laptop
+      // asleep or a phone backgrounded past the token's lifetime comes
+      // back with a token that's already dead. One explicit refresh
+      // almost always fixes this; only if the refresh token itself has
+      // also expired (this device hasn't been used in a long time) is
+      // this a real sign-out rather than something to retry.
+      if (isAuthTokenError(err)) {
+        try {
+          const { data: refreshed, error: refreshError } =
+            await withTimeout(
+              supabase.auth.refreshSession(),
+              AUTH_TIMEOUT_MS,
+              'Refreshing your session is taking too long. Please check your connection and try again.'
+            )
 
-      if (error) {
-        throw error
+          if (refreshError || !refreshed?.session) {
+            throw refreshError || new Error('Session refresh failed.')
+          }
+
+          setSession(refreshed.session)
+          await fetchProfileRow(userId)
+          return
+        } catch (refreshErr) {
+          // The refresh token is dead too — there is no session left
+          // to recover, so land the person on the login screen instead
+          // of a "Try again" button that can never succeed.
+          console.error(
+            'Session refresh failed — signing out:',
+            refreshErr
+          )
+
+          await supabase.auth.signOut()
+          setSession(null)
+          setProfile(null)
+          setAuthError('')
+          return
+        }
       }
 
-      setProfile(data || null)
-    } catch (err) {
       // Whatever the cause — a network drop, a timeout, Supabase
       // itself erroring — this must never leave profileLoading stuck
       // at true. That was the actual bug behind a loading screen that
@@ -109,7 +177,7 @@ export function AuthProvider({ children }) {
     } finally {
       setProfileLoading(false)
     }
-  }, [])
+  }, [fetchProfileRow])
 
   useEffect(() => {
     let mounted = true

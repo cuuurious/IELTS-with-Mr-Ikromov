@@ -64,6 +64,7 @@ export default function TeacherWordlists({ teacherId }) {
   const [editLoading, setEditLoading] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editGenerating, setEditGenerating] = useState(false)
+  const [editRegenerating, setEditRegenerating] = useState(false)
   const [editError, setEditError] = useState('')
 
   useEffect(() => {
@@ -516,6 +517,167 @@ const generateEditDetails = async () => {
     )
   } finally {
     setEditGenerating(false)
+  }
+}
+
+/*
+ * Re-fetches the definition/translation/example for EVERY item in this
+ * list (not just ones added this session) and overwrites whatever was
+ * there before — the fix for a list whose word/definition pairs got
+ * scrambled by the old numbered-paste bug (a word like "36. packaging"
+ * saved with the number still attached, paired with a different word's
+ * definition). Re-running the whole list through the definition
+ * service — which now strips stray numbering and pairs each result
+ * back up by the word's own text — heals both problems in one pass.
+ * This is a separate, opt-in action from "Generate details for new
+ * words" above specifically because it overwrites existing entries,
+ * including any the teacher already fixed by hand.
+ */
+const regenerateAllDetails = () => {
+  if (!editItems.length) return
+
+  setConfirmDialog({
+    title: 'Regenerate every definition in this list?',
+    message:
+      "This re-fetches the definition, translation, and example for EVERY word below and replaces what's currently there — including anything you've edited by hand. Word text itself is also cleaned up (stray numbering like \"36. \" in front of a word is removed). This cannot be undone.",
+    confirmLabel: 'Regenerate all',
+    cancelLabel: 'Cancel',
+    tone: 'coral',
+    onConfirm: doRegenerateAllDetails,
+  })
+}
+
+const doRegenerateAllDetails = async () => {
+  /*
+   * Clean up any leftover numbering/bullets on every word first — the
+   * exact same cleanup newly-added words already get, just applied
+   * retroactively to the whole list.
+   */
+  const cleanedItems = editItems.map((item) => ({
+    ...item,
+    word: stripListMarker(item.word),
+  }))
+
+  setEditItems(cleanedItems)
+
+  const wordsToGenerate = cleanedItems
+    .map((item) => item.word.trim())
+    .filter(Boolean)
+
+  if (!wordsToGenerate.length) {
+    setEditError('This list has no words to regenerate.')
+    return
+  }
+
+  if (wordsToGenerate.length > 250) {
+    setEditError(
+      `This list has ${wordsToGenerate.length} items. Please regenerate 250 words or fewer at a time.`
+    )
+    return
+  }
+
+  setEditRegenerating(true)
+  setEditError('')
+
+  try {
+    const {
+      data: sessionData,
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      throw sessionError
+    }
+
+    const session = sessionData?.session
+
+    if (!session?.access_token) {
+      throw new Error(
+        'Your session has expired. Please log in again.'
+      )
+    }
+
+    const {
+      data,
+      error: functionError,
+    } = await supabase.functions.invoke(
+      'define-words',
+      {
+        body: {
+          words: wordsToGenerate,
+        },
+        headers: {
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+      }
+    )
+
+    if (functionError) {
+      throw new Error(
+        functionError.message ||
+          'The word definition service failed.'
+      )
+    }
+
+    if (
+      !data ||
+      !Array.isArray(data.results)
+    ) {
+      throw new Error(
+        'The definition service did not return a valid word list.'
+      )
+    }
+
+    const generatedByWord = new Map(
+      data.results.map((item) => [
+        (item?.word || '')
+          .trim()
+          .toLowerCase(),
+        {
+          definition:
+            item?.definition || '',
+          uzbek_translation:
+            item?.uzbek_translation || '',
+          example_sentence:
+            item?.example_sentence || '',
+        },
+      ])
+    )
+
+    setEditItems((previous) =>
+      previous.map((item) => {
+        const cleanedWord = stripListMarker(item.word)
+
+        const generated = generatedByWord.get(
+          cleanedWord.trim().toLowerCase()
+        )
+
+        if (!generated) {
+          return { ...item, word: cleanedWord }
+        }
+
+        return {
+          ...item,
+          word: cleanedWord,
+          definition: generated.definition,
+          uzbek_translation: generated.uzbek_translation,
+          example_sentence: generated.example_sentence,
+        }
+      })
+    )
+  } catch (err) {
+    console.error(
+      'Regenerating word list details failed:',
+      err
+    )
+
+    setEditError(
+      err?.message ||
+        'Could not regenerate details for this word list.'
+    )
+  } finally {
+    setEditRegenerating(false)
   }
 }
 
@@ -1022,6 +1184,8 @@ const saveEditWordlist = async () => {
   removeItem={removeEditItem}
   onGenerate={generateEditDetails}
   generating={editGenerating}
+  onRegenerateAll={regenerateAllDetails}
+  regeneratingAll={editRegenerating}
   loading={editLoading}
   saving={editSaving}
   error={editError}
@@ -1070,6 +1234,8 @@ function EditWordlistModal({
   removeItem,
   onGenerate,
   generating,
+  onRegenerateAll,
+  regeneratingAll,
   loading,
   saving,
   error,
@@ -1199,6 +1365,21 @@ function EditWordlistModal({
                     {generating
                       ? 'Generating details...'
                       : '✨ Generate details for new words'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onRegenerateAll}
+                    disabled={
+                      regeneratingAll ||
+                      items.length === 0
+                    }
+                    title="Re-fetch and replace the definition, translation, and example for every word below — use this if a list's words and definitions got mixed up"
+                    className="focus-ring rounded-lg border border-coral px-4 py-2 text-sm font-medium text-coral transition hover:bg-coral/10 disabled:opacity-50"
+                  >
+                    {regeneratingAll
+                      ? 'Regenerating all...'
+                      : '🔄 Regenerate all definitions'}
                   </button>
 
                   <button
