@@ -273,6 +273,45 @@ export default function Layout({
               )}
 
 
+              {/* Speaking Spin admin shortcut — teachers only */}
+
+              {isTeacher && (
+                <a
+                  href="https://speaking.ieltswithmrikromov.com/admin"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Manage Speaking Spin practice content"
+                  className="
+                    focus-ring
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    h-9
+                    px-2.5
+                    sm:px-3
+                    rounded-[0.7rem]
+                    border border-line
+                    bg-panel/80
+                    shadow-sm
+                    text-sm
+                    font-medium
+                    text-mist
+                    hover:text-brass
+                    hover:border-brass/50
+                    hover:bg-brass/10
+                    transition-all
+                    duration-200
+                  "
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" />
+                    <path d="M17 3v4h-4M7 21v-4h4" strokeLinejoin="round" />
+                  </svg>
+                  <span className="hidden sm:inline">Speaking Spin</span>
+                </a>
+              )}
+
+
               {/* Theme */}
 
               <div
