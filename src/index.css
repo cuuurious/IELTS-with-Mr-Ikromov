@@ -7,15 +7,22 @@
    ========================================================= */
 
 @theme {
-  --color-ink: #f5f3ee;
-  --color-panel: #fffdfa;
-  --color-panel-2: #f1efe9;
-  --color-line: #dedbd3;
+  /* Cooler, cleaner neutrals (2026-09) — the previous cream/beige tone
+     (#f5f3ee / #fffdfa / #f1efe9) read as flat and slightly yellowed;
+     these keep the same "soft editorial" lightness but with a neutral-to-
+     cool cast instead, which also sits better with the accent colors. */
+  --color-ink: #f2f3f7;
+  --color-panel: #ffffff;
+  --color-panel-2: #eceef3;
+  --color-line: #dde1e8;
 
   --color-paper: #24232a;
   --color-paper-dim: #696873;
   --color-mist: #85838c;
 
+  /* Accent family — back to the original, calmer saturation. A bolder pass
+     was tried and felt tiring against real content; the background swap
+     above is the actual fix for the "flat/creamy" feeling. */
   --color-brass: #7565df;
   --color-brass-dim: #6252cc;
 
@@ -50,10 +57,10 @@
    ========================================================= */
 
 html[data-theme='light'] {
-  --color-ink: #f5f3ee;
-  --color-panel: #fffdfa;
-  --color-panel-2: #f1efe9;
-  --color-line: #dedbd3;
+  --color-ink: #f2f3f7;
+  --color-panel: #ffffff;
+  --color-panel-2: #eceef3;
+  --color-line: #dde1e8;
 
   --color-paper: #24232a;
   --color-paper-dim: #696873;
