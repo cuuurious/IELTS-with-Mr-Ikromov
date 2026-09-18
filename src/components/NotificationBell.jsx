@@ -333,14 +333,15 @@ export default function NotificationBell({ profile }) {
           h-10
           rounded-full
           border
-          border-line
-          bg-panel
+          border-amber/25
+          bg-amber/10
           flex
           items-center
           justify-center
-          text-mist
-          hover:text-indigo
-          hover:border-indigo
+          text-amber
+          shadow-sm
+          hover:border-amber/50
+          hover:bg-amber/20
           transition-all
           duration-200
         "

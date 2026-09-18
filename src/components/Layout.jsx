@@ -290,15 +290,14 @@ export default function Layout({
                     px-2.5
                     sm:px-3
                     rounded-[0.7rem]
-                    border border-line
-                    bg-panel/80
+                    border border-cyan/25
+                    bg-cyan/10
                     shadow-sm
                     text-sm
                     font-medium
-                    text-mist
-                    hover:text-brass
-                    hover:border-brass/50
-                    hover:bg-brass/10
+                    text-cyan
+                    hover:border-cyan/50
+                    hover:bg-cyan/20
                     transition-all
                     duration-200
                   "
@@ -314,30 +313,12 @@ export default function Layout({
 
               {/* Theme */}
 
-              <div
-                className="
-                  rounded-full
-                  border border-line
-                  bg-panel/80
-                  shadow-sm
-                "
-              >
-                <ThemeToggle />
-              </div>
+              <ThemeToggle />
 
 
               {/* Notifications */}
 
-              <div
-                className="
-                  rounded-full
-                  border border-line
-                  bg-panel/80
-                  shadow-sm
-                "
-              >
-                <NotificationBell profile={profile} />
-              </div>
+              <NotificationBell profile={profile} />
 
 
               {/* Settings */}
@@ -349,13 +330,12 @@ export default function Layout({
                   focus-ring
                   w-9 h-9
                   rounded-full
-                  border border-line
-                  bg-panel/80
+                  border border-brass/25
+                  bg-brass/10
                   flex items-center justify-center
-                  text-mist
-                  hover:text-brass
+                  text-brass
                   hover:border-brass/50
-                  hover:bg-brass/10
+                  hover:bg-brass/20
                   hover:shadow-[0_6px_20px_rgba(99,87,232,0.12)]
                   transition-all
                   duration-200
@@ -393,14 +373,13 @@ export default function Layout({
                   h-9
                   px-3.5
                   rounded-[0.7rem]
-                  border border-line
-                  bg-panel/80
+                  border border-coral/25
+                  bg-coral/10
                   text-sm
                   font-medium
-                  text-mist
-                  hover:text-brass
-                  hover:border-brass/50
-                  hover:bg-brass/10
+                  text-coral
+                  hover:border-coral/50
+                  hover:bg-coral/20
                   transition-all
                   duration-200
                 "
