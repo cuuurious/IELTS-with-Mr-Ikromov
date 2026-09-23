@@ -19,17 +19,23 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-      className="focus-ring w-9 h-9 rounded-[10px] border border-line bg-panel-2 flex items-center justify-center text-mist shrink-0 hover:text-paper hover:border-brass/40 transition-colors"
+      className="focus-ring w-9 h-9 rounded-[10px] border border-line bg-panel-2 flex items-center justify-center shrink-0 hover:border-brass/40 transition-colors"
       title={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}
       aria-label="Toggle day/night mode"
     >
       {theme === 'dark' ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        // Switching TO day mode — a warm amber sun, not a flat gray
+        // glyph, so the icon itself carries a little of the mode
+        // it's offering instead of every top-bar icon reading the
+        // same neutral color.
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber transition-colors group-hover:brightness-110">
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
         </svg>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        // Switching TO night mode — the app's brand lavender rather
+        // than gray, echoing the dark theme's own accent color.
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-lavender">
           <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
         </svg>
       )}

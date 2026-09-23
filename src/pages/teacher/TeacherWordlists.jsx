@@ -1088,7 +1088,7 @@ const saveEditWordlist = async () => {
                     return (
                       <div
                         key={list.id}
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:border-brass/40 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]"
+                        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border ${accent.border} bg-gradient-to-b from-panel-2 to-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]`}
                       >
 
                         <div className="relative flex items-start gap-3">
@@ -1113,10 +1113,18 @@ const saveEditWordlist = async () => {
 
                         <div className="relative mt-4 flex items-center gap-2 border-t border-line pt-3.5">
 
+                          {/*
+                            * Was .btn-secondary — the same plain gray
+                            * outlined button as every other secondary
+                            * action in the app. Tinting it with this
+                            * card's own accent ties the primary action
+                            * back to the badge/border color instead of
+                            * every card's main button looking identical.
+                            */}
                           <button
                             type="button"
                             onClick={() => setViewingResults(list)}
-                            className="btn-secondary flex-1 text-center"
+                            className={`focus-ring flex-1 rounded-[10px] border ${accent.border} ${accent.bg} px-3 py-2 text-center text-sm font-semibold ${accent.text} transition hover:brightness-110`}
                           >
                             View results
                           </button>

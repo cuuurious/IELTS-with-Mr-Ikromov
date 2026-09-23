@@ -354,9 +354,7 @@ export default function NotificationBell({ profile }) {
           flex
           items-center
           justify-center
-          text-mist
           shrink-0
-          hover:text-paper
           hover:border-brass/40
           transition-colors
         "
@@ -365,6 +363,12 @@ export default function NotificationBell({ profile }) {
         aria-expanded={open}
       >
 
+        {/*
+         * A resting brass tint instead of flat gray — one of a
+         * couple of top-bar icons (this one, the theme toggle) that
+         * now carry a little of the app's actual accent color
+         * instead of every icon button reading identically neutral.
+         */}
         <svg
           width="17"
           height="17"
@@ -374,6 +378,7 @@ export default function NotificationBell({ profile }) {
           strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="text-brass/80 transition-colors"
         >
           <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 01-3.46 0" />

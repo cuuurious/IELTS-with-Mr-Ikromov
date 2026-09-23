@@ -1017,7 +1017,7 @@ export default function GroupWorkspace({ teacherId }) {
                         openGroup(group.id)
                       }
                     }}
-                    className="focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-line bg-gradient-to-b from-panel-2 to-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer"
+                    className={`focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border ${accent.border} bg-gradient-to-b from-panel-2 to-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer`}
                   >
 
                     <div className="relative flex items-start justify-between gap-3">
@@ -1116,7 +1116,14 @@ export default function GroupWorkspace({ teacherId }) {
 
                     </div>
 
-                    <div className="relative mt-5 flex items-center gap-1.5 text-sm font-medium text-mist transition group-hover:text-accent">
+                    {/*
+                      * Was gray text that only picked up color on
+                      * hover — meant every card looked identically
+                      * neutral until a cursor found it. Showing this
+                      * card's own accent color at rest instead ties
+                      * the "Open" action back to the badge above it.
+                      */}
+                    <div className={`relative mt-5 flex items-center gap-1.5 text-sm font-semibold transition ${accent.text}`}>
                       Open
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition group-hover:translate-x-0.5">
                         <path d="M5 12h14" />
