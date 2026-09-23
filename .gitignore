@@ -31,3 +31,9 @@ dist-ssr
 
 # Local Supabase CLI cache (regenerated automatically, not needed in git)
 supabase/.temp
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example

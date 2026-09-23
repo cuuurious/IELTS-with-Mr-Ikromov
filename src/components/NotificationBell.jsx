@@ -7,6 +7,22 @@ export default function NotificationBell({ profile }) {
   const [loading, setLoading] = useState(false)
   const boxRef = useRef(null)
 
+  // The redesigned Layout renders a mobile top bar and a desktop top
+  // bar at the same time (CSS just shows/hides whichever one matches
+  // the viewport — both stay mounted), so this component now mounts
+  // TWICE at once for the same signed-in user. Two mounts used to
+  // both call supabase.channel(`notifications-${profile.id}`) with
+  // the exact same topic name — Supabase's realtime client treats
+  // that as the SAME channel, so the second mount's .on(...) call
+  // landed on a channel the first mount had already .subscribe()'d,
+  // which throws ("cannot add postgres_changes callback ... after
+  // subscribe()") and crashed the whole app for every signed-in user.
+  // A random suffix, generated once per mount, gives each instance
+  // its own independent channel instead.
+  const instanceIdRef = useRef(
+    Math.random().toString(36).slice(2, 10)
+  )
+
   /*
    * ============================================================
    * LOAD NOTIFICATIONS
@@ -50,7 +66,7 @@ export default function NotificationBell({ profile }) {
     load()
 
     const channel = supabase
-      .channel(`notifications-${profile.id}`)
+      .channel(`notifications-${profile.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
