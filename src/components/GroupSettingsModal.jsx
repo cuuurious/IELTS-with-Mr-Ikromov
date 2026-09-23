@@ -29,7 +29,25 @@ export default function GroupSettingsModal({
   onUpdated,
   onLeft,
 }) {
-  const isStaff = selfRole === 'teacher'
+  // Two different questions, kept separate on purpose:
+  //  - isTeacherAccount: "is this a teacher account at all" — decides
+  //    things that are about being a STUDENT specifically (mute/leave
+  //    only make sense for a student; a teacher was never a
+  //    group_members row to begin with).
+  //  - isGroupAdmin: "is this account Owner/Admin of THIS group" —
+  //    decides every actual editing/moderation control. With exactly
+  //    one teacher account today (always auto-Owner of every group it
+  //    creates, per migration_23), this is true everywhere a teacher
+  //    looks, so nothing changes yet — but unlike before, a teacher
+  //    who *isn't* promoted on a specific group will correctly see it
+  //    read-only once a second staff account exists.
+  const isTeacherAccount = selfRole === 'teacher'
+
+  // Group info opens READ-ONLY by default, Telegram-style — tapping a
+  // group's photo/name should never immediately hand you editable
+  // fields. An Owner/Admin has to deliberately tap "Manage" to reach
+  // any editing or moderation control.
+  const [editMode, setEditMode] = useState(false)
 
   const [name, setName] = useState(group?.name || '')
   const [description, setDescription] = useState(group?.description || '')
@@ -57,6 +75,10 @@ export default function GroupSettingsModal({
 
   const [viewingProfileId, setViewingProfileId] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
+
+  const isGroupAdmin = members.some(
+    (m) => m.id === selfId && (m.role === 'owner' || m.role === 'admin')
+  )
 
   // "Recent activity" (message edits/deletions) used to live as a
   // separate button + side panel in GroupChat.jsx's own header. Moved
@@ -179,7 +201,7 @@ export default function GroupSettingsModal({
   }
 
   const loadActivity = async () => {
-    if (!group?.id || !isStaff) return
+    if (!group?.id || !isGroupAdmin) return
 
     setLoadingActivity(true)
     setActivityError('')
@@ -250,8 +272,75 @@ export default function GroupSettingsModal({
     )
   }
 
+  // Telegram-style "20 photos / 1 video / 27 voice messages" list —
+  // visible to everyone, not just admins, same as real Telegram. RLS
+  // on group_messages already limits this to members/staff of this
+  // specific group, so no extra permission check is needed here.
+  const [mediaCounts, setMediaCounts] = useState(null)
+
+  const loadMediaCounts = async () => {
+    if (!group?.id) return
+
+    const { data, error } = await supabase
+      .from('group_messages')
+      .select('media_type')
+      .eq('group_id', group.id)
+      .not('media_type', 'is', null)
+
+    if (error) {
+      console.error('Failed to load media counts:', error)
+      return
+    }
+
+    const counts = { image: 0, video: 0, audio: 0, video_note: 0 }
+
+    ;(data || []).forEach((row) => {
+      if (counts[row.media_type] !== undefined) {
+        counts[row.media_type] += 1
+      }
+    })
+
+    setMediaCounts(counts)
+  }
+
+  // Member send permissions (Manage -> Permissions) — see
+  // migration_25.sql. Defaults to "allowed" (true) whenever the group
+  // hasn't set a value yet, so nothing breaks before that migration
+  // has been run.
+  const [allowMedia, setAllowMedia] = useState(true)
+  const [allowVoiceVideo, setAllowVoiceVideo] = useState(true)
+  const [savingPermissions, setSavingPermissions] = useState(false)
+  const [permissionsError, setPermissionsError] = useState('')
+
+  useEffect(() => {
+    setAllowMedia(group?.allow_media !== false)
+    setAllowVoiceVideo(group?.allow_voice_video_notes !== false)
+  }, [group?.id, group?.allow_media, group?.allow_voice_video_notes])
+
+  const updatePermission = async (key, value, setLocal) => {
+    setLocal(value)
+    setSavingPermissions(true)
+    setPermissionsError('')
+
+    const { error } = await supabase
+      .from('groups')
+      .update({ [key]: value })
+      .eq('id', group.id)
+
+    setSavingPermissions(false)
+
+    if (error) {
+      setLocal(!value)
+      setPermissionsError(error.message)
+      return
+    }
+
+    onUpdated?.({ [key]: value })
+  }
+
   useEffect(() => {
     loadMembers()
+    loadMediaCounts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group?.id])
 
@@ -260,10 +349,11 @@ export default function GroupSettingsModal({
     setDescription(group?.description || '')
     setPhotoUrl(group?.photo_url || '')
     setDetailsDirty(false)
+    setEditMode(false)
   }, [group?.id])
 
   const saveDetails = async () => {
-    if (!isStaff) return
+    if (!isGroupAdmin) return
 
     setSavingDetails(true)
     setDetailsError('')
@@ -295,7 +385,7 @@ export default function GroupSettingsModal({
     const file = e.target.files?.[0]
     e.target.value = ''
 
-    if (!file || !isStaff) return
+    if (!file || !isGroupAdmin) return
 
     if (!file.type.startsWith('image/')) {
       setPhotoError('Please choose an image file.')
@@ -557,9 +647,9 @@ export default function GroupSettingsModal({
 
             <label
               className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brass/30 bg-brass/15 font-display text-xl font-semibold text-brass ${
-                isStaff ? 'cursor-pointer' : ''
+                isGroupAdmin && editMode ? 'cursor-pointer' : ''
               }`}
-              title={isStaff ? 'Change group photo' : undefined}
+              title={isGroupAdmin && editMode ? 'Change group photo' : undefined}
             >
               {photoUrl ? (
                 <img
@@ -571,7 +661,7 @@ export default function GroupSettingsModal({
                 groupInitial
               )}
 
-              {isStaff && (
+              {isGroupAdmin && editMode && (
                 <>
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-transparent transition hover:bg-black/40 hover:text-white">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -592,7 +682,7 @@ export default function GroupSettingsModal({
             </label>
 
             <div className="min-w-0 flex-1">
-              {isStaff ? (
+              {isGroupAdmin && editMode ? (
                 <input
                   value={name}
                   onChange={(e) => {
@@ -622,11 +712,13 @@ export default function GroupSettingsModal({
           {/* DESCRIPTION */}
 
           <div>
-            <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-1.5">
-              Description
-            </div>
+            {(editMode && isGroupAdmin) || description ? (
+              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-1.5">
+                Description
+              </div>
+            ) : null}
 
-            {isStaff ? (
+            {isGroupAdmin && editMode ? (
               <textarea
                 rows={2}
                 value={description}
@@ -637,13 +729,11 @@ export default function GroupSettingsModal({
                 placeholder="What this group is for — visible to everyone in it."
                 className="focus-ring w-full resize-none rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper outline-none"
               />
-            ) : (
-              <p className="text-sm text-paper-dim">
-                {description || 'No description yet.'}
-              </p>
-            )}
+            ) : description ? (
+              <p className="text-sm text-paper-dim">{description}</p>
+            ) : null}
 
-            {isStaff && (
+            {isGroupAdmin && editMode && (
               <div className="mt-2 flex items-center gap-3">
                 <button
                   type="button"
@@ -661,6 +751,94 @@ export default function GroupSettingsModal({
             )}
           </div>
 
+          {/* ACTION BUTTONS — Telegram's Mute / Manage / Leave row.
+              Nothing here is live "on tap" — Manage only ever toggles
+              edit mode, it never edits anything by itself. */}
+
+          <div className="flex items-center gap-2">
+
+            {isGroupAdmin && (
+              <button
+                type="button"
+                onClick={() => setEditMode((v) => !v)}
+                className={`focus-ring flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
+                  editMode
+                    ? 'border-brass/50 bg-brass/15 text-brass'
+                    : 'border-line text-paper hover:border-brass/40'
+                }`}
+              >
+                {editMode ? 'Done' : 'Manage'}
+              </button>
+            )}
+
+            {!isTeacherAccount && (
+              <button
+                type="button"
+                onClick={toggleMute}
+                disabled={mutingBusy}
+                className={`focus-ring flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition disabled:opacity-50 ${
+                  selfMuted
+                    ? 'border-brass/50 bg-brass/15 text-brass'
+                    : 'border-line text-paper hover:border-brass/40'
+                }`}
+              >
+                {selfMuted ? 'Unmute' : 'Mute'}
+              </button>
+            )}
+
+            {!isTeacherAccount && (
+              <button
+                type="button"
+                onClick={leaveGroup}
+                disabled={leaving}
+                className="focus-ring flex-1 rounded-lg border border-coral/40 bg-coral/5 px-3 py-2.5 text-sm font-medium text-coral transition hover:bg-coral/10 disabled:opacity-50"
+              >
+                {leaving ? 'Leaving…' : 'Leave'}
+              </button>
+            )}
+
+          </div>
+
+          {/* SHARED MEDIA — visible to everyone, view-only, matching
+              Telegram's own "20 photos / 1 video / ..." list. */}
+
+          {mediaCounts && (
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
+                Shared media
+              </div>
+
+              <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
+                {[
+                  { key: 'image', label: 'Photos', icon: '🖼️' },
+                  { key: 'video', label: 'Videos', icon: '🎥' },
+                  { key: 'audio', label: 'Voice messages', icon: '🎤' },
+                  { key: 'video_note', label: 'Video messages', icon: '📹' },
+                ]
+                  .filter((row) => mediaCounts[row.key] > 0)
+                  .map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex items-center justify-between px-3 py-2 text-sm"
+                    >
+                      <span className="flex items-center gap-2 text-paper">
+                        <span>{row.icon}</span> {row.label}
+                      </span>
+                      <span className="font-mono text-mist">
+                        {mediaCounts[row.key]}
+                      </span>
+                    </div>
+                  ))}
+
+                {Object.values(mediaCounts).every((count) => count === 0) && (
+                  <div className="px-3 py-2.5 text-sm text-mist">
+                    No shared media yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* MEMBERS */}
 
           <div>
@@ -669,7 +847,7 @@ export default function GroupSettingsModal({
                 Members{members.length ? ` · ${members.length}` : ''}
               </div>
 
-              {isStaff && (
+              {isGroupAdmin && editMode && (
                 <button
                   type="button"
                   onClick={() => {
@@ -683,7 +861,7 @@ export default function GroupSettingsModal({
               )}
             </div>
 
-            {addAdminOpen && (
+            {isGroupAdmin && editMode && addAdminOpen && (
               <div className="mb-3 rounded-lg border border-line bg-panel-2 p-3">
                 {availableTeachers.length === 0 ? (
                   <p className="text-xs text-mist">
@@ -766,7 +944,7 @@ export default function GroupSettingsModal({
                         </span>
                       )}
 
-                      {isStaff && member.role === 'admin' && (
+                      {isGroupAdmin && editMode && member.role === 'admin' && (
                         <button
                           type="button"
                           onClick={() => removeAdmin(member)}
@@ -777,7 +955,7 @@ export default function GroupSettingsModal({
                         </button>
                       )}
 
-                      {isStaff && member.role === 'member' && (
+                      {isGroupAdmin && editMode && member.role === 'member' && (
                         <button
                           type="button"
                           onClick={() => removeMember(member)}
@@ -794,9 +972,80 @@ export default function GroupSettingsModal({
             )}
           </div>
 
-          {/* STAFF-ONLY: RECENT ACTIVITY (moved here from the chat header) */}
+          {/* ADMIN-ONLY, MANAGE-MODE-ONLY: MEMBER PERMISSIONS */}
 
-          {isStaff && (
+          {isGroupAdmin && editMode && (
+            <div className="border-t border-line pt-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
+                Member permissions
+              </div>
+
+              <div className="flex flex-col gap-2">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updatePermission('allow_media', !allowMedia, setAllowMedia)
+                  }
+                  disabled={savingPermissions}
+                  className="focus-ring flex items-center justify-between rounded-lg border border-line px-3 py-2.5 text-sm text-paper transition hover:border-brass/40 disabled:opacity-50"
+                >
+                  <span>Members can send photos &amp; videos</span>
+                  <span
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition ${
+                      allowMedia ? 'bg-brass' : 'bg-line'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                        allowMedia ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updatePermission(
+                      'allow_voice_video_notes',
+                      !allowVoiceVideo,
+                      setAllowVoiceVideo
+                    )
+                  }
+                  disabled={savingPermissions}
+                  className="focus-ring flex items-center justify-between rounded-lg border border-line px-3 py-2.5 text-sm text-paper transition hover:border-brass/40 disabled:opacity-50"
+                >
+                  <span>Members can send voice &amp; video messages</span>
+                  <span
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition ${
+                      allowVoiceVideo ? 'bg-brass' : 'bg-line'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                        allowVoiceVideo ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </span>
+                </button>
+
+              </div>
+
+              {permissionsError && (
+                <p className="mt-2 text-xs text-coral">{permissionsError}</p>
+              )}
+
+              <p className="mt-2 text-xs text-mist">
+                Staff can always send any message type, regardless of these settings.
+              </p>
+            </div>
+          )}
+
+          {/* ADMIN-ONLY, MANAGE-MODE-ONLY: RECENT ACTIVITY (moved here
+              from the chat header) */}
+
+          {isGroupAdmin && editMode && (
             <div className="border-t border-line pt-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
@@ -868,43 +1117,6 @@ export default function GroupSettingsModal({
                   )}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* STUDENT-ONLY: MUTE + LEAVE */}
-
-          {!isStaff && (
-            <div className="flex flex-col gap-2 border-t border-line pt-4">
-
-              <button
-                type="button"
-                onClick={toggleMute}
-                disabled={mutingBusy}
-                className="focus-ring flex items-center justify-between rounded-lg border border-line px-3 py-2.5 text-sm text-paper transition hover:border-brass/40 disabled:opacity-50"
-              >
-                <span>Mute notifications for this group</span>
-                <span
-                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition ${
-                    selfMuted ? 'bg-brass' : 'bg-line'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
-                      selfMuted ? 'translate-x-4' : 'translate-x-0.5'
-                    }`}
-                  />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={leaveGroup}
-                disabled={leaving}
-                className="focus-ring rounded-lg border border-coral/40 bg-coral/5 px-3 py-2.5 text-left text-sm font-medium text-coral transition hover:bg-coral/10 disabled:opacity-50"
-              >
-                {leaving ? 'Leaving…' : 'Leave group'}
-              </button>
-
             </div>
           )}
 

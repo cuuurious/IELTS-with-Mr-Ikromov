@@ -177,6 +177,22 @@ export default function PrivateChats({
         readMap[r.peer_id] = r.last_read_at
       })
 
+      // The other direction: how far each peer has read what THIS
+      // account sent them — what puts a "seen" double-check next to a
+      // conversation's timestamp. Needs migration_26's widened select
+      // policy (private_chat_reads is normally locked to your own rows).
+      const { data: peerReadRows, error: peerReadsError } = await supabase
+        .from('private_chat_reads')
+        .select('user_id, last_read_at')
+        .eq('peer_id', selfId)
+
+      if (peerReadsError) throw peerReadsError
+
+      const peerReadMap = {}
+      ;(peerReadRows || []).forEach((r) => {
+        peerReadMap[r.user_id] = r.last_read_at
+      })
+
       const unreadByPeer = new Map()
 
       visible.forEach((m) => {
@@ -215,6 +231,7 @@ export default function PrivateChats({
         ...p,
         lastMessage: lastByPeer.get(p.id) || null,
         unreadCount: unreadByPeer.get(p.id) || 0,
+        peerReadAt: peerReadMap[p.id] || null,
       }))
 
       merged.sort((a, b) => {
@@ -263,6 +280,19 @@ export default function PrivateChats({
             loadConversations()
           }
         }
+      )
+      .on(
+        // Someone just read (or un-read) a conversation with this
+        // account — refreshes the "seen" tick next to the timestamp
+        // without waiting for the next message to arrive.
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'private_chat_reads',
+          filter: `peer_id=eq.${selfId}`,
+        },
+        () => loadConversations()
       )
       .subscribe()
 
@@ -629,6 +659,16 @@ export default function PrivateChats({
               const label = person.full_name || person.username || 'Unknown user'
               const unread = person.unreadCount > 0
 
+              // "Seen" tick — only meaningful when the last message in
+              // this conversation is one this account sent.
+              const sentLast = person.lastMessage?.sender_id === selfId
+              const seenLast = Boolean(
+                sentLast &&
+                  person.peerReadAt &&
+                  new Date(person.lastMessage.created_at) <=
+                    new Date(person.peerReadAt)
+              )
+
               return (
                 <button
                   type="button"
@@ -670,10 +710,18 @@ export default function PrivateChats({
 
                         {person.lastMessage?.created_at && (
                           <span
-                            className={`text-[10px] font-mono shrink-0 ${
+                            className={`flex items-center gap-1 text-[10px] font-mono shrink-0 ${
                               unread ? 'text-brass' : 'text-mist'
                             }`}
                           >
+                            {sentLast && (
+                              <span
+                                className={seenLast ? 'text-brass' : 'opacity-70'}
+                                title={seenLast ? 'Seen' : 'Sent'}
+                              >
+                                {seenLast ? '✓✓' : '✓'}
+                              </span>
+                            )}
                             {formatListTime(person.lastMessage.created_at)}
                           </span>
                         )}

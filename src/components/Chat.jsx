@@ -57,6 +57,13 @@ export default function Chat({
   const [peerAvatarUrl, setPeerAvatarUrl] = useState('')
   const [viewingProfileId, setViewingProfileId] = useState(null)
 
+  // How far the PEER has read this conversation — the flip side of
+  // markRead() below, which is how far THIS account has read it. This
+  // is what lets a message this user sent show a "seen" checkmark and
+  // the time it was read, Telegram-style. Null until the peer has ever
+  // opened this chat, or after they "mark as unread" it.
+  const [peerReadAt, setPeerReadAt] = useState(null)
+
   // Messages this user has hidden from their own view only — "Delete
   // for me". The row stays in the database for the other person; we
   // just never render it here.
@@ -240,6 +247,28 @@ export default function Chat({
     }
   }
 
+  // The read-receipt equivalent for the OTHER direction: how far has
+  // the peer read what THIS account sent. Needs migration_26's widened
+  // policy on private_chat_reads (select is normally locked to your
+  // own rows only) since this reads the peer's row, not this user's.
+  const loadPeerReadState = async () => {
+    if (!selfId || !peerId) return
+
+    const { data, error: readStateError } = await supabase
+      .from('private_chat_reads')
+      .select('last_read_at')
+      .eq('user_id', peerId)
+      .eq('peer_id', selfId)
+      .maybeSingle()
+
+    if (readStateError) {
+      console.error('Failed to load peer read state:', readStateError)
+      return
+    }
+
+    setPeerReadAt(data?.last_read_at || null)
+  }
+
   const loadPins = async (messageIds) => {
     const ids =
       messageIds && messageIds.length
@@ -323,6 +352,7 @@ export default function Chat({
         await loadReactions(rows)
         await loadPins(rows.map((row) => row.id))
         await markRead()
+        await loadPeerReadState()
       }
 
       const { data: deletions, error: deletionsError } =
@@ -491,6 +521,33 @@ export default function Chat({
           table: 'message_pins',
         },
         () => loadPins()
+      )
+      .on(
+        // The peer just read (or un-read) this conversation — live
+        // "Seen" ticks without needing to reopen the chat. Filtered to
+        // rows the peer owns; still double-checked against peer_id
+        // since the filter alone can't express the full pair.
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'private_chat_reads',
+          filter: `user_id=eq.${peerId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            if (payload.old?.peer_id === selfId) {
+              setPeerReadAt(null)
+            }
+            return
+          }
+
+          const row = payload.new
+
+          if (row?.peer_id === selfId) {
+            setPeerReadAt(row.last_read_at)
+          }
+        }
       )
       .on(
         'postgres_changes',
@@ -1829,6 +1886,19 @@ export default function Chat({
           const isHighlighted =
             String(highlightedMessageId) === String(m.id)
 
+          // "Seen" ticks — only meaningful for a message THIS user
+          // sent, comparing when it was sent against how far the peer
+          // has read up to (see loadPeerReadState/the realtime handler
+          // above). The explicit "Read HH:MM" text only shows on the
+          // very last message, same as Telegram Desktop — repeating it
+          // on every bubble would just be noise.
+          const isRead = Boolean(
+            mine &&
+              peerReadAt &&
+              new Date(m.created_at) <= new Date(peerReadAt)
+          )
+          const isLastVisible = index === visible.length - 1
+
           const prev = visible[index - 1]
 
           const dateChanged =
@@ -2046,6 +2116,34 @@ export default function Chat({
                   {m.edited_at && (
                     <span className="italic opacity-70">
                       edited
+                    </span>
+                  )}
+
+                  {mine && (
+                    <span
+                      className={isRead ? 'text-brass' : 'opacity-70'}
+                      title={
+                        isRead
+                          ? `Read ${new Date(
+                              peerReadAt
+                            ).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}`
+                          : 'Sent'
+                      }
+                    >
+                      {isRead ? '✓✓' : '✓'}
+                    </span>
+                  )}
+
+                  {isLastVisible && isRead && (
+                    <span className="text-brass opacity-90">
+                      Read{' '}
+                      {new Date(peerReadAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   )}
 

@@ -294,7 +294,9 @@ export default function GroupChat({
 
       const { data: groupRow } = await supabase
         .from('groups')
-        .select('id, name, photo_url, description, created_by')
+        .select(
+          'id, name, photo_url, description, created_by, allow_media, allow_voice_video_notes'
+        )
         .eq('id', groupId)
         .maybeSingle()
 
@@ -1433,6 +1435,7 @@ export default function GroupChat({
     )
 
     if (!imageItem) return
+    if (!canSendMedia) return
 
     const file =
       imageItem.getAsFile()
@@ -1466,6 +1469,20 @@ export default function GroupChat({
     .trim()
     .charAt(0)
     .toUpperCase() || 'G'
+
+  // Per-group member permissions (set from Group info -> Manage by an
+  // Owner/Admin — see GroupSettingsModal.jsx and migration_25.sql).
+  // Staff can always send everything regardless of these — the toggle
+  // is about restricting ordinary members, never about limiting staff
+  // moderating their own group. `!== false` treats "not loaded yet" /
+  // "column not set" the same as "allowed", so nothing breaks for
+  // anyone who hasn't run migration_25 yet.
+  const canSendMedia =
+    selfRole === 'teacher' || groupInfo?.allow_media !== false
+
+  const canSendVoiceVideo =
+    selfRole === 'teacher' ||
+    groupInfo?.allow_voice_video_notes !== false
 
   // A student who just left this group (via Group info -> Leave group)
   // no longer has a group_members row, so RLS would start rejecting
@@ -2433,55 +2450,63 @@ export default function GroupChat({
           className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3"
         >
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg"
-            onChange={handleFile}
-            className="hidden"
-          />
+          {canSendMedia && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg"
+              onChange={handleFile}
+              className="hidden"
+            />
+          )}
 
-          <button
-            type="button"
-            onClick={() =>
-              fileInputRef.current?.click()
-            }
-            disabled={uploading}
-            title="Send photo, video or audio"
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-              <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-          </button>
+          {canSendMedia && (
+            <button
+              type="button"
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
+              disabled={uploading}
+              title="Send photo, video or audio"
+              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+                <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => startRecording('audio')}
-            disabled={uploading}
-            title="Record voice message"
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-              <rect x="9" y="2" width="6" height="11" rx="3" />
-              <path d="M5 10a7 7 0 0 0 14 0" />
-              <path d="M12 17v4" />
-              <path d="M9 21h6" />
-            </svg>
-          </button>
+          {canSendVoiceVideo && (
+            <button
+              type="button"
+              onClick={() => startRecording('audio')}
+              disabled={uploading}
+              title="Record voice message"
+              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+                <rect x="9" y="2" width="6" height="11" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+                <path d="M12 17v4" />
+                <path d="M9 21h6" />
+              </svg>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => startRecording('video')}
-            disabled={uploading}
-            title="Record video message"
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-              <rect x="2" y="6" width="14" height="12" rx="2" />
-              <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
-            </svg>
-          </button>
+          {canSendVoiceVideo && (
+            <button
+              type="button"
+              onClick={() => startRecording('video')}
+              disabled={uploading}
+              title="Record video message"
+              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+                <rect x="2" y="6" width="14" height="12" rx="2" />
+                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
+              </svg>
+            </button>
+          )}
 
           <input
             ref={inputRef}
