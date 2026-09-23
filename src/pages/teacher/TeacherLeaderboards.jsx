@@ -105,7 +105,11 @@ export default function TeacherLeaderboards() {
                   : 'border-line bg-panel-2 text-mist hover:text-paper'
               }`}
             >
-              🏆 All Students
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" />
+                <path d="M7 5H4a2 2 0 0 0 0 4h1M17 5h3a2 2 0 0 1 0 4h-1" />
+              </svg>
+              All Students
             </button>
 
             {/* GROUPS */}

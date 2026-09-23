@@ -8,7 +8,13 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 
-import Layout from '../../components/Layout'
+import Layout, {
+  IconHomework,
+  IconWordlist,
+  IconLeaderboard,
+  IconGroupChat,
+  IconChat,
+} from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
 import GroupChat from '../../components/GroupChat'
@@ -896,27 +902,19 @@ const studentId =
    * ============================================================
    */
 
-  const tabs = useMemo(
+  // A single unlabeled group is enough for now — the sidebar (see
+  // Layout.jsx) only really needs section headers once there's more
+  // than one natural grouping, which happens once Mock Exams lands.
+  const sections = useMemo(
     () => [
       {
-        key: 'homework',
-        label: 'Homework',
-      },
-      {
-        key: 'wordlists',
-        label: 'Word lists',
-      },
-      {
-        key: 'leaderboard',
-        label: 'Leaderboard',
-      },
-      {
-        key: 'group-chat',
-        label: 'Group chat',
-      },
-      {
-        key: 'chats',
-        label: 'Chats',
+        items: [
+          { key: 'homework', label: 'Homework', icon: IconHomework },
+          { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
+          { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
+          { key: 'group-chat', label: 'Group Chat', icon: IconGroupChat },
+          { key: 'chats', label: 'Chats', icon: IconChat },
+        ],
       },
     ],
     []
@@ -1015,7 +1013,7 @@ const studentId =
 
   return (
     <Layout
-      tabs={tabs}
+      sections={sections}
       activeTab={tab}
       onTabChange={handleTabChange}
     >

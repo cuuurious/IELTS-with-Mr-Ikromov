@@ -19,7 +19,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-      className="focus-ring w-9 h-9 rounded-full border border-lavender/25 bg-lavender/10 flex items-center justify-center text-lavender shadow-sm hover:border-lavender/50 hover:bg-lavender/20 transition-colors"
+      className="focus-ring w-9 h-9 rounded-[10px] border border-line bg-panel-2 flex items-center justify-center text-mist shrink-0 hover:text-paper hover:border-brass/40 transition-colors"
       title={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}
       aria-label="Toggle day/night mode"
     >

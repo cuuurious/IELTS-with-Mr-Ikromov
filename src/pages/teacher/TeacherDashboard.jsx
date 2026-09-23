@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
-import Layout from '../../components/Layout'
+import Layout, {
+  IconGroups,
+  IconStudents,
+  IconWordlist,
+  IconGroupChat,
+  IconChat,
+  IconLeaderboard,
+  IconAI,
+  IconApprovals,
+  IconStaff,
+} from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
 import TeacherStudents from './TeacherStudents'
 import PendingApprovals from './PendingApprovals'
@@ -195,54 +205,49 @@ export default function TeacherDashboard() {
     setTab('chat')
   }
 
-  const tabs = [
+  // Grouped for the sidebar (see Layout.jsx) instead of one flat row of
+  // pill tabs — the old shape stopped scaling once there were 8-9 of
+  // these, and it's only going to grow (Mock Exams, Speaking/Writing
+  // examiner views, etc.).
+  const sections = [
     {
-      key: 'groups',
-      label: 'Groups & homework',
+      title: 'Teaching',
+      items: [
+        { key: 'groups', label: 'Groups & Homework', icon: IconGroups },
+        { key: 'students', label: 'Students', icon: IconStudents },
+        { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
+      ],
     },
     {
-      key: 'students',
-      label: 'Students',
+      title: 'Communication',
+      items: [
+        { key: 'group-chat', label: 'Group Chats', icon: IconGroupChat },
+        { key: 'chat', label: 'Chat', icon: IconChat },
+      ],
     },
     {
-      key: 'wordlists',
-      label: 'Word lists',
+      title: 'Insights',
+      items: [
+        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
+      ],
     },
     {
-      key: 'leaderboards',
-      label: 'Leaderboards',
+      title: 'Admin',
+      items: [
+        { key: 'ai-grading', label: 'AI Grading', icon: IconAI },
+        {
+          key: 'approvals',
+          label: `Approvals${pendingCount ? ` (${pendingCount})` : ''}`,
+          icon: IconApprovals,
+        },
+        // Only Jasur Ikromov's account (profile.is_admin) can see this —
+        // see TeacherAccounts.jsx and the delete-teacher edge function,
+        // which both re-check this independently of the UI hiding it here.
+        ...(profile.is_admin
+          ? [{ key: 'teacher-accounts', label: 'Teacher accounts', icon: IconStaff }]
+          : []),
+      ],
     },
-    {
-      key: 'ai-grading',
-      label: 'AI Grading',
-    },
-    {
-      key: 'approvals',
-      label: `Approvals${
-        pendingCount
-          ? ` (${pendingCount})`
-          : ''
-      }`,
-    },
-    {
-      key: 'group-chat',
-      label: 'Group chats',
-    },
-    {
-      key: 'chat',
-      label: 'Chat',
-    },
-    // Only Jasur Ikromov's account (profile.is_admin) can see this tab
-    // — see TeacherAccounts.jsx and the delete-teacher edge function,
-    // which both re-check this independently of the UI hiding it here.
-    ...(profile.is_admin
-      ? [
-          {
-            key: 'teacher-accounts',
-            label: 'Teacher accounts',
-          },
-        ]
-      : []),
   ]
 
   const handleTabChange = (nextTab) => {
@@ -259,7 +264,7 @@ export default function TeacherDashboard() {
 
   return (
     <Layout
-      tabs={tabs}
+      sections={sections}
       activeTab={tab}
       onTabChange={handleTabChange}
     >

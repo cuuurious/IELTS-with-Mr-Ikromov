@@ -259,6 +259,27 @@ export default function TeacherStudents({ onStartChat }) {
     )
   }, [students, membershipsByStudent])
 
+  // Summary counts shown as stat cards above the table — the same
+  // "total / approved / pending / without a group" numbers a teacher
+  // used to have to infer by scrolling the list, now surfaced at a
+  // glance the way a real admin table's header strip does.
+  const stats = useMemo(() => {
+    let approved = 0
+    let pending = 0
+
+    students.forEach((student) => {
+      if (student.status === 'approved') approved += 1
+      if (student.status === 'pending') pending += 1
+    })
+
+    return {
+      total: students.length,
+      approved,
+      pending,
+      withoutGroup: studentsWithoutGroup.length,
+    }
+  }, [students, studentsWithoutGroup])
+
   const filteredStudents = useMemo(() => {
     let result =
       view === 'without-group'
@@ -822,145 +843,178 @@ export default function TeacherStudents({ onStartChat }) {
           </h2>
 
           <p className="text-mist text-sm mt-1">
-            Manage student accounts and
-            group memberships.
+            Manage student accounts and group memberships.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {loading && (
-            <span className="text-mist text-xs font-mono">
-              Updating…
-            </span>
-          )}
-
-          <div className="flex h-9 items-center gap-1.5 rounded-full border border-line bg-panel px-3.5 text-sm font-mono text-mist shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-sage" />
-            <strong className="font-semibold text-paper">{students.length}</strong>
-            total
-          </div>
-        </div>
+        {loading && (
+          <span className="text-mist text-xs font-mono">
+            Updating…
+          </span>
+        )}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      {/* =====================================================
+          STAT CARDS — the numbers a teacher used to have to
+          count by scanning the list, surfaced up front instead.
+          "Without a group" doubles as a shortcut into that filter.
+      ===================================================== */}
 
-        <button
-          type="button"
-          onClick={() => setView('all')}
-          className={`focus-ring px-3.5 py-2 rounded-full text-sm font-medium transition ${
-            view === 'all'
-              ? 'bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
-              : 'border border-line bg-panel text-mist hover:text-paper'
-          }`}
-        >
-          All Students ({students.length})
-        </button>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+        <div className="rounded-xl border border-line bg-panel px-4 py-3">
+          <div className="font-display text-2xl font-semibold text-paper">
+            {stats.total}
+          </div>
+          <div className="mt-0.5 text-xs text-mist">
+            Total students
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-sage/30 bg-sage/10 px-4 py-3">
+          <div className="font-display text-2xl font-semibold text-sage">
+            {stats.approved}
+          </div>
+          <div className="mt-0.5 text-xs text-mist">
+            Approved
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-3">
+          <div className="font-display text-2xl font-semibold text-amber">
+            {stats.pending}
+          </div>
+          <div className="mt-0.5 text-xs text-mist">
+            Pending approval
+          </div>
+        </div>
 
         <button
           type="button"
           onClick={() =>
-            setView('without-group')
+            setView((prev) =>
+              prev === 'without-group' ? 'all' : 'without-group'
+            )
           }
-          className={`focus-ring px-3.5 py-2 rounded-full text-sm font-medium transition ${
+          className={`focus-ring rounded-xl border px-4 py-3 text-left transition ${
             view === 'without-group'
-              ? 'bg-brass text-onbrass shadow-[0_8px_18px_-8px_rgba(117,101,223,0.55)]'
-              : 'border border-line bg-panel text-mist hover:text-paper'
+              ? 'border-coral/60 bg-coral/15'
+              : 'border-coral/30 bg-coral/5 hover:border-coral/50'
           }`}
         >
-          Without a group (
-          {studentsWithoutGroup.length}
-          )
+          <div className="font-display text-2xl font-semibold text-coral">
+            {stats.withoutGroup}
+          </div>
+          <div className="mt-0.5 text-xs text-mist">
+            Without a group
+          </div>
         </button>
 
       </div>
 
-      <div className="ticket rounded-lg p-4 flex flex-col gap-3">
+      {/* =====================================================
+          FILTER BAR
+      ===================================================== */}
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, username, email, or group…"
-          className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist"
-        />
+      <div className="rounded-xl border border-line bg-panel p-3 flex flex-col gap-3">
 
-        {view === 'all' && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
-            <select
-              value={groupFilter}
-              onChange={(e) =>
-                setGroupFilter(e.target.value)
-              }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
-            >
-              <option value="all">
-                All groups
-              </option>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, username, email, or group…"
+            className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist"
+          />
 
-              <option value="none">
-                No group
-              </option>
+          {view === 'all' ? (
+            <div className="flex flex-wrap gap-2">
 
-              {groups.map((group) => (
-                <option
-                  key={group.id}
-                  value={group.id}
-                >
-                  {group.name}
+              <select
+                value={groupFilter}
+                onChange={(e) =>
+                  setGroupFilter(e.target.value)
+                }
+                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+              >
+                <option value="all">
+                  All groups
                 </option>
-              ))}
-            </select>
 
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value)
-              }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+                <option value="none">
+                  No group
+                </option>
+
+                {groups.map((group) => (
+                  <option
+                    key={group.id}
+                    value={group.id}
+                  >
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value)
+                }
+                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+              >
+                <option value="approved">
+                  Approved
+                </option>
+
+                <option value="pending">
+                  Pending
+                </option>
+
+                <option value="rejected">
+                  Rejected
+                </option>
+
+                <option value="all">
+                  All statuses
+                </option>
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(e.target.value)
+                }
+                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+              >
+                <option value="name-asc">
+                  Name A–Z
+                </option>
+
+                <option value="name-desc">
+                  Name Z–A
+                </option>
+
+                <option value="newest">
+                  Newest first
+                </option>
+
+                <option value="oldest">
+                  Oldest first
+                </option>
+              </select>
+
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setView('all')}
+              className="focus-ring shrink-0 rounded-md border border-line px-3 py-2 text-sm text-mist transition hover:text-paper"
             >
-              <option value="approved">
-                Approved
-              </option>
+              ← Back to all students
+            </button>
+          )}
 
-              <option value="pending">
-                Pending
-              </option>
-
-              <option value="rejected">
-                Rejected
-              </option>
-
-              <option value="all">
-                All statuses
-              </option>
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) =>
-                setSortBy(e.target.value)
-              }
-              className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
-            >
-              <option value="name-asc">
-                Name A–Z
-              </option>
-
-              <option value="name-desc">
-                Name Z–A
-              </option>
-
-              <option value="newest">
-                Newest first
-              </option>
-
-              <option value="oldest">
-                Oldest first
-              </option>
-            </select>
-
-          </div>
-        )}
+        </div>
 
         <div className="flex items-center justify-between gap-2 flex-wrap">
 
@@ -1002,10 +1056,14 @@ export default function TeacherStudents({ onStartChat }) {
           {(search ||
             groupFilter !== 'all' ||
             statusFilter !== 'approved' ||
-            sortBy !== 'name-asc') && (
+            sortBy !== 'name-asc' ||
+            view !== 'all') && (
             <button
               type="button"
-              onClick={clearFilters}
+              onClick={() => {
+                clearFilters()
+                setView('all')
+              }}
               className="focus-ring text-xs text-brass hover:underline"
             >
               Clear filters
@@ -1111,196 +1169,237 @@ export default function TeacherStudents({ onStartChat }) {
 
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        /* =====================================================
+           STUDENT TABLE — a real data table (one row per student,
+           real columns) instead of a stack of card-rows, so this
+           reads like the rest of a professional admin product
+           instead of a scrolling list of tickets.
+        ===================================================== */
+        <div className="overflow-hidden rounded-xl border border-line">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
 
-          {filteredStudents.map((student) => {
-            const studentGroups =
-              getStudentGroups(student.id)
+              <thead>
+                <tr className="border-b border-line bg-panel-2">
+                  <th className="w-10 px-3 py-2.5" />
+                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
+                    Student
+                  </th>
+                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
+                    Groups
+                  </th>
+                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
+                    Status
+                  </th>
+                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
+                    Joined
+                  </th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium uppercase tracking-wide text-mist">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
 
-            const isSelected = selectedIds.has(student.id)
+              <tbody>
+                {filteredStudents.map((student) => {
+                  const studentGroups =
+                    getStudentGroups(student.id)
 
-            return (
-              <div
-                key={student.id}
-                className={`ticket rounded-xl px-3.5 py-3 transition ${
-                  isSelected
-                    ? 'ring-2 ring-brass/50'
-                    : ''
-                }`}
-              >
+                  const isSelected = selectedIds.has(student.id)
 
-                <div className="flex flex-wrap items-center gap-3">
-
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() =>
-                      toggleSelected(student.id)
-                    }
-                    aria-label={`Select ${student.full_name}`}
-                    className="h-4 w-4 shrink-0 accent-brass"
-                  />
-
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-sm font-semibold text-paper shadow-[0_4px_10px_-4px_rgba(0,0,0,0.35)]">
-                    {student.avatar_url ? (
-                      <img
-                        src={student.avatar_url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      String(
-                        student.full_name ||
-                          student.username ||
-                          '?'
-                      )
-                        .charAt(0)
-                        .toUpperCase()
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="truncate font-display text-[15px] text-paper">
-                        {student.full_name}
-                      </span>
-
-                      <span className="shrink-0 text-mist text-xs font-mono">
-                        @{student.username}
-                      </span>
-                    </div>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-
-                      {studentGroups.length === 0 ? (
-                        <span className="text-mist text-xs">
-                          No group
-                        </span>
-                      ) : (
-                        studentGroups.map((group) => {
-                          const chip = getGroupChipStyle(group.id)
-
-                          return (
-                            <span
-                              key={group.id}
-                              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
-                            >
-                              {group.name}
-
-                              <button
-                                type="button"
-                                disabled={
-                                  busyAction ===
-                                  `remove-${student.id}-${group.id}`
-                                }
-                                onClick={() =>
-                                  removeFromGroup(
-                                    student,
-                                    group
-                                  )
-                                }
-                                className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
-                                title="Remove from group"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          )
-                        })
-                      )}
-
-                    </div>
-
-                  </div>
-
-                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-
-                    {student.target_band != null && (
-                      <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-brass/40 bg-brass/10 text-brass">
-                        <TargetBandIcon value={student.target_band} className="h-3.5 w-3.5" />
-                        <span>
-                          {formatTargetBand(student.target_band)}
-                        </span>
-                      </span>
-                    )}
-
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        student.status === 'approved'
-                          ? 'bg-sage text-onbrass'
-                          : student.status === 'pending'
-                          ? 'border border-brass text-brass'
-                          : 'border border-coral text-coral'
+                  return (
+                    <tr
+                      key={student.id}
+                      className={`border-b border-line bg-panel transition last:border-b-0 hover:bg-panel-2/60 ${
+                        isSelected ? 'bg-brass/5' : ''
                       }`}
                     >
-                      {student.status}
-                    </span>
 
-                  </div>
+                      <td className="px-3 py-2.5 align-top">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() =>
+                            toggleSelected(student.id)
+                          }
+                          aria-label={`Select ${student.full_name}`}
+                          className="mt-1 h-4 w-4 shrink-0 accent-brass"
+                        />
+                      </td>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="flex items-center gap-2.5">
 
-                    <select
-                      defaultValue=""
-                      onChange={(e) => {
-                        const groupId = e.target.value
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-sm font-semibold text-paper">
+                            {student.avatar_url ? (
+                              <img
+                                src={student.avatar_url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              String(
+                                student.full_name ||
+                                  student.username ||
+                                  '?'
+                              )
+                                .charAt(0)
+                                .toUpperCase()
+                            )}
+                          </div>
 
-                        if (groupId) {
-                          addToGroup(
-                            student,
-                            groupId
-                          )
-                        }
+                          <div className="min-w-0">
 
-                        e.target.value = ''
-                      }}
-                      disabled={
-                        student.status !== 'approved'
-                      }
-                      title="Add to group"
-                      className="focus-ring bg-panel-2 border border-line rounded-full px-2.5 py-1.5 text-xs text-paper disabled:opacity-40"
-                    >
-                      <option value="">
-                        Add to group…
-                      </option>
+                            <div className="flex flex-wrap items-baseline gap-x-1.5">
+                              <span className="truncate font-display text-[15px] text-paper">
+                                {student.full_name}
+                              </span>
 
-                      {groups
-                        .filter(
-                          (group) =>
-                            !studentGroups.some(
-                              (g) =>
-                                g.id === group.id
-                            )
-                        )
-                        .map((group) => (
-                          <option
-                            key={group.id}
-                            value={group.id}
+                              <span className="shrink-0 font-mono text-xs text-mist">
+                                @{student.username}
+                              </span>
+                            </div>
+
+                            {student.target_band != null && (
+                              <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-brass">
+                                <TargetBandIcon value={student.target_band} className="h-3 w-3" />
+                                Target {formatTargetBand(student.target_band)}
+                              </span>
+                            )}
+
+                          </div>
+
+                        </div>
+                      </td>
+
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="flex max-w-[220px] flex-wrap items-center gap-1.5">
+
+                          {studentGroups.length === 0 ? (
+                            <span className="text-xs text-mist">
+                              No group
+                            </span>
+                          ) : (
+                            studentGroups.map((group) => {
+                              const chip = getGroupChipStyle(group.id)
+
+                              return (
+                                <span
+                                  key={group.id}
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
+                                >
+                                  {group.name}
+
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      busyAction ===
+                                      `remove-${student.id}-${group.id}`
+                                    }
+                                    onClick={() =>
+                                      removeFromGroup(
+                                        student,
+                                        group
+                                      )
+                                    }
+                                    className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
+                                    title="Remove from group"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              )
+                            })
+                          )}
+
+                        </div>
+                      </td>
+
+                      <td className="px-3 py-2.5 align-top">
+                        <span
+                          className={`inline-block rounded-full px-2 py-1 text-xs ${
+                            student.status === 'approved'
+                              ? 'bg-sage text-onbrass'
+                              : student.status === 'pending'
+                              ? 'border border-brass text-brass'
+                              : 'border border-coral text-coral'
+                          }`}
+                        >
+                          {student.status}
+                        </span>
+                      </td>
+
+                      <td className="whitespace-nowrap px-3 py-2.5 align-top font-mono text-xs text-mist">
+                        {student.created_at
+                          ? new Date(student.created_at).toLocaleDateString()
+                          : '—'}
+                      </td>
+
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+
+                          <select
+                            defaultValue=""
+                            onChange={(e) => {
+                              const groupId = e.target.value
+
+                              if (groupId) {
+                                addToGroup(
+                                  student,
+                                  groupId
+                                )
+                              }
+
+                              e.target.value = ''
+                            }}
+                            disabled={
+                              student.status !== 'approved'
+                            }
+                            title="Add to group"
+                            className="focus-ring bg-panel-2 border border-line rounded-full px-2.5 py-1.5 text-xs text-paper disabled:opacity-40"
                           >
-                            {group.name}
-                          </option>
-                        ))}
-                    </select>
+                            <option value="">
+                              Add to group…
+                            </option>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedStudent(student)
-                      }
-                      className="focus-ring px-2.5 py-1.5 rounded-full border border-line text-xs text-mist transition hover:border-brass/40 hover:text-brass"
-                    >
-                      Details
-                    </button>
+                            {groups
+                              .filter(
+                                (group) =>
+                                  !studentGroups.some(
+                                    (g) =>
+                                      g.id === group.id
+                                  )
+                              )
+                              .map((group) => (
+                                <option
+                                  key={group.id}
+                                  value={group.id}
+                                >
+                                  {group.name}
+                                </option>
+                              ))}
+                          </select>
 
-                  </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedStudent(student)
+                            }
+                            className="focus-ring px-2.5 py-1.5 rounded-full border border-line text-xs text-mist transition hover:border-brass/40 hover:text-brass"
+                          >
+                            Details
+                          </button>
 
-                </div>
+                        </div>
+                      </td>
 
-              </div>
-            )
-          })}
+                    </tr>
+                  )
+                })}
+              </tbody>
 
+            </table>
+          </div>
         </div>
       )}
 
@@ -1501,9 +1600,13 @@ export default function TeacherStudents({ onStartChat }) {
                         selectedStudent
                       )
                     }
-                    className="focus-ring rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-mist transition hover:border-brass hover:text-brass"
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-mist transition hover:border-brass hover:text-brass"
                   >
-                    🔑 Reset password
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="8" cy="15" r="4" />
+                      <path d="M10.5 12.5 19 4M17 6l2 2M14 9l2 2" />
+                    </svg>
+                    Reset password
                   </button>
 
                   {onStartChat && (
@@ -1513,9 +1616,12 @@ export default function TeacherStudents({ onStartChat }) {
                         onStartChat(selectedStudent)
                         setSelectedStudent(null)
                       }}
-                      className="focus-ring rounded-xl border border-brass px-4 py-2.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
+                      className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-brass px-4 py-2.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
                     >
-                      💬 Chat with student
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                      </svg>
+                      Chat with student
                     </button>
                   )}
 

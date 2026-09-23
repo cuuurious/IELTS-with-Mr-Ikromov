@@ -329,21 +329,20 @@ export default function NotificationBell({ profile }) {
         className="
           focus-ring
           relative
-          w-10
-          h-10
-          rounded-full
+          w-9
+          h-9
+          rounded-[10px]
           border
-          border-amber/25
-          bg-amber/10
+          border-line
+          bg-panel-2
           flex
           items-center
           justify-center
-          text-amber
-          shadow-sm
-          hover:border-amber/50
-          hover:bg-amber/20
-          transition-all
-          duration-200
+          text-mist
+          shrink-0
+          hover:text-paper
+          hover:border-brass/40
+          transition-colors
         "
         title="Notifications"
         aria-label="Notifications"
