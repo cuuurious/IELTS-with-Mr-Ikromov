@@ -15,7 +15,7 @@ import Layout, {
 import GroupWorkspace from './GroupWorkspace'
 import TeacherStudents from './TeacherStudents'
 import PendingApprovals from './PendingApprovals'
-import TeacherChat from './TeacherChat'
+import PrivateChats from '../../components/PrivateChats'
 import TeacherGroupChats from './TeacherGroupChats'
 import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
@@ -314,12 +314,13 @@ export default function TeacherDashboard() {
       )}
 
       {tab === 'chat' && (
-        <TeacherChat
-          teacherId={profile.id}
-          initialStudentId={
+        <PrivateChats
+          selfId={profile.id}
+          selfRole="teacher"
+          initialPeerId={
             notificationChat?.studentId
           }
-          initialStudentName={
+          initialPeerName={
             notificationChat?.studentName
           }
           initialMessageId={

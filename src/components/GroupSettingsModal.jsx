@@ -58,6 +58,20 @@ export default function GroupSettingsModal({
   const [viewingProfileId, setViewingProfileId] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
 
+  // "Recent activity" (message edits/deletions) used to live as a
+  // separate button + side panel in GroupChat.jsx's own header. Moved
+  // in here instead, since it's a moderation/admin detail about the
+  // group — same shelf as the member list and promote/remove controls
+  // — rather than something that belongs in the day-to-day chat view.
+  // Staff-only, and loaded lazily (only once opened) since most visits
+  // to Group info never need it.
+  const [activityOpen, setActivityOpen] = useState(false)
+  const [activityLoaded, setActivityLoaded] = useState(false)
+  const [loadingActivity, setLoadingActivity] = useState(false)
+  const [activityError, setActivityError] = useState('')
+  const [actions, setActions] = useState([])
+  const [activityProfiles, setActivityProfiles] = useState({})
+
   const loadMembers = async () => {
     if (!group?.id) return
 
@@ -162,6 +176,56 @@ export default function GroupSettingsModal({
 
     setMembers(merged)
     setLoadingMembers(false)
+  }
+
+  const loadActivity = async () => {
+    if (!group?.id || !isStaff) return
+
+    setLoadingActivity(true)
+    setActivityError('')
+
+    const { data, error } = await supabase
+      .from('group_message_actions')
+      .select('*')
+      .eq('group_id', group.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error) {
+      setActivityError(error.message)
+      setLoadingActivity(false)
+      return
+    }
+
+    const rows = data || []
+    setActions(rows)
+
+    const ids = [
+      ...new Set(
+        [
+          ...rows.map((a) => a.actor_id),
+          ...rows.map((a) => a.target_sender_id),
+        ].filter(Boolean)
+      ),
+    ]
+
+    if (ids.length) {
+      const { data: profileRows, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, username')
+        .in('id', ids)
+
+      if (!profileError) {
+        const map = {}
+        ;(profileRows || []).forEach((p) => {
+          map[p.id] = p
+        })
+        setActivityProfiles(map)
+      }
+    }
+
+    setActivityLoaded(true)
+    setLoadingActivity(false)
   }
 
   const loadAvailableTeachers = async () => {
@@ -729,6 +793,83 @@ export default function GroupSettingsModal({
               </div>
             )}
           </div>
+
+          {/* STAFF-ONLY: RECENT ACTIVITY (moved here from the chat header) */}
+
+          {isStaff && (
+            <div className="border-t border-line pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
+                  Recent activity
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivityOpen((v) => !v)
+                    if (!activityOpen && !activityLoaded) loadActivity()
+                  }}
+                  className="text-xs font-medium text-brass hover:text-brass-dim"
+                >
+                  {activityOpen ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {activityOpen && (
+                <div className="max-h-64 overflow-y-auto">
+                  {activityError && (
+                    <p className="mb-2 text-xs text-coral">{activityError}</p>
+                  )}
+
+                  {loadingActivity ? (
+                    <p className="text-sm text-mist">Loading…</p>
+                  ) : actions.length === 0 ? (
+                    <p className="text-sm text-mist">No edits or deletions yet.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {actions.map((action) => (
+                        <div
+                          key={action.id}
+                          className="rounded-lg border border-line bg-panel p-3 text-xs"
+                        >
+                          <div className="flex justify-between gap-2">
+                            <span
+                              className={
+                                action.action === 'deleted'
+                                  ? 'text-coral'
+                                  : 'text-brass'
+                              }
+                            >
+                              {action.action}
+                            </span>
+
+                            <span className="text-mist">
+                              {new Date(action.created_at).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 text-paper-dim">
+                            {activityProfiles[action.actor_id]?.full_name ||
+                              'Teacher'}{' '}
+                            {action.action} a message from{' '}
+                            {activityProfiles[action.target_sender_id]
+                              ?.full_name || 'student'}
+                            .
+                          </div>
+
+                          {action.new_content && (
+                            <div className="mt-2 text-mist truncate">
+                              {action.new_content}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* STUDENT-ONLY: MUTE + LEAVE */}
 

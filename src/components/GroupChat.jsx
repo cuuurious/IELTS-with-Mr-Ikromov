@@ -80,7 +80,6 @@ export default function GroupChat({
   const [messages, setMessages] = useState([])
   const [profiles, setProfiles] = useState({})
   const [reactions, setReactions] = useState({})
-  const [actions, setActions] = useState([])
 
   // Messages this member has hidden from their own view only —
   // "Delete for me". The row stays for everyone else in the group.
@@ -118,7 +117,6 @@ export default function GroupChat({
 
   const [selfRole, setSelfRole] = useState('student')
   const [viewingProfileId, setViewingProfileId] = useState(null)
-  const [showActions, setShowActions] = useState(false)
 
   // The group's own row (name/photo/description/creator) — tapping
   // the header's avatar or name opens GroupSettingsModal, Telegram's
@@ -276,33 +274,6 @@ export default function GroupChat({
     }
 
     setPins(data || [])
-  }
-
-  const loadActions = async () => {
-    if (selfRole !== 'teacher') return
-
-    const { data, error } = await supabase
-      .from('group_message_actions')
-      .select('*')
-      .eq('group_id', groupId)
-      .order('created_at', {
-        ascending: false,
-      })
-      .limit(50)
-
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    const rows = data || []
-
-    setActions(rows)
-
-    await loadProfiles([
-      ...rows.map((a) => a.actor_id),
-      ...rows.map((a) => a.target_sender_id),
-    ])
   }
 
   useEffect(() => {
@@ -463,19 +434,6 @@ export default function GroupChat({
       )
 
       .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'group_message_actions',
-          filter: `group_id=eq.${groupId}`,
-        },
-        () => {
-          loadActions()
-        }
-      )
-
-      .on(
         // Keeps "Delete for me" in sync if this member has the group
         // open in another tab or device.
         'postgres_changes',
@@ -522,12 +480,6 @@ export default function GroupChat({
       supabase.removeChannel(channel)
     }
   }, [groupId, selfRole, selfId])
-
-  useEffect(() => {
-    if (selfRole === 'teacher') {
-      loadActions()
-    }
-  }, [groupId, selfRole])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -1700,26 +1652,6 @@ export default function GroupChat({
             {selectMode ? 'Cancel' : 'Select'}
           </button>
 
-          {selfRole === 'teacher' && (
-            <button
-              type="button"
-              onClick={() =>
-                setShowActions(
-                  (value) => !value
-                )
-              }
-              className={`focus-ring rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
-                showActions
-                  ? 'border-brass/50 bg-brass/15 text-brass'
-                  : 'border-line text-mist hover:border-brass hover:text-brass'
-              }`}
-            >
-              {showActions
-                ? 'Hide activity'
-                : 'Recent activity'}
-            </button>
-          )}
-
         </div>
 
       </div>
@@ -2324,76 +2256,6 @@ export default function GroupChat({
           <div ref={bottomRef} />
 
         </div>
-
-        {showActions &&
-          selfRole === 'teacher' && (
-          <aside className="w-72 border-l border-line bg-panel-2/60 overflow-y-auto p-3 hidden lg:block">
-
-            <div className="text-xs uppercase tracking-wide text-mist font-mono mb-3">
-              Recent message actions
-            </div>
-
-            {actions.length === 0 && (
-              <p className="text-xs text-mist">
-                No edits or deletions yet.
-              </p>
-            )}
-
-            <div className="space-y-2">
-
-              {actions.map((action) => (
-                <div
-                  key={action.id}
-                  className="rounded-lg border border-line bg-panel p-3 text-xs"
-                >
-
-                  <div className="flex justify-between gap-2">
-
-                    <span
-                      className={
-                        action.action ===
-                        'deleted'
-                          ? 'text-coral'
-                          : 'text-brass'
-                      }
-                    >
-                      {action.action}
-                    </span>
-
-                    <span className="text-mist">
-                      {new Date(
-                        action.created_at
-                      ).toLocaleString()}
-                    </span>
-
-                  </div>
-
-                  <div className="mt-1 text-paper-dim">
-                    {profiles[
-                      action.actor_id
-                    ]?.full_name ||
-                      'Teacher'}{' '}
-                    {action.action}{' '}
-                    a message from{' '}
-                    {profiles[
-                      action.target_sender_id
-                    ]?.full_name ||
-                      'student'}.
-                  </div>
-
-                  {action.new_content && (
-                    <div className="mt-2 text-mist truncate">
-                      {action.new_content}
-                    </div>
-                  )}
-
-                </div>
-              ))}
-
-            </div>
-
-          </aside>
-        )}
 
       </div>
 

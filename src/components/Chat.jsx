@@ -45,6 +45,7 @@ export default function Chat({
   peerId,
   peerName,
   targetMessageId = null,
+  onDeleted = null,
 }) {
   const [messages, setMessages] = useState([])
   const [reactions, setReactions] = useState({})
@@ -101,6 +102,11 @@ export default function Chat({
     useState(null)
 
   const [confirmDialog, setConfirmDialog] = useState(null)
+
+  // The small "Delete chat" menu opened from the trash icon in the
+  // header — separate from menuMessage/menuPosition above, which is
+  // for the per-message "⋯" menu instead.
+  const [chatMenuOpen, setChatMenuOpen] = useState(false)
 
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
@@ -209,6 +215,31 @@ export default function Chat({
     setReactions(grouped)
   }
 
+  // Private chat had no equivalent of group chat's "last read" marker
+  // until now — this is what lets the conversation list show/clear an
+  // unread badge for this peer. Called once whenever this chat is
+  // opened, and again on every incoming message while it stays open,
+  // so the badge never lingers on a conversation the user is actively
+  // looking at.
+  const markRead = async () => {
+    if (!selfId || !peerId) return
+
+    const { error: readError } = await supabase
+      .from('private_chat_reads')
+      .upsert(
+        {
+          user_id: selfId,
+          peer_id: peerId,
+          last_read_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,peer_id' }
+      )
+
+    if (readError) {
+      console.error('Failed to mark chat as read:', readError)
+    }
+  }
+
   const loadPins = async (messageIds) => {
     const ids =
       messageIds && messageIds.length
@@ -291,6 +322,7 @@ export default function Chat({
         setMessages(rows)
         await loadReactions(rows)
         await loadPins(rows.map((row) => row.id))
+        await markRead()
       }
 
       const { data: deletions, error: deletionsError } =
@@ -334,6 +366,13 @@ export default function Chat({
 
               return [...prev, m]
             })
+
+            // The chat is open right now, so a message that just
+            // arrived FROM the other person should never sit there
+            // showing as unread back in the conversation list.
+            if (m.sender_id === peerId) {
+              markRead()
+            }
           }
         }
       )
@@ -804,6 +843,77 @@ export default function Chat({
 
   const canDeleteEveryone = (message) =>
     message.sender_id === selfId || selfRole === 'teacher'
+
+  /*
+   * ============================================================
+   * DELETE WHOLE CONVERSATION (Telegram's "Delete chat" dialog)
+   * ============================================================
+   * Separate from deleting individual messages above.
+   *  - "Delete for me" hides the entire history from just this
+   *    account's own view — the same `message_deletions` marker
+   *    already used for a single message, just applied to every
+   *    message in this conversation at once. The other person's copy
+   *    is completely untouched.
+   *  - "Delete for everyone" only shows up for the teacher: it's a
+   *    real delete, and a student's own delete permission only ever
+   *    covers messages THEY sent (see the "everyone" rule above), so
+   *    a student "deleting everyone" would just silently leave the
+   *    other side's messages behind — worse than not offering it.
+   * Both hand off to the parent (the conversation list) via
+   * `onDeleted`, since this component is about to have nothing left
+   * to show once its own history is gone.
+   * ============================================================
+   */
+
+  const requestDeleteConversation = (mode) => {
+    setChatMenuOpen(false)
+
+    setConfirmDialog({
+      title:
+        mode === 'everyone'
+          ? `Delete this chat with ${peerName} for everyone?`
+          : `Delete this chat with ${peerName}?`,
+      message:
+        mode === 'everyone'
+          ? "This permanently deletes the whole conversation for both of you. This can't be undone."
+          : "This removes the conversation from your own chat list. It stays exactly as-is for the other person.",
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'coral',
+      onConfirm: () => doDeleteConversation(mode),
+    })
+  }
+
+  const doDeleteConversation = async (mode) => {
+    const ids = messagesRef.current.map((m) => m.id)
+
+    try {
+      if (mode === 'everyone') {
+        if (ids.length) {
+          const { error: deleteError } = await supabase
+            .from('messages')
+            .delete()
+            .in('id', ids)
+
+          if (deleteError) throw deleteError
+        }
+      } else if (ids.length) {
+        const { error: hideError } = await supabase
+          .from('message_deletions')
+          .upsert(
+            ids.map((id) => ({ message_id: id, user_id: selfId })),
+            { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+          )
+
+        if (hideError) throw hideError
+      }
+
+      onDeleted?.(peerId, mode)
+    } catch (err) {
+      console.error('Failed to delete conversation:', err)
+      setError(err?.message || 'Could not delete this conversation.')
+    }
+  }
 
   const canEdit = (message) =>
     message.sender_id === selfId &&
@@ -1503,6 +1613,53 @@ export default function Chat({
         >
           {selectMode ? 'Cancel' : 'Select'}
         </button>
+
+        {/* "Delete chat" — Telegram's delete-for-me/delete-for-everyone
+            choice for the WHOLE conversation, not just one message. */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setChatMenuOpen((v) => !v)}
+            title="Delete chat"
+            aria-label="Delete chat"
+            className={`focus-ring flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
+              chatMenuOpen
+                ? 'border-coral/50 bg-coral/10 text-coral'
+                : 'border-line text-mist hover:border-coral hover:text-coral'
+            }`}
+          >
+            🗑
+          </button>
+
+          {chatMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setChatMenuOpen(false)}
+              />
+
+              <div className="absolute right-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-lg border border-line bg-panel-2 py-1 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => requestDeleteConversation('me')}
+                  className="block w-full px-3 py-2 text-left text-sm text-paper hover:bg-panel"
+                >
+                  Delete for me
+                </button>
+
+                {selfRole === 'teacher' && (
+                  <button
+                    type="button"
+                    onClick={() => requestDeleteConversation('everyone')}
+                    className="block w-full px-3 py-2 text-left text-sm text-coral hover:bg-panel"
+                  >
+                    Delete for everyone
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
       </div>
 

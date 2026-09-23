@@ -20,7 +20,7 @@ import HomeworkCard from './HomeworkCard'
 import GroupChat from '../../components/GroupChat'
 import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
-import Chat from '../../components/Chat'
+import PrivateChats from '../../components/PrivateChats'
 
 export default function StudentDashboard() {
   const { profile } = useAuth()
@@ -53,16 +53,18 @@ export default function StudentDashboard() {
     useState(null)
 
   /*
-   * The person currently selected for a private chat.
-   *
-   * null = no student selected,
-   * so the Chats tab falls back to the teacher.
+   * A notification (or a push while the app is closed) can ask the
+   * Chats tab to open already pointed at a specific person/message —
+   * PrivateChats itself now owns everything else about the private
+   * chat list (who's in it, search, preview, unread, delete), the
+   * same shared component the teacher side uses.
    */
-  const [chatPeer, setChatPeer] =
-  useState(null)
-
-const [chatContacts, setChatContacts] =
-  useState([])
+  const [notificationChatPeerId, setNotificationChatPeerId] =
+    useState(null)
+  const [notificationChatPeerName, setNotificationChatPeerName] =
+    useState(null)
+  const [notificationChatMessageId, setNotificationChatMessageId] =
+    useState(null)
 
 const [loading, setLoading] =
   useState(true)
@@ -285,423 +287,6 @@ const [loading, setLoading] =
     profile?.id,
   ])
 
-  /*
- * ============================================================
- * LOAD PRIVATE CHAT CONTACTS
- * ============================================================
- *
- * The teacher is always available.
- *
- * Every student who has exchanged at least one private
- * message with the current student is also shown.
- *
- * The currently selected chat is always preserved.
- * ============================================================
- */
-useEffect(() => {
-  if (!profile?.id) return
-
-  let cancelled = false
-
-  const addContactFromProfile = (
-    person,
-    lastMessageAt = null
-  ) => {
-    if (!person?.id) {
-      return
-    }
-
-    setChatContacts((previous) => {
-      const existingIndex =
-        previous.findIndex(
-          (contact) =>
-            contact.id === person.id
-        )
-
-      const newContact = {
-        id: person.id,
-        full_name:
-          person.full_name ||
-          person.username ||
-          (person.role === 'teacher'
-            ? 'Teacher'
-            : 'Student'),
-        username:
-          person.username || '',
-        role:
-          person.role ||
-          'student',
-        lastMessageAt,
-      }
-
-      /*
-       * Contact already exists.
-       *
-       * Update its information, but NEVER remove it.
-       */
-      if (existingIndex !== -1) {
-        const updated = [
-          ...previous,
-        ]
-
-        updated[
-          existingIndex
-        ] = {
-          ...updated[
-            existingIndex
-          ],
-          ...newContact,
-          lastMessageAt:
-            lastMessageAt ||
-            updated[
-              existingIndex
-            ].lastMessageAt ||
-            null,
-        }
-
-        return updated
-      }
-
-      /*
-       * New conversation.
-       */
-      return [
-        ...previous,
-        newContact,
-      ]
-    })
-  }
-
-  const loadChatContacts =
-    async () => {
-      try {
-        /*
-         * Load every private message involving
-         * the current student.
-         */
-        const {
-          data: messages,
-          error: messagesError,
-        } = await supabase
-          .from('messages')
-          .select(
-            'sender_id, receiver_id, created_at'
-          )
-          .or(
-            `sender_id.eq.${profile.id},receiver_id.eq.${profile.id}`
-          )
-          .order(
-            'created_at',
-            {
-              ascending: false,
-            }
-          )
-
-        if (messagesError) {
-          console.error(
-            'Failed to load chat contacts:',
-            messagesError
-          )
-          return
-        }
-
-        /*
-         * Build a unique list of people who have
-         * exchanged messages with this student.
-         *
-         * Map keeps the newest message for each person.
-         */
-        const latestByPeer =
-          new Map()
-
-        ;(messages || []).forEach(
-          (message) => {
-            const peerId =
-              message.sender_id ===
-              profile.id
-                ? message.receiver_id
-                : message.sender_id
-
-            if (
-              !peerId ||
-              peerId === profile.id
-            ) {
-              return
-            }
-
-            if (
-              !latestByPeer.has(
-                peerId
-              )
-            ) {
-              latestByPeer.set(
-                peerId,
-                message.created_at ||
-                  null
-              )
-            }
-          }
-        )
-
-        const peerIds =
-          Array.from(
-            latestByPeer.keys()
-          )
-
-        let loadedContacts = []
-
-        if (
-          peerIds.length > 0
-        ) {
-          const {
-            data: peerProfiles,
-            error: profileError,
-          } = await supabase
-            .from('profiles')
-            .select(
-              'id, full_name, username, role'
-            )
-            .in(
-              'id',
-              peerIds
-            )
-
-          if (profileError) {
-            console.error(
-              'Failed to load chat profiles:',
-              profileError
-            )
-          } else {
-            loadedContacts =
-              (
-                peerProfiles || []
-              ).map(
-                (person) => ({
-                  id:
-                    person.id,
-                  full_name:
-                    person.full_name ||
-                    person.username ||
-                    'Student',
-                  username:
-                    person.username ||
-                    '',
-                  role:
-                    person.role ||
-                    'student',
-                  lastMessageAt:
-                    latestByPeer.get(
-                      person.id
-                    ) || null,
-                })
-              )
-          }
-        }
-
-        /*
-         * Teacher is ALWAYS available.
-         */
-        if (
-          teacher?.id
-        ) {
-          const teacherContact = {
-            id:
-              teacher.id,
-            full_name:
-              teacher.full_name ||
-              teacher.username ||
-              'Teacher',
-            username:
-              teacher.username ||
-              '',
-            role:
-              'teacher',
-            lastMessageAt:
-              latestByPeer.get(
-                teacher.id
-              ) || null,
-          }
-
-          const teacherAlreadyLoaded =
-            loadedContacts.some(
-              (contact) =>
-                contact.id ===
-                teacher.id
-            )
-
-          if (
-            !teacherAlreadyLoaded
-          ) {
-            loadedContacts.push(
-              teacherContact
-            )
-          }
-        }
-
-        /*
-         * Sort newest conversation first.
-         * Teacher with no messages goes after
-         * existing conversations.
-         */
-        loadedContacts.sort(
-          (a, b) => {
-            const aTime =
-              a.lastMessageAt
-                ? new Date(
-                    a.lastMessageAt
-                  ).getTime()
-                : 0
-
-            const bTime =
-              b.lastMessageAt
-                ? new Date(
-                    b.lastMessageAt
-                  ).getTime()
-                : 0
-
-            return (
-              bTime - aTime
-            )
-          }
-        )
-
-        if (
-          cancelled
-        ) {
-          return
-        }
-
-        /*
-         * INITIAL LOAD ONLY.
-         *
-         * This is the only place where we replace
-         * the complete list.
-         */
-        setChatContacts(
-          loadedContacts
-        )
-      } catch (err) {
-        if (
-          cancelled
-        ) {
-          return
-        }
-
-        console.error(
-          'Chat contacts error:',
-          err
-        )
-      }
-    }
-
-  /*
-   * Initial database load.
-   */
-  loadChatContacts()
-
-  /*
-   * REALTIME:
-   *
-   * New messages are MERGED into the existing
-   * chat list.
-   *
-   * We do NOT call loadChatContacts() here.
-   * That is important because doing so can replace
-   * the existing list and make old conversations
-   * disappear.
-   */
-  const channel =
-    supabase
-      .channel(
-        `student-chat-contacts-${profile.id}`
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        async (payload) => {
-          const message =
-            payload.new
-
-          const involvesMe =
-            message.sender_id ===
-              profile.id ||
-            message.receiver_id ===
-              profile.id
-
-          if (
-            !involvesMe
-          ) {
-            return
-          }
-
-          const peerId =
-            message.sender_id ===
-            profile.id
-              ? message.receiver_id
-              : message.sender_id
-
-          if (
-            !peerId ||
-            peerId === profile.id
-          ) {
-            return
-          }
-
-          /*
-           * Get the person's profile.
-           */
-          const {
-            data: person,
-            error: personError,
-          } = await supabase
-            .from('profiles')
-            .select(
-              'id, full_name, username, role'
-            )
-            .eq(
-              'id',
-              peerId
-            )
-            .maybeSingle()
-
-          if (
-            personError
-          ) {
-            console.error(
-              'Failed to load new chat contact:',
-              personError
-            )
-            return
-          }
-
-          if (
-            person
-          ) {
-            addContactFromProfile(
-              person,
-              message.created_at ||
-                null
-            )
-          }
-        }
-      )
-      .subscribe()
-
-  return () => {
-    cancelled = true
-
-    supabase.removeChannel(
-      channel
-    )
-  }
-}, [
-  profile?.id,
-  teacher?.id,
-])
   
   /*
    * ============================================================
@@ -818,9 +403,9 @@ if (
   return
 }
 
-const studentId =
-  link
-    .split(':')[1]
+const linkParts = link.split(':')
+const studentId = linkParts[1]
+const messageId = linkParts[2] || null
 
         if (
           !studentId ||
@@ -860,16 +445,13 @@ const studentId =
           return
         }
 
-        setChatPeer({
-          id: student.id,
-          full_name:
-            student.full_name ||
+        setNotificationChatPeerId(student.id)
+        setNotificationChatPeerName(
+          student.full_name ||
             student.username ||
-            'Student',
-          username:
-            student.username ||
-            '',
-        })
+            'Student'
+        )
+        setNotificationChatMessageId(messageId)
 
         setTab('chats')
       }
@@ -985,11 +567,10 @@ const studentId =
       setTab(nextTab)
 
       /*
-       * Do NOT erase chatPeer when switching between
-       * leaderboard and chats.
-       *
-       * If the student clicked another student in the
-       * leaderboard, we want that person to remain selected.
+       * Intentionally does nothing else — PrivateChats keeps its own
+       * selected conversation in its own state now, so switching to
+       * and from the leaderboard or homework tabs and back never
+       * resets which chat was open.
        */
     }
 
@@ -1219,14 +800,13 @@ const studentId =
                         return
                       }
 
-                      setChatPeer({
-                        id: student.student_id,
-                        full_name:
-                          student.full_name ||
+                      setNotificationChatPeerId(student.student_id)
+                      setNotificationChatPeerName(
+                        student.full_name ||
                           student.username ||
-                          'Student',
-                        username: student.username || '',
-                      })
+                          'Student'
+                      )
+                      setNotificationChatMessageId(null)
 
                       setTab('chats')
                     }}
@@ -1278,134 +858,17 @@ const studentId =
 
         {/* ======================================================
             PRIVATE CHATS
+            Shared with the teacher side — see PrivateChats.jsx.
            ====================================================== */}
         {tab === 'chats' && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between gap-4 px-1">
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
-                <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                Messages
-              </div>
-
-              <div className="text-xs text-mist font-mono">
-                {chatContacts.length}{' '}
-                {chatContacts.length === 1
-                  ? 'conversation'
-                  : 'conversations'}
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-[320px_minmax(0,1fr)] gap-4">
-              <section className="rounded-3xl border border-line bg-panel shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-line bg-panel-2/50">
-                  <div className="font-display text-lg">
-                    Conversations
-                  </div>
-                  <div className="text-xs text-mist mt-1">
-                    Teacher and classmates
-                  </div>
-                </div>
-
-                <div className="max-h-[560px] overflow-y-auto">
-                  {chatContacts.length === 0 && (
-                    <div className="px-5 py-10 text-sm text-mist text-center">
-                      No chats yet.
-                    </div>
-                  )}
-
-                  {chatContacts.map((contact) => {
-                    const isTeacher =
-                      contact.id === teacher?.id
-
-                    const isSelected =
-                      chatPeer?.id === contact.id ||
-                      (!chatPeer && isTeacher)
-
-                    return (
-                      <button
-                        key={contact.id}
-                        type="button"
-                        onClick={() => {
-                          if (isTeacher) {
-                            setChatPeer(null)
-                          } else {
-                            setChatPeer({
-                              id: contact.id,
-                              full_name:
-                                contact.full_name ||
-                                contact.username ||
-                                'Student',
-                              username:
-                                contact.username || '',
-                            })
-                          }
-                        }}
-                        className={`w-full text-left px-4 py-3.5 border-b border-line last:border-b-0 transition-colors ${
-                          isSelected
-                            ? 'bg-brass/10'
-                            : 'hover:bg-panel-2/70'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`relative w-11 h-11 rounded-2xl flex items-center justify-center font-semibold shrink-0 ${
-                              isTeacher
-                                ? 'bg-ink text-brass border border-brass-dim/30'
-                                : 'bg-brass text-onbrass'
-                            }`}
-                          >
-                            {(
-                              contact.full_name ||
-                              contact.username ||
-                              'S'
-                            )
-                              .charAt(0)
-                              .toUpperCase()}
-
-                            {isSelected && (
-                              <span className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-panel bg-brass" />
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-paper font-medium truncate">
-                              {contact.full_name ||
-                                contact.username ||
-                                'Student'}
-                            </div>
-
-                            {isTeacher ? (
-                              <div className="text-xs text-brass mt-0.5">
-                                Teacher
-                              </div>
-                            ) : (
-                              <div className="text-xs text-mist font-mono truncate mt-0.5">
-                                {contact.username
-                                  ? `@${contact.username}`
-                                  : 'Student'}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-3xl border border-line bg-panel shadow-sm overflow-hidden min-w-0 min-h-[520px]">
-                <Chat
-                  selfId={profile.id}
-                  peerId={chatPeer?.id || teacher?.id}
-                  peerName={
-                    chatPeer?.full_name ||
-                    teacher?.full_name ||
-                    'Teacher'
-                  }
-                />
-              </section>
-            </div>
-          </section>
+          <PrivateChats
+            selfId={profile.id}
+            selfRole="student"
+            teacher={teacher}
+            initialPeerId={notificationChatPeerId}
+            initialPeerName={notificationChatPeerName}
+            initialMessageId={notificationChatMessageId}
+          />
         )}
       </div>
     </Layout>
