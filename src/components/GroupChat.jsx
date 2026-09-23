@@ -6,6 +6,7 @@ import ReactionPicker from './ReactionPicker'
 import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
 import ConfirmModal from './ConfirmModal'
+import GroupSettingsModal from './GroupSettingsModal'
 
 const MAX_FILE_MB = 25
 
@@ -118,6 +119,15 @@ export default function GroupChat({
   const [selfRole, setSelfRole] = useState('student')
   const [viewingProfileId, setViewingProfileId] = useState(null)
   const [showActions, setShowActions] = useState(false)
+
+  // The group's own row (name/photo/description/creator) — tapping
+  // the header's avatar or name opens GroupSettingsModal, Telegram's
+  // "tap the chat title for group info" pattern. Fetched here rather
+  // than required as a prop so any caller of GroupChat automatically
+  // gets this for free, same as how selfRole already works below.
+  const [groupInfo, setGroupInfo] = useState(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [leftGroup, setLeftGroup] = useState(false)
 
   const [replyingTo, setReplyingTo] = useState(null)
 
@@ -309,6 +319,16 @@ export default function GroupChat({
 
       if (active) {
         setSelfRole(data?.role || 'student')
+      }
+
+      const { data: groupRow } = await supabase
+        .from('groups')
+        .select('id, name, photo_url, description, created_by')
+        .eq('id', groupId)
+        .maybeSingle()
+
+      if (active && groupRow) {
+        setGroupInfo(groupRow)
       }
 
       await loadMessages()
@@ -1495,6 +1515,21 @@ export default function GroupChat({
     .charAt(0)
     .toUpperCase() || 'G'
 
+  // A student who just left this group (via Group info -> Leave group)
+  // no longer has a group_members row, so RLS would start rejecting
+  // every query this component makes for it — swap to a plain notice
+  // instead of letting the chat area error out trying to keep loading.
+  if (leftGroup) {
+    return (
+      <div className="flex h-[36rem] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel p-6 text-center shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)]">
+        <div className="font-display text-lg text-paper">You've left this group</div>
+        <p className="max-w-xs text-sm text-mist">
+          Switch to another group above, or ask a teacher to add you back to this one.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="group-chat-shell flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
 
@@ -1504,6 +1539,22 @@ export default function GroupChat({
         viewerRole={selfRole}
         onClose={() => setViewingProfileId(null)}
       />
+
+      {settingsOpen && (
+        <GroupSettingsModal
+          group={groupInfo || { id: groupId, name: groupName }}
+          selfId={selfId}
+          selfRole={selfRole}
+          onClose={() => setSettingsOpen(false)}
+          onUpdated={(patch) =>
+            setGroupInfo((prev) => ({ ...(prev || { id: groupId }), ...patch }))
+          }
+          onLeft={() => {
+            setSettingsOpen(false)
+            setLeftGroup(true)
+          }}
+        />
+      )}
 
       {menuMessage && (
         <MessageActionMenu
@@ -1595,23 +1646,41 @@ export default function GroupChat({
           className="pointer-events-none absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 blur-3xl"
         />
 
-        <div className="relative flex min-w-0 items-center gap-3">
+        {/*
+          * Tapping the photo/name opens group info — member list, role
+          * badges, description, and (for staff) the edit/promote
+          * controls — same as tapping a chat's title bar in Telegram.
+          */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className="focus-ring relative flex min-w-0 items-center gap-3 text-left"
+          title="Group info"
+        >
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
-            {groupInitial}
-          </div>
+          {groupInfo?.photo_url ? (
+            <img
+              src={groupInfo.photo_url}
+              alt={groupName || 'Group photo'}
+              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brass/30 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
+              {groupInitial}
+            </div>
+          )}
 
           <div className="min-w-0">
             <div className="font-display text-lg truncate">
               {groupName || 'Group chat'}
             </div>
 
-            <div className="text-xs text-mist">
-              Shared conversation · messages can be removed for everyone
+            <div className="text-xs text-mist truncate">
+              {groupInfo?.description || 'Tap for group info and members'}
             </div>
           </div>
 
-        </div>
+        </button>
 
         <div className="relative flex items-center gap-2 shrink-0">
 

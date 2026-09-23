@@ -33,6 +33,12 @@ export default function ProfileModal({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Tapping the photo itself opens it full-screen, same as tapping a
+  // member's photo in a Telegram profile — separate from the modal
+  // itself so closing the photo doesn't also close the profile card
+  // underneath it.
+  const [viewingPhoto, setViewingPhoto] = useState(false)
+
   useEffect(() => {
     if (!userId) return
 
@@ -64,6 +70,12 @@ export default function ProfileModal({
     return () => {
       active = false
     }
+  }, [userId])
+
+  // Reset any open full-screen photo whenever the profile being viewed
+  // changes (or closes), so it can never carry over onto someone else's.
+  useEffect(() => {
+    setViewingPhoto(false)
   }, [userId])
 
   if (!userId) return null
@@ -111,15 +123,23 @@ export default function ProfileModal({
           )}
 
           {!loading && profile?.avatar_url && (
-            <img
-              src={profile.avatar_url}
-              alt={
-                profile.full_name ||
-                profile.username ||
-                'Profile photo'
-              }
-              className="w-20 h-20 rounded-full object-cover border border-line"
-            />
+            <button
+              type="button"
+              onClick={() => setViewingPhoto(true)}
+              className="focus-ring rounded-full"
+              title="View photo"
+              aria-label="View photo full-screen"
+            >
+              <img
+                src={profile.avatar_url}
+                alt={
+                  profile.full_name ||
+                  profile.username ||
+                  'Profile photo'
+                }
+                className="w-20 h-20 rounded-full object-cover border border-line"
+              />
+            </button>
           )}
 
           {!loading && profile && !profile.avatar_url && (
@@ -208,6 +228,46 @@ export default function ProfileModal({
         </div>
 
       </div>
+
+      {/*
+       * Full-screen photo viewer — tapping an avatar in Telegram opens
+       * the photo large, on its own dark backdrop, dismissible with a
+       * tap anywhere. Rendered on top of the profile card itself
+       * (higher z-index), not as a separate portal, so it can't ever
+       * be reached while a profile isn't already open.
+       */}
+      {viewingPhoto && profile?.avatar_url && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-6"
+          onClick={(e) => {
+            e.stopPropagation()
+            setViewingPhoto(false)
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setViewingPhoto(false)
+            }}
+            aria-label="Close photo"
+            className="focus-ring absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          >
+            ×
+          </button>
+
+          <img
+            src={profile.avatar_url}
+            alt={
+              profile.full_name ||
+              profile.username ||
+              'Profile photo'
+            }
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   )
 }

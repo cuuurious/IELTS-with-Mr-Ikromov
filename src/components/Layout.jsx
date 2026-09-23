@@ -362,12 +362,28 @@ export default function Layout({
           SIDEBAR
           ===================================================== */}
 
+      {/*
+        * lg:static (a normal flow flex item) was the bug behind "the
+        * sidebar goes blank once I scroll down": at desktop width this
+        * aside sits in a `flex` row next to the main column, and a
+        * flex row's default align-items:stretch makes it MATCH the
+        * height of whichever sibling is taller — so once a page's main
+        * content (a long leaderboard, a long table) grew past one
+        * screen, this aside stretched just as tall and scrolled away
+        * WITH the page instead of staying put, leaving a big empty gap
+        * between the real nav items (scrolled out of view) and the
+        * user/logout footer (now stranded far down at the bottom of
+        * that stretched column). lg:sticky + lg:top-0 + lg:h-screen
+        * pins it to the viewport instead, exactly like the top bar's
+        * own `sticky top-0` already does, so it never stretches or
+        * scrolls away regardless of how long the page next to it gets.
+        */}
       <aside
         className={`
           fixed inset-y-0 left-0 z-50 flex flex-col
           bg-panel border-r border-line
           transition-transform duration-200 ease-out
-          lg:static lg:translate-x-0
+          lg:sticky lg:top-0 lg:h-screen lg:translate-x-0
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           ${collapsed ? 'lg:w-[76px]' : 'lg:w-64'}
           w-72

@@ -11,6 +11,7 @@ import {
   TARGET_BANDS,
   formatTargetBand,
 } from '../lib/targetBands'
+import { compressImageIfNeeded } from '../lib/compressImage'
 
 export default function AccountSettingsModal({ onClose }) {
   const { profile, refreshProfile, signOut } = useAuth()
@@ -115,8 +116,19 @@ export default function AccountSettingsModal({ onClose }) {
     setAvatarError('')
 
     try {
-      const extension = file.name.includes('.')
-        ? file.name.split('.').pop()
+      // This util already existed in the codebase (built for homework
+      // photo uploads) but was never actually wired up anywhere,
+      // including here — so every avatar has been uploaded at its
+      // original phone-camera size (often 3-10MB) ever since avatars
+      // shipped. That's the actual reason profile pictures have been
+      // slow to load throughout the app: a tiny 32-40px circle was
+      // fetching a multi-megabyte file every time. This shrinks it to
+      // a sensible size in the browser before it ever leaves the
+      // device — same photo, a fraction of the bytes.
+      const compressedFile = await compressImageIfNeeded(file)
+
+      const extension = compressedFile.name.includes('.')
+        ? compressedFile.name.split('.').pop()
         : 'jpg'
 
       const safeExtension =
@@ -131,9 +143,9 @@ export default function AccountSettingsModal({ onClose }) {
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, file, {
+        .upload(path, compressedFile, {
           upsert: false,
-          contentType: file.type,
+          contentType: compressedFile.type,
         })
 
       if (uploadError) throw uploadError
