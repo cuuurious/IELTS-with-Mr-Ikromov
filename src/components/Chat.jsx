@@ -664,16 +664,54 @@ export default function Chat({
       payload.reply_to_id = replyingTo.id
     }
 
-    const { error: sendError } = await supabase
+    // Optimistic bubble: the database write itself is fast (well under
+    // a second), but this UI otherwise only ever shows a new message
+    // once Supabase's realtime broadcast delivers it back — if that
+    // broadcast lags (a lot of channels are open across this app now),
+    // your own sent message can sit invisible for a long time even
+    // though it saved instantly. Showing it immediately, then
+    // reconciling with the real row once the insert resolves (or with
+    // whichever arrives first, this or the realtime echo), fixes that
+    // without needing realtime to be fast at all.
+    const tempId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...payload,
+        id: tempId,
+        created_at: new Date().toISOString(),
+        _optimistic: true,
+      },
+    ])
+
+    const { data: inserted, error: sendError } = await supabase
       .from('messages')
       .insert(payload)
+      .select()
+      .single()
 
     if (sendError) {
       console.error(sendError)
       setError(sendError.message)
       setText(content)
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
     } else {
       setReplyingTo(null)
+
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => m.id !== tempId)
+
+        // The realtime echo may have already delivered the real row
+        // while this insert was in flight — don't add it twice.
+        if (withoutTemp.some((m) => m.id === inserted.id)) {
+          return withoutTemp
+        }
+
+        return [...withoutTemp, inserted]
+      })
     }
 
     setSending(false)
@@ -1029,6 +1067,13 @@ export default function Chat({
   }
 
   const doDeleteForEveryone = async (message) => {
+    // Same reasoning as sendText's optimistic bubble: the delete itself
+    // is fast, but this view otherwise waits on a realtime DELETE event
+    // to actually remove the bubble, which can lag well behind the
+    // write completing. Remove it immediately; put it back only if the
+    // delete itself turns out to have failed.
+    setMessages((prev) => prev.filter((m) => m.id !== message.id))
+
     const { error: deleteError } = await supabase
       .from('messages')
       .delete()
@@ -1036,6 +1081,14 @@ export default function Chat({
 
     if (deleteError) {
       setError(deleteError.message)
+
+      setMessages((prev) =>
+        prev.some((m) => m.id === message.id)
+          ? prev
+          : [...prev, message].sort(
+              (a, b) => new Date(a.created_at) - new Date(b.created_at)
+            )
+      )
     }
   }
 
@@ -1453,6 +1506,10 @@ export default function Chat({
   }
 
   const doBulkDeleteForEveryone = async (ids) => {
+    const removed = messagesRef.current.filter((m) => ids.includes(m.id))
+
+    setMessages((prev) => prev.filter((m) => !ids.includes(m.id)))
+
     const { error: bulkDeleteError } = await supabase
       .from('messages')
       .delete()
@@ -1460,6 +1517,17 @@ export default function Chat({
 
     if (bulkDeleteError) {
       setError(bulkDeleteError.message)
+
+      setMessages((prev) => {
+        const merged = [
+          ...prev,
+          ...removed.filter((m) => !prev.some((p) => p.id === m.id)),
+        ]
+
+        return merged.sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at)
+        )
+      })
     }
 
     cancelSelecting()

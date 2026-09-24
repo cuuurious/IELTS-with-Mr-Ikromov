@@ -581,11 +581,47 @@ export default function GroupChat({
       payload.reply_to_id = replyToId
     }
 
-    const { error } = await supabase
+    // Optimistic bubble — shared by every send path (text, photo/video,
+    // voice/video note) since they all funnel through here. The insert
+    // itself is fast; what isn't guaranteed to be fast is Supabase's
+    // realtime broadcast, which is otherwise the ONLY thing that makes
+    // a sent message actually show up in this view. Show it right away,
+    // reconcile with the real row (or the realtime echo, whichever
+    // arrives first) once the insert resolves.
+    const tempId = `temp-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...payload,
+        id: tempId,
+        created_at: new Date().toISOString(),
+        _optimistic: true,
+      },
+    ])
+
+    const { data: inserted, error } = await supabase
       .from('group_messages')
       .insert(payload)
+      .select()
+      .single()
 
-    if (error) throw error
+    if (error) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
+      throw error
+    }
+
+    setMessages((prev) => {
+      const withoutTemp = prev.filter((m) => m.id !== tempId)
+
+      if (withoutTemp.some((m) => m.id === inserted.id)) {
+        return withoutTemp
+      }
+
+      return [...withoutTemp, inserted]
+    })
   }
 
   const send = async (e) => {
@@ -847,6 +883,11 @@ export default function GroupChat({
   }
 
   const doDeleteForEveryone = async (message) => {
+    // Same reasoning as insertMessage's optimistic bubble above: don't
+    // wait on a realtime DELETE event to remove it from view when the
+    // delete itself already succeeded. Put it back only if it didn't.
+    setMessages((prev) => prev.filter((m) => m.id !== message.id))
+
     const { error } = await supabase
       .from('group_messages')
       .delete()
@@ -854,6 +895,14 @@ export default function GroupChat({
 
     if (error) {
       setError(error.message)
+
+      setMessages((prev) =>
+        prev.some((m) => m.id === message.id)
+          ? prev
+          : [...prev, message].sort(
+              (a, b) => new Date(a.created_at) - new Date(b.created_at)
+            )
+      )
     }
   }
 
@@ -1274,6 +1323,10 @@ export default function GroupChat({
   }
 
   const doBulkDeleteForEveryone = async (ids) => {
+    const removed = messages.filter((m) => ids.includes(m.id))
+
+    setMessages((prev) => prev.filter((m) => !ids.includes(m.id)))
+
     const { error } = await supabase
       .from('group_messages')
       .delete()
@@ -1281,6 +1334,17 @@ export default function GroupChat({
 
     if (error) {
       setError(error.message)
+
+      setMessages((prev) => {
+        const merged = [
+          ...prev,
+          ...removed.filter((m) => !prev.some((p) => p.id === m.id)),
+        ]
+
+        return merged.sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at)
+        )
+      })
     }
 
     cancelSelecting()
