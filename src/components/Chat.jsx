@@ -735,8 +735,12 @@ export default function Chat({
         .replace(/[^a-zA-Z0-9]/g, '')
         .toLowerCase()
 
+      // The storage policy on this bucket (shared with homework
+      // uploads) requires the path's first folder to be the
+      // uploader's own id — (storage.foldername(name))[1] = auth.uid()
+      // — so `selfId` has to come first, not "chat".
       const path =
-        `chat/${selfId}/${peerId}/${Date.now()}-${Math.random()
+        `${selfId}/chat/${peerId}/${Date.now()}-${Math.random()
           .toString(36)
           .slice(2)}.${safeExtension}`
 
