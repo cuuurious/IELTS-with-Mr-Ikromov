@@ -1067,6 +1067,7 @@ export default function GroupChat({
   const startSelecting = (messageId) => {
     setSelectMode(true)
     setSelectedIds(new Set([messageId]))
+    setError('')
   }
 
   const toggleSelected = (messageId) => {
@@ -1719,11 +1720,15 @@ export default function GroupChat({
 
           <button
             type="button"
-            onClick={() =>
-              selectMode
-                ? cancelSelecting()
-                : setSelectMode(true)
-            }
+            onClick={() => {
+              setError('')
+
+              if (selectMode) {
+                cancelSelecting()
+              } else {
+                setSelectMode(true)
+              }
+            }}
             className={`focus-ring rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
               selectMode
                 ? 'border-coral/50 bg-coral/10 text-coral'

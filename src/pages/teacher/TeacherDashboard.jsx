@@ -16,7 +16,7 @@ import GroupWorkspace from './GroupWorkspace'
 import TeacherStudents from './TeacherStudents'
 import PendingApprovals from './PendingApprovals'
 import PrivateChats from '../../components/PrivateChats'
-import TeacherGroupChats from './TeacherGroupChats'
+import GroupChats from '../../components/GroupChats'
 import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
@@ -299,8 +299,9 @@ export default function TeacherDashboard() {
       )}
 
       {tab === 'group-chat' && (
-        <TeacherGroupChats
-          teacherId={profile.id}
+        <GroupChats
+          selfId={profile.id}
+          selfRole="teacher"
           initialGroupId={
             notificationGroup?.groupId
           }

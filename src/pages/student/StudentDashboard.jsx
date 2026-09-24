@@ -17,7 +17,7 @@ import Layout, {
 } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
-import GroupChat from '../../components/GroupChat'
+import GroupChats from '../../components/GroupChats'
 import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
 import PrivateChats from '../../components/PrivateChats'
@@ -829,30 +829,16 @@ const messageId = linkParts[2] || null
 
         {/* ======================================================
             GROUP CHAT
+            Telegram-style list + preview, shared with the teacher
+            side — see GroupChats.jsx. Intentionally does NOT use
+            `activeGroup`/`GroupPicker` (that pair stays a simple
+            "filter by group" control for Homework/Leaderboard above)
+            — this owns its own selection so opening a group's chat
+            here never changes what those other tabs are filtered to.
            ====================================================== */}
         {tab === 'group-chat' && (
           <section className="space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <GroupPicker />
-
-              {activeGroup && (
-                <div className="text-xs text-mist font-mono">
-                  {myGroups.find((group) => group.id === activeGroup)?.name || 'Group'}
-                </div>
-              )}
-            </div>
-
-            <section className="rounded-3xl border border-line bg-panel shadow-sm overflow-hidden">
-              <GroupChat
-                groupId={activeGroup}
-                selfId={profile.id}
-                groupName={
-                  myGroups.find(
-                    (group) => group.id === activeGroup
-                  )?.name
-                }
-              />
-            </section>
+            <GroupChats selfId={profile.id} selfRole="student" />
           </section>
         )}
 

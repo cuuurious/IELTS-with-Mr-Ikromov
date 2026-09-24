@@ -99,6 +99,13 @@ export default function Chat({
   const [uploading, setUploading] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recordingKind, setRecordingKind] = useState(null)
+  const [recordSeconds, setRecordSeconds] = useState(0)
+
+  // The just-finished recording, held here for review before it's
+  // actually sent — Telegram-style "listen back, then send or
+  // discard" instead of firing it off the moment you stop recording.
+  const [recordedBlob, setRecordedBlob] = useState(null)
+
   const [error, setError] = useState('')
 
   const [replyingTo, setReplyingTo] = useState(null)
@@ -120,6 +127,8 @@ export default function Chat({
   const fileRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
+  const recordStreamRef = useRef(null)
+  const recordTimerRef = useRef(null)
 
   // Lets the pin realtime handler always see the current message
   // list without having to resubscribe every time a message arrives.
@@ -128,6 +137,19 @@ export default function Chat({
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  // Stop any in-progress recording's mic/camera and timer if this chat
+  // is closed (peer switched, component unmounted) mid-recording,
+  // rather than leaving the stream open in the background.
+  useEffect(() => {
+    return () => {
+      clearInterval(recordTimerRef.current)
+
+      recordStreamRef.current
+        ?.getTracks()
+        .forEach((track) => track.stop())
+    }
+  }, [])
 
   /*
    * ============================================================
@@ -794,13 +816,44 @@ export default function Chat({
         payload.reply_to_id = replyingTo.id
       }
 
-      const { error: messageError } = await supabase
+      // Same fix as sendText's optimistic bubble — this call site was
+      // missed the first time around, which is exactly why a voice
+      // message still sat invisible waiting on realtime while a typed
+      // "hi" no longer does.
+      const tempId = `temp-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}`
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...payload,
+          id: tempId,
+          created_at: new Date().toISOString(),
+          _optimistic: true,
+        },
+      ])
+
+      const { data: inserted, error: messageError } = await supabase
         .from('messages')
         .insert(payload)
+        .select()
+        .single()
 
       if (messageError) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId))
         throw messageError
       }
+
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => m.id !== tempId)
+
+        if (withoutTemp.some((m) => m.id === inserted.id)) {
+          return withoutTemp
+        }
+
+        return [...withoutTemp, inserted]
+      })
 
       setReplyingTo(null)
     } catch (err) {
@@ -852,6 +905,8 @@ export default function Chat({
           constraints
         )
 
+      recordStreamRef.current = stream
+
       const recorder = new MediaRecorder(stream)
 
       audioChunksRef.current = []
@@ -862,11 +917,11 @@ export default function Chat({
         }
       }
 
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((track) => {
-          track.stop()
-        })
-
+      // Stopping the recorder no longer sends anything by itself — it
+      // just hands the recording to the review step below (the
+      // recordedBlob preview bar), same as Telegram: listen back, then
+      // explicitly Send or Discard.
+      recorder.onstop = () => {
         const fallbackType =
           kind === 'video' ? 'video/webm' : 'audio/webm'
 
@@ -874,18 +929,10 @@ export default function Chat({
           type: recorder.mimeType || fallbackType,
         })
 
-        const file = new File(
-          [blob],
-          `${
-            kind === 'video' ? 'video-note' : 'voice'
-          }-${Date.now()}.webm`,
-          {
-            type: recorder.mimeType || fallbackType,
-          }
-        )
+        setRecordedBlob(blob)
 
-        await uploadChatFile(file, {
-          asVideoNote: kind === 'video',
+        stream.getTracks().forEach((track) => {
+          track.stop()
         })
       }
 
@@ -895,6 +942,11 @@ export default function Chat({
 
       setRecording(true)
       setRecordingKind(kind)
+      setRecordSeconds(0)
+
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds((value) => value + 1)
+      }, 1000)
     } catch (err) {
       console.error(err)
       setError(
@@ -909,18 +961,50 @@ export default function Chat({
   }
 
   const stopRecording = () => {
+    clearInterval(recordTimerRef.current)
+
     const recorder = mediaRecorderRef.current
 
-    if (!recorder) return
-
-    if (recorder.state !== 'inactive') {
+    if (recorder && recorder.state !== 'inactive') {
       recorder.stop()
     }
 
-    mediaRecorderRef.current = null
     setRecording(false)
+  }
+
+  const discardRecording = () => {
+    setRecordedBlob(null)
+    setRecordSeconds(0)
     setRecordingKind(null)
   }
+
+  const sendRecording = async () => {
+    if (!recordedBlob) return
+
+    const isVideo = recordingKind === 'video'
+
+    const file = new File(
+      [recordedBlob],
+      `${isVideo ? 'video-note' : 'voice'}-${Date.now()}.webm`,
+      {
+        type:
+          recordedBlob.type ||
+          (isVideo ? 'video/webm' : 'audio/webm'),
+      }
+    )
+
+    await uploadChatFile(file, { asVideoNote: isVideo })
+
+    setRecordedBlob(null)
+    setRecordSeconds(0)
+    setRecordingKind(null)
+  }
+
+  const formatRecordSeconds = (seconds) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(
+      2,
+      '0'
+    )}`
 
   /*
    * ============================================================
@@ -1252,6 +1336,7 @@ export default function Chat({
   const startSelecting = (messageId) => {
     setSelectMode(true)
     setSelectedIds(new Set([messageId]))
+    setError('')
   }
 
   const toggleSelected = (messageId) => {
@@ -1733,18 +1818,29 @@ export default function Chat({
 
         <button
           type="button"
-          onClick={() =>
-            selectMode
-              ? cancelSelecting()
-              : setSelectMode(true)
-          }
+          onClick={() => {
+            setError('')
+
+            if (selectMode) {
+              cancelSelecting()
+            } else {
+              setSelectMode(true)
+            }
+          }}
           className="focus-ring shrink-0 text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
         >
           {selectMode ? 'Cancel' : 'Select'}
         </button>
 
         {/* "Delete chat" — Telegram's delete-for-me/delete-for-everyone
-            choice for the WHOLE conversation, not just one message. */}
+            choice for the WHOLE conversation, not just one message.
+            Hidden during Select mode: that mode already has its own
+            "Delete for me"/"Delete for everyone" pair scoped to just
+            the checked messages, in the bar at the bottom — having
+            both on screen at once, with identical labels, is exactly
+            how a bulk delete of a few messages ends up wiping the
+            whole conversation by accident. */}
+        {!selectMode && (
         <div className="relative shrink-0">
           <button
             type="button"
@@ -1789,6 +1885,7 @@ export default function Chat({
             </>
           )}
         </div>
+        )}
 
       </div>
 
@@ -2376,9 +2473,75 @@ export default function Chat({
         </div>
       )}
 
+      {/* RECORDING REVIEW — Telegram-style: listen back to what you just
+          recorded, then explicitly Send or Discard, instead of it going
+          out the moment you stop recording. */}
+
+      {recordedBlob && (
+        <div className="flex items-center gap-2 p-3 border-t border-line bg-panel-2/60">
+
+          {recordingKind === 'video' ? (
+            <video
+              controls
+              src={URL.createObjectURL(recordedBlob)}
+              className="h-24 rounded-lg"
+            />
+          ) : (
+            <audio
+              controls
+              src={URL.createObjectURL(recordedBlob)}
+              className="flex-1"
+            />
+          )}
+
+          <button
+            type="button"
+            onClick={discardRecording}
+            disabled={uploading}
+            className="focus-ring shrink-0 px-3 py-1.5 rounded-md border border-line text-xs text-mist hover:border-coral hover:text-coral disabled:opacity-40"
+          >
+            Discard
+          </button>
+
+          <button
+            type="button"
+            onClick={sendRecording}
+            disabled={uploading}
+            className="focus-ring shrink-0 px-4 py-1.5 rounded-md bg-brass text-onbrass text-xs font-medium disabled:opacity-40"
+          >
+            {uploading ? 'Sending…' : 'Send'}
+          </button>
+
+        </div>
+      )}
+
+      {/* RECORDING IN PROGRESS */}
+
+      {recording && !recordedBlob && (
+        <div className="flex items-center gap-3 p-3 border-t border-line bg-coral/5 text-sm text-coral">
+
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-coral" />
+          </span>
+
+          {recordingKind === 'video' ? '📹' : '🎤'}{' '}
+          Recording {formatRecordSeconds(recordSeconds)}
+
+          <button
+            type="button"
+            onClick={stopRecording}
+            className="focus-ring ml-auto shrink-0 px-3 py-1.5 rounded-md border border-coral/50 text-xs hover:bg-coral hover:text-paper"
+          >
+            Stop
+          </button>
+
+        </div>
+      )}
+
       {/* COMPOSER */}
 
-      {!selectMode && (
+      {!selectMode && !recording && !recordedBlob && (
       <form
         onSubmit={sendText}
         className="flex gap-2 p-3 border-t border-line items-center"
@@ -2399,7 +2562,7 @@ export default function Chat({
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          disabled={uploading || recording}
+          disabled={uploading}
           className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
           title="Photo, video or file"
           aria-label="Photo, video or file"
@@ -2409,62 +2572,40 @@ export default function Chat({
 
         {/* VOICE / VIDEO */}
 
-        {!recording ? (
-          <>
-            <button
-              type="button"
-              onClick={() => startRecording('audio')}
-              disabled={uploading}
-              className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
-              title="Record voice message"
-              aria-label="Record voice message"
-            >
-              🎤
-            </button>
+        <button
+          type="button"
+          onClick={() => startRecording('audio')}
+          disabled={uploading}
+          className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
+          title="Record voice message"
+          aria-label="Record voice message"
+        >
+          🎤
+        </button>
 
-            <button
-              type="button"
-              onClick={() => startRecording('video')}
-              disabled={uploading}
-              className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
-              title="Record video message"
-              aria-label="Record video message"
-            >
-              📹
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={stopRecording}
-            className="focus-ring w-10 h-10 rounded-md border border-coral text-coral animate-pulse"
-            title="Stop recording"
-            aria-label="Stop recording"
-          >
-            ■
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => startRecording('video')}
+          disabled={uploading}
+          className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
+          title="Record video message"
+          aria-label="Record video message"
+        >
+          📹
+        </button>
 
         <input
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={
-            recording
-              ? recordingKind === 'video'
-                ? 'Recording video message…'
-                : 'Recording voice message…'
-              : 'Type a message…'
-          }
-          disabled={recording || uploading}
+          placeholder="Type a message…"
+          disabled={uploading}
           className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist disabled:opacity-50"
         />
 
         <button
           type="submit"
-          disabled={
-            sending || uploading || recording || !text.trim()
-          }
+          disabled={sending || uploading || !text.trim()}
           className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
         >
           {uploading ? 'Sending…' : 'Send'}

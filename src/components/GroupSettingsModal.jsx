@@ -949,7 +949,7 @@ export default function GroupSettingsModal({
                           type="button"
                           onClick={() => removeAdmin(member)}
                           disabled={busyMemberId === member.id}
-                          className="shrink-0 text-xs text-mist hover:text-coral disabled:opacity-40"
+                          className="shrink-0 rounded-md border border-line px-2.5 py-1 text-xs font-medium text-mist transition hover:border-coral/40 hover:bg-coral/10 hover:text-coral active:scale-95 disabled:pointer-events-none disabled:opacity-40"
                         >
                           Remove admin
                         </button>
@@ -960,7 +960,7 @@ export default function GroupSettingsModal({
                           type="button"
                           onClick={() => removeMember(member)}
                           disabled={busyMemberId === member.id}
-                          className="shrink-0 text-xs text-mist hover:text-coral disabled:opacity-40"
+                          className="shrink-0 rounded-md border border-line px-2.5 py-1 text-xs font-medium text-mist transition hover:border-coral/40 hover:bg-coral/10 hover:text-coral active:scale-95 disabled:pointer-events-none disabled:opacity-40"
                         >
                           Remove
                         </button>
@@ -1058,7 +1058,7 @@ export default function GroupSettingsModal({
                     setActivityOpen((v) => !v)
                     if (!activityOpen && !activityLoaded) loadActivity()
                   }}
-                  className="text-xs font-medium text-brass hover:text-brass-dim"
+                  className="rounded-md border border-line px-2.5 py-1 text-xs font-medium text-brass transition hover:border-brass/40 hover:bg-brass/10 active:scale-95"
                 >
                   {activityOpen ? 'Hide' : 'Show'}
                 </button>

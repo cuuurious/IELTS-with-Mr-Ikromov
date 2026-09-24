@@ -492,7 +492,15 @@ export default function PrivateChats({
   }
 
   const handleRowPointerDown = (e, person) => {
-    if (e.pointerType === 'mouse') return
+    // Used to bail out entirely for mouse input, on the assumption
+    // desktop users would always right-click instead. In practice
+    // Jasur (and presumably students) instinctively press-and-hold
+    // with the mouse the same way they would on a touchscreen,
+    // expecting the same preview — and got a normal click-through
+    // into the full chat instead, every time. Press-and-hold now
+    // works the same way for mouse, pen, and touch; right-click
+    // (handleRowContextMenu) still works too, unchanged.
+    if (e.pointerType === 'mouse' && e.button !== 0) return
 
     const rect = e.currentTarget.getBoundingClientRect()
 
@@ -677,6 +685,7 @@ export default function PrivateChats({
                   onPointerMove={handleRowPointerMove}
                   onPointerUp={clearRowLongPress}
                   onPointerCancel={clearRowLongPress}
+                  onPointerLeave={clearRowLongPress}
                   onContextMenu={(e) => handleRowContextMenu(e, person)}
                   onClick={() => handleRowClick(person)}
                   className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
