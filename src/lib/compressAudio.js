@@ -40,7 +40,7 @@ const TARGET_BITRATE = 40000
 // using the original file untouched.
 const MAX_PROCESS_MS = 6 * 60 * 1000
 
-function looksLikeAudio(file) {
+export function looksLikeAudio(file) {
   const type = (file.type || '').toLowerCase()
   if (type.startsWith('audio/')) return true
 

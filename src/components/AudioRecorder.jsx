@@ -7,6 +7,7 @@ export default function AudioRecorder({
   onUpload,
   onDelete,
   uploading,
+  compressingAudio,
 }) {
   const [recording, setRecording] =
     useState(false)
@@ -805,11 +806,18 @@ export default function AudioRecorder({
       ===================================================== */}
 
       {uploading &&
-        !finishing && (
-        <span className="text-mist text-xs font-mono">
-          saving…
-        </span>
-      )}
+        !finishing &&
+        (compressingAudio ? (
+          <span className="text-brass text-xs">
+            ⏳ Compressing your recording — this can take a few
+            minutes for a longer one. Please keep this page open;
+            it hasn't frozen.
+          </span>
+        ) : (
+          <span className="text-mist text-xs font-mono">
+            saving…
+          </span>
+        ))}
 
       {/* =====================================================
           ERROR

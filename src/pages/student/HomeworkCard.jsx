@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { compressImageIfNeeded } from '../../lib/compressImage'
-import { compressAudioIfNeeded } from '../../lib/compressAudio'
+import { compressAudioIfNeeded, looksLikeAudio } from '../../lib/compressAudio'
 import {
   buildAccept,
   matchesSubmissionType,
@@ -86,6 +86,15 @@ export default function HomeworkCard({
 }) {
   const [open, setOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Re-encoding an audio file client-side has no fast path — it plays
+  // the recording back in real time to capture it at a lower bitrate,
+  // so a several-minute recording genuinely takes several minutes (see
+  // compressAudio.js). The generic "uploading" spinner gives no hint
+  // that this specific wait is normal, which is exactly what led a
+  // student to think an audio upload had frozen and reload the page
+  // mid-compression. This flag drives a much more explicit message
+  // during that specific wait.
+  const [compressingAudio, setCompressingAudio] = useState(false)
   const [error, setError] = useState('')
   const [comment, setComment] = useState(
     submission?.comment || ''
@@ -588,10 +597,16 @@ export default function HomeworkCard({
         // and both fall back to the original file untouched if
         // compression itself fails for any reason, so this can only
         // ever help.
+        const isAudio = looksLikeAudio(file)
+
+        if (isAudio) setCompressingAudio(true)
+
         const fileToUpload =
           await compressAudioIfNeeded(
             await compressImageIfNeeded(file)
           )
+
+        if (isAudio) setCompressingAudio(false)
 
         const url =
           await uploadFile(
@@ -662,6 +677,7 @@ export default function HomeworkCard({
       )
     } finally {
       setUploading(false)
+      setCompressingAudio(false)
     }
   }
 
@@ -918,8 +934,12 @@ export default function HomeworkCard({
         // compressAudio.js. A no-op for anything already small, and
         // falls back to the original file untouched if compression
         // itself fails for any reason.
+        setCompressingAudio(true)
+
         const fileToUpload =
           await compressAudioIfNeeded(file)
+
+        setCompressingAudio(false)
 
         const url =
           await uploadFile(
@@ -952,6 +972,7 @@ export default function HomeworkCard({
         )
       } finally {
         setUploading(false)
+        setCompressingAudio(false)
       }
     }
 
@@ -1612,6 +1633,15 @@ export default function HomeworkCard({
                   and paste it here
                   (Ctrl/Cmd + V).
                 </p>
+
+                {compressingAudio && (
+                  <p className="text-xs text-brass mt-2">
+                    ⏳ Compressing your audio file — this can take a
+                    few minutes for longer recordings. This page
+                    hasn't frozen; please keep it open and wait for
+                    it to finish instead of reloading.
+                  </p>
+                )}
               </>
             )}
 
@@ -1880,6 +1910,9 @@ export default function HomeworkCard({
                           }
                           uploading={
                             uploading
+                          }
+                          compressingAudio={
+                            compressingAudio
                           }
                           onSaved={(
                             blob

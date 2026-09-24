@@ -43,18 +43,8 @@ const JPEG_QUALITY_STEPS = [0.82, 0.7, 0.58, 0.45]
 //   - GIF: canvas would flatten it to a single frame, killing any animation.
 //   - SVG: it's vector art, not a photo — canvas would rasterize it for no size benefit.
 //
-// HEIC/HEIF is NOT excluded, on purpose, even though several browsers
-// (mainly non-Apple ones) can't decode it into a canvas at all: an
-// iPhone that hands over a raw .heic file is almost always doing the
-// uploading from Safari itself, which CAN decode it — so attempting
-// this actually fixes two problems in one pass for the common case:
-// it shrinks the file, AND it converts it to a JPEG that every
-// browser can display (a teacher reviewing on Windows/Android
-// couldn't otherwise see a HEIC photo inline at all). If decoding
-// does fail (a non-Apple browser genuinely handed a .heic file),
-// compressImageIfNeeded's own try/catch below falls back to the
-// original file untouched, exactly as if this attempt was never
-// made — so there's nothing to lose by trying.
+// HEIC/HEIF is NOT excluded, on purpose — see the dedicated
+// convertHeicToJpeg() step below, which is what actually handles it now.
 function isCompressible(file) {
   const type = (file.type || '').toLowerCase()
 
@@ -66,6 +56,98 @@ function isCompressible(file) {
   // browsers/OS combinations — fall back to checking the extension.
   const name = (file.name || '').toLowerCase()
   return name.endsWith('.heic') || name.endsWith('.heif')
+}
+
+function isHeicFile(file) {
+  const type = (file.type || '').toLowerCase()
+  if (type === 'image/heic' || type === 'image/heif') return true
+
+  const name = (file.name || '').toLowerCase()
+  return name.endsWith('.heic') || name.endsWith('.heif')
+}
+
+/*
+ * Real-world confirmed bug (2026-09-24): a HEIC photo a student
+ * submitted showed up as a broken image icon in the teacher's
+ * dashboard. Root cause — the previous version of this file assumed
+ * "an iPhone uploading a raw .heic file is almost always doing it from
+ * Safari, which can decode it", but that's wrong in practice: Safari's
+ * own createImageBitmap()/canvas APIs frequently CAN'T decode HEIC
+ * either (only Safari's native <img>-tag renderer can, using the OS's
+ * own codec — a capability this app's JS code has no access to). So a
+ * HEIC upload's decode attempt below was silently failing on every
+ * browser, including Safari, and compressImageIfNeeded was falling
+ * back to uploading the raw, unconverted .heic file — which then
+ * displays as a broken icon for literally anyone viewing it outside
+ * Safari (i.e. any teacher/examiner on Windows, and most
+ * Android/desktop browsers).
+ *
+ * Fixed by converting HEIC/HEIF with a dedicated, pure-JavaScript
+ * decoder (heic2any, WASM-based, doesn't depend on ANY browser's
+ * native codec support) before ever attempting the normal
+ * canvas-based path below. Loaded on demand from a CDN, only when a
+ * HEIC file is actually encountered, so nothing changes for the vast
+ * majority of uploads that are already JPEG/PNG — and nothing needs
+ * installing (no package.json/node_modules change) for this fix to
+ * take effect.
+ */
+// Students on a slow/unstable mobile connection are exactly this
+// app's normal case (see the file-level comment above) — a dynamic
+// import() of a CDN module has no built-in timeout, so on a bad
+// connection this could otherwise hang indefinitely, freezing the
+// whole upload with no way out except reloading the page. Racing it
+// against a plain timeout guarantees this step always either succeeds
+// or fails within a few seconds, so the surrounding try/catch in
+// compressImageIfNeeded can always fall back to the normal
+// canvas-based attempt (or, failing that, the raw file) instead of
+// hanging forever.
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms
+      )
+    ),
+  ])
+}
+
+async function convertHeicToJpeg(file) {
+  const heic2any = (
+    await withTimeout(
+      import(
+        /* @vite-ignore */
+        'https://esm.sh/heic2any@0.0.4'
+      ),
+      8000,
+      'Loading the HEIC decoder'
+    )
+  ).default
+
+  const result = await withTimeout(
+    heic2any({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.9,
+    }),
+    15000,
+    'HEIC conversion'
+  )
+
+  // Resolves to an array when the source HEIC contains multiple images
+  // (Live Photos/burst shots) — the first frame is the actual photo in
+  // every real-world case here.
+  const blob = Array.isArray(result) ? result[0] : result
+
+  return new File(
+    [blob],
+    renameForCompressedOutput(file.name),
+    {
+      type: 'image/jpeg',
+      lastModified: file.lastModified || Date.now(),
+    }
+  )
 }
 
 // createImageBitmap with imageOrientation:"from-image" both decodes
@@ -225,20 +307,40 @@ function renameForCompressedOutput(originalName) {
  * as if this function didn't exist at all.
  */
 export async function compressImageIfNeeded(file) {
-  try {
-    if (!file || typeof file !== 'object') return file
-    if (!isCompressible(file)) return file
-    if (file.size <= SKIP_BELOW_BYTES) return file
+  if (!file || typeof file !== 'object') return file
+  if (!isCompressible(file)) return file
 
-    const image = await decodeImage(file)
+  // Convert HEIC/HEIF to JPEG FIRST, before anything else — see
+  // convertHeicToJpeg's own comment above for why this can't be left
+  // to the usual canvas-based path below. Once this succeeds,
+  // workingFile is a normal JPEG that every subsequent step (and every
+  // future viewer) can handle, regardless of what browser uploaded it.
+  let workingFile = file
+
+  if (isHeicFile(file)) {
+    try {
+      workingFile = await convertHeicToJpeg(file)
+    } catch (error) {
+      console.error(
+        'HEIC conversion failed — falling back to the normal compression attempt (which may also fail to decode it, in which case the raw file is uploaded as-is):',
+        error
+      )
+    }
+  }
+
+  try {
+    if (workingFile.size <= SKIP_BELOW_BYTES) return workingFile
+
+    const image = await decodeImage(workingFile)
     const canvas = drawToCanvas(image)
     const blob = await compressToTargetSize(canvas)
 
-    if (!blob || blob.size >= file.size) {
+    if (!blob || blob.size >= workingFile.size) {
       // Compression didn't actually help (can happen with an
-      // already well-compressed JPEG) — keep the original rather
-      // than hand back a "compressed" file that's actually bigger.
-      return file
+      // already well-compressed JPEG) — keep the working file as-is
+      // rather than hand back a "compressed" file that's actually
+      // bigger.
+      return workingFile
     }
 
     return new File(
@@ -251,10 +353,14 @@ export async function compressImageIfNeeded(file) {
     )
   } catch (error) {
     console.error(
-      'Image compression failed — uploading the original file instead:',
+      'Image compression failed — uploading the working file instead:',
       error
     )
 
-    return file
+    // If HEIC conversion above already succeeded, workingFile is a
+    // normal, universally-viewable JPEG — always prefer returning
+    // that over falling all the way back to the original raw file,
+    // even if this later resize/compress step failed for some reason.
+    return workingFile
   }
 }
