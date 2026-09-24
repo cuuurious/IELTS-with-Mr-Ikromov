@@ -186,6 +186,7 @@ export default function Layout({
   sections,
   activeTab,
   onTabChange,
+  spotlight,
   children,
 }) {
   const { profile, signOut } = useAuth()
@@ -264,6 +265,62 @@ export default function Layout({
           <IconClose className="h-4.5 w-4.5" />
         </button>
       </div>
+
+      {/* SPOTLIGHT
+          A single, deliberately different-looking entry point —
+          Jasur's own words: "I want this to be separate and visually
+          catching, maybe somewhere else." Everything else in this
+          sidebar is a plain list row grouped under a section label;
+          this instead gets its own solid, gradient-filled card ABOVE
+          all the regular sections, so it reads as a distinct feature
+          to jump to rather than one more line in a list. */}
+      {spotlight && (
+        <div className={`pt-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+          <button
+            type="button"
+            onClick={() => goToTab(spotlight.key)}
+            title={collapsed ? spotlight.label : undefined}
+            className={`
+              focus-ring group w-full flex items-center gap-3 rounded-2xl
+              bg-gradient-to-br from-brass to-brass-dim text-onbrass
+              shadow-[0_10px_24px_-10px_var(--color-brass)]
+              transition-transform hover:-translate-y-0.5
+              ${collapsed ? 'justify-center p-2.5' : 'px-3.5 py-3'}
+            `}
+          >
+            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 shrink-0">
+              {spotlight.icon && <spotlight.icon className="h-[19px] w-[19px]" />}
+            </span>
+
+            {!collapsed && (
+              <span className="min-w-0 text-left">
+                <span className="block text-sm font-semibold truncate">
+                  {spotlight.label}
+                </span>
+                {spotlight.description && (
+                  <span className="block text-[11px] opacity-80 truncate">
+                    {spotlight.description}
+                  </span>
+                )}
+              </span>
+            )}
+
+            {!collapsed && (
+              <svg
+                className="h-4 w-4 ml-auto shrink-0 opacity-80 transition-transform group-hover:translate-x-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* NAV */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">

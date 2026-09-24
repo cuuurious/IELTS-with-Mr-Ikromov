@@ -232,7 +232,6 @@ export default function TeacherDashboard() {
       title: 'Insights',
       items: [
         { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
-        { key: 'mock-center', label: 'Mock Center', icon: IconMockExam },
       ],
     },
     {
@@ -286,6 +285,12 @@ export default function TeacherDashboard() {
       sections={sections}
       activeTab={tab}
       onTabChange={handleTabChange}
+      spotlight={{
+        key: 'mock-center',
+        label: 'Mock Center',
+        description: 'Student mock results, all in one place',
+        icon: IconMockExam,
+      }}
     >
       {tab === 'groups' && (
         <GroupWorkspace

@@ -513,7 +513,6 @@ const messageId = linkParts[2] || null
       {
         items: [
           { key: 'homework', label: 'Homework', icon: IconHomework },
-          { key: 'mock-center', label: 'Mock Test Center', icon: IconMockExam },
           { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'group-chat', label: 'Group Chat', icon: IconGroupChat },
@@ -635,6 +634,12 @@ const messageId = linkParts[2] || null
       sections={sections}
       activeTab={tab}
       onTabChange={handleTabChange}
+      spotlight={{
+        key: 'mock-center',
+        label: 'Mock Test Center',
+        description: 'Take a timed reading, listening or writing mock',
+        icon: IconMockExam,
+      }}
     >
       <div className="space-y-5">
 
