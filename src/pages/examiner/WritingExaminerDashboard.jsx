@@ -17,11 +17,17 @@ import { countWords } from '../../lib/writingMock'
  * which is a separate, unrelated system.
  *
  * "Review queue" is two sections, Task 1s and Task 2s, each ordered
- * by student name, per Jasur's spec. A 'full' mode submission (Task 1
- * + Task 2 in one sitting) appears in both sections since each task
- * gets read on its own — but it's still ONE submission row with ONE
- * band/feedback pair (that's the schema migration_29 added), so
- * marking it from either section reviews the whole thing.
+ * by student name, per Jasur's spec. Scoped to mock_task_mode='full'
+ * ONLY (see migration_33 + the loadAll() comment below) — a student
+ * who sat the whole mock, Task 1 and Task 2 together in one timed
+ * sitting. Task1-only/task2-only writing DRILLS a teacher posts as
+ * ordinary homework never reach this queue at all (RLS-enforced, not
+ * just hidden in the UI) — those already have AI grading through the
+ * normal homework review flow, which this dashboard doesn't touch.
+ * A 'full' submission appears in both sections since each task gets
+ * read on its own — but it's still ONE submission row with ONE band/
+ * feedback pair, so marking it from either section reviews the whole
+ * thing.
  * ================================================================
  */
 
@@ -41,10 +47,18 @@ export default function WritingExaminerDashboard() {
   const [notificationChat, setNotificationChat] = useState(null)
 
   const loadAll = async () => {
+    // Jasur's call (2026-09-24): a writing examiner should ONLY see a
+    // student who sat the WHOLE mock (Task 1 + Task 2 together, one
+    // timed sitting — mock_task_mode = 'full'), never a task1-only or
+    // task2-only writing drill a teacher posted as ordinary homework.
+    // Those already have AI grading wired in through the normal
+    // homework/SubmissionPanel review flow and are explicitly
+    // untouched by this dashboard.
     const { data: hwRows, error: hwError } = await supabase
       .from('homeworks')
       .select('*')
       .eq('homework_type', 'writing_mock')
+      .eq('mock_task_mode', 'full')
 
     if (hwError) {
       console.error('Failed to load writing mock homeworks:', hwError)
@@ -119,21 +133,19 @@ export default function WritingExaminerDashboard() {
     const t2 = []
 
     submissions.forEach((submission) => {
+      // homeworks was already loaded filtered to mock_task_mode = 'full'
+      // only, so every entry here is a genuine whole-mock sitting —
+      // no task1-only/task2-only homework drill can reach this queue.
       const homework = homeworkById[submission.homework_id]
       if (!homework) return
 
       const mockEssay = submission.mock_essay || {}
       const student = studentsById[submission.student_id]
-      const mode = homework.mock_task_mode
 
       const entry = { submission, homework, student, mockEssay }
 
-      if ((mode === 'task1' || mode === 'full') && mockEssay.task1_text) {
-        t1.push(entry)
-      }
-      if ((mode === 'task2' || mode === 'full') && mockEssay.task2_text) {
-        t2.push(entry)
-      }
+      if (mockEssay.task1_text) t1.push(entry)
+      if (mockEssay.task2_text) t2.push(entry)
     })
 
     const byName = (a, b) =>

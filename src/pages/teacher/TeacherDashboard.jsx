@@ -8,6 +8,7 @@ import Layout, {
   IconGroupChat,
   IconChat,
   IconLeaderboard,
+  IconMockExam,
   IconAI,
   IconApprovals,
   IconStaff,
@@ -21,6 +22,7 @@ import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
 import TeacherAccounts from './TeacherAccounts'
+import TeacherMockProgress from './TeacherMockProgress'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -229,6 +231,7 @@ export default function TeacherDashboard() {
       title: 'Insights',
       items: [
         { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
+        { key: 'mock-progress', label: 'Mock Progress', icon: IconMockExam },
       ],
     },
     {
@@ -289,6 +292,10 @@ export default function TeacherDashboard() {
 
       {tab === 'leaderboards' && (
         <TeacherLeaderboards />
+      )}
+
+      {tab === 'mock-progress' && (
+        <TeacherMockProgress />
       )}
 
       {tab === 'ai-grading' && (
