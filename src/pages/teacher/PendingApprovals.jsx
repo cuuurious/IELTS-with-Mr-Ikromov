@@ -157,15 +157,7 @@ export default function PendingApprovals() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
 
           <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-              Sign-ups
-            </div>
-
-            <h2 className="font-display text-2xl sm:text-3xl mt-1">
-              Approvals
-            </h2>
-
-            <p className="text-sm text-mist mt-1.5 max-w-md">
+            <p className="text-sm text-mist max-w-md">
               Review new student registrations before they can sign in and access their dashboard.
             </p>
           </div>

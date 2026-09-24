@@ -57,8 +57,7 @@ export default function AiGradingSettings({ teacherId }) {
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <div>
-        <h2 className="font-display text-2xl">AI Grading</h2>
-        <p className="text-mist text-sm mt-1">
+        <p className="text-mist text-sm">
           Upload your grading rubric as a PDF for each skill. When you
           turn on "Evaluate submissions with AI" on a homework, students
           get detailed feedback automatically, right when they submit —

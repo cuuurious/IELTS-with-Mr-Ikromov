@@ -182,10 +182,6 @@ export default function TeacherAccounts({ currentTeacherId }) {
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-display text-xl text-paper">
-            Staff accounts
-          </h2>
-
           <p className="text-mist text-sm mt-1 max-w-xl">
             Only your account can see this tab. Teachers, Speaking
             examiners, and Writing examiners are all created and

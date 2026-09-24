@@ -71,15 +71,7 @@ export default function TeacherLeaderboards() {
       <div className="ticket rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
 
         <div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-            Rankings
-          </div>
-
-          <h2 className="font-display text-2xl sm:text-3xl mt-1">
-            Leaderboards
-          </h2>
-
-          <p className="text-sm text-mist mt-1.5 max-w-md">
+          <p className="text-sm text-mist max-w-md">
             Ranked by homework completed, then by completion rate — see who's leading, by class or across everyone.
           </p>
         </div>

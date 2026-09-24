@@ -977,15 +977,7 @@ const saveEditWordlist = async () => {
             <div className="flex flex-wrap items-center justify-between gap-4">
 
               <div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-                  Vocabulary
-                </div>
-
-                <h2 className="font-display text-2xl sm:text-3xl mt-1">
-                  Word lists
-                </h2>
-
-                <p className="text-sm text-mist mt-1.5 max-w-md">
+                <p className="text-sm text-mist max-w-md">
                   Vocabulary sets your students review and get quizzed on, grouped by class.
                 </p>
               </div>

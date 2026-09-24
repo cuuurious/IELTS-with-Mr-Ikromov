@@ -838,10 +838,6 @@ export default function TeacherStudents({ onStartChat }) {
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-display text-xl text-paper">
-            Students
-          </h2>
-
           <p className="text-mist text-sm mt-1">
             Manage student accounts and group memberships.
           </p>

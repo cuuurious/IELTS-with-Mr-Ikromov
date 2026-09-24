@@ -950,11 +950,7 @@ export default function GroupWorkspace({ teacherId }) {
         <div className="space-y-6">
 
           <div>
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-paper sm:text-4xl">
-              Groups & homework
-            </h1>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-mist sm:text-base">
+            <p className="max-w-xl text-sm leading-6 text-mist sm:text-base">
               Open a group to post homework and see who's done it.
             </p>
           </div>

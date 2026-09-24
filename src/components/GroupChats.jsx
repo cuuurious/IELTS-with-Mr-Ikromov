@@ -374,8 +374,7 @@ export default function GroupChats({
       <aside className="w-full md:w-72 shrink-0 bg-panel border border-line rounded-lg overflow-hidden flex flex-col">
 
         <div className="px-4 py-3 border-b border-line">
-          <div className="font-display text-lg text-paper">Group chats</div>
-          <div className="text-xs text-mist mt-1">
+          <div className="text-xs text-mist">
             Chat with each class as a group.
           </div>
         </div>
