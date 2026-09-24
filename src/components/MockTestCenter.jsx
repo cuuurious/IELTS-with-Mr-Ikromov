@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import MockExams from './MockExams'
+import WritingMockExam from './WritingMockExam'
 import Chat from './Chat'
 import {
   TARGET_BANDS,
@@ -111,37 +112,41 @@ export default function MockTestCenter({ onExit }) {
         ;(examRows || []).forEach((e) => { examMap[e.id] = e })
       }
 
-      // Writing mock reviews: homeworks(homework_type='writing_mock') ->
-      // this student's reviewed submissions.
-      const { data: hwRows, error: hwError } = await supabase
-        .from('homeworks')
-        .select('id, title')
-        .eq('homework_type', 'writing_mock')
+      // Writing mock reviews: writing_mock_attempts (this student's,
+      // reviewed) joined with writing_mock_exams for the title. This is
+      // the brand new self-service system (migration_34) — deliberately
+      // NOT homeworks/submissions, which is a separate, teacher-posted
+      // homework system that never counts as "the whole mock" (Jasur,
+      // 2026-09-24: "everything teacher posts is homework... they are
+      // separate").
+      const { data: writingAttemptRows, error: writingAttemptsError } = await supabase
+        .from('writing_mock_attempts')
+        .select('*')
+        .eq('student_id', profile.id)
+        .not('examiner_reviewed_at', 'is', null)
+        .order('examiner_reviewed_at', { ascending: false })
 
-      if (hwError) console.error('Failed to load writing homeworks:', hwError)
-
-      const hwIds = (hwRows || []).map((h) => h.id)
-      const hwTitleById = {}
-      ;(hwRows || []).forEach((h) => { hwTitleById[h.id] = h.title })
-
-      let reviews = []
-
-      if (hwIds.length > 0) {
-        const { data: subRows, error: subError } = await supabase
-          .from('submissions')
-          .select('*')
-          .eq('student_id', profile.id)
-          .in('homework_id', hwIds)
-          .not('examiner_reviewed_at', 'is', null)
-          .order('examiner_reviewed_at', { ascending: false })
-
-        if (subError) console.error('Failed to load writing reviews:', subError)
-
-        reviews = (subRows || []).map((s) => ({
-          ...s,
-          homeworkTitle: hwTitleById[s.homework_id] || 'Writing mock',
-        }))
+      if (writingAttemptsError) {
+        console.error('Failed to load writing mock reviews:', writingAttemptsError)
       }
+
+      const writingExamIds = [...new Set((writingAttemptRows || []).map((a) => a.exam_id))]
+      let writingExamTitleById = {}
+
+      if (writingExamIds.length > 0) {
+        const { data: writingExamRows, error: writingExamsError } = await supabase
+          .from('writing_mock_exams')
+          .select('id, title')
+          .in('id', writingExamIds)
+
+        if (writingExamsError) console.error('Failed to load writing exam titles:', writingExamsError)
+        ;(writingExamRows || []).forEach((e) => { writingExamTitleById[e.id] = e.title })
+      }
+
+      const reviews = (writingAttemptRows || []).map((a) => ({
+        ...a,
+        examTitle: writingExamTitleById[a.exam_id] || 'Writing mock',
+      }))
 
       setAttempts(attemptRows || [])
       setExamsById(examMap)
@@ -294,7 +299,7 @@ export default function MockTestCenter({ onExit }) {
                     {writingReviews.map((review) => (
                       <div key={review.id} className="rounded-xl border border-line bg-panel-2 p-4">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-paper">{review.homeworkTitle}</p>
+                          <p className="text-sm font-medium text-paper">{review.examTitle}</p>
                           <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
                             Band {review.examiner_band ?? '—'}
                           </span>
@@ -313,7 +318,10 @@ export default function MockTestCenter({ onExit }) {
           )}
 
           {!loading && section === 'take-test' && (
-            <MockExams selfId={profile.id} />
+            <div className="space-y-6">
+              <MockExams selfId={profile.id} />
+              <WritingMockExam selfId={profile.id} />
+            </div>
           )}
 
           {!loading && section === 'speaking' && (

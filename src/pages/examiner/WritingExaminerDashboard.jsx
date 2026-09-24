@@ -10,24 +10,26 @@ import { countWords } from '../../lib/writingMock'
  * ================================================================
  * WRITING EXAMINER DASHBOARD
  * ================================================================
- * Shipped 2026-09-24, sibling to SpeakingExaminerDashboard.jsx. Sits
- * entirely on top of the EXISTING Writing Mock Test system —
- * homeworks.homework_type = 'writing_mock' + submissions.mock_essay —
- * not the newer mock_exams/mock_attempts reading & listening tables,
- * which is a separate, unrelated system.
+ * Rewritten 2026-09-24 (migration_34) to read from the brand new,
+ * wholly self-service writing_mock_exams / writing_mock_attempts
+ * tables instead of homeworks/submissions.
  *
- * "Review queue" is two sections, Task 1s and Task 2s, each ordered
- * by student name, per Jasur's spec. Scoped to mock_task_mode='full'
- * ONLY (see migration_33 + the loadAll() comment below) — a student
- * who sat the whole mock, Task 1 and Task 2 together in one timed
- * sitting. Task1-only/task2-only writing DRILLS a teacher posts as
- * ordinary homework never reach this queue at all (RLS-enforced, not
- * just hidden in the UI) — those already have AI grading through the
- * normal homework review flow, which this dashboard doesn't touch.
- * A 'full' submission appears in both sections since each task gets
- * read on its own — but it's still ONE submission row with ONE band/
- * feedback pair, so marking it from either section reviews the whole
- * thing.
+ * Jasur's own words, verbatim: "only when students take the full mock
+ * which will be in a different dashboard not in a homework, basically
+ * everything teacher posts is homework be it full or not full writing
+ * they are separate." So ANY homework a teacher posts to a group —
+ * regardless of task mode — is homework: AI-graded, teacher-reviewed,
+ * and PERMANENTLY invisible here. This dashboard now only ever reads
+ * writing_mock_attempts, which a student can only create by sitting a
+ * mock themselves from their own Mock Test Center (WritingMockExam.jsx)
+ * — no teacher, no group, no homework row involved anywhere.
+ *
+ * "Review queue" is still two sections, Task 1s and Task 2s, ordered
+ * by student name. Every attempt here is inherently "the whole mock"
+ * now (there's no other kind in this system), so the split just checks
+ * whether an attempt has task1_text — an attempt with only a Task 2
+ * prompt (writing_mock_exams.task1_prompt left blank) never appears in
+ * Task 1s at all.
  * ================================================================
  */
 
@@ -40,53 +42,32 @@ export default function WritingExaminerDashboard() {
 
   const [tab, setTab] = useState('task1')
   const [loading, setLoading] = useState(true)
-  const [homeworks, setHomeworks] = useState([])
-  const [submissions, setSubmissions] = useState([])
+  const [exams, setExams] = useState([])
+  const [attempts, setAttempts] = useState([])
   const [studentsById, setStudentsById] = useState({})
   const [reviewTarget, setReviewTarget] = useState(null)
   const [notificationChat, setNotificationChat] = useState(null)
 
   const loadAll = async () => {
-    // Jasur's call (2026-09-24): a writing examiner should ONLY see a
-    // student who sat the WHOLE mock (Task 1 + Task 2 together, one
-    // timed sitting — mock_task_mode = 'full'), never a task1-only or
-    // task2-only writing drill a teacher posted as ordinary homework.
-    // Those already have AI grading wired in through the normal
-    // homework/SubmissionPanel review flow and are explicitly
-    // untouched by this dashboard.
-    const { data: hwRows, error: hwError } = await supabase
-      .from('homeworks')
+    const { data: examRows, error: examsError } = await supabase
+      .from('writing_mock_exams')
       .select('*')
-      .eq('homework_type', 'writing_mock')
-      .eq('mock_task_mode', 'full')
 
-    if (hwError) {
-      console.error('Failed to load writing mock homeworks:', hwError)
-      setLoading(false)
-      return
+    if (examsError) {
+      console.error('Failed to load writing mock exams:', examsError)
     }
 
-    const homeworkIds = (hwRows || []).map((h) => h.id)
-
-    if (homeworkIds.length === 0) {
-      setHomeworks([])
-      setSubmissions([])
-      setLoading(false)
-      return
-    }
-
-    const { data: subRows, error: subError } = await supabase
-      .from('submissions')
+    const { data: attemptRows, error: attemptError } = await supabase
+      .from('writing_mock_attempts')
       .select('*')
-      .in('homework_id', homeworkIds)
       .not('submitted_at', 'is', null)
       .order('submitted_at', { ascending: false })
 
-    if (subError) {
-      console.error('Failed to load writing mock submissions:', subError)
+    if (attemptError) {
+      console.error('Failed to load writing mock attempts:', attemptError)
     }
 
-    const studentIds = [...new Set((subRows || []).map((s) => s.student_id))]
+    const studentIds = [...new Set((attemptRows || []).map((a) => a.student_id))]
 
     let studentMap = {}
 
@@ -103,8 +84,8 @@ export default function WritingExaminerDashboard() {
       ;(studentRows || []).forEach((s) => { studentMap[s.id] = s })
     }
 
-    setHomeworks(hwRows || [])
-    setSubmissions(subRows || [])
+    setExams(examRows || [])
+    setAttempts(attemptRows || [])
     setStudentsById(studentMap)
     setLoading(false)
   }
@@ -114,38 +95,33 @@ export default function WritingExaminerDashboard() {
     loadAll()
 
     const channel = supabase
-      .channel('writing-examiner-submissions')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, loadAll)
+      .channel('writing-examiner-attempts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_mock_attempts' }, loadAll)
       .subscribe()
 
     return () => supabase.removeChannel(channel)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
-  const homeworkById = useMemo(() => {
+  const examById = useMemo(() => {
     const map = {}
-    homeworks.forEach((h) => { map[h.id] = h })
+    exams.forEach((e) => { map[e.id] = e })
     return map
-  }, [homeworks])
+  }, [exams])
 
   const { task1Queue, task2Queue } = useMemo(() => {
     const t1 = []
     const t2 = []
 
-    submissions.forEach((submission) => {
-      // homeworks was already loaded filtered to mock_task_mode = 'full'
-      // only, so every entry here is a genuine whole-mock sitting —
-      // no task1-only/task2-only homework drill can reach this queue.
-      const homework = homeworkById[submission.homework_id]
-      if (!homework) return
+    attempts.forEach((attempt) => {
+      const exam = examById[attempt.exam_id]
+      if (!exam) return
 
-      const mockEssay = submission.mock_essay || {}
-      const student = studentsById[submission.student_id]
+      const student = studentsById[attempt.student_id]
+      const entry = { attempt, exam, student }
 
-      const entry = { submission, homework, student, mockEssay }
-
-      if (mockEssay.task1_text) t1.push(entry)
-      if (mockEssay.task2_text) t2.push(entry)
+      if (attempt.task1_text) t1.push(entry)
+      if (attempt.task2_text) t2.push(entry)
     })
 
     const byName = (a, b) =>
@@ -155,7 +131,7 @@ export default function WritingExaminerDashboard() {
     t2.sort(byName)
 
     return { task1Queue: t1, task2Queue: t2 }
-  }, [submissions, homeworkById, studentsById])
+  }, [attempts, examById, studentsById])
 
   const handleMessageStudent = (student) => {
     if (!student?.id) return
@@ -164,17 +140,17 @@ export default function WritingExaminerDashboard() {
   }
 
   const saveReview = async ({ band, feedback }) => {
-    const { submission } = reviewTarget
+    const { attempt } = reviewTarget
 
     const { error: updateError } = await supabase
-      .from('submissions')
+      .from('writing_mock_attempts')
       .update({
         examiner_band: band === '' ? null : Number(band),
         examiner_feedback: feedback || null,
         examiner_reviewed_by: profile.id,
         examiner_reviewed_at: new Date().toISOString(),
       })
-      .eq('id', submission.id)
+      .eq('id', attempt.id)
 
     if (updateError) {
       console.error('Could not save review:', updateError)
@@ -208,8 +184,7 @@ export default function WritingExaminerDashboard() {
 
         {tab === 'task1' && (
           <QueueSection
-            title="Task 1s"
-            blurb="Every Task 1 writing mock waiting to be marked, oldest submitted first isn't required — sorted by student name."
+            blurb="Every Task 1 writing mock waiting to be marked, sorted by student name."
             entries={task1Queue}
             taskKey="task1_text"
             onOpen={setReviewTarget}
@@ -219,7 +194,6 @@ export default function WritingExaminerDashboard() {
 
         {tab === 'task2' && (
           <QueueSection
-            title="Task 2s"
             blurb="Every Task 2 writing mock waiting to be marked, sorted by student name."
             entries={task2Queue}
             taskKey="task2_text"
@@ -249,13 +223,14 @@ export default function WritingExaminerDashboard() {
   )
 }
 
-function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
+// No repeated title here — Layout's own sidebar/header already says
+// "Task 1s" / "Task 2s", so this only carries the one line of context
+// that isn't shown anywhere else (per Jasur: "repetitions should be
+// removed from each dashboard be it teacher/examiner or student").
+function QueueSection({ blurb, entries, taskKey, onOpen, onMessage }) {
   return (
     <section className="space-y-3">
-      <div>
-        <h2 className="font-display text-xl text-paper">{title}</h2>
-        <p className="text-sm text-mist mt-1 max-w-2xl">{blurb}</p>
-      </div>
+      <p className="text-sm text-mist max-w-2xl">{blurb}</p>
 
       {entries.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
@@ -264,12 +239,12 @@ function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
       ) : (
         <div className="space-y-2.5">
           {entries.map((entry) => {
-            const reviewed = Boolean(entry.submission.examiner_reviewed_at)
-            const words = countWords(entry.mockEssay[taskKey])
+            const reviewed = Boolean(entry.attempt.examiner_reviewed_at)
+            const words = countWords(entry.attempt[taskKey])
 
             return (
               <div
-                key={entry.submission.id + taskKey}
+                key={entry.attempt.id + taskKey}
                 className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-wrap items-center justify-between gap-3"
               >
                 <div className="min-w-0">
@@ -277,19 +252,19 @@ function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
                     {studentLabel(entry.student)}
                   </p>
                   <p className="text-xs text-mist font-mono mt-0.5">
-                    {entry.homework.title} · {words} words
-                    {entry.submission.submitted_at &&
-                      ` · submitted ${new Date(entry.submission.submitted_at).toLocaleDateString()}`}
+                    {entry.exam.title} · {words} words
+                    {entry.attempt.submitted_at &&
+                      ` · submitted ${new Date(entry.attempt.submitted_at).toLocaleDateString()}`}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   {reviewed ? (
                     <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                      Band {entry.submission.examiner_band ?? '—'}
+                      Band {entry.attempt.examiner_band ?? '—'}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-line bg-panel-2 text-mist px-2.5 py-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1">
                       Not marked
                     </span>
                   )}
@@ -297,7 +272,7 @@ function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
                   <button
                     type="button"
                     onClick={() => onMessage(entry.student)}
-                    className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                    className="focus-ring rounded-full border border-line text-xs font-medium text-mist hover:text-paper hover:border-brass/40 px-3 py-1.5 transition-colors"
                   >
                     Message
                   </button>
@@ -305,7 +280,7 @@ function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
                   <button
                     type="button"
                     onClick={() => onOpen(entry)}
-                    className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-3.5 py-1.5"
+                    className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-brass-dim transition-colors"
                   >
                     {reviewed ? 'View / edit' : 'Mark'}
                   </button>
@@ -320,17 +295,17 @@ function QueueSection({ title, blurb, entries, taskKey, onOpen, onMessage }) {
 }
 
 function ReviewModal({ entry, onClose, onSave }) {
-  const { submission, homework, student, mockEssay } = entry
+  const { attempt, exam, student } = entry
 
-  const [band, setBand] = useState(submission.examiner_band ?? '')
-  const [feedback, setFeedback] = useState(submission.examiner_feedback || '')
+  const [band, setBand] = useState(attempt.examiner_band ?? '')
+  const [feedback, setFeedback] = useState(attempt.examiner_feedback || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [activeTask, setActiveTask] = useState(mockEssay.task1_text ? 'task1' : 'task2')
+  const [activeTask, setActiveTask] = useState(attempt.task1_text ? 'task1' : 'task2')
 
   const tasksAvailable = [
-    mockEssay.task1_text ? 'task1' : null,
-    mockEssay.task2_text ? 'task2' : null,
+    attempt.task1_text ? 'task1' : null,
+    attempt.task2_text ? 'task2' : null,
   ].filter(Boolean)
 
   const handleSave = async () => {
@@ -351,7 +326,7 @@ function ReviewModal({ entry, onClose, onSave }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="font-display text-lg text-paper">{studentLabel(student)}</h3>
-            <p className="text-xs text-mist font-mono mt-0.5">{homework.title}</p>
+            <p className="text-xs text-mist font-mono mt-0.5">{exam.title}</p>
           </div>
           <button
             type="button"
@@ -380,31 +355,31 @@ function ReviewModal({ entry, onClose, onSave }) {
         )}
 
         <div className="mt-4 space-y-4">
-          {activeTask === 'task1' && homework.mock_task1_prompt && (
+          {activeTask === 'task1' && exam.task1_prompt && (
             <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm text-paper-dim whitespace-pre-wrap">
-              {homework.mock_task1_prompt}
+              {exam.task1_prompt}
             </div>
           )}
-          {activeTask === 'task2' && homework.mock_task2_prompt && (
+          {activeTask === 'task2' && exam.task2_prompt && (
             <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm text-paper-dim whitespace-pre-wrap">
-              {homework.mock_task2_prompt}
+              {exam.task2_prompt}
             </div>
           )}
 
-          {activeTask === 'task1' && homework.mock_task1_image_url && (
+          {activeTask === 'task1' && exam.task1_image_url && (
             <img
-              src={homework.mock_task1_image_url}
+              src={exam.task1_image_url}
               alt="Task 1 chart"
               className="max-h-64 rounded-lg border border-line object-contain"
             />
           )}
 
           <div className="rounded-lg border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap max-h-96 overflow-y-auto">
-            {mockEssay[`${activeTask}_text`] || 'No answer written.'}
+            {attempt[`${activeTask}_text`] || 'No answer written.'}
           </div>
 
           <p className="text-xs text-mist font-mono">
-            {countWords(mockEssay[`${activeTask}_text`])} words
+            {countWords(attempt[`${activeTask}_text`])} words
           </p>
         </div>
 

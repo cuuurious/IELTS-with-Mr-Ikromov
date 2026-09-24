@@ -8,10 +8,10 @@ import Layout, {
   IconGroupChat,
   IconChat,
   IconLeaderboard,
-  IconMockExam,
   IconAI,
   IconApprovals,
   IconStaff,
+  IconMockExam,
 } from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
 import TeacherStudents from './TeacherStudents'
@@ -22,13 +22,14 @@ import TeacherLeaderboards from './TeacherLeaderboards'
 import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
 import TeacherAccounts from './TeacherAccounts'
-import TeacherMockProgress from './TeacherMockProgress'
+import TeacherMockCenter from './TeacherMockCenter'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
 
   const [tab, setTab] = useState('groups')
   const [pendingCount, setPendingCount] = useState(0)
+  const [mockCenterOpen, setMockCenterOpen] = useState(false)
 
   const [notificationChat, setNotificationChat] = useState(null)
   const [notificationGroup, setNotificationGroup] = useState(null)
@@ -231,7 +232,7 @@ export default function TeacherDashboard() {
       title: 'Insights',
       items: [
         { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
-        { key: 'mock-progress', label: 'Mock Progress', icon: IconMockExam },
+        { key: 'mock-center', label: 'Mock Center', icon: IconMockExam },
       ],
     },
     {
@@ -257,6 +258,14 @@ export default function TeacherDashboard() {
   ]
 
   const handleTabChange = (nextTab) => {
+    // Mock Center is its own full-screen portal (see TeacherMockCenter.jsx)
+    // — nothing about groups, leaderboards or homework belongs in it, per
+    // Jasur's own words, so it never becomes a regular sidebar tab.
+    if (nextTab === 'mock-center') {
+      setMockCenterOpen(true)
+      return
+    }
+
     setTab(nextTab)
 
     if (nextTab !== 'chat') {
@@ -266,6 +275,10 @@ export default function TeacherDashboard() {
     if (nextTab !== 'group-chat') {
       setNotificationGroup(null)
     }
+  }
+
+  if (mockCenterOpen) {
+    return <TeacherMockCenter onExit={() => setMockCenterOpen(false)} />
   }
 
   return (
@@ -292,10 +305,6 @@ export default function TeacherDashboard() {
 
       {tab === 'leaderboards' && (
         <TeacherLeaderboards />
-      )}
-
-      {tab === 'mock-progress' && (
-        <TeacherMockProgress />
       )}
 
       {tab === 'ai-grading' && (
