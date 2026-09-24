@@ -1636,10 +1636,11 @@ export default function HomeworkCard({
 
                 {compressingAudio && (
                   <p className="text-xs text-brass mt-2">
-                    ⏳ Compressing your audio file — this can take a
-                    few minutes for longer recordings. This page
-                    hasn't frozen; please keep it open and wait for
-                    it to finish instead of reloading.
+                    ⏳ Compressing your audio file — usually just a
+                    few seconds, up to a minute or so for a longer
+                    recording. This page hasn't frozen; please keep
+                    it open and wait for it to finish instead of
+                    reloading.
                   </p>
                 )}
               </>

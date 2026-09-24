@@ -809,9 +809,9 @@ export default function AudioRecorder({
         !finishing &&
         (compressingAudio ? (
           <span className="text-brass text-xs">
-            ⏳ Compressing your recording — this can take a few
-            minutes for a longer one. Please keep this page open;
-            it hasn't frozen.
+            ⏳ Compressing your recording — usually just a few
+            seconds, up to a minute or so for a longer one. Please
+            keep this page open; it hasn't frozen.
           </span>
         ) : (
           <span className="text-mist text-xs font-mono">
