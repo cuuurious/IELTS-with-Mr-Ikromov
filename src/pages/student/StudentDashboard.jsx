@@ -22,13 +22,32 @@ import GroupChats from '../../components/GroupChats'
 import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
 import PrivateChats from '../../components/PrivateChats'
-import MockExams from '../../components/MockExams'
+import MockTestCenter from '../../components/MockTestCenter'
+
+// One-line description shown under the top bar's own title — see the
+// "PAGE INTRO" comment below for why this no longer repeats the title
+// itself (the top bar already has it).
+const PAGE_SUBTITLES = {
+  homework: 'Keep track of your assignments and submit your work on time.',
+  wordlists: 'Build your vocabulary and strengthen your English.',
+  leaderboard: 'See your progress alongside your classmates.',
+  'group-chat': 'Stay connected with your group and classmates.',
+  chats: 'Private conversations with your teacher and other students.',
+}
 
 export default function StudentDashboard() {
   const { profile } = useAuth()
 
   const [tab, setTab] =
     useState('homework')
+
+  // The Mock Test Center is its OWN full-screen portal now, not a tab
+  // in this dashboard's sidebar — see MockTestCenter.jsx's header
+  // comment for why (Jasur wants it to feel like a real exam
+  // environment, not another section of the everyday site). Clicking
+  // its sidebar entry below sets this instead of changing `tab`.
+  const [mockCenterOpen, setMockCenterOpen] =
+    useState(false)
 
   const [myGroups, setMyGroups] =
     useState([])
@@ -494,7 +513,7 @@ const messageId = linkParts[2] || null
       {
         items: [
           { key: 'homework', label: 'Homework', icon: IconHomework },
-          { key: 'mock-exams', label: 'Mock Exams', icon: IconMockExam },
+          { key: 'mock-center', label: 'Mock Test Center', icon: IconMockExam },
           { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'group-chat', label: 'Group Chat', icon: IconGroupChat },
@@ -567,6 +586,14 @@ const messageId = linkParts[2] || null
 
   const handleTabChange =
     (nextTab) => {
+      // The Mock Test Center is a full-screen takeover, not a tab —
+      // open it and leave `tab` exactly where it was, so exiting the
+      // portal lands back on whatever section was open before.
+      if (nextTab === 'mock-center') {
+        setMockCenterOpen(true)
+        return
+      }
+
       setTab(nextTab)
 
       /*
@@ -589,6 +616,14 @@ const messageId = linkParts[2] || null
     )
   }
 
+  if (mockCenterOpen) {
+    return (
+      <MockTestCenter
+        onExit={() => setMockCenterOpen(false)}
+      />
+    )
+  }
+
   /*
    * ============================================================
    * RENDER
@@ -605,75 +640,51 @@ const messageId = linkParts[2] || null
 
         {/* ======================================================
             PAGE INTRO
+            The top bar (Layout.jsx) already shows the "Candidate
+            portal" eyebrow and the page title in big text right
+            above this — repeating both again here in a second card
+            was pure noise. This keeps only the one-line description
+            (which the top bar doesn't have room for) plus the
+            homework tab's group/task-count readout.
            ====================================================== */}
-        <section className="dashboard-hero relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
-  <div className="hero-atmosphere" />
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 blur-3xl" />
-            <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
-          </div>
-
-          <div className="relative px-5 py-4 sm:px-7 sm:py-5">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-brass-dim/25 bg-brass/10 px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] text-brass font-mono">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                  Candidate portal
-                </div>
-
-                <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight mt-2">
-                  {tab === 'homework'
-                    ? 'Your homework'
-                    : tab === 'mock-exams'
-                      ? 'Mock Exams'
-                      : tab === 'wordlists'
-                        ? 'Word lists'
-                        : tab === 'leaderboard'
-                          ? 'Leaderboard'
-                          : tab === 'group-chat'
-                            ? 'Group chat'
-                            : 'Chats'}
-                </h1>
-
-                <p className="mt-1.5 text-sm text-mist leading-6 max-w-2xl">
-                  {tab === 'homework'
-                    ? 'Keep track of your assignments and submit your work on time.'
-                    : tab === 'mock-exams'
-                      ? 'Sit a full, timed IELTS mock exam and get scored instantly.'
-                      : tab === 'wordlists'
-                        ? 'Build your vocabulary and strengthen your English.'
-                        : tab === 'leaderboard'
-                          ? 'See your progress alongside your classmates.'
-                          : tab === 'group-chat'
-                            ? 'Stay connected with your group and classmates.'
-                            : 'Private conversations with your teacher and other students.'}
-                </p>
-              </div>
-
-              {tab === 'homework' && myGroups.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="hidden sm:block text-right">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
-                      Current group
-                    </div>
-                    <div className="font-medium text-paper mt-1">
-                      {myGroups.find((group) => group.id === activeGroup)?.name || 'Group'}
-                    </div>
-                  </div>
-
-                  <div className="h-12 min-w-12 rounded-2xl border border-brass-dim/30 bg-brass/10 px-3 flex flex-col items-center justify-center">
-                    <span className="text-[9px] uppercase tracking-widest text-mist font-mono">
-                      Tasks
-                    </span>
-                    <span className="font-display text-lg leading-none text-brass mt-0.5">
-                      {homeworks.length}
-                    </span>
-                  </div>
-                </div>
-              )}
+        {PAGE_SUBTITLES[tab] && (
+          <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 blur-3xl" />
+              <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
             </div>
-          </div>
-        </section>
+
+            <div className="relative px-5 py-4 sm:px-7 sm:py-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p className="text-sm text-mist leading-6 max-w-2xl">
+                  {PAGE_SUBTITLES[tab]}
+                </p>
+
+                {tab === 'homework' && myGroups.length > 0 && (
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="hidden sm:block text-right">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
+                        Current group
+                      </div>
+                      <div className="font-medium text-paper mt-1">
+                        {myGroups.find((group) => group.id === activeGroup)?.name || 'Group'}
+                      </div>
+                    </div>
+
+                    <div className="h-12 min-w-12 rounded-2xl border border-brass-dim/30 bg-brass/10 px-3 flex flex-col items-center justify-center">
+                      <span className="text-[9px] uppercase tracking-widest text-mist font-mono">
+                        Tasks
+                      </span>
+                      <span className="font-display text-lg leading-none text-brass mt-0.5">
+                        {homeworks.length}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ======================================================
             HOMEWORK
@@ -758,19 +769,6 @@ const messageId = linkParts[2] || null
                 )}
               </>
             )}
-          </section>
-        )}
-
-        {/* ======================================================
-            MOCK EXAMS
-            Ported from the standalone ielts-mock-tests app — see
-            MockExams.jsx and mock-test-site-concept.md's "Merge plan"
-            for the full context. Student-facing slice only for now;
-            the admin exam manager/editor is a separate follow-up.
-           ====================================================== */}
-        {tab === 'mock-exams' && (
-          <section>
-            <MockExams selfId={profile.id} />
           </section>
         )}
 

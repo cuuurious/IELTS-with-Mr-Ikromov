@@ -8,6 +8,8 @@ import Register from './pages/Register'
 import PendingApproval from './pages/PendingApproval'
 import StudentDashboard from './pages/student/StudentDashboard'
 import TeacherDashboard from './pages/teacher/TeacherDashboard'
+import SpeakingExaminerDashboard from './pages/examiner/SpeakingExaminerDashboard'
+import WritingExaminerDashboard from './pages/examiner/WritingExaminerDashboard'
 
 function Gate() {
   const {
@@ -66,9 +68,16 @@ function Gate() {
     return <PendingApproval />
   }
 
-  return profile.role === 'teacher'
-    ? <TeacherDashboard />
-    : <StudentDashboard />
+  // Four roles now exist (see migration_29): teacher, speaking_examiner,
+  // writing_examiner, and everything else (student). Examiners are
+  // deliberately NOT teachers, so they need their own branch here —
+  // before this, both examiner roles fell through the ": " default
+  // straight into StudentDashboard, which is exactly the bug Jasur
+  // hit logging in as a freshly-created examiner account.
+  if (profile.role === 'teacher') return <TeacherDashboard />
+  if (profile.role === 'speaking_examiner') return <SpeakingExaminerDashboard />
+  if (profile.role === 'writing_examiner') return <WritingExaminerDashboard />
+  return <StudentDashboard />
 }
 
 function PublicOnly({ children }) {
