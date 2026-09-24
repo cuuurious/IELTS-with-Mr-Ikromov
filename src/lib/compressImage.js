@@ -75,8 +75,39 @@ function isCompressible(file) {
 // phone stores the sensor's raw (often landscape) pixel data plus a
 // "rotate this for display" tag, and only decoders that actually
 // honor that tag draw it upright.
+//
+// The FIRST attempt below also asks the browser to resize DURING
+// decode (resizeWidth/resizeHeight/resizeFit), instead of decoding
+// the full original and downscaling afterwards via canvas the way
+// every earlier version of this function did. This matters a lot on
+// a modern phone photo: a 12-108 megapixel original needs the browser
+// to hold tens to hundreds of MB of raw decoded pixel data in memory
+// just to draw a ~1920px-wide result — on a lower-end Android phone
+// that's exactly the kind of spike that can crash the whole tab with
+// an out-of-memory error before this function's own try/catch (below,
+// in compressImageIfNeeded) ever gets a chance to run — the crash
+// happens at the browser/OS level, not as a catchable JS exception.
+// Where a browser supports it, decoding at roughly the target size
+// from the start (Chromium can do this straight from a JPEG's own
+// scaled decode path) avoids ever allocating the full-resolution
+// bitmap at all. Where it isn't supported, this simply fails and
+// falls through to the exact same full-decode chain this function
+// already had.
 async function decodeImage(file) {
   if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file, {
+        imageOrientation: 'from-image',
+        resizeWidth: MAX_DIMENSION,
+        resizeHeight: MAX_DIMENSION,
+        resizeFit: 'contain',
+        resizeQuality: 'medium',
+      })
+    } catch {
+      // Resize-during-decode isn't supported/accepted here — fall
+      // through to a plain full-resolution decode instead.
+    }
+
     try {
       return await createImageBitmap(file, {
         imageOrientation: 'from-image',
@@ -95,9 +126,9 @@ async function decodeImage(file) {
 
   // Last-resort fallback for browsers without createImageBitmap at
   // all. This does not reliably honor EXIF orientation in every
-  // browser — but it's only ever reached on very old browsers, and a
-  // same-orientation compressed photo beats failing compression
-  // outright.
+  // browser, and always decodes at full resolution — but it's only
+  // ever reached as a final fallback, and a same-orientation
+  // compressed photo beats failing compression outright.
   return await new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
