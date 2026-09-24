@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 import Layout, {
   IconHomework,
+  IconMockExam,
   IconWordlist,
   IconLeaderboard,
   IconGroupChat,
@@ -21,6 +22,7 @@ import GroupChats from '../../components/GroupChats'
 import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
 import PrivateChats from '../../components/PrivateChats'
+import MockExams from '../../components/MockExams'
 
 export default function StudentDashboard() {
   const { profile } = useAuth()
@@ -492,6 +494,7 @@ const messageId = linkParts[2] || null
       {
         items: [
           { key: 'homework', label: 'Homework', icon: IconHomework },
+          { key: 'mock-exams', label: 'Mock Exams', icon: IconMockExam },
           { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'group-chat', label: 'Group Chat', icon: IconGroupChat },
@@ -621,25 +624,29 @@ const messageId = linkParts[2] || null
                 <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight mt-2">
                   {tab === 'homework'
                     ? 'Your homework'
-                    : tab === 'wordlists'
-                      ? 'Word lists'
-                      : tab === 'leaderboard'
-                        ? 'Leaderboard'
-                        : tab === 'group-chat'
-                          ? 'Group chat'
-                          : 'Chats'}
+                    : tab === 'mock-exams'
+                      ? 'Mock Exams'
+                      : tab === 'wordlists'
+                        ? 'Word lists'
+                        : tab === 'leaderboard'
+                          ? 'Leaderboard'
+                          : tab === 'group-chat'
+                            ? 'Group chat'
+                            : 'Chats'}
                 </h1>
 
                 <p className="mt-1.5 text-sm text-mist leading-6 max-w-2xl">
                   {tab === 'homework'
                     ? 'Keep track of your assignments and submit your work on time.'
-                    : tab === 'wordlists'
-                      ? 'Build your vocabulary and strengthen your English.'
-                      : tab === 'leaderboard'
-                        ? 'See your progress alongside your classmates.'
-                        : tab === 'group-chat'
-                          ? 'Stay connected with your group and classmates.'
-                          : 'Private conversations with your teacher and other students.'}
+                    : tab === 'mock-exams'
+                      ? 'Sit a full, timed IELTS mock exam and get scored instantly.'
+                      : tab === 'wordlists'
+                        ? 'Build your vocabulary and strengthen your English.'
+                        : tab === 'leaderboard'
+                          ? 'See your progress alongside your classmates.'
+                          : tab === 'group-chat'
+                            ? 'Stay connected with your group and classmates.'
+                            : 'Private conversations with your teacher and other students.'}
                 </p>
               </div>
 
@@ -751,6 +758,19 @@ const messageId = linkParts[2] || null
                 )}
               </>
             )}
+          </section>
+        )}
+
+        {/* ======================================================
+            MOCK EXAMS
+            Ported from the standalone ielts-mock-tests app — see
+            MockExams.jsx and mock-test-site-concept.md's "Merge plan"
+            for the full context. Student-facing slice only for now;
+            the admin exam manager/editor is a separate follow-up.
+           ====================================================== */}
+        {tab === 'mock-exams' && (
+          <section>
+            <MockExams selfId={profile.id} />
           </section>
         )}
 

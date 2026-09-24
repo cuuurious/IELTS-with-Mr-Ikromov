@@ -81,6 +81,15 @@ export function IconChat({ className }) {
   )
 }
 
+export function IconMockExam({ className }) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="13" r="7.5" />
+      <path d="M12 13V9M9.5 3.5h5M12 3.5V5" />
+    </svg>
+  )
+}
+
 export function IconLeaderboard({ className }) {
   return (
     <svg className={className} {...iconProps}>
