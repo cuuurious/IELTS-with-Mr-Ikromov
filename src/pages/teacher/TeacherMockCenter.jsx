@@ -72,11 +72,21 @@ export default function TeacherMockCenter({ onExit }) {
         // (migration_34) — NEVER homeworks/submissions, which is a
         // separate, teacher-posted homework flow that doesn't count
         // as "the whole mock" (Jasur, 2026-09-24).
+        //
+        // Fetches every SUBMITTED attempt, reviewed or not — not just
+        // reviewed ones. Only having reviewed rows here made every
+        // student show "Not marked" identically, whether they'd never
+        // touched a writing mock at all or had genuinely submitted one
+        // that's just awaiting a mark — there was no way to tell those
+        // two states apart. The row-building logic below now checks
+        // for the presence of an attempt at all (→ "—" when there is
+        // none) separately from whether it's been reviewed yet (→
+        // "Not marked").
         supabase
           .from('writing_mock_attempts')
           .select('*')
-          .not('examiner_reviewed_at', 'is', null)
-          .order('examiner_reviewed_at', { ascending: false }),
+          .not('submitted_at', 'is', null)
+          .order('submitted_at', { ascending: false }),
       ])
 
       if (studentsError) console.error('Failed to load students:', studentsError)
@@ -158,7 +168,12 @@ export default function TeacherMockCenter({ onExit }) {
         listening: summarize(byModule.listening),
         readingAttempts: byModule.reading,
         listeningAttempts: byModule.listening,
+        // Every submitted attempt (reviewed or not) — used for the
+        // expanded per-attempt list AND to tell "never attempted"
+        // apart from "attempted, awaiting review" in the collapsed
+        // row below.
         writingReviews: ownReviews,
+        reviewedWritingCount: bands.length,
         avgBand,
       }
     })
@@ -273,11 +288,13 @@ export default function TeacherMockCenter({ onExit }) {
                               <>
                                 <span className="font-semibold text-sage">Band {row.avgBand}</span>
                                 <span className="text-mist text-xs ml-1">
-                                  ({row.writingReviews.length})
+                                  ({row.reviewedWritingCount})
                                 </span>
                               </>
+                            ) : row.writingReviews.length > 0 ? (
+                              <span className="text-amber text-xs">Not marked</span>
                             ) : (
-                              <span className="text-mist text-xs">Not marked</span>
+                              <span className="text-mist text-xs">—</span>
                             )}
                           </div>
 
@@ -322,9 +339,13 @@ export default function TeacherMockCenter({ onExit }) {
                               <div key={r.id} className="rounded-lg border border-line bg-panel px-3.5 py-2.5">
                                 <div className="flex items-center justify-between gap-3 text-sm">
                                   <span className="text-paper">{r.examTitle}</span>
-                                  <span className="text-sage font-semibold text-xs">
-                                    Band {r.examiner_band ?? '—'}
-                                  </span>
+                                  {r.examiner_band != null ? (
+                                    <span className="text-sage font-semibold text-xs">
+                                      Band {r.examiner_band}
+                                    </span>
+                                  ) : (
+                                    <span className="text-amber text-xs">Awaiting review</span>
+                                  )}
                                 </div>
                                 {r.examiner_feedback && (
                                   <p className="text-xs text-mist mt-1.5 whitespace-pre-wrap">
