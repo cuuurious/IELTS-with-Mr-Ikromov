@@ -9,8 +9,16 @@ export const SUBMISSION_TYPE_OPTIONS = [
   { value: 'pptx', label: 'PowerPoint (.pptx)', accept: '.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation' },
   { value: 'txt', label: 'Text (.txt)', accept: '.txt,text/plain' },
   { value: 'csv', label: 'CSV (.csv)', accept: '.csv,text/csv' },
-  { value: 'mp3', label: 'MP3 audio', accept: '.mp3,audio/mpeg' },
-  { value: 'wav', label: 'WAV audio', accept: '.wav,audio/wav' },
+  // Both audio options accept ANY common phone-recording format under
+  // the hood (see AUDIO_EXTENSIONS/matchesSubmissionType below) — a
+  // student's actual file is almost never really "just mp3" or "just
+  // wav": an iPhone Voice Memo is .m4a, most Android recorders save
+  // .m4a or .3gp, WhatsApp voice notes are .ogg/.opus, and a
+  // browser-based recording is .webm. Keeping two checkbox values
+  // (instead of collapsing to one) preserves whatever teachers already
+  // have saved on existing homeworks.
+  { value: 'mp3', label: 'MP3 audio', accept: 'audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.3gp,.3gpp,.amr,.webm,.flac,.wma,.wav' },
+  { value: 'wav', label: 'WAV audio', accept: 'audio/*,.wav,.m4a,.aac,.ogg,.oga,.opus,.3gp,.3gpp,.amr,.webm,.flac,.wma,.mp3' },
   { value: 'mp4', label: 'MP4 video', accept: '.mp4,video/mp4' },
   { value: 'zip', label: 'ZIP archive', accept: '.zip,application/zip' },
   { value: 'other', label: 'Other file types', accept: '*/*' },

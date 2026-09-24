@@ -56,12 +56,21 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
     if (mockTask1ImageInputRef.current) mockTask1ImageInputRef.current.value = ''
   }
 
+  // Plain, independent toggle — checking "Other file types" used to
+  // wipe out every other checked box (and checking anything else while
+  // "other" was on would silently drop "other"), which is exactly the
+  // "ticks disappearing" behavior this was reported as. "Other" already
+  // means "no restriction" in buildAccept()/matchesSubmissionType() in
+  // lib/submissionTypes.js regardless of what else is checked, so there's
+  // no need to force it exclusive here — it's just redundant-but-harmless
+  // when combined with specific types, same as the fixed logic in
+  // PostHomeworkForm.jsx.
   const toggleType = (value) => {
-    setAllowedTypes((prev) => {
-      if (value === 'other') return prev.includes('other') ? prev.filter((x) => x !== 'other') : ['other']
-      const next = prev.filter((x) => x !== 'other')
-      return next.includes(value) ? next.filter((x) => x !== value) : [...next, value]
-    })
+    setAllowedTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [...prev, value]
+    )
   }
 
   const save = async (e) => {

@@ -310,16 +310,6 @@ setLists(wordlists || [])
     return (
       <div className="flex flex-col gap-5">
 
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.2em] text-brass font-mono mb-2">
-            Vocabulary studio
-          </div>
-
-          <h1 className="font-display text-2xl sm:text-3xl text-paper">
-            Word lists
-          </h1>
-        </div>
-
         <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
           <p className="text-mist text-sm">
             Loading your vocabulary practice…
@@ -335,15 +325,7 @@ setLists(wordlists || [])
       <div className="flex flex-col gap-5">
 
         <div>
-          <div className="text-[11px] uppercase tracking-[0.2em] text-brass font-mono mb-2">
-            Vocabulary studio
-          </div>
-
-          <h1 className="font-display text-2xl sm:text-3xl text-paper">
-            Word lists
-          </h1>
-
-          <p className="text-mist text-sm mt-2">
+          <p className="text-mist text-sm">
             Vocabulary practice assigned by your teacher will
             appear here.
           </p>
@@ -364,15 +346,7 @@ setLists(wordlists || [])
       <div className="flex flex-col gap-5">
 
         <div>
-          <div className="text-[11px] uppercase tracking-[0.2em] text-brass font-mono mb-2">
-            Vocabulary studio
-          </div>
-
-          <h1 className="font-display text-2xl sm:text-3xl text-paper">
-            Word lists
-          </h1>
-
-          <p className="text-mist text-sm mt-2">
+          <p className="text-mist text-sm">
             Your teacher hasn't posted a vocabulary list yet.
           </p>
         </div>
@@ -401,15 +375,7 @@ setLists(wordlists || [])
 
       <div>
 
-        <div className="text-[11px] uppercase tracking-[0.2em] text-brass font-mono mb-2">
-          Vocabulary studio
-        </div>
-
-        <h1 className="font-display text-2xl sm:text-3xl text-paper">
-          Word lists
-        </h1>
-
-        <p className="text-mist text-sm mt-2 max-w-xl leading-relaxed">
+        <p className="text-mist text-sm max-w-xl leading-relaxed">
           Build your IELTS vocabulary one item at a time.
           Complete a list, review your result, and practise again
           whenever your teacher resets it.

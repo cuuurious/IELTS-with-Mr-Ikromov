@@ -592,8 +592,7 @@ export default function PrivateChats({
       <aside className="w-full md:w-72 shrink-0 bg-panel border border-line rounded-lg overflow-hidden flex flex-col">
 
         <div className="px-4 py-3 border-b border-line">
-          <div className="font-display text-lg text-paper">Chats</div>
-          <div className="text-xs text-mist mt-1">
+          <div className="text-xs text-mist">
             {selfRole === 'teacher'
               ? 'Your conversations with students'
               : 'Your teacher and private conversations'}
