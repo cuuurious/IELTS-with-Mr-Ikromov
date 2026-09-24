@@ -241,10 +241,13 @@ export default function TeacherDashboard() {
           icon: IconApprovals,
         },
         // Only Jasur Ikromov's account (profile.is_admin) can see this —
-        // see TeacherAccounts.jsx and the delete-teacher edge function,
-        // which both re-check this independently of the UI hiding it here.
+        // see TeacherAccounts.jsx and the create-staff-account /
+        // delete-staff-account edge functions, which both re-check this
+        // independently of the UI hiding it here. Widened 2026-09-24
+        // from "teacher accounts" to "staff accounts" (teacher +
+        // speaking_examiner + writing_examiner all live here now).
         ...(profile.is_admin
-          ? [{ key: 'teacher-accounts', label: 'Teacher accounts', icon: IconStaff }]
+          ? [{ key: 'staff-accounts', label: 'Staff accounts', icon: IconStaff }]
           : []),
       ],
     },
@@ -330,7 +333,7 @@ export default function TeacherDashboard() {
         />
       )}
 
-      {tab === 'teacher-accounts' && profile.is_admin && (
+      {tab === 'staff-accounts' && profile.is_admin && (
         <TeacherAccounts
           currentTeacherId={profile.id}
         />
