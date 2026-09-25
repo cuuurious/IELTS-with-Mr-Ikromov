@@ -1420,7 +1420,7 @@ export default function TeacherMockCenter({ onExit }) {
                             <button
                               type="button"
                               onClick={() => openEditExam(exam)}
-                              className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                              className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                             >
                               Edit
                             </button>
@@ -1428,7 +1428,7 @@ export default function TeacherMockCenter({ onExit }) {
                             <button
                               type="button"
                               onClick={() => deleteWritingExam(exam)}
-                              className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                              className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                             >
                               Delete
                             </button>
@@ -1503,7 +1503,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditRlExam(exam)}
-                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                 >
                                   Edit
                                 </button>
@@ -1511,7 +1511,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteRlExam(exam)}
-                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -1592,7 +1592,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditSection(sec)}
-                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                 >
                                   Edit
                                 </button>
@@ -1600,7 +1600,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteSection(sec)}
-                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -1667,7 +1667,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditQuestion(q)}
-                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                 >
                                   Edit
                                 </button>
@@ -1675,7 +1675,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteQuestion(q)}
-                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -1758,7 +1758,7 @@ export default function TeacherMockCenter({ onExit }) {
                               <button
                                 type="button"
                                 onClick={() => openEditFullMock(set)}
-                                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                               >
                                 Edit
                               </button>
@@ -1766,7 +1766,7 @@ export default function TeacherMockCenter({ onExit }) {
                               <button
                                 type="button"
                                 onClick={() => deleteFullMockSet(set)}
-                                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                               >
                                 Delete
                               </button>
