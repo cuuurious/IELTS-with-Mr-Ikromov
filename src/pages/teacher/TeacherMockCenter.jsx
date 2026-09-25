@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
 import { guessMimeType } from '../../lib/mime'
+import ConfirmModal from '../../components/ConfirmModal'
 
 /*
  * ================================================================
@@ -165,6 +166,31 @@ export default function TeacherMockCenter({ onExit }) {
   const [fullMockModal, setFullMockModal] = useState(null) // { mode: 'create' } | { mode: 'edit', set }
   const [fullMockModalSaving, setFullMockModalSaving] = useState(false)
   const [fullMockModalError, setFullMockModalError] = useState('')
+
+  // Styled stand-in for window.confirm()/window.alert() on every delete
+  // in this Content tab — Jasur, on seeing the browser's own native
+  // dialog: "this window has to be in the style of the website." Same
+  // component/pattern already used elsewhere in the app (ConfirmModal.jsx).
+  // { title, message, confirmLabel?, tone?, hideCancel?, onConfirm } | null
+  const [confirmDialog, setConfirmDialog] = useState(null)
+
+  // Postgres foreign-key errors ("update or delete on table ... violates
+  // foreign key constraint ...") are correct but unreadable to a teacher —
+  // e.g. deleting a question/section/exam that a student has already
+  // answered fails because mock_answers still points at it. Translate
+  // that into the same "un-publish instead" guidance already given in
+  // the confirm prompts below, instead of surfacing raw SQL error text.
+  const friendlyDeleteError = (err, fallback) => {
+    const msg = err?.message || ''
+    if (err?.code === '23503' || /foreign key constraint/i.test(msg)) {
+      return (
+        "Can't delete this — a student has already answered one of its questions, so the " +
+        "database is protecting that result. Un-publish it instead so students stop seeing it, " +
+        "without losing what's already been recorded."
+      )
+    }
+    return msg || fallback
+  }
 
   const rlSelectedExam = useMemo(
     () => rlExams.find((e) => e.id === rlSelectedExamId) || null,
@@ -664,21 +690,29 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
-  const deleteWritingExam = async (exam) => {
-    const ok = window.confirm(
-      `Delete "${exam.title}"? This also permanently deletes every student attempt on it. This can't be undone.`
-    )
-    if (!ok) return
+  const deleteWritingExam = (exam) => {
+    setConfirmDialog({
+      title: 'Delete this writing mock?',
+      message: `Delete "${exam.title}"? This also permanently deletes every student attempt on it. This can't be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        const { error } = await supabase.from('writing_mock_exams').delete().eq('id', exam.id)
 
-    const { error } = await supabase.from('writing_mock_exams').delete().eq('id', exam.id)
+        if (error) {
+          console.error('Could not delete writing mock exam:', error)
+          setConfirmDialog({
+            title: "Couldn't delete this exam",
+            message: friendlyDeleteError(error, 'Could not delete this exam.'),
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
 
-    if (error) {
-      console.error('Could not delete writing mock exam:', error)
-      window.alert(error.message || 'Could not delete this exam.')
-      return
-    }
-
-    await reloadWritingExams()
+        await reloadWritingExams()
+      },
+    })
   }
 
   const toggleExamActive = async (exam) => {
@@ -763,47 +797,77 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
-  const deleteRlExam = async (exam) => {
-    const ok = window.confirm(
-      `Delete "${exam.title}"? This deletes every section and question in it. If any student has already ` +
-        `attempted this exam, deletion may fail — un-publish it instead in that case. This can't be undone.`
-    )
-    if (!ok) return
+  const deleteRlExam = (exam) => {
+    setConfirmDialog({
+      title: `Delete "${exam.title}"?`,
+      message:
+        'This deletes every section and question in it. If any student has already attempted this exam, ' +
+        "deletion may fail — un-publish it instead in that case. This can't be undone.",
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        try {
+          const { data: sectionRows, error: sectionsError } = await supabase
+            .from('mock_sections')
+            .select('id')
+            .eq('exam_id', exam.id)
+          if (sectionsError) throw sectionsError
 
-    try {
-      const { data: sectionRows, error: sectionsError } = await supabase
-        .from('mock_sections')
-        .select('id')
-        .eq('exam_id', exam.id)
-      if (sectionsError) throw sectionsError
+          const sectionIds = (sectionRows || []).map((s) => s.id)
 
-      const sectionIds = (sectionRows || []).map((s) => s.id)
-      if (sectionIds.length > 0) {
-        const { error: questionsDeleteError } = await supabase
-          .from('mock_questions')
-          .delete()
-          .in('section_id', sectionIds)
-        if (questionsDeleteError) throw questionsDeleteError
-      }
+          if (sectionIds.length > 0) {
+            const { data: questionRows, error: questionsError } = await supabase
+              .from('mock_questions')
+              .select('id')
+              .in('section_id', sectionIds)
+            if (questionsError) throw questionsError
 
-      const { error: sectionsDeleteError } = await supabase
-        .from('mock_sections')
-        .delete()
-        .eq('exam_id', exam.id)
-      if (sectionsDeleteError) throw sectionsDeleteError
+            // mock_answers (student-submitted answers, from the original
+            // standalone ielts-mock-tests schema) has a FK straight at
+            // mock_questions.id — has to go before the questions
+            // themselves, or the delete below fails with a foreign key
+            // constraint error (exactly what Jasur ran into).
+            const questionIds = (questionRows || []).map((q) => q.id)
+            if (questionIds.length > 0) {
+              const { error: answersDeleteError } = await supabase
+                .from('mock_answers')
+                .delete()
+                .in('question_id', questionIds)
+              if (answersDeleteError) throw answersDeleteError
+            }
 
-      const { error: examDeleteError } = await supabase.from('mock_exams').delete().eq('id', exam.id)
-      if (examDeleteError) throw examDeleteError
+            const { error: questionsDeleteError } = await supabase
+              .from('mock_questions')
+              .delete()
+              .in('section_id', sectionIds)
+            if (questionsDeleteError) throw questionsDeleteError
+          }
 
-      if (rlSelectedExamId === exam.id) backToRlExams()
-      await reloadRlExams()
-    } catch (err) {
-      console.error('Could not delete mock exam:', err)
-      window.alert(
-        err?.message ||
-          'Could not delete this exam — it may already have student attempts. Try un-publishing it instead.'
-      )
-    }
+          const { error: sectionsDeleteError } = await supabase
+            .from('mock_sections')
+            .delete()
+            .eq('exam_id', exam.id)
+          if (sectionsDeleteError) throw sectionsDeleteError
+
+          const { error: examDeleteError } = await supabase.from('mock_exams').delete().eq('id', exam.id)
+          if (examDeleteError) throw examDeleteError
+
+          if (rlSelectedExamId === exam.id) backToRlExams()
+          await reloadRlExams()
+        } catch (err) {
+          console.error('Could not delete mock exam:', err)
+          setConfirmDialog({
+            title: "Couldn't delete this exam",
+            message: friendlyDeleteError(
+              err,
+              'Could not delete this exam — it may already have student attempts. Try un-publishing it instead.'
+            ),
+            hideCancel: true,
+            tone: 'coral',
+          })
+        }
+      },
+    })
   }
 
   const toggleRlExamActive = async (exam) => {
@@ -896,31 +960,56 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
-  const deleteSection = async (section) => {
-    const ok = window.confirm(
-      `Delete "${section.title}"? This also deletes every question in it. This can't be undone.`
-    )
-    if (!ok) return
+  const deleteSection = (section) => {
+    setConfirmDialog({
+      title: `Delete "${section.title}"?`,
+      message: "This also deletes every question in it. This can't be undone.",
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        try {
+          const { data: questionRows, error: questionsError } = await supabase
+            .from('mock_questions')
+            .select('id')
+            .eq('section_id', section.id)
+          if (questionsError) throw questionsError
 
-    try {
-      const { error: questionsDeleteError } = await supabase
-        .from('mock_questions')
-        .delete()
-        .eq('section_id', section.id)
-      if (questionsDeleteError) throw questionsDeleteError
+          // Same mock_answers FK as deleteRlExam above — clear a
+          // question's answers before the question itself.
+          const questionIds = (questionRows || []).map((q) => q.id)
+          if (questionIds.length > 0) {
+            const { error: answersDeleteError } = await supabase
+              .from('mock_answers')
+              .delete()
+              .in('question_id', questionIds)
+            if (answersDeleteError) throw answersDeleteError
+          }
 
-      const { error: sectionDeleteError } = await supabase
-        .from('mock_sections')
-        .delete()
-        .eq('id', section.id)
-      if (sectionDeleteError) throw sectionDeleteError
+          const { error: questionsDeleteError } = await supabase
+            .from('mock_questions')
+            .delete()
+            .eq('section_id', section.id)
+          if (questionsDeleteError) throw questionsDeleteError
 
-      if (rlSelectedSectionId === section.id) backToRlSections()
-      await reloadRlSections(rlSelectedExamId)
-    } catch (err) {
-      console.error('Could not delete section:', err)
-      window.alert(err?.message || 'Could not delete this section.')
-    }
+          const { error: sectionDeleteError } = await supabase
+            .from('mock_sections')
+            .delete()
+            .eq('id', section.id)
+          if (sectionDeleteError) throw sectionDeleteError
+
+          if (rlSelectedSectionId === section.id) backToRlSections()
+          await reloadRlSections(rlSelectedExamId)
+        } catch (err) {
+          console.error('Could not delete section:', err)
+          setConfirmDialog({
+            title: "Couldn't delete this section",
+            message: friendlyDeleteError(err, 'Could not delete this section.'),
+            hideCancel: true,
+            tone: 'coral',
+          })
+        }
+      },
+    })
   }
 
   /*
@@ -973,19 +1062,46 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
-  const deleteQuestion = async (question) => {
-    const ok = window.confirm('Delete this question? This can\'t be undone.')
-    if (!ok) return
+  const deleteQuestion = (question) => {
+    setConfirmDialog({
+      title: 'Delete this question?',
+      message: "This can't be undone.",
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        // Same mock_answers FK as the exam/section deletes above.
+        const { error: answersDeleteError } = await supabase
+          .from('mock_answers')
+          .delete()
+          .eq('question_id', question.id)
 
-    const { error } = await supabase.from('mock_questions').delete().eq('id', question.id)
+        if (answersDeleteError) {
+          console.error('Could not delete question:', answersDeleteError)
+          setConfirmDialog({
+            title: "Couldn't delete this question",
+            message: friendlyDeleteError(answersDeleteError, 'Could not delete this question.'),
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
 
-    if (error) {
-      console.error('Could not delete question:', error)
-      window.alert(error?.message || 'Could not delete this question.')
-      return
-    }
+        const { error } = await supabase.from('mock_questions').delete().eq('id', question.id)
 
-    await reloadRlQuestions(rlSelectedSectionId)
+        if (error) {
+          console.error('Could not delete question:', error)
+          setConfirmDialog({
+            title: "Couldn't delete this question",
+            message: friendlyDeleteError(error, 'Could not delete this question.'),
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
+
+        await reloadRlQuestions(rlSelectedSectionId)
+      },
+    })
   }
 
   /*
@@ -1040,22 +1156,31 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
-  const deleteFullMockSet = async (set) => {
-    const ok = window.confirm(
-      `Delete "${set.title}"? Students partway through it will be stuck mid-sequence. This ` +
-        `doesn't delete the underlying Listening/Reading/Writing exams, just this bundle. This can't be undone.`
-    )
-    if (!ok) return
+  const deleteFullMockSet = (set) => {
+    setConfirmDialog({
+      title: `Delete "${set.title}"?`,
+      message:
+        "Students partway through it will be stuck mid-sequence. This doesn't delete the underlying " +
+        "Listening/Reading/Writing exams, just this bundle. This can't be undone.",
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        const { error } = await supabase.from('full_mock_sets').delete().eq('id', set.id)
 
-    const { error } = await supabase.from('full_mock_sets').delete().eq('id', set.id)
+        if (error) {
+          console.error('Could not delete full mock set:', error)
+          setConfirmDialog({
+            title: "Couldn't delete this full mock",
+            message: friendlyDeleteError(error, 'Could not delete this full mock.'),
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
 
-    if (error) {
-      console.error('Could not delete full mock set:', error)
-      window.alert(error.message || 'Could not delete this full mock.')
-      return
-    }
-
-    await reloadFullMockSets()
+        await reloadFullMockSets()
+      },
+    })
   }
 
   const toggleFullMockActive = async (set) => {
@@ -1836,6 +1961,17 @@ export default function TeacherMockCenter({ onExit }) {
           onSave={saveFullMockSet}
         />
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
     </div>
   )
 }
