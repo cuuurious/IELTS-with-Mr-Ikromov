@@ -447,6 +447,14 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
               >
                 Cancel
               </button>
+              <button
+                type="button"
+                onClick={() => onStatus('no_show')}
+                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                title="Student didn't attend — notifies the teacher"
+              >
+                No-show
+              </button>
             </>
           )}
 

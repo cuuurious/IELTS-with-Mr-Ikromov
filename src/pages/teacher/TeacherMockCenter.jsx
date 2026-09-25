@@ -92,6 +92,7 @@ export default function TeacherMockCenter({ onExit }) {
 
   const [search, setSearch] = useState('')
   const [studentsView, setStudentsView] = useState('grouped') // 'grouped' | 'mixed'
+  const [selectedGroupId, setSelectedGroupId] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -264,12 +265,6 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }, [students, attempts, examsById, writingReviews, speakingSlots])
 
-  const groupNameById = useMemo(() => {
-    const map = {}
-    groups.forEach((g) => { map[g.id] = g.name })
-    return map
-  }, [groups])
-
   const groupIdsByStudent = useMemo(() => {
     const map = {}
     groupMembers.forEach((gm) => {
@@ -289,36 +284,40 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }, [rows, search])
 
-  const rowsByGroup = useMemo(() => {
-    const buckets = {}
+  // A pill picker for "By group" — jumps straight to one group instead
+  // of stacking every group's full student list and making Jasur
+  // scroll past 40+ names to reach the next one. Built from the raw
+  // `groups` list (not the search-filtered rowsByGroup) so the picker
+  // itself never disappears mid-search — only the list underneath it
+  // reacts to the search box.
+  const hasUngroupedStudents = useMemo(
+    () => rows.some((row) => (groupIdsByStudent[row.student.id] || []).length === 0),
+    [rows, groupIdsByStudent]
+  )
 
-    filteredRows.forEach((row) => {
-      const gids = groupIdsByStudent[row.student.id] || []
+  const groupPickerOptions = useMemo(() => {
+    const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name))
+    const options = sorted.map((g) => ({ groupId: g.id, groupName: g.name }))
+    if (hasUngroupedStudents) {
+      options.push({ groupId: '__none__', groupName: 'No group' })
+    }
+    return options
+  }, [groups, hasUngroupedStudents])
 
-      if (gids.length === 0) {
-        if (!buckets.__none__) {
-          buckets.__none__ = { groupId: '__none__', groupName: 'No group', rows: [] }
-        }
-        buckets.__none__.rows.push(row)
-        return
-      }
+  useEffect(() => {
+    if (selectedGroupId) return
+    if (groupPickerOptions.length > 0) {
+      setSelectedGroupId(groupPickerOptions[0].groupId)
+    }
+  }, [groupPickerOptions, selectedGroupId])
 
-      gids.forEach((gid) => {
-        if (!buckets[gid]) {
-          buckets[gid] = { groupId: gid, groupName: groupNameById[gid] || 'Group', rows: [] }
-        }
-        buckets[gid].rows.push(row)
-      })
-    })
-
-    const list = Object.values(buckets)
-    list.sort((a, b) => {
-      if (a.groupId === '__none__') return 1
-      if (b.groupId === '__none__') return -1
-      return a.groupName.localeCompare(b.groupName)
-    })
-    return list
-  }, [filteredRows, groupIdsByStudent, groupNameById])
+  const selectedGroupRows = useMemo(() => {
+    if (!selectedGroupId) return []
+    if (selectedGroupId === '__none__') {
+      return filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).length === 0)
+    }
+    return filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).includes(selectedGroupId))
+  }, [filteredRows, groupIdsByStudent, selectedGroupId])
 
   const allSpeakingSlots = useMemo(() => {
     const studentById = {}
@@ -338,6 +337,47 @@ export default function TeacherMockCenter({ onExit }) {
   const pastSpeaking = allSpeakingSlots
     .filter((s) => s.status !== 'scheduled')
     .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
+
+  // Slots booked per examiner per week — Jasur's "examiner workload
+  // view" ask. "This week" = the current Mon–Sun calendar week.
+  const examinerWorkload = useMemo(() => {
+    const now = new Date()
+    const dayIndex = (now.getDay() + 6) % 7 // 0 = Monday
+    const weekStart = new Date(now)
+    weekStart.setHours(0, 0, 0, 0)
+    weekStart.setDate(now.getDate() - dayIndex)
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 7)
+
+    const byExaminer = {}
+
+    Object.values(examinersById).forEach((examiner) => {
+      byExaminer[examiner.id] = { examinerId: examiner.id, examiner, thisWeek: 0, total: 0, noShows: 0 }
+    })
+
+    speakingSlots.forEach((slot) => {
+      if (!byExaminer[slot.examiner_id]) {
+        byExaminer[slot.examiner_id] = {
+          examinerId: slot.examiner_id,
+          examiner: examinersById[slot.examiner_id] || null,
+          thisWeek: 0,
+          total: 0,
+          noShows: 0,
+        }
+      }
+
+      const entry = byExaminer[slot.examiner_id]
+      entry.total += 1
+      if (slot.status === 'no_show') entry.noShows += 1
+
+      const scheduledAt = new Date(slot.scheduled_at)
+      if (scheduledAt >= weekStart && scheduledAt < weekEnd) entry.thisWeek += 1
+    })
+
+    return Object.values(byExaminer).sort((a, b) =>
+      studentLabel(a.examiner).localeCompare(studentLabel(b.examiner))
+    )
+  }, [speakingSlots, examinersById])
 
   const openChat = (studentId) => {
     onExit()
@@ -475,33 +515,41 @@ export default function TeacherMockCenter({ onExit }) {
                   onToggleEssay={toggleEssay}
                   emptyLabel="No students match that search."
                 />
-              ) : rowsByGroup.length === 0 ? (
+              ) : groupPickerOptions.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-                  No students match that search.
+                  No groups yet.
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
-                  {rowsByGroup.map((bucket) => (
-                    <div key={bucket.groupId}>
-                      <div className="flex items-center gap-2 mb-2.5 px-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                        <h3 className="font-display text-base text-paper">{bucket.groupName}</h3>
-                        <span className="text-xs text-mist font-mono">
-                          {bucket.rows.length} {bucket.rows.length === 1 ? 'student' : 'students'}
-                        </span>
-                      </div>
+                <div className="flex flex-col gap-4">
+                  {/* A group picker, not a stacked scroll — jump straight to one
+                      group instead of scrolling past every other group's full
+                      student list to reach it. */}
+                  <div className="flex gap-2 flex-wrap">
+                    {groupPickerOptions.map((option) => (
+                      <button
+                        key={option.groupId}
+                        type="button"
+                        onClick={() => setSelectedGroupId(option.groupId)}
+                        className={`focus-ring px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
+                          selectedGroupId === option.groupId
+                            ? 'bg-brass text-onbrass border-brass-dim font-semibold'
+                            : 'border-line text-mist hover:text-paper'
+                        }`}
+                      >
+                        {option.groupName}
+                      </button>
+                    ))}
+                  </div>
 
-                      <StudentRowList
-                        rows={bucket.rows}
-                        expandedId={expandedId}
-                        onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                        onMessage={openChat}
-                        expandedEssays={expandedEssays}
-                        onToggleEssay={toggleEssay}
-                        emptyLabel="No students in this group."
-                      />
-                    </div>
-                  ))}
+                  <StudentRowList
+                    rows={selectedGroupRows}
+                    expandedId={expandedId}
+                    onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
+                    onMessage={openChat}
+                    expandedEssays={expandedEssays}
+                    onToggleEssay={toggleEssay}
+                    emptyLabel="No students in this group match that search."
+                  />
                 </div>
               )}
             </div>
@@ -518,6 +566,35 @@ export default function TeacherMockCenter({ onExit }) {
                 Every booked speaking exam, across every speaking examiner — upcoming first,
                 with the band and feedback once a session has been marked.
               </p>
+
+              {examinerWorkload.length > 0 && (
+                <div>
+                  <h3 className="font-display text-lg text-paper mb-2.5">Examiner workload</h3>
+                  <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                    <div className="hidden sm:grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line text-[10px] uppercase tracking-[0.14em] text-mist font-mono">
+                      <span>Examiner</span>
+                      <span>This week</span>
+                      <span>All-time</span>
+                      <span>No-shows</span>
+                    </div>
+                    {examinerWorkload.map((entry) => (
+                      <div
+                        key={entry.examinerId}
+                        className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line last:border-b-0 text-sm"
+                      >
+                        <span className="col-span-2 sm:col-span-1 text-paper font-medium truncate">
+                          {studentLabel(entry.examiner)}
+                        </span>
+                        <span className="text-paper">{entry.thisWeek}</span>
+                        <span className="text-paper">{entry.total}</span>
+                        <span className={entry.noShows > 0 ? 'text-coral font-semibold' : 'text-mist'}>
+                          {entry.noShows}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-display text-lg text-paper mb-2.5">Upcoming</h3>
