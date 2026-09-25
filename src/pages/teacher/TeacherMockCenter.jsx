@@ -801,8 +801,8 @@ export default function TeacherMockCenter({ onExit }) {
     setConfirmDialog({
       title: `Delete "${exam.title}"?`,
       message:
-        'This deletes every section and question in it. If any student has already attempted this exam, ' +
-        "deletion may fail — un-publish it instead in that case. This can't be undone.",
+        'This deletes every section and question in it, plus every student attempt already recorded on ' +
+        "this exam — that attempt history is gone for good once this exam is deleted. This can't be undone.",
       confirmLabel: 'Delete',
       tone: 'coral',
       onConfirm: async () => {
@@ -848,6 +848,19 @@ export default function TeacherMockCenter({ onExit }) {
             .delete()
             .eq('exam_id', exam.id)
           if (sectionsDeleteError) throw sectionsDeleteError
+
+          // mock_attempts.exam_id also points straight at mock_exams.id —
+          // this is what was STILL blocking the delete even after
+          // migration_38 cleared mock_answers: every student attempt on
+          // this exam has to go before the exam row itself can. By this
+          // point every mock_answers row tied to those attempts is
+          // already gone (deleted above, by question_id), so this can't
+          // hit the same foreign-key wall in the other direction.
+          const { error: attemptsDeleteError } = await supabase
+            .from('mock_attempts')
+            .delete()
+            .eq('exam_id', exam.id)
+          if (attemptsDeleteError) throw attemptsDeleteError
 
           const { error: examDeleteError } = await supabase.from('mock_exams').delete().eq('id', exam.id)
           if (examDeleteError) throw examDeleteError
