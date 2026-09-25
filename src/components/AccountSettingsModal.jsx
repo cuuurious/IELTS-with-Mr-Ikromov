@@ -122,6 +122,22 @@ export default function AccountSettingsModal({ onClose }) {
     setTelegramBusy(true)
     setTelegramError('')
 
+    // Open the tab RIGHT NOW, synchronously, in direct response to the
+    // click — before any `await`. Jasur: "I AM DOING SO EACH TIMEEEE NOT
+    // DIRECTLY FROM TELEGRAM" — turned out this was a real bug, not user
+    // error. The old code opened the Telegram tab AFTER awaiting the
+    // Supabase insert below; by the time that finished, the browser no
+    // longer considers the window.open() a direct result of the click,
+    // so most browsers silently block it as a pop-up — no error, no
+    // console message, the button just looks like it does nothing. Then
+    // the natural next move is to open the bot in Telegram directly and
+    // type /start by hand, which sends a bare /start with no token
+    // attached, which the bot can't do anything with. Opening a blank
+    // tab immediately (still inside the click's own call stack) and
+    // only setting its destination once the token is ready keeps this
+    // as a trusted, non-blocked pop-up in every mainstream browser.
+    const telegramTab = window.open('', '_blank')
+
     try {
       const token = crypto.randomUUID()
 
@@ -131,7 +147,20 @@ export default function AccountSettingsModal({ onClose }) {
 
       if (tokenError) throw tokenError
 
-      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${token}`, '_blank', 'noopener,noreferrer')
+      const telegramUrl = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${token}`
+
+      if (telegramTab) {
+        telegramTab.location.href = telegramUrl
+      } else {
+        // The synchronous open above was still blocked (rare — happens
+        // if the browser's pop-up setting is stricter than usual). Fall
+        // back to a direct open, which at least tells the browser this
+        // IS a pop-up rather than failing completely silently, and
+        // shows Jasur/the student an address-bar "pop-up blocked" icon
+        // they can allow instead of just seeing nothing happen.
+        window.open(telegramUrl, '_blank', 'noopener,noreferrer')
+      }
+
       setTelegramStatus('connecting')
 
       // Poll for up to a minute — the bot links the account the moment
@@ -160,6 +189,9 @@ export default function AccountSettingsModal({ onClose }) {
       console.error('Could not start Telegram connection:', err)
       setTelegramError(err?.message || 'Could not start Telegram connection.')
       setTelegramStatus('not-linked')
+      // Don't leave a dangling blank tab open if the token insert failed
+      // before we ever pointed it at Telegram.
+      if (telegramTab && !telegramTab.closed) telegramTab.close()
     } finally {
       setTelegramBusy(false)
     }
