@@ -13,6 +13,8 @@ import {
 } from '../lib/targetBands'
 import { compressImageIfNeeded } from '../lib/compressImage'
 
+const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME
+
 export default function AccountSettingsModal({ onClose }) {
   const { profile, refreshProfile, signOut } = useAuth()
 
@@ -61,6 +63,11 @@ export default function AccountSettingsModal({ onClose }) {
   const [targetBandMessage, setTargetBandMessage] = useState('')
   const [targetBandError, setTargetBandError] = useState('')
 
+  const [telegramLink, setTelegramLink] = useState(null) // telegram_links row, or null once we know there isn't one
+  const [telegramStatus, setTelegramStatus] = useState('checking') // checking | not-linked | connecting | linked
+  const [telegramBusy, setTelegramBusy] = useState(false)
+  const [telegramError, setTelegramError] = useState('')
+
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -74,6 +81,111 @@ export default function AccountSettingsModal({ onClose }) {
 
     getPushStatus().then(setPushStatus)
   }, [])
+
+  /*
+   * ============================================================
+   * TELEGRAM NOTIFICATIONS
+   * ============================================================
+   * Added 2026-09-25 (migration_29's telegram_links/telegram_link_tokens
+   * schema, finally wired up). A one-time token is generated here and
+   * carried in a t.me/<bot>?start=<token> deep link; the actual linking
+   * (matching the token to this account, capturing a VERIFIED phone
+   * number via Telegram's own "share contact" button) happens entirely
+   * inside supabase/functions/telegram-webhook — this component never
+   * writes telegram_links directly, since a chat_id isn't something a
+   * browser request can prove it owns.
+   */
+  useEffect(() => {
+    if (!profile?.id) return
+    let cancelled = false
+
+    supabase
+      .from('telegram_links')
+      .select('*')
+      .eq('user_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        setTelegramLink(data || null)
+        setTelegramStatus(data ? 'linked' : 'not-linked')
+      })
+
+    return () => { cancelled = true }
+  }, [profile?.id])
+
+  const connectTelegram = async () => {
+    if (!TELEGRAM_BOT_USERNAME) {
+      setTelegramError('Telegram notifications are being set up — check back soon.')
+      return
+    }
+
+    setTelegramBusy(true)
+    setTelegramError('')
+
+    try {
+      const token = crypto.randomUUID()
+
+      const { error: tokenError } = await supabase
+        .from('telegram_link_tokens')
+        .insert({ token, user_id: profile.id })
+
+      if (tokenError) throw tokenError
+
+      window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${token}`, '_blank', 'noopener,noreferrer')
+      setTelegramStatus('connecting')
+
+      // Poll for up to a minute — the bot links the account the moment
+      // the student taps "Start" and shares their contact in Telegram,
+      // which happens in a separate tab this component can't observe
+      // directly.
+      const deadline = Date.now() + 60000
+      const poll = async () => {
+        if (Date.now() > deadline) return
+        const { data } = await supabase
+          .from('telegram_links')
+          .select('*')
+          .eq('user_id', profile.id)
+          .maybeSingle()
+
+        if (data) {
+          setTelegramLink(data)
+          setTelegramStatus('linked')
+          return
+        }
+
+        setTimeout(poll, 3000)
+      }
+      setTimeout(poll, 3000)
+    } catch (err) {
+      console.error('Could not start Telegram connection:', err)
+      setTelegramError(err?.message || 'Could not start Telegram connection.')
+      setTelegramStatus('not-linked')
+    } finally {
+      setTelegramBusy(false)
+    }
+  }
+
+  const disconnectTelegram = async () => {
+    setTelegramBusy(true)
+    setTelegramError('')
+
+    try {
+      const { error } = await supabase
+        .from('telegram_links')
+        .delete()
+        .eq('user_id', profile.id)
+
+      if (error) throw error
+
+      setTelegramLink(null)
+      setTelegramStatus('not-linked')
+    } catch (err) {
+      console.error('Could not disconnect Telegram:', err)
+      setTelegramError(err?.message || 'Could not disconnect Telegram.')
+    } finally {
+      setTelegramBusy(false)
+    }
+  }
 
   const togglePush = async () => {
     setPushError('')
@@ -845,6 +957,56 @@ const deleteAccount = async () => {
           {pushError && (
             <p className="text-coral text-sm">
               {pushError}
+            </p>
+          )}
+        </div>
+
+        {/* TELEGRAM NOTIFICATIONS */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-line">
+          <div className="text-xs uppercase tracking-wide text-mist font-mono">
+            Telegram notifications
+          </div>
+
+          <p className="text-mist text-xs -mt-2">
+            Get the "starting in 5 minutes" speaking-exam alert on Telegram too, alongside push.
+          </p>
+
+          {telegramStatus === 'linked' && (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-sage/40 bg-sage/10 px-3 py-2.5">
+              <p className="text-sage text-sm">
+                Connected{telegramLink?.telegram_username ? ` as @${telegramLink.telegram_username}` : ''}
+              </p>
+              <button
+                type="button"
+                onClick={disconnectTelegram}
+                disabled={telegramBusy}
+                className="focus-ring shrink-0 text-xs text-coral hover:text-coral/80 disabled:opacity-50"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+
+          {telegramStatus === 'connecting' && (
+            <p className="text-mist text-sm">
+              Check Telegram — tap Start, then share your contact when the bot asks. This updates automatically once it's linked.
+            </p>
+          )}
+
+          {(telegramStatus === 'not-linked' || telegramStatus === 'connecting') && (
+            <button
+              type="button"
+              onClick={connectTelegram}
+              disabled={telegramBusy}
+              className="focus-ring rounded-md border border-line py-2 text-sm hover:border-brass hover:text-brass disabled:opacity-50"
+            >
+              {telegramBusy ? 'Opening Telegram…' : telegramStatus === 'connecting' ? 'Open Telegram again' : 'Connect Telegram'}
+            </button>
+          )}
+
+          {telegramError && (
+            <p className="text-coral text-sm">
+              {telegramError}
             </p>
           )}
         </div>

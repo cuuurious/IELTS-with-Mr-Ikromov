@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { ExamTaker } from './MockExams'
+import { ExamTaker, buildAttemptQuestions } from './MockExams'
 import { WritingTaker } from './WritingMockExam'
 
 /*
@@ -191,7 +191,10 @@ export default function FullMockRunner({ selfId }) {
         exam,
         sections: (sections || []).map((s) => ({
           ...s,
-          questions: (questions || []).filter((q) => q.section_id === s.id),
+          // Randomized question bank (2026-09-25) — draws a fresh random
+          // subset/order each time this stage loads, if the exam has it
+          // turned on. See MockExams.jsx's buildAttemptQuestions comment.
+          questions: buildAttemptQuestions((questions || []).filter((q) => q.section_id === s.id), exam),
         })),
       })
       setModuleLoading(false)

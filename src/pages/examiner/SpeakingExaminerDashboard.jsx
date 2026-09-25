@@ -5,6 +5,7 @@ import Layout, { IconStudents, IconMockExam, IconChat } from '../../components/L
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { formatTargetBand } from '../../lib/targetBands'
+import { downloadSpeakingSlotIcs } from '../../lib/calendarEvent'
 
 /*
  * ================================================================
@@ -193,7 +194,7 @@ export default function SpeakingExaminerDashboard() {
    */
   const openScoreModal = (slot) => setScoreModal({ slot })
 
-  const saveScore = async ({ band, feedback }) => {
+  const saveScore = async ({ band, feedback, recordingUrl }) => {
     setScoreSaving(true)
     setScoreError('')
 
@@ -204,6 +205,7 @@ export default function SpeakingExaminerDashboard() {
           examiner_band: band === '' ? null : Number(band),
           examiner_feedback: feedback || null,
           examiner_reviewed_at: new Date().toISOString(),
+          recording_url: recordingUrl || null,
         })
         .eq('id', scoreModal.slot.id)
 
@@ -428,6 +430,19 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
             <>
               <button
                 type="button"
+                onClick={() =>
+                  downloadSpeakingSlotIcs(slot, {
+                    summary: `IELTS Speaking Mock Exam — ${student?.full_name || student?.username || 'Student'}`,
+                    description: slot.notes || undefined,
+                  })
+                }
+                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                title="Download a calendar file for this slot"
+              >
+                📅 Calendar
+              </button>
+              <button
+                type="button"
                 onClick={onEdit}
                 className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
               >
@@ -484,6 +499,17 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
       {slot.examiner_feedback && (
         <p className="text-xs text-mist whitespace-pre-wrap">{slot.examiner_feedback}</p>
       )}
+
+      {slot.recording_url && (
+        <a
+          href={slot.recording_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-brass hover:text-brass-dim inline-block truncate max-w-xs"
+        >
+          🎙 Session recording
+        </a>
+      )}
     </div>
   )
 }
@@ -491,6 +517,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
 function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
   const [band, setBand] = useState(slot.examiner_band ?? '')
   const [feedback, setFeedback] = useState(slot.examiner_feedback || '')
+  const [recordingUrl, setRecordingUrl] = useState(slot.recording_url || '')
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
@@ -523,6 +550,20 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
             />
           </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Recording link (optional)
+            <input
+              type="url"
+              placeholder="https://drive.google.com/..."
+              value={recordingUrl}
+              onChange={(e) => setRecordingUrl(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+          <p className="text-xs text-mist -mt-2">
+            Paste the cloud-recording link once it's uploaded — the student and teacher will see it here too.
+          </p>
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -538,7 +579,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
           </button>
           <button
             type="button"
-            onClick={() => onSave({ band, feedback })}
+            onClick={() => onSave({ band, feedback, recordingUrl })}
             disabled={saving}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
           >

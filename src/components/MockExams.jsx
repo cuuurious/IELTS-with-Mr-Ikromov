@@ -47,6 +47,38 @@ export const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
 
 export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
 
+// Randomized question bank — added 2026-09-25. Scoped with Jasur as
+// "just shuffle": no skill/difficulty tagging, a plain toggle on the
+// exam ("Randomize questions from bank" in the Content tab's exam
+// forms) plus an optional "questions per section" count. A teacher
+// authors MORE questions in a section's pool than a student actually
+// needs to see; each attempt draws that many at random, in random
+// order, from the pool — so repeat test-takers don't just memorize one
+// fixed paper. When questionsPerSection is unset, every question in the
+// pool is still used, just shuffled into a random order.
+//
+// This only changes which questions get built into the `sections` array
+// passed to <ExamTaker> at attempt-start — submission/scoring
+// (submit_mock_attempt, an existing Postgres RPC from the original
+// standalone app) is untouched, since it's driven entirely by whatever
+// question_id/answer pairs are actually submitted, not by any separate
+// count of "all questions in this section".
+function shuffleArray(arr) {
+  const copy = [...arr]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
+export function buildAttemptQuestions(allQuestionsForSection, exam) {
+  if (!exam?.randomize_questions) return allQuestionsForSection
+  const shuffled = shuffleArray(allQuestionsForSection)
+  const count = Number(exam.questions_per_section) || 0
+  return count > 0 ? shuffled.slice(0, count) : shuffled
+}
+
 export function formatClock(ms) {
   const totalSeconds = Math.max(0, Math.round(ms / 1000))
   const m = Math.floor(totalSeconds / 60)
@@ -132,7 +164,7 @@ export default function MockExams({ selfId }) {
       exam,
       sections: (sections || []).map((s) => ({
         ...s,
-        questions: (questions || []).filter((q) => q.section_id === s.id),
+        questions: buildAttemptQuestions((questions || []).filter((q) => q.section_id === s.id), exam),
       })),
     })
   }

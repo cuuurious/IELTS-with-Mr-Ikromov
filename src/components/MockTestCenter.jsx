@@ -7,6 +7,9 @@ import {
   TARGET_BANDS,
   formatTargetBand,
 } from '../lib/targetBands'
+import { downloadSpeakingSlotIcs } from '../lib/calendarEvent'
+import { estimateBandFromPercent } from '../lib/ieltsBands'
+import { downloadScoreReport } from '../lib/generateScoreReport'
 
 /*
  * ================================================================
@@ -71,6 +74,8 @@ export default function MockTestCenter({ onExit }) {
   const [loading, setLoading] = useState(true)
 
   const [targetSaving, setTargetSaving] = useState(false)
+  const [reportGenerating, setReportGenerating] = useState(false)
+  const [reportError, setReportError] = useState('')
 
   useEffect(() => {
     if (!profile?.id) return
@@ -195,6 +200,62 @@ export default function MockTestCenter({ onExit }) {
     }
   }
 
+  /*
+   * ============================================================
+   * TRF-STYLE PDF SCORE REPORT
+   * ============================================================
+   * Added 2026-09-25 — one of the "next level" picks. Reading/
+   * Listening only ever have a raw percentage here, so their bands are
+   * ESTIMATED (see ieltsBands.js) from the student's average % across
+   * every attempt; Writing/Speaking use the most recent human-marked
+   * band as-is, no estimation. generateScoreReport.js clearly labels
+   * which is which in the PDF itself.
+   */
+  const handleDownloadReport = async () => {
+    setReportGenerating(true)
+    setReportError('')
+    try {
+      const latestWritingReview = writingReviews[0] || null
+      const latestSpeakingSlot = slots.find((s) => s.examiner_band != null) || null
+
+      await downloadScoreReport({
+        studentName: profile?.full_name || profile?.username,
+        targetBand: profile?.target_band,
+        skills: {
+          listening: stats.listening
+            ? {
+                band: estimateBandFromPercent(stats.listening.average),
+                note: `${stats.listening.average}% average across ${stats.listening.count} attempt(s) — estimated`,
+              }
+            : null,
+          reading: stats.reading
+            ? {
+                band: estimateBandFromPercent(stats.reading.average),
+                note: `${stats.reading.average}% average across ${stats.reading.count} attempt(s) — estimated`,
+              }
+            : null,
+          writing: latestWritingReview
+            ? {
+                band: latestWritingReview.examiner_band,
+                note: `Reviewed ${new Date(latestWritingReview.examiner_reviewed_at).toLocaleDateString()}`,
+              }
+            : null,
+          speaking: latestSpeakingSlot
+            ? {
+                band: latestSpeakingSlot.examiner_band,
+                note: `Speaking exam ${new Date(latestSpeakingSlot.scheduled_at).toLocaleDateString()}`,
+              }
+            : null,
+        },
+      })
+    } catch (err) {
+      console.error('Could not generate score report:', err)
+      setReportError(err?.message || 'Could not generate the report. Please try again.')
+    } finally {
+      setReportGenerating(false)
+    }
+  }
+
   const upcomingSlot = slots.find((s) => s.status === 'scheduled')
   const speakingExaminer = examiners.find((e) => e.role === 'speaking_examiner')
   const writingExaminer = examiners.find((e) => e.role === 'writing_examiner')
@@ -262,6 +323,29 @@ export default function MockTestCenter({ onExit }) {
                   label="Listening"
                   stats={stats.listening}
                 />
+              </div>
+
+              <div className="rounded-2xl border border-line bg-panel p-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
+                    Score report
+                  </p>
+                  <p className="text-sm text-mist mt-1">
+                    Download a one-page PDF combining your Listening, Reading, Writing and
+                    Speaking results so far.
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleDownloadReport}
+                    disabled={reportGenerating}
+                    className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50"
+                  >
+                    {reportGenerating ? 'Generating…' : 'Download score report'}
+                  </button>
+                  {reportError && <p className="text-coral text-xs mt-2 max-w-xs">{reportError}</p>}
+                </div>
               </div>
 
               <div className="rounded-2xl border border-line bg-panel p-5">
@@ -353,15 +437,30 @@ export default function MockTestCenter({ onExit }) {
                       </span>
                     </div>
                     <p className="text-sm text-mist mt-1">{slot.duration_minutes} minutes</p>
-                    {slot.meeting_link && slot.status === 'scheduled' && (
-                      <a
-                        href={slot.meeting_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="focus-ring inline-block mt-3 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2"
-                      >
-                        Join exam link
-                      </a>
+                    {slot.status === 'scheduled' && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {slot.meeting_link && (
+                          <a
+                            href={slot.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="focus-ring inline-block rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2"
+                          >
+                            Join exam link
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadSpeakingSlotIcs(slot, {
+                              summary: 'IELTS Speaking Mock Exam',
+                            })
+                          }
+                          className="focus-ring inline-block rounded-full border border-line text-sm font-medium px-4 py-2 text-mist hover:text-paper hover:border-brass/40"
+                        >
+                          📅 Add to calendar
+                        </button>
+                      </div>
                     )}
 
                     {slot.status === 'completed' && (
@@ -377,6 +476,16 @@ export default function MockTestCenter({ onExit }) {
                           <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
                             {slot.examiner_feedback}
                           </p>
+                        )}
+                        {slot.recording_url && (
+                          <a
+                            href={slot.recording_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-brass hover:text-brass-dim mt-2 inline-block"
+                          >
+                            🎙 Listen to your recording
+                          </a>
                         )}
                       </div>
                     )}

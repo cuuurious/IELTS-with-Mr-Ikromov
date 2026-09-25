@@ -400,6 +400,13 @@ export default function TeacherMockCenter({ onExit }) {
     try {
       let examId
 
+      const randomizePayload = {
+        randomize_questions: values.randomizeQuestions,
+        questions_per_section: values.randomizeQuestions && values.questionsPerSection
+          ? Number(values.questionsPerSection)
+          : null,
+      }
+
       if (listeningWizard.mode === 'create') {
         const { data, error: insertError } = await supabase
           .from('mock_exams')
@@ -408,6 +415,7 @@ export default function TeacherMockCenter({ onExit }) {
             module: 'listening',
             is_active: false,
             sort_order: Number(values.sortOrder) || 0,
+            ...randomizePayload,
           })
           .select('*')
           .single()
@@ -421,6 +429,7 @@ export default function TeacherMockCenter({ onExit }) {
           .update({
             title: values.title.trim(),
             sort_order: Number(values.sortOrder) || 0,
+            ...randomizePayload,
           })
           .eq('id', examId)
         if (updateError) throw updateError
@@ -967,6 +976,10 @@ export default function TeacherMockCenter({ onExit }) {
         module: values.module,
         is_active: values.isActive,
         sort_order: Number(values.sortOrder) || 0,
+        randomize_questions: values.randomizeQuestions,
+        questions_per_section: values.randomizeQuestions && values.questionsPerSection
+          ? Number(values.questionsPerSection)
+          : null,
       }
 
       let createdExam = null
@@ -2727,6 +2740,8 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
   const [title, setTitle] = useState(exam?.title || '')
   const [isActive, setIsActive] = useState(exam ? exam.is_active : true)
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
+  const [randomizeQuestions, setRandomizeQuestions] = useState(exam?.randomize_questions ?? false)
+  const [questionsPerSection, setQuestionsPerSection] = useState(exam?.questions_per_section ?? '')
 
   const canSave = title.trim() && (moduleName === 'reading' || moduleName === 'listening')
 
@@ -2778,6 +2793,36 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
             />
             Published (students can see and sit this)
           </label>
+
+          <div className="rounded-lg border border-line bg-panel-2 p-3">
+            <label className="flex items-center gap-2 text-sm text-paper">
+              <input
+                type="checkbox"
+                checked={randomizeQuestions}
+                onChange={(e) => setRandomizeQuestions(e.target.checked)}
+                className="accent-brass"
+              />
+              Randomize questions from bank
+            </label>
+            <p className="mt-1 text-[11px] text-mist">
+              Author more questions per section than you need — each student sitting this exam
+              gets a random draw, in random order, so repeat test-takers don't just memorize one
+              fixed paper.
+            </p>
+            {randomizeQuestions && (
+              <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
+                Questions per section (blank = use every question, just shuffled)
+                <input
+                  type="number"
+                  min="1"
+                  value={questionsPerSection}
+                  onChange={(e) => setQuestionsPerSection(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
+                />
+              </label>
+            )}
+          </div>
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -2793,7 +2838,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
           </button>
           <button
             type="button"
-            onClick={() => onSave({ title, module: moduleName, isActive, sortOrder })}
+            onClick={() => onSave({ title, module: moduleName, isActive, sortOrder, randomizeQuestions, questionsPerSection })}
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
@@ -3104,6 +3149,8 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
 
   const [title, setTitle] = useState(exam?.title || '')
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
+  const [randomizeQuestions, setRandomizeQuestions] = useState(exam?.randomize_questions ?? false)
+  const [questionsPerSection, setQuestionsPerSection] = useState(exam?.questions_per_section ?? '')
 
   const buildInitialParts = () => {
     if (!isEdit) {
@@ -3203,6 +3250,8 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
     onSave({
       title,
       sortOrder,
+      randomizeQuestions,
+      questionsPerSection,
       parts: parts.map((p) => ({
         sectionId: p.sectionId,
         title: p.title,
@@ -3261,6 +3310,36 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
+        </div>
+
+        <div className="mt-3 rounded-lg border border-line bg-panel-2 p-3">
+          <label className="flex items-center gap-2 text-sm text-paper">
+            <input
+              type="checkbox"
+              checked={randomizeQuestions}
+              onChange={(e) => setRandomizeQuestions(e.target.checked)}
+              className="accent-brass"
+            />
+            Randomize questions from bank
+          </label>
+          <p className="mt-1 text-[11px] text-mist">
+            Author more questions per part than you need — each student sitting this exam gets a
+            random draw, in random order, so repeat test-takers don't just memorize one fixed
+            paper.
+          </p>
+          {randomizeQuestions && (
+            <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
+              Questions per part (blank = use every question, just shuffled)
+              <input
+                type="number"
+                min="1"
+                value={questionsPerSection}
+                onChange={(e) => setQuestionsPerSection(e.target.value)}
+                placeholder="e.g. 10"
+                className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
+              />
+            </label>
+          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
