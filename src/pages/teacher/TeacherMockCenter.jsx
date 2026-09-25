@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
+import { guessMimeType } from '../../lib/mime'
 
 /*
  * ================================================================
@@ -45,6 +46,7 @@ const SECTIONS = [
   { key: 'progress', label: 'Student Progress' },
   { key: 'students', label: 'Students' },
   { key: 'speaking', label: 'Speaking' },
+  { key: 'content', label: 'Content' },
 ]
 
 const SPEAKING_STATUS_META = {
@@ -93,6 +95,31 @@ export default function TeacherMockCenter({ onExit }) {
   const [search, setSearch] = useState('')
   const [studentsView, setStudentsView] = useState('grouped') // 'grouped' | 'mixed'
   const [selectedGroupId, setSelectedGroupId] = useState(null)
+
+  // Content editor (Writing mocks) — Jasur's "next level" ask
+  // 2026-09-25: no more inserting these by hand in the Supabase Table
+  // Editor. Reading/Listening (mock_exams/mock_sections/mock_questions)
+  // is a bigger editor, coming in a follow-up — this covers Writing
+  // first since writing_mock_exams is a single flat row, no nested
+  // sections/questions to author.
+  const [writingExams, setWritingExams] = useState([])
+  const [examFormModal, setExamFormModal] = useState(null) // { mode: 'create' } | { mode: 'edit', exam }
+  const [examFormSaving, setExamFormSaving] = useState(false)
+  const [examFormError, setExamFormError] = useState('')
+
+  const reloadWritingExams = async () => {
+    const { data, error } = await supabase
+      .from('writing_mock_exams')
+      .select('*')
+      .order('sort_order', { ascending: true })
+
+    if (error) {
+      console.error('Failed to load writing mock exams:', error)
+      return
+    }
+
+    setWritingExams(data || [])
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -205,6 +232,8 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     load()
+    reloadWritingExams()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const rows = useMemo(() => {
@@ -390,6 +419,108 @@ export default function TeacherMockCenter({ onExit }) {
 
   const toggleEssay = (reviewId) => {
     setExpandedEssays((previous) => ({ ...previous, [reviewId]: !previous[reviewId] }))
+  }
+
+  /*
+   * ============================================================
+   * CONTENT EDITOR — WRITING MOCKS
+   * ============================================================
+   * writing_mock_exams already has full teacher CRUD RLS from
+   * migration_34 (writing_mock_exams_insert_teacher/update_teacher/
+   * delete_teacher) — no new migration needed for this piece.
+   */
+  const openCreateExam = () => {
+    setExamFormError('')
+    setExamFormModal({ mode: 'create' })
+  }
+
+  const openEditExam = (exam) => {
+    setExamFormError('')
+    setExamFormModal({ mode: 'edit', exam })
+  }
+
+  const saveWritingExam = async (values) => {
+    setExamFormSaving(true)
+    setExamFormError('')
+
+    try {
+      let task1ImageUrl = examFormModal.mode === 'edit' ? examFormModal.exam.task1_image_url : null
+
+      if (values.task1ImageFile) {
+        const path = `${profile.id}/writing-mock/${Date.now()}-${values.task1ImageFile.name}`
+        const { error: uploadError } = await supabase.storage
+          .from('homework-files')
+          .upload(path, values.task1ImageFile, {
+            contentType: guessMimeType(values.task1ImageFile.name, values.task1ImageFile.type),
+          })
+        if (uploadError) throw uploadError
+        task1ImageUrl = supabase.storage.from('homework-files').getPublicUrl(path).data.publicUrl
+      } else if (values.clearTask1Image) {
+        task1ImageUrl = null
+      }
+
+      const payload = {
+        title: values.title.trim(),
+        task1_prompt: values.task1Prompt.trim() || null,
+        task1_image_url: task1ImageUrl,
+        task2_prompt: values.task2Prompt.trim(),
+        time_limit_minutes: Number(values.timeLimitMinutes) || 60,
+        is_active: values.isActive,
+        sort_order: Number(values.sortOrder) || 0,
+      }
+
+      if (examFormModal.mode === 'create') {
+        const { error: insertError } = await supabase
+          .from('writing_mock_exams')
+          .insert({ ...payload, created_by: profile.id })
+        if (insertError) throw insertError
+      } else {
+        const { error: updateError } = await supabase
+          .from('writing_mock_exams')
+          .update(payload)
+          .eq('id', examFormModal.exam.id)
+        if (updateError) throw updateError
+      }
+
+      setExamFormModal(null)
+      await reloadWritingExams()
+    } catch (err) {
+      console.error('Could not save writing mock exam:', err)
+      setExamFormError(err?.message || 'Could not save this exam.')
+    } finally {
+      setExamFormSaving(false)
+    }
+  }
+
+  const deleteWritingExam = async (exam) => {
+    const ok = window.confirm(
+      `Delete "${exam.title}"? This also permanently deletes every student attempt on it. This can't be undone.`
+    )
+    if (!ok) return
+
+    const { error } = await supabase.from('writing_mock_exams').delete().eq('id', exam.id)
+
+    if (error) {
+      console.error('Could not delete writing mock exam:', error)
+      window.alert(error.message || 'Could not delete this exam.')
+      return
+    }
+
+    await reloadWritingExams()
+  }
+
+  const toggleExamActive = async (exam) => {
+    const { error } = await supabase
+      .from('writing_mock_exams')
+      .update({ is_active: !exam.is_active })
+      .eq('id', exam.id)
+
+    if (error) {
+      console.error('Could not update exam status:', error)
+      return
+    }
+
+    await reloadWritingExams()
   }
 
   return (
@@ -627,8 +758,99 @@ export default function TeacherMockCenter({ onExit }) {
               </div>
             </div>
           )}
+
+          {/* ======================================================
+              CONTENT — Jasur's "next level" ask 2026-09-25: no more
+              inserting mock exams by hand in the Supabase Table
+              Editor. Writing mocks first (a single flat row, quick to
+              build a form for); Reading/Listening (nested sections +
+              per-question answer keys) is a bigger editor, coming in a
+              follow-up.
+             ====================================================== */}
+          {!loading && section === 'content' && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-mist max-w-lg">
+                  Writing mock exams students can sit from their own Mock Test Center. Reading
+                  and Listening exam content is still managed directly in Supabase for now.
+                </p>
+                <button
+                  type="button"
+                  onClick={openCreateExam}
+                  className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                >
+                  + Add writing mock
+                </button>
+              </div>
+
+              {writingExams.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                  No writing mocks yet — add one to let students sit it from their Mock Test
+                  Center.
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                  {writingExams.map((exam) => (
+                    <div
+                      key={exam.id}
+                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-paper truncate">{exam.title}</p>
+                        <p className="text-xs text-mist font-mono mt-0.5">
+                          {exam.task1_prompt ? 'Task 1 + Task 2' : 'Task 2 only'} ·{' '}
+                          {exam.time_limit_minutes} min
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleExamActive(exam)}
+                          className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                            exam.is_active
+                              ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
+                              : 'text-mist border-line bg-panel-2 hover:text-paper'
+                          }`}
+                          title="Click to toggle whether students can see this"
+                        >
+                          {exam.is_active ? 'Published' : 'Draft'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openEditExam(exam)}
+                          className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteWritingExam(exam)}
+                          className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
+
+      {examFormModal && (
+        <WritingExamFormModal
+          modal={examFormModal}
+          saving={examFormSaving}
+          error={examFormError}
+          onCancel={() => setExamFormModal(null)}
+          onSave={saveWritingExam}
+        />
+      )}
     </div>
   )
 }
@@ -902,6 +1124,164 @@ function SpeakingSlotRow({ slot, onMessage }) {
       {slot.examiner_feedback && (
         <p className="text-xs text-mist whitespace-pre-wrap">{slot.examiner_feedback}</p>
       )}
+    </div>
+  )
+}
+
+function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
+  const exam = modal.mode === 'edit' ? modal.exam : null
+
+  const [title, setTitle] = useState(exam?.title || '')
+  const [task1Prompt, setTask1Prompt] = useState(exam?.task1_prompt || '')
+  const [task2Prompt, setTask2Prompt] = useState(exam?.task2_prompt || '')
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(exam?.time_limit_minutes || 60)
+  const [isActive, setIsActive] = useState(exam ? exam.is_active : true)
+  const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
+  const [task1ImageFile, setTask1ImageFile] = useState(null)
+  const [clearTask1Image, setClearTask1Image] = useState(false)
+
+  const canSave = title.trim() && task2Prompt.trim() && Number(timeLimitMinutes) > 0
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {modal.mode === 'create' ? 'Add writing mock' : 'Edit writing mock'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          Task 1 is optional — leave its prompt blank for a Task-2-only mock.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Title
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Writing Mock Test 1"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Task 1 prompt (optional)
+            <textarea
+              value={task1Prompt}
+              onChange={(e) => setTask1Prompt(e.target.value)}
+              rows={3}
+              placeholder="The chart below shows... Summarize the information..."
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+            />
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Task 1 chart/graph image (optional)
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                setTask1ImageFile(e.target.files?.[0] || null)
+                setClearTask1Image(false)
+              }}
+              className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border-0 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass"
+            />
+          </label>
+
+          {exam?.task1_image_url && !task1ImageFile && !clearTask1Image && (
+            <div className="flex items-center gap-3">
+              <img
+                src={exam.task1_image_url}
+                alt="Current Task 1 chart"
+                className="h-16 rounded-lg border border-line object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => setClearTask1Image(true)}
+                className="focus-ring text-xs text-coral hover:text-coral/80"
+              >
+                Remove image
+              </button>
+            </div>
+          )}
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Task 2 prompt
+            <textarea
+              value={task2Prompt}
+              onChange={(e) => setTask2Prompt(e.target.value)}
+              rows={3}
+              placeholder="Some people believe... Discuss both views and give your opinion."
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Time limit (minutes)
+              <input
+                type="number"
+                min="1"
+                value={timeLimitMinutes}
+                onChange={(e) => setTimeLimitMinutes(e.target.value)}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+            </label>
+
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Sort order
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+            </label>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-paper">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="accent-brass"
+            />
+            Published (students can see and sit this)
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onSave({
+                title,
+                task1Prompt,
+                task2Prompt,
+                timeLimitMinutes,
+                isActive,
+                sortOrder,
+                task1ImageFile,
+                clearTask1Image,
+              })
+            }
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
