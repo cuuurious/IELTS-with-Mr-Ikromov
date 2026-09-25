@@ -68,6 +68,10 @@ export default function SpeakingExaminerDashboard() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const [scoreModal, setScoreModal] = useState(null) // { slot } once a session is completed
+  const [scoreSaving, setScoreSaving] = useState(false)
+  const [scoreError, setScoreError] = useState('')
+
   const loadAll = async () => {
     const [{ data: studentRows, error: studentsError }, { data: slotRows, error: slotsError }] =
       await Promise.all([
@@ -177,6 +181,44 @@ export default function SpeakingExaminerDashboard() {
     await loadAll()
   }
 
+  /*
+   * ============================================================
+   * SCORE A COMPLETED SESSION
+   * ============================================================
+   * Added 2026-09-24 (migration_35) — once a slot is marked
+   * "completed", a speaking examiner can leave a band + feedback, the
+   * same way a writing examiner already does on writing_mock_attempts.
+   * This is what makes the score show up in the student's Mock Test
+   * Center and the teacher's Mock Center Speaking column/section.
+   */
+  const openScoreModal = (slot) => setScoreModal({ slot })
+
+  const saveScore = async ({ band, feedback }) => {
+    setScoreSaving(true)
+    setScoreError('')
+
+    try {
+      const { error: updateError } = await supabase
+        .from('mock_speaking_slots')
+        .update({
+          examiner_band: band === '' ? null : Number(band),
+          examiner_feedback: feedback || null,
+          examiner_reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', scoreModal.slot.id)
+
+      if (updateError) throw updateError
+
+      setScoreModal(null)
+      await loadAll()
+    } catch (err) {
+      console.error('Could not save speaking score:', err)
+      setScoreError(err?.message || 'Could not save this score.')
+    } finally {
+      setScoreSaving(false)
+    }
+  }
+
   const sections = useMemo(
     () => [
       {
@@ -269,6 +311,7 @@ export default function SpeakingExaminerDashboard() {
                       student={studentById[slot.student_id]}
                       onEdit={() => openEditModal(slot)}
                       onStatus={(status) => updateStatus(slot, status)}
+                      onScore={() => openScoreModal(slot)}
                     />
                   ))}
                 </div>
@@ -286,6 +329,7 @@ export default function SpeakingExaminerDashboard() {
                       student={studentById[slot.student_id]}
                       onEdit={() => openEditModal(slot)}
                       onStatus={(status) => updateStatus(slot, status)}
+                      onScore={() => openScoreModal(slot)}
                     />
                   ))}
                 </div>
@@ -334,64 +378,165 @@ export default function SpeakingExaminerDashboard() {
           onSave={saveSlot}
         />
       )}
+
+      {scoreModal && (
+        <ScoreModal
+          studentName={studentById[scoreModal.slot.student_id]?.full_name || studentById[scoreModal.slot.student_id]?.username}
+          slot={scoreModal.slot}
+          saving={scoreSaving}
+          error={scoreError}
+          onCancel={() => setScoreModal(null)}
+          onSave={saveScore}
+        />
+      )}
     </Layout>
   )
 }
 
-function SlotRow({ slot, student, onEdit, onStatus }) {
+function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
   const meta = STATUS_META[slot.status] || STATUS_META.scheduled
+  const scored = slot.examiner_band != null || slot.examiner_feedback
 
   return (
-    <div className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-wrap items-center gap-3 justify-between">
-      <div className="min-w-0">
-        <p className="font-medium text-paper truncate">
-          {student?.full_name || student?.username || 'Student'}
-        </p>
-        <p className="text-xs text-mist font-mono mt-0.5">
-          {formatSlotTime(slot.scheduled_at)} · {slot.duration_minutes} min
-        </p>
-        {slot.meeting_link && (
-          <a
-            href={slot.meeting_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-brass hover:text-brass-dim mt-0.5 inline-block truncate max-w-xs"
-          >
-            {slot.meeting_link}
-          </a>
-        )}
+    <div className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <div className="min-w-0">
+          <p className="font-medium text-paper truncate">
+            {student?.full_name || student?.username || 'Student'}
+          </p>
+          <p className="text-xs text-mist font-mono mt-0.5">
+            {formatSlotTime(slot.scheduled_at)} · {slot.duration_minutes} min
+          </p>
+          {slot.meeting_link && (
+            <a
+              href={slot.meeting_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brass hover:text-brass-dim mt-0.5 inline-block truncate max-w-xs"
+            >
+              {slot.meeting_link}
+            </a>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${meta.className}`}>
+            {meta.label}
+          </span>
+
+          {slot.status === 'scheduled' && (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => onStatus('completed')}
+                className="focus-ring text-xs text-sage hover:text-sage/80 px-2 py-1"
+              >
+                Mark done
+              </button>
+              <button
+                type="button"
+                onClick={() => onStatus('cancelled')}
+                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+
+          {slot.status === 'completed' && (
+            <>
+              {slot.examiner_band != null ? (
+                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
+                  Band {slot.examiner_band}
+                </span>
+              ) : (
+                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1">
+                  Not marked
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={onScore}
+                className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-brass-dim transition-colors"
+              >
+                {scored ? 'View / edit' : 'Mark'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${meta.className}`}>
-          {meta.label}
-        </span>
+      {slot.examiner_feedback && (
+        <p className="text-xs text-mist whitespace-pre-wrap">{slot.examiner_feedback}</p>
+      )}
+    </div>
+  )
+}
 
-        {slot.status === 'scheduled' && (
-          <>
-            <button
-              type="button"
-              onClick={onEdit}
-              className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={() => onStatus('completed')}
-              className="focus-ring text-xs text-sage hover:text-sage/80 px-2 py-1"
-            >
-              Mark done
-            </button>
-            <button
-              type="button"
-              onClick={() => onStatus('cancelled')}
-              className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
-            >
-              Cancel
-            </button>
-          </>
-        )}
+function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
+  const [band, setBand] = useState(slot.examiner_band ?? '')
+  const [feedback, setFeedback] = useState(slot.examiner_feedback || '')
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">Score speaking exam</h3>
+        <p className="text-sm text-mist mt-0.5">{studentName}</p>
+        <p className="text-xs text-mist font-mono mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Band
+            <input
+              type="number"
+              min="0"
+              max="9"
+              step="0.5"
+              value={band}
+              onChange={(e) => setBand(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Feedback
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              rows={4}
+              placeholder="Fluency, pronunciation, grammar, what to improve…"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+            />
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave({ band, feedback })}
+            disabled={saving}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save score'}
+          </button>
+        </div>
       </div>
     </div>
   )

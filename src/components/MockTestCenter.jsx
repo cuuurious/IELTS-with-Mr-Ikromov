@@ -220,7 +220,7 @@ export default function MockTestCenter({ onExit }) {
         <button
           type="button"
           onClick={onExit}
-          className="focus-ring shrink-0 rounded-full border border-line px-4 py-2 text-xs font-semibold text-mist hover:text-paper hover:border-brass/40 transition-colors"
+          className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
         >
           ← Exit to dashboard
         </button>
@@ -362,6 +362,23 @@ export default function MockTestCenter({ onExit }) {
                       >
                         Join exam link
                       </a>
+                    )}
+
+                    {slot.status === 'completed' && (
+                      <div className="mt-3 rounded-xl border border-line bg-panel-2 p-3.5">
+                        {slot.examiner_band != null ? (
+                          <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
+                            Band {slot.examiner_band}
+                          </span>
+                        ) : (
+                          <p className="text-sm text-mist">Not marked yet.</p>
+                        )}
+                        {slot.examiner_feedback && (
+                          <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
+                            {slot.examiner_feedback}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))
