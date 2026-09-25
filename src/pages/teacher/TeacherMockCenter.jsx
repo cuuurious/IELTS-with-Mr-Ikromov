@@ -152,6 +152,34 @@ export default function TeacherMockCenter({ onExit }) {
 
   /*
    * ============================================================
+   * CONTENT EDITOR — LISTENING (a guided wizard, not Reading's drill-down)
+   * ============================================================
+   * Jasur, 2026-09-25, on seeing Listening reuse Reading's generic
+   * exam -> section -> question screens: "why adding content for
+   * listening is the same as for the reading and i didnt want you to
+   * have it like this... i want it to have a space for pasting part 1
+   * for example and then part two but they should not be separate...
+   * before posting the whole listening posting shouldnt be possible
+   * unlike rn we can post even with the title only" — then, on the
+   * fragmented create flow itself: "first u post name then add content
+   * then other stuff, this is not what i wanted for overall."
+   *
+   * Real IELTS Listening is always exactly 4 parts (never a variable
+   * count like Reading's passages), so this hard-codes that instead of
+   * a free-form "+ Add section" list, walks through Part 1 -> 2 -> 3 ->
+   * 4 in one continuous screen (each part stays visible once reached,
+   * nothing is "separate"), and the exam row itself is never created in
+   * the database at all until every part has audio and at least one
+   * question — no more saving a bare title and being left to hunt for
+   * where the content goes. Reading is untouched; it keeps the
+   * general-purpose drill-down above since its passage count varies.
+   */
+  const [listeningWizard, setListeningWizard] = useState(null) // { mode: 'create' } | { mode: 'edit', exam, loading, sections, questionsBySection }
+  const [listeningWizardSaving, setListeningWizardSaving] = useState(false)
+  const [listeningWizardError, setListeningWizardError] = useState('')
+
+  /*
+   * ============================================================
    * CONTENT EDITOR — FULL MOCK SETS
    * ============================================================
    * Jasur, 2026-09-25: "i dont want them to be able to do watever test
@@ -315,6 +343,182 @@ export default function TeacherMockCenter({ onExit }) {
   const backToRlSections = () => {
     setRlSelectedSectionId(null)
     setRlQuestions([])
+  }
+
+  /*
+   * ============================================================
+   * CONTENT EDITOR — LISTENING WIZARD (handlers)
+   * ============================================================
+   */
+  const openListeningWizard = async (exam) => {
+    setListeningWizardError('')
+    setListeningWizard({ mode: 'edit', exam, loading: true, sections: [], questionsBySection: {} })
+
+    const { data: sections, error: sectionsError } = await supabase
+      .from('mock_sections')
+      .select('*')
+      .eq('exam_id', exam.id)
+      .order('order_index', { ascending: true })
+
+    if (sectionsError) {
+      console.error('Failed to load listening sections:', sectionsError)
+      setListeningWizard({ mode: 'edit', exam, loading: false, sections: [], questionsBySection: {} })
+      return
+    }
+
+    const sectionIds = (sections || []).map((s) => s.id)
+    const questionsBySection = {}
+
+    if (sectionIds.length > 0) {
+      // mock_questions, not mock_questions_public — a teacher edits the
+      // real answer key, same as the Reading/Listening drill-down does.
+      const { data: questions, error: questionsError } = await supabase
+        .from('mock_questions')
+        .select('*')
+        .in('section_id', sectionIds)
+        .order('order_index', { ascending: true })
+
+      if (questionsError) console.error('Failed to load listening questions:', questionsError)
+      ;(questions || []).forEach((q) => {
+        questionsBySection[q.section_id] = [...(questionsBySection[q.section_id] || []), q]
+      })
+    }
+
+    setListeningWizard({ mode: 'edit', exam, loading: false, sections: sections || [], questionsBySection })
+  }
+
+  const saveListeningWizard = async (values) => {
+    setListeningWizardSaving(true)
+    setListeningWizardError('')
+
+    // Tracked so a failure partway through a brand-new exam can clean up
+    // after itself instead of leaving an orphaned, content-less exam
+    // row behind — exactly the "posting with just a title" problem this
+    // wizard exists to prevent in the first place.
+    let createdExamId = null
+
+    try {
+      let examId
+
+      if (listeningWizard.mode === 'create') {
+        const { data, error: insertError } = await supabase
+          .from('mock_exams')
+          .insert({
+            title: values.title.trim(),
+            module: 'listening',
+            is_active: false,
+            sort_order: Number(values.sortOrder) || 0,
+          })
+          .select('*')
+          .single()
+        if (insertError) throw insertError
+        examId = data.id
+        createdExamId = data.id
+      } else {
+        examId = listeningWizard.exam.id
+        const { error: updateError } = await supabase
+          .from('mock_exams')
+          .update({
+            title: values.title.trim(),
+            sort_order: Number(values.sortOrder) || 0,
+          })
+          .eq('id', examId)
+        if (updateError) throw updateError
+      }
+
+      for (let i = 0; i < values.parts.length; i++) {
+        const part = values.parts[i]
+
+        let audioUrl = part.audioUrl || null
+        if (part.audioFile) {
+          const path = `${profile.id}/mock-audio/${Date.now()}-part${i + 1}-${part.audioFile.name}`
+          const { error: uploadError } = await supabase.storage
+            .from('homework-files')
+            .upload(path, part.audioFile, {
+              contentType: guessMimeType(part.audioFile.name, part.audioFile.type),
+            })
+          if (uploadError) throw uploadError
+          audioUrl = supabase.storage.from('homework-files').getPublicUrl(path).data.publicUrl
+        } else if (part.clearAudio) {
+          audioUrl = null
+        }
+
+        let sectionId = part.sectionId
+
+        if (sectionId) {
+          const { error: sectionUpdateError } = await supabase
+            .from('mock_sections')
+            .update({ title: part.title, order_index: i, audio_url: audioUrl })
+            .eq('id', sectionId)
+          if (sectionUpdateError) throw sectionUpdateError
+
+          // Editing an existing part replaces its whole question set
+          // rather than diffing question-by-question — simplest correct
+          // approach given questions have no stable client-side key of
+          // their own here. Same mock_answers FK this file already
+          // works around on delete (migration_38) has to be cleared
+          // first, before the old questions, before the new ones go in.
+          const { data: oldQuestionRows, error: oldQuestionsError } = await supabase
+            .from('mock_questions')
+            .select('id')
+            .eq('section_id', sectionId)
+          if (oldQuestionsError) throw oldQuestionsError
+
+          const oldQuestionIds = (oldQuestionRows || []).map((q) => q.id)
+          if (oldQuestionIds.length > 0) {
+            const { error: answersDeleteError } = await supabase
+              .from('mock_answers')
+              .delete()
+              .in('question_id', oldQuestionIds)
+            if (answersDeleteError) throw answersDeleteError
+
+            const { error: oldQuestionsDeleteError } = await supabase
+              .from('mock_questions')
+              .delete()
+              .eq('section_id', sectionId)
+            if (oldQuestionsDeleteError) throw oldQuestionsDeleteError
+          }
+        } else {
+          const { data: newSection, error: sectionInsertError } = await supabase
+            .from('mock_sections')
+            .insert({ exam_id: examId, order_index: i, title: part.title, audio_url: audioUrl })
+            .select('*')
+            .single()
+          if (sectionInsertError) throw sectionInsertError
+          sectionId = newSection.id
+        }
+
+        const questionRows = part.questions.map((q, qIndex) => ({
+          section_id: sectionId,
+          order_index: qIndex,
+          prompt: q.prompt.trim(),
+          type: q.type,
+          options: q.type === 'multiple_choice' ? { choices: q.choices } : null,
+          correct_answer: q.correctAnswer.trim(),
+        }))
+
+        if (questionRows.length > 0) {
+          const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
+          if (questionsInsertError) throw questionsInsertError
+        }
+      }
+
+      setListeningWizard(null)
+      await reloadRlExams()
+    } catch (err) {
+      console.error('Could not save listening exam:', err)
+
+      if (createdExamId) {
+        // Best-effort cleanup — a half-built exam row with no complete
+        // content is exactly what this wizard is meant to prevent, so
+        // don't leave one behind just because a later part failed.
+        await supabase.from('mock_exams').delete().eq('id', createdExamId)
+      }
+
+      setListeningWizardError(err?.message || 'Could not save this listening exam. Nothing was published — please try again.')
+    } finally {
+      setListeningWizardSaving(false)
+    }
   }
 
   useEffect(() => {
@@ -1587,11 +1791,15 @@ export default function TeacherMockCenter({ onExit }) {
                         <p className="text-sm text-mist max-w-lg">
                           {contentTab === 'reading'
                             ? 'Reading mock exams — each has one or more passages (sections), each passage has its own questions and correct answers.'
-                            : 'Listening mock exams — each has one or more audio tracks (sections), each track has its own questions and correct answers.'}
+                            : "Listening mock exams — always 4 parts, built in one guided flow. Can't be created until every part has audio and questions."}
                         </p>
                         <button
                           type="button"
-                          onClick={() => openCreateRlExam(contentTab)}
+                          onClick={() =>
+                            contentTab === 'listening'
+                              ? setListeningWizard({ mode: 'create' })
+                              : openCreateRlExam(contentTab)
+                          }
                           className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
                           + Add {contentTab} exam
@@ -1600,8 +1808,9 @@ export default function TeacherMockCenter({ onExit }) {
 
                       {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
                         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-                          No {contentTab} mocks yet — add one, then you'll go straight into adding
-                          its passages/audio and questions.
+                          {contentTab === 'reading'
+                            ? "No reading mocks yet — add one, then you'll go straight into adding its passages and questions."
+                            : "No listening mocks yet — \"+ Add listening exam\" walks you through all 4 parts before it can be created."}
                         </div>
                       ) : (
                         <div className="rounded-2xl border border-line bg-panel overflow-hidden">
@@ -1630,21 +1839,33 @@ export default function TeacherMockCenter({ onExit }) {
                                   {exam.is_active ? 'Published' : 'Draft'}
                                 </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => openExamSections(exam)}
-                                  className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
-                                >
-                                  Manage sections →
-                                </button>
+                                {contentTab === 'listening' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openListeningWizard(exam)}
+                                    className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                  >
+                                    Edit content →
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => openExamSections(exam)}
+                                      className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                    >
+                                      Manage sections →
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => openEditRlExam(exam)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
-                                >
-                                  Edit
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditRlExam(exam)}
+                                      className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                  </>
+                                )}
 
                                 <button
                                   type="button"
@@ -1959,6 +2180,16 @@ export default function TeacherMockCenter({ onExit }) {
           error={questionModalError}
           onCancel={() => setQuestionModal(null)}
           onSave={saveQuestion}
+        />
+      )}
+
+      {listeningWizard && (
+        <ListeningExamWizard
+          wizard={listeningWizard}
+          saving={listeningWizardSaving}
+          error={listeningWizardError}
+          onCancel={() => setListeningWizard(null)}
+          onSave={saveListeningWizard}
         />
       )}
 
@@ -2849,6 +3080,386 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/*
+ * ================================================================
+ * LISTENING WIZARD
+ * ================================================================
+ * Replaces Reading's generic exam -> section -> question drill-down for
+ * Listening specifically (see the "CONTENT EDITOR — LISTENING WIZARD"
+ * comment above, near listeningWizard's state, for the full context of
+ * why). Always exactly 4 parts; in create mode they reveal one at a
+ * time as each becomes complete, and nothing is written to the
+ * database at all until every part has audio and at least one
+ * question — saveListeningWizard (the caller of onSave here) does the
+ * actual exam/section/question inserts in one sequence.
+ */
+function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
+  const isEdit = wizard.mode === 'edit'
+  const exam = isEdit ? wizard.exam : null
+
+  const [title, setTitle] = useState(exam?.title || '')
+  const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
+
+  const buildInitialParts = () => {
+    if (!isEdit) {
+      return [0, 1, 2, 3].map((i) => ({
+        sectionId: null,
+        title: `Part ${i + 1}`,
+        audioFile: null,
+        audioUrl: null,
+        clearAudio: false,
+        questions: [],
+      }))
+    }
+
+    const sections = wizard.sections || []
+    return [0, 1, 2, 3].map((i) => {
+      const sec = sections[i]
+      const existingQuestions = sec ? wizard.questionsBySection[sec.id] || [] : []
+      return {
+        sectionId: sec?.id || null,
+        title: sec?.title || `Part ${i + 1}`,
+        audioFile: null,
+        audioUrl: sec?.audio_url || null,
+        clearAudio: false,
+        questions: existingQuestions.map((q) => ({
+          prompt: q.prompt,
+          type: q.type,
+          choicesText: (q.options?.choices || []).join('\n'),
+          correctAnswer: q.correct_answer,
+        })),
+      }
+    })
+  }
+
+  const [parts, setParts] = useState(buildInitialParts)
+
+  // Create mode: parts reveal one at a time as each becomes complete —
+  // Jasur: "space for pasting part 1... then part two but they should
+  // not be separate... next part should be there." Edit mode shows all
+  // 4 at once, since the content already exists.
+  const [revealedCount, setRevealedCount] = useState(isEdit ? 4 : 1)
+
+  const updatePart = (index, patch) => {
+    setParts((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
+  }
+
+  const addQuestion = (partIndex) => {
+    setParts((prev) =>
+      prev.map((p, i) =>
+        i !== partIndex
+          ? p
+          : {
+              ...p,
+              questions: [
+                ...p.questions,
+                { prompt: '', type: 'multiple_choice', choicesText: '', correctAnswer: '' },
+              ],
+            }
+      )
+    )
+  }
+
+  const updateQuestion = (partIndex, qIndex, patch) => {
+    setParts((prev) =>
+      prev.map((p, i) =>
+        i !== partIndex
+          ? p
+          : { ...p, questions: p.questions.map((q, j) => (j === qIndex ? { ...q, ...patch } : q)) }
+      )
+    )
+  }
+
+  const removeQuestion = (partIndex, qIndex) => {
+    setParts((prev) =>
+      prev.map((p, i) =>
+        i !== partIndex ? p : { ...p, questions: p.questions.filter((_, j) => j !== qIndex) }
+      )
+    )
+  }
+
+  const isPartValid = (part) => {
+    const hasAudio = Boolean(part.audioFile || (part.audioUrl && !part.clearAudio))
+    if (!hasAudio || part.questions.length === 0) return false
+    return part.questions.every((q) => {
+      if (!q.prompt.trim() || !q.correctAnswer.trim()) return false
+      if (q.type === 'multiple_choice') {
+        const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+        return choices.length >= 2 && choices.includes(q.correctAnswer)
+      }
+      return true
+    })
+  }
+
+  const allPartsValid = parts.every(isPartValid)
+  const canSave = title.trim() && allPartsValid
+
+  const handleSave = () => {
+    onSave({
+      title,
+      sortOrder,
+      parts: parts.map((p) => ({
+        sectionId: p.sectionId,
+        title: p.title,
+        audioFile: p.audioFile,
+        audioUrl: p.audioUrl,
+        clearAudio: p.clearAudio,
+        questions: p.questions.map((q) => ({
+          prompt: q.prompt,
+          type: q.type,
+          choices: q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean),
+          correctAnswer: q.correctAnswer,
+        })),
+      })),
+    })
+  }
+
+  if (isEdit && wizard.loading) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+        <div className="w-full max-w-3xl rounded-2xl border border-line bg-panel shadow-xl p-8 text-center">
+          <p className="text-sm text-mist">Loading listening exam…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {isEdit ? 'Edit listening exam' : 'New listening exam'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          {isEdit
+            ? 'All 4 parts, right here — update audio or questions in any part, then save.'
+            : "Fill in Part 1, then move on to the next — this can't be created until every part has audio and at least one question."}
+        </p>
+
+        <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Title
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Listening Mock Test 1"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Sort order
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-4">
+          {parts.slice(0, revealedCount).map((part, i) => (
+            <ListeningPartEditor
+              key={i}
+              part={part}
+              valid={isPartValid(part)}
+              onChange={(patch) => updatePart(i, patch)}
+              onAddQuestion={() => addQuestion(i)}
+              onUpdateQuestion={(qIndex, patch) => updateQuestion(i, qIndex, patch)}
+              onRemoveQuestion={(qIndex) => removeQuestion(i, qIndex)}
+            />
+          ))}
+        </div>
+
+        {!isEdit && revealedCount < 4 && (
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setRevealedCount((n) => Math.min(n + 1, 4))}
+              disabled={!isPartValid(parts[revealedCount - 1])}
+              className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next part →
+            </button>
+          </div>
+        )}
+
+        {error && <p className="text-coral text-sm mt-4">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end border-t border-line pt-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          {(isEdit || revealedCount === 4) && (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !canSave}
+              title={!canSave ? 'Every part needs audio and at least one complete question.' : undefined}
+              className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            >
+              {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create listening exam'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion }) {
+  return (
+    <div className={`rounded-xl border p-4 ${valid ? 'border-sage/30 bg-sage/5' : 'border-line bg-panel-2'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <input
+          type="text"
+          value={part.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+          className="focus-ring font-display text-base text-paper bg-transparent border-0 border-b border-transparent hover:border-line focus:border-brass px-0 py-0.5 flex-1 min-w-0"
+        />
+        <span
+          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${
+            valid ? 'text-sage border-sage/30 bg-sage/10' : 'text-mist border-line bg-panel'
+          }`}
+        >
+          {valid ? 'Complete' : 'Incomplete'}
+        </span>
+      </div>
+
+      <label className="mt-3 block text-xs text-mist font-mono uppercase tracking-wide">
+        Audio file
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={(e) => onChange({ audioFile: e.target.files?.[0] || null, clearAudio: false })}
+          className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
+        />
+      </label>
+
+      {part.audioFile ? (
+        <div className="mt-1.5 flex items-center gap-3">
+          <audio controls preload="none" src={URL.createObjectURL(part.audioFile)} className="h-9" />
+          <span className="text-xs text-sage">Audio ready — {part.audioFile.name}</span>
+        </div>
+      ) : part.audioUrl && !part.clearAudio ? (
+        <div className="mt-1.5 flex items-center gap-3">
+          <audio controls preload="none" src={part.audioUrl} className="h-9" />
+          <button
+            type="button"
+            onClick={() => onChange({ clearAudio: true })}
+            className="focus-ring text-xs text-coral hover:text-coral/80"
+          >
+            Remove audio
+          </button>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-col gap-3">
+        {part.questions.length === 0 && (
+          <p className="text-xs text-mist">No questions in this part yet.</p>
+        )}
+
+        {part.questions.map((q, qIndex) => {
+          const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+          return (
+            <div key={qIndex} className="rounded-lg border border-line bg-panel p-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <select
+                  value={q.type}
+                  onChange={(e) => onUpdateQuestion(qIndex, { type: e.target.value, correctAnswer: '' })}
+                  className="focus-ring rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-xs text-paper"
+                >
+                  <option value="multiple_choice">Multiple choice</option>
+                  <option value="true_false_ng">True / False / Not Given</option>
+                  <option value="short_answer">Short answer</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => onRemoveQuestion(qIndex)}
+                  className="focus-ring text-xs text-coral hover:text-coral/80 px-1 shrink-0"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <textarea
+                value={q.prompt}
+                onChange={(e) => onUpdateQuestion(qIndex, { prompt: e.target.value })}
+                rows={2}
+                placeholder="Question prompt…"
+                className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
+              />
+
+              {q.type === 'multiple_choice' && (
+                <>
+                  <textarea
+                    value={q.choicesText}
+                    onChange={(e) => onUpdateQuestion(qIndex, { choicesText: e.target.value })}
+                    rows={3}
+                    placeholder={'Choice A\nChoice B\nChoice C'}
+                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
+                  />
+                  <select
+                    value={q.correctAnswer}
+                    onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                  >
+                    <option value="">Select the correct choice…</option>
+                    {choices.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {q.type === 'true_false_ng' && (
+                <select
+                  value={q.correctAnswer}
+                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                >
+                  <option value="">Select…</option>
+                  {TRUE_FALSE_NG_CHOICES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {q.type === 'short_answer' && (
+                <input
+                  type="text"
+                  value={q.correctAnswer}
+                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                  placeholder="Correct answer"
+                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                />
+              )}
+            </div>
+          )
+        })}
+
+        <button
+          type="button"
+          onClick={onAddQuestion}
+          className="focus-ring self-start text-xs font-semibold rounded-full border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
+        >
+          + Add question
+        </button>
       </div>
     </div>
   )
