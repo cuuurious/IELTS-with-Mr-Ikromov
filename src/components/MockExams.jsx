@@ -43,11 +43,11 @@ const MODULE_BLURB = {
   listening: 'Play the audio once through, answer as you go.',
 }
 
-const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
+export const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
 
-const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
+export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
 
-function formatClock(ms) {
+export function formatClock(ms) {
   const totalSeconds = Math.max(0, Math.round(ms / 1000))
   const m = Math.floor(totalSeconds / 60)
   const s = totalSeconds % 60
@@ -228,7 +228,15 @@ export default function MockExams({ selfId }) {
   )
 }
 
-function ExamTaker({ selfId, exam, sections, onExit }) {
+export function ExamTaker({
+  selfId,
+  exam,
+  sections,
+  onExit,
+  ctaLabel = 'Back to exams',
+  onAttemptStarted,
+  onSubmitted,
+}) {
   const [phase, setPhase] = useState('starting')
   const [attemptId, setAttemptId] = useState(null)
   const [error, setError] = useState(null)
@@ -268,6 +276,7 @@ function ExamTaker({ selfId, exam, sections, onExit }) {
       setAttemptId(data.id)
       setDeadline(Date.now() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
       setPhase('in-progress')
+      onAttemptStarted?.(data.id)
     }
 
     start()
@@ -327,8 +336,10 @@ function ExamTaker({ selfId, exam, sections, onExit }) {
     }
 
     const row = Array.isArray(data) ? data[0] : data
-    setResult({ score: row?.score ?? 0, maxScore: row?.max_score ?? 0 })
+    const finalResult = { score: row?.score ?? 0, maxScore: row?.max_score ?? 0 }
+    setResult(finalResult)
     setPhase('done')
+    onSubmitted?.(finalResult)
   }
 
   if (phase === 'starting') {
@@ -349,7 +360,7 @@ function ExamTaker({ selfId, exam, sections, onExit }) {
           onClick={onExit}
           className="focus-ring mt-5 inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
         >
-          Back to exams
+          {ctaLabel}
         </button>
       </div>
     )
@@ -374,7 +385,7 @@ function ExamTaker({ selfId, exam, sections, onExit }) {
             onClick={onExit}
             className="focus-ring mt-6 inline-block rounded-full bg-brass px-6 py-2.5 text-sm font-bold text-onbrass shadow-sm transition-transform hover:scale-105"
           >
-            Back to exams
+            {ctaLabel}
           </button>
         </div>
 
@@ -472,7 +483,7 @@ function ExamTaker({ selfId, exam, sections, onExit }) {
   )
 }
 
-function QuestionBlock({ index, question, value, onChange }) {
+export function QuestionBlock({ index, question, value, onChange }) {
   return (
     <div className="border-t border-line pt-4 first:border-0 first:pt-0">
       <p className="mb-2.5 text-sm font-medium text-paper">

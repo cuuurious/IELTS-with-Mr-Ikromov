@@ -129,7 +129,7 @@ export default function TeacherMockCenter({ onExit }) {
    * explicitly at the app level instead of assuming the database will
    * do it.
    */
-  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading' | 'listening'
+  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading' | 'listening' | 'full-mocks'
   const [rlExams, setRlExams] = useState([])
   const [rlSelectedExamId, setRlSelectedExamId] = useState(null)
   const [rlSections, setRlSections] = useState([])
@@ -148,6 +148,23 @@ export default function TeacherMockCenter({ onExit }) {
   const [questionModal, setQuestionModal] = useState(null) // { mode: 'create' } | { mode: 'edit', question }
   const [questionModalSaving, setQuestionModalSaving] = useState(false)
   const [questionModalError, setQuestionModalError] = useState('')
+
+  /*
+   * ============================================================
+   * CONTENT EDITOR — FULL MOCK SETS
+   * ============================================================
+   * Jasur, 2026-09-25: "i dont want them to be able to do watever test
+   * they want at anytime, once they start the mock they have to solve
+   * listening first, reading and writing next." A Full Mock bundles one
+   * already-authored Listening exam + one Reading exam + one Writing
+   * exam (migration_37) — the actual forced-order sequencing happens in
+   * FullMockRunner.jsx on the student side; this tab is just where a
+   * teacher builds the bundle.
+   */
+  const [fullMockSets, setFullMockSets] = useState([])
+  const [fullMockModal, setFullMockModal] = useState(null) // { mode: 'create' } | { mode: 'edit', set }
+  const [fullMockModalSaving, setFullMockModalSaving] = useState(false)
+  const [fullMockModalError, setFullMockModalError] = useState('')
 
   const rlSelectedExam = useMemo(
     () => rlExams.find((e) => e.id === rlSelectedExamId) || null,
@@ -184,6 +201,20 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     setRlExams(data || [])
+  }
+
+  const reloadFullMockSets = async () => {
+    const { data, error } = await supabase
+      .from('full_mock_sets')
+      .select('*')
+      .order('sort_order', { ascending: true })
+
+    if (error) {
+      console.error('Failed to load full mock sets:', error)
+      return
+    }
+
+    setFullMockSets(data || [])
   }
 
   const openExamSections = async (exam) => {
@@ -373,6 +404,7 @@ export default function TeacherMockCenter({ onExit }) {
     load()
     reloadWritingExams()
     reloadRlExams()
+    reloadFullMockSets()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -956,6 +988,90 @@ export default function TeacherMockCenter({ onExit }) {
     await reloadRlQuestions(rlSelectedSectionId)
   }
 
+  /*
+   * ============================================================
+   * CONTENT EDITOR — FULL MOCK SETS
+   * ============================================================
+   */
+  const openCreateFullMock = () => {
+    setFullMockModalError('')
+    setFullMockModal({ mode: 'create' })
+  }
+
+  const openEditFullMock = (set) => {
+    setFullMockModalError('')
+    setFullMockModal({ mode: 'edit', set })
+  }
+
+  const saveFullMockSet = async (values) => {
+    setFullMockModalSaving(true)
+    setFullMockModalError('')
+
+    try {
+      const payload = {
+        title: values.title.trim(),
+        listening_exam_id: values.listeningExamId,
+        reading_exam_id: values.readingExamId,
+        writing_exam_id: values.writingExamId,
+        is_active: values.isActive,
+        sort_order: Number(values.sortOrder) || 0,
+      }
+
+      if (fullMockModal.mode === 'create') {
+        const { error: insertError } = await supabase
+          .from('full_mock_sets')
+          .insert({ ...payload, created_by: profile.id })
+        if (insertError) throw insertError
+      } else {
+        const { error: updateError } = await supabase
+          .from('full_mock_sets')
+          .update(payload)
+          .eq('id', fullMockModal.set.id)
+        if (updateError) throw updateError
+      }
+
+      setFullMockModal(null)
+      await reloadFullMockSets()
+    } catch (err) {
+      console.error('Could not save full mock set:', err)
+      setFullMockModalError(err?.message || 'Could not save this full mock.')
+    } finally {
+      setFullMockModalSaving(false)
+    }
+  }
+
+  const deleteFullMockSet = async (set) => {
+    const ok = window.confirm(
+      `Delete "${set.title}"? Students partway through it will be stuck mid-sequence. This ` +
+        `doesn't delete the underlying Listening/Reading/Writing exams, just this bundle. This can't be undone.`
+    )
+    if (!ok) return
+
+    const { error } = await supabase.from('full_mock_sets').delete().eq('id', set.id)
+
+    if (error) {
+      console.error('Could not delete full mock set:', error)
+      window.alert(error.message || 'Could not delete this full mock.')
+      return
+    }
+
+    await reloadFullMockSets()
+  }
+
+  const toggleFullMockActive = async (set) => {
+    const { error } = await supabase
+      .from('full_mock_sets')
+      .update({ is_active: !set.is_active })
+      .eq('id', set.id)
+
+    if (error) {
+      console.error('Could not update full mock status:', error)
+      return
+    }
+
+    await reloadFullMockSets()
+  }
+
   return (
     <div className="fixed inset-0 z-[9998] flex flex-col bg-ink text-paper">
 
@@ -1239,6 +1355,15 @@ export default function TeacherMockCenter({ onExit }) {
                   }`}
                 >
                   Listening
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentTab('full-mocks')}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    contentTab === 'full-mocks' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
+                  }`}
+                >
+                  Full Mocks
                 </button>
               </div>
 
@@ -1563,6 +1688,96 @@ export default function TeacherMockCenter({ onExit }) {
                   )}
                 </div>
               )}
+
+              {/* ======================================================
+                  FULL MOCKS — bundles one Listening + one Reading + one
+                  Writing exam into a single ordered sitting. Migration_37.
+                  This REPLACES free single-module practice on the student
+                  side per Jasur's "full sequence only" call — students no
+                  longer pick individual Reading/Listening/Writing exams,
+                  only a Full Mock set from here.
+                 ====================================================== */}
+              {contentTab === 'full-mocks' && (
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-mist max-w-lg">
+                      What students actually sit: one Listening exam, one Reading exam and one
+                      Writing exam bundled together, taken in that order with an instructions +
+                      confirm screen between each — same shape as the real test. Build the
+                      individual Listening/Reading/Writing exams first (the tabs to the left),
+                      then bundle them here.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openCreateFullMock}
+                      className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                    >
+                      + Add full mock
+                    </button>
+                  </div>
+
+                  {fullMockSets.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                      No full mocks yet — once you have at least one published Listening, Reading
+                      and Writing exam, bundle them into a set here.
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                      {fullMockSets.map((set) => {
+                        const listeningExam = rlExams.find((e) => e.id === set.listening_exam_id)
+                        const readingExam = rlExams.find((e) => e.id === set.reading_exam_id)
+                        const writingExam = writingExams.find((e) => e.id === set.writing_exam_id)
+
+                        return (
+                          <div
+                            key={set.id}
+                            className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium text-paper truncate">{set.title}</p>
+                              <p className="text-xs text-mist font-mono mt-0.5 truncate">
+                                Listening: {listeningExam?.title || '—'} · Reading:{' '}
+                                {readingExam?.title || '—'} · Writing: {writingExam?.title || '—'}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleFullMockActive(set)}
+                                className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                                  set.is_active
+                                    ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
+                                    : 'text-mist border-line bg-panel-2 hover:text-paper'
+                                }`}
+                                title="Click to toggle whether students can see this"
+                              >
+                                {set.is_active ? 'Published' : 'Draft'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => openEditFullMock(set)}
+                                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => deleteFullMockSet(set)}
+                                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1606,6 +1821,19 @@ export default function TeacherMockCenter({ onExit }) {
           error={questionModalError}
           onCancel={() => setQuestionModal(null)}
           onSave={saveQuestion}
+        />
+      )}
+
+      {fullMockModal && (
+        <FullMockSetFormModal
+          modal={fullMockModal}
+          listeningExams={rlExams.filter((e) => e.module === 'listening' && e.is_active)}
+          readingExams={rlExams.filter((e) => e.module === 'reading' && e.is_active)}
+          writingExams={writingExams.filter((e) => e.is_active)}
+          saving={fullMockModalSaving}
+          error={fullMockModalError}
+          onCancel={() => setFullMockModal(null)}
+          onSave={saveFullMockSet}
         />
       )}
     </div>
@@ -2404,6 +2632,170 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={() => onSave({ prompt, orderIndex, type, choices, correctAnswer })}
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FullMockSetFormModal({
+  modal,
+  listeningExams,
+  readingExams,
+  writingExams,
+  saving,
+  error,
+  onCancel,
+  onSave,
+}) {
+  const set = modal.mode === 'edit' ? modal.set : null
+
+  const [title, setTitle] = useState(set?.title || '')
+  const [listeningExamId, setListeningExamId] = useState(set?.listening_exam_id || '')
+  const [readingExamId, setReadingExamId] = useState(set?.reading_exam_id || '')
+  const [writingExamId, setWritingExamId] = useState(set?.writing_exam_id || '')
+  const [isActive, setIsActive] = useState(set ? set.is_active : true)
+  const [sortOrder, setSortOrder] = useState(set?.sort_order ?? 0)
+
+  // Editing an existing set: its own currently-linked exam might no
+  // longer be in the "published" list passed in (e.g. it got
+  // un-published after this set was built) — still offer it as an
+  // option so editing doesn't silently drop a valid selection.
+  const listeningOptions = set && !listeningExams.some((e) => e.id === set.listening_exam_id)
+    ? [{ id: set.listening_exam_id, title: '(currently linked, unpublished)' }, ...listeningExams]
+    : listeningExams
+  const readingOptions = set && !readingExams.some((e) => e.id === set.reading_exam_id)
+    ? [{ id: set.reading_exam_id, title: '(currently linked, unpublished)' }, ...readingExams]
+    : readingExams
+  const writingOptions = set && !writingExams.some((e) => e.id === set.writing_exam_id)
+    ? [{ id: set.writing_exam_id, title: '(currently linked, unpublished)' }, ...writingExams]
+    : writingExams
+
+  const canSave =
+    title.trim() && listeningExamId && readingExamId && writingExamId
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {modal.mode === 'create' ? 'Add full mock' : 'Edit full mock'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          Students sit these three, in this order, as one continuous test — same as the real
+          exam.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Title
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Full Mock 1"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            1. Listening exam
+            <select
+              value={listeningExamId}
+              onChange={(e) => setListeningExamId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {listeningOptions.length ? 'Select a listening exam…' : 'No published listening exams yet'}
+              </option>
+              {listeningOptions.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            2. Reading exam
+            <select
+              value={readingExamId}
+              onChange={(e) => setReadingExamId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {readingOptions.length ? 'Select a reading exam…' : 'No published reading exams yet'}
+              </option>
+              {readingOptions.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            3. Writing exam
+            <select
+              value={writingExamId}
+              onChange={(e) => setWritingExamId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {writingOptions.length ? 'Select a writing exam…' : 'No published writing exams yet'}
+              </option>
+              {writingOptions.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Sort order
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+            <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+              Just the display order in the student's list — lower numbers show first.
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-paper">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="accent-brass"
+            />
+            Published (students can see and sit this)
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onSave({ title, listeningExamId, readingExamId, writingExamId, isActive, sortOrder })
+            }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >

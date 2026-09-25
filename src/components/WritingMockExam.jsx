@@ -31,7 +31,7 @@ const AUTOSAVE_MS = 5000
  * ================================================================
  */
 
-function tasksFor(exam) {
+export function tasksFor(exam) {
   return exam.task1_prompt ? ['task1', 'task2'] : ['task2']
 }
 
@@ -192,7 +192,7 @@ export default function WritingMockExam({ selfId }) {
   )
 }
 
-function WritingTaker({ exam, attempt, onDone, onMinimize }) {
+export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   const tasks = useMemo(() => tasksFor(exam), [exam])
   const [activeTask, setActiveTask] = useState(tasks[0])
   const [imageLightboxOpen, setImageLightboxOpen] = useState(false)

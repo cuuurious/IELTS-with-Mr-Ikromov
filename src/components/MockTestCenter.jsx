@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import MockExams from './MockExams'
-import WritingMockExam from './WritingMockExam'
+import FullMockRunner from './FullMockRunner'
 import Chat from './Chat'
 import {
   TARGET_BANDS,
@@ -24,7 +23,11 @@ import {
  *   Overview        — average/highest reading+listening scores,
  *                     target band (editable here too), writing mock
  *                     bands/feedback from a writing examiner.
- *   Take a Test      — the existing MockExams component, untouched.
+ *   Take a Test      — FullMockRunner: a forced Listening→Reading→
+ *                     Writing sequence built from a teacher-bundled
+ *                     "Full Mock" set (migration_37), replacing the old
+ *                     free pick-any-exam-anytime MockExams/WritingMockExam
+ *                     screens per Jasur's 2026-09-25 decision.
  *   Speaking Exam    — the student's booked slot(s) from
  *                     mock_speaking_slots (migration_29), with the
  *                     join link and examiner name.
@@ -318,10 +321,7 @@ export default function MockTestCenter({ onExit }) {
           )}
 
           {!loading && section === 'take-test' && (
-            <div className="space-y-6">
-              <MockExams selfId={profile.id} />
-              <WritingMockExam selfId={profile.id} />
-            </div>
+            <FullMockRunner selfId={profile.id} />
           )}
 
           {!loading && section === 'speaking' && (
