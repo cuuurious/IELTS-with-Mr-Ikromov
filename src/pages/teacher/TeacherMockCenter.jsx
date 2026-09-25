@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
@@ -2273,6 +2273,16 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
   const [task1ImageFile, setTask1ImageFile] = useState(null)
   const [clearTask1Image, setClearTask1Image] = useState(false)
+  const task1FileInputRef = useRef(null)
+
+  // Clears a chosen-or-pasted (not-yet-saved) Task 1 image. Also resets
+  // the native file input's own value — otherwise choosing the exact
+  // same file again wouldn't fire onChange a second time, since as far
+  // as the <input> itself is concerned nothing changed.
+  const removeTask1ImageFile = () => {
+    setTask1ImageFile(null)
+    if (task1FileInputRef.current) task1FileInputRef.current.value = ''
+  }
 
   // Jasur: "enable pasting pics here" — a chart/graph screenshot is
   // usually already on the clipboard (Snipping Tool, Win+Shift+S, etc.),
@@ -2342,6 +2352,7 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
           <label className="text-xs text-mist font-mono uppercase tracking-wide">
             Task 1 chart/graph image (optional)
             <input
+              ref={task1FileInputRef}
               type="file"
               accept="image/*"
               onChange={(e) => {
@@ -2363,6 +2374,13 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
                 className="h-16 rounded-lg border border-line object-contain"
               />
               <span className="text-xs text-sage">Image ready — {task1ImageFile.name}</span>
+              <button
+                type="button"
+                onClick={removeTask1ImageFile}
+                className="focus-ring text-xs text-coral hover:text-coral/80"
+              >
+                Remove image
+              </button>
             </div>
           )}
 
