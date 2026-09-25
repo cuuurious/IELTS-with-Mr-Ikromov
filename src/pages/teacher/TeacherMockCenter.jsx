@@ -56,6 +56,14 @@ const SPEAKING_STATUS_META = {
   no_show: { label: 'No-show', className: 'text-coral border-coral/30 bg-coral/10' },
 }
 
+const QUESTION_TYPE_LABELS = {
+  multiple_choice: 'Multiple choice',
+  true_false_ng: 'True/False/Not Given',
+  short_answer: 'Short answer',
+}
+
+const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
+
 function pct(score, max) {
   if (!max) return 0
   return Math.round((score / max) * 100)
@@ -107,6 +115,49 @@ export default function TeacherMockCenter({ onExit }) {
   const [examFormSaving, setExamFormSaving] = useState(false)
   const [examFormError, setExamFormError] = useState('')
 
+  /*
+   * ============================================================
+   * CONTENT EDITOR — READING/LISTENING MOCKS
+   * ============================================================
+   * mock_exams/mock_sections/mock_questions predate this project's own
+   * migrations (built by the old standalone ielts-mock-tests app) and
+   * had NO teacher RLS at all until migration_36 added it. Drill-down
+   * UI: exam list -> section list (within one exam) -> question list
+   * (within one section). There's no confirmed DB-level cascade on
+   * these tables (unlike writing_mock_attempts.exam_id, which is
+   * explicitly "on delete cascade"), so deletes here cascade
+   * explicitly at the app level instead of assuming the database will
+   * do it.
+   */
+  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading-listening'
+  const [rlExams, setRlExams] = useState([])
+  const [rlSelectedExamId, setRlSelectedExamId] = useState(null)
+  const [rlSections, setRlSections] = useState([])
+  const [rlSelectedSectionId, setRlSelectedSectionId] = useState(null)
+  const [rlQuestions, setRlQuestions] = useState([])
+  const [rlLoading, setRlLoading] = useState(false)
+
+  const [examModal, setExamModal] = useState(null) // { mode: 'create' } | { mode: 'edit', exam }
+  const [examModalSaving, setExamModalSaving] = useState(false)
+  const [examModalError, setExamModalError] = useState('')
+
+  const [sectionModal, setSectionModal] = useState(null) // { mode: 'create' } | { mode: 'edit', section }
+  const [sectionModalSaving, setSectionModalSaving] = useState(false)
+  const [sectionModalError, setSectionModalError] = useState('')
+
+  const [questionModal, setQuestionModal] = useState(null) // { mode: 'create' } | { mode: 'edit', question }
+  const [questionModalSaving, setQuestionModalSaving] = useState(false)
+  const [questionModalError, setQuestionModalError] = useState('')
+
+  const rlSelectedExam = useMemo(
+    () => rlExams.find((e) => e.id === rlSelectedExamId) || null,
+    [rlExams, rlSelectedExamId]
+  )
+  const rlSelectedSection = useMemo(
+    () => rlSections.find((s) => s.id === rlSelectedSectionId) || null,
+    [rlSections, rlSelectedSectionId]
+  )
+
   const reloadWritingExams = async () => {
     const { data, error } = await supabase
       .from('writing_mock_exams')
@@ -119,6 +170,94 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     setWritingExams(data || [])
+  }
+
+  const reloadRlExams = async () => {
+    const { data, error } = await supabase
+      .from('mock_exams')
+      .select('*')
+      .order('sort_order', { ascending: true })
+
+    if (error) {
+      console.error('Failed to load reading/listening mock exams:', error)
+      return
+    }
+
+    setRlExams(data || [])
+  }
+
+  const openExamSections = async (exam) => {
+    setRlSelectedExamId(exam.id)
+    setRlSelectedSectionId(null)
+    setRlQuestions([])
+    setRlLoading(true)
+
+    const { data, error } = await supabase
+      .from('mock_sections')
+      .select('*')
+      .eq('exam_id', exam.id)
+      .order('order_index', { ascending: true })
+
+    if (error) console.error('Failed to load sections:', error)
+    setRlSections(data || [])
+    setRlLoading(false)
+  }
+
+  const reloadRlSections = async (examId) => {
+    const { data, error } = await supabase
+      .from('mock_sections')
+      .select('*')
+      .eq('exam_id', examId)
+      .order('order_index', { ascending: true })
+
+    if (error) {
+      console.error('Failed to reload sections:', error)
+      return
+    }
+    setRlSections(data || [])
+  }
+
+  const openSectionQuestions = async (section) => {
+    setRlSelectedSectionId(section.id)
+    setRlLoading(true)
+
+    // mock_questions, not mock_questions_public — a teacher needs to
+    // see (and edit) the answer key, unlike a student sitting the exam.
+    const { data, error } = await supabase
+      .from('mock_questions')
+      .select('*')
+      .eq('section_id', section.id)
+      .order('order_index', { ascending: true })
+
+    if (error) console.error('Failed to load questions:', error)
+    setRlQuestions(data || [])
+    setRlLoading(false)
+  }
+
+  const reloadRlQuestions = async (sectionId) => {
+    const { data, error } = await supabase
+      .from('mock_questions')
+      .select('*')
+      .eq('section_id', sectionId)
+      .order('order_index', { ascending: true })
+
+    if (error) {
+      console.error('Failed to reload questions:', error)
+      return
+    }
+    setRlQuestions(data || [])
+  }
+
+  const backToRlExams = () => {
+    setRlSelectedExamId(null)
+    setRlSections([])
+    setRlSelectedSectionId(null)
+    setRlQuestions([])
+  }
+
+  const backToRlSections = () => {
+    setRlSelectedSectionId(null)
+    setRlQuestions([])
   }
 
   useEffect(() => {
@@ -233,6 +372,7 @@ export default function TeacherMockCenter({ onExit }) {
 
     load()
     reloadWritingExams()
+    reloadRlExams()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -523,6 +663,268 @@ export default function TeacherMockCenter({ onExit }) {
     await reloadWritingExams()
   }
 
+  /*
+   * ============================================================
+   * CONTENT EDITOR — READING/LISTENING MOCKS (exams)
+   * ============================================================
+   */
+  const openCreateRlExam = () => {
+    setExamModalError('')
+    setExamModal({ mode: 'create' })
+  }
+
+  const openEditRlExam = (exam) => {
+    setExamModalError('')
+    setExamModal({ mode: 'edit', exam })
+  }
+
+  const saveRlExam = async (values) => {
+    setExamModalSaving(true)
+    setExamModalError('')
+
+    try {
+      const payload = {
+        title: values.title.trim(),
+        module: values.module,
+        is_active: values.isActive,
+        sort_order: Number(values.sortOrder) || 0,
+      }
+
+      if (examModal.mode === 'create') {
+        const { error: insertError } = await supabase.from('mock_exams').insert(payload)
+        if (insertError) throw insertError
+      } else {
+        const { error: updateError } = await supabase
+          .from('mock_exams')
+          .update(payload)
+          .eq('id', examModal.exam.id)
+        if (updateError) throw updateError
+      }
+
+      setExamModal(null)
+      await reloadRlExams()
+    } catch (err) {
+      console.error('Could not save mock exam:', err)
+      setExamModalError(err?.message || 'Could not save this exam.')
+    } finally {
+      setExamModalSaving(false)
+    }
+  }
+
+  const deleteRlExam = async (exam) => {
+    const ok = window.confirm(
+      `Delete "${exam.title}"? This deletes every section and question in it. If any student has already ` +
+        `attempted this exam, deletion may fail — un-publish it instead in that case. This can't be undone.`
+    )
+    if (!ok) return
+
+    try {
+      const { data: sectionRows, error: sectionsError } = await supabase
+        .from('mock_sections')
+        .select('id')
+        .eq('exam_id', exam.id)
+      if (sectionsError) throw sectionsError
+
+      const sectionIds = (sectionRows || []).map((s) => s.id)
+      if (sectionIds.length > 0) {
+        const { error: questionsDeleteError } = await supabase
+          .from('mock_questions')
+          .delete()
+          .in('section_id', sectionIds)
+        if (questionsDeleteError) throw questionsDeleteError
+      }
+
+      const { error: sectionsDeleteError } = await supabase
+        .from('mock_sections')
+        .delete()
+        .eq('exam_id', exam.id)
+      if (sectionsDeleteError) throw sectionsDeleteError
+
+      const { error: examDeleteError } = await supabase.from('mock_exams').delete().eq('id', exam.id)
+      if (examDeleteError) throw examDeleteError
+
+      if (rlSelectedExamId === exam.id) backToRlExams()
+      await reloadRlExams()
+    } catch (err) {
+      console.error('Could not delete mock exam:', err)
+      window.alert(
+        err?.message ||
+          'Could not delete this exam — it may already have student attempts. Try un-publishing it instead.'
+      )
+    }
+  }
+
+  const toggleRlExamActive = async (exam) => {
+    const { error } = await supabase
+      .from('mock_exams')
+      .update({ is_active: !exam.is_active })
+      .eq('id', exam.id)
+
+    if (error) {
+      console.error('Could not update exam status:', error)
+      return
+    }
+
+    await reloadRlExams()
+  }
+
+  /*
+   * ============================================================
+   * CONTENT EDITOR — READING/LISTENING MOCKS (sections)
+   * ============================================================
+   */
+  const openCreateSection = () => {
+    setSectionModalError('')
+    setSectionModal({ mode: 'create' })
+  }
+
+  const openEditSection = (section) => {
+    setSectionModalError('')
+    setSectionModal({ mode: 'edit', section })
+  }
+
+  const saveSection = async (values) => {
+    setSectionModalSaving(true)
+    setSectionModalError('')
+
+    try {
+      let audioUrl =
+        sectionModal.mode === 'edit' ? sectionModal.section.audio_url : null
+
+      if (values.audioFile) {
+        const path = `${profile.id}/mock-audio/${Date.now()}-${values.audioFile.name}`
+        const { error: uploadError } = await supabase.storage
+          .from('homework-files')
+          .upload(path, values.audioFile, {
+            contentType: guessMimeType(values.audioFile.name, values.audioFile.type),
+          })
+        if (uploadError) throw uploadError
+        audioUrl = supabase.storage.from('homework-files').getPublicUrl(path).data.publicUrl
+      } else if (values.clearAudio) {
+        audioUrl = null
+      }
+
+      const payload = {
+        exam_id: rlSelectedExamId,
+        order_index: Number(values.orderIndex) || 0,
+        title: values.title.trim(),
+        passage_text: rlSelectedExam?.module === 'reading' ? values.passageText.trim() || null : null,
+        audio_url: rlSelectedExam?.module === 'listening' ? audioUrl : null,
+      }
+
+      if (sectionModal.mode === 'create') {
+        const { error: insertError } = await supabase.from('mock_sections').insert(payload)
+        if (insertError) throw insertError
+      } else {
+        const { error: updateError } = await supabase
+          .from('mock_sections')
+          .update(payload)
+          .eq('id', sectionModal.section.id)
+        if (updateError) throw updateError
+      }
+
+      setSectionModal(null)
+      await reloadRlSections(rlSelectedExamId)
+    } catch (err) {
+      console.error('Could not save section:', err)
+      setSectionModalError(err?.message || 'Could not save this section.')
+    } finally {
+      setSectionModalSaving(false)
+    }
+  }
+
+  const deleteSection = async (section) => {
+    const ok = window.confirm(
+      `Delete "${section.title}"? This also deletes every question in it. This can't be undone.`
+    )
+    if (!ok) return
+
+    try {
+      const { error: questionsDeleteError } = await supabase
+        .from('mock_questions')
+        .delete()
+        .eq('section_id', section.id)
+      if (questionsDeleteError) throw questionsDeleteError
+
+      const { error: sectionDeleteError } = await supabase
+        .from('mock_sections')
+        .delete()
+        .eq('id', section.id)
+      if (sectionDeleteError) throw sectionDeleteError
+
+      if (rlSelectedSectionId === section.id) backToRlSections()
+      await reloadRlSections(rlSelectedExamId)
+    } catch (err) {
+      console.error('Could not delete section:', err)
+      window.alert(err?.message || 'Could not delete this section.')
+    }
+  }
+
+  /*
+   * ============================================================
+   * CONTENT EDITOR — READING/LISTENING MOCKS (questions)
+   * ============================================================
+   */
+  const openCreateQuestion = () => {
+    setQuestionModalError('')
+    setQuestionModal({ mode: 'create' })
+  }
+
+  const openEditQuestion = (question) => {
+    setQuestionModalError('')
+    setQuestionModal({ mode: 'edit', question })
+  }
+
+  const saveQuestion = async (values) => {
+    setQuestionModalSaving(true)
+    setQuestionModalError('')
+
+    try {
+      const payload = {
+        section_id: rlSelectedSectionId,
+        order_index: Number(values.orderIndex) || 0,
+        prompt: values.prompt.trim(),
+        type: values.type,
+        options: values.type === 'multiple_choice' ? { choices: values.choices } : null,
+        correct_answer: values.correctAnswer.trim(),
+      }
+
+      if (questionModal.mode === 'create') {
+        const { error: insertError } = await supabase.from('mock_questions').insert(payload)
+        if (insertError) throw insertError
+      } else {
+        const { error: updateError } = await supabase
+          .from('mock_questions')
+          .update(payload)
+          .eq('id', questionModal.question.id)
+        if (updateError) throw updateError
+      }
+
+      setQuestionModal(null)
+      await reloadRlQuestions(rlSelectedSectionId)
+    } catch (err) {
+      console.error('Could not save question:', err)
+      setQuestionModalError(err?.message || 'Could not save this question.')
+    } finally {
+      setQuestionModalSaving(false)
+    }
+  }
+
+  const deleteQuestion = async (question) => {
+    const ok = window.confirm('Delete this question? This can\'t be undone.')
+    if (!ok) return
+
+    const { error } = await supabase.from('mock_questions').delete().eq('id', question.id)
+
+    if (error) {
+      console.error('Could not delete question:', error)
+      window.alert(error?.message || 'Could not delete this question.')
+      return
+    }
+
+    await reloadRlQuestions(rlSelectedSectionId)
+  }
+
   return (
     <div className="fixed inset-0 z-[9998] flex flex-col bg-ink text-paper">
 
@@ -762,79 +1164,350 @@ export default function TeacherMockCenter({ onExit }) {
           {/* ======================================================
               CONTENT — Jasur's "next level" ask 2026-09-25: no more
               inserting mock exams by hand in the Supabase Table
-              Editor. Writing mocks first (a single flat row, quick to
-              build a form for); Reading/Listening (nested sections +
-              per-question answer keys) is a bigger editor, coming in a
-              follow-up.
+              Editor. Writing mocks first (a single flat row); Reading/
+              Listening (nested sections + per-question answer keys),
+              shipped as a drill-down editor, 2026-09-25.
              ====================================================== */}
           {!loading && section === 'content' && (
             <div className="flex flex-col gap-5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-mist max-w-lg">
-                  Writing mock exams students can sit from their own Mock Test Center. Reading
-                  and Listening exam content is still managed directly in Supabase for now.
-                </p>
+              <div className="flex gap-2 rounded-full border border-line bg-panel-2 p-1 w-fit">
                 <button
                   type="button"
-                  onClick={openCreateExam}
-                  className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                  onClick={() => setContentTab('writing')}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    contentTab === 'writing' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
+                  }`}
                 >
-                  + Add writing mock
+                  Writing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentTab('reading-listening')}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    contentTab === 'reading-listening'
+                      ? 'bg-brass text-onbrass'
+                      : 'text-mist hover:text-paper'
+                  }`}
+                >
+                  Reading &amp; Listening
                 </button>
               </div>
 
-              {writingExams.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-                  No writing mocks yet — add one to let students sit it from their Mock Test
-                  Center.
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                  {writingExams.map((exam) => (
-                    <div
-                      key={exam.id}
-                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+              {contentTab === 'writing' && (
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-mist max-w-lg">
+                      Writing mock exams students can sit from their own Mock Test Center — full
+                      timed test, task switching, word count, the works.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openCreateExam}
+                      className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                     >
-                      <div className="min-w-0">
-                        <p className="font-medium text-paper truncate">{exam.title}</p>
-                        <p className="text-xs text-mist font-mono mt-0.5">
-                          {exam.task1_prompt ? 'Task 1 + Task 2' : 'Task 2 only'} ·{' '}
-                          {exam.time_limit_minutes} min
-                        </p>
-                      </div>
+                      + Add writing mock
+                    </button>
+                  </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleExamActive(exam)}
-                          className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
-                            exam.is_active
-                              ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
-                              : 'text-mist border-line bg-panel-2 hover:text-paper'
-                          }`}
-                          title="Click to toggle whether students can see this"
-                        >
-                          {exam.is_active ? 'Published' : 'Draft'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => openEditExam(exam)}
-                          className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteWritingExam(exam)}
-                          className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                  {writingExams.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                      No writing mocks yet — add one to let students sit it from their Mock Test
+                      Center.
                     </div>
-                  ))}
+                  ) : (
+                    <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                      {writingExams.map((exam) => (
+                        <div
+                          key={exam.id}
+                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium text-paper truncate">{exam.title}</p>
+                            <p className="text-xs text-mist font-mono mt-0.5">
+                              {exam.task1_prompt ? 'Task 1 + Task 2' : 'Task 2 only'} ·{' '}
+                              {exam.time_limit_minutes} min
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleExamActive(exam)}
+                              className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                                exam.is_active
+                                  ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
+                                  : 'text-mist border-line bg-panel-2 hover:text-paper'
+                              }`}
+                              title="Click to toggle whether students can see this"
+                            >
+                              {exam.is_active ? 'Published' : 'Draft'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openEditExam(exam)}
+                              className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => deleteWritingExam(exam)}
+                              className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {contentTab === 'reading-listening' && (
+                <div className="flex flex-col gap-5">
+                  {/* ---- Level 1: exam list ---- */}
+                  {!rlSelectedExamId && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-mist max-w-lg">
+                          Reading and Listening mock exams — each has sections (passages or audio
+                          tracks), each section has its own questions and answer key.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={openCreateRlExam}
+                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                        >
+                          + Add exam
+                        </button>
+                      </div>
+
+                      {rlExams.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                          No reading/listening mocks yet — add one, then build out its sections
+                          and questions.
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                          {rlExams.map((exam) => (
+                            <div
+                              key={exam.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-medium text-paper truncate">{exam.title}</p>
+                                <p className="text-xs text-mist font-mono mt-0.5 capitalize">
+                                  {exam.module}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRlExamActive(exam)}
+                                  className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                                    exam.is_active
+                                      ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
+                                      : 'text-mist border-line bg-panel-2 hover:text-paper'
+                                  }`}
+                                  title="Click to toggle whether students can see this"
+                                >
+                                  {exam.is_active ? 'Published' : 'Draft'}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openExamSections(exam)}
+                                  className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                >
+                                  Manage sections →
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openEditRlExam(exam)}
+                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteRlExam(exam)}
+                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ---- Level 2: section list within one exam ---- */}
+                  {rlSelectedExamId && !rlSelectedSectionId && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={backToRlExams}
+                            className="focus-ring text-xs text-mist hover:text-paper"
+                          >
+                            ← All exams
+                          </button>
+                          <p className="mt-1 font-display text-lg text-paper truncate">
+                            {rlSelectedExam?.title}{' '}
+                            <span className="text-xs font-mono text-mist capitalize">
+                              ({rlSelectedExam?.module})
+                            </span>
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openCreateSection}
+                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                        >
+                          + Add section
+                        </button>
+                      </div>
+
+                      {rlLoading ? (
+                        <p className="text-sm text-mist">Loading sections…</p>
+                      ) : rlSections.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                          No sections yet — add one (a passage for reading, an audio track for
+                          listening), then add its questions.
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                          {rlSections.map((sec) => (
+                            <div
+                              key={sec.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-medium text-paper truncate">
+                                  {sec.order_index + 1}. {sec.title}
+                                </p>
+                                <p className="text-xs text-mist font-mono mt-0.5">
+                                  {rlSelectedExam?.module === 'listening'
+                                    ? sec.audio_url
+                                      ? 'Audio uploaded'
+                                      : 'No audio yet'
+                                    : sec.passage_text
+                                    ? `${sec.passage_text.length} characters of passage text`
+                                    : 'No passage text yet'}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => openSectionQuestions(sec)}
+                                  className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                >
+                                  Manage questions →
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openEditSection(sec)}
+                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteSection(sec)}
+                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ---- Level 3: question list within one section ---- */}
+                  {rlSelectedExamId && rlSelectedSectionId && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={backToRlSections}
+                            className="focus-ring text-xs text-mist hover:text-paper"
+                          >
+                            ← {rlSelectedExam?.title}
+                          </button>
+                          <p className="mt-1 font-display text-lg text-paper truncate">
+                            {rlSelectedSection?.title}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openCreateQuestion}
+                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                        >
+                          + Add question
+                        </button>
+                      </div>
+
+                      {rlLoading ? (
+                        <p className="text-sm text-mist">Loading questions…</p>
+                      ) : rlQuestions.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                          No questions yet — add the first one.
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                          {rlQuestions.map((q) => (
+                            <div
+                              key={q.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-medium text-paper truncate">
+                                  {q.order_index + 1}. {q.prompt}
+                                </p>
+                                <p className="text-xs text-mist font-mono mt-0.5">
+                                  {QUESTION_TYPE_LABELS[q.type] || q.type} · Answer: {q.correct_answer}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditQuestion(q)}
+                                  className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                                >
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteQuestion(q)}
+                                  className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -849,6 +1522,37 @@ export default function TeacherMockCenter({ onExit }) {
           error={examFormError}
           onCancel={() => setExamFormModal(null)}
           onSave={saveWritingExam}
+        />
+      )}
+
+      {examModal && (
+        <ExamFormModal
+          modal={examModal}
+          saving={examModalSaving}
+          error={examModalError}
+          onCancel={() => setExamModal(null)}
+          onSave={saveRlExam}
+        />
+      )}
+
+      {sectionModal && (
+        <SectionFormModal
+          modal={sectionModal}
+          module={rlSelectedExam?.module}
+          saving={sectionModalSaving}
+          error={sectionModalError}
+          onCancel={() => setSectionModal(null)}
+          onSave={saveSection}
+        />
+      )}
+
+      {questionModal && (
+        <QuestionFormModal
+          modal={questionModal}
+          saving={questionModalSaving}
+          error={questionModalError}
+          onCancel={() => setQuestionModal(null)}
+          onSave={saveQuestion}
         />
       )}
     </div>
@@ -1184,7 +1888,7 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
                 setTask1ImageFile(e.target.files?.[0] || null)
                 setClearTask1Image(false)
               }}
-              className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border-0 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass"
+              className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
             />
           </label>
 
@@ -1236,6 +1940,10 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
                 onChange={(e) => setSortOrder(e.target.value)}
                 className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
               />
+              <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+                Just the display order in the student's list — lower numbers show first. 0 and 1
+                are fine; it doesn't affect grading or timing.
+              </span>
             </label>
           </div>
 
@@ -1257,7 +1965,7 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -1276,7 +1984,381 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
               })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
+  const exam = modal.mode === 'edit' ? modal.exam : null
+
+  const [title, setTitle] = useState(exam?.title || '')
+  const [moduleName, setModuleName] = useState(exam?.module || 'reading')
+  const [isActive, setIsActive] = useState(exam ? exam.is_active : true)
+  const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
+
+  const canSave = title.trim() && (moduleName === 'reading' || moduleName === 'listening')
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {modal.mode === 'create' ? 'Add exam' : 'Edit exam'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          The module can't be changed to the other one after sections exist — pick it carefully.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Title
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Reading Mock Test 1"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Module
+            <select
+              value={moduleName}
+              onChange={(e) => setModuleName(e.target.value)}
+              disabled={modal.mode === 'edit'}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper disabled:opacity-50"
+            >
+              <option value="reading">Reading (60 min, timed by the app)</option>
+              <option value="listening">Listening (40 min, timed by the app)</option>
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Sort order
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+            <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+              Just the display order in the student's list — lower numbers show first.
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-paper">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="accent-brass"
+            />
+            Published (students can see and sit this)
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave({ title, module: moduleName, isActive, sortOrder })}
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SectionFormModal({ modal, module: examModule, saving, error, onCancel, onSave }) {
+  const section = modal.mode === 'edit' ? modal.section : null
+
+  const [title, setTitle] = useState(section?.title || '')
+  const [orderIndex, setOrderIndex] = useState(section?.order_index ?? 0)
+  const [passageText, setPassageText] = useState(section?.passage_text || '')
+  const [audioFile, setAudioFile] = useState(null)
+  const [clearAudio, setClearAudio] = useState(false)
+
+  const isReading = examModule === 'reading'
+  const canSave = title.trim() && (!isReading || passageText.trim())
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {modal.mode === 'create' ? 'Add section' : 'Edit section'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          {isReading
+            ? 'One passage per section — students read it alongside its questions.'
+            : 'One audio track per section — students hear it once, same as the real test.'}
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Title
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={isReading ? 'Passage 1' : 'Section 1'}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+            </label>
+
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Order
+              <input
+                type="number"
+                value={orderIndex}
+                onChange={(e) => setOrderIndex(e.target.value)}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+            </label>
+          </div>
+
+          {isReading ? (
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Passage text
+              <textarea
+                value={passageText}
+                onChange={(e) => setPassageText(e.target.value)}
+                rows={8}
+                placeholder="Paste the reading passage here…"
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+              />
+            </label>
+          ) : (
+            <>
+              <label className="text-xs text-mist font-mono uppercase tracking-wide">
+                Audio file
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => {
+                    setAudioFile(e.target.files?.[0] || null)
+                    setClearAudio(false)
+                  }}
+                  className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
+                />
+              </label>
+
+              {section?.audio_url && !audioFile && !clearAudio && (
+                <div className="flex items-center gap-3">
+                  <audio controls preload="none" src={section.audio_url} className="h-9" />
+                  <button
+                    type="button"
+                    onClick={() => setClearAudio(true)}
+                    className="focus-ring text-xs text-coral hover:text-coral/80"
+                  >
+                    Remove audio
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onSave({ title, orderIndex, passageText, audioFile, clearAudio })
+            }
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
+  const question = modal.mode === 'edit' ? modal.question : null
+
+  const [prompt, setPrompt] = useState(question?.prompt || '')
+  const [orderIndex, setOrderIndex] = useState(question?.order_index ?? 0)
+  const [type, setType] = useState(question?.type || 'multiple_choice')
+  const [choicesText, setChoicesText] = useState(
+    (question?.options?.choices || []).join('\n')
+  )
+  const [correctAnswer, setCorrectAnswer] = useState(question?.correct_answer || '')
+
+  const choices = choicesText
+    .split('\n')
+    .map((c) => c.trim())
+    .filter(Boolean)
+
+  const canSave =
+    prompt.trim() &&
+    correctAnswer.trim() &&
+    (type !== 'multiple_choice' || (choices.length >= 2 && choices.includes(correctAnswer)))
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">
+          {modal.mode === 'create' ? 'Add question' : 'Edit question'}
+        </h3>
+        <p className="text-sm text-mist mt-0.5">
+          Grading is an exact, case-insensitive text match against the correct answer below.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="grid grid-cols-[1fr_auto] gap-3">
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Question type
+              <select
+                value={type}
+                onChange={(e) => {
+                  setType(e.target.value)
+                  setCorrectAnswer('')
+                }}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              >
+                <option value="multiple_choice">Multiple choice</option>
+                <option value="true_false_ng">True / False / Not Given</option>
+                <option value="short_answer">Short answer</option>
+              </select>
+            </label>
+
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Order
+              <input
+                type="number"
+                value={orderIndex}
+                onChange={(e) => setOrderIndex(e.target.value)}
+                className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+            </label>
+          </div>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Prompt
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={2}
+              placeholder="What does the writer suggest about...?"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+            />
+          </label>
+
+          {type === 'multiple_choice' && (
+            <>
+              <label className="text-xs text-mist font-mono uppercase tracking-wide">
+                Choices (one per line)
+                <textarea
+                  value={choicesText}
+                  onChange={(e) => setChoicesText(e.target.value)}
+                  rows={4}
+                  placeholder={'Choice A\nChoice B\nChoice C'}
+                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+                />
+              </label>
+
+              <label className="text-xs text-mist font-mono uppercase tracking-wide">
+                Correct answer
+                <select
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+                >
+                  <option value="">Select the correct choice…</option>
+                  {choices.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+
+          {type === 'true_false_ng' && (
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Correct answer
+              <select
+                value={correctAnswer}
+                onChange={(e) => setCorrectAnswer(e.target.value)}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              >
+                <option value="">Select…</option>
+                {TRUE_FALSE_NG_CHOICES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {type === 'short_answer' && (
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Correct answer
+              <input
+                type="text"
+                value={correctAnswer}
+                onChange={(e) => setCorrectAnswer(e.target.value)}
+                placeholder="e.g. photosynthesis"
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              />
+              <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+                Grading trims spaces and ignores case, but otherwise needs an exact match — keep
+                it to one accepted spelling.
+              </span>
+            </label>
+          )}
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave({ prompt, orderIndex, type, choices, correctAnswer })}
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
