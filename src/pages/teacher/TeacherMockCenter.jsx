@@ -3398,6 +3398,81 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
 }
 
 function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion }) {
+  const { profile } = useAuth()
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const [importInfo, setImportInfo] = useState('')
+  const importInputRef = useRef(null)
+
+  // Jasur: "insert a pdf, word docx pic or any other file and it has
+  // to build it to the mock environment" — teacher picks a file (a
+  // scanned/typed question paper), it's uploaded to the private
+  // mock-content-uploads bucket (migration_43), and the
+  // mock-content-import Edge Function reads it with OpenAI and hands
+  // back a draft question list. That draft is appended straight into
+  // this part's normal, editable question list below — nothing is
+  // saved yet. The AI is told to leave correct_answer blank whenever
+  // it isn't sure, so any incomplete question shows up as normal here
+  // (this part stays "Incomplete" until every answer is filled in),
+  // which forces the same review-before-save step a human typing
+  // questions in by hand already goes through.
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (importInputRef.current) importInputRef.current.value = ''
+    if (!file) return
+
+    setImporting(true)
+    setImportError('')
+    setImportInfo('')
+
+    try {
+      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('mock-content-uploads')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream' })
+
+      if (uploadError) throw uploadError
+
+      const { data, error: fnError } = await supabase.functions.invoke('mock-content-import', {
+        body: { storagePath: path, mimeType: file.type || '', module: 'listening' },
+      })
+
+      if (fnError) throw fnError
+      if (data?.error) throw new Error(data.error)
+
+      const extracted = data?.result?.questions || []
+
+      if (extracted.length === 0) {
+        throw new Error('No questions were found in that file.')
+      }
+
+      const imported = extracted.map((q) => ({
+        prompt: q.prompt || '',
+        type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
+          ? q.type
+          : 'short_answer',
+        choicesText: (q.choices || []).join('\n'),
+        correctAnswer: q.correct_answer || '',
+      }))
+
+      onChange({ questions: [...part.questions, ...imported] })
+
+      const missingAnswers = imported.filter((q) => !q.correctAnswer.trim()).length
+      setImportInfo(
+        `Imported ${imported.length} question${imported.length === 1 ? '' : 's'} — check each one below.` +
+          (missingAnswers
+            ? ` ${missingAnswers} of them had no answer key in the file, so the correct answer is still blank — fill those in before saving.`
+            : ' Double-check the correct answers before saving.')
+      )
+    } catch (err) {
+      console.error('Mock content import failed:', err)
+      setImportError(err?.message || 'Could not import that file. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   return (
     <div className={`rounded-xl border p-4 ${valid ? 'border-sage/30 bg-sage/5' : 'border-line bg-panel-2'}`}>
       <div className="flex items-center justify-between gap-3">
@@ -3443,6 +3518,28 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
           </button>
         </div>
       ) : null}
+
+      <div className="mt-3 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
+        <label className="text-xs font-semibold text-brass">
+          Import questions from a file
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+            disabled={importing}
+            onChange={handleImportFile}
+            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
+          />
+        </label>
+        <p className="mt-1 text-[11px] text-mist">
+          Upload a PDF, Word doc, or photo of the real question paper for this part and the
+          questions below get filled in automatically — review them, fill in any blank answer,
+          then save. (This reads the questions only; audio still has to be uploaded above.)
+        </p>
+        {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
+        {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}
+        {importError && <p className="mt-1.5 text-xs text-coral">{importError}</p>}
+      </div>
 
       <div className="mt-4 flex flex-col gap-3">
         {part.questions.length === 0 && (
