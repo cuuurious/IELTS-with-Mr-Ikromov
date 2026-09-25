@@ -2274,6 +2274,36 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
   const [task1ImageFile, setTask1ImageFile] = useState(null)
   const [clearTask1Image, setClearTask1Image] = useState(false)
 
+  // Jasur: "enable pasting pics here" — a chart/graph screenshot is
+  // usually already on the clipboard (Snipping Tool, Win+Shift+S, etc.),
+  // so requiring "Choose file" → save it somewhere → browse to it was
+  // an extra, unnecessary round trip. Ctrl+V anywhere in this modal now
+  // picks up an image straight off the clipboard, same as pasting into
+  // Word/Slack. Only intercepts when the clipboard actually holds an
+  // image — pasting text into the Title/Task fields is untouched.
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) {
+            const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg')
+            const named = new File([file], `pasted-chart-${Date.now()}.${ext}`, { type: file.type })
+            setTask1ImageFile(named)
+            setClearTask1Image(false)
+          }
+          e.preventDefault()
+          return
+        }
+      }
+    }
+
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [])
+
   const canSave = title.trim() && task2Prompt.trim() && Number(timeLimitMinutes) > 0
 
   return (
@@ -2321,6 +2351,20 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
             />
           </label>
+          <p className="-mt-2 text-[11px] text-mist normal-case">
+            Or just paste a screenshot — click anywhere in this window and press Ctrl+V (⌘V on Mac).
+          </p>
+
+          {task1ImageFile && (
+            <div className="flex items-center gap-3">
+              <img
+                src={URL.createObjectURL(task1ImageFile)}
+                alt="Pasted Task 1 chart"
+                className="h-16 rounded-lg border border-line object-contain"
+              />
+              <span className="text-xs text-sage">Image ready — {task1ImageFile.name}</span>
+            </div>
+          )}
 
           {exam?.task1_image_url && !task1ImageFile && !clearTask1Image && (
             <div className="flex items-center gap-3">
