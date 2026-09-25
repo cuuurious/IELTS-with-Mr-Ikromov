@@ -129,7 +129,7 @@ export default function TeacherMockCenter({ onExit }) {
    * explicitly at the app level instead of assuming the database will
    * do it.
    */
-  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading-listening'
+  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading' | 'listening'
   const [rlExams, setRlExams] = useState([])
   const [rlSelectedExamId, setRlSelectedExamId] = useState(null)
   const [rlSections, setRlSections] = useState([])
@@ -668,9 +668,18 @@ export default function TeacherMockCenter({ onExit }) {
    * CONTENT EDITOR — READING/LISTENING MOCKS (exams)
    * ============================================================
    */
-  const openCreateRlExam = () => {
+  // Jasur, on first use of this editor: "there is no place to insert the
+  // content" — right, on purpose. An exam here is just a title/module
+  // shell; the actual passage/audio text and the questions+answers live
+  // one and two levels down (sections, then questions). Two fixes for
+  // that confusion: (1) the module is now picked by which tab you're on
+  // (Reading vs Listening — see his separate "why aren't they separate"
+  // question) instead of a dropdown, and (2) saving a new exam or a new
+  // section below auto-opens the next level down instead of dropping
+  // back to a list, so the flow itself points at where content goes.
+  const openCreateRlExam = (module) => {
     setExamModalError('')
-    setExamModal({ mode: 'create' })
+    setExamModal({ mode: 'create', module })
   }
 
   const openEditRlExam = (exam) => {
@@ -690,9 +699,16 @@ export default function TeacherMockCenter({ onExit }) {
         sort_order: Number(values.sortOrder) || 0,
       }
 
+      let createdExam = null
+
       if (examModal.mode === 'create') {
-        const { error: insertError } = await supabase.from('mock_exams').insert(payload)
+        const { data, error: insertError } = await supabase
+          .from('mock_exams')
+          .insert(payload)
+          .select('*')
+          .single()
         if (insertError) throw insertError
+        createdExam = data
       } else {
         const { error: updateError } = await supabase
           .from('mock_exams')
@@ -703,6 +719,10 @@ export default function TeacherMockCenter({ onExit }) {
 
       setExamModal(null)
       await reloadRlExams()
+
+      // Auto-drill into "Manage sections" for a brand new exam — that's
+      // where the passage/audio content actually gets pasted in.
+      if (createdExam) openExamSections(createdExam)
     } catch (err) {
       console.error('Could not save mock exam:', err)
       setExamModalError(err?.message || 'Could not save this exam.')
@@ -812,9 +832,16 @@ export default function TeacherMockCenter({ onExit }) {
         audio_url: rlSelectedExam?.module === 'listening' ? audioUrl : null,
       }
 
+      let createdSection = null
+
       if (sectionModal.mode === 'create') {
-        const { error: insertError } = await supabase.from('mock_sections').insert(payload)
+        const { data, error: insertError } = await supabase
+          .from('mock_sections')
+          .insert(payload)
+          .select('*')
+          .single()
         if (insertError) throw insertError
+        createdSection = data
       } else {
         const { error: updateError } = await supabase
           .from('mock_sections')
@@ -825,6 +852,10 @@ export default function TeacherMockCenter({ onExit }) {
 
       setSectionModal(null)
       await reloadRlSections(rlSelectedExamId)
+
+      // Auto-drill into "Manage questions" for a brand new section —
+      // that's where the correct-answer field lives, per question.
+      if (createdSection) openSectionQuestions(createdSection)
     } catch (err) {
       console.error('Could not save section:', err)
       setSectionModalError(err?.message || 'Could not save this section.')
@@ -940,7 +971,7 @@ export default function TeacherMockCenter({ onExit }) {
             <p className="text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
               Mock Center
             </p>
-            <p className="text-sm font-medium text-paper truncate">
+            <p className="font-display text-base text-paper truncate">
               {profile?.full_name || profile?.username}
             </p>
           </div>
@@ -1170,6 +1201,11 @@ export default function TeacherMockCenter({ onExit }) {
              ====================================================== */}
           {!loading && section === 'content' && (
             <div className="flex flex-col gap-5">
+              {/* Three separate tabs, not one combined "Reading & Listening"
+                  tab with a module dropdown inside it (Jasur: "why
+                  readin/listening are not separate?") — each is its own
+                  exam list now, and "+ Add exam" from inside one already
+                  knows its module, no picker needed. */}
               <div className="flex gap-2 rounded-full border border-line bg-panel-2 p-1 w-fit">
                 <button
                   type="button"
@@ -1182,14 +1218,27 @@ export default function TeacherMockCenter({ onExit }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setContentTab('reading-listening')}
+                  onClick={() => {
+                    setContentTab('reading')
+                    backToRlExams()
+                  }}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    contentTab === 'reading-listening'
-                      ? 'bg-brass text-onbrass'
-                      : 'text-mist hover:text-paper'
+                    contentTab === 'reading' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
                 >
-                  Reading &amp; Listening
+                  Reading
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContentTab('listening')
+                    backToRlExams()
+                  }}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    contentTab === 'listening' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
+                  }`}
+                >
+                  Listening
                 </button>
               </div>
 
@@ -1266,42 +1315,42 @@ export default function TeacherMockCenter({ onExit }) {
                 </div>
               )}
 
-              {contentTab === 'reading-listening' && (
+              {(contentTab === 'reading' || contentTab === 'listening') && (
                 <div className="flex flex-col gap-5">
-                  {/* ---- Level 1: exam list ---- */}
+                  {/* ---- Level 1: exam list (this tab's module only) ---- */}
                   {!rlSelectedExamId && (
                     <>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-mist max-w-lg">
-                          Reading and Listening mock exams — each has sections (passages or audio
-                          tracks), each section has its own questions and answer key.
+                          {contentTab === 'reading'
+                            ? 'Reading mock exams — each has one or more passages (sections), each passage has its own questions and correct answers.'
+                            : 'Listening mock exams — each has one or more audio tracks (sections), each track has its own questions and correct answers.'}
                         </p>
                         <button
                           type="button"
-                          onClick={openCreateRlExam}
+                          onClick={() => openCreateRlExam(contentTab)}
                           className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
-                          + Add exam
+                          + Add {contentTab} exam
                         </button>
                       </div>
 
-                      {rlExams.length === 0 ? (
+                      {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
                         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-                          No reading/listening mocks yet — add one, then build out its sections
-                          and questions.
+                          No {contentTab} mocks yet — add one, then you'll go straight into adding
+                          its passages/audio and questions.
                         </div>
                       ) : (
                         <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                          {rlExams.map((exam) => (
+                          {rlExams
+                            .filter((e) => e.module === contentTab)
+                            .map((exam) => (
                             <div
                               key={exam.id}
                               className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
                             >
                               <div className="min-w-0">
                                 <p className="font-medium text-paper truncate">{exam.title}</p>
-                                <p className="text-xs text-mist font-mono mt-0.5 capitalize">
-                                  {exam.module}
-                                </p>
                               </div>
 
                               <div className="flex items-center gap-2 shrink-0">
@@ -1453,6 +1502,9 @@ export default function TeacherMockCenter({ onExit }) {
                           <p className="mt-1 font-display text-lg text-paper truncate">
                             {rlSelectedSection?.title}
                           </p>
+                          <p className="text-xs text-mist mt-0.5">
+                            Each question's correct answer is set right here, in its own form.
+                          </p>
                         </div>
                         <button
                           type="button"
@@ -1467,7 +1519,8 @@ export default function TeacherMockCenter({ onExit }) {
                         <p className="text-sm text-mist">Loading questions…</p>
                       ) : rlQuestions.length === 0 ? (
                         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-                          No questions yet — add the first one.
+                          No questions yet — click "+ Add question" and you'll set its correct
+                          answer as part of that form.
                         </div>
                       ) : (
                         <div className="rounded-2xl border border-line bg-panel overflow-hidden">
@@ -1996,9 +2049,12 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
 
 function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
   const exam = modal.mode === 'edit' ? modal.exam : null
+  // Create mode: the module is whichever tab (Reading/Listening) "+ Add
+  // exam" was clicked from — no dropdown needed, since it's already
+  // unambiguous. Edit mode: shown read-only, can't change post-creation.
+  const moduleName = modal.mode === 'edit' ? exam.module : modal.module
 
   const [title, setTitle] = useState(exam?.title || '')
-  const [moduleName, setModuleName] = useState(exam?.module || 'reading')
   const [isActive, setIsActive] = useState(exam ? exam.is_active : true)
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
 
@@ -2008,10 +2064,14 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
         <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create' ? 'Add exam' : 'Edit exam'}
+          {modal.mode === 'create'
+            ? `Add ${moduleName} exam`
+            : `Edit ${moduleName} exam`}
         </h3>
         <p className="text-sm text-mist mt-0.5">
-          The module can't be changed to the other one after sections exist — pick it carefully.
+          {moduleName === 'reading'
+            ? "60 minutes, timed by the app. Next you'll add its passages and questions."
+            : "40 minutes, timed by the app. Next you'll add its audio tracks and questions."}
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -2021,22 +2081,9 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Reading Mock Test 1"
+              placeholder={moduleName === 'reading' ? 'Reading Mock Test 1' : 'Listening Mock Test 1'}
               className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
-          </label>
-
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Module
-            <select
-              value={moduleName}
-              onChange={(e) => setModuleName(e.target.value)}
-              disabled={modal.mode === 'edit'}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper disabled:opacity-50"
-            >
-              <option value="reading">Reading (60 min, timed by the app)</option>
-              <option value="listening">Listening (40 min, timed by the app)</option>
-            </select>
           </label>
 
           <label className="text-xs text-mist font-mono uppercase tracking-wide">

@@ -211,7 +211,7 @@ export default function MockTestCenter({ onExit }) {
             <p className="text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
               Mock Test Center
             </p>
-            <p className="text-sm font-medium text-paper truncate">
+            <p className="font-display text-base text-paper truncate">
               Candidate: {profile?.full_name || profile?.username}
             </p>
           </div>
