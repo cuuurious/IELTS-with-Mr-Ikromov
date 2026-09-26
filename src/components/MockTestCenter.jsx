@@ -8,7 +8,7 @@ import {
   formatTargetBand,
 } from '../lib/targetBands'
 import { downloadSpeakingSlotIcs } from '../lib/calendarEvent'
-import { estimateBandFromPercent } from '../lib/ieltsBands'
+import { estimateBandFromPercent, roundOverallBand, formatBand } from '../lib/ieltsBands'
 import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
 
@@ -82,6 +82,34 @@ export default function MockTestCenter({ onExit }) {
   const [targetSaving, setTargetSaving] = useState(false)
   const [reportGenerating, setReportGenerating] = useState(false)
   const [reportError, setReportError] = useState('')
+
+  // Per-question mistake breakdown ("mountin → mountain"), added
+  // 2026-09-26 once mock_answers' real columns were confirmed
+  // (student_answer, is_correct). Fetched on demand per attempt via the
+  // get_mock_answer_breakdown() RPC (migration_50) — that function itself
+  // enforces the release gate (a student can only ever pull this for
+  // their own attempt, and only once released_at is set), so there's
+  // nothing more to check client-side here.
+  const [openBreakdownId, setOpenBreakdownId] = useState(null)
+  const [breakdowns, setBreakdowns] = useState({})
+
+  const toggleBreakdown = async (attemptId) => {
+    if (openBreakdownId === attemptId) {
+      setOpenBreakdownId(null)
+      return
+    }
+    setOpenBreakdownId(attemptId)
+    if (breakdowns[attemptId]) return
+
+    setBreakdowns((prev) => ({ ...prev, [attemptId]: { loading: true, error: '', rows: null } }))
+    const { data, error } = await supabase.rpc('get_mock_answer_breakdown', {
+      p_attempt_id: attemptId,
+    })
+    setBreakdowns((prev) => ({
+      ...prev,
+      [attemptId]: { loading: false, error: error?.message || '', rows: data || [] },
+    }))
+  }
 
   useEffect(() => {
     if (!profile?.id) return
@@ -196,6 +224,54 @@ export default function MockTestCenter({ onExit }) {
     return { reading: summarize(byModule.reading), listening: summarize(byModule.listening) }
   }, [attempts, examsById])
 
+  // Every released Reading/Listening attempt, newest first, with its
+  // module/title attached — the list this screen shows under the
+  // aggregate ScoreCards, each with a "View mistakes" toggle.
+  const attemptsWithModule = useMemo(() => {
+    return attempts
+      .map((a) => ({ ...a, module: examsById[a.exam_id]?.module, examTitle: examsById[a.exam_id]?.title }))
+      .filter((a) => a.module)
+      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+  }, [attempts, examsById])
+
+  // "Just like a real exam" results, added 2026-09-26: one band per
+  // skill plus a combined overall band, using whichever data is already
+  // release-gated above rather than re-deriving anything. Reading/
+  // Listening use the teacher-confirmed `band` column (set at release —
+  // may differ from a fresh percentage estimate if the teacher edited
+  // the suggestion), never a live re-estimate.
+  const latestAttemptByModule = useMemo(() => {
+    const latest = (module) => attemptsWithModule.find((a) => a.module === module) || null
+    return { reading: latest('reading'), listening: latest('listening') }
+  }, [attemptsWithModule])
+
+  const latestWritingReview = useMemo(
+    () => writingReviews.find((r) => r.released_at != null) || null,
+    [writingReviews]
+  )
+  const latestSpeakingSlot = useMemo(
+    () => slots.find((s) => s.examiner_band != null && s.released_at != null) || null,
+    [slots]
+  )
+
+  const resultBands = useMemo(() => {
+    const bandFor = (attempt) =>
+      attempt ? attempt.band ?? estimateBandFromPercent(pct(attempt.score, attempt.max_score)) : null
+
+    const reading = bandFor(latestAttemptByModule.reading)
+    const listening = bandFor(latestAttemptByModule.listening)
+    const writing = latestWritingReview?.examiner_band ?? null
+    const speaking = latestSpeakingSlot?.examiner_band ?? null
+
+    const available = [reading, listening, writing, speaking].filter((b) => b != null)
+    const overall =
+      available.length > 0
+        ? roundOverallBand(available.reduce((sum, b) => sum + Number(b), 0) / available.length)
+        : null
+
+    return { reading, listening, writing, speaking, overall, availableCount: available.length }
+  }, [latestAttemptByModule, latestWritingReview, latestSpeakingSlot])
+
   const saveTargetBand = async (value) => {
     setTargetSaving(true)
     try {
@@ -227,28 +303,26 @@ export default function MockTestCenter({ onExit }) {
     setReportGenerating(true)
     setReportError('')
     try {
-      // Writing/Speaking rows are fetched as soon as an examiner marks
-      // them (see the load() effect above) so this screen can show a
-      // "marked, awaiting release" placeholder — but the report itself
-      // must never include a band the teacher hasn't released yet.
-      const latestWritingReview = writingReviews.find((r) => r.released_at != null) || null
-      const latestSpeakingSlot =
-        slots.find((s) => s.examiner_band != null && s.released_at != null) || null
-
+      // 2026-09-26: this used to re-estimate Reading/Listening from the
+      // AVERAGE percentage across every attempt — now it uses the same
+      // single most-recent-attempt bands resultBands already computed
+      // for the on-screen "Your results" card, including the teacher's
+      // own confirmed `band` value (which may differ from a fresh
+      // estimate if they edited the suggestion at release time).
       await downloadScoreReport({
         studentName: profile?.full_name || profile?.username,
         targetBand: profile?.target_band,
         skills: {
-          listening: stats.listening
+          listening: latestAttemptByModule.listening
             ? {
-                band: estimateBandFromPercent(stats.listening.average),
-                note: `${stats.listening.average}% average across ${stats.listening.count} attempt(s) — estimated`,
+                band: resultBands.listening,
+                note: `${pct(latestAttemptByModule.listening.score, latestAttemptByModule.listening.max_score)}% · ${new Date(latestAttemptByModule.listening.submitted_at).toLocaleDateString()}`,
               }
             : null,
-          reading: stats.reading
+          reading: latestAttemptByModule.reading
             ? {
-                band: estimateBandFromPercent(stats.reading.average),
-                note: `${stats.reading.average}% average across ${stats.reading.count} attempt(s) — estimated`,
+                band: resultBands.reading,
+                note: `${pct(latestAttemptByModule.reading.score, latestAttemptByModule.reading.max_score)}% · ${new Date(latestAttemptByModule.reading.submitted_at).toLocaleDateString()}`,
               }
             : null,
           writing: latestWritingReview
@@ -334,6 +408,41 @@ export default function MockTestCenter({ onExit }) {
 
           {!loading && section === 'overview' && (
             <div className="space-y-6">
+              <div className="rounded-2xl border border-line bg-panel p-5">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
+                  Your results
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {[
+                    { label: 'Listening', band: resultBands.listening },
+                    { label: 'Reading', band: resultBands.reading },
+                    { label: 'Writing', band: resultBands.writing },
+                    { label: 'Speaking', band: resultBands.speaking },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-center">
+                      <p className="text-[10px] font-mono uppercase tracking-wide text-paper-dim">{s.label}</p>
+                      <p className="mt-1 text-lg font-semibold text-paper">{formatBand(s.band)}</p>
+                    </div>
+                  ))}
+                  <div className="rounded-xl border border-brass/40 bg-brass/10 px-3 py-2.5 text-center">
+                    <p className="text-[10px] font-mono uppercase tracking-wide text-brass">Overall</p>
+                    <p className="mt-1 text-lg font-semibold text-brass">{formatBand(resultBands.overall)}</p>
+                  </div>
+                </div>
+                {resultBands.availableCount > 0 && resultBands.availableCount < 4 && (
+                  <p className="text-xs text-mist mt-3">
+                    Overall is based on {resultBands.availableCount} of 4 skills — the rest haven't
+                    been released yet.
+                  </p>
+                )}
+                {resultBands.availableCount === 0 && (
+                  <p className="text-xs text-mist mt-3">
+                    Nothing released yet — your bands will appear here as soon as your teacher
+                    confirms them.
+                  </p>
+                )}
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <ScoreCard
                   label="Reading"
@@ -344,6 +453,74 @@ export default function MockTestCenter({ onExit }) {
                   stats={stats.listening}
                 />
               </div>
+
+              {attemptsWithModule.length > 0 && (
+                <div className="rounded-2xl border border-line bg-panel p-5">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
+                    Your attempts
+                  </p>
+                  <div className="space-y-2.5">
+                    {attemptsWithModule.map((a) => {
+                      const isOpen = openBreakdownId === a.id
+                      const bd = breakdowns[a.id]
+                      const mistakes = bd?.rows ? bd.rows.filter((r) => r.is_correct === false) : null
+
+                      return (
+                        <div key={a.id} className="rounded-xl border border-line bg-panel-2 p-3.5">
+                          <div className="flex items-center justify-between gap-3 text-sm">
+                            <span className="text-paper capitalize">
+                              {a.module} · {a.examTitle}
+                            </span>
+                            <span className="text-paper-dim font-mono text-xs">
+                              {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
+                              {new Date(a.submitted_at).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdown(a.id)}
+                            className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
+                          >
+                            {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
+                          </button>
+
+                          {isOpen && (
+                            <div className="mt-2.5">
+                              {bd?.loading && <p className="text-xs text-mist">Loading…</p>}
+                              {bd?.error && <p className="text-xs text-coral">{bd.error}</p>}
+                              {mistakes && mistakes.length === 0 && (
+                                <p className="text-xs text-sage">
+                                  No mistakes — every question was answered correctly.
+                                </p>
+                              )}
+                              {mistakes && mistakes.length > 0 && (
+                                <div className="space-y-1.5">
+                                  {mistakes.map((r) => (
+                                    <div key={r.question_id} className="rounded-lg bg-panel px-3 py-2 text-xs">
+                                      {r.section_title && (
+                                        <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                                          {r.section_title}
+                                        </p>
+                                      )}
+                                      <p className="text-paper-dim">{r.prompt}</p>
+                                      <p className="mt-1">
+                                        <span className="text-coral">{r.student_answer || '(no answer)'}</span>
+                                        <span className="text-mist mx-1.5">→</span>
+                                        <span className="text-sage">{r.correct_answer}</span>
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-2xl border border-line bg-panel p-5 flex flex-wrap items-center justify-between gap-3">
                 <div>

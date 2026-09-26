@@ -3912,7 +3912,93 @@ function CriterionChip({ label, value }) {
   )
 }
 
+// Shared between the Reading and Listening sections of StudentProfileModal
+// — one attempt row with a "View mistakes" toggle that lazily fetches and
+// shows only the wrong answers, given → correct, in the shape Jasur asked
+// for ("mountin → mountain").
+function AttemptMistakeRow({ a, isOpen, bd, onToggle }) {
+  const mistakes = bd?.rows ? bd.rows.filter((r) => r.is_correct === false) : null
+
+  return (
+    <div className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="text-paper">{a.examTitle}</span>
+        <span className="text-paper-dim font-mono text-xs">
+          {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
+          {new Date(a.submitted_at).toLocaleDateString()}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onToggle(a.id)}
+        className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
+      >
+        {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
+      </button>
+
+      {isOpen && (
+        <div className="mt-2.5">
+          {bd?.loading && <p className="text-xs text-mist">Loading…</p>}
+          {bd?.error && <p className="text-xs text-coral">{bd.error}</p>}
+          {mistakes && mistakes.length === 0 && (
+            <p className="text-xs text-sage">No mistakes — every question was answered correctly.</p>
+          )}
+          {mistakes && mistakes.length > 0 && (
+            <div className="space-y-1.5">
+              {mistakes.map((r) => (
+                <div key={r.question_id} className="rounded-md bg-panel px-2.5 py-2 text-xs">
+                  {r.section_title && (
+                    <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                      {r.section_title}
+                    </p>
+                  )}
+                  <p className="text-paper-dim">{r.prompt}</p>
+                  <p className="mt-1">
+                    <span className="text-coral">{r.student_answer || '(no answer)'}</span>
+                    <span className="text-mist mx-1.5">→</span>
+                    <span className="text-sage">{r.correct_answer}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay }) {
+  // Per-question mistake breakdown ("mountin → mountain"), added
+  // 2026-09-26 once mock_answers' real columns were confirmed
+  // (student_answer, is_correct). Fetched on demand per attempt via
+  // get_mock_answer_breakdown() (migration_50) — that function lets a
+  // teacher preview it even before releasing, since is_teacher() bypasses
+  // its own released_at check (the student side of the same RPC does
+  // enforce it). Declared before the early `if (!row) return null` below
+  // so hook order never changes across renders.
+  const [openBreakdownId, setOpenBreakdownId] = useState(null)
+  const [breakdowns, setBreakdowns] = useState({})
+
+  const toggleBreakdown = async (attemptId) => {
+    if (openBreakdownId === attemptId) {
+      setOpenBreakdownId(null)
+      return
+    }
+    setOpenBreakdownId(attemptId)
+    if (breakdowns[attemptId]) return
+
+    setBreakdowns((prev) => ({ ...prev, [attemptId]: { loading: true, error: '', rows: null } }))
+    const { data, error } = await supabase.rpc('get_mock_answer_breakdown', {
+      p_attempt_id: attemptId,
+    })
+    setBreakdowns((prev) => ({
+      ...prev,
+      [attemptId]: { loading: false, error: error?.message || '', rows: data || [] },
+    }))
+  }
+
   if (!row) return null
   const { student } = row
 
@@ -4038,16 +4124,13 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                       .slice()
                       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
                       .map((a) => (
-                        <div
+                        <AttemptMistakeRow
                           key={a.id}
-                          className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
-                        >
-                          <span className="text-paper">{a.examTitle}</span>
-                          <span className="text-paper-dim font-mono text-xs">
-                            {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
-                            {new Date(a.submitted_at).toLocaleDateString()}
-                          </span>
-                        </div>
+                          a={a}
+                          isOpen={openBreakdownId === a.id}
+                          bd={breakdowns[a.id]}
+                          onToggle={toggleBreakdown}
+                        />
                       ))}
                   </div>
                 )}
@@ -4065,23 +4148,16 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                       .slice()
                       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
                       .map((a) => (
-                        <div
+                        <AttemptMistakeRow
                           key={a.id}
-                          className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
-                        >
-                          <span className="text-paper">{a.examTitle}</span>
-                          <span className="text-paper-dim font-mono text-xs">
-                            {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
-                            {new Date(a.submitted_at).toLocaleDateString()}
-                          </span>
-                        </div>
+                          a={a}
+                          isOpen={openBreakdownId === a.id}
+                          bd={breakdowns[a.id]}
+                          onToggle={toggleBreakdown}
+                        />
                       ))}
                   </div>
                 )}
-                <p className="text-[11px] text-mist mt-1.5">
-                  A per-question breakdown of right/wrong answers is coming here next — this
-                  section will show the score only until that ships.
-                </p>
               </div>
 
               <div id={PROFILE_SECTION_IDS.writing}>
