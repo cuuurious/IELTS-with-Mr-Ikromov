@@ -43,13 +43,30 @@ import { supabase } from '../lib/supabaseClient'
  * a genuine 2-minute Listening-only review window once all audio has
  * played, plus a quiet tab-switch integrity log (migration_47,
  * `mock_attempts.tab_switch_count`, same pattern
- * `WritingMockTest.jsx`/`WritingMockExam.jsx` already use). Still not
- * done from the original Phase 8 list: the exact real-exam highlight
- * colors/Settings panel (still blocked on that research gap — this pass
- * uses the app's own `amber` token rather than waiting on it further)
- * and the pink exam-chrome/split-pane visual restyle (a separate, purely
- * cosmetic pass — the STRUCTURE below is now real-exam-accurate, the
- * paint job is still this app's own brass/dark theme).
+ * `WritingMockTest.jsx`/`WritingMockExam.jsx` already use).
+ *
+ * RESOLVED 2026-09-26 — Settings panel (font size + background/text
+ * color): researched off the official British Council "how IELTS on
+ * computer works" page ("A 'Settings' button allows adjusting font
+ * size and background color") and IDP's own feature rundown
+ * (highlighter, adjustable text size, split-screen). ExamTaker now has
+ * a ⚙ Settings popover in the sticky bar with three font-size steps
+ * and four background/text combinations (the app's own default, plus
+ * white/black, cream/black, and black/yellow — the three high-contrast
+ * pairings real accessibility-minded candidates actually use), applied
+ * only to the exam content (passage, question text, answer controls),
+ * never the branded timer chrome. In-memory only, same convention as
+ * the highlight/notes tool. The passage/question highlight color
+ * itself stays the app's own `amber` token — research turned up no
+ * single official hex value beyond "works like word-processor
+ * highlighting," and amber already reads as a standard highlighter
+ * yellow, so there was nothing concrete to change it to.
+ *
+ * Still not done: the pink exam-chrome/split-pane visual restyle (a
+ * separate, purely cosmetic pass — the STRUCTURE below is real-exam-
+ * accurate, the paint job on the sticky bar/cards is still this app's
+ * own brass/dark theme, by design, so it doesn't clash with the rest of
+ * the site's look outside of an active exam).
  */
 
 const MODULE_LABEL = { reading: 'Reading', listening: 'Listening' }
@@ -69,6 +86,37 @@ export const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
 const REVIEW_WINDOW_MS = 2 * 60_000
 
 export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
+
+// Settings panel (font size + background/text color) — added 2026-09-26
+// alongside spoken instructions, closing the other concrete gap the
+// "how the real IELTS on computer interface works" research turned up
+// (britishcouncil.org/takeielts's own "how it works" page: "A 'Settings'
+// button allows adjusting font size and background color"). Real
+// candidates use this for readability/accessibility (e.g. a
+// cream-on-black or black-on-cream combination), not cosmetics — so
+// this is scoped to exactly those two things, not a full re-theme.
+// Applied only to the exam content itself (passage/questions), not the
+// sticky brass timer bar — the real exam's own settings only ever
+// touch the reading/question pane, never its chrome either. In-memory
+// only for the sitting, same convention as the highlight/notes tool
+// above — nothing here is saved server-side.
+const FONT_SCALE_STEPS = [
+  { key: 'normal', label: 'A', scale: 1 },
+  { key: 'large', label: 'A+', scale: 1.15 },
+  { key: 'xlarge', label: 'A++', scale: 1.3 },
+]
+
+// surface/surfaceBorder/mutedText let the answer controls (option chips,
+// the short-answer input, etc.) stay legible against a non-default
+// background too, instead of the app's own dark bg-panel chips floating
+// oddly on top of a white/cream/black override — see the components
+// below that consume `theme` for exactly this.
+const EXAM_THEMES = [
+  { key: 'default', label: 'App theme (default)', bg: null, text: null, surface: null, surfaceBorder: null, mutedText: null },
+  { key: 'light', label: 'White background, black text', bg: '#ffffff', text: '#1a1a1a', surface: '#f2f2f0', surfaceBorder: '#d8d6d0', mutedText: '#57534e' },
+  { key: 'cream', label: 'Cream background, black text', bg: '#fdf6e3', text: '#2b2313', surface: '#f5ecd0', surfaceBorder: '#ddcf9e', mutedText: '#6b5d33' },
+  { key: 'contrast', label: 'Black background, yellow text', bg: '#0a0a0a', text: '#ffe066', surface: '#1a1a1a', surfaceBorder: '#4a4420', mutedText: '#c9b94d' },
+]
 
 // New question types — added 2026-09-26 alongside the teacher-side editor
 // in TeacherMockCenter.jsx (see that file's QUESTION_TYPE_LABELS comment
@@ -354,6 +402,24 @@ export function ExamTaker({
   // anyway). Keyed by section id, each entry {id, start, end, note}.
   // ------------------------------------------------------------------
   const [highlightsBySection, setHighlightsBySection] = useState({})
+
+  // Settings panel state — see FONT_SCALE_STEPS/EXAM_THEMES comment above.
+  const [fontScaleIdx, setFontScaleIdx] = useState(0)
+  const [themeIdx, setThemeIdx] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const activeFontScale = FONT_SCALE_STEPS[fontScaleIdx].scale
+  const activeTheme = EXAM_THEMES[themeIdx]
+  const sectionThemeStyle = activeTheme.bg ? { backgroundColor: activeTheme.bg, color: activeTheme.text } : undefined
+  const settingsRef = useRef(null)
+
+  useEffect(() => {
+    if (!settingsOpen) return
+    const onDown = (e) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) setSettingsOpen(false)
+    }
+    window.addEventListener('mousedown', onDown)
+    return () => window.removeEventListener('mousedown', onDown)
+  }, [settingsOpen])
 
   const addHighlight = (sectionId, range) => {
     setHighlightsBySection((prev) => {
@@ -712,6 +778,59 @@ export function ExamTaker({
             <span className={`font-display text-lg font-bold tabular-nums ${timerClass}`}>
               {formatClock(remainingMs)}
             </span>
+            <div className="relative" ref={settingsRef}>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((o) => !o)}
+                className="focus-ring rounded-full bg-onbrass/15 px-3 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-onbrass/25"
+              >
+                ⚙ Settings
+              </button>
+              {settingsOpen && (
+                <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg">
+                  <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Text size</p>
+                  <div className="mb-4 flex gap-2">
+                    {FONT_SCALE_STEPS.map((step, i) => (
+                      <button
+                        key={step.key}
+                        type="button"
+                        onClick={() => setFontScaleIdx(i)}
+                        className={`focus-ring flex-1 rounded-lg border px-2 py-1.5 text-sm font-bold transition-colors ${
+                          i === fontScaleIdx
+                            ? 'border-brass/40 bg-brass/15 text-paper'
+                            : 'border-line bg-panel-2 text-mist hover:border-brass/30'
+                        }`}
+                      >
+                        {step.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Background</p>
+                  <div className="flex flex-col gap-1.5">
+                    {EXAM_THEMES.map((theme, i) => (
+                      <button
+                        key={theme.key}
+                        type="button"
+                        onClick={() => setThemeIdx(i)}
+                        className={`focus-ring flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-colors ${
+                          i === themeIdx
+                            ? 'border-brass/40 bg-brass/15 text-paper'
+                            : 'border-line bg-panel-2 text-mist hover:border-brass/30'
+                        }`}
+                      >
+                        <span
+                          className="h-3.5 w-3.5 shrink-0 rounded-full border border-line"
+                          style={{ backgroundColor: theme.bg || '#8a8578' }}
+                          aria-hidden
+                        />
+                        {theme.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => handleSubmit(false)}
@@ -741,8 +860,15 @@ export function ExamTaker({
       </div>
 
       {sections.map((section, sIdx) => (
-        <div key={section.id} className="ticket rounded-2xl p-5 sm:p-6">
-          <p className="mb-3 font-display text-base text-paper">
+        <div
+          key={section.id}
+          className="ticket rounded-2xl p-5 sm:p-6"
+          style={sectionThemeStyle}
+        >
+          <p
+            className="mb-3 font-display text-base"
+            style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
+          >
             {section.title ||
               `${exam.module === 'reading' ? 'Passage' : 'Section'} ${sIdx + 1}`}
           </p>
@@ -755,6 +881,8 @@ export function ExamTaker({
                 onAdd={(range) => addHighlight(section.id, range)}
                 onUpdateNote={(id, note) => updateHighlightNote(section.id, id, note)}
                 onRemove={(id) => removeHighlight(section.id, id)}
+                fontScale={activeFontScale}
+                theme={activeTheme}
               />
             </div>
           )}
@@ -778,6 +906,8 @@ export function ExamTaker({
                 onChange={(v) => setAnswer(q.id, v)}
                 flagged={flags.has(q.id)}
                 onToggleFlag={() => toggleFlag(q.id)}
+                fontScale={activeFontScale}
+                theme={activeTheme}
               />
             ))}
           </div>
@@ -924,7 +1054,8 @@ function SectionAudioPlayer({ url, onEnded }) {
 // Deliberately simple for v1: an overlapping selection is rejected
 // rather than merged/split — good enough for what a real passage
 // actually needs, and a lot less code to get wrong.
-function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove }) {
+function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove, fontScale = 1, theme }) {
+  const themeStyle = theme?.bg ? { backgroundColor: theme.bg, color: theme.text } : undefined
   const containerRef = useRef(null)
   const [toolbar, setToolbar] = useState(null) // { start, end, rect }
   const [openNoteFor, setOpenNoteFor] = useState(null)
@@ -997,7 +1128,8 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove 
       <div
         ref={containerRef}
         onMouseUp={handleMouseUp}
-        className="max-h-72 overflow-y-auto rounded-xl border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap"
+        className="max-h-72 overflow-y-auto rounded-xl border border-line bg-panel-2 p-4 leading-relaxed text-paper whitespace-pre-wrap"
+        style={{ fontSize: `${0.875 * fontScale}rem`, ...(themeStyle || {}) }}
       >
         {segments.map((seg) =>
           seg.highlight ? (
@@ -1083,11 +1215,31 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove 
   )
 }
 
-export function QuestionBlock({ index, question, value, onChange, flagged = false, onToggleFlag }) {
+// Shared theme helper for every answer control below — a selected
+// option always uses the accent-brass look regardless of background
+// (it's the app's own selection color, still legible on any of the
+// EXAM_THEMES), but an UNselected option's own dark bg-panel/border-line
+// classes would otherwise float oddly on top of a white/cream/black
+// section background. When a non-default theme is active, this
+// overrides just that resting-state background/border/text via inline
+// style — inline style always wins over the Tailwind classes already
+// on the element, so nothing needs stripping.
+function themedOptionStyle(theme, selected) {
+  if (!theme?.bg || selected) return undefined
+  return { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text }
+}
+
+export function QuestionBlock({ index, question, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme }) {
+  const promptStyle = {
+    fontSize: `${0.875 * fontScale}rem`,
+    ...(theme?.bg ? { color: theme.text } : {}),
+  }
+  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+
   return (
     <div id={`q-${question.id}`} className="border-t border-line pt-4 first:border-0 first:pt-0 scroll-mt-40">
       <div className="mb-2.5 flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-paper">
+        <p className="font-medium text-paper" style={promptStyle}>
           <span className="mr-1.5 text-mist">{index}.</span>
           {question.prompt}
         </p>
@@ -1110,7 +1262,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           {(question.options?.choices ?? []).map((choice) => (
             <label
               key={choice}
-              className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm transition-colors ${
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+              className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 transition-colors ${
                 value === choice
                   ? 'border-brass/40 bg-brass/10 text-paper'
                   : 'border-line bg-panel text-mist hover:border-brass/30'
@@ -1134,7 +1287,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           {TRUE_FALSE_NG_CHOICES.map((choice) => (
             <label
               key={choice}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-colors ${
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 transition-colors ${
                 value === choice
                   ? 'border-brass/40 bg-brass/10 text-paper'
                   : 'border-line bg-panel text-mist hover:border-brass/30'
@@ -1158,7 +1312,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           {YES_NO_NG_CHOICES.map((choice) => (
             <label
               key={choice}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-colors ${
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 transition-colors ${
                 value === choice
                   ? 'border-brass/40 bg-brass/10 text-paper'
                   : 'border-line bg-panel text-mist hover:border-brass/30'
@@ -1182,6 +1337,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           question={question}
           value={value}
           onChange={onChange}
+          fontScale={fontScale}
+          theme={theme}
         />
       )}
 
@@ -1190,6 +1347,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           question={question}
           value={value}
           onChange={onChange}
+          fontScale={fontScale}
+          theme={theme}
         />
       )}
 
@@ -1198,7 +1357,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Your answer"
-          className="focus-ring w-full max-w-sm rounded-xl border border-line bg-panel px-3.5 py-2 text-sm text-paper"
+          style={{ ...optionTextStyle, ...(theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : {}) }}
+          className="focus-ring w-full max-w-sm rounded-xl border border-line bg-panel px-3.5 py-2 text-paper"
         />
       )}
     </div>
@@ -1209,9 +1369,10 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
 // comma-joined string (see canonicalizeMultiSelect above) — this
 // component only ever writes that same canonical form back out, never
 // a raw click-order join, so grading stays exact-match-safe.
-function MultiSelectQuestion({ question, value, onChange }) {
+function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }) {
   const choices = question.options?.choices ?? []
   const selected = value ? value.split(MULTI_SELECT_SEPARATOR).map((s) => s.trim()) : []
+  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
 
   const toggle = (choice) => {
     const next = selected.includes(choice)
@@ -1228,7 +1389,8 @@ function MultiSelectQuestion({ question, value, onChange }) {
         return (
           <label
             key={choice}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm transition-colors ${
+            style={{ ...optionTextStyle, ...themedOptionStyle(theme, checked) }}
+            className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 transition-colors ${
               checked
                 ? 'border-brass/40 bg-brass/10 text-paper'
                 : 'border-line bg-panel text-mist hover:border-brass/30'
@@ -1256,9 +1418,10 @@ function MultiSelectQuestion({ question, value, onChange }) {
 // for touch/mobile, where HTML5 drag-and-drop doesn't work) both set
 // the same single answer; dragging/clicking a different chip replaces
 // it, same as picking a different radio would.
-function MatchingQuestion({ question, value, onChange }) {
+function MatchingQuestion({ question, value, onChange, fontScale = 1, theme }) {
   const choices = question.options?.choices ?? []
   const [dragOver, setDragOver] = useState(false)
+  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
 
   const handleDrop = (e) => {
     e.preventDefault()
@@ -1276,7 +1439,8 @@ function MatchingQuestion({ question, value, onChange }) {
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
-        className={`flex min-h-[2.75rem] items-center rounded-xl border-2 border-dashed px-3.5 py-2 text-sm transition-colors ${
+        style={{ ...optionTextStyle, ...(!dragOver && !value ? themedOptionStyle(theme, false) : {}) }}
+        className={`flex min-h-[2.75rem] items-center rounded-xl border-2 border-dashed px-3.5 py-2 transition-colors ${
           dragOver
             ? 'border-brass bg-brass/10 text-paper'
             : value
@@ -1295,7 +1459,8 @@ function MatchingQuestion({ question, value, onChange }) {
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
             onClick={() => onChange(choice)}
-            className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 text-sm transition-colors active:cursor-grabbing ${
+            style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+            className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 transition-colors active:cursor-grabbing ${
               value === choice
                 ? 'border-brass/40 bg-brass/10 text-paper'
                 : 'border-line bg-panel text-mist hover:border-brass/30'

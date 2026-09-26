@@ -170,6 +170,42 @@ function formatSlotTime(iso) {
   })
 }
 
+// Lingrow-parity content table filtering — scoped 2026-09-26
+// (mock-test-site-concept.md's "Lingrow-parity expansion", item 3:
+// "richer, filterable admin content table... lowest-risk of this list
+// to build first: it's a UI/query change over the existing
+// mock_sections/mock_questions schema, no new tables"). Jasur's own
+// earlier call ("why readin/listening are not separate?") keeps each
+// module its own tab rather than merging into one cross-module table
+// like Lingrow's own — this just makes each tab's list searchable/
+// filterable/sortable instead of always showing every row in whatever
+// order it was created. No new columns needed: status comes from the
+// existing is_active flag, sort options work off fields already on
+// every exam row (title, sort_order).
+function filterAndSortExams(exams, { query, status, sort }) {
+  let out = exams
+
+  if (status !== 'all') {
+    const wantActive = status === 'published'
+    out = out.filter((e) => Boolean(e.is_active) === wantActive)
+  }
+
+  const q = query.trim().toLowerCase()
+  if (q) out = out.filter((e) => (e.title || '').toLowerCase().includes(q))
+
+  if (sort === 'title-asc') {
+    out = [...out].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+  } else if (sort === 'title-desc') {
+    out = [...out].sort((a, b) => (b.title || '').localeCompare(a.title || ''))
+  } else if (sort === 'status') {
+    out = [...out].sort((a, b) => Number(Boolean(b.is_active)) - Number(Boolean(a.is_active)))
+  }
+  // 'default' — leave as fetched (existing sort_order/module ordering
+  // from the query itself), i.e. no re-sort.
+
+  return out
+}
+
 export default function TeacherMockCenter({ onExit }) {
   const { profile } = useAuth()
   const [section, setSection] = useState('progress')
@@ -247,6 +283,15 @@ export default function TeacherMockCenter({ onExit }) {
    * do it.
    */
   const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading' | 'listening' | 'full-mocks'
+
+  // Lingrow-parity filter bar (search / status / sort), shared across the
+  // Writing/Reading/Listening exam-list views below — see
+  // filterAndSortExams's own comment above for scope/reasoning.
+  const [contentFilterQuery, setContentFilterQuery] = useState('')
+  const [contentFilterStatus, setContentFilterStatus] = useState('all') // 'all' | 'published' | 'draft'
+  const [contentSort, setContentSort] = useState('default') // 'default' | 'title-asc' | 'title-desc' | 'status'
+  const contentFilterActive = Boolean(contentFilterQuery.trim()) || contentFilterStatus !== 'all'
+
   const [rlExams, setRlExams] = useState([])
   const [rlSelectedExamId, setRlSelectedExamId] = useState(null)
   const [rlSections, setRlSections] = useState([])
@@ -351,6 +396,23 @@ export default function TeacherMockCenter({ onExit }) {
   const [fullMockModal, setFullMockModal] = useState(null) // { mode: 'create' } | { mode: 'edit', set }
   const [fullMockModalSaving, setFullMockModalSaving] = useState(false)
   const [fullMockModalError, setFullMockModalError] = useState('')
+
+  // Filtered/sorted views for the Content tab's exam lists — see
+  // filterAndSortExams above. Recomputed only when the underlying data
+  // or the filter controls actually change.
+  const filteredWritingExams = useMemo(
+    () => filterAndSortExams(writingExams, { query: contentFilterQuery, status: contentFilterStatus, sort: contentSort }),
+    [writingExams, contentFilterQuery, contentFilterStatus, contentSort]
+  )
+  const filteredRlExams = useMemo(
+    () =>
+      filterAndSortExams(rlExams.filter((e) => e.module === contentTab), {
+        query: contentFilterQuery,
+        status: contentFilterStatus,
+        sort: contentSort,
+      }),
+    [rlExams, contentTab, contentFilterQuery, contentFilterStatus, contentSort]
+  )
 
   /*
    * ============================================================
@@ -2917,7 +2979,11 @@ export default function TeacherMockCenter({ onExit }) {
               <div className="flex gap-2 rounded-full border border-line bg-panel-2 p-1 w-fit">
                 <button
                   type="button"
-                  onClick={() => setContentTab('writing')}
+                  onClick={() => {
+                    setContentTab('writing')
+                    setContentFilterQuery('')
+                    setContentFilterStatus('all')
+                  }}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'writing' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
@@ -2928,6 +2994,8 @@ export default function TeacherMockCenter({ onExit }) {
                   type="button"
                   onClick={() => {
                     setContentTab('reading')
+                    setContentFilterQuery('')
+                    setContentFilterStatus('all')
                     backToRlExams()
                   }}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
@@ -2940,6 +3008,8 @@ export default function TeacherMockCenter({ onExit }) {
                   type="button"
                   onClick={() => {
                     setContentTab('listening')
+                    setContentFilterQuery('')
+                    setContentFilterStatus('all')
                     backToRlExams()
                   }}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
@@ -2950,7 +3020,11 @@ export default function TeacherMockCenter({ onExit }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setContentTab('full-mocks')}
+                  onClick={() => {
+                    setContentTab('full-mocks')
+                    setContentFilterQuery('')
+                    setContentFilterStatus('all')
+                  }}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'full-mocks' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
@@ -2975,14 +3049,31 @@ export default function TeacherMockCenter({ onExit }) {
                     </button>
                   </div>
 
+                  {writingExams.length > 0 && (
+                    <ContentFilterBar
+                      query={contentFilterQuery}
+                      onQueryChange={setContentFilterQuery}
+                      status={contentFilterStatus}
+                      onStatusChange={setContentFilterStatus}
+                      sort={contentSort}
+                      onSortChange={setContentSort}
+                      resultCount={filteredWritingExams.length}
+                      totalCount={writingExams.length}
+                    />
+                  )}
+
                   {writingExams.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                       No writing mocks yet — add one to let students sit it from their Mock Test
                       Center.
                     </div>
+                  ) : filteredWritingExams.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                      No writing mocks match these filters.
+                    </div>
                   ) : (
                     <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                      {writingExams.map((exam) => (
+                      {filteredWritingExams.map((exam) => (
                         <div
                           key={exam.id}
                           className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
@@ -3056,17 +3147,32 @@ export default function TeacherMockCenter({ onExit }) {
                         </button>
                       </div>
 
+                      {rlExams.filter((e) => e.module === contentTab).length > 0 && (
+                        <ContentFilterBar
+                          query={contentFilterQuery}
+                          onQueryChange={setContentFilterQuery}
+                          status={contentFilterStatus}
+                          onStatusChange={setContentFilterStatus}
+                          sort={contentSort}
+                          onSortChange={setContentSort}
+                          resultCount={filteredRlExams.length}
+                          totalCount={rlExams.filter((e) => e.module === contentTab).length}
+                        />
+                      )}
+
                       {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
                         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           {contentTab === 'reading'
                             ? "No reading mocks yet — \"+ Add reading exam\" walks you through all 3 passages before it can be created."
                             : "No listening mocks yet — \"+ Add listening exam\" walks you through all 4 parts before it can be created."}
                         </div>
+                      ) : filteredRlExams.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                          No {contentTab} mocks match these filters.
+                        </div>
                       ) : (
                         <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                          {rlExams
-                            .filter((e) => e.module === contentTab)
-                            .map((exam) => (
+                          {filteredRlExams.map((exam) => (
                             <div
                               key={exam.id}
                               className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
@@ -3779,6 +3885,49 @@ export default function TeacherMockCenter({ onExit }) {
           onToggleEssay={toggleEssay}
         />
       )}
+    </div>
+  )
+}
+
+// Search + status filter + sort — one shared control row for the
+// Writing/Reading/Listening exam lists (see filterAndSortExams above).
+// A plain, small toolbar rather than a modal/drawer: Lingrow's own
+// "Test Sections" table keeps its filters inline above the table too.
+function ContentFilterBar({ query, onQueryChange, status, onStatusChange, sort, onSortChange, resultCount, totalCount }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-line bg-panel-2 px-3.5 py-2.5">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => onQueryChange(e.target.value)}
+        placeholder="Search by title…"
+        className="focus-ring min-w-[10rem] flex-1 rounded-lg border border-line bg-panel px-3 py-1.5 text-sm text-paper placeholder:text-mist"
+      />
+
+      <select
+        value={status}
+        onChange={(e) => onStatusChange(e.target.value)}
+        className="focus-ring rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm text-paper"
+      >
+        <option value="all">All statuses</option>
+        <option value="published">Published only</option>
+        <option value="draft">Draft only</option>
+      </select>
+
+      <select
+        value={sort}
+        onChange={(e) => onSortChange(e.target.value)}
+        className="focus-ring rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm text-paper"
+      >
+        <option value="default">Sort: default order</option>
+        <option value="title-asc">Sort: title A→Z</option>
+        <option value="title-desc">Sort: title Z→A</option>
+        <option value="status">Sort: published first</option>
+      </select>
+
+      <span className="ml-auto shrink-0 text-xs text-mist font-mono">
+        {resultCount}/{totalCount} shown
+      </span>
     </div>
   )
 }

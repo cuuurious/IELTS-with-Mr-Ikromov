@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { ExamTaker, buildAttemptQuestions } from './MockExams'
 import { WritingTaker } from './WritingMockExam'
+import { isSpeechSupported, speak, stopSpeaking } from '../lib/speech'
 
 /*
  * ================================================================
@@ -64,6 +65,19 @@ import { WritingTaker } from './WritingMockExam'
  * day on the official familiarisation site — a deliberate break from
  * the rest of this file's dark brass "ticket" theme, same reasoning as
  * MockCheckIn.jsx's own header comment.
+ *
+ * Spoken instructions (2026-09-26): the gap flagged right above — "the
+ * *seeing* and *confirming* part is real-exam-accurate; there's no
+ * actual spoken-audio narration" — is closed here. Jasur, verbatim:
+ * "yes ofcourse audio instructions have to be added just like in real
+ * exam." Each stage's instructions box now narrates itself once,
+ * automatically, via the browser's own text-to-speech (see
+ * `lib/speech.js` for why that beats a recorded-audio-file approach),
+ * with a Replay/Stop control for anyone who wants to hear it again or
+ * would rather read in silence. narratedStagesRef makes sure a stage
+ * only auto-narrates the first time its gate is shown per mount — not
+ * every re-render, and not again if the student backs out and returns
+ * to an already-narrated stage in the same sitting.
  * ================================================================
  */
 
@@ -105,6 +119,42 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const [currentStageAttemptId, setCurrentStageAttemptId] = useState(null)
   const [justFinished, setJustFinished] = useState(null) // { score, maxScore } | 'writing' | null, shown before advancing
   const [writingStarting, setWritingStarting] = useState(false) // guards startWriting() from firing more than once
+
+  // Spoken instructions — see lib/speech.js and the header comment
+  // above. narratedStagesRef tracks which stage keys have already
+  // auto-played once this mount, so returning to a gate already heard
+  // doesn't narrate itself again unprompted.
+  const [narrating, setNarrating] = useState(false)
+  const narratedStagesRef = useRef(new Set())
+
+  const narrationKey = activeAttempt ? `${activeAttempt.attempt.id}:${activeAttempt.attempt.stage}` : null
+  const gateIsShowing = Boolean(
+    activeAttempt && activeAttempt.attempt.stage !== 'done' && !gateConfirmed &&
+      !(activeAttempt.attempt.stage === 'writing' && writingResume)
+  )
+
+  const speakInstructions = () => {
+    const meta = activeAttempt ? STAGE_META[activeAttempt.attempt.stage] : null
+    if (!meta) return
+    speak(meta.instructions, { onStart: () => setNarrating(true), onEnd: () => setNarrating(false) })
+  }
+
+  useEffect(() => {
+    if (!gateIsShowing || !narrationKey) return
+    if (narratedStagesRef.current.has(narrationKey)) return
+    narratedStagesRef.current.add(narrationKey)
+    speakInstructions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gateIsShowing, narrationKey])
+
+  // Stop narrating the moment the student moves on (confirms, exits, or
+  // the whole runner unmounts) — a real invigilator doesn't keep talking
+  // once the section has started either.
+  useEffect(() => {
+    if (!gateIsShowing) stopSpeaking()
+  }, [gateIsShowing])
+
+  useEffect(() => stopSpeaking, [])
 
   const loadAll = async () => {
     setLoading(true)
@@ -565,6 +615,20 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         {meta.instructions}
       </div>
 
+      {isSpeechSupported() && (
+        <button
+          type="button"
+          onClick={() => (narrating ? stopSpeaking() : speakInstructions())}
+          className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-colors"
+        >
+          {narrating ? (
+            <>⏸ Stop reading</>
+          ) : (
+            <>🔊 Hear these instructions again</>
+          )}
+        </button>
+      )}
+
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
       <div className="mt-6">
@@ -605,7 +669,8 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       </div>
 
       <p className="mt-6 text-[11px] text-slate-400">
-        Like the real test, you'll only see these instructions once for this section.
+        Like the real test, these instructions are read aloud once automatically — use the button
+        above if you need to hear them again.
       </p>
     </div>
   )
