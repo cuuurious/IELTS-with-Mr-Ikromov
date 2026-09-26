@@ -272,6 +272,46 @@ export default function MockTestCenter({ onExit }) {
     return { reading, listening, writing, speaking, overall, availableCount: available.length }
   }, [latestAttemptByModule, latestWritingReview, latestSpeakingSlot])
 
+  // Score history / trend — the "Score history" bullet from
+  // mock-test-site-concept.md's "Not built yet" list, built 2026-09-26.
+  // One chronological (oldest -> newest) {date, band} series per skill,
+  // released results only, same convention as everywhere else on this
+  // screen: Reading/Listening use each attempt's own teacher-confirmed
+  // `band` where set, falling back to a percentage estimate only for an
+  // attempt that predates migration_48 and never got one; Writing/
+  // Speaking use the examiner's own band, never an estimate.
+  const bandHistory = useMemo(() => {
+    const bandFor = (attempt) => attempt.band ?? estimateBandFromPercent(pct(attempt.score, attempt.max_score))
+    const byDateAsc = (a, b) => new Date(a.date) - new Date(b.date)
+
+    const readingHistory = attemptsWithModule
+      .filter((a) => a.module === 'reading')
+      .map((a) => ({ date: a.submitted_at, band: bandFor(a) }))
+      .filter((p) => p.band != null)
+      .sort(byDateAsc)
+
+    const listeningHistory = attemptsWithModule
+      .filter((a) => a.module === 'listening')
+      .map((a) => ({ date: a.submitted_at, band: bandFor(a) }))
+      .filter((p) => p.band != null)
+      .sort(byDateAsc)
+
+    const writingHistory = writingReviews
+      .filter((r) => r.released_at != null && r.examiner_band != null)
+      .map((r) => ({ date: r.examiner_reviewed_at, band: r.examiner_band }))
+      .sort(byDateAsc)
+
+    const speakingHistory = slots
+      .filter((s) => s.released_at != null && s.examiner_band != null)
+      .map((s) => ({ date: s.scheduled_at, band: s.examiner_band }))
+      .sort(byDateAsc)
+
+    return { listening: listeningHistory, reading: readingHistory, writing: writingHistory, speaking: speakingHistory }
+  }, [attemptsWithModule, writingReviews, slots])
+
+  const hasAnyHistory =
+    bandHistory.listening.length + bandHistory.reading.length + bandHistory.writing.length + bandHistory.speaking.length > 0
+
   const saveTargetBand = async (value) => {
     setTargetSaving(true)
     try {
@@ -522,6 +562,20 @@ export default function MockTestCenter({ onExit }) {
                 </div>
               )}
 
+              {hasAnyHistory && (
+                <div className="rounded-2xl border border-line bg-panel p-5">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
+                    Score history
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <BandTrendCard label="Listening" history={bandHistory.listening} />
+                    <BandTrendCard label="Reading" history={bandHistory.reading} />
+                    <BandTrendCard label="Writing" history={bandHistory.writing} />
+                    <BandTrendCard label="Speaking" history={bandHistory.speaking} />
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-2xl border border-line bg-panel p-5 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono">
@@ -721,6 +775,92 @@ export default function MockTestCenter({ onExit }) {
           )}
         </div>
       </main>
+    </div>
+  )
+}
+
+// A small hand-rolled trend line — no charting library in this project
+// (see package.json), and a handful of points per skill doesn't need
+// one. X positions are evenly spaced by attempt ORDER, not by real date
+// gaps — a student who sits mocks a month apart vs. a week apart still
+// gets an evenly-readable line rather than points bunched at one edge.
+function BandSparkline({ points }) {
+  const bands = points.map((p) => Number(p.band))
+  const minB = Math.min(...bands)
+  const maxB = Math.max(...bands)
+  // Pad the domain a bit so a flat line (every attempt the same band)
+  // still draws as a visible centered line, not a line pinned to one edge.
+  const domainMin = minB === maxB ? minB - 0.5 : minB - 0.25
+  const domainMax = minB === maxB ? maxB + 0.5 : maxB + 0.25
+  const w = 100
+  const h = 32
+  const stepX = points.length > 1 ? w / (points.length - 1) : 0
+
+  const coords = points.map((p, i) => {
+    const x = points.length > 1 ? i * stepX : w / 2
+    const y = h - ((Number(p.band) - domainMin) / (domainMax - domainMin)) * h
+    return [x, y]
+  })
+
+  const pathD = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-8">
+      <path d={pathD} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {coords.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.2" fill="currentColor" />
+      ))}
+    </svg>
+  )
+}
+
+// One skill's trend card — used in the "Score history" panel above.
+// `history` is already sorted oldest -> newest, released results only
+// (see the bandHistory useMemo). Needs at least 2 points to draw a line
+// (one point is just a dot with nothing to compare it to), but still
+// shows that one result rather than an empty "no attempts" state.
+function BandTrendCard({ label, history }) {
+  const latest = history[history.length - 1]
+  const first = history[0]
+  const delta = history.length >= 2 ? Number(latest.band) - Number(first.band) : null
+
+  return (
+    <div className="rounded-xl border border-line bg-panel-2 p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-paper">{label}</p>
+        {history.length > 0 && (
+          <span className="text-sm font-semibold text-brass">{formatBand(latest.band)}</span>
+        )}
+      </div>
+
+      {history.length === 0 && (
+        <p className="text-xs text-mist mt-2">No released results yet.</p>
+      )}
+
+      {history.length === 1 && (
+        <p className="text-xs text-mist mt-2">
+          One result so far ({new Date(first.date).toLocaleDateString()}) — sit another to see a
+          trend.
+        </p>
+      )}
+
+      {history.length >= 2 && (
+        <>
+          <div className="mt-2 text-brass">
+            <BandSparkline points={history} />
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-mist">
+            <span>{new Date(first.date).toLocaleDateString()}</span>
+            {delta !== null && delta !== 0 && (
+              <span className={delta > 0 ? 'font-semibold text-sage' : 'font-semibold text-coral'}>
+                {delta > 0 ? '+' : ''}
+                {formatBand(delta).replace('-', '−')} since first
+              </span>
+            )}
+            <span>{new Date(latest.date).toLocaleDateString()}</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
