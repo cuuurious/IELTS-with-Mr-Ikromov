@@ -400,11 +400,16 @@ export default function TeacherMockCenter({ onExit }) {
     try {
       let examId
 
+      // Randomize-from-bank is Reading-only (see buildAttemptQuestions in
+      // MockExams.jsx) — a Listening section has exactly one fixed audio
+      // track that narrates in a set order, so shuffling or drawing a
+      // random subset of questions breaks the correspondence between
+      // what's on screen and what the student hears. Hard-coded off here
+      // regardless of any stale wizard state, rather than trusting the
+      // checkbox to always be absent.
       const randomizePayload = {
-        randomize_questions: values.randomizeQuestions,
-        questions_per_section: values.randomizeQuestions && values.questionsPerSection
-          ? Number(values.questionsPerSection)
-          : null,
+        randomize_questions: false,
+        questions_per_section: null,
       }
 
       if (listeningWizard.mode === 'create') {
@@ -1174,6 +1179,45 @@ export default function TeacherMockCenter({ onExit }) {
           .update(payload)
           .eq('id', sectionModal.section.id)
         if (updateError) throw updateError
+      }
+
+      // Questions pulled in via "Import from a file" above — inserted
+      // right alongside the section itself so "Manage questions" opens
+      // already populated instead of empty. Numbered to start after
+      // whatever's already there, in case this is a re-import into an
+      // existing section rather than a brand new one.
+      const importedQuestions = values.importedQuestions || []
+      if (importedQuestions.length > 0) {
+        const sectionId = createdSection ? createdSection.id : sectionModal.section.id
+
+        const { data: existingQuestions, error: existingQuestionsError } = await supabase
+          .from('mock_questions')
+          .select('order_index')
+          .eq('section_id', sectionId)
+          .order('order_index', { ascending: false })
+          .limit(1)
+        if (existingQuestionsError) throw existingQuestionsError
+
+        const startIndex =
+          existingQuestions && existingQuestions.length > 0
+            ? existingQuestions[0].order_index + 1
+            : 0
+
+        const questionRows = importedQuestions.map((q, i) => ({
+          section_id: sectionId,
+          order_index: startIndex + i,
+          prompt: q.prompt || '',
+          type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
+            ? q.type
+            : 'short_answer',
+          options: q.type === 'multiple_choice' ? { choices: q.choices || [] } : null,
+          correct_answer: q.correct_answer || '',
+        }))
+
+        const { error: questionsInsertError } = await supabase
+          .from('mock_questions')
+          .insert(questionRows)
+        if (questionsInsertError) throw questionsInsertError
       }
 
       setSectionModal(null)
@@ -2794,35 +2838,37 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
             Published (students can see and sit this)
           </label>
 
-          <div className="rounded-lg border border-line bg-panel-2 p-3">
-            <label className="flex items-center gap-2 text-sm text-paper">
-              <input
-                type="checkbox"
-                checked={randomizeQuestions}
-                onChange={(e) => setRandomizeQuestions(e.target.checked)}
-                className="accent-brass"
-              />
-              Randomize questions from bank
-            </label>
-            <p className="mt-1 text-[11px] text-mist">
-              Author more questions per section than you need — each student sitting this exam
-              gets a random draw, in random order, so repeat test-takers don't just memorize one
-              fixed paper.
-            </p>
-            {randomizeQuestions && (
-              <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
-                Questions per section (blank = use every question, just shuffled)
+          {moduleName === 'reading' && (
+            <div className="rounded-lg border border-line bg-panel-2 p-3">
+              <label className="flex items-center gap-2 text-sm text-paper">
                 <input
-                  type="number"
-                  min="1"
-                  value={questionsPerSection}
-                  onChange={(e) => setQuestionsPerSection(e.target.value)}
-                  placeholder="e.g. 10"
-                  className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
+                  type="checkbox"
+                  checked={randomizeQuestions}
+                  onChange={(e) => setRandomizeQuestions(e.target.checked)}
+                  className="accent-brass"
                 />
+                Randomize questions from bank
               </label>
-            )}
-          </div>
+              <p className="mt-1 text-[11px] text-mist">
+                Author more questions per section than you need — each student sitting this exam
+                gets a random draw, in random order, so repeat test-takers don't just memorize one
+                fixed paper.
+              </p>
+              {randomizeQuestions && (
+                <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
+                  Questions per section (blank = use every question, just shuffled)
+                  <input
+                    type="number"
+                    min="1"
+                    value={questionsPerSection}
+                    onChange={(e) => setQuestionsPerSection(e.target.value)}
+                    placeholder="e.g. 10"
+                    className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
+                  />
+                </label>
+              )}
+            </div>
+          )}
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -2838,7 +2884,19 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
           </button>
           <button
             type="button"
-            onClick={() => onSave({ title, module: moduleName, isActive, sortOrder, randomizeQuestions, questionsPerSection })}
+            onClick={() =>
+              onSave({
+                title,
+                module: moduleName,
+                isActive,
+                sortOrder,
+                // Listening can't support this (see the comment on this
+                // checkbox above) — forced off regardless of stale state
+                // even though the checkbox is hidden for this module.
+                randomizeQuestions: moduleName === 'reading' ? randomizeQuestions : false,
+                questionsPerSection: moduleName === 'reading' ? questionsPerSection : '',
+              })
+            }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
@@ -2851,6 +2909,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
 }
 
 function SectionFormModal({ modal, module: examModule, saving, error, onCancel, onSave }) {
+  const { profile } = useAuth()
   const section = modal.mode === 'edit' ? modal.section : null
 
   const [title, setTitle] = useState(section?.title || '')
@@ -2861,6 +2920,72 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
 
   const isReading = examModule === 'reading'
   const canSave = title.trim() && (!isReading || passageText.trim())
+
+  // Jasur: "why do i have to write the title first then the passage and
+  // then questions separately, it takes a lot of time" — same
+  // mock-content-import Edge Function built for Listening already
+  // extracts a title + full passage text + a question list in one shot
+  // for module 'reading' too (it just wasn't wired into this modal yet).
+  // One upload here fills in all three; the questions get bulk-inserted
+  // right after this section is saved, in saveSection, so "Manage
+  // questions" opens already populated instead of empty.
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const [importInfo, setImportInfo] = useState('')
+  const [importedQuestions, setImportedQuestions] = useState([])
+  const importInputRef = useRef(null)
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (importInputRef.current) importInputRef.current.value = ''
+    if (!file) return
+
+    setImporting(true)
+    setImportError('')
+    setImportInfo('')
+
+    try {
+      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('mock-content-uploads')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream' })
+
+      if (uploadError) throw uploadError
+
+      const { data, error: fnError } = await supabase.functions.invoke('mock-content-import', {
+        body: { storagePath: path, mimeType: file.type || '', module: 'reading' },
+      })
+
+      if (fnError) throw fnError
+      if (data?.error) throw new Error(data.error)
+
+      const result = data?.result || {}
+      const extracted = result.questions || []
+
+      if (!result.section_title && !result.passage_text && extracted.length === 0) {
+        throw new Error('Nothing usable was found in that file.')
+      }
+
+      if (result.section_title) setTitle(result.section_title)
+      if (result.passage_text) setPassageText(result.passage_text)
+      setImportedQuestions(extracted)
+
+      const missingAnswers = extracted.filter((q) => !q.correct_answer?.trim()).length
+      setImportInfo(
+        (result.section_title || result.passage_text ? 'Title, passage, and ' : '') +
+          `${extracted.length} question${extracted.length === 1 ? '' : 's'} imported — review below, then save.` +
+          (missingAnswers
+            ? ` ${missingAnswers} had no visible answer key, so you'll need to fill those in after saving.`
+            : '')
+      )
+    } catch (err) {
+      console.error('Mock content import failed:', err)
+      setImportError(err?.message || 'Could not import that file. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
@@ -2873,6 +2998,30 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
             ? 'One passage per section — students read it alongside its questions.'
             : 'One audio track per section — students hear it once, same as the real test.'}
         </p>
+
+        {isReading && (
+          <div className="mt-4 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
+            <label className="text-xs font-semibold text-brass">
+              Import from a file
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                disabled={importing}
+                onChange={handleImportFile}
+                className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
+              />
+            </label>
+            <p className="mt-1 text-[11px] text-mist">
+              Upload a PDF, Word doc, or photo of the real passage + questions and the title,
+              passage text, and questions below all get filled in at once — review, fill in any
+              blank answer, then hit Save just once.
+            </p>
+            {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
+            {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}
+            {importError && <p className="mt-1.5 text-xs text-coral">{importError}</p>}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
@@ -2954,7 +3103,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
           <button
             type="button"
             onClick={() =>
-              onSave({ title, orderIndex, passageText, audioFile, clearAudio })
+              onSave({ title, orderIndex, passageText, audioFile, clearAudio, importedQuestions })
             }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
@@ -3149,8 +3298,11 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
 
   const [title, setTitle] = useState(exam?.title || '')
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
-  const [randomizeQuestions, setRandomizeQuestions] = useState(exam?.randomize_questions ?? false)
-  const [questionsPerSection, setQuestionsPerSection] = useState(exam?.questions_per_section ?? '')
+  // No "randomize questions from bank" here on purpose — a Listening
+  // part has exactly one fixed audio track, so shuffling or drawing a
+  // random subset of questions would break the correspondence between
+  // what's on screen and what the student hears. Reading-only; see
+  // ExamFormModal and buildAttemptQuestions (MockExams.jsx).
 
   const buildInitialParts = () => {
     if (!isEdit) {
@@ -3250,8 +3402,6 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
     onSave({
       title,
       sortOrder,
-      randomizeQuestions,
-      questionsPerSection,
       parts: parts.map((p) => ({
         sectionId: p.sectionId,
         title: p.title,
@@ -3310,36 +3460,6 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
-        </div>
-
-        <div className="mt-3 rounded-lg border border-line bg-panel-2 p-3">
-          <label className="flex items-center gap-2 text-sm text-paper">
-            <input
-              type="checkbox"
-              checked={randomizeQuestions}
-              onChange={(e) => setRandomizeQuestions(e.target.checked)}
-              className="accent-brass"
-            />
-            Randomize questions from bank
-          </label>
-          <p className="mt-1 text-[11px] text-mist">
-            Author more questions per part than you need — each student sitting this exam gets a
-            random draw, in random order, so repeat test-takers don't just memorize one fixed
-            paper.
-          </p>
-          {randomizeQuestions && (
-            <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
-              Questions per part (blank = use every question, just shuffled)
-              <input
-                type="number"
-                min="1"
-                value={questionsPerSection}
-                onChange={(e) => setQuestionsPerSection(e.target.value)}
-                placeholder="e.g. 10"
-                className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
-              />
-            </label>
-          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-4">

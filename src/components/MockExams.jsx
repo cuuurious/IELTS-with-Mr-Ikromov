@@ -73,6 +73,12 @@ function shuffleArray(arr) {
 }
 
 export function buildAttemptQuestions(allQuestionsForSection, exam) {
+  // Listening can't support this even if a row's randomize_questions
+  // somehow ended up true (e.g. old data from before this guard) — one
+  // fixed audio track narrates in a set order, so shuffling or drawing a
+  // random subset would desync what's on screen from what's playing.
+  // Reading-only, enforced here regardless of what the UI already does.
+  if (exam?.module === 'listening') return allQuestionsForSection
   if (!exam?.randomize_questions) return allQuestionsForSection
   const shuffled = shuffleArray(allQuestionsForSection)
   const count = Number(exam.questions_per_section) || 0
