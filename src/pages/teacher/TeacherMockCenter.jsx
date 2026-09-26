@@ -202,6 +202,23 @@ export default function TeacherMockCenter({ onExit }) {
   const [listeningWizardSaving, setListeningWizardSaving] = useState(false)
   const [listeningWizardError, setListeningWizardError] = useState('')
 
+  // Jasur, more than once now: "why do i have to write the title first
+  // then the passage and then questions separately, it takes a lot of
+  // time" / "i do not want publishing process to be separate with
+  // title typing and adding content to be separate." Listening already
+  // got the real fix (ListeningExamWizard, above) — this is the same
+  // fix for Reading: "+ Add reading exam" opens this instead of
+  // ExamFormModal, so title, all 3 passages, and every question are
+  // one screen with one Save, never a title-only exam saved on its
+  // own. Create-only, mirroring ListeningExamWizard's create path;
+  // editing an already-created reading exam's passages still goes
+  // through "Manage sections" below, which is a separate, ongoing
+  // content-maintenance screen rather than the one-time creation flow
+  // this was actually about.
+  const [readingWizard, setReadingWizard] = useState(null) // { mode: 'create' } | null
+  const [readingWizardSaving, setReadingWizardSaving] = useState(false)
+  const [readingWizardError, setReadingWizardError] = useState('')
+
   /*
    * ============================================================
    * CONTENT EDITOR — FULL MOCK SETS
@@ -237,9 +254,8 @@ export default function TeacherMockCenter({ onExit }) {
    * out loud/write on a whiteboard, like a real exam candidate number.
    */
   const [accessCodes, setAccessCodes] = useState([])
-  const [accessCodeModal, setAccessCodeModal] = useState(null) // { mode: 'create' } | null
-  const [accessCodeModalSaving, setAccessCodeModalSaving] = useState(false)
-  const [accessCodeModalError, setAccessCodeModalError] = useState('')
+  const [accessCodeModalOpen, setAccessCodeModalOpen] = useState(false)
+  const [sendingCodeIds, setSendingCodeIds] = useState(() => new Set())
 
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
@@ -762,6 +778,86 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
+  // Reading's equivalent of saveListeningWizard above — always a create
+  // (see the comment on readingWizard's state), so there's no
+  // update-or-insert branching per passage: every passage is a brand
+  // new mock_sections row, same as a brand new part is for Listening's
+  // "create" path. New exams start unpublished, same as Listening's —
+  // publish from the exam list's own toggle once it's ready.
+  const saveReadingWizard = async (values) => {
+    setReadingWizardSaving(true)
+    setReadingWizardError('')
+
+    let createdExamId = null
+
+    try {
+      const { data: examRow, error: insertError } = await supabase
+        .from('mock_exams')
+        .insert({
+          title: values.title.trim(),
+          module: 'reading',
+          is_active: false,
+          sort_order: Number(values.sortOrder) || 0,
+          randomize_questions: values.randomizeQuestions,
+          questions_per_section:
+            values.randomizeQuestions && values.questionsPerSection
+              ? Number(values.questionsPerSection)
+              : null,
+        })
+        .select('*')
+        .single()
+      if (insertError) throw insertError
+
+      const examId = examRow.id
+      createdExamId = examRow.id
+
+      for (let i = 0; i < values.passages.length; i++) {
+        const passage = values.passages[i]
+
+        const { data: newSection, error: sectionInsertError } = await supabase
+          .from('mock_sections')
+          .insert({
+            exam_id: examId,
+            order_index: i,
+            title: passage.title,
+            passage_text: passage.passageText.trim(),
+          })
+          .select('*')
+          .single()
+        if (sectionInsertError) throw sectionInsertError
+
+        const questionRows = passage.questions.map((q, qIndex) => ({
+          section_id: newSection.id,
+          order_index: qIndex,
+          prompt: q.prompt.trim(),
+          type: q.type,
+          options: q.type === 'multiple_choice' ? { choices: q.choices } : null,
+          correct_answer: q.correctAnswer.trim(),
+        }))
+
+        if (questionRows.length > 0) {
+          const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
+          if (questionsInsertError) throw questionsInsertError
+        }
+      }
+
+      setReadingWizard(null)
+      await reloadRlExams()
+    } catch (err) {
+      console.error('Could not save reading exam:', err)
+
+      if (createdExamId) {
+        // Same best-effort cleanup as the listening wizard — don't leave
+        // a title-only exam behind just because a later passage failed.
+        await supabase.from('mock_exams').delete().eq('id', createdExamId)
+      }
+
+      setReadingWizardError(err?.message || 'Could not save this reading exam. Nothing was published — please try again.')
+    } finally {
+      setReadingWizardSaving(false)
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
       const [
@@ -1181,19 +1277,13 @@ export default function TeacherMockCenter({ onExit }) {
    * ============================================================
    */
   // Jasur, on first use of this editor: "there is no place to insert the
-  // content" — right, on purpose. An exam here is just a title/module
-  // shell; the actual passage/audio text and the questions+answers live
-  // one and two levels down (sections, then questions). Two fixes for
-  // that confusion: (1) the module is now picked by which tab you're on
-  // (Reading vs Listening — see his separate "why aren't they separate"
-  // question) instead of a dropdown, and (2) saving a new exam or a new
-  // section below auto-opens the next level down instead of dropping
-  // back to a list, so the flow itself points at where content goes.
-  const openCreateRlExam = (module) => {
-    setExamModalError('')
-    setExamModal({ mode: 'create', module })
-  }
-
+  // content" — right, on purpose then; ReadingExamWizard and
+  // ListeningExamWizard (both above) are the real fix now — creating
+  // either module opens one of those instead of this exam-only modal,
+  // so there's no title-only exam saved before content exists. This
+  // modal is edit-only these days: adjusting an existing exam's title,
+  // sort order, published state, or randomize-from-bank setting
+  // without touching its passages/audio.
   const openEditRlExam = (exam) => {
     setExamModalError('')
     setExamModal({ mode: 'edit', exam })
@@ -1720,52 +1810,136 @@ export default function TeacherMockCenter({ onExit }) {
   }
 
   const openIssueAccessCode = () => {
-    setAccessCodeModalError('')
-    setAccessCodeModal({ mode: 'create' })
+    setAccessCodeModalOpen(true)
   }
 
-  const saveAccessCode = async (values) => {
-    setAccessCodeModalSaving(true)
-    setAccessCodeModalError('')
+  /*
+   * Jasur, 2026-09-26, verbatim: "i want teacher to be able to
+   * generate those codes for many students at once, for example by
+   * ticking the students profiles that are gonna take the mock test
+   * he will choose them and click generate password and then teacher
+   * sees and checks whether every student he wants to take the test
+   * is here and he confirms sending them to those students via
+   * telegrambot." This is step one of that: one code per selected
+   * student, inserted together and tagged with a shared batch_id
+   * (migration_46) purely so the Access codes list can show them as
+   * one batch later. A single INSERT with multiple rows is atomic in
+   * Postgres — either every code lands or none do — so on a
+   * unique_violation (23505) it's safe to just throw the whole batch
+   * away and retry with a fresh set of random codes rather than
+   * figure out which single row collided.
+   */
+  const generateAccessCodeBatch = async (fullMockSetId, studentIds) => {
+    const batchId = crypto.randomUUID()
+    let rows = null
+    let lastError = null
 
-    try {
-      let attemptsLeft = 5
-      let lastError = null
-
-      while (attemptsLeft > 0) {
-        attemptsLeft--
-        const { error: insertError } = await supabase.from('mock_access_codes').insert({
-          code: generateAccessCode(),
-          student_id: values.studentId,
-          full_mock_set_id: values.fullMockSetId,
+    for (let attempt = 0; attempt < 5 && !rows; attempt++) {
+      const usedCodes = new Set()
+      const candidateRows = studentIds.map((studentId) => {
+        let code
+        do {
+          code = generateAccessCode()
+        } while (usedCodes.has(code))
+        usedCodes.add(code)
+        return {
+          code,
+          student_id: studentId,
+          full_mock_set_id: fullMockSetId,
           created_by: profile.id,
-        })
-
-        if (!insertError) {
-          lastError = null
-          break
+          batch_id: batchId,
         }
+      })
 
-        // 23503 unique_violation — vanishingly unlikely at 32^6 possible
-        // codes, but retry with a fresh random code rather than fail.
-        if (insertError.code === '23505') {
-          lastError = insertError
-          continue
-        }
+      const { data, error: insertError } = await supabase
+        .from('mock_access_codes')
+        .insert(candidateRows)
+        .select('*')
 
-        lastError = insertError
+      if (!insertError) {
+        rows = data
         break
       }
 
-      if (lastError) throw lastError
+      if (insertError.code === '23505') {
+        lastError = insertError
+        continue
+      }
 
-      setAccessCodeModal(null)
-      await reloadAccessCodes()
+      lastError = insertError
+      break
+    }
+
+    if (!rows) throw lastError || new Error('Could not generate these access codes.')
+
+    await reloadAccessCodes()
+    return rows
+  }
+
+  // Calls the send-mock-access-codes Edge Function (service-role only,
+  // because it needs TELEGRAM_BOT_TOKEN and every recipient's
+  // telegram_links row, not just the caller's own) and returns a
+  // per-code result so the modal can show who got theirs and who
+  // still needs the code shared another way.
+  const sendAccessCodesViaTelegram = async (codeIds) => {
+    const { data, error: fnError } = await supabase.functions.invoke('send-mock-access-codes', {
+      body: { codeIds },
+    })
+
+    if (fnError) throw fnError
+    if (data?.error) throw new Error(data.error)
+
+    await reloadAccessCodes()
+    return data?.results || []
+  }
+
+  const accessCodeSendReasonLabel = (reason) => {
+    switch (reason) {
+      case 'not_connected':
+        return 'Not connected to Telegram'
+      case 'revoked':
+        return 'This code was cancelled'
+      case 'already_used':
+        return 'This code has already been used'
+      case 'not_found':
+        return 'Code not found'
+      default:
+        return reason || 'Could not send'
+    }
+  }
+
+  // Per-row "Send via Telegram" in the Access codes list itself — for
+  // a code generated without sending, or for retrying one student
+  // after they connect Telegram later.
+  const sendSingleCodeViaTelegram = async (row) => {
+    setSendingCodeIds((prev) => new Set(prev).add(row.id))
+
+    try {
+      const results = await sendAccessCodesViaTelegram([row.id])
+      const result = results?.[0]
+
+      if (result && !result.sent) {
+        setConfirmDialog({
+          title: "Couldn't send over Telegram",
+          message: accessCodeSendReasonLabel(result.reason) + ' — share the code with them another way.',
+          hideCancel: true,
+          tone: 'coral',
+        })
+      }
     } catch (err) {
-      console.error('Could not issue an access code:', err)
-      setAccessCodeModalError(err?.message || 'Could not issue this code.')
+      console.error('Could not send access code via Telegram:', err)
+      setConfirmDialog({
+        title: "Couldn't send over Telegram",
+        message: err?.message || 'Could not send this code.',
+        hideCancel: true,
+        tone: 'coral',
+      })
     } finally {
-      setAccessCodeModalSaving(false)
+      setSendingCodeIds((prev) => {
+        const next = new Set(prev)
+        next.delete(row.id)
+        return next
+      })
     }
   }
 
@@ -2175,7 +2349,7 @@ export default function TeacherMockCenter({ onExit }) {
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-mist max-w-lg">
                           {contentTab === 'reading'
-                            ? 'Reading mock exams — each has one or more passages (sections), each passage has its own questions and correct answers.'
+                            ? "Reading mock exams — always 3 passages, built in one guided flow. Can't be created until every passage has its text and questions."
                             : "Listening mock exams — always 4 parts, built in one guided flow. Can't be created until every part has audio and questions."}
                         </p>
                         <button
@@ -2183,7 +2357,7 @@ export default function TeacherMockCenter({ onExit }) {
                           onClick={() =>
                             contentTab === 'listening'
                               ? setListeningWizard({ mode: 'create' })
-                              : openCreateRlExam(contentTab)
+                              : setReadingWizard({ mode: 'create' })
                           }
                           className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
@@ -2194,7 +2368,7 @@ export default function TeacherMockCenter({ onExit }) {
                       {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
                         <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           {contentTab === 'reading'
-                            ? "No reading mocks yet — add one, then you'll go straight into adding its passages and questions."
+                            ? "No reading mocks yet — \"+ Add reading exam\" walks you through all 3 passages before it can be created."
                             : "No listening mocks yet — \"+ Add listening exam\" walks you through all 4 parts before it can be created."}
                         </div>
                       ) : (
@@ -2708,8 +2882,8 @@ export default function TeacherMockCenter({ onExit }) {
                         <p className="text-sm text-mist max-w-lg mt-0.5">
                           Real IELTS style: a student can't start any Full Mock without a code
                           issued to them here first, tied to one specific set. Every attempt
-                          needs its own code — issue a new one each time a student sits (or
-                          re-sits) a mock.
+                          needs its own code — tick everyone sitting a mock and issue the whole
+                          batch at once, then send them out over Telegram.
                         </p>
                       </div>
                       <button
@@ -2719,7 +2893,7 @@ export default function TeacherMockCenter({ onExit }) {
                         className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
                       >
-                        + Issue code
+                        + Issue codes
                       </button>
                     </div>
 
@@ -2744,7 +2918,7 @@ export default function TeacherMockCenter({ onExit }) {
                               className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
                             >
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-mono text-sm font-semibold text-brass tracking-wide">
                                     {row.code}
                                   </span>
@@ -2753,6 +2927,11 @@ export default function TeacherMockCenter({ onExit }) {
                                   >
                                     {status.label}
                                   </span>
+                                  {row.telegram_sent_at && (
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full border border-line text-mist px-2 py-0.5">
+                                      Sent via Telegram
+                                    </span>
+                                  )}
                                 </div>
                                 <p className="text-xs text-mist mt-0.5 truncate">
                                   {student?.full_name || student?.username || 'Unknown student'} ·{' '}
@@ -2765,15 +2944,27 @@ export default function TeacherMockCenter({ onExit }) {
                                 </p>
                               </div>
 
-                              {!row.revoked && (
-                                <button
-                                  type="button"
-                                  onClick={() => revokeAccessCode(row)}
-                                  className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
-                                >
-                                  Revoke
-                                </button>
-                              )}
+                              <div className="flex items-center gap-2 shrink-0">
+                                {!row.revoked && !row.used_at && !row.telegram_sent_at && (
+                                  <button
+                                    type="button"
+                                    onClick={() => sendSingleCodeViaTelegram(row)}
+                                    disabled={sendingCodeIds.has(row.id)}
+                                    className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass hover:text-brass transition-colors disabled:opacity-50"
+                                  >
+                                    {sendingCodeIds.has(row.id) ? 'Sending…' : 'Send via Telegram'}
+                                  </button>
+                                )}
+                                {!row.revoked && (
+                                  <button
+                                    type="button"
+                                    onClick={() => revokeAccessCode(row)}
+                                    className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  >
+                                    Revoke
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )
                         })}
@@ -2838,6 +3029,16 @@ export default function TeacherMockCenter({ onExit }) {
         />
       )}
 
+      {readingWizard && (
+        <ReadingExamWizard
+          wizard={readingWizard}
+          saving={readingWizardSaving}
+          error={readingWizardError}
+          onCancel={() => setReadingWizard(null)}
+          onSave={saveReadingWizard}
+        />
+      )}
+
       {fullMockModal && (
         <FullMockSetFormModal
           modal={fullMockModal}
@@ -2851,15 +3052,17 @@ export default function TeacherMockCenter({ onExit }) {
         />
       )}
 
-      {accessCodeModal && (
-        <AccessCodeFormModal
-          modal={accessCodeModal}
+      {accessCodeModalOpen && (
+        <AccessCodeIssueModal
           students={students}
+          groups={groups}
+          groupMembers={groupMembers}
           fullMockSets={fullMockSets.filter((s) => s.is_active)}
-          saving={accessCodeModalSaving}
-          error={accessCodeModalError}
-          onCancel={() => setAccessCodeModal(null)}
-          onSave={saveAccessCode}
+          onCancel={() => setAccessCodeModalOpen(false)}
+          onGenerate={generateAccessCodeBatch}
+          onSend={sendAccessCodesViaTelegram}
+          reasonLabel={accessCodeSendReasonLabel}
+          onDone={() => setAccessCodeModalOpen(false)}
         />
       )}
 
@@ -4361,6 +4564,454 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
   )
 }
 
+/*
+ * Reading's version of ListeningExamWizard, just above — same shape
+ * (title + a fixed number of parts, revealed one at a time, nothing
+ * saved until the whole thing is complete), swapping 4 audio parts for
+ * the real IELTS Reading structure of exactly 3 passages, and audio
+ * upload for passage text + the combined title/passage/questions file
+ * import (ReadingPartEditor, below). Create-only — see the comment on
+ * the readingWizard state in the parent for why editing an existing
+ * exam still goes through "Manage sections" instead.
+ */
+function ReadingExamWizard({ saving, error, onCancel, onSave }) {
+  const [title, setTitle] = useState('')
+  const [sortOrder, setSortOrder] = useState(0)
+  const [randomizeQuestions, setRandomizeQuestions] = useState(false)
+  const [questionsPerSection, setQuestionsPerSection] = useState('')
+
+  const [passages, setPassages] = useState(() =>
+    [0, 1, 2].map((i) => ({
+      title: `Passage ${i + 1}`,
+      passageText: '',
+      questions: [],
+    }))
+  )
+
+  // Jasur: "space for pasting part 1... then part two but they should
+  // not be separate... next part should be there" (said about
+  // Listening, applies here just the same) — passages reveal one at a
+  // time as each becomes complete, rather than showing all 3 empty
+  // boxes at once.
+  const [revealedCount, setRevealedCount] = useState(1)
+
+  const updatePassage = (index, patch) => {
+    setPassages((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
+  }
+
+  const addQuestion = (passageIndex) => {
+    setPassages((prev) =>
+      prev.map((p, i) =>
+        i !== passageIndex
+          ? p
+          : {
+              ...p,
+              questions: [
+                ...p.questions,
+                { prompt: '', type: 'multiple_choice', choicesText: '', correctAnswer: '' },
+              ],
+            }
+      )
+    )
+  }
+
+  const updateQuestion = (passageIndex, qIndex, patch) => {
+    setPassages((prev) =>
+      prev.map((p, i) =>
+        i !== passageIndex
+          ? p
+          : { ...p, questions: p.questions.map((q, j) => (j === qIndex ? { ...q, ...patch } : q)) }
+      )
+    )
+  }
+
+  const removeQuestion = (passageIndex, qIndex) => {
+    setPassages((prev) =>
+      prev.map((p, i) =>
+        i !== passageIndex ? p : { ...p, questions: p.questions.filter((_, j) => j !== qIndex) }
+      )
+    )
+  }
+
+  const isPassageValid = (passage) => {
+    if (!passage.title.trim() || !passage.passageText.trim() || passage.questions.length === 0) {
+      return false
+    }
+    return passage.questions.every((q) => {
+      if (!q.prompt.trim() || !q.correctAnswer.trim()) return false
+      if (q.type === 'multiple_choice') {
+        const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+        return choices.length >= 2 && choices.includes(q.correctAnswer)
+      }
+      return true
+    })
+  }
+
+  const allPassagesValid = passages.every(isPassageValid)
+  const canSave = title.trim() && allPassagesValid
+
+  const handleSave = () => {
+    onSave({
+      title,
+      sortOrder,
+      randomizeQuestions,
+      questionsPerSection,
+      passages: passages.map((p) => ({
+        title: p.title,
+        passageText: p.passageText,
+        questions: p.questions.map((q) => ({
+          prompt: q.prompt,
+          type: q.type,
+          choices: q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean),
+          correctAnswer: q.correctAnswer,
+        })),
+      })),
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">New reading exam</h3>
+        <p className="text-sm text-mist mt-0.5">
+          Fill in Passage 1, then move on to the next — this can't be created until every passage
+          has its text and at least one complete question.
+        </p>
+
+        <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Title
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Reading Mock Test 1"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Sort order
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+          </label>
+        </div>
+
+        <div className="mt-3 rounded-lg border border-line bg-panel-2 p-3">
+          <label className="flex items-center gap-2 text-sm text-paper">
+            <input
+              type="checkbox"
+              checked={randomizeQuestions}
+              onChange={(e) => setRandomizeQuestions(e.target.checked)}
+              className="accent-brass"
+            />
+            Randomize questions from bank
+          </label>
+          <p className="mt-1 text-[11px] text-mist">
+            Author more questions per passage than you need — each student sitting this exam gets
+            a random draw, in random order, so repeat test-takers don't just memorize one fixed
+            paper.
+          </p>
+          {randomizeQuestions && (
+            <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
+              Questions per passage (blank = use every question, just shuffled)
+              <input
+                type="number"
+                min="1"
+                value={questionsPerSection}
+                onChange={(e) => setQuestionsPerSection(e.target.value)}
+                placeholder="e.g. 10"
+                className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
+              />
+            </label>
+          )}
+        </div>
+
+        <div className="mt-5 flex flex-col gap-4">
+          {passages.slice(0, revealedCount).map((passage, i) => (
+            <ReadingPartEditor
+              key={i}
+              part={passage}
+              valid={isPassageValid(passage)}
+              onChange={(patch) => updatePassage(i, patch)}
+              onAddQuestion={() => addQuestion(i)}
+              onUpdateQuestion={(qIndex, patch) => updateQuestion(i, qIndex, patch)}
+              onRemoveQuestion={(qIndex) => removeQuestion(i, qIndex)}
+            />
+          ))}
+        </div>
+
+        {revealedCount < 3 && (
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setRevealedCount((n) => Math.min(n + 1, 3))}
+              disabled={!isPassageValid(passages[revealedCount - 1])}
+              className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next passage →
+            </button>
+          </div>
+        )}
+
+        {error && <p className="text-coral text-sm mt-4">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end border-t border-line pt-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          {revealedCount === 3 && (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !canSave}
+              title={!canSave ? 'Every passage needs its text and at least one complete question.' : undefined}
+              className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            >
+              {saving ? 'Saving…' : 'Create reading exam'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion }) {
+  const { profile } = useAuth()
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const [importInfo, setImportInfo] = useState('')
+  const importInputRef = useRef(null)
+
+  // Same mock-content-import Edge Function as ListeningPartEditor's own
+  // import box, mode 'reading' — this one hands back a title, the full
+  // passage text, AND a question list from one upload (SectionFormModal
+  // already did exactly this import, one passage at a time, in its own
+  // separate modal; this just brings it inside the wizard so filling a
+  // passage never needs a screen of its own).
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (importInputRef.current) importInputRef.current.value = ''
+    if (!file) return
+
+    setImporting(true)
+    setImportError('')
+    setImportInfo('')
+
+    try {
+      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('mock-content-uploads')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream' })
+
+      if (uploadError) throw uploadError
+
+      const { data, error: fnError } = await supabase.functions.invoke('mock-content-import', {
+        body: { storagePath: path, mimeType: file.type || '', module: 'reading' },
+      })
+
+      if (fnError) throw fnError
+      if (data?.error) throw new Error(data.error)
+
+      const result = data?.result || {}
+      const extracted = result.questions || []
+
+      if (!result.section_title && !result.passage_text && extracted.length === 0) {
+        throw new Error('Nothing usable was found in that file.')
+      }
+
+      const imported = extracted.map((q) => ({
+        prompt: q.prompt || '',
+        type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
+          ? q.type
+          : 'short_answer',
+        choicesText: (q.choices || []).join('\n'),
+        correctAnswer: q.correct_answer || '',
+      }))
+
+      onChange({
+        ...(result.section_title ? { title: result.section_title } : {}),
+        ...(result.passage_text ? { passageText: result.passage_text } : {}),
+        questions: [...part.questions, ...imported],
+      })
+
+      const missingAnswers = imported.filter((q) => !q.correctAnswer.trim()).length
+      setImportInfo(
+        (result.section_title || result.passage_text ? 'Title, passage, and ' : '') +
+          `${imported.length} question${imported.length === 1 ? '' : 's'} imported — check each one below.` +
+          (missingAnswers
+            ? ` ${missingAnswers} of them had no visible answer key, so the correct answer is still blank — fill those in before saving.`
+            : '')
+      )
+    } catch (err) {
+      console.error('Mock content import failed:', err)
+      setImportError(err?.message || 'Could not import that file. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className={`rounded-xl border p-4 ${valid ? 'border-sage/30 bg-sage/5' : 'border-line bg-panel-2'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <input
+          type="text"
+          value={part.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+          className="focus-ring font-display text-base text-paper bg-transparent border-0 border-b border-transparent hover:border-line focus:border-brass px-0 py-0.5 flex-1 min-w-0"
+        />
+        <span
+          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${
+            valid ? 'text-sage border-sage/30 bg-sage/10' : 'text-mist border-line bg-panel'
+          }`}
+        >
+          {valid ? 'Complete' : 'Incomplete'}
+        </span>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
+        <label className="text-xs font-semibold text-brass">
+          Import from a file
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+            disabled={importing}
+            onChange={handleImportFile}
+            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
+          />
+        </label>
+        <p className="mt-1 text-[11px] text-mist">
+          Upload a PDF, Word doc, or photo of the real passage + questions and the title, passage
+          text, and questions below all get filled in at once — review, fill in any blank answer,
+          then save.
+        </p>
+        {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
+        {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}
+        {importError && <p className="mt-1.5 text-xs text-coral">{importError}</p>}
+      </div>
+
+      <label className="mt-3 block text-xs text-mist font-mono uppercase tracking-wide">
+        Passage text
+        <textarea
+          value={part.passageText}
+          onChange={(e) => onChange({ passageText: e.target.value })}
+          rows={8}
+          placeholder="Paste the reading passage here…"
+          className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+        />
+      </label>
+
+      <div className="mt-4 flex flex-col gap-3">
+        {part.questions.length === 0 && (
+          <p className="text-xs text-mist">No questions in this passage yet.</p>
+        )}
+
+        {part.questions.map((q, qIndex) => {
+          const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+          return (
+            <div key={qIndex} className="rounded-lg border border-line bg-panel p-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <select
+                  value={q.type}
+                  onChange={(e) => onUpdateQuestion(qIndex, { type: e.target.value, correctAnswer: '' })}
+                  className="focus-ring rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-xs text-paper"
+                >
+                  <option value="multiple_choice">Multiple choice</option>
+                  <option value="true_false_ng">True / False / Not Given</option>
+                  <option value="short_answer">Short answer</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => onRemoveQuestion(qIndex)}
+                  className="focus-ring text-xs text-coral hover:text-coral/80 px-1 shrink-0"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <textarea
+                value={q.prompt}
+                onChange={(e) => onUpdateQuestion(qIndex, { prompt: e.target.value })}
+                rows={2}
+                placeholder="Question prompt…"
+                className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
+              />
+
+              {q.type === 'multiple_choice' && (
+                <>
+                  <textarea
+                    value={q.choicesText}
+                    onChange={(e) => onUpdateQuestion(qIndex, { choicesText: e.target.value })}
+                    rows={3}
+                    placeholder={'Choice A\nChoice B\nChoice C'}
+                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
+                  />
+                  <select
+                    value={q.correctAnswer}
+                    onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                  >
+                    <option value="">Select the correct choice…</option>
+                    {choices.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {q.type === 'true_false_ng' && (
+                <select
+                  value={q.correctAnswer}
+                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                >
+                  <option value="">Select…</option>
+                  {TRUE_FALSE_NG_CHOICES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {q.type === 'short_answer' && (
+                <input
+                  type="text"
+                  value={q.correctAnswer}
+                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
+                  placeholder="Correct answer"
+                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+                />
+              )}
+            </div>
+          )
+        })}
+
+        <button
+          type="button"
+          onClick={onAddQuestion}
+          className="focus-ring self-start text-xs font-semibold rounded-full border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
+        >
+          + Add question
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function FullMockSetFormModal({
   modal,
   listeningExams,
@@ -4525,80 +5176,343 @@ function FullMockSetFormModal({
   )
 }
 
-function AccessCodeFormModal({ modal, students, fullMockSets, saving, error, onCancel, onSave }) {
-  const [studentId, setStudentId] = useState('')
+/*
+ * Jasur, 2026-09-26, verbatim: "i want teacher to be able to generate
+ * those codes for many students at once, for example by ticking the
+ * students profiles that are gonna take the mock test he will choose
+ * them and click generate password and then teacher sees and checks
+ * whether every student he wants to take the test is here and he
+ * confirms sending them to those students via telegrambot."
+ *
+ * Three steps, one modal, matching that flow exactly:
+ *   'select' — pick the full mock, tick everyone sitting it
+ *   'review' — the generated codes (already saved — see onGenerate),
+ *              so the teacher can check the roster before sending
+ *   'sent'   — per-student Telegram delivery result, with the code
+ *              still shown for anyone not connected to share manually
+ *
+ * onGenerate/onSend are the parent's Supabase calls (batch insert,
+ * then the send-mock-access-codes Edge Function) — this component
+ * only owns the picker UI and which step it's on.
+ */
+function AccessCodeIssueModal({
+  students,
+  groups,
+  groupMembers,
+  fullMockSets,
+  onCancel,
+  onGenerate,
+  onSend,
+  reasonLabel,
+  onDone,
+}) {
+  const [step, setStep] = useState('select') // 'select' | 'review' | 'sent'
   const [fullMockSetId, setFullMockSetId] = useState(fullMockSets.length === 1 ? fullMockSets[0].id : '')
+  const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState('')
+  const [generatedRows, setGeneratedRows] = useState([])
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
+  const [sendResults, setSendResults] = useState(null)
 
-  const canSave = Boolean(studentId && fullMockSetId)
+  const groupIdsByStudent = useMemo(() => {
+    const map = {}
+    ;(groupMembers || []).forEach((gm) => {
+      if (!map[gm.student_id]) map[gm.student_id] = []
+      map[gm.student_id].push(gm.group_id)
+    })
+    return map
+  }, [groupMembers])
+
+  const studentById = useMemo(() => {
+    const map = {}
+    students.forEach((s) => {
+      map[s.id] = s
+    })
+    return map
+  }, [students])
+
+  const filteredStudents = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return students
+    return students.filter((s) => {
+      const name = (s.full_name || '').toLowerCase()
+      const username = (s.username || '').toLowerCase()
+      return name.includes(q) || username.includes(q)
+    })
+  }, [students, search])
+
+  const toggleStudent = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectAllFiltered = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      filteredStudents.forEach((s) => next.add(s.id))
+      return next
+    })
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const addGroup = (groupId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      students.forEach((s) => {
+        if ((groupIdsByStudent[s.id] || []).includes(groupId)) next.add(s.id)
+      })
+      return next
+    })
+  }
+
+  const selectedCount = selectedIds.size
+  const canGenerate = Boolean(fullMockSetId) && selectedCount > 0 && !generating
+  const setTitle = fullMockSets.find((s) => s.id === fullMockSetId)?.title || 'this mock'
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    setGenerateError('')
+    try {
+      const rows = await onGenerate(fullMockSetId, Array.from(selectedIds))
+      setGeneratedRows(rows)
+      setStep('review')
+    } catch (err) {
+      console.error('Could not generate access codes:', err)
+      setGenerateError(err?.message || 'Could not generate these codes.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleSend = async () => {
+    setSending(true)
+    setSendError('')
+    try {
+      const results = await onSend(generatedRows.map((r) => r.id))
+      setSendResults(results)
+      setStep('sent')
+    } catch (err) {
+      console.error('Could not send access codes via Telegram:', err)
+      setSendError(err?.message || 'Could not send these codes via Telegram.')
+    } finally {
+      setSending(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">Issue an access code</h3>
-        <p className="text-sm text-mist mt-0.5">
-          One code, for one student, good for one attempt at one full mock — same as a real exam
-          candidate ticket. The code appears once you save; make sure you can copy it down before
-          closing this.
-        </p>
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        {step === 'select' && (
+          <>
+            <h3 className="font-display text-lg text-paper">Issue access codes</h3>
+            <p className="text-sm text-mist mt-0.5">
+              Pick the full mock and tick everyone sitting it. One code per student, good for one
+              attempt — same as a real exam candidate ticket.
+            </p>
 
-        <div className="mt-4 flex flex-col gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Student
-            <select
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-            >
-              <option value="">
-                {students.length ? 'Select a student…' : 'No students yet'}
-              </option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.full_name || s.username}
+            <label className="text-xs text-mist font-mono uppercase tracking-wide mt-4 block">
+              Full mock
+              <select
+                value={fullMockSetId}
+                onChange={(e) => setFullMockSetId(e.target.value)}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              >
+                <option value="">
+                  {fullMockSets.length ? 'Select a full mock…' : 'No published full mocks yet'}
                 </option>
-              ))}
-            </select>
-          </label>
+                {fullMockSets.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Full mock
-            <select
-              value={fullMockSetId}
-              onChange={(e) => setFullMockSetId(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-            >
-              <option value="">
-                {fullMockSets.length ? 'Select a full mock…' : 'No published full mocks yet'}
-              </option>
-              {fullMockSets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-mist font-mono uppercase tracking-wide">
+                  Students ({selectedCount} selected)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={selectAllFiltered}
+                    className="text-xs text-brass hover:underline"
+                  >
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="text-xs text-mist hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
 
-        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+              {groups.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {groups.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => addGroup(g.id)}
+                      className="focus-ring text-[11px] rounded-full border border-line px-2.5 py-1 text-mist hover:border-brass hover:text-brass transition-colors"
+                    >
+                      + {g.name}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-        <div className="mt-5 flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave({ studentId, fullMockSetId })}
-            disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
-          >
-            {saving ? 'Issuing…' : 'Issue code'}
-          </button>
-        </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search students…"
+                className="focus-ring mt-2 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper placeholder:text-mist"
+              />
+
+              <div className="mt-2 max-h-56 overflow-y-auto rounded-lg border border-line divide-y divide-line">
+                {filteredStudents.length === 0 ? (
+                  <p className="px-3 py-4 text-sm text-mist text-center">No students match.</p>
+                ) : (
+                  filteredStudents.map((s) => (
+                    <label
+                      key={s.id}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm text-paper cursor-pointer hover:bg-panel-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(s.id)}
+                        onChange={() => toggleStudent(s.id)}
+                        className="accent-brass"
+                      />
+                      <span className="truncate">{s.full_name || s.username}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {generateError && <p className="text-coral text-sm mt-3">{generateError}</p>}
+
+            <div className="mt-5 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={generating}
+                className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+              >
+                {generating
+                  ? 'Generating…'
+                  : `Generate ${selectedCount || ''} code${selectedCount === 1 ? '' : 's'}`}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 'review' && (
+          <>
+            <h3 className="font-display text-lg text-paper">
+              {generatedRows.length} code{generatedRows.length === 1 ? '' : 's'} issued for {setTitle}
+            </h3>
+            <p className="text-sm text-mist mt-0.5">
+              These are already saved — check the roster, then send them out over Telegram, or close
+              this and share them another way.
+            </p>
+
+            <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-line divide-y divide-line">
+              {generatedRows.map((row) => {
+                const s = studentById[row.student_id]
+                return (
+                  <div key={row.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                    <span className="truncate text-paper">{s?.full_name || s?.username || 'Student'}</span>
+                    <span className="font-mono text-brass shrink-0">{row.code}</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {sendError && <p className="text-coral text-sm mt-3">{sendError}</p>}
+
+            <div className="mt-5 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={onDone}
+                disabled={sending}
+                className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                I'll share manually
+              </button>
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={sending}
+                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+              >
+                {sending ? 'Sending…' : 'Send via Telegram'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 'sent' && (
+          <>
+            <h3 className="font-display text-lg text-paper">Sent</h3>
+            <p className="text-sm text-mist mt-0.5">
+              {(sendResults || []).filter((r) => r.sent).length} of {(sendResults || []).length} delivered
+              over Telegram. Anyone not connected still has their code below — share it another way.
+            </p>
+
+            <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-line divide-y divide-line">
+              {(sendResults || []).map((r) => {
+                const s = studentById[r.studentId]
+                const row = generatedRows.find((gr) => gr.id === r.codeId)
+                return (
+                  <div key={r.codeId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate text-paper">{s?.full_name || s?.username || 'Student'}</p>
+                      {!r.sent && (
+                        <p className="text-[11px] text-mist truncate">{reasonLabel(r.reason)}</p>
+                      )}
+                    </div>
+                    <span className={`font-mono shrink-0 ${r.sent ? 'text-sage' : 'text-brass'}`}>
+                      {row?.code}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={onDone}
+                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
