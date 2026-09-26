@@ -1389,9 +1389,14 @@ export default function HomeworkCard({
           {/* DESCRIPTION */}
 
           {homework.description && (
-            <p className="text-sm font-medium text-paper whitespace-pre-wrap">
-              {homework.description}
-            </p>
+            <div className="rounded-lg border-l-4 border-brass bg-brass/5 px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-wide text-brass font-mono mb-1">
+                Instructions
+              </p>
+              <p className="text-sm font-medium text-paper whitespace-pre-wrap">
+                {homework.description}
+              </p>
+            </div>
           )}
 
           {/* TEACHER ATTACHMENT */}
