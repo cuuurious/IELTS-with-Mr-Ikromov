@@ -36,3 +36,17 @@ entrypoint = "./functions/change-password/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/create-student-account/index.ts"
+
+# Telegram calls this function directly (it's the webhook target Telegram's
+# own servers POST to) and has no Supabase login/JWT of its own — without
+# verify_jwt = false, Supabase's gateway rejects every delivery with a 401
+# before our own code (which checks Telegram's own TELEGRAM_WEBHOOK_SECRET
+# header instead) ever runs. Found 2026-09-26: getWebhookInfo showed
+# last_error_message "Wrong response from the webhook: 401 Unauthorized"
+# with 9 undelivered updates queued up — this was the actual, sole reason
+# "Connect Telegram" never worked, even though the deep-link/token code on
+# both ends was correct the whole time.
+[functions.telegram-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/telegram-webhook/index.ts"
