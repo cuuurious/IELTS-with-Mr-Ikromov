@@ -62,6 +62,7 @@ export default function SpeakingExaminerDashboard() {
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
   const [slots, setSlots] = useState([])
+  const [studentSearch, setStudentSearch] = useState('')
 
   const [notificationChat, setNotificationChat] = useState(null)
 
@@ -118,6 +119,15 @@ export default function SpeakingExaminerDashboard() {
     students.forEach((s) => { map[s.id] = s })
     return map
   }, [students])
+
+  const filteredStudents = useMemo(() => {
+    const q = studentSearch.trim().toLowerCase()
+    if (!q) return students
+    return students.filter((s) =>
+      (s.full_name || '').toLowerCase().includes(q) ||
+      (s.username || '').toLowerCase().includes(q)
+    )
+  }, [students, studentSearch])
 
   const upcomingSlots = slots.filter((s) => s.status === 'scheduled')
   const pastSlots = slots.filter((s) => s.status !== 'scheduled')
@@ -249,13 +259,28 @@ export default function SpeakingExaminerDashboard() {
               student directly.
             </p>
 
+            {students.length > 0 && (
+              <input
+                type="search"
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                placeholder="Search students by name…"
+                className="focus-ring w-full sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+              />
+            )}
+
             {students.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
                 <h2 className="font-display text-xl">No students yet</h2>
               </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
+                <h2 className="font-display text-xl">No students match</h2>
+                <p className="text-sm text-mist mt-1">Try a different name or username.</p>
+              </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {students.map((student) => (
+                {filteredStudents.map((student) => (
                   <div
                     key={student.id}
                     className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-col gap-3"
@@ -573,7 +598,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
+            className="focus-ring rounded-full border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -657,7 +682,7 @@ function SlotModal({ mode, studentName, initial, saving, error, onCancel, onSave
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
+            className="focus-ring rounded-full border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
