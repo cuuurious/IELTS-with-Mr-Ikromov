@@ -237,16 +237,25 @@ export default function MockExams({ selfId }) {
 
     const sectionIds = (sections || []).map((s) => s.id)
 
-    const { data: questions, error: questionsError } = await supabase
-      .from('mock_questions_public')
-      .select('*')
-      .in('section_id', sectionIds.length ? sectionIds : ['00000000-0000-0000-0000-000000000000'])
-      .order('order_index', { ascending: true })
+    // 2026-09-26: mock_questions_public used to be a plain view anyone
+    // signed in could query directly for ANY active exam, with no check
+    // that this student was ever actually issued a code for it —
+    // migration_57 replaced it with this security-definer function,
+    // which only returns rows for a teacher or a student holding a
+    // checked-in access code for the Full Mock set this exam belongs
+    // to. Same columns back (never correct_answer), just sorted here
+    // instead of via a chained .order() on an rpc() call.
+    const { data: questionsRaw, error: questionsError } = await supabase.rpc(
+      'get_mock_questions_public',
+      { p_section_ids: sectionIds.length ? sectionIds : ['00000000-0000-0000-0000-000000000000'] }
+    )
 
     if (questionsError) {
       setError(questionsError.message || 'Could not load this exam.')
       return
     }
+
+    const questions = [...(questionsRaw || [])].sort((a, b) => a.order_index - b.order_index)
 
     setActiveExam({
       exam,

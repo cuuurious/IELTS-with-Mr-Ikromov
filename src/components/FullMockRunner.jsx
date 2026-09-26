@@ -310,11 +310,19 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       }
 
       const sectionIds = (sections || []).map((s) => s.id)
-      const { data: questions, error: questionsError } = await supabase
-        .from('mock_questions_public')
-        .select('*')
-        .in('section_id', sectionIds.length ? sectionIds : ['00000000-0000-0000-0000-000000000000'])
-        .order('order_index', { ascending: true })
+      // 2026-09-26: mock_questions_public used to be a plain view anyone
+      // signed in could query directly for ANY active exam, with no
+      // check that this student was ever actually issued a code for
+      // it — migration_57 replaced it with this security-definer
+      // function, which only returns rows for a teacher or a student
+      // holding a checked-in access code for the Full Mock set this
+      // exam belongs to (exactly the code MockCheckIn.jsx stamps
+      // used_at on). Same columns back, just sorted here instead of
+      // via a chained .order() on an rpc() call.
+      const { data: questionsRaw, error: questionsError } = await supabase.rpc(
+        'get_mock_questions_public',
+        { p_section_ids: sectionIds.length ? sectionIds : ['00000000-0000-0000-0000-000000000000'] }
+      )
 
       if (cancelled) return
       if (questionsError) {
@@ -322,6 +330,8 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         setModuleLoading(false)
         return
       }
+
+      const questions = [...(questionsRaw || [])].sort((a, b) => a.order_index - b.order_index)
 
       setModuleExamData({
         exam,
