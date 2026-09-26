@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
+import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import { guessMimeType } from '../../lib/mime'
 import ConfirmModal from '../../components/ConfirmModal'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -1139,6 +1140,111 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }, [students, attempts, examsById, writingReviews, speakingSlots])
 
+  // ====================================================================
+  // STUDENT PROGRESS STATS — Jasur: "i want here the stats you know, any
+  // ideas on how can we represent and organise data on students mock
+  // results?" He picked all three of the options offered: summary tiles
+  // above Student Progress, a per-group average in the Students tab's
+  // section headers, and a "needs attention" callout for students who
+  // are either untouched or well below their target.
+  //
+  // Reading/Listening only ever have a raw percentage per attempt, so
+  // they're converted to an ESTIMATED band with estimateBandFromPercent
+  // (same estimate generateScoreReport.js already uses) purely so they
+  // can sit on the same 1-9 scale as Writing/Speaking's real
+  // examiner-given bands for one "overall" comparison against
+  // target_band. A student's overall band only ever averages whichever
+  // of the four modules they actually have a band for — a student with
+  // only Reading data isn't penalized for not having sat Speaking yet.
+  const BAND_GAP_ATTENTION = 1 // a full band or more under target flags "needs attention"
+
+  const studentBandSummary = useMemo(() => {
+    return rows.map((row) => {
+      const readingBand = row.reading ? estimateBandFromPercent(row.reading.average) : null
+      const listeningBand = row.listening ? estimateBandFromPercent(row.listening.average) : null
+      const writingBand = row.avgBand
+      const speakingBand = row.avgSpeakingBand
+      const available = [readingBand, listeningBand, writingBand, speakingBand].filter((b) => b != null)
+      const overallBand = available.length
+        ? roundOverallBand(available.reduce((s, v) => s + v, 0) / available.length)
+        : null
+      const hasAnyActivity =
+        row.readingAttempts.length > 0 ||
+        row.listeningAttempts.length > 0 ||
+        row.writingReviews.length > 0 ||
+        row.speakingSlots.length > 0
+
+      return { row, readingBand, listeningBand, writingBand, speakingBand, overallBand, hasAnyActivity }
+    })
+  }, [rows])
+
+  const bandSummaryByStudentId = useMemo(() => {
+    const map = {}
+    studentBandSummary.forEach((s) => {
+      map[s.row.student.id] = s
+    })
+    return map
+  }, [studentBandSummary])
+
+  const progressSummary = useMemo(() => {
+    const total = studentBandSummary.length
+    const moduleDefs = [
+      { key: 'reading', label: 'Reading' },
+      { key: 'listening', label: 'Listening' },
+      { key: 'writing', label: 'Writing' },
+      { key: 'speaking', label: 'Speaking' },
+    ]
+    const modules = moduleDefs.map(({ key, label }) => {
+      const bands = studentBandSummary.map((s) => s[`${key}Band`]).filter((b) => b != null)
+      return {
+        key,
+        label,
+        attemptedCount: bands.length,
+        attemptedPct: total ? Math.round((bands.length / total) * 100) : 0,
+        avgBand: bands.length ? roundOverallBand(bands.reduce((s, v) => s + v, 0) / bands.length) : null,
+      }
+    })
+
+    const comparable = studentBandSummary.filter(
+      (s) => s.overallBand != null && s.row.student.target_band != null
+    )
+    const below = comparable.filter((s) => s.overallBand < s.row.student.target_band).length
+    const at = comparable.filter((s) => s.overallBand === s.row.student.target_band).length
+    const above = comparable.filter((s) => s.overallBand > s.row.student.target_band).length
+    const notStarted = total - studentBandSummary.filter((s) => s.hasAnyActivity).length
+
+    return { total, modules, below, at, above, notStarted }
+  }, [studentBandSummary])
+
+  // Sorted worst-first: never-attempted students before well-below-target
+  // ones, and within the latter, the biggest gap first — so the names
+  // most worth a teacher's attention are always at the top rather than
+  // in whatever order `students` happened to load in.
+  const needsAttention = useMemo(() => {
+    return studentBandSummary
+      .filter((s) => {
+        if (!s.hasAnyActivity) return true
+        if (s.overallBand != null && s.row.student.target_band != null) {
+          return s.overallBand <= s.row.student.target_band - BAND_GAP_ATTENTION
+        }
+        return false
+      })
+      .map((s) => ({
+        student: s.row.student,
+        neverAttempted: !s.hasAnyActivity,
+        reason: !s.hasAnyActivity
+          ? 'Never attempted a mock'
+          : `Estimated ${formatBand(s.overallBand)} vs target ${formatBand(s.row.student.target_band)}`,
+        gap: s.overallBand != null && s.row.student.target_band != null
+          ? s.row.student.target_band - s.overallBand
+          : Infinity,
+      }))
+      .sort((a, b) => {
+        if (a.neverAttempted !== b.neverAttempted) return a.neverAttempted ? -1 : 1
+        return b.gap - a.gap
+      })
+  }, [studentBandSummary])
+
   const groupIdsByStudent = useMemo(() => {
     const map = {}
     groupMembers.forEach((gm) => {
@@ -1192,6 +1298,17 @@ export default function TeacherMockCenter({ onExit }) {
     if (!trimmed) return '?'
     if (/^\d+$/.test(trimmed)) return trimmed
     return trimmed.charAt(0).toUpperCase()
+  }
+
+  // Per-group average — the second of the "all three" stats Jasur
+  // picked. Only averages students who actually have a band yet, so one
+  // brand-new group member with no attempts doesn't drag a whole
+  // group's number down to look worse than it is.
+  const getGroupAvgBand = (groupRows) => {
+    const bands = groupRows
+      .map((r) => bandSummaryByStudentId[r.student.id]?.overallBand)
+      .filter((b) => b != null)
+    return bands.length ? roundOverallBand(bands.reduce((s, v) => s + v, 0) / bands.length) : null
   }
 
   const groupSections = useMemo(
@@ -2168,6 +2285,65 @@ export default function TeacherMockCenter({ onExit }) {
                 marked a completed session — one row per student.
               </p>
 
+              {/* ==================================================
+                  SUMMARY TILES — Reading/Listening bands are an
+                  ESTIMATE from the raw percentage (same conversion the
+                  score report already uses); Writing/Speaking are the
+                  real examiner-given band, averaged. "Vs target"
+                  only counts students who have at least one band AND a
+                  target set.
+                 ================================================== */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Students</p>
+                  <p className="font-display text-2xl text-paper mt-1">{progressSummary.total}</p>
+                  <p className="text-xs text-paper-dim mt-0.5">
+                    {progressSummary.notStarted} not started yet
+                  </p>
+                </div>
+                {progressSummary.modules.map((m) => (
+                  <div key={m.key} className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-wide text-mist font-mono">{m.label}</p>
+                    <p className="font-display text-2xl text-paper mt-1">
+                      {m.avgBand != null ? formatBand(m.avgBand) : '—'}
+                    </p>
+                    <p className="text-xs text-paper-dim mt-0.5">{m.attemptedPct}% attempted</p>
+                  </div>
+                ))}
+                <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Vs target</p>
+                  <div className="flex flex-col gap-0.5 mt-1.5">
+                    <span className="text-sage text-sm font-semibold">{progressSummary.above} above</span>
+                    <span className="text-brass text-sm font-semibold">{progressSummary.at} at target</span>
+                    <span className="text-coral text-sm font-semibold">{progressSummary.below} below</span>
+                  </div>
+                </div>
+              </div>
+
+              {needsAttention.length > 0 && (
+                <div className="rounded-2xl border border-coral/30 bg-coral/5 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-coral font-mono mb-2">
+                    Needs attention · {needsAttention.length}
+                  </p>
+                  <div className="flex flex-col divide-y divide-line/60">
+                    {needsAttention.slice(0, 8).map(({ student, reason }) => (
+                      <button
+                        key={student.id}
+                        type="button"
+                        onClick={() => setProfileStudentId(student.id)}
+                        className="focus-ring flex items-center justify-between gap-3 py-2 -mx-2 px-2 rounded-lg text-left hover:bg-panel/60 transition-colors"
+                      >
+                        <span className="text-sm text-paper truncate">{studentLabel(student)}</span>
+                        <span className="text-xs text-paper-dim shrink-0">{reason}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {needsAttention.length > 8 && (
+                    <p className="text-xs text-mist mt-2">+{needsAttention.length - 8} more</p>
+                  )}
+                </div>
+              )}
+
               <StudentRowList
                 rows={rows}
                 onOpenProfile={setProfileStudentId}
@@ -2241,6 +2417,7 @@ export default function TeacherMockCenter({ onExit }) {
                       // student never clicked it, so typing a name doesn't
                       // also require hunting down and opening its group.
                       const isOpen = expandedGroupIds.has(group.id) || (Boolean(search.trim()) && groupRows.length > 0)
+                      const groupAvg = getGroupAvgBand(groupRows)
                       return (
                         <div
                           key={group.id}
@@ -2264,6 +2441,9 @@ export default function TeacherMockCenter({ onExit }) {
                             <span className="text-sm text-paper-dim">
                               {groupRows.length} student{groupRows.length === 1 ? '' : 's'}
                             </span>
+                            {groupAvg != null && (
+                              <span className="text-xs font-mono text-mist">avg {formatBand(groupAvg)}</span>
+                            )}
                             <span className="ml-auto text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
                           </button>
 
@@ -2281,6 +2461,7 @@ export default function TeacherMockCenter({ onExit }) {
                   {(ungroupedRows.length > 0 || !search.trim()) && hasUngroupedStudents && (() => {
                     const isOpen =
                       expandedGroupIds.has('__none__') || (Boolean(search.trim()) && ungroupedRows.length > 0)
+                    const groupAvg = getGroupAvgBand(ungroupedRows)
                     return (
                       <div className="flex flex-col gap-3">
                         <button
@@ -2295,6 +2476,9 @@ export default function TeacherMockCenter({ onExit }) {
                           <span className="text-sm text-paper-dim">
                             {ungroupedRows.length} student{ungroupedRows.length === 1 ? '' : 's'}
                           </span>
+                          {groupAvg != null && (
+                            <span className="text-xs font-mono text-mist">avg {formatBand(groupAvg)}</span>
+                          )}
                           <span className="ml-auto text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
                         </button>
 
