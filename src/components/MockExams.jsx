@@ -47,42 +47,32 @@ export const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
 
 export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
 
-// Randomized question bank — added 2026-09-25. Scoped with Jasur as
-// "just shuffle": no skill/difficulty tagging, a plain toggle on the
-// exam ("Randomize questions from bank" in the Content tab's exam
-// forms) plus an optional "questions per section" count. A teacher
-// authors MORE questions in a section's pool than a student actually
-// needs to see; each attempt draws that many at random, in random
-// order, from the pool — so repeat test-takers don't just memorize one
-// fixed paper. When questionsPerSection is unset, every question in the
-// pool is still used, just shuffled into a random order.
-//
-// This only changes which questions get built into the `sections` array
-// passed to <ExamTaker> at attempt-start — submission/scoring
-// (submit_mock_attempt, an existing Postgres RPC from the original
-// standalone app) is untouched, since it's driven entirely by whatever
-// question_id/answer pairs are actually submitted, not by any separate
-// count of "all questions in this section".
-function shuffleArray(arr) {
-  const copy = [...arr]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
-
+// Randomized question bank — added 2026-09-25, RETIRED 2026-09-26.
+// Was scoped with Jasur as "just shuffle": a toggle on the exam
+// ("Randomize questions from bank") plus an optional "questions per
+// section" count, drawing a random subset in random order from a
+// larger authored pool per section. Removed from the UI for both
+// modules (Listening's was already gone; Reading's went with it here)
+// once Jasur pointed out a passage's questions are written to match
+// that specific passage — shuffling breaks that. buildAttemptQuestions
+// below is kept as a stable no-op (old rows may still have
+// randomize_questions set) rather than deleted outright, so nothing
+// upstream that still passes an exam through it needs to change.
 export function buildAttemptQuestions(allQuestionsForSection, exam) {
-  // Listening can't support this even if a row's randomize_questions
-  // somehow ended up true (e.g. old data from before this guard) — one
-  // fixed audio track narrates in a set order, so shuffling or drawing a
-  // random subset would desync what's on screen from what's playing.
-  // Reading-only, enforced here regardless of what the UI already does.
-  if (exam?.module === 'listening') return allQuestionsForSection
-  if (!exam?.randomize_questions) return allQuestionsForSection
-  const shuffled = shuffleArray(allQuestionsForSection)
-  const count = Number(exam.questions_per_section) || 0
-  return count > 0 ? shuffled.slice(0, count) : shuffled
+  // Randomizing was tried for both modules and retired for both.
+  // Listening never worked with it (one fixed audio track narrates in
+  // a set order — shuffling or drawing a subset would desync what's on
+  // screen from what's playing), and Jasur flagged 2026-09-26 that
+  // Reading has the same problem for a different reason: a passage's
+  // questions are written to match that specific passage (e.g.
+  // "Questions 14-20 refer to paragraph C"), so shuffling their order
+  // or dropping some breaks that correspondence. So this is now a
+  // permanent no-op — every section's questions are always returned as
+  // authored, in order, regardless of what any row's
+  // randomize_questions/questions_per_section columns say (old data
+  // from before this guard, or before the UI to set it was removed
+  // entirely).
+  return allQuestionsForSection
 }
 
 export function formatClock(ms) {

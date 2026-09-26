@@ -798,11 +798,12 @@ export default function TeacherMockCenter({ onExit }) {
           module: 'reading',
           is_active: false,
           sort_order: Number(values.sortOrder) || 0,
-          randomize_questions: values.randomizeQuestions,
-          questions_per_section:
-            values.randomizeQuestions && values.questionsPerSection
-              ? Number(values.questionsPerSection)
-              : null,
+          // Randomize-from-bank was retired 2026-09-26 — Jasur pointed
+          // out a passage's questions are written to match that
+          // specific passage, so shuffling/subsetting them breaks that.
+          // Always off for a new reading exam now.
+          randomize_questions: false,
+          questions_per_section: null,
         })
         .select('*')
         .single()
@@ -1299,10 +1300,11 @@ export default function TeacherMockCenter({ onExit }) {
         module: values.module,
         is_active: values.isActive,
         sort_order: Number(values.sortOrder) || 0,
-        randomize_questions: values.randomizeQuestions,
-        questions_per_section: values.randomizeQuestions && values.questionsPerSection
-          ? Number(values.questionsPerSection)
-          : null,
+        // Randomize-from-bank was retired for both modules 2026-09-26
+        // (see MockExams.jsx's buildAttemptQuestions) — always saved
+        // off from this modal now, regardless of module.
+        randomize_questions: false,
+        questions_per_section: null,
       }
 
       let createdExam = null
@@ -3587,8 +3589,6 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
   const [title, setTitle] = useState(exam?.title || '')
   const [isActive, setIsActive] = useState(exam ? exam.is_active : true)
   const [sortOrder, setSortOrder] = useState(exam?.sort_order ?? 0)
-  const [randomizeQuestions, setRandomizeQuestions] = useState(exam?.randomize_questions ?? false)
-  const [questionsPerSection, setQuestionsPerSection] = useState(exam?.questions_per_section ?? '')
 
   const canSave = title.trim() && (moduleName === 'reading' || moduleName === 'listening')
 
@@ -3600,14 +3600,14 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
             ? `Add ${moduleName} exam`
             : `Edit ${moduleName} exam`}
         </h3>
-        <p className="text-sm text-mist mt-0.5">
+        <p className="text-sm text-paper-dim mt-0.5">
           {moduleName === 'reading'
             ? "60 minutes, timed by the app. Next you'll add its passages and questions."
             : "40 minutes, timed by the app. Next you'll add its audio tracks and questions."}
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Title
             <input
               type="text"
@@ -3618,7 +3618,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Sort order
             <input
               type="number"
@@ -3626,7 +3626,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
               onChange={(e) => setSortOrder(e.target.value)}
               className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
-            <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+            <span className="mt-1 block text-[11px] normal-case tracking-normal text-paper-dim/80">
               Just the display order in the student's list — lower numbers show first.
             </span>
           </label>
@@ -3640,38 +3640,6 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
             />
             Published (students can see and sit this)
           </label>
-
-          {moduleName === 'reading' && (
-            <div className="rounded-lg border border-line bg-panel-2 p-3">
-              <label className="flex items-center gap-2 text-sm text-paper">
-                <input
-                  type="checkbox"
-                  checked={randomizeQuestions}
-                  onChange={(e) => setRandomizeQuestions(e.target.checked)}
-                  className="accent-brass"
-                />
-                Randomize questions from bank
-              </label>
-              <p className="mt-1 text-[11px] text-mist">
-                Author more questions per section than you need — each student sitting this exam
-                gets a random draw, in random order, so repeat test-takers don't just memorize one
-                fixed paper.
-              </p>
-              {randomizeQuestions && (
-                <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
-                  Questions per section (blank = use every question, just shuffled)
-                  <input
-                    type="number"
-                    min="1"
-                    value={questionsPerSection}
-                    onChange={(e) => setQuestionsPerSection(e.target.value)}
-                    placeholder="e.g. 10"
-                    className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
-                  />
-                </label>
-              )}
-            </div>
-          )}
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -3693,11 +3661,6 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
                 module: moduleName,
                 isActive,
                 sortOrder,
-                // Listening can't support this (see the comment on this
-                // checkbox above) — forced off regardless of stale state
-                // even though the checkbox is hidden for this module.
-                randomizeQuestions: moduleName === 'reading' ? randomizeQuestions : false,
-                questionsPerSection: moduleName === 'reading' ? questionsPerSection : '',
               })
             }
             disabled={saving || !canSave}
@@ -4237,14 +4200,14 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
         <h3 className="font-display text-lg text-paper">
           {isEdit ? 'Edit listening exam' : 'New listening exam'}
         </h3>
-        <p className="text-sm text-mist mt-0.5">
+        <p className="text-sm text-paper-dim mt-0.5">
           {isEdit
             ? 'All 4 parts, right here — update audio or questions in any part, then save.'
             : "Fill in Part 1, then move on to the next — this can't be created until every part has audio and at least one question."}
         </p>
 
         <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Title
             <input
               type="text"
@@ -4254,7 +4217,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Sort order
             <input
               type="number"
@@ -4577,8 +4540,6 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
 function ReadingExamWizard({ saving, error, onCancel, onSave }) {
   const [title, setTitle] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
-  const [randomizeQuestions, setRandomizeQuestions] = useState(false)
-  const [questionsPerSection, setQuestionsPerSection] = useState('')
 
   const [passages, setPassages] = useState(() =>
     [0, 1, 2].map((i) => ({
@@ -4654,8 +4615,6 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
     onSave({
       title,
       sortOrder,
-      randomizeQuestions,
-      questionsPerSection,
       passages: passages.map((p) => ({
         title: p.title,
         passageText: p.passageText,
@@ -4673,13 +4632,13 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
         <h3 className="font-display text-lg text-paper">New reading exam</h3>
-        <p className="text-sm text-mist mt-0.5">
+        <p className="text-sm text-paper-dim mt-0.5">
           Fill in Passage 1, then move on to the next — this can't be created until every passage
           has its text and at least one complete question.
         </p>
 
         <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Title
             <input
               type="text"
@@ -4689,7 +4648,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Sort order
             <input
               type="number"
@@ -4698,36 +4657,6 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
-        </div>
-
-        <div className="mt-3 rounded-lg border border-line bg-panel-2 p-3">
-          <label className="flex items-center gap-2 text-sm text-paper">
-            <input
-              type="checkbox"
-              checked={randomizeQuestions}
-              onChange={(e) => setRandomizeQuestions(e.target.checked)}
-              className="accent-brass"
-            />
-            Randomize questions from bank
-          </label>
-          <p className="mt-1 text-[11px] text-mist">
-            Author more questions per passage than you need — each student sitting this exam gets
-            a random draw, in random order, so repeat test-takers don't just memorize one fixed
-            paper.
-          </p>
-          {randomizeQuestions && (
-            <label className="mt-2 block text-xs text-mist font-mono uppercase tracking-wide">
-              Questions per passage (blank = use every question, just shuffled)
-              <input
-                type="number"
-                min="1"
-                value={questionsPerSection}
-                onChange={(e) => setQuestionsPerSection(e.target.value)}
-                placeholder="e.g. 10"
-                className="focus-ring mt-1 w-32 rounded-lg border border-line bg-panel px-3 py-2 text-sm text-paper normal-case"
-              />
-            </label>
-          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-4">

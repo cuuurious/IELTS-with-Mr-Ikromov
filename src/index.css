@@ -104,7 +104,14 @@ html:not([data-theme='light']) {
 
   --color-paper: #f3f1eb;
   --color-paper-dim: #c3c0ba;
-  --color-mist: #9b99a0;
+  /* Raised from #9b99a0 2026-09-26 — Jasur, more than once, on modal
+     labels/help text set in this color: "too invisible" / "too much
+     grey text... exhausting." This is the app's single most-used
+     secondary-text color (every uppercase field label, every one-line
+     explainer, every muted timestamp), so nudging it here lifts
+     legibility everywhere at once instead of hunting down each
+     individual text-mist usage in every modal one by one. */
+  --color-mist: #b2afb7;
 
   --color-brass: #a69af4;
   --color-brass-dim: #9183e6;
