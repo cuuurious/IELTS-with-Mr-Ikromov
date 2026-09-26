@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
 import { guessMimeType } from '../../lib/mime'
 import ConfirmModal from '../../components/ConfirmModal'
+import ThemeToggle from '../../components/ThemeToggle'
 
 /*
  * ================================================================
@@ -191,7 +192,22 @@ export default function TeacherMockCenter({ onExit }) {
 
   const [search, setSearch] = useState('')
   const [studentsView, setStudentsView] = useState('grouped') // 'grouped' | 'mixed'
-  const [selectedGroupId, setSelectedGroupId] = useState(null)
+  // Jasur 2026-09-26, right after asking for every group as its own
+  // section: "i dont want to scroll for hours to see groups
+  // separately" — groups here run 30-40+ students each, so all of them
+  // expanded at once was exactly that. Sections now start collapsed
+  // (header only) and open on click; a search still opens any group
+  // that has a match automatically, so searching doesn't require
+  // manually opening every section first.
+  const [expandedGroupIds, setExpandedGroupIds] = useState(() => new Set())
+  const toggleGroupExpanded = (groupId) => {
+    setExpandedGroupIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }
 
   // Content editor (Writing mocks) — Jasur's "next level" ask
   // 2026-09-25: no more inserting these by hand in the Supabase Table
@@ -1142,40 +1158,55 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }, [rows, search])
 
-  // A pill picker for "By group" — jumps straight to one group instead
-  // of stacking every group's full student list and making Jasur
-  // scroll past 40+ names to reach the next one. Built from the raw
-  // `groups` list (not the search-filtered rowsByGroup) so the picker
-  // itself never disappears mid-search — only the list underneath it
-  // reacts to the search box.
   const hasUngroupedStudents = useMemo(
     () => rows.some((row) => (groupIdsByStudent[row.student.id] || []).length === 0),
     [rows, groupIdsByStudent]
   )
 
-  const groupPickerOptions = useMemo(() => {
-    const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name))
-    const options = sorted.map((g) => ({ groupId: g.id, groupName: g.name }))
-    if (hasUngroupedStudents) {
-      options.push({ groupId: '__none__', groupName: 'No group' })
-    }
-    return options
-  }, [groups, hasUngroupedStudents])
+  // Replaces the old "By group" pill picker (pick one group at a time,
+  // everyone else hidden) — Jasur, more than once: "add all students...
+  // make them separate sections like in groups and homework groups look
+  // like". So every group now renders as its own always-visible section
+  // below, styled with the same rotating accent palette GroupWorkspace
+  // uses for its own group cards, instead of a flat, all-black pill row.
+  const groupAccentPalette = [
+    { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/30' },
+    { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/30' },
+    { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/30' },
+    { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/30' },
+    { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/30' },
+  ]
 
-  useEffect(() => {
-    if (selectedGroupId) return
-    if (groupPickerOptions.length > 0) {
-      setSelectedGroupId(groupPickerOptions[0].groupId)
-    }
-  }, [groupPickerOptions, selectedGroupId])
+  const sortedGroups = useMemo(
+    () => [...groups].sort((a, b) => a.name.localeCompare(b.name)),
+    [groups]
+  )
 
-  const selectedGroupRows = useMemo(() => {
-    if (!selectedGroupId) return []
-    if (selectedGroupId === '__none__') {
-      return filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).length === 0)
-    }
-    return filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).includes(selectedGroupId))
-  }, [filteredRows, groupIdsByStudent, selectedGroupId])
+  const getGroupAccent = (groupId) => {
+    const index = sortedGroups.findIndex((g) => g.id === groupId)
+    return groupAccentPalette[(index === -1 ? 0 : index) % groupAccentPalette.length]
+  }
+
+  const getGroupBadge = (name) => {
+    const trimmed = (name || '').trim()
+    if (!trimmed) return '?'
+    if (/^\d+$/.test(trimmed)) return trimmed
+    return trimmed.charAt(0).toUpperCase()
+  }
+
+  const groupSections = useMemo(
+    () =>
+      sortedGroups.map((g) => ({
+        group: g,
+        rows: filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).includes(g.id)),
+      })),
+    [sortedGroups, filteredRows, groupIdsByStudent]
+  )
+
+  const ungroupedRows = useMemo(
+    () => filteredRows.filter((row) => (groupIdsByStudent[row.student.id] || []).length === 0),
+    [filteredRows, groupIdsByStudent]
+  )
 
   const allSpeakingSlots = useMemo(() => {
     const studentById = {}
@@ -2090,13 +2121,16 @@ export default function TeacherMockCenter({ onExit }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onExit}
-          className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
-        >
-          ← Exit to dashboard
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={onExit}
+            className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
+          >
+            ← Exit to dashboard
+          </button>
+        </div>
       </header>
 
       <nav className="shrink-0 border-b border-line bg-panel-2 px-4 sm:px-6 flex gap-1 overflow-x-auto">
@@ -2184,37 +2218,95 @@ export default function TeacherMockCenter({ onExit }) {
                   onOpenProfile={setProfileStudentId}
                   emptyLabel="No students match that search."
                 />
-              ) : groupPickerOptions.length === 0 ? (
+              ) : groupSections.length === 0 && !hasUngroupedStudents ? (
                 <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                   No groups yet.
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {/* A group picker, not a stacked scroll — jump straight to one
-                      group instead of scrolling past every other group's full
-                      student list to reach it. */}
-                  <div className="flex gap-2 flex-wrap">
-                    {groupPickerOptions.map((option) => (
-                      <button
-                        key={option.groupId}
-                        type="button"
-                        onClick={() => setSelectedGroupId(option.groupId)}
-                        className={`focus-ring px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
-                          selectedGroupId === option.groupId
-                            ? 'bg-brass text-onbrass border-brass-dim font-semibold'
-                            : 'border-line text-mist hover:text-paper'
-                        }`}
-                      >
-                        {option.groupName}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-3">
+                  {groupSections
+                    .filter((s) => s.rows.length > 0 || !search.trim())
+                    .map(({ group, rows: groupRows }) => {
+                      const accent = getGroupAccent(group.id)
+                      const badge = getGroupBadge(group.name)
+                      // Same call GroupWorkspace.jsx makes for its own group
+                      // cards: a purely numeric name ("71") already shows in
+                      // full inside the badge, so a title right next to it
+                      // would just repeat the exact same text — skip it for
+                      // those, keep it for named groups ("EL STARS") where
+                      // the badge is only a one-letter monogram.
+                      const isNumericName = /^\d+$/.test(group.name.trim())
+                      // A search match forces the section open even if the
+                      // student never clicked it, so typing a name doesn't
+                      // also require hunting down and opening its group.
+                      const isOpen = expandedGroupIds.has(group.id) || (Boolean(search.trim()) && groupRows.length > 0)
+                      return (
+                        <div
+                          key={group.id}
+                          className={`flex flex-col gap-3 ${isOpen ? 'w-full' : 'w-full sm:w-auto'}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleGroupExpanded(group.id)}
+                            className={`focus-ring flex items-center gap-3 rounded-2xl border ${accent.border} bg-panel-2 px-4 py-3 text-left shadow-sm transition-colors hover:bg-panel`}
+                          >
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display font-semibold ${
+                                badge.length > 1 ? 'text-sm' : 'text-base'
+                              } ${accent.bg} ${accent.text} ring-1 ring-inset ring-white/10`}
+                            >
+                              {badge}
+                            </div>
+                            {!isNumericName && (
+                              <p className="font-display text-base text-paper">{group.name}</p>
+                            )}
+                            <span className="text-sm text-paper-dim">
+                              {groupRows.length} student{groupRows.length === 1 ? '' : 's'}
+                            </span>
+                            <span className="ml-auto text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
+                          </button>
 
-                  <StudentRowList
-                    rows={selectedGroupRows}
-                    onOpenProfile={setProfileStudentId}
-                    emptyLabel="No students in this group match that search."
-                  />
+                          {isOpen && (
+                            <StudentRowList
+                              rows={groupRows}
+                              onOpenProfile={setProfileStudentId}
+                              emptyLabel="No students in this group match that search."
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+
+                  {(ungroupedRows.length > 0 || !search.trim()) && hasUngroupedStudents && (() => {
+                    const isOpen =
+                      expandedGroupIds.has('__none__') || (Boolean(search.trim()) && ungroupedRows.length > 0)
+                    return (
+                      <div className="flex flex-col gap-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroupExpanded('__none__')}
+                          className="focus-ring flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-left shadow-sm transition-colors hover:bg-panel"
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display font-semibold text-base bg-panel text-paper-dim ring-1 ring-inset ring-white/10">
+                            ?
+                          </div>
+                          <p className="font-display text-base text-paper">No group</p>
+                          <span className="text-sm text-paper-dim">
+                            {ungroupedRows.length} student{ungroupedRows.length === 1 ? '' : 's'}
+                          </span>
+                          <span className="ml-auto text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
+                        </button>
+
+                        {isOpen && (
+                          <StudentRowList
+                            rows={ungroupedRows}
+                            onOpenProfile={setProfileStudentId}
+                            emptyLabel="No ungrouped students match that search."
+                          />
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
             </div>
@@ -3209,7 +3301,7 @@ function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
 
   return (
     <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3 border-b border-line text-[10px] uppercase tracking-[0.14em] text-paper-dim font-mono font-semibold">
+      <div className="hidden sm:grid grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3 border-b border-line text-xs font-semibold text-paper-dim">
         <span>Student</span>
         <span>Reading</span>
         <span>Listening</span>
@@ -3267,7 +3359,7 @@ function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
             )}
           </div>
 
-          <span className="text-xs text-brass self-center hidden sm:block">View →</span>
+          <span />
         </button>
       ))}
     </div>
@@ -3334,7 +3426,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring shrink-0 text-mist hover:text-paper text-xl leading-none px-1"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-lg leading-none text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -3590,9 +3682,19 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create' ? 'Add writing mock' : 'Edit writing mock'}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {modal.mode === 'create' ? 'Add writing mock' : 'Edit writing mock'}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-mist mt-0.5">
           Task 1 is optional — leave its prompt blank for a Task-2-only mock.
         </p>
@@ -3776,11 +3878,21 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create'
-            ? `Add ${moduleName} exam`
-            : `Edit ${moduleName} exam`}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {modal.mode === 'create'
+              ? `Add ${moduleName} exam`
+              : `Edit ${moduleName} exam`}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-paper-dim mt-0.5">
           {moduleName === 'reading'
             ? "60 minutes, timed by the app. Next you'll add its passages and questions."
@@ -3937,9 +4049,19 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create' ? 'Add section' : 'Edit section'}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {modal.mode === 'create' ? 'Add section' : 'Edit section'}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-mist mt-0.5">
           {isReading
             ? 'One passage per section — students read it alongside its questions.'
@@ -3993,14 +4115,14 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
           </div>
 
           {isReading ? (
-            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            <label className="flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
               Passage text
               <textarea
                 value={passageText}
                 onChange={(e) => setPassageText(e.target.value)}
                 rows={8}
                 placeholder="Paste the reading passage here…"
-                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+                className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper resize-none"
               />
             </label>
           ) : (
@@ -4313,9 +4435,19 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create' ? 'Add question' : 'Edit question'}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {modal.mode === 'create' ? 'Add question' : 'Edit question'}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-mist mt-0.5">
           Grading is an exact, case-insensitive text match against the correct answer below.
         </p>
@@ -4504,8 +4636,33 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
 
   const allPartsValid = parts.every(isPartValid)
   const canSave = title.trim() && allPartsValid
+  const [validationMessage, setValidationMessage] = useState('')
+
+  // Clear any "you missed something" message as soon as the teacher
+  // starts fixing it, instead of leaving a stale warning on screen.
+  useEffect(() => {
+    setValidationMessage('')
+  }, [title, parts])
+
+  const getValidationMessage = () => {
+    if (!title.trim()) return 'Give this exam a title before saving.'
+    const badIndex = parts.findIndex((p, i) => i < revealedCount && !isPartValid(p))
+    if (badIndex !== -1) {
+      const p = parts[badIndex]
+      const hasAudio = Boolean(p.audioFile || (p.audioUrl && !p.clearAudio))
+      if (!hasAudio) return `Part ${badIndex + 1} is missing its audio file.`
+      if (p.questions.length === 0) return `Part ${badIndex + 1} needs at least one question.`
+      return `Part ${badIndex + 1} has a question that's missing an answer or choices — check every question in that part.`
+    }
+    return ''
+  }
 
   const handleSave = () => {
+    const message = getValidationMessage()
+    if (message) {
+      setValidationMessage(message)
+      return
+    }
     onSave({
       title,
       sortOrder,
@@ -4538,9 +4695,19 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {isEdit ? 'Edit listening exam' : 'New listening exam'}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {isEdit ? 'Edit listening exam' : 'New listening exam'}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-paper-dim mt-0.5">
           {isEdit
             ? 'All 4 parts, right here — update audio or questions in any part, then save.'
@@ -4548,23 +4715,27 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
         </p>
 
         <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+          {/* flex+gap instead of relying on a margin on the input — a
+              plain margin-top here kept reading as "too close" no matter
+              how much it was bumped, since it depends on the label's own
+              line-height rather than a fixed, guaranteed gap. */}
+          <label className="flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Title
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Listening Mock Test 1"
-              className="focus-ring mt-2 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper"
             />
           </label>
-          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+          <label className="flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Sort order
             <input
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="focus-ring mt-2 w-28 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring w-28 rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper"
             />
           </label>
         </div>
@@ -4596,7 +4767,9 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
           </div>
         )}
 
-        {error && <p className="text-coral text-sm mt-4">{error}</p>}
+        {(validationMessage || error) && (
+          <p className="text-coral text-sm mt-4">{validationMessage || error}</p>
+        )}
 
         <div className="mt-5 flex gap-2 justify-end border-t border-line pt-4">
           <button
@@ -4611,8 +4784,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving || !canSave}
-              title={!canSave ? 'Every part needs audio and at least one complete question.' : undefined}
+              disabled={saving}
               className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
               {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create listening exam'}
@@ -4709,13 +4881,6 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
           onChange={(e) => onChange({ title: e.target.value })}
           className="focus-ring font-display text-base text-paper bg-transparent border-0 border-b border-transparent hover:border-line focus:border-brass px-0 py-0.5 flex-1 min-w-0"
         />
-        <span
-          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${
-            valid ? 'text-sage border-sage/30 bg-sage/10' : 'text-mist border-line bg-panel'
-          }`}
-        >
-          {valid ? 'Complete' : 'Incomplete'}
-        </span>
       </div>
 
       <div className="mt-3">
@@ -4903,8 +5068,33 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
 
   const allPassagesValid = passages.every(isPassageValid)
   const canSave = title.trim() && allPassagesValid
+  const [validationMessage, setValidationMessage] = useState('')
+
+  // Clear any "you missed something" message as soon as the teacher
+  // starts fixing it, instead of leaving a stale warning on screen.
+  useEffect(() => {
+    setValidationMessage('')
+  }, [title, passages])
+
+  const getValidationMessage = () => {
+    if (!title.trim()) return 'Give this exam a title before saving.'
+    const badIndex = passages.findIndex((p, i) => i < revealedCount && !isPassageValid(p))
+    if (badIndex !== -1) {
+      const p = passages[badIndex]
+      if (!p.title.trim()) return `Passage ${badIndex + 1} is missing a title.`
+      if (!p.passageText.trim()) return `Passage ${badIndex + 1} is missing its passage text.`
+      if (p.questions.length === 0) return `Passage ${badIndex + 1} needs at least one question.`
+      return `Passage ${badIndex + 1} has a question that's missing an answer or choices — check every question in that passage.`
+    }
+    return ''
+  }
 
   const handleSave = () => {
+    const message = getValidationMessage()
+    if (message) {
+      setValidationMessage(message)
+      return
+    }
     onSave({
       title,
       sortOrder,
@@ -4924,30 +5114,40 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">New reading exam</h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">New reading exam</h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-paper-dim mt-0.5">
           Fill in Passage 1, then move on to the next — this can't be created until every passage
           has its text and at least one complete question.
         </p>
 
         <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+          <label className="flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Title
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Reading Mock Test 1"
-              className="focus-ring mt-2 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper"
             />
           </label>
-          <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+          <label className="flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
             Sort order
             <input
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="focus-ring mt-2 w-28 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring w-28 rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper"
             />
           </label>
         </div>
@@ -4979,7 +5179,9 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
           </div>
         )}
 
-        {error && <p className="text-coral text-sm mt-4">{error}</p>}
+        {(validationMessage || error) && (
+          <p className="text-coral text-sm mt-4">{validationMessage || error}</p>
+        )}
 
         <div className="mt-5 flex gap-2 justify-end border-t border-line pt-4">
           <button
@@ -4994,8 +5196,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving || !canSave}
-              title={!canSave ? 'Every passage needs its text and at least one complete question.' : undefined}
+              disabled={saving}
               className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
               {saving ? 'Saving…' : 'Create reading exam'}
@@ -5092,13 +5293,6 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
           onChange={(e) => onChange({ title: e.target.value })}
           className="focus-ring font-display text-base text-paper bg-transparent border-0 border-b border-transparent hover:border-line focus:border-brass px-0 py-0.5 flex-1 min-w-0"
         />
-        <span
-          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${
-            valid ? 'text-sage border-sage/30 bg-sage/10' : 'text-mist border-line bg-panel'
-          }`}
-        >
-          {valid ? 'Complete' : 'Incomplete'}
-        </span>
       </div>
 
       <div className="mt-3 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
@@ -5121,14 +5315,14 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
         {importError && <p className="mt-1.5 text-xs text-coral">{importError}</p>}
       </div>
 
-      <label className="mt-3 block text-xs text-mist font-mono uppercase tracking-wide">
+      <label className="mt-3 flex flex-col gap-2 text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
         Passage text
         <textarea
           value={part.passageText}
           onChange={(e) => onChange({ passageText: e.target.value })}
           rows={8}
           placeholder="Paste the reading passage here…"
-          className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+          className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-paper resize-none"
         />
       </label>
 
@@ -5229,9 +5423,19 @@ function FullMockSetFormModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
-          {modal.mode === 'create' ? 'Add full mock' : 'Edit full mock'}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-lg text-paper">
+            {modal.mode === 'create' ? 'Add full mock' : 'Edit full mock'}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
         <p className="text-sm text-mist mt-0.5">
           Students sit these three, in this order, as one continuous test — same as the real
           exam.

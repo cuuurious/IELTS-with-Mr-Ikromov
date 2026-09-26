@@ -10,6 +10,7 @@ import {
 import { downloadSpeakingSlotIcs } from '../lib/calendarEvent'
 import { estimateBandFromPercent } from '../lib/ieltsBands'
 import { downloadScoreReport } from '../lib/generateScoreReport'
+import ThemeToggle from './ThemeToggle'
 
 /*
  * ================================================================
@@ -286,13 +287,16 @@ export default function MockTestCenter({ onExit }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onExit}
-          className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
-        >
-          ← Exit to dashboard
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={onExit}
+            className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
+          >
+            ← Exit to dashboard
+          </button>
+        </div>
       </header>
 
       <nav className="shrink-0 border-b border-line bg-panel-2 px-4 sm:px-6 flex gap-1 overflow-x-auto">
