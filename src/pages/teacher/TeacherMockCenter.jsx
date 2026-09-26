@@ -2100,17 +2100,18 @@ export default function TeacherMockCenter({ onExit }) {
           homework belongs in this window at all. */}
       <header className="shrink-0 border-b border-line bg-panel px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          {profile?.avatar_url ? (
+          {/* Same brand photo + online dot as the main sidebar's header
+              (src="/mrikromov.jpg") — not the signed-in profile's own
+              avatar_url. This box is the site's identity, same as it is
+              everywhere else in the app, not a per-account picture. */}
+          <div className="relative shrink-0">
             <img
-              src={profile.avatar_url}
-              alt=""
-              className="h-10 w-10 rounded-full border border-brass-dim/30 object-cover shrink-0"
+              src="/mrikromov.jpg"
+              alt="IELTS with Mr Ikromov"
+              className="h-10 w-10 rounded-[0.85rem] object-cover object-center border border-line"
             />
-          ) : (
-            <div className="h-10 w-10 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
-              <img src="/favicon.svg" alt="" className="h-full w-full object-contain" />
-            </div>
-          )}
+            <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-full bg-sage border-2 border-panel" />
+          </div>
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.14em] text-brass font-mono font-semibold">
               Mock Center
