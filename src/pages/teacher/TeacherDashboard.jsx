@@ -12,6 +12,7 @@ import Layout, {
   IconApprovals,
   IconStaff,
   IconMockExam,
+  IconHelp,
 } from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
 import TeacherStudents from './TeacherStudents'
@@ -23,6 +24,7 @@ import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
 import TeacherAccounts from './TeacherAccounts'
 import TeacherMockCenter from './TeacherMockCenter'
+import HowToUseGuide from '../../components/HowToUseGuide'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -254,6 +256,16 @@ export default function TeacherDashboard() {
           : []),
       ],
     },
+    {
+      title: 'Reference',
+      items: [
+        // Same walkthrough students see in their own dashboard (see
+        // src/components/HowToUseGuide.jsx) — kept here too so a teacher
+        // can preview exactly what a new student sees, and grab the PDF
+        // to distribute, without needing a student login.
+        { key: 'howto', label: 'How to Use (Student Guide)', icon: IconHelp },
+      ],
+    },
   ]
 
   const handleTabChange = (nextTab) => {
@@ -359,6 +371,8 @@ export default function TeacherDashboard() {
           currentTeacherId={profile.id}
         />
       )}
+
+      {tab === 'howto' && <HowToUseGuide />}
     </Layout>
   )
 }

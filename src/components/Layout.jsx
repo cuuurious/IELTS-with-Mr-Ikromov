@@ -124,6 +124,16 @@ export function IconStaff({ className }) {
   )
 }
 
+export function IconHelp({ className }) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.3 9.3a2.7 2.7 0 0 1 5.2 1c0 1.8-2.5 2-2.5 3.7" />
+      <path d="M12 17.3h.01" />
+    </svg>
+  )
+}
+
 function IconMenu({ className }) {
   return (
     <svg className={className} {...iconProps}>

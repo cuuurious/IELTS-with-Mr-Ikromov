@@ -15,6 +15,7 @@ import Layout, {
   IconLeaderboard,
   IconGroupChat,
   IconChat,
+  IconHelp,
 } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
@@ -23,6 +24,7 @@ import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
 import PrivateChats from '../../components/PrivateChats'
 import MockTestCenter from '../../components/MockTestCenter'
+import HowToUseGuide from '../../components/HowToUseGuide'
 
 // One-line description shown under the top bar's own title — see the
 // "PAGE INTRO" comment below for why this no longer repeats the title
@@ -33,6 +35,9 @@ const PAGE_SUBTITLES = {
   leaderboard: 'See your progress alongside your classmates.',
   'group-chat': 'Stay connected with your group and classmates.',
   chats: 'Private conversations with your teacher and other students.',
+  // 'howto' intentionally has no entry — HowToUseGuide.jsx renders its
+  // own header card (eyebrow + title + description), so this generic
+  // subtitle card would just duplicate it right above.
 }
 
 export default function StudentDashboard() {
@@ -519,6 +524,11 @@ const messageId = linkParts[2] || null
           { key: 'chats', label: 'Chats', icon: IconChat },
         ],
       },
+      {
+        items: [
+          { key: 'howto', label: 'How to Use', icon: IconHelp },
+        ],
+      },
     ],
     []
   )
@@ -879,6 +889,14 @@ const messageId = linkParts[2] || null
             initialMessageId={notificationChatMessageId}
           />
         )}
+
+        {/* ======================================================
+            HOW TO USE
+            Onboarding walkthrough for new students — see
+            HowToUseGuide.jsx. Also downloadable as a PDF from
+            inside that component (public/how-to-use-ielts-portal.pdf).
+           ====================================================== */}
+        {tab === 'howto' && <HowToUseGuide />}
       </div>
     </Layout>
   )
