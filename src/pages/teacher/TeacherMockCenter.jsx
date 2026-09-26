@@ -181,7 +181,12 @@ export default function TeacherMockCenter({ onExit }) {
   const [groups, setGroups] = useState([])
   const [groupMembers, setGroupMembers] = useState([])
 
-  const [expandedId, setExpandedId] = useState(null)
+  // Was "expandedId" — a click used to expand the row in place. Jasur
+  // 2026-09-26: "i want a separate window of this profile to be opened
+  // with details about mocks like in leaderboard" — same idea (one
+  // student open at a time, tracked by id) now opens StudentProfileModal
+  // instead of an inline panel.
+  const [profileStudentId, setProfileStudentId] = useState(null)
   const [expandedEssays, setExpandedEssays] = useState({})
 
   const [search, setSearch] = useState('')
@@ -2130,11 +2135,7 @@ export default function TeacherMockCenter({ onExit }) {
 
               <StudentRowList
                 rows={rows}
-                expandedId={expandedId}
-                onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                onMessage={openChat}
-                expandedEssays={expandedEssays}
-                onToggleEssay={toggleEssay}
+                onOpenProfile={setProfileStudentId}
                 emptyLabel="No students yet."
               />
             </div>
@@ -2180,11 +2181,7 @@ export default function TeacherMockCenter({ onExit }) {
               {studentsView === 'mixed' ? (
                 <StudentRowList
                   rows={filteredRows}
-                  expandedId={expandedId}
-                  onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                  onMessage={openChat}
-                  expandedEssays={expandedEssays}
-                  onToggleEssay={toggleEssay}
+                  onOpenProfile={setProfileStudentId}
                   emptyLabel="No students match that search."
                 />
               ) : groupPickerOptions.length === 0 ? (
@@ -2215,11 +2212,7 @@ export default function TeacherMockCenter({ onExit }) {
 
                   <StudentRowList
                     rows={selectedGroupRows}
-                    expandedId={expandedId}
-                    onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
-                    onMessage={openChat}
-                    expandedEssays={expandedEssays}
-                    onToggleEssay={toggleEssay}
+                    onOpenProfile={setProfileStudentId}
                     emptyLabel="No students in this group match that search."
                   />
                 </div>
@@ -3166,6 +3159,19 @@ export default function TeacherMockCenter({ onExit }) {
           run?.()
         }}
       />
+
+      {profileStudentId && (
+        <StudentProfileModal
+          row={rows.find((r) => r.student.id === profileStudentId)}
+          onClose={() => setProfileStudentId(null)}
+          onMessage={(id) => {
+            setProfileStudentId(null)
+            openChat(id)
+          }}
+          expandedEssays={expandedEssays}
+          onToggleEssay={toggleEssay}
+        />
+      )}
     </div>
   )
 }
@@ -3187,9 +3193,12 @@ function MetricCell({ stats }) {
 }
 
 // Shared between "Student Progress" and "Students" — same row shape,
-// same expand behavior, just fed a different (filtered/grouped or not)
-// slice of `rows`.
-function StudentRowList({ rows, expandedId, onToggle, onMessage, expandedEssays, onToggleEssay, emptyLabel }) {
+// just fed a different (filtered/grouped or not) slice of `rows`.
+// Used to expand a row in place to show mock history; Jasur 2026-09-26
+// asked for "a separate window of this profile... like in leaderboard"
+// instead, so a row click now opens StudentProfileModal (rendered once,
+// at the top level) rather than an inline panel here.
+function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
@@ -3200,7 +3209,7 @@ function StudentRowList({ rows, expandedId, onToggle, onMessage, expandedEssays,
 
   return (
     <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3 border-b border-line text-[10px] uppercase tracking-[0.14em] text-mist font-mono">
+      <div className="hidden sm:grid grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3 border-b border-line text-[10px] uppercase tracking-[0.14em] text-paper-dim font-mono font-semibold">
         <span>Student</span>
         <span>Reading</span>
         <span>Listening</span>
@@ -3209,192 +3218,273 @@ function StudentRowList({ rows, expandedId, onToggle, onMessage, expandedEssays,
         <span />
       </div>
 
-      {rows.map((row) => {
-        const expanded = expandedId === row.student.id
-
-        return (
-          <div key={row.student.id} className="border-b border-line last:border-b-0">
-            <button
-              type="button"
-              onClick={() => onToggle(row.student.id)}
-              className="w-full text-left grid grid-cols-2 sm:grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3.5 hover:bg-panel-2 transition-colors"
-            >
-              <div className="col-span-2 sm:col-span-1 min-w-0">
-                <p className="font-medium text-paper truncate">{studentLabel(row.student)}</p>
-                {row.student.target_band != null && (
-                  <p className="text-xs text-brass mt-0.5">
-                    Target {formatTargetBand(row.student.target_band)}
-                  </p>
-                )}
-              </div>
-
-              <MetricCell stats={row.reading} />
-              <MetricCell stats={row.listening} />
-
-              <div className="text-sm text-paper">
-                {row.avgBand != null ? (
-                  <>
-                    <span className="font-semibold text-sage">Band {row.avgBand}</span>
-                    <span className="text-mist text-xs ml-1">
-                      ({row.reviewedWritingCount})
-                    </span>
-                  </>
-                ) : row.writingReviews.length > 0 ? (
-                  <span className="text-amber text-xs">Not marked</span>
-                ) : (
-                  <span className="text-mist text-xs">—</span>
-                )}
-              </div>
-
-              <div className="text-sm text-paper">
-                {row.avgSpeakingBand != null ? (
-                  <>
-                    <span className="font-semibold text-sage">Band {row.avgSpeakingBand}</span>
-                    <span className="text-mist text-xs ml-1">
-                      ({row.reviewedSpeakingCount})
-                    </span>
-                  </>
-                ) : row.hasCompletedSpeaking ? (
-                  <span className="text-amber text-xs">Not marked</span>
-                ) : (
-                  <span className="text-mist text-xs">—</span>
-                )}
-              </div>
-
-              <span className="text-xs text-mist self-center hidden sm:block">
-                {expanded ? '▲' : '▼'}
-              </span>
-            </button>
-
-            {expanded && (
-              <div className="px-5 pb-4 pt-1 space-y-3 bg-panel-2/40">
-                <button
-                  type="button"
-                  onClick={() => onMessage(row.student.id)}
-                  className="focus-ring text-xs text-brass hover:text-brass-dim"
-                >
-                  Message {studentLabel(row.student)} →
-                </button>
-
-                {[...row.readingAttempts, ...row.listeningAttempts].length === 0 &&
-                  row.writingReviews.length === 0 &&
-                  row.speakingSlots.length === 0 && (
-                    <p className="text-sm text-mist">No mock activity yet.</p>
-                  )}
-
-                {[...row.readingAttempts, ...row.listeningAttempts]
-                  .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-                  .map((a) => (
-                    <div
-                      key={a.id}
-                      className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel px-3.5 py-2.5"
-                    >
-                      <span className="text-paper capitalize">
-                        {a.module} · {a.examTitle}
-                      </span>
-                      <span className="text-mist font-mono text-xs">
-                        {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
-                        {new Date(a.submitted_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-
-                {row.writingReviews.map((r) => {
-                  const essayOpen = Boolean(expandedEssays[r.id])
-                  const hasEssay = Boolean(r.task1_text || r.task2_text)
-
-                  return (
-                    <div key={r.id} className="rounded-lg border border-line bg-panel px-3.5 py-2.5">
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-paper">{r.examTitle}</span>
-                        {r.examiner_band != null ? (
-                          <span className="text-sage font-semibold text-xs">
-                            Band {r.examiner_band}
-                          </span>
-                        ) : (
-                          <span className="text-amber text-xs">Awaiting review</span>
-                        )}
-                      </div>
-
-                      {r.examiner_feedback && (
-                        <p className="text-xs text-mist mt-1.5 whitespace-pre-wrap">
-                          {r.examiner_feedback}
-                        </p>
-                      )}
-
-                      {hasEssay && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => onToggleEssay(r.id)}
-                            className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
-                          >
-                            {essayOpen ? 'Hide essay ▲' : 'View essay ▼'}
-                          </button>
-
-                          {essayOpen && (
-                            <div className="mt-2 space-y-2.5">
-                              {r.task1_text && (
-                                <div>
-                                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1">
-                                    Task 1
-                                  </p>
-                                  <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel-2 p-2.5 max-h-64 overflow-y-auto">
-                                    {r.task1_text}
-                                  </p>
-                                </div>
-                              )}
-                              {r.task2_text && (
-                                <div>
-                                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1">
-                                    Task 2
-                                  </p>
-                                  <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel-2 p-2.5 max-h-64 overflow-y-auto">
-                                    {r.task2_text}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
-
-                {row.speakingSlots
-                  .slice()
-                  .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
-                  .map((slot) => {
-                    const meta = SPEAKING_STATUS_META[slot.status] || SPEAKING_STATUS_META.scheduled
-                    return (
-                      <div key={slot.id} className="rounded-lg border border-line bg-panel px-3.5 py-2.5">
-                        <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="text-paper">{formatSlotTime(slot.scheduled_at)}</span>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${meta.className}`}>
-                              {meta.label}
-                            </span>
-                            {slot.examiner_band != null && (
-                              <span className="text-sage font-semibold text-xs">
-                                Band {slot.examiner_band}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {slot.examiner_feedback && (
-                          <p className="text-xs text-mist mt-1.5 whitespace-pre-wrap">
-                            {slot.examiner_feedback}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
-              </div>
+      {rows.map((row) => (
+        <button
+          key={row.student.id}
+          type="button"
+          onClick={() => onOpenProfile(row.student.id)}
+          className="w-full text-left grid grid-cols-2 sm:grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3.5 border-b border-line last:border-b-0 hover:bg-panel-2 transition-colors"
+        >
+          <div className="col-span-2 sm:col-span-1 min-w-0">
+            <p className="font-medium text-paper truncate">{studentLabel(row.student)}</p>
+            {row.student.target_band != null && (
+              <p className="text-xs text-brass mt-0.5">
+                Target {formatTargetBand(row.student.target_band)}
+              </p>
             )}
           </div>
-        )
-      })}
+
+          <MetricCell stats={row.reading} />
+          <MetricCell stats={row.listening} />
+
+          <div className="text-sm text-paper">
+            {row.avgBand != null ? (
+              <>
+                <span className="font-semibold text-sage">Band {row.avgBand}</span>
+                <span className="text-paper-dim text-xs ml-1">
+                  ({row.reviewedWritingCount})
+                </span>
+              </>
+            ) : row.writingReviews.length > 0 ? (
+              <span className="text-amber text-xs">Not marked</span>
+            ) : (
+              <span className="text-mist text-xs">—</span>
+            )}
+          </div>
+
+          <div className="text-sm text-paper">
+            {row.avgSpeakingBand != null ? (
+              <>
+                <span className="font-semibold text-sage">Band {row.avgSpeakingBand}</span>
+                <span className="text-paper-dim text-xs ml-1">
+                  ({row.reviewedSpeakingCount})
+                </span>
+              </>
+            ) : row.hasCompletedSpeaking ? (
+              <span className="text-amber text-xs">Not marked</span>
+            ) : (
+              <span className="text-mist text-xs">—</span>
+            )}
+          </div>
+
+          <span className="text-xs text-brass self-center hidden sm:block">View →</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Jasur 2026-09-26: "a separate window of this profile to be opened
+// with details about mocks like in leaderboard, more details should be
+// added... like username as well" — styled after Leaderboard.jsx's own
+// selectedStudent modal (avatar/name/@username header, a stat-tile
+// grid, then activity history below) rather than inventing a new look.
+function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay }) {
+  if (!row) return null
+  const { student } = row
+
+  const hasActivity =
+    [...row.readingAttempts, ...row.listeningAttempts].length > 0 ||
+    row.writingReviews.length > 0 ||
+    row.speakingSlots.length > 0
+
+  const statTiles = [
+    { label: 'Reading', value: row.reading ? `${row.reading.average}%` : '—', sub: row.reading ? `${row.reading.highest}% high` : 'No attempts' },
+    { label: 'Listening', value: row.listening ? `${row.listening.average}%` : '—', sub: row.listening ? `${row.listening.highest}% high` : 'No attempts' },
+    {
+      label: 'Writing',
+      value: row.avgBand != null ? `Band ${row.avgBand}` : row.writingReviews.length > 0 ? 'Pending' : '—',
+      sub: row.reviewedWritingCount > 0 ? `${row.reviewedWritingCount} marked` : 'No submissions',
+    },
+    {
+      label: 'Speaking',
+      value: row.avgSpeakingBand != null ? `Band ${row.avgSpeakingBand}` : row.hasCompletedSpeaking ? 'Pending' : '—',
+      sub: row.reviewedSpeakingCount > 0 ? `${row.reviewedSpeakingCount} marked` : 'No sessions',
+    },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {student.avatar_url ? (
+              <img
+                src={student.avatar_url}
+                alt=""
+                className="h-14 w-14 rounded-full border-2 border-brass-dim/30 object-cover shrink-0"
+              />
+            ) : (
+              <div className="h-14 w-14 rounded-full border-2 border-brass-dim/30 bg-brass/15 flex items-center justify-center font-display text-lg text-brass shrink-0">
+                {studentLabel(student).slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-display text-lg text-paper truncate">{studentLabel(student)}</p>
+              {student.username && (
+                <p className="text-sm text-brass truncate">@{student.username}</p>
+              )}
+              {student.target_band != null && (
+                <p className="text-xs text-paper-dim mt-0.5">
+                  Target {formatTargetBand(student.target_band)}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="focus-ring shrink-0 text-mist hover:text-paper text-xl leading-none px-1"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {statTiles.map((tile) => (
+            <div key={tile.label} className="rounded-xl border border-line bg-panel-2 px-3 py-2.5">
+              <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-paper-dim">
+                {tile.label}
+              </p>
+              <p className="mt-1 text-base font-semibold text-paper">{tile.value}</p>
+              <p className="text-[11px] text-mist">{tile.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
+          {student.contact_email && (
+            <span className="text-xs text-paper-dim">{student.contact_email}</span>
+          )}
+          <button
+            type="button"
+            onClick={() => onMessage(student.id)}
+            className="focus-ring ml-auto rounded-full bg-brass text-onbrass text-xs font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+          >
+            Message {studentLabel(student)} →
+          </button>
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-line">
+          <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-paper-dim mb-3">
+            Mock history
+          </p>
+
+          <div className="flex flex-col gap-3">
+            {!hasActivity && <p className="text-sm text-mist">No mock activity yet.</p>}
+
+            {[...row.readingAttempts, ...row.listeningAttempts]
+              .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+              .map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
+                >
+                  <span className="text-paper capitalize">
+                    {a.module} · {a.examTitle}
+                  </span>
+                  <span className="text-paper-dim font-mono text-xs">
+                    {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
+                    {new Date(a.submitted_at).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+
+            {row.writingReviews.map((r) => {
+              const essayOpen = Boolean(expandedEssays[r.id])
+              const hasEssay = Boolean(r.task1_text || r.task2_text)
+
+              return (
+                <div key={r.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-paper">{r.examTitle}</span>
+                    {r.examiner_band != null ? (
+                      <span className="text-sage font-semibold text-xs">
+                        Band {r.examiner_band}
+                      </span>
+                    ) : (
+                      <span className="text-amber text-xs">Awaiting review</span>
+                    )}
+                  </div>
+
+                  {r.examiner_feedback && (
+                    <p className="text-xs text-paper-dim mt-1.5 whitespace-pre-wrap">
+                      {r.examiner_feedback}
+                    </p>
+                  )}
+
+                  {hasEssay && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onToggleEssay(r.id)}
+                        className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
+                      >
+                        {essayOpen ? 'Hide essay ▲' : 'View essay ▼'}
+                      </button>
+
+                      {essayOpen && (
+                        <div className="mt-2 space-y-2.5">
+                          {r.task1_text && (
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                                Task 1
+                              </p>
+                              <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
+                                {r.task1_text}
+                              </p>
+                            </div>
+                          )}
+                          {r.task2_text && (
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                                Task 2
+                              </p>
+                              <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
+                                {r.task2_text}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )
+            })}
+
+            {row.speakingSlots
+              .slice()
+              .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
+              .map((slot) => {
+                const meta = SPEAKING_STATUS_META[slot.status] || SPEAKING_STATUS_META.scheduled
+                return (
+                  <div key={slot.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-paper">{formatSlotTime(slot.scheduled_at)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${meta.className}`}>
+                          {meta.label}
+                        </span>
+                        {slot.examiner_band != null && (
+                          <span className="text-sage font-semibold text-xs">
+                            Band {slot.examiner_band}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {slot.examiner_feedback && (
+                      <p className="text-xs text-paper-dim mt-1.5 whitespace-pre-wrap">
+                        {slot.examiner_feedback}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

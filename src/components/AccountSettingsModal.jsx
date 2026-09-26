@@ -44,6 +44,17 @@ export default function AccountSettingsModal({ onClose }) {
   const [usernameMessage, setUsernameMessage] = useState('')
   const [usernameError, setUsernameError] = useState('')
 
+  // Jasur 2026-09-26: "i want students to be able to change their full
+  // names as well" — same save-on-its-own-form pattern as username/bio
+  // below. Shared by every role since this modal already is (students,
+  // teachers, examiners all open the same AccountSettingsModal).
+  const [fullName, setFullName] = useState(
+    profile?.full_name || ''
+  )
+  const [fullNameSaving, setFullNameSaving] = useState(false)
+  const [fullNameMessage, setFullNameMessage] = useState('')
+  const [fullNameError, setFullNameError] = useState('')
+
   const [bio, setBio] = useState(profile?.bio || '')
   const [bioSaving, setBioSaving] = useState(false)
   const [bioMessage, setBioMessage] = useState('')
@@ -398,6 +409,51 @@ export default function AccountSettingsModal({ onClose }) {
       )
     } finally {
       setUsernameSaving(false)
+    }
+  }
+
+  const saveFullName = async (e) => {
+    e.preventDefault()
+
+    setFullNameSaving(true)
+    setFullNameMessage('')
+    setFullNameError('')
+
+    const cleanFullName = fullName.trim()
+
+    try {
+      if (!cleanFullName) {
+        throw new Error('Full name cannot be empty.')
+      }
+
+      if (cleanFullName.length > 80) {
+        throw new Error('Full name must be 80 characters or fewer.')
+      }
+
+      if (cleanFullName === (profile?.full_name || '')) {
+        setFullNameMessage("That's already your name.")
+        return
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ full_name: cleanFullName })
+        .eq('id', profile.id)
+
+      if (updateError) throw updateError
+
+      setFullName(cleanFullName)
+      setFullNameMessage('Name updated.')
+
+      await refreshProfile()
+    } catch (err) {
+      console.error('Full name save failed:', err)
+
+      setFullNameError(
+        err?.message || 'Could not save your name.'
+      )
+    } finally {
+      setFullNameSaving(false)
     }
   }
 
@@ -826,6 +882,50 @@ const deleteAccount = async () => {
             {usernameError && (
               <p className="text-coral text-xs">
                 {usernameError}
+              </p>
+            )}
+          </form>
+
+          <form
+            onSubmit={saveFullName}
+            className="flex flex-col gap-2"
+          >
+            <label className="text-xs text-mist">
+              Full name
+            </label>
+
+            <div className="flex gap-2">
+              <input
+                value={fullName}
+                onChange={(e) =>
+                  setFullName(e.target.value)
+                }
+                maxLength={80}
+                className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                placeholder="Your full name"
+              />
+
+              <button
+                disabled={fullNameSaving}
+                className="focus-ring shrink-0 border border-line rounded-md px-3 py-2 text-sm hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                {fullNameSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+
+            <p className="text-mist text-xs">
+              Shown to teachers and classmates instead of your username.
+            </p>
+
+            {fullNameMessage && (
+              <p className="text-sage text-xs">
+                {fullNameMessage}
+              </p>
+            )}
+
+            {fullNameError && (
+              <p className="text-coral text-xs">
+                {fullNameError}
               </p>
             )}
           </form>
