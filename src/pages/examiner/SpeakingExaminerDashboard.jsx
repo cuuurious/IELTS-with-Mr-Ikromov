@@ -598,7 +598,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+            className="focus-ring rounded-full border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -682,7 +682,7 @@ function SlotModal({ mode, studentName, initial, saving, error, onCancel, onSave
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+            className="focus-ring rounded-full border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
