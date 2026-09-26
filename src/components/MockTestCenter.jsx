@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import FullMockRunner from './FullMockRunner'
+import MockCheckIn from './MockCheckIn'
 import Chat from './Chat'
 import {
   TARGET_BANDS,
@@ -26,11 +26,16 @@ import { downloadScoreReport } from '../lib/generateScoreReport'
  *   Overview        — average/highest reading+listening scores,
  *                     target band (editable here too), writing mock
  *                     bands/feedback from a writing examiner.
- *   Take a Test      — FullMockRunner: a forced Listening→Reading→
+ *   Take a Test      — MockCheckIn: a real-IELTS-style candidate
+ *                     check-in (full name + a teacher-issued code,
+ *                     migration_45) gates entry, then hands off to
+ *                     FullMockRunner for a forced Listening→Reading→
  *                     Writing sequence built from a teacher-bundled
- *                     "Full Mock" set (migration_37), replacing the old
+ *                     "Full Mock" set (migration_37). Replaces the old
  *                     free pick-any-exam-anytime MockExams/WritingMockExam
- *                     screens per Jasur's 2026-09-25 decision.
+ *                     screens (2026-09-25) and, as of 2026-09-26, free
+ *                     code-less access to Full Mocks too — every attempt
+ *                     now needs a code issued for that student.
  *   Speaking Exam    — the student's booked slot(s) from
  *                     mock_speaking_slots (migration_29), with the
  *                     join link and examiner name.
@@ -405,7 +410,11 @@ export default function MockTestCenter({ onExit }) {
           )}
 
           {!loading && section === 'take-test' && (
-            <FullMockRunner selfId={profile.id} />
+            // 2026-09-26 (migration_45): free self-practice access is gone —
+            // every attempt now needs a teacher-issued code first, real
+            // IELTS candidate check-in style. MockCheckIn renders
+            // <FullMockRunner> itself once a code checks out.
+            <MockCheckIn selfId={profile.id} />
           )}
 
           {!loading && section === 'speaking' && (

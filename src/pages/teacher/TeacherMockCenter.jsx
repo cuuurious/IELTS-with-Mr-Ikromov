@@ -219,6 +219,28 @@ export default function TeacherMockCenter({ onExit }) {
   const [fullMockModalSaving, setFullMockModalSaving] = useState(false)
   const [fullMockModalError, setFullMockModalError] = useState('')
 
+  /*
+   * ============================================================
+   * ACCESS CODES — real-IELTS-style candidate check-in (migration_45)
+   * ============================================================
+   * Jasur, 2026-09-26: "this confirming window has to be the same as
+   * well, maybe we could add a window to login with their full name
+   * and a special password or code... that password or code will be
+   * made up by a teacher and assigned to a particular mock session."
+   * Confirmed scope: one code per student per attempt, and this
+   * replaces free self-practice access entirely — a student can't
+   * start ANY Full Mock (Listening/Reading/Writing all sit inside one
+   * now, per migration_37) without a code issued here first. Nothing
+   * fancy about the code itself — it's not a real secret, since RLS
+   * (student_id = auth.uid()) already means a student can never see
+   * another student's row — it just needs to be short enough to read
+   * out loud/write on a whiteboard, like a real exam candidate number.
+   */
+  const [accessCodes, setAccessCodes] = useState([])
+  const [accessCodeModal, setAccessCodeModal] = useState(null) // { mode: 'create' } | null
+  const [accessCodeModalSaving, setAccessCodeModalSaving] = useState(false)
+  const [accessCodeModalError, setAccessCodeModalError] = useState('')
+
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
   // dialog: "this window has to be in the style of the website." Same
@@ -293,6 +315,20 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     setFullMockSets(data || [])
+  }
+
+  const reloadAccessCodes = async () => {
+    const { data, error } = await supabase
+      .from('mock_access_codes')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Failed to load access codes:', error)
+      return
+    }
+
+    setAccessCodes(data || [])
   }
 
   const openExamSections = async (exam) => {
@@ -840,6 +876,7 @@ export default function TeacherMockCenter({ onExit }) {
     reloadWritingExams()
     reloadRlExams()
     reloadFullMockSets()
+    reloadAccessCodes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1662,6 +1699,104 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     await reloadFullMockSets()
+  }
+
+  /*
+   * ---------- Access codes CRUD ----------
+   * Not a real secret (see the block comment above), so a short,
+   * easy-to-read-aloud code is fine: 6 characters from an alphabet with
+   * the usual look-alikes (0/O, 1/I/L) removed, shown grouped as
+   * XXX-XXX. On the rare unique-constraint collision, just try again —
+   * cheaper than a database round trip to check first.
+   */
+  const ACCESS_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+
+  const generateAccessCode = () => {
+    let raw = ''
+    for (let i = 0; i < 6; i++) {
+      raw += ACCESS_CODE_ALPHABET[Math.floor(Math.random() * ACCESS_CODE_ALPHABET.length)]
+    }
+    return `${raw.slice(0, 3)}-${raw.slice(3)}`
+  }
+
+  const openIssueAccessCode = () => {
+    setAccessCodeModalError('')
+    setAccessCodeModal({ mode: 'create' })
+  }
+
+  const saveAccessCode = async (values) => {
+    setAccessCodeModalSaving(true)
+    setAccessCodeModalError('')
+
+    try {
+      let attemptsLeft = 5
+      let lastError = null
+
+      while (attemptsLeft > 0) {
+        attemptsLeft--
+        const { error: insertError } = await supabase.from('mock_access_codes').insert({
+          code: generateAccessCode(),
+          student_id: values.studentId,
+          full_mock_set_id: values.fullMockSetId,
+          created_by: profile.id,
+        })
+
+        if (!insertError) {
+          lastError = null
+          break
+        }
+
+        // 23503 unique_violation — vanishingly unlikely at 32^6 possible
+        // codes, but retry with a fresh random code rather than fail.
+        if (insertError.code === '23505') {
+          lastError = insertError
+          continue
+        }
+
+        lastError = insertError
+        break
+      }
+
+      if (lastError) throw lastError
+
+      setAccessCodeModal(null)
+      await reloadAccessCodes()
+    } catch (err) {
+      console.error('Could not issue an access code:', err)
+      setAccessCodeModalError(err?.message || 'Could not issue this code.')
+    } finally {
+      setAccessCodeModalSaving(false)
+    }
+  }
+
+  const revokeAccessCode = (row) => {
+    setConfirmDialog({
+      title: `Revoke code ${row.code}?`,
+      message: row.used_at
+        ? 'This code has already been used to start a mock, so revoking it now only stops it being reused if the attempt is somehow reset. It does not stop or delete the mock already in progress.'
+        : "This code hasn't been used yet — revoking it stops that student from checking in with it. This can't be undone; issue a new code if they still need one.",
+      confirmLabel: 'Revoke',
+      tone: 'coral',
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('mock_access_codes')
+          .update({ revoked: true })
+          .eq('id', row.id)
+
+        if (error) {
+          console.error('Could not revoke access code:', error)
+          setConfirmDialog({
+            title: "Couldn't revoke this code",
+            message: error.message || 'Could not revoke this code.',
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
+
+        await reloadAccessCodes()
+      },
+    })
   }
 
   return (
@@ -2560,6 +2695,91 @@ export default function TeacherMockCenter({ onExit }) {
                       })}
                     </div>
                   )}
+
+                  {/* ================================================
+                      ACCESS CODES — real-IELTS-style candidate check-in
+                      (migration_45). One code per student per attempt;
+                      students can't reach any Full Mock without one.
+                     ================================================ */}
+                  <div className="border-t border-line pt-5 flex flex-col gap-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-paper">Access codes</p>
+                        <p className="text-sm text-mist max-w-lg mt-0.5">
+                          Real IELTS style: a student can't start any Full Mock without a code
+                          issued to them here first, tied to one specific set. Every attempt
+                          needs its own code — issue a new one each time a student sits (or
+                          re-sits) a mock.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={openIssueAccessCode}
+                        disabled={fullMockSets.length === 0}
+                        className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
+                      >
+                        + Issue code
+                      </button>
+                    </div>
+
+                    {accessCodes.length === 0 ? (
+                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                        No codes issued yet.
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                        {accessCodes.map((row) => {
+                          const student = students.find((s) => s.id === row.student_id)
+                          const set = fullMockSets.find((s) => s.id === row.full_mock_set_id)
+                          const status = row.revoked
+                            ? { label: 'Revoked', cls: 'text-mist border-line bg-panel-2' }
+                            : row.used_at
+                            ? { label: 'Used', cls: 'text-mist border-line bg-panel-2' }
+                            : { label: 'Unused', cls: 'text-sage border-sage/30 bg-sage/10' }
+
+                          return (
+                            <div
+                              key={row.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-sm font-semibold text-brass tracking-wide">
+                                    {row.code}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                                  >
+                                    {status.label}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-mist mt-0.5 truncate">
+                                  {student?.full_name || student?.username || 'Unknown student'} ·{' '}
+                                  {set?.title || 'Unknown set'}
+                                  {row.used_at &&
+                                    row.entered_full_name &&
+                                    row.entered_full_name !== (student?.full_name || '') && (
+                                      <> · checked in as "{row.entered_full_name}"</>
+                                    )}
+                                </p>
+                              </div>
+
+                              {!row.revoked && (
+                                <button
+                                  type="button"
+                                  onClick={() => revokeAccessCode(row)}
+                                  className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                >
+                                  Revoke
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -2628,6 +2848,18 @@ export default function TeacherMockCenter({ onExit }) {
           error={fullMockModalError}
           onCancel={() => setFullMockModal(null)}
           onSave={saveFullMockSet}
+        />
+      )}
+
+      {accessCodeModal && (
+        <AccessCodeFormModal
+          modal={accessCodeModal}
+          students={students}
+          fullMockSets={fullMockSets.filter((s) => s.is_active)}
+          saving={accessCodeModalSaving}
+          error={accessCodeModalError}
+          onCancel={() => setAccessCodeModal(null)}
+          onSave={saveAccessCode}
         />
       )}
 
@@ -4286,6 +4518,85 @@ function FullMockSetFormModal({
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AccessCodeFormModal({ modal, students, fullMockSets, saving, error, onCancel, onSave }) {
+  const [studentId, setStudentId] = useState('')
+  const [fullMockSetId, setFullMockSetId] = useState(fullMockSets.length === 1 ? fullMockSets[0].id : '')
+
+  const canSave = Boolean(studentId && fullMockSetId)
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">Issue an access code</h3>
+        <p className="text-sm text-mist mt-0.5">
+          One code, for one student, good for one attempt at one full mock — same as a real exam
+          candidate ticket. The code appears once you save; make sure you can copy it down before
+          closing this.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Student
+            <select
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {students.length ? 'Select a student…' : 'No students yet'}
+              </option>
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.full_name || s.username}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Full mock
+            <select
+              value={fullMockSetId}
+              onChange={(e) => setFullMockSetId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {fullMockSets.length ? 'Select a full mock…' : 'No published full mocks yet'}
+              </option>
+              {fullMockSets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave({ studentId, fullMockSetId })}
+            disabled={saving || !canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Issuing…' : 'Issue code'}
           </button>
         </div>
       </div>

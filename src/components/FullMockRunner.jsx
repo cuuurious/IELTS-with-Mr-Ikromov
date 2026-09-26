@@ -48,6 +48,22 @@ import { WritingTaker } from './WritingMockExam'
  * and the forced Listening->Reading->Writing order — IS real-exam-
  * accurate; the deeper visual polish of the exam screen itself is a
  * separate, later pass.
+ *
+ * Access-code gate (2026-09-26, migration_45): free self-practice
+ * access is gone — MockTestCenter.jsx now renders MockCheckIn.jsx in
+ * front of this component instead of this component directly.
+ * MockCheckIn hands down `restrictedSet` (the one full_mock_sets row
+ * the student's code was issued for) once the student's teacher-issued
+ * code checks out. When `restrictedSet` is set, the free "pick a full
+ * mock" grid below is skipped entirely — there's only ever one set to
+ * sit — and a fresh attempt is started automatically the moment this
+ * component loads with nothing already in progress. The instructions+
+ * confirm gate itself was also restyled to match the real IELTS
+ * check-in/instructions screen (white card, black text, gray
+ * instructions box, black pill "Start" button) researched the same
+ * day on the official familiarisation site — a deliberate break from
+ * the rest of this file's dark brass "ticket" theme, same reasoning as
+ * MockCheckIn.jsx's own header comment.
  * ================================================================
  */
 
@@ -76,12 +92,13 @@ const STAGE_META = {
   },
 }
 
-export default function FullMockRunner({ selfId }) {
+export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sets, setSets] = useState([])
   const [activeAttempt, setActiveAttempt] = useState(null) // { attempt, set } | null
   const [gateConfirmed, setGateConfirmed] = useState(false)
+  const [readyToStart, setReadyToStart] = useState(false) // "I confirm" clicked, black Start pill now showing — see gate render below
   const [moduleExamData, setModuleExamData] = useState(null) // { exam, sections } for listening/reading
   const [moduleLoading, setModuleLoading] = useState(false)
   const [writingResume, setWritingResume] = useState(undefined) // undefined = not checked, null = none, object = in-progress attempt
@@ -92,6 +109,43 @@ export default function FullMockRunner({ selfId }) {
   const loadAll = async () => {
     setLoading(true)
     setError('')
+
+    // Access-code gate: MockCheckIn already verified the code and knows
+    // exactly which set this is for — no free pick, and no need to load
+    // every published set just to show one.
+    if (restrictedSet) {
+      const { data: attemptRows, error: attemptsError } = await supabase
+        .from('full_mock_attempts')
+        .select('*')
+        .eq('student_id', selfId)
+        .neq('stage', 'done')
+        .order('started_at', { ascending: false })
+        .limit(1)
+
+      if (attemptsError) console.error('Failed to load full mock progress:', attemptsError)
+
+      setSets([restrictedSet])
+
+      const inProgress = (attemptRows || [])[0] || null
+      if (inProgress) {
+        // Resume whatever's already in progress — same "don't lose their
+        // place" behavior as the free-pick path always had. Only
+        // restrictedSet's own title/exam ids are available here, which is
+        // fine even in the edge case of a stale in-progress attempt from
+        // a different set (unreachable going forward, now that every
+        // attempt starts from a code tied to one specific set).
+        setActiveAttempt({ attempt: inProgress, set: restrictedSet })
+        setGateConfirmed(false)
+        setReadyToStart(false)
+        setLoading(false)
+      } else {
+        // Nothing in progress — this code is fresh, start the one set it
+        // was issued for immediately. No grid, no picking.
+        await startFullMock(restrictedSet)
+        setLoading(false)
+      }
+      return
+    }
 
     const [{ data: setRows, error: setsError }, { data: attemptRows, error: attemptsError }] =
       await Promise.all([
@@ -119,6 +173,7 @@ export default function FullMockRunner({ selfId }) {
       const set = (setRows || []).find((s) => s.id === inProgress.set_id) || null
       setActiveAttempt({ attempt: inProgress, set })
       setGateConfirmed(false)
+      setReadyToStart(false)
     } else {
       setActiveAttempt(null)
     }
@@ -278,6 +333,7 @@ export default function FullMockRunner({ selfId }) {
 
     setActiveAttempt({ attempt: data, set })
     setGateConfirmed(false)
+    setReadyToStart(false)
     setCurrentStageAttemptId(null)
     setJustFinished(null)
   }
@@ -300,6 +356,7 @@ export default function FullMockRunner({ selfId }) {
 
     setActiveAttempt((prev) => ({ ...prev, attempt: data }))
     setGateConfirmed(false)
+    setReadyToStart(false)
     setCurrentStageAttemptId(null)
     setModuleExamData(null)
     setJustFinished(null)
@@ -324,10 +381,16 @@ export default function FullMockRunner({ selfId }) {
   const backToPicker = () => {
     setActiveAttempt(null)
     setGateConfirmed(false)
+    setReadyToStart(false)
     setModuleExamData(null)
     setWritingResume(undefined)
     loadAll()
   }
+
+  // Once a code is checked in there's no free picker to go "back" to —
+  // hand control back to MockCheckIn so it shows the check-in form again
+  // for whatever code the student uses next time.
+  const finishUp = restrictedSet && onExitRestricted ? onExitRestricted : backToPicker
 
   if (loading) {
     return (
@@ -405,10 +468,10 @@ export default function FullMockRunner({ selfId }) {
         </p>
         <button
           type="button"
-          onClick={backToPicker}
+          onClick={finishUp}
           className="focus-ring mt-6 inline-block rounded-full bg-brass px-6 py-2.5 text-sm font-bold text-onbrass shadow-sm transition-transform hover:scale-105"
         >
-          Back to Full Mocks
+          {restrictedSet ? 'Done' : 'Back to Full Mocks'}
         </button>
       </div>
     )
@@ -473,6 +536,14 @@ export default function FullMockRunner({ selfId }) {
   }
 
   // ---- Instructions + confirm gate (default for every stage) ----
+  // Restyled 2026-09-26 to match the real IELTS check-in/instructions
+  // screen (researched on the official familiarisation site the same
+  // day): white card, black text, gray "Test information"-style
+  // instructions box, and a two-step confirm -> black pill "Start"
+  // button, instead of this app's own dark brass "ticket" theme used
+  // everywhere else. Jasur, verbatim: "this confirming window has to be
+  // the same as well... they will see instrutcions and hear them as
+  // well and confirm there."
   const examTitleForGate =
     stage === 'writing'
       ? activeAttempt.set?.title
@@ -481,49 +552,60 @@ export default function FullMockRunner({ selfId }) {
       : moduleExamData?.exam?.title || 'Reading'
 
   return (
-    <div className="ticket rounded-2xl p-6 sm:p-8">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-        {setTitle} — {meta.label}
+    <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-8 shadow-sm">
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
+        <span className="text-[11px] uppercase tracking-[0.18em] text-red-600 font-semibold">
+          {setTitle} — {meta.label}
+        </span>
       </div>
-      <h2 className="font-display text-2xl mt-1">{examTitleForGate}</h2>
 
-      <div className="mt-4 rounded-xl border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap">
+      <h2 className="text-2xl font-bold mt-1.5 text-slate-900">{examTitleForGate}</h2>
+
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
         {meta.instructions}
       </div>
 
-      {error && <p className="mt-3 text-sm text-coral">{error}</p>}
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <span
-          className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-3 py-1 ${
-            gateConfirmed
-              ? 'text-sage border-sage/30 bg-sage/10'
-              : 'text-coral border-coral/30 bg-coral/10'
-          }`}
-        >
-          {gateConfirmed ? 'Confirmed' : 'Not confirmed'}
-        </span>
+      <div className="mt-6">
+        <p className="text-lg font-bold text-slate-900">Ready?</p>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Please confirm that you have understood the instructions above.
+        </p>
 
-        {!gateConfirmed && (
-          <button
-            type="button"
-            onClick={() => setGateConfirmed(true)}
-            className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-1.5 text-sm font-semibold hover:bg-brass/20 transition-colors"
-          >
-            I confirm I've read and understood the instructions
-          </button>
-        )}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {!gateConfirmed && !readyToStart && (
+            <button
+              type="button"
+              onClick={() => setReadyToStart(true)}
+              className="focus-ring rounded-full border-2 border-slate-900 text-slate-900 px-5 py-2.5 text-sm font-semibold hover:bg-slate-900 hover:text-white transition-colors"
+            >
+              I confirm
+            </button>
+          )}
 
-        {gateConfirmed && (stage === 'listening' || stage === 'reading') && (
-          <span className="text-sm text-mist">Loading exam…</span>
-        )}
+          {!gateConfirmed && readyToStart && (
+            <button
+              type="button"
+              onClick={() => setGateConfirmed(true)}
+              className="focus-ring inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-6 py-2.5 text-sm font-semibold shadow-sm hover:bg-slate-700 transition-colors"
+            >
+              <span aria-hidden>→</span> Start {meta.label}
+            </button>
+          )}
 
-        {gateConfirmed && stage === 'writing' && writingResume === undefined && (
-          <span className="text-sm text-mist">Checking for anything already in progress…</span>
-        )}
+          {gateConfirmed && (stage === 'listening' || stage === 'reading') && (
+            <span className="text-sm text-slate-500">Loading exam…</span>
+          )}
+
+          {gateConfirmed && stage === 'writing' && writingResume === undefined && (
+            <span className="text-sm text-slate-500">Checking for anything already in progress…</span>
+          )}
+        </div>
       </div>
 
-      <p className="mt-4 text-[11px] text-mist">
+      <p className="mt-6 text-[11px] text-slate-400">
         Like the real test, you'll only see these instructions once for this section.
       </p>
     </div>
