@@ -90,13 +90,21 @@ const SPEAKING_STATUS_META = {
 // of editor entirely (upload an image, place labeled pins on it) rather
 // than a new answer-shape on the existing question form. Flagged, not
 // forgotten — say the word if you want that scoped next.
+// Jasur's teacher went looking for a "Gap filling" type and couldn't
+// find one — there isn't a separate one. Every kind of gap-fill
+// (sentence/summary/note/table/flow-chart completion, diagram/map/plan
+// labelling) has always lived under short_answer, since they're all
+// the same shape: the student types the missing word(s) into a blank.
+// Renamed the label so that's visible right in the dropdown instead of
+// only in a code comment — no behavior change, same type, same
+// grading, same everything else.
 const QUESTION_TYPE_LABELS = {
   multiple_choice: 'Multiple choice',
   multi_select: 'Choose multiple',
   true_false_ng: 'True/False/Not Given',
   yes_no_ng: 'Yes/No/Not Given',
   matching: 'Matching (drag & drop)',
-  short_answer: 'Short answer',
+  short_answer: 'Short answer / gap fill',
 }
 
 // Every type whose editor needs a list of options at all (as opposed to
@@ -2546,6 +2554,60 @@ export default function TeacherMockCenter({ onExit }) {
           .from('mock_questions')
           .insert(questionRows)
         if (questionsInsertError) throw questionsInsertError
+      }
+
+      // Extra passages from a whole-paper import (mock-content-import's
+      // `sections` array can come back with more than one passage) —
+      // this modal only ever reviews ONE passage on screen, so passages
+      // 2+ ride along as plain data and get created as their own new
+      // sections + questions right here, same shape as the primary
+      // section above, the moment the teacher saves the one they can
+      // actually see.
+      const extraSections = values.extraSections || []
+      if (extraSections.length > 0) {
+        const { data: maxRow, error: maxError } = await supabase
+          .from('mock_sections')
+          .select('order_index')
+          .eq('exam_id', rlSelectedExamId)
+          .order('order_index', { ascending: false })
+          .limit(1)
+        if (maxError) throw maxError
+
+        let nextOrderIndex = maxRow && maxRow.length > 0 ? maxRow[0].order_index + 1 : 0
+
+        for (const extra of extraSections) {
+          const { data: extraSection, error: extraInsertError } = await supabase
+            .from('mock_sections')
+            .insert({
+              exam_id: rlSelectedExamId,
+              order_index: nextOrderIndex,
+              title: (extra.section_title || `Passage ${nextOrderIndex + 1}`).trim(),
+              passage_text: (extra.passage_text || '').trim() || null,
+              audio_url: null,
+            })
+            .select('*')
+            .single()
+          if (extraInsertError) throw extraInsertError
+
+          nextOrderIndex += 1
+
+          const extraQuestions = extra.questions || []
+          if (extraQuestions.length > 0) {
+            const extraQuestionRows = extraQuestions.map((q, i) => ({
+              section_id: extraSection.id,
+              order_index: i,
+              prompt: q.prompt || '',
+              type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
+              options: CHOICE_BASED_TYPES.includes(q.type) ? { choices: q.choices || [] } : null,
+              correct_answer: q.correct_answer || '',
+            }))
+
+            const { error: extraQuestionsInsertError } = await supabase
+              .from('mock_questions')
+              .insert(extraQuestionRows)
+            if (extraQuestionsInsertError) throw extraQuestionsInsertError
+          }
+        }
       }
 
       setSectionModal(null)
@@ -6015,6 +6077,14 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
   const [importError, setImportError] = useState('')
   const [importInfo, setImportInfo] = useState('')
   const [importedQuestions, setImportedQuestions] = useState([])
+  // 2026-09-26: a teacher uploading the whole test paper (not just one
+  // passage) here now gets every extra passage the file contains, not
+  // just the first — see mock-content-import's own header comment.
+  // This modal still only has room to REVIEW one passage's title/text/
+  // questions on screen, so passages 2+ ride along as "extraSections"
+  // and get created as their own new mock_sections rows in saveSection
+  // the moment the teacher hits Save on this one.
+  const [extraSections, setExtraSections] = useState([])
   const importInputRef = useRef(null)
 
   const handleImportFile = async (e) => {
@@ -6025,6 +6095,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
     setImporting(true)
     setImportError('')
     setImportInfo('')
+    setExtraSections([])
 
     try {
       const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
@@ -6042,23 +6113,31 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
       if (fnError) throw fnError
       if (data?.error) throw new Error(data.error)
 
-      const result = data?.result || {}
-      const extracted = result.questions || []
+      const sections = data?.result?.sections || []
 
-      if (!result.section_title && !result.passage_text && extracted.length === 0) {
+      if (sections.length === 0) {
         throw new Error('Nothing usable was found in that file.')
       }
 
-      if (result.section_title) setTitle(result.section_title)
-      if (result.passage_text) setPassageText(result.passage_text)
-      setImportedQuestions(extracted)
+      const [primary, ...rest] = sections
+      const extracted = primary.questions || []
 
-      const missingAnswers = extracted.filter((q) => !q.correct_answer?.trim()).length
+      if (primary.section_title) setTitle(primary.section_title)
+      if (primary.passage_text) setPassageText(primary.passage_text)
+      setImportedQuestions(extracted)
+      setExtraSections(rest)
+
+      const allQuestions = sections.flatMap((s) => s.questions || [])
+      const missingAnswers = allQuestions.filter((q) => !q.correct_answer?.trim()).length
+
       setImportInfo(
-        (result.section_title || result.passage_text ? 'Title, passage, and ' : '') +
+        (primary.section_title || primary.passage_text ? 'Title, passage, and ' : '') +
           `${extracted.length} question${extracted.length === 1 ? '' : 's'} imported — review below, then save.` +
+          (rest.length > 0
+            ? ` This file had ${sections.length} passages total — the other ${rest.length} will be added as their own new section${rest.length === 1 ? '' : 's'} automatically when you save this one.`
+            : '') +
           (missingAnswers
-            ? ` ${missingAnswers} had no visible answer key, so you'll need to fill those in after saving.`
+            ? ` ${missingAnswers} question${missingAnswers === 1 ? '' : 's'} across this file had no visible answer key, so you'll need to fill ${missingAnswers === 1 ? 'it' : 'them'} in after saving.`
             : '')
       )
     } catch (err) {
@@ -6105,7 +6184,9 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
             <p className="mt-1.5 text-[11px] text-paper-dim">
               Upload a PDF, Word doc, or photo of the real passage + questions and the title,
               passage text, and questions below all get filled in at once — review, fill in any
-              blank answer, then hit Save just once.
+              blank answer, then hit Save just once. You can also upload the WHOLE test paper
+              (all 3 passages) here — the other passages get created automatically as their own
+              sections the moment you save this one.
             </p>
             {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
             {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}
@@ -6196,7 +6277,15 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
           <button
             type="button"
             onClick={() =>
-              onSave({ title, orderIndex, passageText, audioFile, clearAudio, importedQuestions })
+              onSave({
+                title,
+                orderIndex,
+                passageText,
+                audioFile,
+                clearAudio,
+                importedQuestions,
+                extraSections,
+              })
             }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
@@ -6651,6 +6740,35 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
     )
   }
 
+  // 2026-09-26: a teacher uploading the whole Listening paper (all 4
+  // parts) into ONE part's import box now gets every part the file
+  // contains back from mock-content-import, not just that one — see
+  // its own header comment. fromIndex is the part the file was
+  // uploaded into; extraParts (already mapped to this wizard's local
+  // {title, questions} shape) fill the NEXT parts in order and reveal
+  // them, same as if the teacher had clicked "Next part" and imported
+  // into each by hand. Anything past Part 4 is silently dropped —
+  // Listening is always exactly 4 parts.
+  const importIntoLaterParts = (fromIndex, extraParts) => {
+    if (!extraParts || extraParts.length === 0) return
+
+    setParts((prev) => {
+      const next = [...prev]
+      extraParts.forEach((extra, offset) => {
+        const targetIndex = fromIndex + 1 + offset
+        if (targetIndex > 3) return
+        next[targetIndex] = {
+          ...next[targetIndex],
+          title: extra.title?.trim() ? extra.title.trim() : next[targetIndex].title,
+          questions: [...next[targetIndex].questions, ...extra.questions],
+        }
+      })
+      return next
+    })
+
+    setRevealedCount((n) => Math.min(4, Math.max(n, fromIndex + 1 + extraParts.length)))
+  }
+
   const isPartValid = (part) => {
     const hasAudio = Boolean(part.audioFile || (part.audioUrl && !part.clearAudio))
     if (!hasAudio || part.questions.length === 0) return false
@@ -6773,6 +6891,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               onAddQuestion={() => addQuestion(i)}
               onUpdateQuestion={(qIndex, patch) => updateQuestion(i, qIndex, patch)}
               onRemoveQuestion={(qIndex) => removeQuestion(i, qIndex)}
+              onImportMoreParts={(extraParts) => importIntoLaterParts(i, extraParts)}
             />
           ))}
         </div>
@@ -6819,7 +6938,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   )
 }
 
-function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion }) {
+function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImportMoreParts }) {
   const { profile } = useAuth()
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
@@ -6863,31 +6982,49 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
       if (fnError) throw fnError
       if (data?.error) throw new Error(data.error)
 
-      const extracted = data?.result?.questions || []
+      const sections = data?.result?.sections || []
 
-      if (extracted.length === 0) {
+      const mapQuestions = (qs) =>
+        (qs || []).map((q) => ({
+          prompt: q.prompt || '',
+          // Was hard-coded to only 3 of the 6 question types, silently
+          // demoting an AI-imported yes_no_ng/multi_select/matching
+          // question to short_answer with the wrong correct-answer format
+          // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
+          // allowlist saveSection's own import path already used.
+          type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
+          choicesText: (q.choices || []).join('\n'),
+          correctAnswer: q.correct_answer || '',
+        }))
+
+      const mappedSections = sections.map((sec) => ({
+        title: sec.section_title || '',
+        questions: mapQuestions(sec.questions),
+      }))
+
+      const totalQuestions = mappedSections.reduce((n, s) => n + s.questions.length, 0)
+
+      if (totalQuestions === 0) {
         throw new Error('No questions were found in that file.')
       }
 
-      const imported = extracted.map((q) => ({
-        prompt: q.prompt || '',
-        // Was hard-coded to only 3 of the 6 question types, silently
-        // demoting an AI-imported yes_no_ng/multi_select/matching
-        // question to short_answer with the wrong correct-answer format
-        // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
-        // allowlist saveSection's own import path already used.
-        type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
-        choicesText: (q.choices || []).join('\n'),
-        correctAnswer: q.correct_answer || '',
-      }))
+      const [primary, ...extraParts] = mappedSections
+      onChange({ questions: [...part.questions, ...primary.questions] })
 
-      onChange({ questions: [...part.questions, ...imported] })
+      if (extraParts.length > 0 && onImportMoreParts) {
+        onImportMoreParts(extraParts)
+      }
 
-      const missingAnswers = imported.filter((q) => !q.correctAnswer.trim()).length
+      const missingAnswers = mappedSections
+        .flatMap((s) => s.questions)
+        .filter((q) => !q.correctAnswer.trim()).length
+
       setImportInfo(
-        `Imported ${imported.length} question${imported.length === 1 ? '' : 's'} — check each one below.` +
+        (extraParts.length > 0
+          ? `This file had ${mappedSections.length} parts — ${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} were added here, and the next ${extraParts.length} part${extraParts.length === 1 ? '' : 's'} were filled in automatically below.`
+          : `Imported ${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} — check each one below.`) +
           (missingAnswers
-            ? ` ${missingAnswers} of them had no answer key in the file, so the correct answer is still blank — fill those in before saving.`
+            ? ` ${missingAnswers} of ${totalQuestions} had no answer key in the file, so the correct answer is still blank — fill those in before saving.`
             : ' Double-check the correct answers before saving.')
       )
     } catch (err) {
@@ -6953,7 +7090,9 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
         <p className="mt-1.5 text-[11px] text-paper-dim">
           Upload a PDF, Word doc, or photo of the real question paper for this part and the
           questions below get filled in automatically — review them, fill in any blank answer,
-          then save. (This reads the questions only; audio still has to be uploaded above.)
+          then save. (This reads the questions only; audio still has to be uploaded above.) You
+          can also upload the WHOLE listening paper here — the other parts get filled in
+          automatically below.
         </p>
         {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
         {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}
@@ -7085,6 +7224,31 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
     )
   }
 
+  // 2026-09-26: same fan-out as ListeningExamWizard's own
+  // importIntoLaterParts, just for Reading's 3 passages instead of
+  // Listening's 4 parts — see mock-content-import's header comment for
+  // why a single upload can now contain more than one passage at all.
+  const importIntoLaterPassages = (fromIndex, extraPassages) => {
+    if (!extraPassages || extraPassages.length === 0) return
+
+    setPassages((prev) => {
+      const next = [...prev]
+      extraPassages.forEach((extra, offset) => {
+        const targetIndex = fromIndex + 1 + offset
+        if (targetIndex > 2) return
+        next[targetIndex] = {
+          ...next[targetIndex],
+          title: extra.title?.trim() ? extra.title.trim() : next[targetIndex].title,
+          passageText: extra.passageText?.trim() ? extra.passageText : next[targetIndex].passageText,
+          questions: [...next[targetIndex].questions, ...extra.questions],
+        }
+      })
+      return next
+    })
+
+    setRevealedCount((n) => Math.min(3, Math.max(n, fromIndex + 1 + extraPassages.length)))
+  }
+
   const isPassageValid = (passage) => {
     if (!passage.title.trim() || !passage.passageText.trim() || passage.questions.length === 0) {
       return false
@@ -7188,6 +7352,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               onAddQuestion={() => addQuestion(i)}
               onUpdateQuestion={(qIndex, patch) => updateQuestion(i, qIndex, patch)}
               onRemoveQuestion={(qIndex) => removeQuestion(i, qIndex)}
+              onImportMoreParts={(extraPassages) => importIntoLaterPassages(i, extraPassages)}
             />
           ))}
         </div>
@@ -7234,7 +7399,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
   )
 }
 
-function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion }) {
+function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImportMoreParts }) {
   const { profile } = useAuth()
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
@@ -7272,37 +7437,55 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
       if (fnError) throw fnError
       if (data?.error) throw new Error(data.error)
 
-      const result = data?.result || {}
-      const extracted = result.questions || []
+      const sections = data?.result?.sections || []
 
-      if (!result.section_title && !result.passage_text && extracted.length === 0) {
+      if (sections.length === 0) {
         throw new Error('Nothing usable was found in that file.')
       }
 
-      const imported = extracted.map((q) => ({
-        prompt: q.prompt || '',
-        // Was hard-coded to only 3 of the 6 question types, silently
-        // demoting an AI-imported yes_no_ng/multi_select/matching
-        // question to short_answer with the wrong correct-answer format
-        // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
-        // allowlist saveSection's own import path already used.
-        type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
-        choicesText: (q.choices || []).join('\n'),
-        correctAnswer: q.correct_answer || '',
+      const mapQuestions = (qs) =>
+        (qs || []).map((q) => ({
+          prompt: q.prompt || '',
+          // Was hard-coded to only 3 of the 6 question types, silently
+          // demoting an AI-imported yes_no_ng/multi_select/matching
+          // question to short_answer with the wrong correct-answer format
+          // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
+          // allowlist saveSection's own import path already used.
+          type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
+          choicesText: (q.choices || []).join('\n'),
+          correctAnswer: q.correct_answer || '',
+        }))
+
+      const mappedSections = sections.map((sec) => ({
+        title: sec.section_title || '',
+        passageText: sec.passage_text || '',
+        questions: mapQuestions(sec.questions),
       }))
 
+      const [primary, ...extraPassages] = mappedSections
+
       onChange({
-        ...(result.section_title ? { title: result.section_title } : {}),
-        ...(result.passage_text ? { passageText: result.passage_text } : {}),
-        questions: [...part.questions, ...imported],
+        ...(primary.title ? { title: primary.title } : {}),
+        ...(primary.passageText ? { passageText: primary.passageText } : {}),
+        questions: [...part.questions, ...primary.questions],
       })
 
-      const missingAnswers = imported.filter((q) => !q.correctAnswer.trim()).length
+      if (extraPassages.length > 0 && onImportMoreParts) {
+        onImportMoreParts(extraPassages)
+      }
+
+      const totalQuestions = mappedSections.reduce((n, s) => n + s.questions.length, 0)
+      const missingAnswers = mappedSections
+        .flatMap((s) => s.questions)
+        .filter((q) => !q.correctAnswer.trim()).length
+
       setImportInfo(
-        (result.section_title || result.passage_text ? 'Title, passage, and ' : '') +
-          `${imported.length} question${imported.length === 1 ? '' : 's'} imported — check each one below.` +
+        (extraPassages.length > 0
+          ? `This file had ${mappedSections.length} passages — ${primary.title || primary.passageText ? 'title, passage, and ' : ''}${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} were added here, and the next ${extraPassages.length} passage${extraPassages.length === 1 ? '' : 's'} were filled in automatically below.`
+          : (primary.title || primary.passageText ? 'Title, passage, and ' : '') +
+            `${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} imported — check each one below.`) +
           (missingAnswers
-            ? ` ${missingAnswers} of them had no visible answer key, so the correct answer is still blank — fill those in before saving.`
+            ? ` ${missingAnswers} of ${totalQuestions} had no visible answer key, so the correct answer is still blank — fill those in after saving.`
             : '')
       )
     } catch (err) {
@@ -7337,7 +7520,8 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
         <p className="mt-1.5 text-[11px] text-paper-dim">
           Upload a PDF, Word doc, or photo of the real passage + questions and the title, passage
           text, and questions below all get filled in at once — review, fill in any blank answer,
-          then save.
+          then save. You can also upload the WHOLE reading paper here — the other passages get
+          filled in automatically below.
         </p>
         {importing && <p className="mt-1.5 text-xs text-brass">Reading the file — this can take a moment…</p>}
         {importInfo && <p className="mt-1.5 text-xs text-sage">{importInfo}</p>}

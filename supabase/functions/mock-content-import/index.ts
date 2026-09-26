@@ -13,17 +13,31 @@ const corsHeaders = {
  * content editor. Teacher uploads a PDF, Word doc, or photo of a real
  * question paper to the "mock-content-uploads" storage bucket
  * (migration_43), this function reads it with OpenAI and hands back a
- * structured draft: a section/part title, the passage or transcript
- * text if present, and a question list (type, prompt, choices,
- * correct answer where an answer key is actually visible in the
- * document). The caller (TeacherMockCenter.jsx) drops that straight
- * into the SAME editable question builder used for manual entry —
- * nothing is written to the database here. The teacher reviews,
- * fixes anything wrong, fills in any answer the AI left blank, then
- * presses the normal Save button. This mirrors the two-step
- * "extract, then review-and-save" design from mock-test-site-
+ * structured draft: one entry per passage (Reading) or part
+ * (Listening) it actually found in the document — each with its own
+ * title, passage/transcript text if present, and question list (type,
+ * prompt, choices, correct answer where an answer key is actually
+ * visible in the document). The caller (TeacherMockCenter.jsx) drops
+ * that straight into the SAME editable question builder used for
+ * manual entry — nothing is written to the database here. The teacher
+ * reviews, fixes anything wrong, fills in any answer the AI left
+ * blank, then presses the normal Save button. This mirrors the
+ * two-step "extract, then review-and-save" design from mock-test-site-
  * concept.md, just reusing the existing form as the review screen
  * instead of a separate one.
+ *
+ * 2026-09-26 fix: Jasur's teacher uploaded a whole Reading paper (3
+ * passages) and only got Passage 1 back. Root cause — this function's
+ * schema used to have room for exactly ONE section per call
+ * (section_title/passage_text/questions as flat top-level fields), so
+ * even when the model could see all 3 passages on the page, there was
+ * nowhere in the response shape to put more than one. Fixed by
+ * wrapping that same shape in a `sections` ARRAY and telling the model
+ * explicitly to return one entry per passage/part it finds — a single
+ * page still comes back as a one-item array, so every existing caller
+ * needed the same one-line change (read result.sections[0] plus, for a
+ * caller that supports it, the rest of the array) rather than a
+ * rewrite.
  *
  * Sibling to ai-grading — same project, same OPENAI_API_KEY secret,
  * same Responses API. Nothing new to configure beyond deploying this
@@ -115,7 +129,10 @@ async function callOpenAiResponses(apiKey, body) {
   return json
 }
 
-const MOCK_IMPORT_SCHEMA = {
+// One entry per passage (Reading) or part (Listening) found in the
+// document — see the 2026-09-26 comment up top for why this is an
+// array now instead of a single flat object.
+const IMPORT_SECTION_SCHEMA = {
   type: 'object',
   properties: {
     section_title: {
@@ -133,7 +150,11 @@ const MOCK_IMPORT_SCHEMA = {
       items: {
         type: 'object',
         properties: {
-          order_index: { type: 'integer' },
+          order_index: {
+            type: 'integer',
+            description:
+              'Starts at 0 for EACH section — the first question of Passage 2 is order_index 0 again, not a continuation of Passage 1\'s numbering.',
+          },
           type: {
             type: 'string',
             enum: [
@@ -164,6 +185,21 @@ const MOCK_IMPORT_SCHEMA = {
     },
   },
   required: ['section_title', 'passage_text', 'questions'],
+  additionalProperties: false,
+}
+
+const MOCK_IMPORT_SCHEMA = {
+  type: 'object',
+  properties: {
+    sections: {
+      type: 'array',
+      minItems: 1,
+      items: IMPORT_SECTION_SCHEMA,
+      description:
+        'One entry per passage (Reading) or part (Listening) actually present in the document, in the order they appear. A document with just one passage/part on it still comes back as a one-item array.',
+    },
+  },
+  required: ['sections'],
   additionalProperties: false,
 }
 
@@ -214,11 +250,21 @@ function buildAnswerKeyPrompt() {
 
 function buildPrompt(module) {
   const moduleLabel = module === 'reading' ? 'Reading' : 'Listening'
+  const unitWord = module === 'reading' ? 'passage' : 'part'
+  const usualCount = module === 'reading' ? '3 passages' : '4 parts'
+  const headingExamples =
+    module === 'reading'
+      ? '"READING PASSAGE 1", "READING PASSAGE 2", "Passage 3"'
+      : '"Part 1", "Part 2", "SECTION 3", "Part 4"'
 
   return [
     `You are helping an IELTS teacher import a real ${moduleLabel} question paper into a mock-test builder.`,
     '',
     'Read the attached document (it may be a typed document, a scanned page, or a photo — some may be low quality; do your best) and extract its content into the structure requested.',
+    '',
+    `FIRST — figure out how many ${unitWord}s are actually in this document. It might be a single ${unitWord} on its own (one page, or a short excerpt), or it might be the FULL test paper containing every ${unitWord} at once (a complete IELTS ${moduleLabel} paper normally has ${usualCount}). Look for headings like ${headingExamples} or a clear break where one ${unitWord}'s questions end and a new ${unitWord} (with its own text and its own question numbers restarting a new group) begins. Return ONE entry in "sections" for every distinct ${unitWord} you actually find, in the order they appear — never merge two different ${unitWord}s into one entry, and never split one ${unitWord} into two. If the document truly only contains a single ${unitWord}, "sections" should have exactly one entry — don't invent extra empty ones to hit ${usualCount}.`,
+    '',
+    `For EACH ${unitWord} (each entry in "sections"), extract it the same way:`,
     '',
     'Every question you find must be mapped to exactly ONE of these six types, since that is all the builder supports today:',
     '- multiple_choice — the question lists lettered/numbered answer choices and the student picks exactly ONE. Extract every choice, in order, into "choices".',
@@ -226,13 +272,13 @@ function buildPrompt(module) {
     '- true_false_ng — the question asks whether a factual statement is True, False, or Not Given.',
     '- yes_no_ng — the question asks whether a statement agrees with the writer\'s claims/views — Yes, No, or Not Given. Do NOT map this to true_false_ng even though the shape looks similar: True/False/Not Given and Yes/No/Not Given are different question types in real IELTS papers and must come back with their own type here.',
     '- matching — the question asks the student to match something (a paragraph, a heading, a name, a piece of information) to ONE option out of a shared bank of options printed once for the whole group (matching headings, matching information, matching names/features, and similar). Put the full bank of options, in order, into "choices" — the same bank is usually reused across several matching questions in the same group.',
-    '- short_answer — anything else: sentence/note/form/table completion (the blank the student fills in), diagram/map labelling, or a plain short-answer question. The student will type the missing word(s) into a text box, so "prompt" should make clear exactly what they need to type (include the surrounding sentence with a blank so the question stands on its own without needing to see the original page layout).',
+    '- short_answer — every kind of gap-filling / completion question, PLUS plain short-answer questions: sentence completion, summary completion, note completion, table completion, flow-chart completion, and diagram/map/plan label completion all belong here — anywhere the student types the missing word(s) into a blank rather than picking from a list. "prompt" should make clear exactly what they need to type (include the surrounding sentence/label with its blank so the question stands on its own without needing to see the original page layout). This type covers every "gap fill" style question in the paper — there is no separate gap-filling type, they all map to short_answer.',
     '',
-    'Number the questions in "order_index" starting at 0, in the order they appear in the document.',
+    `Number the questions in "order_index" starting at 0 WITHIN EACH SECTION — the first question of the second ${unitWord} is order_index 0 again, not a continuation of the first ${unitWord}'s numbering (the builder inserts each ${unitWord}'s questions separately and renumbers them itself).`,
     '',
     'CRITICAL — correct answers: only put a value in "correct_answer" when this document actually shows an answer key (a separate answer list, an underlined/marked correct choice, or similar). Do NOT guess or infer an answer from general knowledge — grading later is an exact text match, so a wrong guess would silently mark every student wrong. If there is no visible answer key for a question, leave "correct_answer" as an empty string and leave it for the teacher to fill in. For true_false_ng, when you do have a real answer key, write it as exactly "True", "False", or "Not Given"; for yes_no_ng write exactly "Yes", "No", or "Not Given". For multi_select, when you do have a real answer key, write every correct choice joined by ", " (comma-space), in the same order those choices are listed in "choices" — never in the order the answer key happens to print them.',
     '',
-    'If the document includes the reading passage or the listening transcript/script text, put the complete text (verbatim) in "passage_text". If it is a questions-only page, leave "passage_text" as an empty string.',
+    'If a section includes the reading passage or the listening transcript/script text, put the complete text (verbatim) in that section\'s "passage_text". If it is a questions-only section, leave "passage_text" as an empty string.',
     '',
     'IMPORTANT — keep the paragraph structure: the source document is written in paragraphs, so "passage_text" must be too. Insert a blank line (two newline characters, i.e. "\\n\\n") between each paragraph exactly where the original paragraph breaks fall. Do not run every paragraph together into one continuous block of text — a passage with 6 paragraphs on the page must come back as 6 paragraphs separated by blank lines, not one long paragraph.',
     '',
