@@ -138,6 +138,30 @@ export default function TeacherMockCenter({ onExit }) {
   const [rlQuestions, setRlQuestions] = useState([])
   const [rlLoading, setRlLoading] = useState(false)
 
+  // "View test" — Jasur: "i want a button smth like 'view the test' and
+  // be able to see the test in the mock environment and being able too
+  // edit everything here like passages questions to avoid errors
+  // possibly made by ai." Shows every section (passage/audio) and its
+  // questions for one exam on one page, laid out the way a student
+  // would actually encounter them, with an Edit affordance on each
+  // piece that opens the SAME SectionFormModal/QuestionFormModal used
+  // everywhere else in this tab — no separate editing machinery to keep
+  // in sync, just a read-through view over the same data.
+  const [examPreview, setExamPreview] = useState(null) // { exam, sections, questionsBySection, loading, error }
+
+  // "Upload answer key" — Jasur: "teacher should insert correct answers
+  // by himself or upload as a file by choice." A separate, smaller
+  // action than the full "Import from a file" above: the questions
+  // already exist (typed by hand, imported, or both), and this just
+  // fills in whichever ones still have a blank correct_answer by
+  // reading an uploaded answer-key document and matching by question
+  // number. Never touches a question that already has an answer, so it
+  // can't undo a manual correction.
+  const [answerKeyImporting, setAnswerKeyImporting] = useState(false)
+  const [answerKeyError, setAnswerKeyError] = useState('')
+  const [answerKeyInfo, setAnswerKeyInfo] = useState('')
+  const answerKeyInputRef = useRef(null)
+
   const [examModal, setExamModal] = useState(null) // { mode: 'create' } | { mode: 'edit', exam }
   const [examModalSaving, setExamModalSaving] = useState(false)
   const [examModalError, setExamModalError] = useState('')
@@ -343,6 +367,173 @@ export default function TeacherMockCenter({ onExit }) {
   const backToRlSections = () => {
     setRlSelectedSectionId(null)
     setRlQuestions([])
+  }
+
+  /*
+   * ============================================================
+   * "VIEW TEST" PREVIEW (Reading and Listening)
+   * ============================================================
+   * Reuses openEditSection/openEditQuestion and their existing
+   * SectionFormModal/QuestionFormModal save paths — rlSelectedExamId is
+   * kept in sync so saveSection's exam_id and saveQuestion's
+   * section_id are always correct even though preview shows every
+   * section at once rather than one at a time.
+   */
+  const openExamPreview = async (exam) => {
+    setExamPreview({ exam, sections: [], questionsBySection: {}, loading: true, error: '' })
+    setRlSelectedExamId(exam.id)
+    setRlSelectedSectionId(null)
+
+    const { data: sections, error: sectionsError } = await supabase
+      .from('mock_sections')
+      .select('*')
+      .eq('exam_id', exam.id)
+      .order('order_index', { ascending: true })
+
+    if (sectionsError) {
+      console.error('Failed to load exam preview:', sectionsError)
+      setExamPreview({
+        exam,
+        sections: [],
+        questionsBySection: {},
+        loading: false,
+        error: sectionsError.message || 'Could not load this exam.',
+      })
+      return
+    }
+
+    const sectionIds = (sections || []).map((s) => s.id)
+    const questionsBySection = {}
+
+    if (sectionIds.length > 0) {
+      // mock_questions, not mock_questions_public — same as everywhere
+      // else in this tab, a teacher previewing needs the real answer key.
+      const { data: questions, error: questionsError } = await supabase
+        .from('mock_questions')
+        .select('*')
+        .in('section_id', sectionIds)
+        .order('order_index', { ascending: true })
+
+      if (questionsError) {
+        console.error('Failed to load exam preview questions:', questionsError)
+        setExamPreview({
+          exam,
+          sections: sections || [],
+          questionsBySection: {},
+          loading: false,
+          error: questionsError.message || 'Could not load its questions.',
+        })
+        return
+      }
+
+      ;(questions || []).forEach((q) => {
+        questionsBySection[q.section_id] = [...(questionsBySection[q.section_id] || []), q]
+      })
+    }
+
+    setExamPreview({ exam, sections: sections || [], questionsBySection, loading: false, error: '' })
+  }
+
+  const closeExamPreview = () => {
+    setExamPreview(null)
+    backToRlExams()
+  }
+
+  // Called after any section/question save while a preview is open, so
+  // an edit made from the preview shows up there immediately instead of
+  // only after re-opening it.
+  const refreshExamPreviewIfOpen = () => {
+    if (examPreview) openExamPreview(examPreview.exam)
+  }
+
+  const previewEditQuestion = (question) => {
+    setRlSelectedSectionId(question.section_id)
+    openEditQuestion(question)
+  }
+
+  const previewAddQuestion = (sectionId) => {
+    setRlSelectedSectionId(sectionId)
+    openCreateQuestion()
+  }
+
+  const handleAnswerKeyUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (answerKeyInputRef.current) answerKeyInputRef.current.value = ''
+    if (!file || !rlSelectedSectionId) return
+
+    setAnswerKeyImporting(true)
+    setAnswerKeyError('')
+    setAnswerKeyInfo('')
+
+    try {
+      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('mock-content-uploads')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream' })
+
+      if (uploadError) throw uploadError
+
+      const { data, error: fnError } = await supabase.functions.invoke('mock-content-import', {
+        body: { storagePath: path, mimeType: file.type || '', mode: 'answer_key' },
+      })
+
+      if (fnError) throw fnError
+      if (data?.error) throw new Error(data.error)
+
+      const answers = data?.result?.answers || []
+
+      if (answers.length === 0) {
+        throw new Error('No answers were found in that file.')
+      }
+
+      const answerByIndex = {}
+      answers.forEach((a) => {
+        answerByIndex[a.order_index] = a.correct_answer
+      })
+
+      let filled = 0
+      let leftAlone = 0
+
+      for (const q of rlQuestions) {
+        if (!(q.order_index in answerByIndex)) continue
+        if (q.correct_answer && q.correct_answer.trim()) {
+          leftAlone++
+          continue
+        }
+
+        const { error: updateError } = await supabase
+          .from('mock_questions')
+          .update({ correct_answer: answerByIndex[q.order_index] })
+          .eq('id', q.id)
+
+        if (updateError) throw updateError
+        filled++
+      }
+
+      const matchedIndexes = new Set(rlQuestions.map((q) => q.order_index))
+      const unmatched = answers.filter((a) => !matchedIndexes.has(a.order_index)).length
+
+      await reloadRlQuestions(rlSelectedSectionId)
+      refreshExamPreviewIfOpen()
+
+      setAnswerKeyInfo(
+        `Filled in ${filled} answer${filled === 1 ? '' : 's'}.` +
+          (leftAlone
+            ? ` ${leftAlone} question${leftAlone === 1 ? '' : 's'} already had an answer and ${
+                leftAlone === 1 ? 'was' : 'were'
+              } left alone.`
+            : '') +
+          (unmatched
+            ? ` ${unmatched} entr${unmatched === 1 ? 'y' : 'ies'} in the key didn't match a question number here.`
+            : '')
+      )
+    } catch (err) {
+      console.error('Answer key import failed:', err)
+      setAnswerKeyError(err?.message || 'Could not read that answer key. Please try again.')
+    } finally {
+      setAnswerKeyImporting(false)
+    }
   }
 
   /*
@@ -1222,6 +1413,7 @@ export default function TeacherMockCenter({ onExit }) {
 
       setSectionModal(null)
       await reloadRlSections(rlSelectedExamId)
+      refreshExamPreviewIfOpen()
 
       // Auto-drill into "Manage questions" for a brand new section —
       // that's where the correct-answer field lives, per question.
@@ -1328,6 +1520,7 @@ export default function TeacherMockCenter({ onExit }) {
 
       setQuestionModal(null)
       await reloadRlQuestions(rlSelectedSectionId)
+      refreshExamPreviewIfOpen()
     } catch (err) {
       console.error('Could not save question:', err)
       setQuestionModalError(err?.message || 'Could not save this question.')
@@ -1842,7 +2035,7 @@ export default function TeacherMockCenter({ onExit }) {
               {(contentTab === 'reading' || contentTab === 'listening') && (
                 <div className="flex flex-col gap-5">
                   {/* ---- Level 1: exam list (this tab's module only) ---- */}
-                  {!rlSelectedExamId && (
+                  {!examPreview && !rlSelectedExamId && (
                     <>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-mist max-w-lg">
@@ -1926,6 +2119,15 @@ export default function TeacherMockCenter({ onExit }) {
 
                                 <button
                                   type="button"
+                                  onClick={() => openExamPreview(exam)}
+                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  title="See it laid out like a student would, and fix anything from there"
+                                >
+                                  View test
+                                </button>
+
+                                <button
+                                  type="button"
                                   onClick={() => deleteRlExam(exam)}
                                   className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
@@ -1940,7 +2142,7 @@ export default function TeacherMockCenter({ onExit }) {
                   )}
 
                   {/* ---- Level 2: section list within one exam ---- */}
-                  {rlSelectedExamId && !rlSelectedSectionId && (
+                  {!examPreview && rlSelectedExamId && !rlSelectedSectionId && (
                     <>
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -2029,7 +2231,7 @@ export default function TeacherMockCenter({ onExit }) {
                   )}
 
                   {/* ---- Level 3: question list within one section ---- */}
-                  {rlSelectedExamId && rlSelectedSectionId && (
+                  {!examPreview && rlSelectedExamId && rlSelectedSectionId && (
                     <>
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -2054,6 +2256,31 @@ export default function TeacherMockCenter({ onExit }) {
                         >
                           + Add question
                         </button>
+                      </div>
+
+                      <div className="rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
+                        <label className="text-xs font-semibold text-brass">
+                          Upload answer key
+                          <input
+                            ref={answerKeyInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                            disabled={answerKeyImporting}
+                            onChange={handleAnswerKeyUpload}
+                            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
+                          />
+                        </label>
+                        <p className="mt-1 text-[11px] text-mist">
+                          Upload a photo, PDF, or Word doc of the official answer key and every
+                          question below that's still blank gets filled in automatically, matched
+                          by question number. Anything you've already filled in yourself is left
+                          alone.
+                        </p>
+                        {answerKeyImporting && (
+                          <p className="mt-1.5 text-xs text-brass">Reading the answer key — this can take a moment…</p>
+                        )}
+                        {answerKeyInfo && <p className="mt-1.5 text-xs text-sage">{answerKeyInfo}</p>}
+                        {answerKeyError && <p className="mt-1.5 text-xs text-coral">{answerKeyError}</p>}
                       </div>
 
                       {rlLoading ? (
@@ -2098,6 +2325,147 @@ export default function TeacherMockCenter({ onExit }) {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ---- "View test" preview: every section + question, student-layout ---- */}
+                  {examPreview && (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={closeExamPreview}
+                            className="focus-ring text-xs text-mist hover:text-paper"
+                          >
+                            ← All exams
+                          </button>
+                          <p className="mt-1 font-display text-lg text-paper truncate">
+                            {examPreview.exam?.title}{' '}
+                            <span className="text-xs font-mono text-mist capitalize">
+                              ({examPreview.exam?.module})
+                            </span>
+                          </p>
+                          <p className="text-xs text-mist mt-0.5">
+                            Laid out the way a student will actually see it — click Edit on
+                            anything to fix it right here.
+                          </p>
+                        </div>
+                      </div>
+
+                      {examPreview.loading ? (
+                        <p className="text-sm text-mist">Loading…</p>
+                      ) : examPreview.error ? (
+                        <p className="text-sm text-coral">{examPreview.error}</p>
+                      ) : examPreview.sections.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                          No sections yet — add them from "Manage sections" first.
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          {examPreview.sections.map((sec) => {
+                            const secQuestions = examPreview.questionsBySection[sec.id] || []
+                            return (
+                              <div
+                                key={sec.id}
+                                className="rounded-2xl border border-line bg-panel overflow-hidden"
+                              >
+                                <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-line bg-panel-2">
+                                  <p className="font-medium text-paper truncate">
+                                    {sec.order_index + 1}. {sec.title}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditSection(sec)}
+                                    className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+
+                                <div className="px-5 py-4">
+                                  {examPreview.exam?.module === 'reading' ? (
+                                    sec.passage_text ? (
+                                      <p className="text-sm text-paper-dim whitespace-pre-wrap">
+                                        {sec.passage_text}
+                                      </p>
+                                    ) : (
+                                      <p className="text-xs text-mist italic">No passage text yet.</p>
+                                    )
+                                  ) : sec.audio_url ? (
+                                    <audio controls preload="none" src={sec.audio_url} className="h-9" />
+                                  ) : (
+                                    <p className="text-xs text-mist italic">No audio uploaded yet.</p>
+                                  )}
+                                </div>
+
+                                <div className="border-t border-line">
+                                  {secQuestions.length === 0 ? (
+                                    <p className="px-5 py-4 text-xs text-mist">
+                                      No questions in this section yet.
+                                    </p>
+                                  ) : (
+                                    secQuestions.map((q) => (
+                                      <div
+                                        key={q.id}
+                                        className="flex flex-wrap items-start justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                                      >
+                                        <div className="min-w-0">
+                                          <p className="font-medium text-paper text-sm">
+                                            {q.order_index + 1}. {q.prompt}
+                                          </p>
+                                          {q.type === 'multiple_choice' &&
+                                            (q.options?.choices?.length > 0) && (
+                                              <ul className="mt-1 text-xs text-mist">
+                                                {q.options.choices.map((c, i) => (
+                                                  <li
+                                                    key={i}
+                                                    className={
+                                                      c === q.correct_answer
+                                                        ? 'text-sage font-medium'
+                                                        : ''
+                                                    }
+                                                  >
+                                                    {c}
+                                                    {c === q.correct_answer ? ' ✓' : ''}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                            )}
+                                          <p
+                                            className={`text-xs font-mono mt-1 ${
+                                              q.correct_answer?.trim() ? 'text-mist' : 'text-coral'
+                                            }`}
+                                          >
+                                            {QUESTION_TYPE_LABELS[q.type] || q.type} · Answer:{' '}
+                                            {q.correct_answer?.trim() || '(blank)'}
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => previewEditQuestion(q)}
+                                          className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                        >
+                                          Edit
+                                        </button>
+                                      </div>
+                                    ))
+                                  )}
+                                  <div className="px-5 py-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => previewAddQuestion(sec.id)}
+                                      className="focus-ring text-xs text-brass hover:text-brass-dim font-medium"
+                                    >
+                                      + Add question to this section
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </>

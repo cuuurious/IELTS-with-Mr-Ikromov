@@ -160,6 +160,51 @@ const MOCK_IMPORT_SCHEMA = {
   additionalProperties: false,
 }
 
+// "Upload answer key" — a separate, smaller ask than the full content
+// import above: after a test is already built (by hand, by import, or
+// both), the teacher can upload just the official answer key document
+// (an answer sheet, an underlined/marked copy, anything with "1. B, 2.
+// TRUE, 3. beach..."-style entries) and this fills in whichever
+// questions still have a blank correct_answer, matched purely by
+// question number/order — nothing else about the question changes.
+const ANSWER_KEY_SCHEMA = {
+  type: 'object',
+  properties: {
+    answers: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          order_index: {
+            type: 'integer',
+            description:
+              'The printed question number, converted to start at 0 (printed "1" -> 0, printed "2" -> 1, and so on).',
+          },
+          correct_answer: { type: 'string' },
+        },
+        required: ['order_index', 'correct_answer'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['answers'],
+  additionalProperties: false,
+}
+
+function buildAnswerKeyPrompt() {
+  return [
+    'This document is an answer key for an IELTS mock test — a list of question numbers each with its correct answer (for example "1. B", "21. TRUE", "5. beach", or a table/underlined-choice layout that means the same thing).',
+    '',
+    'Extract every entry you can find as {order_index, correct_answer}. Convert the printed question number to a 0-based index: printed question 1 becomes order_index 0, printed question 2 becomes order_index 1, and so on.',
+    '',
+    'For a True/False/Not Given answer, write exactly "True", "False", or "Not Given" (also treat Yes/No/Not Given answer keys the same way). For a multiple-choice answer, write just the letter or the exact choice text as printed in the key. For anything else, write the answer exactly as printed.',
+    '',
+    "Only include entries you can actually read from the document — don't guess or fill in a number that isn't there.",
+    '',
+    'Return nothing except the structured list — no commentary.',
+  ].join('\n')
+}
+
 function buildPrompt(module) {
   const moduleLabel = module === 'reading' ? 'Reading' : 'Listening'
 
@@ -246,6 +291,7 @@ Deno.serve(async (req) => {
     const storagePath = payload?.storagePath
     const mimeType = payload?.mimeType || ''
     const module = payload?.module === 'reading' ? 'reading' : 'listening'
+    const mode = payload?.mode === 'answer_key' ? 'answer_key' : 'content'
 
     if (!storagePath) {
       return jsonResponse({ error: 'storagePath is required.' }, 400)
@@ -261,7 +307,7 @@ Deno.serve(async (req) => {
       throw signError || new Error('Could not create a signed URL for that file.')
     }
 
-    const promptText = buildPrompt(module)
+    const promptText = mode === 'answer_key' ? buildAnswerKeyPrompt() : buildPrompt(module)
 
     const content = [{ type: 'input_text', text: promptText }]
 
@@ -282,12 +328,20 @@ Deno.serve(async (req) => {
       model: TEXT_MODEL,
       input: [{ role: 'user', content }],
       text: {
-        format: {
-          type: 'json_schema',
-          name: 'mock_content_import',
-          strict: true,
-          schema: MOCK_IMPORT_SCHEMA,
-        },
+        format:
+          mode === 'answer_key'
+            ? {
+                type: 'json_schema',
+                name: 'mock_answer_key_import',
+                strict: true,
+                schema: ANSWER_KEY_SCHEMA,
+              }
+            : {
+                type: 'json_schema',
+                name: 'mock_content_import',
+                strict: true,
+                schema: MOCK_IMPORT_SCHEMA,
+              },
       },
     })
 
