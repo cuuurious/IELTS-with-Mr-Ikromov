@@ -1213,7 +1213,16 @@ export default function TeacherMockCenter({ onExit }) {
     const above = comparable.filter((s) => s.overallBand > s.row.student.target_band).length
     const notStarted = total - studentBandSummary.filter((s) => s.hasAnyActivity).length
 
-    return { total, modules, below, at, above, notStarted }
+    // The class's overall estimated band — every student's own overallBand
+    // (itself an average of whichever modules THEY have data for)
+    // averaged across everyone who has at least one. Distinct from each
+    // module tile above, which only ever averages that one module.
+    const overallBands = studentBandSummary.map((s) => s.overallBand).filter((b) => b != null)
+    const overallAvg = overallBands.length
+      ? roundOverallBand(overallBands.reduce((s, v) => s + v, 0) / overallBands.length)
+      : null
+
+    return { total, modules, below, at, above, notStarted, overallAvg, overallCount: overallBands.length }
   }, [studentBandSummary])
 
   // Sorted worst-first: never-attempted students before well-below-target
@@ -2251,21 +2260,30 @@ export default function TeacherMockCenter({ onExit }) {
         </div>
       </header>
 
-      <nav className="shrink-0 border-b border-line bg-panel-2 px-4 sm:px-6 flex gap-1 overflow-x-auto">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => setSection(s.key)}
-            className={`focus-ring shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              section === s.key
-                ? 'border-brass text-brass'
-                : 'border-transparent text-mist hover:text-paper'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+      {/* Was a flat underline-tab row (border-b-2 on the active label) —
+          Jasur: "these sections layout is too flat and not visually
+          attractive". Switched to the same rounded segmented-control
+          look this file already uses elsewhere (the Students tab's "By
+          group"/"All mixed" toggle) instead of inventing a new style:
+          a pill track with a solid brass-filled pill for whichever
+          section is active. */}
+      <nav className="shrink-0 border-b border-line bg-panel-2 px-4 sm:px-6 py-3 overflow-x-auto">
+        <div className="inline-flex items-center gap-1 rounded-full border border-line bg-panel p-1">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setSection(s.key)}
+              className={`focus-ring shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                section === s.key
+                  ? 'bg-brass text-onbrass shadow-sm'
+                  : 'text-paper-dim hover:text-paper'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </nav>
 
       <main className="flex-1 overflow-y-auto">
@@ -2293,12 +2311,27 @@ export default function TeacherMockCenter({ onExit }) {
                   only counts students who have at least one band AND a
                   target set.
                  ================================================== */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
                 <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
                   <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Students</p>
                   <p className="font-display text-2xl text-paper mt-1">{progressSummary.total}</p>
                   <p className="text-xs text-paper-dim mt-0.5">
                     {progressSummary.notStarted} not started yet
+                  </p>
+                </div>
+                {/* The class's overall estimated band — each student's own
+                    overall (an average of whichever of the 4 modules THEY
+                    have data for) averaged across everyone who has at
+                    least one. Given its own highlighted tile since it's
+                    the headline number, distinct from each single-module
+                    tile beside it. */}
+                <div className="rounded-2xl border border-brass/30 bg-brass/10 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-brass font-mono">Overall</p>
+                  <p className="font-display text-2xl text-paper mt-1">
+                    {progressSummary.overallAvg != null ? formatBand(progressSummary.overallAvg) : '—'}
+                  </p>
+                  <p className="text-xs text-paper-dim mt-0.5">
+                    {progressSummary.overallCount} of {progressSummary.total} rated
                   </p>
                 </div>
                 {progressSummary.modules.map((m) => (
