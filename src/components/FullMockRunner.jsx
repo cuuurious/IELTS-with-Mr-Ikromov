@@ -411,8 +411,8 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
           <h2 className="font-display text-2xl sm:text-3xl mt-1">Full Mock</h2>
           <p className="text-sm text-mist mt-1.5 max-w-md">
             Sit Listening, Reading and Writing back-to-back, in that order, under real exam
-            conditions — timed, no skipping ahead. Listening and Reading are scored the moment
-            you submit; Writing is marked by hand afterwards.
+            conditions — timed, no skipping ahead. Just like a real exam, results aren't
+            available immediately — your teacher releases them once they're ready.
           </p>
         </div>
 
@@ -462,9 +462,8 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         </span>
         <p className="mt-2 font-display text-2xl text-paper">{setTitle}</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-mist">
-          Listening and Reading are already scored — check Overview for your %. Writing is
-          marked by hand; you'll see the band and feedback there once a writing examiner reviews
-          it.
+          Submitted. Just like a real exam, your results aren't out yet — your teacher will
+          release your Listening, Reading and Writing bands to Overview once they're ready.
         </p>
         <button
           type="button"

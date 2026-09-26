@@ -47,6 +47,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 
 const SECTIONS = [
   { key: 'progress', label: 'Student Progress' },
+  { key: 'results', label: 'Results' },
   { key: 'students', label: 'Students' },
   { key: 'speaking', label: 'Speaking' },
   { key: 'content', label: 'Content' },
@@ -182,6 +183,16 @@ export default function TeacherMockCenter({ onExit }) {
   const [examinersById, setExaminersById] = useState({})
   const [groups, setGroups] = useState([])
   const [groupMembers, setGroupMembers] = useState([])
+
+  // Results — confirm & release (migration_48). bandDrafts holds a
+  // teacher's in-progress edit to a Reading/Listening item's suggested
+  // band, keyed by that item's `key` (see pendingRelease below) —
+  // separate from the persisted mock_attempts.band column, which is
+  // only written once that item is actually released.
+  const [bandDrafts, setBandDrafts] = useState({})
+  const [selectedReleaseKeys, setSelectedReleaseKeys] = useState(() => new Set())
+  const [releasing, setReleasing] = useState(false)
+  const [releaseError, setReleaseError] = useState('')
 
   // Was "expandedId" — a click used to expand the row in place. Jasur
   // 2026-09-26: "i want a separate window of this profile to be opened
@@ -1139,6 +1150,179 @@ export default function TeacherMockCenter({ onExit }) {
       }
     })
   }, [students, attempts, examsById, writingReviews, speakingSlots])
+
+  // ====================================================================
+  // RESULTS — CONFIRM & RELEASE (migration_48, 2026-09-26)
+  // ====================================================================
+  // Jasur's ask, across three messages, verbatim gist: today a student
+  // sees their Listening/Reading score instantly and a Writing/Speaking
+  // band the moment an examiner marks it — nothing holds any of it back.
+  // He wants one release gate in front of all four skills, releasable
+  // one student at a time or in bulk ("multiple students or all").
+  //
+  // Reading/Listening: every submitted attempt with released_at still
+  // null is "pending" — the teacher sees the raw score plus a SUGGESTED
+  // band (estimateBandFromPercent, the same estimate the score report
+  // and Student Progress tiles already use) which they can edit before
+  // releasing; the edited value is what actually gets saved to
+  // mock_attempts.band and shown to the student, not a live re-estimate.
+  // Writing/Speaking: only attempts/slots an examiner has ALREADY
+  // reviewed show up here — releasing is a confirm, not a re-score.
+  const bandOverride = (key, fallback) =>
+    bandDrafts[key] !== undefined ? bandDrafts[key] : fallback
+
+  const pendingRelease = useMemo(() => {
+    return rows
+      .map(({ student, readingAttempts, listeningAttempts, writingReviews: ownReviews, speakingSlots: ownSlots }) => {
+        const items = []
+
+        readingAttempts.forEach((a) => {
+          if (a.released_at) return
+          items.push({
+            key: `mock_attempts:${a.id}`,
+            table: 'mock_attempts',
+            id: a.id,
+            skill: 'Reading',
+            title: a.examTitle || 'Reading',
+            date: a.submitted_at,
+            scoreLabel: `${a.score}/${a.max_score}`,
+            suggestedBand: estimateBandFromPercent(pct(a.score, a.max_score)),
+            editableBand: true,
+          })
+        })
+
+        listeningAttempts.forEach((a) => {
+          if (a.released_at) return
+          items.push({
+            key: `mock_attempts:${a.id}`,
+            table: 'mock_attempts',
+            id: a.id,
+            skill: 'Listening',
+            title: a.examTitle || 'Listening',
+            date: a.submitted_at,
+            scoreLabel: `${a.score}/${a.max_score}`,
+            suggestedBand: estimateBandFromPercent(pct(a.score, a.max_score)),
+            editableBand: true,
+          })
+        })
+
+        ownReviews.forEach((r) => {
+          if (!r.examiner_reviewed_at || r.released_at) return
+          items.push({
+            key: `writing_mock_attempts:${r.id}`,
+            table: 'writing_mock_attempts',
+            id: r.id,
+            skill: 'Writing',
+            title: r.examTitle || 'Writing mock',
+            date: r.examiner_reviewed_at,
+            scoreLabel: null,
+            suggestedBand: r.examiner_band,
+            editableBand: false,
+          })
+        })
+
+        ownSlots.forEach((s) => {
+          if (s.status !== 'completed' || s.examiner_band == null || s.released_at) return
+          items.push({
+            key: `mock_speaking_slots:${s.id}`,
+            table: 'mock_speaking_slots',
+            id: s.id,
+            skill: 'Speaking',
+            title: 'Speaking exam',
+            date: s.examiner_reviewed_at || s.scheduled_at,
+            scoreLabel: null,
+            suggestedBand: s.examiner_band,
+            editableBand: false,
+          })
+        })
+
+        // Oldest first within a student, so the earliest-waiting result
+        // is what a teacher sees at the top of that student's group.
+        items.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
+
+        return { student, items }
+      })
+      .filter((g) => g.items.length > 0)
+  }, [rows])
+
+  const allPendingItems = useMemo(() => pendingRelease.flatMap((g) => g.items), [pendingRelease])
+
+  const releaseItems = async (items) => {
+    if (items.length === 0) return
+    setReleasing(true)
+    setReleaseError('')
+    try {
+      const nowIso = new Date().toISOString()
+      const byTable = { mock_attempts: [], writing_mock_attempts: [], mock_speaking_slots: [] }
+      items.forEach((it) => byTable[it.table]?.push(it))
+
+      // mock_attempts: one UPDATE per row — each can carry a different
+      // (possibly teacher-edited) band, so these can't be batched with
+      // a single .in() the way the other two tables' plain confirms can.
+      for (const it of byTable.mock_attempts) {
+        const band = bandOverride(it.key, it.suggestedBand)
+        const { error } = await supabase
+          .from('mock_attempts')
+          .update({ released_at: nowIso, released_by: profile.id, band })
+          .eq('id', it.id)
+        if (error) throw error
+      }
+
+      if (byTable.writing_mock_attempts.length > 0) {
+        const { error } = await supabase
+          .from('writing_mock_attempts')
+          .update({ released_at: nowIso, released_by: profile.id })
+          .in('id', byTable.writing_mock_attempts.map((it) => it.id))
+        if (error) throw error
+      }
+
+      if (byTable.mock_speaking_slots.length > 0) {
+        const { error } = await supabase
+          .from('mock_speaking_slots')
+          .update({ released_at: nowIso, released_by: profile.id })
+          .in('id', byTable.mock_speaking_slots.map((it) => it.id))
+        if (error) throw error
+      }
+
+      const releasedMockAttemptBandById = {}
+      byTable.mock_attempts.forEach((it) => {
+        releasedMockAttemptBandById[it.id] = bandOverride(it.key, it.suggestedBand)
+      })
+      const releasedMockAttemptIds = new Set(byTable.mock_attempts.map((it) => it.id))
+      const releasedWritingIds = new Set(byTable.writing_mock_attempts.map((it) => it.id))
+      const releasedSlotIds = new Set(byTable.mock_speaking_slots.map((it) => it.id))
+
+      setAttempts((prev) =>
+        prev.map((a) =>
+          releasedMockAttemptIds.has(a.id)
+            ? { ...a, released_at: nowIso, released_by: profile.id, band: releasedMockAttemptBandById[a.id] }
+            : a
+        )
+      )
+      setWritingReviews((prev) =>
+        prev.map((r) => (releasedWritingIds.has(r.id) ? { ...r, released_at: nowIso, released_by: profile.id } : r))
+      )
+      setSpeakingSlots((prev) =>
+        prev.map((s) => (releasedSlotIds.has(s.id) ? { ...s, released_at: nowIso, released_by: profile.id } : s))
+      )
+
+      setSelectedReleaseKeys((prev) => {
+        const next = new Set(prev)
+        items.forEach((it) => next.delete(it.key))
+        return next
+      })
+      setBandDrafts((prev) => {
+        const next = { ...prev }
+        items.forEach((it) => delete next[it.key])
+        return next
+      })
+    } catch (err) {
+      console.error('Could not release result(s):', err)
+      setReleaseError(err?.message || 'Could not release — please try again.')
+    } finally {
+      setReleasing(false)
+    }
+  }
 
   // ====================================================================
   // STUDENT PROGRESS STATS — Jasur: "i want here the stats you know, any
@@ -2382,6 +2566,119 @@ export default function TeacherMockCenter({ onExit }) {
                 onOpenProfile={setProfileStudentId}
                 emptyLabel="No students yet."
               />
+            </div>
+          )}
+
+          {/* ======================================================
+              RESULTS — confirm & release (migration_48, 2026-09-26).
+              Nothing here is visible to a student until released, even
+              Reading/Listening's already-computed score — that's the
+              whole point of this tab existing.
+             ====================================================== */}
+          {!loading && section === 'results' && (
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-mist max-w-lg">
+                  Reading/Listening score instantly and Writing/Speaking are marked by an
+                  examiner, but nothing reaches a student until you release it here — one
+                  result at a time, or select several/all at once.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    disabled={releasing || selectedReleaseKeys.size === 0}
+                    onClick={() => releaseItems(allPendingItems.filter((it) => selectedReleaseKeys.has(it.key)))}
+                    className="focus-ring rounded-full border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40"
+                  >
+                    Release selected ({selectedReleaseKeys.size})
+                  </button>
+                  <button
+                    type="button"
+                    disabled={releasing || allPendingItems.length === 0}
+                    onClick={() => releaseItems(allPendingItems)}
+                    className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40"
+                  >
+                    Release all ({allPendingItems.length})
+                  </button>
+                </div>
+              </div>
+
+              {releaseError && <p className="text-sm text-coral">{releaseError}</p>}
+
+              {pendingRelease.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
+                  Nothing waiting — every scored or marked result is already visible to its
+                  student.
+                </div>
+              ) : (
+                pendingRelease.map(({ student, items }) => (
+                  <div key={student.id} className="rounded-2xl border border-line bg-panel p-4">
+                    <button
+                      type="button"
+                      onClick={() => setProfileStudentId(student.id)}
+                      className="focus-ring text-sm font-semibold text-paper hover:text-brass transition-colors mb-2"
+                    >
+                      {studentLabel(student)}
+                    </button>
+                    <div className="flex flex-col divide-y divide-line/60">
+                      {items.map((it) => (
+                        <div key={it.key} className="flex items-center gap-3 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={selectedReleaseKeys.has(it.key)}
+                            onChange={(e) => {
+                              setSelectedReleaseKeys((prev) => {
+                                const next = new Set(prev)
+                                if (e.target.checked) next.add(it.key)
+                                else next.delete(it.key)
+                                return next
+                              })
+                            }}
+                            className="h-4 w-4 shrink-0 rounded border-line"
+                            aria-label={`Select ${it.skill} result for ${studentLabel(student)}`}
+                          />
+                          <span className="text-xs font-semibold uppercase tracking-wide text-mist w-20 shrink-0">
+                            {it.skill}
+                          </span>
+                          <span className="text-sm text-paper-dim flex-1 truncate">
+                            {it.title}
+                            {it.scoreLabel ? ` — ${it.scoreLabel}` : ''}
+                          </span>
+                          {it.editableBand ? (
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="1"
+                              max="9"
+                              value={bandOverride(it.key, it.suggestedBand) ?? ''}
+                              onChange={(e) =>
+                                setBandDrafts((prev) => ({
+                                  ...prev,
+                                  [it.key]: e.target.value === '' ? null : Number(e.target.value),
+                                }))
+                              }
+                              className="focus-ring w-16 shrink-0 rounded-lg border border-line bg-panel-2 px-2 py-1 text-sm text-paper text-center"
+                              aria-label={`Suggested band for ${it.skill}, editable before release`}
+                            />
+                          ) : (
+                            <span className="text-sm font-semibold text-paper w-16 shrink-0 text-center">
+                              {formatBand(it.suggestedBand)}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            disabled={releasing}
+                            onClick={() => releaseItems([it])}
+                            className="focus-ring shrink-0 rounded-full border border-line text-xs font-semibold px-3 py-1.5 text-mist hover:text-brass hover:border-brass/40 transition-colors disabled:opacity-40"
+                          >
+                            Release
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 

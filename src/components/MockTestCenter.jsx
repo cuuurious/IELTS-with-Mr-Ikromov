@@ -97,6 +97,12 @@ export default function MockTestCenter({ onExit }) {
           .select('*')
           .eq('user_id', profile.id)
           .not('submitted_at', 'is', null)
+          // 2026-09-26: Reading/Listening used to score the instant a
+          // student submitted — now nothing reaches a student until their
+          // teacher explicitly releases it (migration_48). An unreleased
+          // attempt simply doesn't exist yet as far as this screen is
+          // concerned; it reappears the moment released_at is set.
+          .not('released_at', 'is', null)
           .order('submitted_at', { ascending: false }),
         supabase
           .from('mock_speaking_slots')
@@ -221,8 +227,13 @@ export default function MockTestCenter({ onExit }) {
     setReportGenerating(true)
     setReportError('')
     try {
-      const latestWritingReview = writingReviews[0] || null
-      const latestSpeakingSlot = slots.find((s) => s.examiner_band != null) || null
+      // Writing/Speaking rows are fetched as soon as an examiner marks
+      // them (see the load() effect above) so this screen can show a
+      // "marked, awaiting release" placeholder — but the report itself
+      // must never include a band the teacher hasn't released yet.
+      const latestWritingReview = writingReviews.find((r) => r.released_at != null) || null
+      const latestSpeakingSlot =
+        slots.find((s) => s.examiner_band != null && s.released_at != null) || null
 
       await downloadScoreReport({
         studentName: profile?.full_name || profile?.username,
@@ -396,13 +407,25 @@ export default function MockTestCenter({ onExit }) {
                       <div key={review.id} className="rounded-xl border border-line bg-panel-2 p-4">
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm font-medium text-paper">{review.examTitle}</p>
-                          <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                            Band {review.examiner_band ?? '—'}
-                          </span>
+                          {review.released_at != null ? (
+                            <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
+                              Band {review.examiner_band ?? '—'}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold rounded-full border border-line bg-panel text-mist px-2.5 py-1">
+                              Awaiting release
+                            </span>
+                          )}
                         </div>
-                        {review.examiner_feedback && (
-                          <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
-                            {review.examiner_feedback}
+                        {review.released_at != null ? (
+                          review.examiner_feedback && (
+                            <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
+                              {review.examiner_feedback}
+                            </p>
+                          )
+                        ) : (
+                          <p className="text-sm text-mist mt-2">
+                            Marked — your teacher will release your result soon.
                           </p>
                         )}
                       </div>
@@ -478,14 +501,18 @@ export default function MockTestCenter({ onExit }) {
 
                     {slot.status === 'completed' && (
                       <div className="mt-3 rounded-xl border border-line bg-panel-2 p-3.5">
-                        {slot.examiner_band != null ? (
+                        {slot.examiner_band == null ? (
+                          <p className="text-sm text-mist">Not marked yet.</p>
+                        ) : slot.released_at == null ? (
+                          <p className="text-sm text-mist">
+                            Marked — your teacher will release your result soon.
+                          </p>
+                        ) : (
                           <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
                             Band {slot.examiner_band}
                           </span>
-                        ) : (
-                          <p className="text-sm text-mist">Not marked yet.</p>
                         )}
-                        {slot.examiner_feedback && (
+                        {slot.released_at != null && slot.examiner_feedback && (
                           <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
                             {slot.examiner_feedback}
                           </p>
