@@ -108,6 +108,27 @@ export default function MockCheckIn({ selfId }) {
         return
       }
 
+      // Bug fix 2026-09-26: look up the Full Mock set BEFORE marking the
+      // code used, not after. This used to run the other way around — if
+      // the set had been deleted/deactivated, or this query just hit a
+      // network blip, the code was already permanently burned with
+      // nothing to show for it (used_at set, but checkedInSet never got
+      // populated), and the only fix was a teacher issuing a brand new
+      // code. Validating everything first means a failure here costs the
+      // student nothing — they can just try again with the same code.
+      const { data: setRow, error: setLookupError } = await supabase
+        .from('full_mock_sets')
+        .select('*')
+        .eq('id', row.full_mock_set_id)
+        .single()
+
+      if (setLookupError) throw setLookupError
+
+      if (!setRow) {
+        setError('This code points to a mock that no longer exists — ask your teacher for a new one.')
+        return
+      }
+
       const { data: updatedRow, error: updateError } = await supabase
         .from('mock_access_codes')
         .update({ used_at: new Date().toISOString(), entered_full_name: trimmedName })
@@ -127,14 +148,6 @@ export default function MockCheckIn({ selfId }) {
         setError('This code was just used or cancelled — ask your teacher for a new one.')
         return
       }
-
-      const { data: setRow, error: setLookupError } = await supabase
-        .from('full_mock_sets')
-        .select('*')
-        .eq('id', updatedRow.full_mock_set_id)
-        .single()
-
-      if (setLookupError) throw setLookupError
 
       setCheckedInSet(setRow)
     } catch (err) {

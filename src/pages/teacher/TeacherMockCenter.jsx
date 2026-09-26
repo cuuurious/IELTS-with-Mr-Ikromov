@@ -3,8 +3,10 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { formatTargetBand } from '../../lib/targetBands'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
+import { downloadScoreReport } from '../../lib/generateScoreReport'
 import { guessMimeType } from '../../lib/mime'
 import ConfirmModal from '../../components/ConfirmModal'
+import FrozenAttemptReview from '../../components/FrozenAttemptReview'
 import ThemeToggle from '../../components/ThemeToggle'
 
 /*
@@ -48,6 +50,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 const SECTIONS = [
   { key: 'progress', label: 'Student Progress' },
   { key: 'results', label: 'Results' },
+  { key: 'analytics', label: 'Analytics' },
   { key: 'students', label: 'Students' },
   { key: 'speaking', label: 'Speaking' },
   { key: 'content', label: 'Content' },
@@ -204,6 +207,224 @@ function filterAndSortExams(exams, { query, status, sort }) {
   // from the query itself), i.e. no re-sort.
 
   return out
+}
+
+/*
+ * CSV export of Student Progress — one of the ~15 convenience suggestions
+ * from the 2026-09-26 brainstorm, folded into "build everything you
+ * suggested." Jasur regularly needs this data outside the app itself
+ * (a spreadsheet for a school director, a printed handout for a parents'
+ * meeting) — no server round-trip, no new dependency, just a Blob + a
+ * temporary `<a download>`, same "plain browser APIs only" approach as
+ * printAccessCodeSlips right below. Takes the exact same
+ * `studentBandSummary` array the Student Progress tab already computes
+ * (one entry per student, with readingBand/listeningBand/writingBand/
+ * speakingBand/overallBand pre-derived) so the numbers in the download
+ * always match what's on screen — nothing is recomputed here.
+ */
+function csvCell(value) {
+  if (value == null) return ''
+  const s = String(value)
+  // Quote whenever the value contains a comma, quote, or newline — plain
+  // values (numbers, short names) are left bare for readability, matching
+  // how most spreadsheet apps write CSV themselves.
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+function downloadStudentProgressCsv(studentBandSummary) {
+  if (!studentBandSummary || studentBandSummary.length === 0) return
+
+  const header = [
+    'Student',
+    'Username',
+    'Target band',
+    'Reading band (est.)',
+    'Reading avg %',
+    'Reading highest %',
+    'Reading attempts',
+    'Listening band (est.)',
+    'Listening avg %',
+    'Listening highest %',
+    'Listening attempts',
+    'Writing band',
+    'Writing marked',
+    'Speaking band',
+    'Speaking marked',
+    'Overall band (est.)',
+  ]
+
+  const lines = studentBandSummary.map((s) => {
+    const { row } = s
+    return [
+      studentLabel(row.student),
+      row.student.username || '',
+      row.student.target_band != null ? formatTargetBand(row.student.target_band) : '',
+      s.readingBand != null ? formatBand(s.readingBand) : '',
+      row.reading ? row.reading.average : '',
+      row.reading ? row.reading.highest : '',
+      row.readingAttempts.length,
+      s.listeningBand != null ? formatBand(s.listeningBand) : '',
+      row.listening ? row.listening.average : '',
+      row.listening ? row.listening.highest : '',
+      row.listeningAttempts.length,
+      s.writingBand != null ? formatBand(s.writingBand) : '',
+      row.reviewedWritingCount,
+      s.speakingBand != null ? formatBand(s.speakingBand) : '',
+      row.reviewedSpeakingCount,
+      s.overallBand != null ? formatBand(s.overallBand) : '',
+    ]
+      .map(csvCell)
+      .join(',')
+  })
+
+  const csv = [header.map(csvCell).join(','), ...lines].join('\r\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `student-progress-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+/*
+ * Printable access-code slips — one of the ~15 convenience suggestions
+ * from the 2026-09-26 brainstorm, folded into "build everything you
+ * suggested." Telegram delivery already covers most students, but not
+ * everyone connects it (or a teacher may just prefer physically handing
+ * out a slip on exam day, like a real IELTS candidate ticket). This
+ * opens a plain new browser tab/window with a print-only stylesheet —
+ * no new dependency, no PDF library, just `window.print()` — laid out
+ * as a grid of cut-along-the-dashed-line cards, one per code, each
+ * showing who it's for, which Full Mock, the code itself in large
+ * monospace, and the same check-in instructions already sent over
+ * Telegram. `slips` is a plain array of { code, studentName, setTitle }
+ * so this has no dependency on any particular row shape — both the
+ * main Access codes list and AccessCodeIssueModal's own generated-batch
+ * step build that array themselves before calling this.
+ */
+function printAccessCodeSlips(slips) {
+  if (!slips || slips.length === 0) return
+
+  const win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700')
+  if (!win) {
+    window.alert('Could not open the print window — check if your browser blocked a popup.')
+    return
+  }
+
+  const escapeHtml = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[c]))
+
+  const cardsHtml = slips
+    .map(
+      (s) => `
+        <div class="slip">
+          <div class="slip-eyebrow">IELTS with Mr Ikromov — Mock exam access</div>
+          <div class="slip-name">${escapeHtml(s.studentName)}</div>
+          <div class="slip-set">${escapeHtml(s.setTitle)}</div>
+          <div class="slip-code">${escapeHtml(s.code)}</div>
+          <div class="slip-instructions">
+            Open the app → Take a Test → enter your full name and this code to check in.
+            Works once — keep it to yourself.
+          </div>
+        </div>`
+    )
+    .join('\n')
+
+  win.document.open()
+  win.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Access code slips</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f3f1ea;
+    color: #1a1712;
+  }
+  .toolbar {
+    margin-bottom: 16px;
+  }
+  .toolbar button {
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: none;
+    background: #b8862f;
+    color: #fff;
+    cursor: pointer;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+  }
+  .slip {
+    border: 1px dashed #999;
+    padding: 18px 20px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 160px;
+    justify-content: center;
+  }
+  .slip-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #b8862f;
+    font-weight: 700;
+  }
+  .slip-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .slip-set {
+    font-size: 12px;
+    color: #555;
+  }
+  .slip-code {
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 8px 0;
+  }
+  .slip-instructions {
+    font-size: 10.5px;
+    color: #666;
+    line-height: 1.4;
+  }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar { display: none; }
+    .slip { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar"><button onclick="window.print()">Print</button></div>
+  <div class="grid">
+    ${cardsHtml}
+  </div>
+</body>
+</html>`)
+  win.document.close()
 }
 
 export default function TeacherMockCenter({ onExit }) {
@@ -435,6 +656,50 @@ export default function TeacherMockCenter({ onExit }) {
   const [accessCodeModalOpen, setAccessCodeModalOpen] = useState(false)
   const [sendingCodeIds, setSendingCodeIds] = useState(() => new Set())
 
+  // Duplicate/clone an exam (Writing, or Reading/Listening) — see the
+  // duplicateWritingExam/duplicateRlExam block comment further down.
+  // One shared id here since a teacher can only ever have one clone
+  // in flight at a time from this UI (buttons are disabled while set).
+  const [duplicatingExamId, setDuplicatingExamId] = useState(null)
+
+  /*
+   * ============================================================
+   * QUESTION-TYPE MISTAKE ANALYTICS (migration_53)
+   * ============================================================
+   * Aggregates across every submitted attempt ever recorded, not one
+   * student/attempt at a time (that's the existing per-attempt mistake
+   * breakdown in the Student Profile modal). null = never loaded yet;
+   * loaded lazily the first time the Analytics tab is opened, since
+   * it's a heavier aggregate query than everything else fetched on
+   * mount.
+   */
+  const [questionStats, setQuestionStats] = useState(null)
+  const [questionStatsLoading, setQuestionStatsLoading] = useState(false)
+  const [questionStatsError, setQuestionStatsError] = useState('')
+  const [analyticsExamFilter, setAnalyticsExamFilter] = useState('')
+
+  /*
+   * ============================================================
+   * SCHEDULED SESSIONS — group-scheduled mock sessions (migration_52)
+   * ============================================================
+   * One of the ~15 convenience suggestions from the 2026-09-26
+   * brainstorm ("what functions/features can be added... how can we
+   * make it even more convenient?"), picked by Jasur as a priority
+   * item, then folded into "now everything u seggested has to be
+   * built." Builds directly on the Access codes flow just above:
+   * instead of a teacher manually ticking a group's students and
+   * hitting "Issue codes" the morning of a mock, they schedule a
+   * group + a Full Mock set + a date/time once, and a server-side
+   * cron function (run-scheduled-mock-sessions) generates and sends
+   * the codes automatically once that time arrives — reading the
+   * group's LIVE membership at fire time, so a student added the day
+   * before still gets included.
+   */
+  const [scheduledSessions, setScheduledSessions] = useState([])
+  const [scheduleSessionModalOpen, setScheduleSessionModalOpen] = useState(false)
+  const [scheduleSessionSaving, setScheduleSessionSaving] = useState(false)
+  const [scheduleSessionError, setScheduleSessionError] = useState('')
+
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
   // dialog: "this window has to be in the style of the website." Same
@@ -524,6 +789,48 @@ export default function TeacherMockCenter({ onExit }) {
 
     setAccessCodes(data || [])
   }
+
+  const reloadScheduledSessions = async () => {
+    const { data, error } = await supabase
+      .from('mock_scheduled_sessions')
+      .select('*')
+      .order('scheduled_at', { ascending: false })
+
+    if (error) {
+      console.error('Failed to load scheduled sessions:', error)
+      return
+    }
+
+    setScheduledSessions(data || [])
+  }
+
+  const reloadQuestionStats = async () => {
+    setQuestionStatsLoading(true)
+    setQuestionStatsError('')
+
+    const { data, error } = await supabase.rpc('get_mock_question_stats')
+
+    if (error) {
+      console.error('Failed to load question analytics:', error)
+      setQuestionStatsError(error.message || 'Could not load question analytics.')
+      setQuestionStatsLoading(false)
+      return
+    }
+
+    setQuestionStats(data || [])
+    setQuestionStatsLoading(false)
+  }
+
+  // Lazy-load: only fires the first time the Analytics tab is actually
+  // opened (questionStats stays null until then), not on every mount of
+  // this whole portal, since it's a heavier aggregate query than
+  // everything else fetched up front.
+  useEffect(() => {
+    if (section === 'analytics' && questionStats === null && !questionStatsLoading) {
+      reloadQuestionStats()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section])
 
   const openExamSections = async (exam) => {
     setRlSelectedExamId(exam.id)
@@ -734,7 +1041,7 @@ export default function TeacherMockCenter({ onExit }) {
 
         const { error: updateError } = await supabase
           .from('mock_questions')
-          .update({ correct_answer: answerByIndex[q.order_index] })
+          .update({ correct_answer: String(answerByIndex[q.order_index] ?? '').trim() })
           .eq('id', q.id)
 
         if (updateError) throw updateError
@@ -928,7 +1235,7 @@ export default function TeacherMockCenter({ onExit }) {
           order_index: qIndex,
           prompt: q.prompt.trim(),
           type: q.type,
-          options: q.type === 'multiple_choice' ? { choices: q.choices } : null,
+          options: CHOICE_BASED_TYPES.includes(q.type) ? { choices: q.choices || [] } : null,
           correct_answer: q.correctAnswer.trim(),
         }))
 
@@ -1010,7 +1317,7 @@ export default function TeacherMockCenter({ onExit }) {
           order_index: qIndex,
           prompt: q.prompt.trim(),
           type: q.type,
-          options: q.type === 'multiple_choice' ? { choices: q.choices } : null,
+          options: CHOICE_BASED_TYPES.includes(q.type) ? { choices: q.choices || [] } : null,
           correct_answer: q.correctAnswer.trim(),
         }))
 
@@ -1152,8 +1459,54 @@ export default function TeacherMockCenter({ onExit }) {
     reloadRlExams()
     reloadFullMockSets()
     reloadAccessCodes()
+    reloadScheduledSessions()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Rolls the per-question rows from get_mock_question_stats up by
+  // question TYPE — the headline view of "which kinds of questions trip
+  // students up the most," across every exam at once. Only counts
+  // toward a type's total once at least one student has actually
+  // answered a question of that type (total_answers > 0), so an
+  // unused/never-sat question type doesn't show as a misleading 0%.
+  const typeStats = useMemo(() => {
+    const byType = {}
+    ;(questionStats || []).forEach((q) => {
+      const total = Number(q.total_answers) || 0
+      if (total === 0) return
+      if (!byType[q.type]) byType[q.type] = { type: q.type, total: 0, wrong: 0 }
+      byType[q.type].total += total
+      byType[q.type].wrong += Number(q.wrong_answers) || 0
+    })
+    return Object.values(byType)
+      .map((t) => ({ ...t, wrongRate: t.total > 0 ? t.wrong / t.total : 0 }))
+      .sort((a, b) => b.wrongRate - a.wrongRate)
+  }, [questionStats])
+
+  // Per-question drill-down, worst-first, optionally narrowed to one
+  // exam. A minimum sample size (5 answers) keeps a single unlucky
+  // attempt from making one question look like a disaster — with fewer
+  // than 5 answers on record there just isn't enough signal yet.
+  const MIN_QUESTION_SAMPLE = 5
+  const worstQuestions = useMemo(() => {
+    return (questionStats || [])
+      .filter((q) => Number(q.total_answers) >= MIN_QUESTION_SAMPLE)
+      .filter((q) => !analyticsExamFilter || q.exam_id === analyticsExamFilter)
+      .map((q) => ({
+        ...q,
+        wrongRate: Number(q.total_answers) > 0 ? Number(q.wrong_answers) / Number(q.total_answers) : 0,
+      }))
+      .sort((a, b) => b.wrongRate - a.wrongRate)
+      .slice(0, 30)
+  }, [questionStats, analyticsExamFilter])
+
+  const analyticsExamOptions = useMemo(() => {
+    const seen = new Map()
+    ;(questionStats || []).forEach((q) => {
+      if (!seen.has(q.exam_id)) seen.set(q.exam_id, q.exam_title)
+    })
+    return Array.from(seen.entries()).map(([id, title]) => ({ id, title }))
+  }, [questionStats])
 
   const rows = useMemo(() => {
     return students.map((student) => {
@@ -1640,6 +1993,17 @@ export default function TeacherMockCenter({ onExit }) {
     )
   }, [speakingSlots, examinersById])
 
+  // Examiner workload auto-balancing (2026-09-26, migration_55) — same
+  // "3 or more above average" threshold SpeakingExaminerDashboard.jsx
+  // uses to nudge an examiner at the moment they book, applied here so a
+  // teacher glancing at this same table can also spot who's carrying
+  // more than the rest at a glance, not just read raw counts off it.
+  const WORKLOAD_IMBALANCE_THRESHOLD = 3
+  const examinerWorkloadAvgThisWeek = useMemo(() => {
+    if (examinerWorkload.length === 0) return null
+    return examinerWorkload.reduce((s, e) => s + e.thisWeek, 0) / examinerWorkload.length
+  }, [examinerWorkload])
+
   const openChat = (studentId) => {
     onExit()
     window.dispatchEvent(
@@ -1747,6 +2111,45 @@ export default function TeacherMockCenter({ onExit }) {
         await reloadWritingExams()
       },
     })
+  }
+
+  /*
+   * Duplicate/clone an exam — one of the ~15 brainstormed suggestions,
+   * folded into "build everything you suggested." Jasur builds a lot of
+   * exams that share almost all their structure with an existing one
+   * (e.g. a slightly reworded Task 2 prompt, or the same Reading passage
+   * shape with new questions) — today that means rebuilding from
+   * scratch every time. This inserts a full copy under a new id, always
+   * starting as an unpublished Draft (never auto-published, even if the
+   * original was) so a half-edited clone can never accidentally reach
+   * students before the teacher reviews it.
+   */
+  const duplicateWritingExam = async (exam) => {
+    setDuplicatingExamId(exam.id)
+    try {
+      const { error: insertError } = await supabase.from('writing_mock_exams').insert({
+        title: `${exam.title} (copy)`,
+        task1_prompt: exam.task1_prompt,
+        task1_image_url: exam.task1_image_url,
+        task2_prompt: exam.task2_prompt,
+        time_limit_minutes: exam.time_limit_minutes,
+        is_active: false,
+        sort_order: exam.sort_order,
+      })
+      if (insertError) throw insertError
+
+      await reloadWritingExams()
+    } catch (err) {
+      console.error('Could not duplicate this writing exam:', err)
+      setConfirmDialog({
+        title: "Couldn't duplicate this exam",
+        message: err?.message || 'Could not duplicate this exam.',
+        hideCancel: true,
+        tone: 'coral',
+      })
+    } finally {
+      setDuplicatingExamId(null)
+    }
   }
 
   const toggleExamActive = async (exam) => {
@@ -1916,6 +2319,116 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }
 
+  // Reading/Listening's own version of duplicateWritingExam above —
+  // deeper because the content lives in two more tables (mock_sections,
+  // mock_questions), each needing its own id remapped as it's copied,
+  // in the same parent-then-children order every insert path in this
+  // file already uses (exam -> sections -> questions).
+  const duplicateRlExam = async (exam) => {
+    setDuplicatingExamId(exam.id)
+    let createdExamId = null
+    try {
+      const { data: sectionRows, error: sectionsError } = await supabase
+        .from('mock_sections')
+        .select('*')
+        .eq('exam_id', exam.id)
+        .order('order_index', { ascending: true })
+      if (sectionsError) throw sectionsError
+
+      const sectionIds = (sectionRows || []).map((s) => s.id)
+      let questionsBySection = {}
+
+      if (sectionIds.length > 0) {
+        const { data: questionRows, error: questionsError } = await supabase
+          .from('mock_questions')
+          .select('*')
+          .in('section_id', sectionIds)
+          .order('order_index', { ascending: true })
+        if (questionsError) throw questionsError
+
+        questionsBySection = {}
+        ;(questionRows || []).forEach((q) => {
+          if (!questionsBySection[q.section_id]) questionsBySection[q.section_id] = []
+          questionsBySection[q.section_id].push(q)
+        })
+      }
+
+      const { data: newExam, error: examInsertError } = await supabase
+        .from('mock_exams')
+        .insert({
+          title: `${exam.title} (copy)`,
+          module: exam.module,
+          is_active: false,
+          sort_order: exam.sort_order,
+          randomize_questions: exam.randomize_questions,
+          questions_per_section: exam.questions_per_section,
+        })
+        .select('*')
+        .single()
+      if (examInsertError) throw examInsertError
+      createdExamId = newExam.id
+
+      for (const section of sectionRows || []) {
+        const { data: newSection, error: sectionInsertError } = await supabase
+          .from('mock_sections')
+          .insert({
+            exam_id: newExam.id,
+            order_index: section.order_index,
+            title: section.title,
+            audio_url: section.audio_url,
+            passage_text: section.passage_text,
+          })
+          .select('*')
+          .single()
+        if (sectionInsertError) throw sectionInsertError
+
+        const oldQuestions = questionsBySection[section.id] || []
+        if (oldQuestions.length > 0) {
+          const questionRows = oldQuestions.map((q) => ({
+            section_id: newSection.id,
+            order_index: q.order_index,
+            prompt: q.prompt,
+            type: q.type,
+            options: q.options,
+            correct_answer: q.correct_answer,
+          }))
+          const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
+          if (questionsInsertError) throw questionsInsertError
+        }
+      }
+
+      await reloadRlExams()
+    } catch (err) {
+      console.error('Could not duplicate this exam:', err)
+      if (createdExamId) {
+        // Same best-effort cleanup the wizards already do on a partial
+        // failure — an incomplete clone left behind would be exactly
+        // the "content-less/half-built exam" problem the wizards exist
+        // to prevent in the first place. mock_sections/mock_questions
+        // cascade isn't relied on at the DB level anywhere else in this
+        // file, so clean those up explicitly too before the exam row.
+        const { data: orphanSections } = await supabase
+          .from('mock_sections')
+          .select('id')
+          .eq('exam_id', createdExamId)
+        const orphanSectionIds = (orphanSections || []).map((s) => s.id)
+        if (orphanSectionIds.length > 0) {
+          await supabase.from('mock_questions').delete().in('section_id', orphanSectionIds)
+          await supabase.from('mock_sections').delete().eq('exam_id', createdExamId)
+        }
+        await supabase.from('mock_exams').delete().eq('id', createdExamId)
+      }
+      setConfirmDialog({
+        title: "Couldn't duplicate this exam",
+        message: err?.message || 'Could not duplicate this exam.',
+        hideCancel: true,
+        tone: 'coral',
+      })
+    } finally {
+      setDuplicatingExamId(null)
+    }
+  }
+
   const toggleRlExamActive = async (exam) => {
     const { error } = await supabase
       .from('mock_exams')
@@ -1937,7 +2450,13 @@ export default function TeacherMockCenter({ onExit }) {
    */
   const openCreateSection = () => {
     setSectionModalError('')
-    setSectionModal({ mode: 'create' })
+    // Default a new section to slot in after whatever's already here,
+    // not order_index 0 — otherwise "+ Add section" on an exam that
+    // already has sections silently inserts at the front until the
+    // teacher notices and fixes the number by hand.
+    const nextOrderIndex =
+      rlSections.length > 0 ? Math.max(...rlSections.map((s) => s.order_index)) + 1 : 0
+    setSectionModal({ mode: 'create', nextOrderIndex })
   }
 
   const openEditSection = (section) => {
@@ -2103,7 +2622,13 @@ export default function TeacherMockCenter({ onExit }) {
    */
   const openCreateQuestion = () => {
     setQuestionModalError('')
-    setQuestionModal({ mode: 'create' })
+    // Same reasoning as openCreateSection above — default to after the
+    // last existing question in this section, not 0, so "+ Add
+    // question" on a section that already has questions doesn't quietly
+    // land the new one first.
+    const nextOrderIndex =
+      rlQuestions.length > 0 ? Math.max(...rlQuestions.map((q) => q.order_index)) + 1 : 0
+    setQuestionModal({ mode: 'create', nextOrderIndex })
   }
 
   const openEditQuestion = (question) => {
@@ -2464,6 +2989,71 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }
 
+  /*
+   * ---------- Scheduled sessions CRUD ----------
+   * The teacher-side half only ever inserts/updates/deletes rows in
+   * mock_scheduled_sessions — it never touches mock_access_codes or
+   * Telegram directly (that's run-scheduled-mock-sessions' job, once
+   * scheduled_at arrives). Cancelling before that happens just flips
+   * cancelled_at, same soft-delete-by-flag shape as revoking a code.
+   */
+  const openScheduleSession = () => {
+    setScheduleSessionModalOpen(true)
+  }
+
+  const createScheduledSession = async (groupId, fullMockSetId, scheduledAtIso) => {
+    setScheduleSessionSaving(true)
+    setScheduleSessionError('')
+    try {
+      const { error: insertError } = await supabase.from('mock_scheduled_sessions').insert({
+        group_id: groupId,
+        full_mock_set_id: fullMockSetId,
+        scheduled_at: scheduledAtIso,
+        created_by: profile.id,
+      })
+
+      if (insertError) throw insertError
+
+      setScheduleSessionModalOpen(false)
+      await reloadScheduledSessions()
+    } catch (err) {
+      console.error('Could not schedule this session:', err)
+      setScheduleSessionError(err?.message || 'Could not schedule this session.')
+    } finally {
+      setScheduleSessionSaving(false)
+    }
+  }
+
+  const cancelScheduledSession = (session) => {
+    const group = groups.find((g) => g.id === session.group_id)
+    setConfirmDialog({
+      title: 'Cancel this scheduled session?',
+      message: `No access codes will be issued to ${group?.name || 'this group'} for it. This can't be undone — schedule a new one if you change your mind.`,
+      confirmLabel: 'Cancel session',
+      tone: 'coral',
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('mock_scheduled_sessions')
+          .update({ cancelled_at: new Date().toISOString() })
+          .eq('id', session.id)
+          .is('codes_sent_at', null)
+
+        if (error) {
+          console.error('Could not cancel this scheduled session:', error)
+          setConfirmDialog({
+            title: "Couldn't cancel this session",
+            message: error.message || 'Could not cancel this session.',
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
+
+        await reloadScheduledSessions()
+      },
+    })
+  }
+
   return (
     <div className="fixed inset-0 z-[9998] flex flex-col bg-ink text-paper">
 
@@ -2543,11 +3133,22 @@ export default function TeacherMockCenter({ onExit }) {
              ====================================================== */}
           {!loading && section === 'progress' && (
             <div className="flex flex-col gap-5">
-              <p className="text-sm text-mist max-w-lg">
-                Reading/listening scores from Mock Exams, writing mock bands once a writing
-                examiner has marked them, and speaking bands once a speaking examiner has
-                marked a completed session — one row per student.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="text-sm text-mist max-w-lg">
+                  Reading/listening scores from Mock Exams, writing mock bands once a writing
+                  examiner has marked them, and speaking bands once a speaking examiner has
+                  marked a completed session — one row per student.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => downloadStudentProgressCsv(studentBandSummary)}
+                  disabled={studentBandSummary.length === 0}
+                  title="Downloads every row below as a spreadsheet-ready CSV"
+                  className="focus-ring shrink-0 rounded-full border border-line bg-panel-2 text-paper text-sm font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-40"
+                >
+                  ⬇ Export CSV
+                </button>
+              </div>
 
               {/* ==================================================
                   SUMMARY TILES — Reading/Listening bands are an
@@ -2745,6 +3346,114 @@ export default function TeacherMockCenter({ onExit }) {
           )}
 
           {/* ======================================================
+              ANALYTICS — question-type mistake analytics (migration_53).
+              Aggregates across every submitted attempt ever recorded:
+              which question TYPES trip students up the most, and which
+              SPECIFIC questions have an unusually high wrong-rate.
+             ====================================================== */}
+          {!loading && section === 'analytics' && (
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-mist max-w-lg">
+                Aggregated across every attempt ever submitted — which question types students
+                miss most often, and which specific questions have an unusually high wrong rate
+                (worth a second look at the wording, or extra teaching time on that skill).
+              </p>
+
+              {questionStatsError && <p className="text-sm text-coral">{questionStatsError}</p>}
+
+              {questionStatsLoading ? (
+                <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
+                  Loading…
+                </div>
+              ) : (questionStats || []).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
+                  No submitted attempts yet — analytics show up once students start sitting mocks.
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-2xl border border-line bg-panel p-4">
+                    <p className="font-medium text-paper mb-3">By question type</p>
+                    {typeStats.length === 0 ? (
+                      <p className="text-sm text-mist">No answered questions yet.</p>
+                    ) : (
+                      <div className="flex flex-col gap-2.5">
+                        {typeStats.map((t) => (
+                          <div key={t.type} className="flex items-center gap-3">
+                            <span className="w-40 shrink-0 text-sm text-paper truncate">
+                              {QUESTION_TYPE_LABELS[t.type] || t.type}
+                            </span>
+                            <div className="flex-1 h-2 rounded-full bg-panel-2 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  t.wrongRate >= 0.5 ? 'bg-coral' : t.wrongRate >= 0.25 ? 'bg-brass' : 'bg-sage'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.round(t.wrongRate * 100))}%` }}
+                              />
+                            </div>
+                            <span className="w-32 shrink-0 text-xs text-mist text-right font-mono">
+                              {Math.round(t.wrongRate * 100)}% wrong ({t.wrong}/{t.total})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-line bg-panel p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                      <p className="font-medium text-paper">Toughest questions</p>
+                      <select
+                        value={analyticsExamFilter}
+                        onChange={(e) => setAnalyticsExamFilter(e.target.value)}
+                        className="focus-ring rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-xs text-paper"
+                      >
+                        <option value="">All exams</option>
+                        {analyticsExamOptions.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {worstQuestions.length === 0 ? (
+                      <p className="text-sm text-mist">
+                        Not enough answers on record yet (need at least {MIN_QUESTION_SAMPLE} per
+                        question before a wrong rate means much).
+                      </p>
+                    ) : (
+                      <div className="flex flex-col divide-y divide-line/60">
+                        {worstQuestions.map((q) => (
+                          <div key={q.question_id} className="flex items-center gap-3 py-2.5">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-paper truncate">{q.prompt}</p>
+                              <p className="text-xs text-mist truncate">
+                                {q.exam_title} · {q.section_title} ·{' '}
+                                {QUESTION_TYPE_LABELS[q.type] || q.type}
+                              </p>
+                            </div>
+                            <span
+                              className={`shrink-0 text-xs font-mono font-semibold rounded-full border px-2.5 py-1 ${
+                                q.wrongRate >= 0.5
+                                  ? 'text-coral border-coral/30 bg-coral/10'
+                                  : q.wrongRate >= 0.25
+                                  ? 'text-brass border-brass/30 bg-brass/10'
+                                  : 'text-sage border-sage/30 bg-sage/10'
+                              }`}
+                            >
+                              {Math.round(q.wrongRate * 100)}% ({q.wrong_answers}/{q.total_answers})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================
               STUDENTS — searchable, grouped-or-mixed view of the same
               per-student data. Student Progress above is left alone.
              ====================================================== */}
@@ -2911,21 +3620,36 @@ export default function TeacherMockCenter({ onExit }) {
                       <span>All-time</span>
                       <span>No-shows</span>
                     </div>
-                    {examinerWorkload.map((entry) => (
-                      <div
-                        key={entry.examinerId}
-                        className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line last:border-b-0 text-sm"
-                      >
-                        <span className="col-span-2 sm:col-span-1 text-paper font-medium truncate">
-                          {studentLabel(entry.examiner)}
-                        </span>
-                        <span className="text-paper">{entry.thisWeek}</span>
-                        <span className="text-paper">{entry.total}</span>
-                        <span className={entry.noShows > 0 ? 'text-coral font-semibold' : 'text-mist'}>
-                          {entry.noShows}
-                        </span>
-                      </div>
-                    ))}
+                    {examinerWorkload.map((entry) => {
+                      const isOverloaded =
+                        examinerWorkloadAvgThisWeek != null &&
+                        entry.thisWeek - examinerWorkloadAvgThisWeek >= WORKLOAD_IMBALANCE_THRESHOLD
+                      return (
+                        <div
+                          key={entry.examinerId}
+                          className={`grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line last:border-b-0 text-sm ${
+                            isOverloaded ? 'bg-amber/5' : ''
+                          }`}
+                        >
+                          <span className="col-span-2 sm:col-span-1 text-paper font-medium truncate">
+                            {studentLabel(entry.examiner)}
+                            {isOverloaded && (
+                              <span
+                                className="ml-2 rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-semibold text-amber align-middle"
+                                title={`Noticeably more than the team average (${examinerWorkloadAvgThisWeek.toFixed(1)}) this week`}
+                              >
+                                ⚖ above average
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-paper">{entry.thisWeek}</span>
+                          <span className="text-paper">{entry.total}</span>
+                          <span className={entry.noShows > 0 ? 'text-coral font-semibold' : 'text-mist'}>
+                            {entry.noShows}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -3110,6 +3834,15 @@ export default function TeacherMockCenter({ onExit }) {
 
                             <button
                               type="button"
+                              onClick={() => duplicateWritingExam(exam)}
+                              disabled={duplicatingExamId === exam.id}
+                              className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                            >
+                              {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => deleteWritingExam(exam)}
                               className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                             >
@@ -3230,6 +3963,15 @@ export default function TeacherMockCenter({ onExit }) {
                                   title="See it laid out like a student would, and fix anything from there"
                                 >
                                   View test
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => duplicateRlExam(exam)}
+                                  disabled={duplicatingExamId === exam.id}
+                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                                >
+                                  {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
                                 </button>
 
                                 <button
@@ -3682,15 +4424,40 @@ export default function TeacherMockCenter({ onExit }) {
                           batch at once, then send them out over Telegram.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={openIssueAccessCode}
-                        disabled={fullMockSets.length === 0}
-                        className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
-                      >
-                        + Issue codes
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            printAccessCodeSlips(
+                              accessCodes
+                                .filter((row) => !row.revoked && !row.used_at)
+                                .map((row) => {
+                                  const s = students.find((st) => st.id === row.student_id)
+                                  const set = fullMockSets.find((fm) => fm.id === row.full_mock_set_id)
+                                  return {
+                                    code: row.code,
+                                    studentName: s?.full_name || s?.username || 'Student',
+                                    setTitle: set?.title || 'Full Mock',
+                                  }
+                                })
+                            )
+                          }
+                          disabled={accessCodes.filter((row) => !row.revoked && !row.used_at).length === 0}
+                          className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Opens a printable page with one slip per unused code — handy for anyone not on Telegram"
+                        >
+                          🖨 Print unused
+                        </button>
+                        <button
+                          type="button"
+                          onClick={openIssueAccessCode}
+                          disabled={fullMockSets.length === 0}
+                          className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
+                        >
+                          + Issue codes
+                        </button>
+                      </div>
                     </div>
 
                     {accessCodes.length === 0 ? (
@@ -3758,6 +4525,107 @@ export default function TeacherMockCenter({ onExit }) {
                                     className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                   >
                                     Revoke
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ================================================
+                      SCHEDULED SESSIONS — group-scheduled mock sessions
+                      (migration_52). Schedule a group + a Full Mock +
+                      a date/time once; run-scheduled-mock-sessions (a
+                      server-side cron function) issues+sends the codes
+                      automatically once that time arrives, reading the
+                      group's live membership at fire time.
+                     ================================================ */}
+                  <div className="border-t border-line pt-5 flex flex-col gap-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-paper">Scheduled sessions</p>
+                        <p className="text-sm text-mist max-w-lg mt-0.5">
+                          Schedule a group into a Full Mock for a future date/time — access codes
+                          for everyone in the group at that moment get generated and sent over
+                          Telegram automatically, no need to come back and issue them by hand.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={openScheduleSession}
+                        disabled={fullMockSets.length === 0 || groups.length === 0}
+                        className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={
+                          fullMockSets.length === 0
+                            ? 'Add a full mock set first'
+                            : groups.length === 0
+                            ? 'No groups yet'
+                            : undefined
+                        }
+                      >
+                        + Schedule session
+                      </button>
+                    </div>
+
+                    {scheduledSessions.length === 0 ? (
+                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                        No sessions scheduled yet.
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                        {scheduledSessions.map((session) => {
+                          const group = groups.find((g) => g.id === session.group_id)
+                          const set = fullMockSets.find((s) => s.id === session.full_mock_set_id)
+                          const scheduledDate = new Date(session.scheduled_at)
+                          const status = session.cancelled_at
+                            ? { label: 'Cancelled', cls: 'text-mist border-line bg-panel-2' }
+                            : session.codes_sent_at
+                            ? { label: 'Codes sent', cls: 'text-sage border-sage/30 bg-sage/10' }
+                            : scheduledDate.getTime() <= Date.now()
+                            ? { label: 'Due any moment', cls: 'text-brass border-brass/30 bg-brass/10' }
+                            : { label: 'Scheduled', cls: 'text-mist border-line bg-panel-2' }
+
+                          return (
+                            <div
+                              key={session.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium text-paper truncate">
+                                    {group?.name || 'Unknown group'}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                                  >
+                                    {status.label}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-mist mt-0.5 truncate">
+                                  {set?.title || 'Unknown set'} ·{' '}
+                                  {scheduledDate.toLocaleString(undefined, {
+                                    dateStyle: 'medium',
+                                    timeStyle: 'short',
+                                  })}
+                                  {session.codes_sent_at &&
+                                    typeof session.codes_issued_count === 'number' && (
+                                      <> · {session.codes_issued_count} code
+                                        {session.codes_issued_count === 1 ? '' : 's'} issued</>
+                                    )}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {!session.cancelled_at && !session.codes_sent_at && (
+                                  <button
+                                    type="button"
+                                    onClick={() => cancelScheduledSession(session)}
+                                    className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  >
+                                    Cancel
                                   </button>
                                 )}
                               </div>
@@ -3859,6 +4727,17 @@ export default function TeacherMockCenter({ onExit }) {
           onSend={sendAccessCodesViaTelegram}
           reasonLabel={accessCodeSendReasonLabel}
           onDone={() => setAccessCodeModalOpen(false)}
+        />
+      )}
+
+      {scheduleSessionModalOpen && (
+        <ScheduleSessionModal
+          groups={groups}
+          fullMockSets={fullMockSets.filter((s) => s.is_active)}
+          saving={scheduleSessionSaving}
+          error={scheduleSessionError}
+          onCancel={() => setScheduleSessionModalOpen(false)}
+          onSave={createScheduledSession}
         />
       )}
 
@@ -4061,11 +4940,81 @@ function CriterionChip({ label, value }) {
   )
 }
 
+// Teacher-side score-history trend (2026-09-26) — one of the ~15
+// "build everything" brainstorm items. Deliberately a duplicated copy of
+// MockTestCenter.jsx's own BandSparkline/BandTrendCard rather than a
+// shared import: that component is student-facing and already shipped,
+// so this leaves it untouched while reusing the exact same tiny SVG
+// sparkline + delta-badge design here. See StudentProfileModal's
+// bandHistory useMemo for why this trend is NOT gated on released_at
+// the way the student's own version is.
+function BandSparkline({ points }) {
+  const bands = points.map((p) => Number(p.band))
+  const minB = Math.min(...bands)
+  const maxB = Math.max(...bands)
+  const domainMin = minB === maxB ? minB - 0.5 : minB - 0.25
+  const domainMax = minB === maxB ? maxB + 0.5 : maxB + 0.25
+  const w = 100
+  const h = 32
+  const stepX = points.length > 1 ? w / (points.length - 1) : 0
+  const coords = points.map((p, i) => {
+    const x = points.length > 1 ? i * stepX : w / 2
+    const y = h - ((Number(p.band) - domainMin) / (domainMax - domainMin)) * h
+    return [x, y]
+  })
+  const pathD = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-8">
+      <path d={pathD} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {coords.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.2" fill="currentColor" />
+      ))}
+    </svg>
+  )
+}
+
+function BandTrendCard({ label, history }) {
+  const latest = history[history.length - 1]
+  const first = history[0]
+  const delta = history.length >= 2 ? Number(latest.band) - Number(first.band) : null
+  return (
+    <div className="rounded-xl border border-line bg-panel-2 p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-paper">{label}</p>
+        {history.length > 0 && <span className="text-sm font-semibold text-brass">{formatBand(latest.band)}</span>}
+      </div>
+      {history.length === 0 && <p className="text-xs text-mist mt-2">No graded results yet.</p>}
+      {history.length === 1 && (
+        <p className="text-xs text-mist mt-2">
+          One result so far ({new Date(first.date).toLocaleDateString()}) — needs another to show a trend.
+        </p>
+      )}
+      {history.length >= 2 && (
+        <>
+          <div className="mt-2 text-brass">
+            <BandSparkline points={history} />
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-mist">
+            <span>{new Date(first.date).toLocaleDateString()}</span>
+            {delta !== null && delta !== 0 && (
+              <span className={delta > 0 ? 'font-semibold text-sage' : 'font-semibold text-coral'}>
+                {delta > 0 ? '+' : ''}
+                {formatBand(delta).replace('-', '−')} since first
+              </span>
+            )}
+            <span>{new Date(latest.date).toLocaleDateString()}</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // Shared between the Reading and Listening sections of StudentProfileModal
 // — one attempt row with a "View mistakes" toggle that lazily fetches and
 // shows only the wrong answers, given → correct, in the shape Jasur asked
 // for ("mountin → mountain").
-function AttemptMistakeRow({ a, isOpen, bd, onToggle }) {
+function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview }) {
   const mistakes = bd?.rows ? bd.rows.filter((r) => r.is_correct === false) : null
 
   return (
@@ -4078,13 +5027,25 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle }) {
         </span>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onToggle(a.id)}
-        className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
-      >
-        {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
-      </button>
+      <div className="flex items-center gap-3 mt-2">
+        <button
+          type="button"
+          onClick={() => onToggle(a.id)}
+          className="focus-ring text-xs text-brass hover:text-brass-dim"
+        >
+          {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
+        </button>
+        {onReview && (
+          <button
+            type="button"
+            onClick={onReview}
+            className="focus-ring text-xs text-brass hover:text-brass-dim"
+            title="Open a full-screen, read-only replay styled like the actual exam screen"
+          >
+            🖥 Review in exam view
+          </button>
+        )}
+      </div>
 
       {isOpen && (
         <div className="mt-2.5">
@@ -4119,6 +5080,92 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle }) {
 }
 
 function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay }) {
+  const { profile } = useAuth()
+
+  // Teacher-side PDF score report (2026-09-26) — one of the ~15 "build
+  // everything" brainstorm items, finishing what the student's own
+  // "Download report" (generateScoreReport.js, shipped 2026-09-25) left
+  // as a student-only self-serve action. Lets a teacher generate/print a
+  // student's report themselves (a parent meeting, a record for a file,
+  // a student who never found the download button on their own side).
+  //
+  // Deliberately the OPPOSITE filtering choice from this same modal's
+  // Score history panel above: that panel intentionally shows every
+  // graded result, released or not, because it's an in-app diagnostic
+  // view only the teacher ever sees. A PDF is an artifact meant to leave
+  // the app and be handed to someone — so this only ever pulls each
+  // skill's most recent RELEASED result, exactly mirroring what the
+  // student would see if they generated their own report right now.
+  // Generating this can never hand a student (or a parent) a score
+  // before the teacher has actually chosen to release it.
+  const [downloadingReport, setDownloadingReport] = useState(false)
+  const [downloadReportError, setDownloadReportError] = useState('')
+
+  const handleDownloadReport = async () => {
+    if (!row) return
+    setDownloadingReport(true)
+    setDownloadReportError('')
+    try {
+      const byDateDesc = (dateOf) => (a, b) => new Date(dateOf(b)) - new Date(dateOf(a))
+
+      const latestReleasedReading =
+        row.readingAttempts
+          .filter((a) => a.released_at != null)
+          .sort(byDateDesc((a) => a.submitted_at))[0] || null
+      const latestReleasedListening =
+        row.listeningAttempts
+          .filter((a) => a.released_at != null)
+          .sort(byDateDesc((a) => a.submitted_at))[0] || null
+      const latestReleasedWriting =
+        row.writingReviews
+          .filter((r) => r.released_at != null && r.examiner_band != null)
+          .sort(byDateDesc((r) => r.examiner_reviewed_at))[0] || null
+      const latestReleasedSpeaking =
+        row.speakingSlots
+          .filter((s) => s.released_at != null && s.examiner_band != null)
+          .sort(byDateDesc((s) => s.scheduled_at))[0] || null
+
+      const bandFor = (a) => (a ? a.band ?? estimateBandFromPercent(pct(a.score, a.max_score)) : null)
+
+      await downloadScoreReport({
+        studentName: studentLabel(row.student),
+        targetBand: row.student?.target_band,
+        generatedFor: `Generated by ${profile?.full_name || profile?.username || 'a teacher'} · Teacher Mock Center`,
+        skills: {
+          listening: latestReleasedListening
+            ? {
+                band: bandFor(latestReleasedListening),
+                note: `${pct(latestReleasedListening.score, latestReleasedListening.max_score)}% · ${new Date(latestReleasedListening.submitted_at).toLocaleDateString()}`,
+              }
+            : null,
+          reading: latestReleasedReading
+            ? {
+                band: bandFor(latestReleasedReading),
+                note: `${pct(latestReleasedReading.score, latestReleasedReading.max_score)}% · ${new Date(latestReleasedReading.submitted_at).toLocaleDateString()}`,
+              }
+            : null,
+          writing: latestReleasedWriting
+            ? {
+                band: latestReleasedWriting.examiner_band,
+                note: `Reviewed ${new Date(latestReleasedWriting.examiner_reviewed_at).toLocaleDateString()}`,
+              }
+            : null,
+          speaking: latestReleasedSpeaking
+            ? {
+                band: latestReleasedSpeaking.examiner_band,
+                note: `Speaking exam ${new Date(latestReleasedSpeaking.scheduled_at).toLocaleDateString()}`,
+              }
+            : null,
+        },
+      })
+    } catch (err) {
+      console.error('Could not generate score report:', err)
+      setDownloadReportError(err?.message || 'Could not generate the report. Please try again.')
+    } finally {
+      setDownloadingReport(false)
+    }
+  }
+
   // Per-question mistake breakdown ("mountin → mountain"), added
   // 2026-09-26 once mock_answers' real columns were confirmed
   // (student_answer, is_correct). Fetched on demand per attempt via
@@ -4129,6 +5176,59 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
   // so hook order never changes across renders.
   const [openBreakdownId, setOpenBreakdownId] = useState(null)
   const [breakdowns, setBreakdowns] = useState({})
+
+  // Frozen real-interface review (migration_54 fix + FrozenAttemptReview
+  // component) — { id, examTitle } | null. A separate full-screen replay
+  // from the inline mistake-breakdown list above, opened by its own
+  // "Review in exam view" button on each attempt row.
+  const [reviewingAttempt, setReviewingAttempt] = useState(null)
+
+  // Score-history trend (2026-09-26) — reuses the same sparkline idea as
+  // the student's own MockTestCenter.jsx, but deliberately NOT gated on
+  // released_at: row.readingAttempts/listeningAttempts/writingReviews/
+  // speakingSlots (built in the `rows` useMemo above) are already every
+  // submitted/graded item regardless of release, and a teacher already
+  // sees ungated mistake breakdowns and frozen replays for any attempt
+  // elsewhere on this same modal — hiding an already-marked result from
+  // the teacher's own trend view here would be inconsistent with that,
+  // and less useful for spotting a slump early, before choosing to
+  // release. Declared before the early `if (!row) return null` below,
+  // same reasoning as openBreakdownId/reviewingAttempt above.
+  const bandHistory = useMemo(() => {
+    if (!row) return { reading: [], listening: [], writing: [], speaking: [] }
+    const byDateAsc = (a, b) => new Date(a.date) - new Date(b.date)
+
+    const readingHistory = row.readingAttempts
+      .map((a) => ({ date: a.submitted_at, band: estimateBandFromPercent(pct(a.score, a.max_score)) }))
+      .filter((p) => p.band != null && p.date != null)
+      .sort(byDateAsc)
+
+    const listeningHistory = row.listeningAttempts
+      .map((a) => ({ date: a.submitted_at, band: estimateBandFromPercent(pct(a.score, a.max_score)) }))
+      .filter((p) => p.band != null && p.date != null)
+      .sort(byDateAsc)
+
+    const writingHistory = row.writingReviews
+      .filter((r) => r.examiner_band != null)
+      .map((r) => ({ date: r.examiner_reviewed_at || r.submitted_at, band: r.examiner_band }))
+      .filter((p) => p.date != null)
+      .sort(byDateAsc)
+
+    const speakingHistory = row.speakingSlots
+      .filter((s) => s.status === 'completed' && s.examiner_band != null)
+      .map((s) => ({ date: s.examiner_reviewed_at || s.scheduled_at, band: s.examiner_band }))
+      .filter((p) => p.date != null)
+      .sort(byDateAsc)
+
+    return { reading: readingHistory, listening: listeningHistory, writing: writingHistory, speaking: speakingHistory }
+  }, [row])
+
+  const hasAnyBandHistory =
+    bandHistory.reading.length +
+      bandHistory.listening.length +
+      bandHistory.writing.length +
+      bandHistory.speaking.length >
+    0
 
   const toggleBreakdown = async (attemptId) => {
     if (openBreakdownId === attemptId) {
@@ -4239,18 +5339,44 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
           ))}
         </div>
 
+        {hasAnyBandHistory && (
+          <div className="mt-4 rounded-2xl border border-line bg-panel p-4">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
+              Score history
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <BandTrendCard label="Reading" history={bandHistory.reading} />
+              <BandTrendCard label="Listening" history={bandHistory.listening} />
+              <BandTrendCard label="Writing" history={bandHistory.writing} />
+              <BandTrendCard label="Speaking" history={bandHistory.speaking} />
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 flex items-center gap-3 flex-wrap">
           {student.contact_email && (
             <span className="text-xs text-paper-dim">{student.contact_email}</span>
           )}
           <button
             type="button"
+            onClick={handleDownloadReport}
+            disabled={downloadingReport}
+            title="Downloads a PDF using each skill's most recently RELEASED result only — never a score the student hasn't been shown yet"
+            className="focus-ring ml-auto rounded-full border border-line bg-panel-2 text-paper text-xs font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-60"
+          >
+            {downloadingReport ? 'Generating…' : '📄 Download PDF report'}
+          </button>
+          <button
+            type="button"
             onClick={() => onMessage(student.id)}
-            className="focus-ring ml-auto rounded-full bg-brass text-onbrass text-xs font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+            className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
           >
             Message {studentLabel(student)} →
           </button>
         </div>
+        {downloadReportError && (
+          <p className="mt-2 text-xs text-coral text-right">{downloadReportError}</p>
+        )}
 
         <div className="mt-5 pt-4 border-t border-line">
           <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-paper-dim mb-3">
@@ -4279,6 +5405,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                           isOpen={openBreakdownId === a.id}
                           bd={breakdowns[a.id]}
                           onToggle={toggleBreakdown}
+                          onReview={() => setReviewingAttempt(a)}
                         />
                       ))}
                   </div>
@@ -4303,6 +5430,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                           isOpen={openBreakdownId === a.id}
                           bd={breakdowns[a.id]}
                           onToggle={toggleBreakdown}
+                          onReview={() => setReviewingAttempt(a)}
                         />
                       ))}
                   </div>
@@ -4464,6 +5592,14 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
           )}
         </div>
       </div>
+
+      {reviewingAttempt && (
+        <FrozenAttemptReview
+          attemptId={reviewingAttempt.id}
+          examTitle={reviewingAttempt.examTitle}
+          onClose={() => setReviewingAttempt(null)}
+        />
+      )}
     </div>
   )
 }
@@ -4859,7 +5995,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
   const section = modal.mode === 'edit' ? modal.section : null
 
   const [title, setTitle] = useState(section?.title || '')
-  const [orderIndex, setOrderIndex] = useState(section?.order_index ?? 0)
+  const [orderIndex, setOrderIndex] = useState(section?.order_index ?? modal.nextOrderIndex ?? 0)
   const [passageText, setPassageText] = useState(section?.passage_text || '')
   const [audioFile, setAudioFile] = useState(null)
   const [clearAudio, setClearAudio] = useState(false)
@@ -5295,7 +6431,7 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
   const question = modal.mode === 'edit' ? modal.question : null
 
   const [prompt, setPrompt] = useState(question?.prompt || '')
-  const [orderIndex, setOrderIndex] = useState(question?.order_index ?? 0)
+  const [orderIndex, setOrderIndex] = useState(question?.order_index ?? modal.nextOrderIndex ?? 0)
   const [type, setType] = useState(question?.type || 'multiple_choice')
   const [choicesText, setChoicesText] = useState(
     (question?.options?.choices || []).join('\n')
@@ -5735,9 +6871,12 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
 
       const imported = extracted.map((q) => ({
         prompt: q.prompt || '',
-        type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
-          ? q.type
-          : 'short_answer',
+        // Was hard-coded to only 3 of the 6 question types, silently
+        // demoting an AI-imported yes_no_ng/multi_select/matching
+        // question to short_answer with the wrong correct-answer format
+        // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
+        // allowlist saveSection's own import path already used.
+        type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
         choicesText: (q.choices || []).join('\n'),
         correctAnswer: q.correct_answer || '',
       }))
@@ -6142,9 +7281,12 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
 
       const imported = extracted.map((q) => ({
         prompt: q.prompt || '',
-        type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
-          ? q.type
-          : 'short_answer',
+        // Was hard-coded to only 3 of the 6 question types, silently
+        // demoting an AI-imported yes_no_ng/multi_select/matching
+        // question to short_answer with the wrong correct-answer format
+        // baked in. Matches Object.keys(QUESTION_TYPE_LABELS) — the same
+        // allowlist saveSection's own import path already used.
+        type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
         choicesText: (q.choices || []).join('\n'),
         correctAnswer: q.correct_answer || '',
       }))
@@ -6722,7 +7864,25 @@ function AccessCodeIssueModal({
 
             {sendError && <p className="text-coral text-sm mt-3">{sendError}</p>}
 
-            <div className="mt-5 flex gap-2 justify-end">
+            <div className="mt-5 flex flex-wrap gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  printAccessCodeSlips(
+                    generatedRows.map((row) => {
+                      const s = studentById[row.student_id]
+                      return {
+                        code: row.code,
+                        studentName: s?.full_name || s?.username || 'Student',
+                        setTitle,
+                      }
+                    })
+                  )
+                }
+                className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass"
+              >
+                🖨 Print slips
+              </button>
               <button
                 type="button"
                 onClick={onDone}
@@ -6771,7 +7931,25 @@ function AccessCodeIssueModal({
               })}
             </div>
 
-            <div className="mt-5 flex justify-end">
+            <div className="mt-5 flex flex-wrap gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  printAccessCodeSlips(
+                    generatedRows.map((row) => {
+                      const s = studentById[row.student_id]
+                      return {
+                        code: row.code,
+                        studentName: s?.full_name || s?.username || 'Student',
+                        setTitle,
+                      }
+                    })
+                  )
+                }
+                className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass"
+              >
+                🖨 Print slips
+              </button>
               <button
                 type="button"
                 onClick={onDone}
@@ -6782,6 +7960,128 @@ function AccessCodeIssueModal({
             </div>
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
+/*
+ * Group-scheduled mock sessions (migration_52) — the "schedule it for
+ * later" counterpart to AccessCodeIssueModal above. Deliberately much
+ * simpler: no roster ticking here, since the whole point is the group's
+ * membership is read fresh by run-scheduled-mock-sessions at fire time,
+ * not frozen at scheduling time. Just three fields — which group, which
+ * Full Mock, and when — then it's a single insert, no review/send steps
+ * (there's nothing to review yet; no codes exist until the scheduled
+ * time actually arrives).
+ */
+function ScheduleSessionModal({ groups, fullMockSets, saving, error, onCancel, onSave }) {
+  const [groupId, setGroupId] = useState(groups.length === 1 ? groups[0].id : '')
+  const [fullMockSetId, setFullMockSetId] = useState(fullMockSets.length === 1 ? fullMockSets[0].id : '')
+  const [dateTimeLocal, setDateTimeLocal] = useState('')
+
+  // datetime-local gives a naive "YYYY-MM-DDTHH:mm" string with no
+  // timezone info — `new Date(...)` parses that as the browser's own
+  // local time, which is exactly what a teacher typing a wall-clock
+  // time here means. .toISOString() from there is a real, unambiguous
+  // instant for the scheduled_at column.
+  const canSave = Boolean(groupId) && Boolean(fullMockSetId) && Boolean(dateTimeLocal) && !saving
+
+  const handleSave = () => {
+    const scheduledAtIso = new Date(dateTimeLocal).toISOString()
+    onSave(groupId, fullMockSetId, scheduledAtIso)
+  }
+
+  // Prevents picking a moment already in the past — the browser's own
+  // min attribute on the input, computed once per render, second-level
+  // precision is unnecessary here.
+  const nowLocal = (() => {
+    const d = new Date()
+    d.setSeconds(0, 0)
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+    return d.toISOString().slice(0, 16)
+  })()
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="font-display text-lg text-paper">Schedule a session</h3>
+        <p className="text-sm text-mist mt-0.5">
+          At the date/time below, everyone in this group gets an access code for this Full Mock,
+          sent automatically over Telegram — same as issuing codes by hand, just timed to happen on
+          its own.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Group
+            <select
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">{groups.length ? 'Select a group…' : 'No groups yet'}</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Full mock
+            <select
+              value={fullMockSetId}
+              onChange={(e) => setFullMockSetId(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            >
+              <option value="">
+                {fullMockSets.length ? 'Select a full mock…' : 'No published full mocks yet'}
+              </option>
+              {fullMockSets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Date & time
+            <input
+              type="datetime-local"
+              value={dateTimeLocal}
+              min={nowLocal}
+              onChange={(e) => setDateTimeLocal(e.target.value)}
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+            <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+              Your own local time — codes go out once this moment arrives, not before.
+            </span>
+          </label>
+        </div>
+
+        {error && <p className="text-coral text-sm mt-3">{error}</p>}
+
+        <div className="mt-5 flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave}
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+          >
+            {saving ? 'Scheduling…' : 'Schedule'}
+          </button>
+        </div>
       </div>
     </div>
   )

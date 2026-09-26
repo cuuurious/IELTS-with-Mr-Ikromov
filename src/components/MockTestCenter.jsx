@@ -11,6 +11,7 @@ import { downloadSpeakingSlotIcs } from '../lib/calendarEvent'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../lib/ieltsBands'
 import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
+import FrozenAttemptReview from './FrozenAttemptReview'
 
 /*
  * ================================================================
@@ -92,6 +93,11 @@ export default function MockTestCenter({ onExit }) {
   // nothing more to check client-side here.
   const [openBreakdownId, setOpenBreakdownId] = useState(null)
   const [breakdowns, setBreakdowns] = useState({})
+
+  // Frozen real-interface review — see FrozenAttemptReview.jsx. A
+  // separate full-screen replay from the inline mistake-breakdown list
+  // below, opened by its own "Review in exam view" button per attempt.
+  const [reviewingAttempt, setReviewingAttempt] = useState(null)
 
   const toggleBreakdown = async (attemptId) => {
     if (openBreakdownId === attemptId) {
@@ -517,13 +523,23 @@ export default function MockTestCenter({ onExit }) {
                             </span>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdown(a.id)}
-                            className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
-                          >
-                            {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
-                          </button>
+                          <div className="flex items-center gap-3 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleBreakdown(a.id)}
+                              className="focus-ring text-xs text-brass hover:text-brass-dim"
+                            >
+                              {isOpen ? 'Hide mistakes ▲' : 'View mistakes ▼'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReviewingAttempt(a)}
+                              className="focus-ring text-xs text-brass hover:text-brass-dim"
+                              title="Open a full-screen, read-only replay styled like the actual exam screen"
+                            >
+                              🖥 Review in exam view
+                            </button>
+                          </div>
 
                           {isOpen && (
                             <div className="mt-2.5">
@@ -775,6 +791,14 @@ export default function MockTestCenter({ onExit }) {
           )}
         </div>
       </main>
+
+      {reviewingAttempt && (
+        <FrozenAttemptReview
+          attemptId={reviewingAttempt.id}
+          examTitle={reviewingAttempt.examTitle}
+          onClose={() => setReviewingAttempt(null)}
+        />
+      )}
     </div>
   )
 }

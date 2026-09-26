@@ -366,6 +366,83 @@ export function ExamTaker({
   const [result, setResult] = useState(null)
 
   // ------------------------------------------------------------------
+  // Refs mirroring the state above — fixes a real bug found 2026-09-26
+  // during a full audit: the auto-submit timer's `tick` closure (below)
+  // is only re-created when `phase`/`deadline` change, which for
+  // Reading is ONCE, right at the start. Every answer a student picked
+  // after that point was invisible to that stale closure's `answers`,
+  // so a full-time auto-submit could grade against an empty/outdated
+  // answers object even though the student answered everything —
+  // silently scoring 0 with no error shown. Reading these refs'
+  // `.current` instead of the state variables directly inside
+  // handleSubmit means it's always correct regardless of which
+  // render's closure ends up calling it (a fresh button click, or a
+  // year-old interval tick).
+  // ------------------------------------------------------------------
+  const answersRef = useRef(answers)
+  useEffect(() => {
+    answersRef.current = answers
+  }, [answers])
+
+  const attemptIdRef = useRef(attemptId)
+  useEffect(() => {
+    attemptIdRef.current = attemptId
+  }, [attemptId])
+
+  // Synchronous double-submit guard — set the instant handleSubmit
+  // starts, before any `await`, so a manual click and an auto-submit
+  // landing at nearly the same moment (the clock hits 0:00 right as the
+  // student clicks Submit) can't both pass the check and both call the
+  // grading RPC concurrently. A plain `phase === 'submitting'` state
+  // check isn't enough for this — two calls can both read the old phase
+  // before either's setPhase('submitting') has been applied.
+  const submittingRef = useRef(false)
+
+  // ------------------------------------------------------------------
+  // Offline/flaky-connection banner + retry queue (2026-09-26) — one of
+  // the ~15 "build everything" brainstorm items. Before this, a dropped
+  // autosave just logged to the console (invisible to the student) and a
+  // failed final submit dumped them straight onto a dead-end "Something
+  // went wrong" screen with no way back in except Exit. Neither told the
+  // student their answers were actually safe, and neither tried again on
+  // its own — exactly the moment a flaky connection does the most
+  // damage, since it's also the moment a panicked student is most likely
+  // to hit refresh (which resume-on-refresh handles, but shouldn't be
+  // the FIRST line of defense against a normal network blip).
+  //
+  // `isOnline` mirrors the browser's own online/offline events, but
+  // that signal alone isn't enough — a captive portal or a dead upstream
+  // link can leave a browser reporting "online" while every real request
+  // still fails — so `saveFailing` (set by the autosave retry loop
+  // below) is the other half of the signal the banner reacts to.
+  // isOnlineRef exists for the same stale-closure reason every other ref
+  // in this component exists: handleSubmit's retry recursion needs the
+  // CURRENT value at the moment a request fails, not whatever value
+  // existed when that particular closure was created.
+  // ------------------------------------------------------------------
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+  const isOnlineRef = useRef(isOnline)
+  useEffect(() => {
+    isOnlineRef.current = isOnline
+  }, [isOnline])
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true)
+    const goOffline = () => setIsOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [])
+
+  const [saveFailing, setSaveFailing] = useState(false)
+  // { attempt, of } while an automatic submit retry is in flight, else null.
+  const [submitRetry, setSubmitRetry] = useState(null)
+  const lastSubmitAutoRef = useRef(false)
+
+  // ------------------------------------------------------------------
   // Question navigator + flag-for-review — numbers run CONTINUOUSLY
   // across every section (1..40), matching the real test, instead of
   // resetting to 1 at the top of each section/passage the way the old
@@ -421,15 +498,25 @@ export function ExamTaker({
     return () => window.removeEventListener('mousedown', onDown)
   }, [settingsOpen])
 
+  // Returns whether the highlight was actually added — a bug found
+  // 2026-09-26: this used to always report success by returning nothing,
+  // so a student who selected text overlapping an existing highlight and
+  // then clicked "Note" got a note editor opened for a highlight that
+  // was silently never created — typing and saving a note there did
+  // nothing, with zero feedback that anything had gone wrong. Checking
+  // the overlap against the current state directly (rather than inside
+  // the setter callback, whose return value the caller can't see) lets
+  // HighlightablePassage below tell the difference and react to it.
   const addHighlight = (sectionId, range) => {
-    setHighlightsBySection((prev) => {
-      const existing = prev[sectionId] || []
-      // Keep it simple for v1: reject a selection that overlaps an
-      // already-highlighted range rather than merging/splitting them.
-      const overlaps = existing.some((h) => range.start < h.end && range.end > h.start)
-      if (overlaps) return prev
-      return { ...prev, [sectionId]: [...existing, { id: range.id, start: range.start, end: range.end, note: '' }] }
-    })
+    const existing = highlightsBySection[sectionId] || []
+    const overlaps = existing.some((h) => range.start < h.end && range.end > h.start)
+    if (overlaps) return false
+
+    setHighlightsBySection((prev) => ({
+      ...prev,
+      [sectionId]: [...(prev[sectionId] || []), { id: range.id, start: range.start, end: range.end, note: '' }],
+    }))
+    return true
   }
 
   const updateHighlightNote = (sectionId, highlightId, note) => {
@@ -449,9 +536,24 @@ export function ExamTaker({
   // ------------------------------------------------------------------
   // Listening-only: track which sections' audio has played all the way
   // through, so the 2-minute review window (below) knows when to start.
+  //
+  // Both of these are now also persisted (see the resume-on-refresh fix
+  // above/below) — without that, a refresh would reset this to {}/false
+  // and let a student re-hear audio that already finished, or get a
+  // fresh 2-minute review window instead of whatever was left of the
+  // real one. audioEndedBySectionRef/reviewStartedAtRef exist purely so
+  // the periodic-save interval always writes the CURRENT value (same
+  // stale-closure reasoning as answersRef above), not whatever value
+  // existed when the interval was created.
   // ------------------------------------------------------------------
   const [audioEndedBySection, setAudioEndedBySection] = useState({})
+  const audioEndedBySectionRef = useRef(audioEndedBySection)
+  useEffect(() => {
+    audioEndedBySectionRef.current = audioEndedBySection
+  }, [audioEndedBySection])
+
   const [reviewPhase, setReviewPhase] = useState(false)
+  const reviewStartedAtRef = useRef(null)
 
   const handleAudioEnded = (sectionId) => {
     setAudioEndedBySection((prev) => (prev[sectionId] ? prev : { ...prev, [sectionId]: true }))
@@ -513,22 +615,70 @@ export function ExamTaker({
     }
   }, [phase])
 
-  // Cheap periodic save so the count survives a crash/refresh even if
-  // the student never reaches a normal submit — mirrors how Writing's
-  // own autosave keeps tab_switch_count current throughout, not just
-  // at the very end.
+  // Cheap periodic save so the count (and, as of the resume-on-refresh
+  // fix above, the student's answers-so-far) survive a crash/refresh even
+  // if the student never reaches a normal submit — mirrors how Writing's
+  // own autosave keeps its state current throughout, not just at the end.
+  // Bundled into the same 30s tick/update as tab_switch_count rather than
+  // a separate interval, to avoid doubling how often this writes to the
+  // database.
+  //
+  // RETRY QUEUE (2026-09-26): this used to be a plain setInterval that
+  // just console.error'd on failure and waited a full new 30s before
+  // trying again — meaning up to a minute of unsaved answers on a flaky
+  // connection, with zero visible feedback to the student. Rewritten as
+  // a self-rescheduling loop instead: on success it waits the normal 30s
+  // like before, but on failure it retries much sooner (5s, then 10s,
+  // 20s, capped at 30s) until a save actually goes through, and flips
+  // `saveFailing` so the banner below can tell the student. Always saves
+  // the CURRENT answers/tab-switch-count via the refs, not a snapshot
+  // frozen at the moment of the original failure — so a retry after a
+  // dropped connection sends whatever the student has answered by the
+  // time connectivity returns, never stale data.
   useEffect(() => {
     if (phase !== 'in-progress' || !attemptId) return
-    const id = setInterval(() => {
-      supabase
+    let cancelled = false
+    let timeoutId
+    let failures = 0
+
+    const NORMAL_DELAY = 30_000
+    const MIN_RETRY_DELAY = 5_000
+    const MAX_RETRY_DELAY = 30_000
+
+    const save = async () => {
+      const { error: saveError } = await supabase
         .from('mock_attempts')
-        .update({ tab_switch_count: tabSwitchCountRef.current })
-        .eq('id', attemptId)
-        .then(({ error: saveError }) => {
-          if (saveError) console.error('Could not save integrity log:', saveError)
+        .update({
+          tab_switch_count: tabSwitchCountRef.current,
+          draft_answers: {
+            answers: answersRef.current,
+            audioEnded: Object.keys(audioEndedBySectionRef.current),
+            reviewStartedAt: reviewStartedAtRef.current,
+          },
         })
-    }, 30_000)
-    return () => clearInterval(id)
+        .eq('id', attemptId)
+
+      if (cancelled) return
+
+      if (saveError) {
+        console.error('Could not save integrity log:', saveError)
+        failures += 1
+        setSaveFailing(true)
+        const delay = Math.min(MIN_RETRY_DELAY * 2 ** (failures - 1), MAX_RETRY_DELAY)
+        timeoutId = setTimeout(save, delay)
+        return
+      }
+
+      failures = 0
+      setSaveFailing(false)
+      timeoutId = setTimeout(save, NORMAL_DELAY)
+    }
+
+    timeoutId = setTimeout(save, NORMAL_DELAY)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [phase, attemptId])
 
   const totalQuestions = useMemo(
@@ -541,14 +691,77 @@ export function ExamTaker({
   // Start the attempt as soon as the student opens the test, so
   // started_at reflects when they actually began rather than when they
   // submit — same as the standalone app.
+  //
+  // RESUME-ON-REFRESH (bug found during the 2026-09-26 audit, fixed here):
+  // this used to unconditionally INSERT a brand-new mock_attempts row on
+  // every mount, with a fresh full-length deadline. That meant a dropped
+  // connection or an accidental refresh/back-button mid-section silently
+  // orphaned whatever was in progress and started over from a blank sheet
+  // with a brand new clock — losing every answer, AND (worse) letting a
+  // student reset their own countdown just by refreshing the page. Now,
+  // before inserting anything, this checks for an attempt already in
+  // progress (submitted_at is null) for this exact exam+student and
+  // resumes it instead: same attemptId, same original deadline (computed
+  // from the real started_at, not "now"), and whatever answers were last
+  // autosaved (see the periodic-save effect below, which now also writes
+  // draft_answers alongside tab_switch_count).
   useEffect(() => {
     let cancelled = false
 
     const start = async () => {
+      const { data: existing, error: lookupError } = await supabase
+        .from('mock_attempts')
+        .select('id, started_at, draft_answers')
+        .eq('exam_id', exam.id)
+        .eq('user_id', selfId)
+        .is('submitted_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (lookupError) {
+        // Not fatal on its own — fall through to starting a fresh attempt
+        // rather than blocking the student entirely over a transient read
+        // error (e.g. offline for a moment).
+        console.error('Could not check for an in-progress attempt:', lookupError)
+      }
+
+      if (existing) {
+        const draft = existing.draft_answers || {}
+        setAttemptId(existing.id)
+        setAnswers(draft.answers || {})
+
+        const restoredAudioEnded = {}
+        ;(draft.audioEnded || []).forEach((sectionId) => {
+          restoredAudioEnded[sectionId] = true
+        })
+        setAudioEndedBySection(restoredAudioEnded)
+
+        if (draft.reviewStartedAt) {
+          // Resuming mid-review-window: restore the REMAINING review time
+          // from the real start, not a fresh 2 minutes — and set reviewPhase
+          // synchronously here (not left for the review-detection effect to
+          // notice) so that effect's own `if (... || reviewPhase) return`
+          // guard skips it on the very next render instead of overwriting
+          // this with a brand-new window.
+          reviewStartedAtRef.current = draft.reviewStartedAt
+          setReviewPhase(true)
+          setDeadline(new Date(draft.reviewStartedAt).getTime() + REVIEW_WINDOW_MS)
+        } else {
+          setDeadline(new Date(existing.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
+        }
+
+        setPhase('in-progress')
+        onAttemptStarted?.(existing.id)
+        return
+      }
+
       const { data, error: startError } = await supabase
         .from('mock_attempts')
         .insert({ exam_id: exam.id, user_id: selfId })
-        .select('id')
+        .select('id, started_at')
         .single()
 
       if (cancelled) return
@@ -560,7 +773,10 @@ export function ExamTaker({
       }
 
       setAttemptId(data.id)
-      setDeadline(Date.now() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
+      // started_at comes back from the row itself (server-assigned) rather
+      // than Date.now() here, so the very first render already agrees with
+      // whatever a resume later computes from the same column.
+      setDeadline(new Date(data.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
       setPhase('in-progress')
       onAttemptStarted?.(data.id)
     }
@@ -623,50 +839,113 @@ export function ExamTaker({
     const allDone = sectionsWithAudio.every((s) => audioEndedBySection[s.id])
     if (!allDone) return
 
+    const startedAt = new Date().toISOString()
+    reviewStartedAtRef.current = startedAt
     setReviewPhase(true)
     setDeadline(Date.now() + REVIEW_WINDOW_MS)
     setFlashMessage('Audio finished — 2 minutes to review your answers')
+
+    // Save immediately rather than waiting for the next 30s autosave tick
+    // — entering review phase is exactly the moment a refresh would do
+    // the most damage (losing the "already reviewed, don't replay" state
+    // right when it just became true), so this can't wait.
+    const currentAttemptId = attemptIdRef.current
+    if (currentAttemptId) {
+      supabase
+        .from('mock_attempts')
+        .update({
+          draft_answers: {
+            answers: answersRef.current,
+            audioEnded: Object.keys(audioEndedBySectionRef.current),
+            reviewStartedAt: startedAt,
+          },
+        })
+        .eq('id', currentAttemptId)
+        .then(({ error: saveError }) => {
+          if (saveError) console.error('Could not save review-phase state:', saveError)
+        })
+    }
   }, [audioEndedBySection, exam.module, phase, reviewPhase, sections])
 
   const setAnswer = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
   }
 
-  const handleSubmit = async (auto = false) => {
-    if (!attemptId || phase === 'submitting' || phase === 'done') return
+  // MAX_SUBMIT_ATTEMPTS total tries (1 initial + 4 automatic retries)
+  // spread over roughly a minute — long enough to ride out a genuine
+  // blip (wifi drop, a phone briefly losing signal) without leaving the
+  // student stuck on a dead-end error screen for something that fixes
+  // itself in a few seconds. `attempt` is internal — always called as
+  // handleSubmit(auto) from a button/timer; recursion supplies the rest.
+  const MAX_SUBMIT_ATTEMPTS = 5
 
-    if (!auto && answeredCount < totalQuestions) {
-      const ok = window.confirm(
-        `You've answered ${answeredCount} of ${totalQuestions} questions. Submit anyway?`
-      )
-      if (!ok) return
+  const handleSubmit = async (auto = false, attempt = 1) => {
+    const currentAttemptId = attemptIdRef.current
+    if (!currentAttemptId || submittingRef.current) return
+
+    if (attempt === 1) {
+      if (!auto && answeredCount < totalQuestions) {
+        const ok = window.confirm(
+          `You've answered ${answeredCount} of ${totalQuestions} questions. Submit anyway?`
+        )
+        if (!ok) return
+        // Re-check after the confirm dialog closes — it's an async gap the
+        // auto-submit timer could have slipped through while it was open.
+        if (submittingRef.current) return
+      }
+      lastSubmitAutoRef.current = auto
     }
 
+    submittingRef.current = true
     setPhase('submitting')
+    setSubmitRetry(attempt > 1 ? { attempt, of: MAX_SUBMIT_ATTEMPTS } : null)
 
     // Save the integrity log one last time alongside the real submit —
     // best-effort, a failure here shouldn't block the actual grading.
     const { error: logError } = await supabase
       .from('mock_attempts')
       .update({ tab_switch_count: tabSwitchCountRef.current })
-      .eq('id', attemptId)
+      .eq('id', currentAttemptId)
     if (logError) console.error('Could not save integrity log:', logError)
 
+    // Read from the ref, not the `answers` state closed over by whichever
+    // render created this particular function instance — see the ref's
+    // own comment above for why that distinction is the actual fix.
+    const currentAnswers = answersRef.current
     const payload = sections.flatMap((s) =>
-      s.questions.map((q) => ({ question_id: q.id, answer: answers[q.id] ?? '' }))
+      s.questions.map((q) => ({ question_id: q.id, answer: currentAnswers[q.id] ?? '' }))
     )
 
     const { data, error: submitError } = await supabase.rpc('submit_mock_attempt', {
-      p_attempt_id: attemptId,
+      p_attempt_id: currentAttemptId,
       p_answers: payload,
     })
 
     if (submitError) {
+      // Only auto-retry a failure that LOOKS like a connectivity problem
+      // (the browser itself is offline, or the error text matches a
+      // fetch/network-shaped message) — a real validation/authorization
+      // error from the RPC won't fix itself by trying again, so those
+      // still go straight to the error screen below rather than wasting
+      // a minute retrying something that will never succeed.
+      const looksLikeNetworkTrouble =
+        !isOnlineRef.current || /fetch|network|timeout|connection/i.test(submitError.message || '')
+
+      if (looksLikeNetworkTrouble && attempt < MAX_SUBMIT_ATTEMPTS) {
+        submittingRef.current = false
+        const delay = Math.min(3000 * 2 ** (attempt - 1), 20_000)
+        setTimeout(() => handleSubmit(auto, attempt + 1), delay)
+        return
+      }
+
+      setSubmitRetry(null)
       setError(submitError.message)
       setPhase('error')
+      submittingRef.current = false // allow a manual retry rather than permanently locking up
       return
     }
 
+    setSubmitRetry(null)
     const row = Array.isArray(data) ? data[0] : data
     const finalResult = { score: row?.score ?? 0, maxScore: row?.max_score ?? 0 }
     setResult(finalResult)
@@ -687,13 +966,25 @@ export function ExamTaker({
       <div className="ticket rounded-2xl p-8 text-center">
         <p className="font-display text-lg text-paper">Something went wrong</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-coral">{error}</p>
-        <button
-          type="button"
-          onClick={onExit}
-          className="focus-ring mt-5 inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
-        >
-          {ctaLabel}
-        </button>
+        <p className="mx-auto mt-2 max-w-sm text-xs text-mist">
+          Your answers are still saved on this device — retrying won't lose anything.
+        </p>
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleSubmit(lastSubmitAutoRef.current)}
+            className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+          >
+            Try submitting again
+          </button>
+          <button
+            type="button"
+            onClick={onExit}
+            className="focus-ring inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
+          >
+            {ctaLabel}
+          </button>
+        </div>
       </div>
     )
   }
@@ -764,6 +1055,27 @@ export function ExamTaker({
       )}
 
       <div className="sticky top-3 z-10 flex flex-col gap-2.5 rounded-2xl bg-brass px-5 py-3.5 text-onbrass shadow-md">
+        {(!isOnline || saveFailing || submitRetry) && (
+          <div className="flex items-center gap-2 rounded-xl bg-ink/20 px-3 py-2 text-xs font-semibold">
+            <span aria-hidden>⚠</span>
+            {submitRetry ? (
+              <span>
+                Couldn't reach the server — retrying your submission (attempt {submitRetry.attempt} of{' '}
+                {submitRetry.of})… your answers are safe.
+              </span>
+            ) : !isOnline ? (
+              <span>
+                You're offline — your answers are saved on this device and will sync once you're back
+                online. Don't close this tab.
+              </span>
+            ) : (
+              <span>
+                Having trouble reaching the server — retrying automatically. Your answers are safe on
+                this device.
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-onbrass/70">
@@ -892,6 +1204,7 @@ export function ExamTaker({
               <SectionAudioPlayer
                 url={section.audio_url}
                 onEnded={() => handleAudioEnded(section.id)}
+                alreadyEnded={!!audioEndedBySection[section.id]}
               />
             </div>
           )}
@@ -957,11 +1270,19 @@ function QuestionNavigator({ questions, answers, flags, onJump }) {
 // real test's "audio plays once" rule instead of the old plain
 // `<audio controls>` element, which let a student scrub back and
 // replay freely.
-function SectionAudioPlayer({ url, onEnded }) {
+// `alreadyEnded` — restored from the resume-on-refresh fix above: without
+// this, a page refresh after this section's audio already finished would
+// remount this component fresh (status defaulting back to 'ready'),
+// silently letting a student re-hear audio the real exam only ever plays
+// once. When true, this mounts straight into the 'done' state instead —
+// a full progress bar, "Played" label, no play button — matching exactly
+// what the student would already be looking at if the page had never
+// reloaded.
+function SectionAudioPlayer({ url, onEnded, alreadyEnded = false }) {
   const audioRef = useRef(null)
-  const [status, setStatus] = useState('ready') // ready | playing | done
+  const [status, setStatus] = useState(alreadyEnded ? 'done' : 'ready') // ready | playing | done
   const [volume, setVolume] = useState(1)
-  const [progressPct, setProgressPct] = useState(0)
+  const [progressPct, setProgressPct] = useState(alreadyEnded ? 100 : 0)
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
@@ -1060,6 +1381,13 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
   const [toolbar, setToolbar] = useState(null) // { start, end, rect }
   const [openNoteFor, setOpenNoteFor] = useState(null)
   const [noteDraft, setNoteDraft] = useState('')
+  const [rejectFlash, setRejectFlash] = useState(false) // true briefly after an overlapping selection is rejected
+
+  useEffect(() => {
+    if (!rejectFlash) return
+    const t = setTimeout(() => setRejectFlash(false), 2200)
+    return () => clearTimeout(t)
+  }, [rejectFlash])
 
   const getSelectionOffsets = () => {
     const container = containerRef.current
@@ -1095,17 +1423,25 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
 
   const handleHighlight = () => {
     if (!toolbar) return
-    onAdd({ id: crypto.randomUUID(), start: toolbar.start, end: toolbar.end })
+    const added = onAdd({ id: crypto.randomUUID(), start: toolbar.start, end: toolbar.end })
     setToolbar(null)
     window.getSelection()?.removeAllRanges()
+    if (!added) setRejectFlash(true)
   }
 
   const handleAddNote = () => {
     if (!toolbar) return
     const id = crypto.randomUUID()
-    onAdd({ id, start: toolbar.start, end: toolbar.end })
+    const added = onAdd({ id, start: toolbar.start, end: toolbar.end })
     setToolbar(null)
     window.getSelection()?.removeAllRanges()
+    if (!added) {
+      // Bug fix 2026-09-26: don't open a note editor for a highlight that
+      // was never created (an overlapping selection) — see addHighlight's
+      // own comment in ExamTaker for the full failure this used to cause.
+      setRejectFlash(true)
+      return
+    }
     setNoteDraft('')
     setOpenNoteFor(id)
   }
@@ -1151,8 +1487,10 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
         )}
       </div>
 
-      <p className="mt-1.5 text-[11px] text-mist">
-        Select any text above to highlight it or attach a note.
+      <p className={`mt-1.5 text-[11px] ${rejectFlash ? 'text-coral font-medium' : 'text-mist'}`}>
+        {rejectFlash
+          ? "That overlaps a highlight you already made — remove it first, or select different text."
+          : 'Select any text above to highlight it or attach a note.'}
       </p>
 
       {toolbar && (

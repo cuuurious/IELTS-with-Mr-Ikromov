@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { ExamTaker, buildAttemptQuestions } from './MockExams'
 import { WritingTaker } from './WritingMockExam'
 import { isSpeechSupported, speak, stopSpeaking } from '../lib/speech'
+import { isTestToneSupported, playTestTone } from '../lib/testTone'
 
 /*
  * ================================================================
@@ -119,6 +120,16 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const [currentStageAttemptId, setCurrentStageAttemptId] = useState(null)
   const [justFinished, setJustFinished] = useState(null) // { score, maxScore } | 'writing' | null, shown before advancing
   const [writingStarting, setWritingStarting] = useState(false) // guards startWriting() from firing more than once
+
+  // Pre-exam system check (2026-09-26) — real computer-delivered IELTS
+  // runs a short system/sound check before the test proper begins; this
+  // mirrors that once per sitting, right before the very first (Listening)
+  // gate, rather than repeating it before every stage. Plain in-memory
+  // state is enough — the resume-on-refresh fix already skips straight
+  // past the gate entirely (via gateConfirmed) for a Listening attempt
+  // already under way, so this naturally never re-appears on a refresh
+  // either; it only shows for a genuinely fresh start.
+  const [systemCheckPassed, setSystemCheckPassed] = useState(false)
 
   // Spoken instructions — see lib/speech.js and the header comment
   // above. narratedStagesRef tracks which stage keys have already
@@ -264,6 +275,26 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         setModuleLoading(false)
         return
       }
+
+      // Resume-on-refresh, gate half: ExamTaker itself already resumes an
+      // in-progress mock_attempts row instead of starting over (see
+      // MockExams.jsx), but it never even mounts until `gateConfirmed` is
+      // true — and that's plain component state, so a refresh reset it to
+      // false and re-showed the "read the instructions and confirm"
+      // screen every time, even for a stage already well underway. The
+      // real exam's own rule is "you'll only see this once" — so if an
+      // attempt already exists here (unsubmitted), skip straight past the
+      // gate instead of making the student click "I confirm" again for an
+      // exam they already started.
+      const { data: inProgress } = await supabase
+        .from('mock_attempts')
+        .select('id')
+        .eq('exam_id', examId)
+        .eq('user_id', selfId)
+        .is('submitted_at', null)
+        .limit(1)
+        .maybeSingle()
+      if (!cancelled && inProgress) setGateConfirmed(true)
 
       const { data: sections, error: sectionsError } = await supabase
         .from('mock_sections')
@@ -503,6 +534,11 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const meta = STAGE_META[stage]
   const setTitle = activeAttempt.set?.title || 'Full Mock'
 
+  // ---- System check (once, before Listening's gate only) ----
+  if (stage === 'listening' && !gateConfirmed && !systemCheckPassed) {
+    return <SystemCheckGate setTitle={setTitle} onContinue={() => setSystemCheckPassed(true)} />
+  }
+
   // ---- Done ----
   if (stage === 'done') {
     return (
@@ -672,6 +708,145 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         Like the real test, these instructions are read aloud once automatically — use the button
         above if you need to hear them again.
       </p>
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------
+// Pre-exam system check — see the state comment above where this is
+// rendered. Styled to match the instructions/confirm gate immediately
+// after it (white card, black text, red eyebrow) so the two feel like
+// one continuous real-exam check-in flow, not a bolted-on extra screen.
+// Deliberately narrow in scope: a connection status readout (best-effort
+// — `navigator.onLine` is a hint, not a guarantee, so this only ever
+// warns, never hard-blocks on it) and a synthesized audio chime the
+// student has to confirm they heard before Continue enables, since a
+// silent/broken speaker or a muted tab is the one failure mode here that
+// would otherwise only surface once the actual Listening audio starts.
+// Speaking isn't checked here — it isn't recorded in-app at all (a live
+// Zoom call with the examiner), so there's nothing about a microphone
+// this screen could meaningfully verify.
+// ------------------------------------------------------------------
+function SystemCheckGate({ setTitle, onContinue }) {
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
+  const [toneStatus, setToneStatus] = useState('idle') // idle | playing | asked
+  const [audioConfirmed, setAudioConfirmed] = useState(false)
+  const toneSupported = isTestToneSupported()
+
+  useEffect(() => {
+    const goOnline = () => setOnline(true)
+    const goOffline = () => setOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [])
+
+  const handlePlayTone = async () => {
+    setToneStatus('playing')
+    await playTestTone()
+    setToneStatus('asked')
+  }
+
+  const canContinue = audioConfirmed || !toneSupported
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-8 shadow-sm">
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
+        <span className="text-[11px] uppercase tracking-[0.18em] text-red-600 font-semibold">
+          {setTitle} — System check
+        </span>
+      </div>
+
+      <h2 className="text-2xl font-bold mt-1.5 text-slate-900">Before you begin</h2>
+      <p className="mt-1 text-sm text-slate-500">
+        A quick check, the same way a real test center checks your computer before you sit down —
+        just once, before Listening starts.
+      </p>
+
+      <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-block h-2 w-2 rounded-full ${online ? 'bg-emerald-500' : 'bg-red-600'}`}
+            aria-hidden
+          />
+          <span className="text-sm font-semibold text-slate-900">
+            {online ? "You're online" : 'You appear to be offline'}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          {online
+            ? 'A stable connection matters most for Listening, since the audio streams as it plays.'
+            : "Your browser reports no connection right now — check your wifi or data before starting. This can sometimes be wrong, so it won't stop you here, but a mock started offline may not save properly."}
+        </p>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <p className="text-sm font-semibold text-slate-900">Sound check</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Listening plays once, with no way to replay it — make sure you can hear it clearly now,
+          not partway through the real thing.
+        </p>
+
+        {toneSupported ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handlePlayTone}
+              disabled={toneStatus === 'playing'}
+              className="focus-ring rounded-full border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-900 hover:text-slate-900 transition-colors disabled:opacity-60"
+            >
+              {toneStatus === 'playing' ? 'Playing…' : '▶ Play test sound'}
+            </button>
+
+            {toneStatus === 'asked' && !audioConfirmed && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-600">Did you hear it clearly?</span>
+                <button
+                  type="button"
+                  onClick={() => setAudioConfirmed(true)}
+                  className="focus-ring rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePlayTone}
+                  className="focus-ring rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-900 hover:text-slate-900"
+                >
+                  No, play again
+                </button>
+              </div>
+            )}
+
+            {audioConfirmed && (
+              <span className="text-xs font-medium text-emerald-600">✓ Sound confirmed</span>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-amber-600">
+            This browser doesn't support the check itself — you can still continue, just make sure
+            your volume is up and unmuted before Listening starts.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={!canContinue}
+          className="focus-ring inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-6 py-2.5 text-sm font-semibold shadow-sm transition-colors hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Continue to instructions <span aria-hidden>→</span>
+        </button>
+        {!canContinue && (
+          <p className="mt-2 text-xs text-slate-400">Confirm you can hear the test sound to continue.</p>
+        )}
+      </div>
     </div>
   )
 }

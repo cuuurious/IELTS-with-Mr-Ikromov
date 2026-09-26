@@ -1,0 +1,44 @@
+name: Trigger teacher needs-attention digest
+
+# Weekly Telegram digest to every teacher listing students who either
+# never attempted a mock, or whose estimated overall band sits a full
+# band or more below their target — the server-side twin of
+# TeacherMockCenter.jsx's own "Needs attention" panel (Student Progress
+# tab), sent on a schedule instead of only showing up if a teacher
+# happens to open the app. See supabase/functions/
+# teacher-needs-attention-digest/index.ts for the full writeup.
+#
+# Same secrets and curl pattern as daily-reminders.yml/exam-reminders.yml:
+#   VITE_SUPABASE_URL — same project URL used everywhere else.
+#   SUPABASE_SERVICE_ROLE_KEY — Supabase → Project Settings → API →
+#   legacy "service_role" key. Never expose this anywhere else.
+#
+# Runs WEEKLY (Monday), not daily — a student's overall standing doesn't
+# swing day to day, so a daily ping would train teachers to ignore it.
+# Change the cron below if a different day/cadence is wanted; the
+# function itself already skips sending anything when nobody currently
+# needs attention, so a shorter interval is safe to try without spamming.
+#
+# Note: GitHub only runs scheduled workflows on a best-effort basis (a
+# few minutes of drift is normal) and auto-disables a schedule after 60
+# days with no other activity on the repo — if the digest stops arriving,
+# check the Actions tab and re-enable it there.
+
+on:
+  schedule:
+    # 6:00 AM UTC every Monday.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call the teacher-needs-attention-digest Supabase function
+        run: |
+          curl --fail --show-error --silent \
+            -X POST \
+            "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/teacher-needs-attention-digest" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"

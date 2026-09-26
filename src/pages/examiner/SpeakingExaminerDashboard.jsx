@@ -94,6 +94,30 @@ export default function SpeakingExaminerDashboard() {
   const [scoreSaving, setScoreSaving] = useState(false)
   const [scoreError, setScoreError] = useState('')
 
+  // Examiner workload auto-balancing (2026-09-26, migration_55) — one of
+  // the ~15 "build everything" brainstorm items. Booking has always been
+  // fully self-service (this examiner picks a student and books a slot
+  // for THEMSELVES, no queue or assignment step), so two examiners can
+  // end up wildly uneven with neither ever finding out — TeacherMockCenter
+  // .jsx already has a read-only "Examiner workload" tile, but only a
+  // teacher ever sees it. This is deliberately a NUDGE, not a forced
+  // reassignment: get_speaking_examiner_workload() (a security-definer
+  // RPC, since RLS otherwise keeps one examiner from seeing another's
+  // slot rows at all) returns just {examiner_name, this_week_count} per
+  // examiner — never another examiner's actual students or slot details
+  // — so this can show "you vs. the team average" without exposing
+  // anything beyond a headcount.
+  const [workload, setWorkload] = useState([])
+
+  const loadWorkload = async () => {
+    const { data, error: workloadError } = await supabase.rpc('get_speaking_examiner_workload')
+    if (workloadError) {
+      console.error('Could not load examiner workload:', workloadError)
+      return
+    }
+    setWorkload(data || [])
+  }
+
   const loadAll = async () => {
     const [{ data: studentRows, error: studentsError }, { data: slotRows, error: slotsError }] =
       await Promise.all([
@@ -120,19 +144,55 @@ export default function SpeakingExaminerDashboard() {
   useEffect(() => {
     if (!profile?.id) return
     loadAll()
+    loadWorkload()
 
     const channel = supabase
       .channel('speaking-slots-examiner')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'mock_speaking_slots', filter: `examiner_id=eq.${profile.id}` },
-        loadAll
+        () => {
+          loadAll()
+          // A slot this examiner just booked/cancelled changes their own
+          // count immediately; re-pull the shared workload view too so
+          // the "you vs. team average" numbers stay current without
+          // waiting for a manual refresh.
+          loadWorkload()
+        }
       )
       .subscribe()
 
     return () => supabase.removeChannel(channel)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
+
+  // "You" vs. "everyone else's average" for THIS week — the number this
+  // component actually shows. A lone examiner (or one with no peers who
+  // have booked anything yet) has nobody to compare against, so the
+  // note/strip below simply doesn't render rather than comparing against
+  // zero and always looking "overloaded."
+  const myWorkload = useMemo(
+    () => workload.find((w) => w.examiner_id === profile?.id) || null,
+    [workload, profile?.id]
+  )
+  const otherExaminers = useMemo(
+    () => workload.filter((w) => w.examiner_id !== profile?.id),
+    [workload, profile?.id]
+  )
+  const teamAverageThisWeek = useMemo(() => {
+    if (otherExaminers.length === 0) return null
+    const sum = otherExaminers.reduce((s, w) => s + Number(w.this_week_count || 0), 0)
+    return sum / otherExaminers.length
+  }, [otherExaminers])
+
+  // A full 3 sessions above the team's average is the "worth a nudge"
+  // threshold — enough to be a real, visible gap rather than the normal
+  // give-and-take of everyone's differing availability day to day.
+  const WORKLOAD_IMBALANCE_THRESHOLD = 3
+  const isOverloaded =
+    myWorkload != null &&
+    teamAverageThisWeek != null &&
+    Number(myWorkload.this_week_count) - teamAverageThisWeek >= WORKLOAD_IMBALANCE_THRESHOLD
 
   const studentById = useMemo(() => {
     const map = {}
@@ -286,6 +346,21 @@ export default function SpeakingExaminerDashboard() {
               student directly.
             </p>
 
+            {myWorkload != null && teamAverageThisWeek != null && (
+              <div
+                className={`rounded-xl border px-4 py-2.5 text-xs font-medium ${
+                  isOverloaded
+                    ? 'border-amber/40 bg-amber/10 text-amber'
+                    : 'border-line bg-panel-2 text-mist'
+                }`}
+              >
+                {isOverloaded ? '⚖ ' : ''}
+                Your workload this week: <strong className="text-paper">{myWorkload.this_week_count}</strong>{' '}
+                · Team average: <strong className="text-paper">{teamAverageThisWeek.toFixed(1)}</strong>
+                {isOverloaded && ' — you\'re carrying noticeably more than others right now.'}
+              </div>
+            )}
+
             {students.length > 0 && (
               <input
                 type="search"
@@ -428,6 +503,11 @@ export default function SpeakingExaminerDashboard() {
           }
           saving={saving}
           error={error}
+          workloadNote={
+            bookModal.mode === 'create' && isOverloaded
+              ? `You already have ${myWorkload.this_week_count} sessions booked this week — noticeably more than the team average (${teamAverageThisWeek.toFixed(1)}). Worth booking this one if the student needs you specifically, or leaving it for a colleague otherwise.`
+              : null
+          }
           onCancel={() => setBookModal(null)}
           onSave={saveSlot}
         />
@@ -683,7 +763,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
   )
 }
 
-function SlotModal({ mode, studentName, initial, saving, error, onCancel, onSave }) {
+function SlotModal({ mode, studentName, initial, saving, error, workloadNote, onCancel, onSave }) {
   const [scheduledAt, setScheduledAt] = useState(initial.scheduledAt)
   const [durationMinutes, setDurationMinutes] = useState(initial.durationMinutes)
   const [meetingLink, setMeetingLink] = useState(initial.meetingLink)
@@ -696,6 +776,12 @@ function SlotModal({ mode, studentName, initial, saving, error, onCancel, onSave
           {mode === 'create' ? 'Book speaking exam' : 'Edit speaking exam'}
         </h3>
         <p className="text-sm text-mist mt-0.5">{studentName}</p>
+
+        {workloadNote && (
+          <div className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-amber">
+            ⚖ {workloadNote}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-3">
           <label className="text-xs text-mist font-mono uppercase tracking-wide">

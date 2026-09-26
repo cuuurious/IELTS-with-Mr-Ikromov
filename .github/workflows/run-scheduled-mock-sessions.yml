@@ -1,0 +1,36 @@
+name: Run scheduled mock sessions
+
+# Group-scheduled mock sessions (migration_52) — calls the
+# run-scheduled-mock-sessions Supabase Edge Function every 10 minutes so
+# a teacher-scheduled session's access codes go out automatically once
+# its date/time arrives, without anyone needing to come back and click
+# "Issue codes" that morning. Same pattern as daily-reminders.yml.
+#
+# Requires the same two repository secrets daily-reminders.yml already
+# uses, under GitHub -> repo -> Settings -> Secrets and variables ->
+# Actions:
+#   VITE_SUPABASE_URL — same project URL used everywhere else.
+#   SUPABASE_SERVICE_ROLE_KEY — Supabase -> Project Settings -> API ->
+#   legacy "service_role" key. Never expose this anywhere else.
+#
+# Note: GitHub only runs scheduled workflows on a best-effort basis (a
+# few minutes of drift is normal) and auto-disables a schedule after 60
+# days with no other activity on the repo — if a scheduled session's
+# codes never go out, check the Actions tab and re-enable it there.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the run-scheduled-mock-sessions Supabase function
+        run: |
+          curl --fail --show-error --silent \
+            -X POST \
+            "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/run-scheduled-mock-sessions" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"
