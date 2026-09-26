@@ -47,6 +47,27 @@ export const TIME_LIMIT_MINUTES = { reading: 60, listening: 40 }
 
 export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
 
+// New question types — added 2026-09-26 alongside the teacher-side editor
+// in TeacherMockCenter.jsx (see that file's QUESTION_TYPE_LABELS comment
+// for the full taxonomy this maps to). Kept as small standalone consts
+// here rather than importing from the teacher file, since this component
+// is the student-facing side and the two don't otherwise share code.
+export const YES_NO_NG_CHOICES = ['Yes', 'No', 'Not Given']
+
+// Mirrors TeacherMockCenter.jsx's MULTI_SELECT_SEPARATOR /
+// canonicalizeMultiSelect exactly — this is the half of that contract
+// that runs on the student's submitted answer. The teacher's
+// correct_answer is always every correct choice joined by this
+// separator IN AUTHORED ORDER, so the student's submission has to be
+// canonicalized the same way (by that question's own options.choices
+// order, not click order) for the exact-string-match grading RPC to
+// ever award multi_select points correctly.
+const MULTI_SELECT_SEPARATOR = ', '
+
+function canonicalizeMultiSelect(selectedChoices, allChoices) {
+  return allChoices.filter((c) => selectedChoices.includes(c)).join(MULTI_SELECT_SEPARATOR)
+}
+
 // Randomized question bank — added 2026-09-25, RETIRED 2026-09-26.
 // Was scoped with Jasur as "just shuffle": a toggle on the exam
 // ("Randomize questions from bank") plus an optional "questions per
@@ -567,6 +588,46 @@ export function QuestionBlock({ index, question, value, onChange }) {
         </div>
       )}
 
+      {question.type === 'yes_no_ng' && (
+        <div className="flex flex-wrap gap-2">
+          {YES_NO_NG_CHOICES.map((choice) => (
+            <label
+              key={choice}
+              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 text-sm transition-colors ${
+                value === choice
+                  ? 'border-brass/40 bg-brass/10 text-paper'
+                  : 'border-line bg-panel text-mist hover:border-brass/30'
+              }`}
+            >
+              <input
+                type="radio"
+                name={question.id}
+                checked={value === choice}
+                onChange={() => onChange(choice)}
+                className="accent-brass"
+              />
+              {choice}
+            </label>
+          ))}
+        </div>
+      )}
+
+      {question.type === 'multi_select' && (
+        <MultiSelectQuestion
+          question={question}
+          value={value}
+          onChange={onChange}
+        />
+      )}
+
+      {question.type === 'matching' && (
+        <MatchingQuestion
+          question={question}
+          value={value}
+          onChange={onChange}
+        />
+      )}
+
       {question.type === 'short_answer' && (
         <input
           value={value}
@@ -575,6 +636,110 @@ export function QuestionBlock({ index, question, value, onChange }) {
           className="focus-ring w-full max-w-sm rounded-xl border border-line bg-panel px-3.5 py-2 text-sm text-paper"
         />
       )}
+    </div>
+  )
+}
+
+// choose MORE THAN ONE from a list. `value` is the canonical
+// comma-joined string (see canonicalizeMultiSelect above) — this
+// component only ever writes that same canonical form back out, never
+// a raw click-order join, so grading stays exact-match-safe.
+function MultiSelectQuestion({ question, value, onChange }) {
+  const choices = question.options?.choices ?? []
+  const selected = value ? value.split(MULTI_SELECT_SEPARATOR).map((s) => s.trim()) : []
+
+  const toggle = (choice) => {
+    const next = selected.includes(choice)
+      ? selected.filter((c) => c !== choice)
+      : [...selected, choice]
+    onChange(canonicalizeMultiSelect(next, choices))
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[11px] text-mist -mt-1 mb-0.5">Choose every answer that applies.</p>
+      {choices.map((choice) => {
+        const checked = selected.includes(choice)
+        return (
+          <label
+            key={choice}
+            className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm transition-colors ${
+              checked
+                ? 'border-brass/40 bg-brass/10 text-paper'
+                : 'border-line bg-panel text-mist hover:border-brass/30'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={() => toggle(choice)}
+              className="accent-brass"
+            />
+            {choice}
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
+// match a statement/heading/paragraph-ref/name to one item from a bank
+// of options — the same single-pick data shape as multiple_choice
+// (one options.choices bank, one correct_answer), but given the drag-
+// and-drop interaction Jasur specifically asked for. Dragging a chip
+// into the drop target (or just clicking a chip — kept as a fallback
+// for touch/mobile, where HTML5 drag-and-drop doesn't work) both set
+// the same single answer; dragging/clicking a different chip replaces
+// it, same as picking a different radio would.
+function MatchingQuestion({ question, value, onChange }) {
+  const choices = question.options?.choices ?? []
+  const [dragOver, setDragOver] = useState(false)
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const choice = e.dataTransfer.getData('text/plain')
+    if (choice) onChange(choice)
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragOver(true)
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        className={`flex min-h-[2.75rem] items-center rounded-xl border-2 border-dashed px-3.5 py-2 text-sm transition-colors ${
+          dragOver
+            ? 'border-brass bg-brass/10 text-paper'
+            : value
+              ? 'border-brass/40 bg-brass/5 text-paper'
+              : 'border-line bg-panel text-mist'
+        }`}
+      >
+        {value || 'Drag an option here, or tap one below'}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {choices.map((choice) => (
+          <button
+            key={choice}
+            type="button"
+            draggable
+            onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+            onClick={() => onChange(choice)}
+            className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 text-sm transition-colors active:cursor-grabbing ${
+              value === choice
+                ? 'border-brass/40 bg-brass/10 text-paper'
+                : 'border-line bg-panel text-mist hover:border-brass/30'
+            }`}
+          >
+            {choice}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

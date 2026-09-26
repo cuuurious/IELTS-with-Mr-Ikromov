@@ -124,6 +124,30 @@ function isChoiceMarkedCorrect(choice, question) {
   return choice === (question.correct_answer ?? question.correctAnswer)
 }
 
+// Shared by ListeningExamWizard's isPartValid and ReadingExamWizard's
+// isPassageValid — both were only ever special-casing 'multiple_choice'
+// (choices.length >= 2 && choices.includes(correctAnswer)) and treating
+// every other type as automatically valid once it had a prompt and a
+// correct answer. That's still right for true_false_ng/yes_no_ng/
+// short_answer, but multi_select and matching are choice-based too and
+// need the same "at least 2 choices, and the answer(s) must actually be
+// among them" check — matching reuses multiple_choice's own check since
+// it's the same single-pick shape, multi_select needs every one of its
+// (possibly several) answers present in the choice list.
+function isDraftQuestionValid(q) {
+  if (!q.prompt.trim() || !q.correctAnswer.trim()) return false
+  if (q.type === 'multiple_choice' || q.type === 'matching') {
+    const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+    return choices.length >= 2 && choices.includes(q.correctAnswer)
+  }
+  if (q.type === 'multi_select') {
+    const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
+    const answers = q.correctAnswer.split(MULTI_SELECT_SEPARATOR).map((c) => c.trim())
+    return choices.length >= 2 && answers.length > 0 && answers.every((a) => choices.includes(a))
+  }
+  return true
+}
+
 function pct(score, max) {
   if (!max) return 0
   return Math.round((score / max) * 100)
@@ -2040,9 +2064,17 @@ export default function TeacherMockCenter({ onExit }) {
           homework belongs in this window at all. */}
       <header className="shrink-0 border-b border-line bg-panel px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
-            <img src="/favicon.svg" alt="" className="h-full w-full object-contain" />
-          </div>
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt=""
+              className="h-10 w-10 rounded-full border border-brass-dim/30 object-cover shrink-0"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
+              <img src="/favicon.svg" alt="" className="h-full w-full object-contain" />
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.14em] text-brass font-mono font-semibold">
               Mock Center
@@ -4377,14 +4409,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   const isPartValid = (part) => {
     const hasAudio = Boolean(part.audioFile || (part.audioUrl && !part.clearAudio))
     if (!hasAudio || part.questions.length === 0) return false
-    return part.questions.every((q) => {
-      if (!q.prompt.trim() || !q.correctAnswer.trim()) return false
-      if (q.type === 'multiple_choice') {
-        const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
-        return choices.length >= 2 && choices.includes(q.correctAnswer)
-      }
-      return true
-    })
+    return part.questions.every(isDraftQuestionValid)
   }
 
   const allPartsValid = parts.every(isPartValid)
@@ -4664,15 +4689,11 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
           return (
             <div key={qIndex} className="rounded-lg border border-line bg-panel p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <select
+                <QuestionTypeSelect
                   value={q.type}
-                  onChange={(e) => onUpdateQuestion(qIndex, { type: e.target.value, correctAnswer: '' })}
+                  onChange={(v) => onUpdateQuestion(qIndex, { type: v, correctAnswer: '' })}
                   className="focus-ring rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-xs text-paper"
-                >
-                  <option value="multiple_choice">Multiple choice</option>
-                  <option value="true_false_ng">True / False / Not Given</option>
-                  <option value="short_answer">Short answer</option>
-                </select>
+                />
                 <button
                   type="button"
                   onClick={() => onRemoveQuestion(qIndex)}
@@ -4690,54 +4711,16 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
                 className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
               />
 
-              {q.type === 'multiple_choice' && (
-                <>
-                  <textarea
-                    value={q.choicesText}
-                    onChange={(e) => onUpdateQuestion(qIndex, { choicesText: e.target.value })}
-                    rows={3}
-                    placeholder={'Choice A\nChoice B\nChoice C'}
-                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
-                  />
-                  <select
-                    value={q.correctAnswer}
-                    onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                  >
-                    <option value="">Select the correct choice…</option>
-                    {choices.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-
-              {q.type === 'true_false_ng' && (
-                <select
-                  value={q.correctAnswer}
-                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                >
-                  <option value="">Select…</option>
-                  {TRUE_FALSE_NG_CHOICES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {q.type === 'short_answer' && (
-                <input
-                  type="text"
-                  value={q.correctAnswer}
-                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                  placeholder="Correct answer"
-                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                />
-              )}
+              <QuestionAnswerFields
+                type={q.type}
+                choicesText={q.choicesText}
+                onChoicesTextChange={(v) => onUpdateQuestion(qIndex, { choicesText: v })}
+                correctAnswer={q.correctAnswer}
+                onCorrectAnswerChange={(v) => onUpdateQuestion(qIndex, { correctAnswer: v })}
+                choices={choices}
+                labelClassName="text-xs text-paper-dim font-mono uppercase tracking-wide"
+                inputClassName="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+              />
             </div>
           )
         })}
@@ -4825,14 +4808,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
     if (!passage.title.trim() || !passage.passageText.trim() || passage.questions.length === 0) {
       return false
     }
-    return passage.questions.every((q) => {
-      if (!q.prompt.trim() || !q.correctAnswer.trim()) return false
-      if (q.type === 'multiple_choice') {
-        const choices = q.choicesText.split('\n').map((c) => c.trim()).filter(Boolean)
-        return choices.length >= 2 && choices.includes(q.correctAnswer)
-      }
-      return true
-    })
+    return passage.questions.every(isDraftQuestionValid)
   }
 
   const allPassagesValid = passages.every(isPassageValid)
@@ -5076,15 +5052,11 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
           return (
             <div key={qIndex} className="rounded-lg border border-line bg-panel p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <select
+                <QuestionTypeSelect
                   value={q.type}
-                  onChange={(e) => onUpdateQuestion(qIndex, { type: e.target.value, correctAnswer: '' })}
+                  onChange={(v) => onUpdateQuestion(qIndex, { type: v, correctAnswer: '' })}
                   className="focus-ring rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-xs text-paper"
-                >
-                  <option value="multiple_choice">Multiple choice</option>
-                  <option value="true_false_ng">True / False / Not Given</option>
-                  <option value="short_answer">Short answer</option>
-                </select>
+                />
                 <button
                   type="button"
                   onClick={() => onRemoveQuestion(qIndex)}
@@ -5102,54 +5074,16 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
                 className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
               />
 
-              {q.type === 'multiple_choice' && (
-                <>
-                  <textarea
-                    value={q.choicesText}
-                    onChange={(e) => onUpdateQuestion(qIndex, { choicesText: e.target.value })}
-                    rows={3}
-                    placeholder={'Choice A\nChoice B\nChoice C'}
-                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper resize-none"
-                  />
-                  <select
-                    value={q.correctAnswer}
-                    onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                    className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                  >
-                    <option value="">Select the correct choice…</option>
-                    {choices.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-
-              {q.type === 'true_false_ng' && (
-                <select
-                  value={q.correctAnswer}
-                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                >
-                  <option value="">Select…</option>
-                  {TRUE_FALSE_NG_CHOICES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {q.type === 'short_answer' && (
-                <input
-                  type="text"
-                  value={q.correctAnswer}
-                  onChange={(e) => onUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                  placeholder="Correct answer"
-                  className="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
-                />
-              )}
+              <QuestionAnswerFields
+                type={q.type}
+                choicesText={q.choicesText}
+                onChoicesTextChange={(v) => onUpdateQuestion(qIndex, { choicesText: v })}
+                correctAnswer={q.correctAnswer}
+                onCorrectAnswerChange={(v) => onUpdateQuestion(qIndex, { correctAnswer: v })}
+                choices={choices}
+                labelClassName="text-xs text-paper-dim font-mono uppercase tracking-wide"
+                inputClassName="focus-ring w-full rounded-md border border-line bg-panel-2 px-2.5 py-1.5 text-sm text-paper"
+              />
             </div>
           )
         })}
