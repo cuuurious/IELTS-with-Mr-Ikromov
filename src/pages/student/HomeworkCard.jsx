@@ -1389,7 +1389,7 @@ export default function HomeworkCard({
           {/* DESCRIPTION */}
 
           {homework.description && (
-            <p className="text-sm text-paper-dim whitespace-pre-wrap">
+            <p className="text-sm font-medium text-paper whitespace-pre-wrap">
               {homework.description}
             </p>
           )}
@@ -1597,11 +1597,16 @@ export default function HomeworkCard({
               </div>
 
               {!submissionLocked && (
-                <span className="text-xs text-brass font-mono">
-                  {allowedTypes.join(
-                    ', '
-                  )}
-                </span>
+                <div className="flex flex-wrap items-start gap-1">
+                  {allowedTypes.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[11px] font-medium rounded-full border border-brass/30 bg-brass/10 text-brass px-2 py-0.5"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
 
