@@ -57,13 +57,72 @@ const SPEAKING_STATUS_META = {
   no_show: { label: 'No-show', className: 'text-coral border-coral/30 bg-coral/10' },
 }
 
+// Question types — expanded 2026-09-26. Jasur: "we have to build in all
+// of the features like drag and drop, choosing multiple answers in our
+// mock environment for both listening and reading" — real IELTS Reading
+// has 9 distinct question types and Listening has 6 (researched against
+// ielts.idp.com); most of them reduce to the same handful of underlying
+// interactions once you set aside exactly what's being matched:
+//   - pick ONE from a list            -> multiple_choice (existing)
+//   - pick MORE THAN ONE from a list  -> multi_select (new)
+//   - True/False/Not Given            -> true_false_ng (existing)
+//   - Yes/No/Not Given (opinions, not facts — a different fixed set of
+//     3 options, otherwise identical to True/False/Not Given)
+//                                      -> yes_no_ng (new)
+//   - type in a short piece of text   -> short_answer (existing — this
+//     already covers sentence/summary/note/table/form/flow-chart
+//     completion too: every one of those is "type the missing word(s)",
+//     graded the same exact-text-match way, just a different prompt)
+//   - match a statement/heading/paragraph-ref/name to one item from a
+//     shared bank of options          -> matching (new, drag-and-drop
+//     on the student side — covers matching headings, locating
+//     information in paragraphs, matching statements to people/things,
+//     sentence-ending matches, and classification: all "pick the right
+//     one from this bank" underneath)
+// NOT built this pass: plan/map/diagram labelling (Listening) — that
+// needs an actual image with click/drag points on it, a different kind
+// of editor entirely (upload an image, place labeled pins on it) rather
+// than a new answer-shape on the existing question form. Flagged, not
+// forgotten — say the word if you want that scoped next.
 const QUESTION_TYPE_LABELS = {
   multiple_choice: 'Multiple choice',
+  multi_select: 'Choose multiple',
   true_false_ng: 'True/False/Not Given',
+  yes_no_ng: 'Yes/No/Not Given',
+  matching: 'Matching (drag & drop)',
   short_answer: 'Short answer',
 }
 
+// Every type whose editor needs a list of options at all (as opposed to
+// short_answer, which is just free text). Used to decide whether to
+// show the "Choices" box across every question form in this file.
+const CHOICE_BASED_TYPES = ['multiple_choice', 'multi_select', 'matching']
+
 const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
+const YES_NO_NG_CHOICES = ['Yes', 'No', 'Not Given']
+
+// multi_select stores its correct answer as every correct choice joined
+// by this separator, always in the SAME order the choices themselves
+// were authored in — never the order they were clicked in. That's what
+// makes it gradeable with the existing exact-text-match RPC unchanged:
+// as long as the student's submitted answer is joined the same way (see
+// MockExams.jsx's QuestionBlock), "B, D" always means the same thing on
+// both sides regardless of click order.
+const MULTI_SELECT_SEPARATOR = ', '
+
+function canonicalizeMultiSelect(selectedChoices, allChoices) {
+  return allChoices.filter((c) => selectedChoices.includes(c)).join(MULTI_SELECT_SEPARATOR)
+}
+
+function isChoiceMarkedCorrect(choice, question) {
+  if (question.type === 'multi_select') {
+    return (question.correct_answer || question.correctAnswer || '')
+      .split(MULTI_SELECT_SEPARATOR)
+      .map((s) => s.trim())
+      .includes(choice)
+  }
+  return choice === (question.correct_answer ?? question.correctAnswer)
+}
 
 function pct(score, max) {
   if (!max) return 0
@@ -1527,10 +1586,8 @@ export default function TeacherMockCenter({ onExit }) {
           section_id: sectionId,
           order_index: startIndex + i,
           prompt: q.prompt || '',
-          type: ['multiple_choice', 'true_false_ng', 'short_answer'].includes(q.type)
-            ? q.type
-            : 'short_answer',
-          options: q.type === 'multiple_choice' ? { choices: q.choices || [] } : null,
+          type: Object.keys(QUESTION_TYPE_LABELS).includes(q.type) ? q.type : 'short_answer',
+          options: CHOICE_BASED_TYPES.includes(q.type) ? { choices: q.choices || [] } : null,
           correct_answer: q.correct_answer || '',
         }))
 
@@ -1632,7 +1689,7 @@ export default function TeacherMockCenter({ onExit }) {
         order_index: Number(values.orderIndex) || 0,
         prompt: values.prompt.trim(),
         type: values.type,
-        options: values.type === 'multiple_choice' ? { choices: values.choices } : null,
+        options: CHOICE_BASED_TYPES.includes(values.type) ? { choices: values.choices } : null,
         correct_answer: values.correctAnswer.trim(),
       }
 
@@ -1983,14 +2040,14 @@ export default function TeacherMockCenter({ onExit }) {
           homework belongs in this window at all. */}
       <header className="shrink-0 border-b border-line bg-panel px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center text-brass font-display text-sm shrink-0">
-            MC
+          <div className="h-10 w-10 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
+            <img src="/favicon.svg" alt="" className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-brass font-mono font-semibold">
               Mock Center
             </p>
-            <p className="font-display text-base text-paper truncate">
+            <p className="font-display text-lg font-semibold text-paper truncate leading-tight">
               {profile?.full_name || profile?.username}
             </p>
           </div>
@@ -2570,17 +2627,16 @@ export default function TeacherMockCenter({ onExit }) {
                       </div>
 
                       <div className="rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
-                        <label className="text-xs font-semibold text-brass">
-                          Upload answer key
-                          <input
-                            ref={answerKeyInputRef}
-                            type="file"
+                        <span className="text-xs font-semibold text-brass">Upload answer key</span>
+                        <div className="mt-1.5">
+                          <FileInputButton
+                            inputRef={answerKeyInputRef}
                             accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
                             disabled={answerKeyImporting}
                             onChange={handleAnswerKeyUpload}
-                            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
+                            label="Choose file"
                           />
-                        </label>
+                        </div>
                         <p className="mt-1 text-[11px] text-mist">
                           Upload a photo, PDF, or Word doc of the official answer key and every
                           question below that's still blank gets filled in automatically, matched
@@ -2727,20 +2783,20 @@ export default function TeacherMockCenter({ onExit }) {
                                           <p className="font-medium text-paper text-sm">
                                             {q.order_index + 1}. {q.prompt}
                                           </p>
-                                          {q.type === 'multiple_choice' &&
+                                          {CHOICE_BASED_TYPES.includes(q.type) &&
                                             (q.options?.choices?.length > 0) && (
                                               <ul className="mt-1 text-xs text-mist">
                                                 {q.options.choices.map((c, i) => (
                                                   <li
                                                     key={i}
                                                     className={
-                                                      c === q.correct_answer
+                                                      isChoiceMarkedCorrect(c, q)
                                                         ? 'text-sage font-medium'
                                                         : ''
                                                     }
                                                   >
                                                     {c}
-                                                    {c === q.correct_answer ? ' ✓' : ''}
+                                                    {isChoiceMarkedCorrect(c, q) ? ' ✓' : ''}
                                                   </li>
                                                 ))}
                                               </ul>
@@ -3442,19 +3498,22 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Task 1 chart/graph image (optional)
-            <input
-              ref={task1FileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                setTask1ImageFile(e.target.files?.[0] || null)
-                setClearTask1Image(false)
-              }}
-              className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
-            />
-          </label>
+          <div>
+            <span className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+              Task 1 chart/graph image (optional)
+            </span>
+            <div className="mt-1.5">
+              <FileInputButton
+                inputRef={task1FileInputRef}
+                accept="image/*"
+                fileName={task1ImageFile?.name}
+                onChange={(e) => {
+                  setTask1ImageFile(e.target.files?.[0] || null)
+                  setClearTask1Image(false)
+                }}
+              />
+            </div>
+          </div>
           <p className="-mt-2 text-[11px] text-mist normal-case">
             Or just paste a screenshot — click anywhere in this window and press Ctrl+V (⌘V on Mac).
           </p>
@@ -3767,18 +3826,16 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
 
         {isReading && (
           <div className="mt-4 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
-            <label className="text-xs font-semibold text-brass">
-              Import from a file
-              <input
-                ref={importInputRef}
-                type="file"
+            <span className="text-xs font-semibold text-brass">Import from a file</span>
+            <div className="mt-1.5">
+              <FileInputButton
+                inputRef={importInputRef}
                 accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
                 disabled={importing}
                 onChange={handleImportFile}
-                className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
               />
-            </label>
-            <p className="mt-1 text-[11px] text-mist">
+            </div>
+            <p className="mt-1.5 text-[11px] text-paper-dim">
               Upload a PDF, Word doc, or photo of the real passage + questions and the title,
               passage text, and questions below all get filled in at once — review, fill in any
               blank answer, then hit Save just once.
@@ -3826,18 +3883,21 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
             </label>
           ) : (
             <>
-              <label className="text-xs text-mist font-mono uppercase tracking-wide">
-                Audio file
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => {
-                    setAudioFile(e.target.files?.[0] || null)
-                    setClearAudio(false)
-                  }}
-                  className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
-                />
-              </label>
+              <div>
+                <span className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+                  Audio file
+                </span>
+                <div className="mt-1.5">
+                  <FileInputButton
+                    accept="audio/*"
+                    fileName={audioFile?.name}
+                    onChange={(e) => {
+                      setAudioFile(e.target.files?.[0] || null)
+                      setClearAudio(false)
+                    }}
+                  />
+                </div>
+              </div>
 
               {section?.audio_url && !audioFile && !clearAudio && (
                 <div className="flex items-center gap-3">
@@ -3882,6 +3942,224 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
   )
 }
 
+// Every "choose a file" control in this file used to be a raw
+// <input type="file"> restyled with Tailwind's file: variant. Jasur
+// flagged two problems with that 2026-09-26: a stray corner artifact
+// poking out next to the pill button (a long-standing Chrome/Edge
+// quirk — the native file control keeps a faint default box around
+// itself that a CSS-only ::file-selector-button restyle can't fully
+// suppress), and the "no file chosen" text being stuck in the
+// browser's own flat system font/color with no way to theme it.
+// Hiding the real <input> completely (sr-only) and building the whole
+// control — pill button plus a filename readout — out of ordinary
+// styled elements fixes both at once: no native chrome left to leak
+// through, and the filename text can finally take the app's own
+// colors and fonts. `fileName` is optional — the several "import a
+// file" buttons in this file fire an upload immediately and reset
+// their input, so they never have a lasting filename to show and
+// just render the placeholder permanently, matching how they already
+// behaved.
+function FileInputButton({
+  inputRef,
+  accept,
+  disabled,
+  onChange,
+  fileName,
+  label = 'Choose file',
+  placeholder = 'No file chosen',
+  className = '',
+}) {
+  return (
+    <span className={`inline-flex items-center gap-3 min-w-0 ${className}`}>
+      <label
+        className={`focus-ring shrink-0 rounded-full border border-brass/40 bg-brass/15 px-3 py-1.5 text-xs font-semibold text-brass shadow-sm transition-colors hover:bg-brass/25 cursor-pointer ${
+          disabled ? 'opacity-50 pointer-events-none' : ''
+        }`}
+      >
+        {label}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          disabled={disabled}
+          onChange={onChange}
+          className="sr-only"
+        />
+      </label>
+      <span
+        className={`truncate text-sm ${
+          fileName ? 'text-cyan font-medium' : 'text-paper-dim italic'
+        }`}
+      >
+        {fileName || placeholder}
+      </span>
+    </span>
+  )
+}
+
+// Shared by QuestionFormModal (Reading's old Level-3 editor),
+// ListeningPartEditor, and ReadingPartEditor (the two wizards) — one
+// place for every question type's answer-editing UI, instead of
+// tripling it as each new type got added. `choicesText`/`correctAnswer`
+// are the raw string state the caller already keeps; `choices` is that
+// text split into a clean array. Every `on*` callback just hands back a
+// new string, same shape as before, so none of the three callers needed
+// to change how they store a question.
+function QuestionAnswerFields({
+  type,
+  choicesText,
+  onChoicesTextChange,
+  correctAnswer,
+  onCorrectAnswerChange,
+  choices,
+  labelClassName = 'text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold',
+  inputClassName = 'focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper',
+}) {
+  if (type === 'multiple_choice' || type === 'matching') {
+    return (
+      <>
+        <label className={labelClassName}>
+          {type === 'matching' ? 'Bank of options (one per line)' : 'Choices (one per line)'}
+          <textarea
+            value={choicesText}
+            onChange={(e) => onChoicesTextChange(e.target.value)}
+            rows={4}
+            placeholder={
+              type === 'matching'
+                ? 'i. A surprising discovery\nii. The cost of doing nothing\niii. A change of direction'
+                : 'Choice A\nChoice B\nChoice C'
+            }
+            className={`${inputClassName} resize-none`}
+          />
+        </label>
+
+        <label className={labelClassName}>
+          {type === 'matching' ? 'Correct match' : 'Correct answer'}
+          <select
+            value={correctAnswer}
+            onChange={(e) => onCorrectAnswerChange(e.target.value)}
+            className={inputClassName}
+          >
+            <option value="">
+              {type === 'matching' ? 'Select the correct option…' : 'Select the correct choice…'}
+            </option>
+            {choices.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+      </>
+    )
+  }
+
+  if (type === 'multi_select') {
+    const selected = correctAnswer
+      ? correctAnswer.split(MULTI_SELECT_SEPARATOR).map((s) => s.trim())
+      : []
+
+    const toggle = (choice) => {
+      const next = selected.includes(choice)
+        ? selected.filter((c) => c !== choice)
+        : [...selected, choice]
+      onCorrectAnswerChange(canonicalizeMultiSelect(next, choices))
+    }
+
+    return (
+      <>
+        <label className={labelClassName}>
+          Choices (one per line)
+          <textarea
+            value={choicesText}
+            onChange={(e) => onChoicesTextChange(e.target.value)}
+            rows={4}
+            placeholder={'Choice A\nChoice B\nChoice C\nChoice D\nChoice E'}
+            className={`${inputClassName} resize-none`}
+          />
+        </label>
+
+        <div>
+          <p className={labelClassName}>Correct answers (tick every one that's correct)</p>
+          {choices.length === 0 ? (
+            <p className="mt-1 text-xs text-paper-dim/80 normal-case">
+              Add choices above first.
+            </p>
+          ) : (
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              {choices.map((c) => (
+                <label
+                  key={c}
+                  className="flex items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(c)}
+                    onChange={() => toggle(c)}
+                    className="accent-brass"
+                  />
+                  {c}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
+
+  if (type === 'true_false_ng' || type === 'yes_no_ng') {
+    const optionSet = type === 'yes_no_ng' ? YES_NO_NG_CHOICES : TRUE_FALSE_NG_CHOICES
+    return (
+      <label className={labelClassName}>
+        Correct answer
+        <select
+          value={correctAnswer}
+          onChange={(e) => onCorrectAnswerChange(e.target.value)}
+          className={inputClassName}
+        >
+          <option value="">Select…</option>
+          {optionSet.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+    )
+  }
+
+  // short_answer
+  return (
+    <label className={labelClassName}>
+      Correct answer
+      <input
+        type="text"
+        value={correctAnswer}
+        onChange={(e) => onCorrectAnswerChange(e.target.value)}
+        placeholder="e.g. photosynthesis"
+        className={inputClassName}
+      />
+      <span className="mt-1 block text-[11px] normal-case tracking-normal text-paper-dim/80">
+        Grading trims spaces and ignores case, but otherwise needs an exact match — keep it to one
+        accepted spelling.
+      </span>
+    </label>
+  )
+}
+
+function QuestionTypeSelect({ value, onChange, className }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={className}>
+      {Object.entries(QUESTION_TYPE_LABELS).map(([key, label]) => (
+        <option key={key} value={key}>
+          {label}
+        </option>
+      ))}
+    </select>
+  )
+}
+
 function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
   const question = modal.mode === 'edit' ? modal.question : null
 
@@ -3901,7 +4179,14 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
   const canSave =
     prompt.trim() &&
     correctAnswer.trim() &&
-    (type !== 'multiple_choice' || (choices.length >= 2 && choices.includes(correctAnswer)))
+    (!CHOICE_BASED_TYPES.includes(type) ||
+      (choices.length >= 2 &&
+        (type === 'multi_select'
+          ? correctAnswer
+              .split(MULTI_SELECT_SEPARATOR)
+              .map((c) => c.trim())
+              .every((c) => choices.includes(c))
+          : choices.includes(correctAnswer))))
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
@@ -3917,18 +4202,14 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
           <div className="grid grid-cols-[1fr_auto] gap-3">
             <label className="text-xs text-mist font-mono uppercase tracking-wide">
               Question type
-              <select
+              <QuestionTypeSelect
                 value={type}
-                onChange={(e) => {
-                  setType(e.target.value)
+                onChange={(v) => {
+                  setType(v)
                   setCorrectAnswer('')
                 }}
                 className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-              >
-                <option value="multiple_choice">Multiple choice</option>
-                <option value="true_false_ng">True / False / Not Given</option>
-                <option value="short_answer">Short answer</option>
-              </select>
+              />
             </label>
 
             <label className="text-xs text-mist font-mono uppercase tracking-wide">
@@ -3953,71 +4234,16 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
             />
           </label>
 
-          {type === 'multiple_choice' && (
-            <>
-              <label className="text-xs text-mist font-mono uppercase tracking-wide">
-                Choices (one per line)
-                <textarea
-                  value={choicesText}
-                  onChange={(e) => setChoicesText(e.target.value)}
-                  rows={4}
-                  placeholder={'Choice A\nChoice B\nChoice C'}
-                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
-                />
-              </label>
-
-              <label className="text-xs text-mist font-mono uppercase tracking-wide">
-                Correct answer
-                <select
-                  value={correctAnswer}
-                  onChange={(e) => setCorrectAnswer(e.target.value)}
-                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-                >
-                  <option value="">Select the correct choice…</option>
-                  {choices.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
-          )}
-
-          {type === 'true_false_ng' && (
-            <label className="text-xs text-mist font-mono uppercase tracking-wide">
-              Correct answer
-              <select
-                value={correctAnswer}
-                onChange={(e) => setCorrectAnswer(e.target.value)}
-                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-              >
-                <option value="">Select…</option>
-                {TRUE_FALSE_NG_CHOICES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {type === 'short_answer' && (
-            <label className="text-xs text-mist font-mono uppercase tracking-wide">
-              Correct answer
-              <input
-                type="text"
-                value={correctAnswer}
-                onChange={(e) => setCorrectAnswer(e.target.value)}
-                placeholder="e.g. photosynthesis"
-                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-              />
-              <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
-                Grading trims spaces and ignores case, but otherwise needs an exact match — keep
-                it to one accepted spelling.
-              </span>
-            </label>
-          )}
+          <QuestionAnswerFields
+            type={type}
+            choicesText={choicesText}
+            onChoicesTextChange={setChoicesText}
+            correctAnswer={correctAnswer}
+            onCorrectAnswerChange={setCorrectAnswer}
+            choices={choices}
+            labelClassName="text-xs text-mist font-mono uppercase tracking-wide"
+            inputClassName="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+          />
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -4214,7 +4440,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Listening Mock Test 1"
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-2 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
           <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
@@ -4223,7 +4449,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-2 w-28 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
         </div>
@@ -4377,15 +4603,18 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
         </span>
       </div>
 
-      <label className="mt-3 block text-xs text-mist font-mono uppercase tracking-wide">
-        Audio file
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(e) => onChange({ audioFile: e.target.files?.[0] || null, clearAudio: false })}
-          className="focus-ring mt-1 w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25"
-        />
-      </label>
+      <div className="mt-3">
+        <span className="block text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
+          Audio file
+        </span>
+        <div className="mt-1.5">
+          <FileInputButton
+            accept="audio/*"
+            fileName={part.audioFile?.name}
+            onChange={(e) => onChange({ audioFile: e.target.files?.[0] || null, clearAudio: false })}
+          />
+        </div>
+      </div>
 
       {part.audioFile ? (
         <div className="mt-1.5 flex items-center gap-3">
@@ -4406,18 +4635,16 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
       ) : null}
 
       <div className="mt-3 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
-        <label className="text-xs font-semibold text-brass">
-          Import questions from a file
-          <input
-            ref={importInputRef}
-            type="file"
+        <span className="text-xs font-semibold text-brass">Import questions from a file</span>
+        <div className="mt-1.5">
+          <FileInputButton
+            inputRef={importInputRef}
             accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
             disabled={importing}
             onChange={handleImportFile}
-            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
           />
-        </label>
-        <p className="mt-1 text-[11px] text-mist">
+        </div>
+        <p className="mt-1.5 text-[11px] text-paper-dim">
           Upload a PDF, Word doc, or photo of the real question paper for this part and the
           questions below get filled in automatically — review them, fill in any blank answer,
           then save. (This reads the questions only; audio still has to be uploaded above.)
@@ -4645,7 +4872,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Reading Mock Test 1"
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-2 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
           <label className="text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
@@ -4654,7 +4881,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="focus-ring mt-1 w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-2 w-28 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
         </div>
@@ -4809,18 +5036,16 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
       </div>
 
       <div className="mt-3 rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
-        <label className="text-xs font-semibold text-brass">
-          Import from a file
-          <input
-            ref={importInputRef}
-            type="file"
+        <span className="text-xs font-semibold text-brass">Import from a file</span>
+        <div className="mt-1.5">
+          <FileInputButton
+            inputRef={importInputRef}
             accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
             disabled={importing}
             onChange={handleImportFile}
-            className="focus-ring mt-1 block w-full text-sm text-paper file:mr-3 file:rounded-full file:border file:border-brass/40 file:bg-brass/15 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brass file:shadow-sm file:transition-colors hover:file:bg-brass/25 disabled:opacity-50"
           />
-        </label>
-        <p className="mt-1 text-[11px] text-mist">
+        </div>
+        <p className="mt-1.5 text-[11px] text-paper-dim">
           Upload a PDF, Word doc, or photo of the real passage + questions and the title, passage
           text, and questions below all get filled in at once — review, fill in any blank answer,
           then save.
