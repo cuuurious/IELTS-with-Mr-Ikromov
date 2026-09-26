@@ -126,7 +126,7 @@ const MOCK_IMPORT_SCHEMA = {
     passage_text: {
       type: 'string',
       description:
-        'The full reading passage or listening transcript/script text, verbatim, if the document actually contains it. Empty string if the document is questions only (no passage/transcript printed).',
+        'The full reading passage or listening transcript/script text, verbatim, if the document actually contains it. Empty string if the document is questions only (no passage/transcript printed). Preserve the original paragraph breaks: separate each paragraph with a blank line (two newline characters), never collapse the whole passage into one continuous block.',
     },
     questions: {
       type: 'array',
@@ -223,6 +223,8 @@ function buildPrompt(module) {
     'CRITICAL — correct answers: only put a value in "correct_answer" when this document actually shows an answer key (a separate answer list, an underlined/marked correct choice, or similar). Do NOT guess or infer an answer from general knowledge — grading later is an exact text match, so a wrong guess would silently mark every student wrong. If there is no visible answer key for a question, leave "correct_answer" as an empty string and leave it for the teacher to fill in. For true_false_ng, when you do have a real answer key, write it as exactly "True", "False", or "Not Given".',
     '',
     'If the document includes the reading passage or the listening transcript/script text, put the complete text (verbatim) in "passage_text". If it is a questions-only page, leave "passage_text" as an empty string.',
+    '',
+    'IMPORTANT — keep the paragraph structure: the source document is written in paragraphs, so "passage_text" must be too. Insert a blank line (two newline characters, i.e. "\\n\\n") between each paragraph exactly where the original paragraph breaks fall. Do not run every paragraph together into one continuous block of text — a passage with 6 paragraphs on the page must come back as 6 paragraphs separated by blank lines, not one long paragraph.',
     '',
     'Return nothing except the structured extraction — no commentary.',
   ].join('\n')
