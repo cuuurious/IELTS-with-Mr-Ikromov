@@ -6,6 +6,7 @@ import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { formatTargetBand } from '../../lib/targetBands'
 import { downloadSpeakingSlotIcs } from '../../lib/calendarEvent'
+import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 
 /*
  * ================================================================
@@ -46,6 +47,25 @@ function formatSlotTime(iso) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+// The four IELTS Speaking criteria, added 2026-09-26 (migration_49) —
+// same pattern and same locked decision as WritingExaminerDashboard.jsx:
+// the overall band is calculated from these, never typed in separately,
+// and only once all four are filled (so editing an older, already-marked
+// slot's feedback alone never overwrites its existing examiner_band with
+// a bogus average of blanks).
+const SPEAKING_CRITERIA = [
+  { key: 'fc', label: 'Fluency & Coherence' },
+  { key: 'lr', label: 'Lexical Resource' },
+  { key: 'gra', label: 'Grammatical Range & Accuracy' },
+  { key: 'pron', label: 'Pronunciation' },
+]
+
+function computeOverallBand(criteriaValues) {
+  const nums = criteriaValues.map((v) => (v === '' || v == null ? null : Number(v)))
+  if (nums.some((n) => n == null || Number.isNaN(n))) return null
+  return roundOverallBand(nums.reduce((sum, n) => sum + n, 0) / nums.length)
 }
 
 const STATUS_META = {
@@ -204,15 +224,22 @@ export default function SpeakingExaminerDashboard() {
    */
   const openScoreModal = (slot) => setScoreModal({ slot })
 
-  const saveScore = async ({ band, feedback, recordingUrl }) => {
+  const saveScore = async ({ fc, lr, gra, pron, feedback, recordingUrl }) => {
     setScoreSaving(true)
     setScoreError('')
 
     try {
+      const computedOverall = computeOverallBand([fc, lr, gra, pron])
+
       const { error: updateError } = await supabase
         .from('mock_speaking_slots')
         .update({
-          examiner_band: band === '' ? null : Number(band),
+          fc_band: fc === '' ? null : Number(fc),
+          lr_band: lr === '' ? null : Number(lr),
+          gra_band: gra === '' ? null : Number(gra),
+          pron_band: pron === '' ? null : Number(pron),
+          examiner_band:
+            computedOverall != null ? computedOverall : scoreModal.slot.examiner_band ?? null,
           examiner_feedback: feedback || null,
           examiner_reviewed_at: new Date().toISOString(),
           recording_url: recordingUrl || null,
@@ -540,9 +567,17 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
 }
 
 function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
-  const [band, setBand] = useState(slot.examiner_band ?? '')
+  const [criteria, setCriteria] = useState({
+    fc: slot.fc_band ?? '',
+    lr: slot.lr_band ?? '',
+    gra: slot.gra_band ?? '',
+    pron: slot.pron_band ?? '',
+  })
   const [feedback, setFeedback] = useState(slot.examiner_feedback || '')
   const [recordingUrl, setRecordingUrl] = useState(slot.recording_url || '')
+
+  const computedOverall = computeOverallBand([criteria.fc, criteria.lr, criteria.gra, criteria.pron])
+  const displayOverall = computedOverall != null ? computedOverall : slot.examiner_band ?? null
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
@@ -552,18 +587,41 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
         <p className="text-xs text-mist font-mono mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
 
         <div className="mt-4 flex flex-col gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Band
-            <input
-              type="number"
-              min="0"
-              max="9"
-              step="0.5"
-              value={band}
-              onChange={(e) => setBand(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-            />
-          </label>
+          <div>
+            <p className="text-xs text-mist font-mono uppercase tracking-wide mb-2">
+              Criteria marks
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {SPEAKING_CRITERIA.map((c) => (
+                <label key={c.key} className="text-[11px] text-mist">
+                  {c.label}
+                  <input
+                    type="number"
+                    min="0"
+                    max="9"
+                    step="0.5"
+                    value={criteria[c.key]}
+                    onChange={(e) => setCriteria((prev) => ({ ...prev, [c.key]: e.target.value }))}
+                    className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-2.5 py-2 text-sm text-paper"
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[11px] text-mist font-mono uppercase tracking-wide">
+                Overall band
+              </span>
+              <span className="text-sm font-semibold text-paper">
+                {formatBand(displayOverall)}
+              </span>
+              <span className="text-[11px] text-mist">
+                {computedOverall != null
+                  ? '— calculated from the four criteria'
+                  : 'fill in all four to calculate'}
+              </span>
+            </div>
+          </div>
 
           <label className="text-xs text-mist font-mono uppercase tracking-wide">
             Feedback
@@ -604,7 +662,16 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
           </button>
           <button
             type="button"
-            onClick={() => onSave({ band, feedback, recordingUrl })}
+            onClick={() =>
+              onSave({
+                fc: criteria.fc,
+                lr: criteria.lr,
+                gra: criteria.gra,
+                pron: criteria.pron,
+                feedback,
+                recordingUrl,
+              })
+            }
             disabled={saving}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
           >

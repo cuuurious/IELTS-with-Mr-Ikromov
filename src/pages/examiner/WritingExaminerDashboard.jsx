@@ -5,6 +5,7 @@ import Layout, { IconHomework, IconChat } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { countWords } from '../../lib/writingMock'
+import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 
 /*
  * ================================================================
@@ -35,6 +36,26 @@ import { countWords } from '../../lib/writingMock'
 
 function studentLabel(student) {
   return student?.full_name || student?.username || 'Student'
+}
+
+// The four IELTS Writing criteria, added 2026-09-26 (migration_49) so an
+// examiner's report is a real breakdown, not just one number. Locked with
+// Jasur via AskUserQuestion the same day: the overall band is calculated
+// from these four, never typed in separately — only once all four are
+// filled in, so editing feedback alone on an older, already-marked
+// attempt (which has no breakdown) never overwrites its existing
+// examiner_band with a bogus average of blanks.
+const WRITING_CRITERIA = [
+  { key: 'ta', label: 'Task Achievement / Response' },
+  { key: 'cc', label: 'Coherence & Cohesion' },
+  { key: 'lr', label: 'Lexical Resource' },
+  { key: 'gra', label: 'Grammatical Range & Accuracy' },
+]
+
+function computeOverallBand(criteriaValues) {
+  const nums = criteriaValues.map((v) => (v === '' || v == null ? null : Number(v)))
+  if (nums.some((n) => n == null || Number.isNaN(n))) return null
+  return roundOverallBand(nums.reduce((sum, n) => sum + n, 0) / nums.length)
 }
 
 export default function WritingExaminerDashboard() {
@@ -139,13 +160,22 @@ export default function WritingExaminerDashboard() {
     setTab('chats')
   }
 
-  const saveReview = async ({ band, feedback }) => {
+  const saveReview = async ({ ta, cc, lr, gra, feedback }) => {
     const { attempt } = reviewTarget
+    const computedOverall = computeOverallBand([ta, cc, lr, gra])
 
     const { error: updateError } = await supabase
       .from('writing_mock_attempts')
       .update({
-        examiner_band: band === '' ? null : Number(band),
+        ta_band: ta === '' ? null : Number(ta),
+        cc_band: cc === '' ? null : Number(cc),
+        lr_band: lr === '' ? null : Number(lr),
+        gra_band: gra === '' ? null : Number(gra),
+        // Only overwrite the overall band once all four criteria are
+        // filled — otherwise leave whatever was already there (e.g. an
+        // older attempt marked before the breakdown existed, or a
+        // feedback-only edit) untouched.
+        examiner_band: computedOverall != null ? computedOverall : attempt.examiner_band ?? null,
         examiner_feedback: feedback || null,
         examiner_reviewed_by: profile.id,
         examiner_reviewed_at: new Date().toISOString(),
@@ -297,7 +327,12 @@ function QueueSection({ blurb, entries, taskKey, onOpen, onMessage }) {
 function ReviewModal({ entry, onClose, onSave }) {
   const { attempt, exam, student } = entry
 
-  const [band, setBand] = useState(attempt.examiner_band ?? '')
+  const [criteria, setCriteria] = useState({
+    ta: attempt.ta_band ?? '',
+    cc: attempt.cc_band ?? '',
+    lr: attempt.lr_band ?? '',
+    gra: attempt.gra_band ?? '',
+  })
   const [feedback, setFeedback] = useState(attempt.examiner_feedback || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -308,11 +343,14 @@ function ReviewModal({ entry, onClose, onSave }) {
     attempt.task2_text ? 'task2' : null,
   ].filter(Boolean)
 
+  const computedOverall = computeOverallBand([criteria.ta, criteria.cc, criteria.lr, criteria.gra])
+  const displayOverall = computedOverall != null ? computedOverall : attempt.examiner_band ?? null
+
   const handleSave = async () => {
     setSaving(true)
     setError('')
     try {
-      await onSave({ band, feedback })
+      await onSave({ ta: criteria.ta, cc: criteria.cc, lr: criteria.lr, gra: criteria.gra, feedback })
     } catch (err) {
       setError(err?.message || 'Could not save this review.')
     } finally {
@@ -383,21 +421,42 @@ function ReviewModal({ entry, onClose, onSave }) {
           </p>
         </div>
 
-        <div className="mt-5 border-t border-line pt-4 grid gap-3 sm:grid-cols-[120px_1fr]">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
-            Band
-            <input
-              type="number"
-              min="0"
-              max="9"
-              step="0.5"
-              value={band}
-              onChange={(e) => setBand(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
-            />
-          </label>
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-xs text-mist font-mono uppercase tracking-wide mb-2">
+            Criteria marks
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {WRITING_CRITERIA.map((c) => (
+              <label key={c.key} className="text-[11px] text-mist">
+                {c.label}
+                <input
+                  type="number"
+                  min="0"
+                  max="9"
+                  step="0.5"
+                  value={criteria[c.key]}
+                  onChange={(e) => setCriteria((prev) => ({ ...prev, [c.key]: e.target.value }))}
+                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-2.5 py-2 text-sm text-paper"
+                />
+              </label>
+            ))}
+          </div>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-[11px] text-mist font-mono uppercase tracking-wide">
+              Overall band
+            </span>
+            <span className="text-sm font-semibold text-paper">
+              {formatBand(displayOverall)}
+            </span>
+            <span className="text-[11px] text-mist">
+              {computedOverall != null
+                ? '— calculated from the four criteria'
+                : 'fill in all four to calculate'}
+            </span>
+          </div>
+
+          <label className="mt-4 block text-xs text-mist font-mono uppercase tracking-wide">
             Feedback
             <textarea
               value={feedback}

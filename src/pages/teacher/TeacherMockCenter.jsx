@@ -3886,6 +3886,32 @@ function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
 // added... like username as well" — styled after Leaderboard.jsx's own
 // selectedStudent modal (avatar/name/@username header, a stat-tile
 // grid, then activity history below) rather than inventing a new look.
+// A student's mock-result window has one DOM id per skill so the stat
+// tiles above can jump straight to that skill's detail below — see
+// scrollToProfileSection(). Only one StudentProfileModal is ever mounted
+// at a time (rendered once, at the top level, only while profileStudentId
+// is set), so fixed ids are safe — no risk of colliding with a second
+// open instance.
+const PROFILE_SECTION_IDS = {
+  reading: 'student-profile-section-reading',
+  listening: 'student-profile-section-listening',
+  writing: 'student-profile-section-writing',
+  speaking: 'student-profile-section-speaking',
+}
+
+function scrollToProfileSection(key) {
+  document.getElementById(PROFILE_SECTION_IDS[key])?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function CriterionChip({ label, value }) {
+  return (
+    <div className="rounded-lg border border-line bg-panel px-2 py-1.5 text-center">
+      <p className="text-[9px] font-mono uppercase tracking-wide text-paper-dim">{label}</p>
+      <p className="text-xs font-semibold text-paper mt-0.5">{formatBand(value)}</p>
+    </div>
+  )
+}
+
 function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay }) {
   if (!row) return null
   const { student } = row
@@ -3896,14 +3922,26 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
     row.speakingSlots.length > 0
 
   const statTiles = [
-    { label: 'Reading', value: row.reading ? `${row.reading.average}%` : '—', sub: row.reading ? `${row.reading.highest}% high` : 'No attempts' },
-    { label: 'Listening', value: row.listening ? `${row.listening.average}%` : '—', sub: row.listening ? `${row.listening.highest}% high` : 'No attempts' },
     {
+      key: 'reading',
+      label: 'Reading',
+      value: row.reading ? `${row.reading.average}%` : '—',
+      sub: row.reading ? `${row.reading.highest}% high` : 'No attempts',
+    },
+    {
+      key: 'listening',
+      label: 'Listening',
+      value: row.listening ? `${row.listening.average}%` : '—',
+      sub: row.listening ? `${row.listening.highest}% high` : 'No attempts',
+    },
+    {
+      key: 'writing',
       label: 'Writing',
       value: row.avgBand != null ? `Band ${row.avgBand}` : row.writingReviews.length > 0 ? 'Pending' : '—',
       sub: row.reviewedWritingCount > 0 ? `${row.reviewedWritingCount} marked` : 'No submissions',
     },
     {
+      key: 'speaking',
       label: 'Speaking',
       value: row.avgSpeakingBand != null ? `Band ${row.avgSpeakingBand}` : row.hasCompletedSpeaking ? 'Pending' : '—',
       sub: row.reviewedSpeakingCount > 0 ? `${row.reviewedSpeakingCount} marked` : 'No sessions',
@@ -3950,13 +3988,19 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
 
         <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
           {statTiles.map((tile) => (
-            <div key={tile.label} className="rounded-xl border border-line bg-panel-2 px-3 py-2.5">
+            <button
+              key={tile.key}
+              type="button"
+              onClick={() => scrollToProfileSection(tile.key)}
+              title={`Jump to ${tile.label} detail below`}
+              className="focus-ring rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-left transition-colors hover:border-brass/40 hover:bg-panel"
+            >
               <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-paper-dim">
                 {tile.label}
               </p>
               <p className="mt-1 text-base font-semibold text-paper">{tile.value}</p>
               <p className="text-[11px] text-mist">{tile.sub}</p>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -3978,118 +4022,221 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
             Mock history
           </p>
 
-          <div className="flex flex-col gap-3">
-            {!hasActivity && <p className="text-sm text-mist">No mock activity yet.</p>}
-
-            {[...row.readingAttempts, ...row.listeningAttempts]
-              .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-              .map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
-                >
-                  <span className="text-paper capitalize">
-                    {a.module} · {a.examTitle}
-                  </span>
-                  <span className="text-paper-dim font-mono text-xs">
-                    {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
-                    {new Date(a.submitted_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-
-            {row.writingReviews.map((r) => {
-              const essayOpen = Boolean(expandedEssays[r.id])
-              const hasEssay = Boolean(r.task1_text || r.task2_text)
-
-              return (
-                <div key={r.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-paper">{r.examTitle}</span>
-                    {r.examiner_band != null ? (
-                      <span className="text-sage font-semibold text-xs">
-                        Band {r.examiner_band}
-                      </span>
-                    ) : (
-                      <span className="text-amber text-xs">Awaiting review</span>
-                    )}
+          {!hasActivity ? (
+            <p className="text-sm text-mist">No mock activity yet.</p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              <div id={PROFILE_SECTION_IDS.reading}>
+                <p className="text-[10px] font-mono uppercase tracking-wide text-brass mb-2">
+                  Reading
+                </p>
+                {row.readingAttempts.length === 0 ? (
+                  <p className="text-xs text-mist">No attempts yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {row.readingAttempts
+                      .slice()
+                      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+                      .map((a) => (
+                        <div
+                          key={a.id}
+                          className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
+                        >
+                          <span className="text-paper">{a.examTitle}</span>
+                          <span className="text-paper-dim font-mono text-xs">
+                            {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
+                            {new Date(a.submitted_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
                   </div>
+                )}
+              </div>
 
-                  {r.examiner_feedback && (
-                    <p className="text-xs text-paper-dim mt-1.5 whitespace-pre-wrap">
-                      {r.examiner_feedback}
-                    </p>
-                  )}
+              <div id={PROFILE_SECTION_IDS.listening}>
+                <p className="text-[10px] font-mono uppercase tracking-wide text-brass mb-2">
+                  Listening
+                </p>
+                {row.listeningAttempts.length === 0 ? (
+                  <p className="text-xs text-mist">No attempts yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {row.listeningAttempts
+                      .slice()
+                      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+                      .map((a) => (
+                        <div
+                          key={a.id}
+                          className="flex items-center justify-between gap-3 text-sm rounded-lg border border-line bg-panel-2 px-3.5 py-2.5"
+                        >
+                          <span className="text-paper">{a.examTitle}</span>
+                          <span className="text-paper-dim font-mono text-xs">
+                            {a.score}/{a.max_score} ({pct(a.score, a.max_score)}%) ·{' '}
+                            {new Date(a.submitted_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-mist mt-1.5">
+                  A per-question breakdown of right/wrong answers is coming here next — this
+                  section will show the score only until that ships.
+                </p>
+              </div>
 
-                  {hasEssay && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onToggleEssay(r.id)}
-                        className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
-                      >
-                        {essayOpen ? 'Hide essay ▲' : 'View essay ▼'}
-                      </button>
+              <div id={PROFILE_SECTION_IDS.writing}>
+                <p className="text-[10px] font-mono uppercase tracking-wide text-brass mb-2">
+                  Writing
+                </p>
+                {row.writingReviews.length === 0 ? (
+                  <p className="text-xs text-mist">No submissions yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {row.writingReviews.map((r) => {
+                      const essayOpen = Boolean(expandedEssays[r.id])
+                      const hasEssay = Boolean(r.task1_text || r.task2_text)
+                      const hasCriteria =
+                        r.ta_band != null || r.cc_band != null || r.lr_band != null || r.gra_band != null
 
-                      {essayOpen && (
-                        <div className="mt-2 space-y-2.5">
-                          {r.task1_text && (
-                            <div>
-                              <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
-                                Task 1
-                              </p>
-                              <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
-                                {r.task1_text}
-                              </p>
+                      return (
+                        <div key={r.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
+                          <div className="flex items-center justify-between gap-3 text-sm">
+                            <span className="text-paper">{r.examTitle}</span>
+                            {r.examiner_band != null ? (
+                              <span className="text-sage font-semibold text-xs">
+                                Band {r.examiner_band}
+                              </span>
+                            ) : (
+                              <span className="text-amber text-xs">Awaiting review</span>
+                            )}
+                          </div>
+
+                          {hasCriteria && (
+                            <div className="grid grid-cols-4 gap-1.5 mt-2.5">
+                              <CriterionChip label="TA" value={r.ta_band} />
+                              <CriterionChip label="CC" value={r.cc_band} />
+                              <CriterionChip label="LR" value={r.lr_band} />
+                              <CriterionChip label="GRA" value={r.gra_band} />
                             </div>
                           )}
-                          {r.task2_text && (
-                            <div>
-                              <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
-                                Task 2
-                              </p>
-                              <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
-                                {r.task2_text}
-                              </p>
-                            </div>
+
+                          {r.examiner_feedback && (
+                            <p className="text-xs text-paper-dim mt-2 whitespace-pre-wrap">
+                              {r.examiner_feedback}
+                            </p>
+                          )}
+
+                          {hasEssay && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onToggleEssay(r.id)}
+                                className="focus-ring text-xs text-brass hover:text-brass-dim mt-2"
+                              >
+                                {essayOpen ? 'Hide essay ▲' : 'View essay ▼'}
+                              </button>
+
+                              {essayOpen && (
+                                <div className="mt-2 space-y-2.5">
+                                  {r.task1_text && (
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                                        Task 1
+                                      </p>
+                                      <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
+                                        {r.task1_text}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {r.task2_text && (
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
+                                        Task 2
+                                      </p>
+                                      <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
+                                        {r.task2_text}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )
-            })}
-
-            {row.speakingSlots
-              .slice()
-              .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
-              .map((slot) => {
-                const meta = SPEAKING_STATUS_META[slot.status] || SPEAKING_STATUS_META.scheduled
-                return (
-                  <div key={slot.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-paper">{formatSlotTime(slot.scheduled_at)}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${meta.className}`}>
-                          {meta.label}
-                        </span>
-                        {slot.examiner_band != null && (
-                          <span className="text-sage font-semibold text-xs">
-                            Band {slot.examiner_band}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {slot.examiner_feedback && (
-                      <p className="text-xs text-paper-dim mt-1.5 whitespace-pre-wrap">
-                        {slot.examiner_feedback}
-                      </p>
-                    )}
+                      )
+                    })}
                   </div>
-                )
-              })}
-          </div>
+                )}
+              </div>
+
+              <div id={PROFILE_SECTION_IDS.speaking}>
+                <p className="text-[10px] font-mono uppercase tracking-wide text-brass mb-2">
+                  Speaking
+                </p>
+                {row.speakingSlots.length === 0 ? (
+                  <p className="text-xs text-mist">No sessions yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {row.speakingSlots
+                      .slice()
+                      .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
+                      .map((slot) => {
+                        const meta = SPEAKING_STATUS_META[slot.status] || SPEAKING_STATUS_META.scheduled
+                        const hasCriteria =
+                          slot.fc_band != null ||
+                          slot.lr_band != null ||
+                          slot.gra_band != null ||
+                          slot.pron_band != null
+
+                        return (
+                          <div key={slot.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                              <span className="text-paper">{formatSlotTime(slot.scheduled_at)}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${meta.className}`}>
+                                  {meta.label}
+                                </span>
+                                {slot.examiner_band != null && (
+                                  <span className="text-sage font-semibold text-xs">
+                                    Band {slot.examiner_band}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {hasCriteria && (
+                              <div className="grid grid-cols-4 gap-1.5 mt-2.5">
+                                <CriterionChip label="FC" value={slot.fc_band} />
+                                <CriterionChip label="LR" value={slot.lr_band} />
+                                <CriterionChip label="GRA" value={slot.gra_band} />
+                                <CriterionChip label="PRON" value={slot.pron_band} />
+                              </div>
+                            )}
+
+                            {slot.examiner_feedback && (
+                              <p className="text-xs text-paper-dim mt-2 whitespace-pre-wrap">
+                                {slot.examiner_feedback}
+                              </p>
+                            )}
+
+                            {slot.recording_url && (
+                              <a
+                                href={slot.recording_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-brass hover:text-brass-dim mt-2 inline-block"
+                              >
+                                🎙 Session recording
+                              </a>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
