@@ -643,6 +643,11 @@ export default function TeacherMockCenter({ onExit }) {
     [rlExams, contentTab, contentFilterQuery, contentFilterStatus, contentSort]
   )
 
+  const pendingMockRequests = useMemo(
+    () => mockAccessRequests.filter((r) => r.status === 'pending'),
+    [mockAccessRequests]
+  )
+
   /*
    * ============================================================
    * ACCESS CODES — real-IELTS-style candidate check-in (migration_45)
@@ -707,6 +712,26 @@ export default function TeacherMockCenter({ onExit }) {
   const [scheduleSessionModalOpen, setScheduleSessionModalOpen] = useState(false)
   const [scheduleSessionSaving, setScheduleSessionSaving] = useState(false)
   const [scheduleSessionError, setScheduleSessionError] = useState('')
+
+  /*
+   * ============================================================
+   * MOCK REQUESTS (migration_61)
+   * ============================================================
+   * Jasur's own suggestion (2026-09-27), after asking why the Issue
+   * Codes student picker looked empty: "maybe we have to add smth like
+   * request teacher to start mock and then teacher is able to accept
+   * one by one or all at the same time??" A student now sees every
+   * published Full Mock on their own Take a Test tab (MockCheckIn.jsx)
+   * and can request one; they show up here as pending rows. Approving
+   * reuses the EXACT SAME generateAccessCodeBatch/sendAccessCodesViaTelegram
+   * path "Issue codes" already uses — one click both decides the
+   * request and gets the student their code, same convenience as
+   * today's manual flow, confirmed with Jasur over "scope it out."
+   */
+  const [mockAccessRequests, setMockAccessRequests] = useState([])
+  const [selectedRequestIds, setSelectedRequestIds] = useState(() => new Set())
+  const [decidingRequests, setDecidingRequests] = useState(false)
+  const [requestActionError, setRequestActionError] = useState('')
 
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
@@ -810,6 +835,20 @@ export default function TeacherMockCenter({ onExit }) {
     }
 
     setScheduledSessions(data || [])
+  }
+
+  const reloadMockAccessRequests = async () => {
+    const { data, error } = await supabase
+      .from('mock_access_requests')
+      .select('*')
+      .order('requested_at', { ascending: false })
+
+    if (error) {
+      console.error('Failed to load mock access requests:', error)
+      return
+    }
+
+    setMockAccessRequests(data || [])
   }
 
   const reloadQuestionStats = async () => {
@@ -1372,10 +1411,18 @@ export default function TeacherMockCenter({ onExit }) {
         { data: groupRows, error: groupsError },
         { data: groupMemberRows, error: groupMembersError },
       ] = await Promise.all([
+        // Bug found 2026-09-27 (from Jasur asking why the Issue Codes
+        // picker looked empty): this used to have no status filter at
+        // all, so a student who'd only just signed up and was still
+        // sitting in Pending Approvals — unable to even log in yet —
+        // was already selectable here. .eq('status', 'approved') matches
+        // the exact filter teacher-needs-attention-digest's own Edge
+        // Function already uses for this same query shape.
         supabase
           .from('profiles')
           .select('id, full_name, username, target_band')
           .eq('role', 'student')
+          .eq('status', 'approved')
           .order('full_name', { ascending: true }),
         supabase
           .from('mock_attempts')
@@ -1477,6 +1524,7 @@ export default function TeacherMockCenter({ onExit }) {
     reloadFullMockSets()
     reloadAccessCodes()
     reloadScheduledSessions()
+    reloadMockAccessRequests()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -2980,6 +3028,109 @@ export default function TeacherMockCenter({ onExit }) {
     return data?.results || []
   }
 
+  /*
+   * Approving one or more pending mock_access_requests rows. Reuses
+   * generateAccessCodeBatch/sendAccessCodesViaTelegram verbatim — the
+   * exact same tested path "Issue codes" already uses — grouped by
+   * full_mock_set_id since that function issues codes for one set at a
+   * time. If a student already holds an unused, unrevoked code for the
+   * set they requested (e.g. issued manually before they ever asked),
+   * that existing code is reused instead of generating a confusing
+   * duplicate.
+   */
+  const approveMockAccessRequests = async (requestIds) => {
+    setDecidingRequests(true)
+    setRequestActionError('')
+    try {
+      const requests = mockAccessRequests.filter((r) => requestIds.includes(r.id))
+      const bySet = {}
+      requests.forEach((r) => {
+        if (!bySet[r.full_mock_set_id]) bySet[r.full_mock_set_id] = []
+        bySet[r.full_mock_set_id].push(r)
+      })
+
+      const allGeneratedCodeIds = []
+      const requestUpdates = [] // [{ id, access_code_id }]
+
+      for (const [setId, reqs] of Object.entries(bySet)) {
+        const studentIdsNeedingNewCode = []
+        reqs.forEach((r) => {
+          const existing = accessCodes.find(
+            (c) =>
+              c.student_id === r.student_id &&
+              c.full_mock_set_id === setId &&
+              !c.revoked &&
+              !c.used_at
+          )
+          if (existing) {
+            requestUpdates.push({ id: r.id, access_code_id: existing.id })
+          } else {
+            studentIdsNeedingNewCode.push(r.student_id)
+          }
+        })
+
+        if (studentIdsNeedingNewCode.length > 0) {
+          const newRows = await generateAccessCodeBatch(setId, studentIdsNeedingNewCode)
+          newRows.forEach((row) => {
+            allGeneratedCodeIds.push(row.id)
+            const req = reqs.find((r) => r.student_id === row.student_id)
+            if (req) requestUpdates.push({ id: req.id, access_code_id: row.id })
+          })
+        }
+      }
+
+      if (allGeneratedCodeIds.length > 0) {
+        await sendAccessCodesViaTelegram(allGeneratedCodeIds)
+      }
+
+      const nowIso = new Date().toISOString()
+      for (const { id, access_code_id } of requestUpdates) {
+        const { error } = await supabase
+          .from('mock_access_requests')
+          .update({ status: 'approved', decided_at: nowIso, decided_by: profile.id, access_code_id })
+          .eq('id', id)
+        if (error) throw error
+      }
+
+      await reloadMockAccessRequests()
+      setSelectedRequestIds(new Set())
+    } catch (err) {
+      console.error('Could not approve mock access request(s):', err)
+      setRequestActionError(err?.message || 'Could not approve — please try again.')
+    } finally {
+      setDecidingRequests(false)
+    }
+  }
+
+  const rejectMockAccessRequests = async (requestIds) => {
+    setDecidingRequests(true)
+    setRequestActionError('')
+    try {
+      const nowIso = new Date().toISOString()
+      const { error } = await supabase
+        .from('mock_access_requests')
+        .update({ status: 'rejected', decided_at: nowIso, decided_by: profile.id })
+        .in('id', requestIds)
+      if (error) throw error
+      await reloadMockAccessRequests()
+      setSelectedRequestIds(new Set())
+    } catch (err) {
+      console.error('Could not reject mock access request(s):', err)
+      setRequestActionError(err?.message || 'Could not reject — please try again.')
+    } finally {
+      setDecidingRequests(false)
+    }
+  }
+
+  const toggleRequestSelected = (id) => {
+    setSelectedRequestIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const accessCodeSendReasonLabel = (reason) => {
     switch (reason) {
       case 'not_connected':
@@ -4478,6 +4629,114 @@ export default function TeacherMockCenter({ onExit }) {
                       })}
                     </div>
                   )}
+
+                  {/* ================================================
+                      MOCK REQUESTS — migration_61. A student requests a
+                      published Full Mock themselves, from their own
+                      Take a Test tab (MockCheckIn.jsx). Approving one
+                      here reuses the exact same generateAccessCodeBatch/
+                      sendAccessCodesViaTelegram path Issue Codes below
+                      uses — one click both decides the request and gets
+                      the student their code.
+                     ================================================ */}
+                  <div className="border-t border-line pt-5 flex flex-col gap-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-paper">Mock requests</p>
+                        <p className="text-sm text-mist max-w-lg mt-0.5">
+                          Students can request to sit a published Full Mock themselves from their
+                          own Take a Test tab. Approving issues and sends their code automatically
+                          — same as Issue Codes below, just student-initiated.
+                        </p>
+                      </div>
+                      {pendingMockRequests.length > 0 && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => rejectMockAccessRequests(Array.from(selectedRequestIds))}
+                            disabled={selectedRequestIds.size === 0 || decidingRequests}
+                            className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Reject selected
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => approveMockAccessRequests(Array.from(selectedRequestIds))}
+                            disabled={selectedRequestIds.size === 0 || decidingRequests}
+                            className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            Approve selected
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => approveMockAccessRequests(pendingMockRequests.map((r) => r.id))}
+                            disabled={decidingRequests}
+                            className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {decidingRequests ? 'Working…' : 'Approve all'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
+
+                    {pendingMockRequests.length === 0 ? (
+                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                        No pending requests.
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                        {pendingMockRequests.map((req) => {
+                          const student = students.find((s) => s.id === req.student_id)
+                          const set = fullMockSets.find((s) => s.id === req.full_mock_set_id)
+                          return (
+                            <div
+                              key={req.id}
+                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                            >
+                              <label className="flex items-center gap-3 min-w-0 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedRequestIds.has(req.id)}
+                                  onChange={() => toggleRequestSelected(req.id)}
+                                  className="focus-ring h-4 w-4 shrink-0 rounded border-line accent-brass"
+                                />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-paper truncate">
+                                    {student?.full_name || student?.username || 'Unknown student'}
+                                  </p>
+                                  <p className="text-xs text-mist mt-0.5 truncate">
+                                    {set?.title || 'Unknown set'} · requested{' '}
+                                    {new Date(req.requested_at).toLocaleString()}
+                                  </p>
+                                </div>
+                              </label>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => rejectMockAccessRequests([req.id])}
+                                  disabled={decidingRequests}
+                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => approveMockAccessRequests([req.id])}
+                                  disabled={decidingRequests}
+                                  className="focus-ring text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
+                                >
+                                  Approve
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {/* ================================================
                       ACCESS CODES — real-IELTS-style candidate check-in

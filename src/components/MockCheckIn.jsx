@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import FullMockRunner from './FullMockRunner'
 
@@ -54,6 +54,110 @@ export default function MockCheckIn({ selfId }) {
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState('')
   const [checkedInSet, setCheckedInSet] = useState(null) // a full_mock_sets row, once the code checks out
+
+  /*
+   * ================================================================
+   * AVAILABLE MOCKS + REQUEST ACCESS (migration_61)
+   * ================================================================
+   * Shipped 2026-09-27. Before this, a student could only ever start a
+   * mock if a teacher proactively issued them a code — there was no
+   * screen where they could see what's available and ask for one
+   * themselves. Jasur's own suggestion, after asking why the teacher's
+   * Issue Codes picker looked empty: "maybe we have to add smth like
+   * request teacher to start mock and then teacher is able to accept
+   * one by one or all at the same time??"
+   *
+   * Every PUBLISHED (is_active) Full Mock set is listed below, regardless
+   * of group — full_mock_sets_select's own RLS already exposes every
+   * active set to any signed-in student (migration_37), so this is
+   * exactly what a student could already see if they queried the table
+   * directly; this just gives it a real screen and a button. Requesting
+   * inserts a mock_access_requests row; the teacher's Full Mocks tab
+   * shows it in a new "Mock requests" queue, and approving it there
+   * auto-generates and sends the actual code — this screen never
+   * creates a code itself, only asks for one.
+   */
+  const [fullMockSets, setFullMockSets] = useState([])
+  const [myRequests, setMyRequests] = useState([])
+  const [myUnusedCodes, setMyUnusedCodes] = useState([])
+  const [availableLoading, setAvailableLoading] = useState(true)
+  const [requestingSetId, setRequestingSetId] = useState(null)
+  const [requestError, setRequestError] = useState('')
+
+  const reloadAvailableMocks = async () => {
+    const [{ data: setRows, error: setsError }, { data: requestRows, error: requestsError }, { data: codeRows, error: codesError }] =
+      await Promise.all([
+        supabase.from('full_mock_sets').select('id, title').eq('is_active', true).order('title', { ascending: true }),
+        supabase
+          .from('mock_access_requests')
+          .select('*')
+          .eq('student_id', selfId)
+          .order('requested_at', { ascending: false }),
+        supabase
+          .from('mock_access_codes')
+          .select('*')
+          .eq('student_id', selfId)
+          .is('used_at', null)
+          .eq('revoked', false),
+      ])
+
+    if (setsError) console.error('Failed to load full mock sets:', setsError)
+    if (requestsError) console.error('Failed to load mock access requests:', requestsError)
+    if (codesError) console.error('Failed to load access codes:', codesError)
+
+    setFullMockSets(setRows || [])
+    setMyRequests(requestRows || [])
+    setMyUnusedCodes(codeRows || [])
+    setAvailableLoading(false)
+  }
+
+  useEffect(() => {
+    reloadAvailableMocks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selfId])
+
+  // What to show for one set: an unused/unrevoked code takes priority
+  // (they can act on it right now), then a pending request, then their
+  // most recent rejected request (if any), then nothing — offer to
+  // request. A used-up code from a past attempt falls through here just
+  // like "nothing", so requesting a retake works the same as a first try.
+  const statusForSet = (setId) => {
+    const unusedCode = myUnusedCodes.find((c) => c.full_mock_set_id === setId)
+    if (unusedCode) return { kind: 'has-code', code: unusedCode }
+
+    const pending = myRequests.find((r) => r.full_mock_set_id === setId && r.status === 'pending')
+    if (pending) return { kind: 'pending', request: pending }
+
+    const lastRejected = myRequests
+      .filter((r) => r.full_mock_set_id === setId && r.status === 'rejected')
+      .sort((a, b) => new Date(b.requested_at) - new Date(a.requested_at))[0]
+    if (lastRejected) return { kind: 'rejected', request: lastRejected }
+
+    return { kind: 'none' }
+  }
+
+  const requestAccess = async (setId) => {
+    setRequestingSetId(setId)
+    setRequestError('')
+    try {
+      const { error: insertError } = await supabase
+        .from('mock_access_requests')
+        .insert({ student_id: selfId, full_mock_set_id: setId, status: 'pending' })
+
+      // 23505 = unique_violation — a pending request for this set already
+      // exists (e.g. a double-click, or another tab beat this one to it).
+      // Not a real failure from the student's point of view: they already
+      // have a pending request either way, so just refresh and move on.
+      if (insertError && insertError.code !== '23505') throw insertError
+
+      await reloadAvailableMocks()
+    } catch (err) {
+      console.error('Could not request mock access:', err)
+      setRequestError(err?.message || 'Could not send that request — please try again.')
+    } finally {
+      setRequestingSetId(null)
+    }
+  }
 
   const resetForNextCode = () => {
     setCheckedInSet(null)
@@ -165,7 +269,8 @@ export default function MockCheckIn({ selfId }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-10 shadow-sm">
+    <div className="mx-auto w-full max-w-md flex flex-col gap-6">
+      <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-10 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
         <span className="text-[11px] uppercase tracking-[0.18em] text-red-600 font-semibold">
@@ -222,10 +327,94 @@ export default function MockCheckIn({ selfId }) {
         </button>
       </form>
 
-      <p className="mt-6 text-[11px] text-slate-400">
-        Don't have a code? Ask your teacher — every mock attempt now needs one, just like checking
-        in for the real test.
-      </p>
+        <p className="mt-6 text-[11px] text-slate-400">
+          Don't have a code yet? Request one for any mock below and your teacher will send it once
+          they approve.
+        </p>
+      </div>
+
+      <AvailableMocks
+        fullMockSets={fullMockSets}
+        loading={availableLoading}
+        statusForSet={statusForSet}
+        requestingSetId={requestingSetId}
+        requestError={requestError}
+        onRequest={requestAccess}
+        onUseCode={(code) => setCode(code)}
+      />
+    </div>
+  )
+}
+
+/*
+ * Every published Full Mock, with whatever this student's own state is
+ * for it — request it, wait, see why it wasn't approved, or (once
+ * approved) jump straight to using the code above instead of having to
+ * go dig it out of Telegram.
+ */
+function AvailableMocks({ fullMockSets, loading, statusForSet, requestingSetId, requestError, onRequest, onUseCode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-8 shadow-sm">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Available mocks</h3>
+
+      {requestError && <p className="mt-2 text-sm text-red-600">{requestError}</p>}
+
+      {loading ? (
+        <p className="mt-3 text-sm text-slate-400">Loading…</p>
+      ) : fullMockSets.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-400">Nothing published yet — check back later.</p>
+      ) : (
+        <div className="mt-3 flex flex-col gap-2.5">
+          {fullMockSets.map((set) => {
+            const status = statusForSet(set.id)
+            return (
+              <div
+                key={set.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3"
+              >
+                <p className="font-medium text-slate-900 truncate">{set.title}</p>
+
+                {status.kind === 'has-code' ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-sm font-semibold tracking-wide text-slate-900">
+                      {status.code.code}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onUseCode(status.code.code)}
+                      className="text-xs font-semibold text-slate-900 underline hover:no-underline"
+                    >
+                      Use this code above
+                    </button>
+                  </div>
+                ) : status.kind === 'pending' ? (
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide rounded-full border border-amber-300 bg-amber-50 text-amber-700 px-2.5 py-1">
+                    Requested — waiting on your teacher
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {status.kind === 'rejected' && (
+                      <span className="text-xs text-slate-400">Not approved last time —</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onRequest(set.id)}
+                      disabled={requestingSetId === set.id}
+                      className="text-xs font-semibold rounded-full border border-slate-900 text-slate-900 px-3 py-1.5 hover:bg-slate-900 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {requestingSetId === set.id
+                        ? 'Requesting…'
+                        : status.kind === 'rejected'
+                        ? 'Request again'
+                        : 'Request access'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
