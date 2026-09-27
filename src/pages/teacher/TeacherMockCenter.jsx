@@ -6769,13 +6769,23 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
     setRevealedCount((n) => Math.min(4, Math.max(n, fromIndex + 1 + extraParts.length)))
   }
 
-  const isPartValid = (part) => {
+  // Jasur relayed the teacher's request (2026-09-27): most teachers record
+  // Listening as ONE continuous file for the whole test, not 4 separate
+  // clips, and were being forced to split it up (or leave parts 2-4
+  // audio-less some other way) just to get past this validation. Audio is
+  // only required on Part 1 now — a teacher can still upload separate
+  // files per part if they prefer, but parts 2-4 no longer block saving
+  // without their own audio. The student-facing player already only shows
+  // up per-section when that section actually has an audio_url, so a
+  // single Part-1 recording "just works" with zero changes on that side.
+  const isPartValid = (part, index) => {
+    const audioRequired = index === 0
     const hasAudio = Boolean(part.audioFile || (part.audioUrl && !part.clearAudio))
-    if (!hasAudio || part.questions.length === 0) return false
+    if ((audioRequired && !hasAudio) || part.questions.length === 0) return false
     return part.questions.every(isDraftQuestionValid)
   }
 
-  const allPartsValid = parts.every(isPartValid)
+  const allPartsValid = parts.every((p, i) => isPartValid(p, i))
   const canSave = title.trim() && allPartsValid
   const [validationMessage, setValidationMessage] = useState('')
 
@@ -6787,11 +6797,11 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
 
   const getValidationMessage = () => {
     if (!title.trim()) return 'Give this exam a title before saving.'
-    const badIndex = parts.findIndex((p, i) => i < revealedCount && !isPartValid(p))
+    const badIndex = parts.findIndex((p, i) => i < revealedCount && !isPartValid(p, i))
     if (badIndex !== -1) {
       const p = parts[badIndex]
       const hasAudio = Boolean(p.audioFile || (p.audioUrl && !p.clearAudio))
-      if (!hasAudio) return `Part ${badIndex + 1} is missing its audio file.`
+      if (badIndex === 0 && !hasAudio) return 'Part 1 is missing its audio file.'
       if (p.questions.length === 0) return `Part ${badIndex + 1} needs at least one question.`
       return `Part ${badIndex + 1} has a question that's missing an answer or choices — check every question in that part.`
     }
@@ -6852,7 +6862,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
         <p className="text-sm text-paper-dim mt-0.5">
           {isEdit
             ? 'All 4 parts, right here — update audio or questions in any part, then save.'
-            : "Fill in Part 1, then move on to the next — this can't be created until every part has audio and at least one question."}
+            : "Fill in Part 1, then move on to the next — Part 1 needs its audio file (one continuous recording for the whole test works fine), and every part needs at least one question."}
         </p>
 
         <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
@@ -6886,7 +6896,8 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
             <ListeningPartEditor
               key={i}
               part={part}
-              valid={isPartValid(part)}
+              index={i}
+              valid={isPartValid(part, i)}
               onChange={(patch) => updatePart(i, patch)}
               onAddQuestion={() => addQuestion(i)}
               onUpdateQuestion={(qIndex, patch) => updateQuestion(i, qIndex, patch)}
@@ -6901,7 +6912,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
             <button
               type="button"
               onClick={() => setRevealedCount((n) => Math.min(n + 1, 4))}
-              disabled={!isPartValid(parts[revealedCount - 1])}
+              disabled={!isPartValid(parts[revealedCount - 1], revealedCount - 1)}
               className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next part →
@@ -6938,7 +6949,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   )
 }
 
-function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImportMoreParts }) {
+function ListeningPartEditor({ part, index, valid, onChange, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImportMoreParts }) {
   const { profile } = useAuth()
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
@@ -7048,7 +7059,7 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
 
       <div className="mt-3">
         <span className="block text-xs text-paper-dim font-mono uppercase tracking-wide font-semibold">
-          Audio file
+          Audio file{index > 0 ? ' (optional)' : ''}
         </span>
         <div className="mt-1.5">
           <FileInputButton
@@ -7057,6 +7068,12 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
             onChange={(e) => onChange({ audioFile: e.target.files?.[0] || null, clearAudio: false })}
           />
         </div>
+        {index > 0 && !part.audioFile && !(part.audioUrl && !part.clearAudio) && (
+          <p className="mt-1.5 text-[11px] text-paper-dim">
+            Only needed if you're uploading separate audio per part. If you already put one
+            continuous recording for the whole test on Part 1, leave this empty.
+          </p>
+        )}
       </div>
 
       {part.audioFile ? (
@@ -7090,7 +7107,8 @@ function ListeningPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQue
         <p className="mt-1.5 text-[11px] text-paper-dim">
           Upload a PDF, Word doc, or photo of the real question paper for this part and the
           questions below get filled in automatically — review them, fill in any blank answer,
-          then save. (This reads the questions only; audio still has to be uploaded above.) You
+          then save. (This reads the questions only —
+          {index === 0 ? ' audio still has to be uploaded above.' : " audio for this part is optional, see above."}) You
           can also upload the WHOLE listening paper here — the other parts get filled in
           automatically below.
         </p>
