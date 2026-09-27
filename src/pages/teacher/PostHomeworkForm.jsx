@@ -66,6 +66,40 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
     }
   }
 
+  // Reads an image pasted from the clipboard (Ctrl+V) the same way a
+  // real file input would.
+  const handleAttachmentPaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const pasted = item.getAsFile()
+        if (pasted) {
+          e.preventDefault()
+          setFile(pasted)
+          break
+        }
+      }
+    }
+  }
+
+  const handleMockTask1ImagePaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const pasted = item.getAsFile()
+        if (pasted) {
+          e.preventDefault()
+          setMockTask1Image(pasted)
+          break
+        }
+      }
+    }
+  }
+
   const chooseHomeworkType = (type) => {
     setHomeworkType(type)
 
@@ -233,7 +267,24 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   }
 
   return (
-    <form onSubmit={submit} className="ticket rounded-lg p-4 flex flex-col gap-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setOpen(false)}>
+      <div className="ticket rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={submit} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl">Post homework</h2>
+            <p className="text-mist text-xs mt-1">Choose a type below, then fill in the details.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass"
+          >
+            ×
+          </button>
+        </div>
+
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (e.g. Reading Passage 3)" className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" required />
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instructions for students (optional)" rows={3} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" />
 
@@ -259,17 +310,33 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-  <div>
-    <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">
-      Deadline
-    </label>
+  <div className="rounded-lg border border-brass/25 bg-gradient-to-br from-brass/10 to-panel-2 p-3">
+    <div className="flex items-center justify-between gap-2 mb-1.5">
+      <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
+        <span className="text-sm leading-none">📅</span> Deadline
+      </label>
+
+      {dueDate && (
+        <button
+          type="button"
+          onClick={() => setDueDate('')}
+          className="focus-ring text-xs font-medium text-coral hover:underline"
+        >
+          Clear
+        </button>
+      )}
+    </div>
 
     <input
       type="datetime-local"
       value={dueDate}
       onChange={(e) => setDueDate(e.target.value)}
-      className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+      className="focus-ring w-full bg-panel border border-line rounded-md px-3 py-2 text-sm text-paper transition-colors focus:border-brass/60"
     />
+
+    <p className="text-xs text-mist mt-1.5">
+      {dueDate ? 'Students will see a live countdown.' : 'Optional — leave blank for no deadline.'}
+    </p>
   </div>
 
   {homeworkType === 'standard' && (
@@ -389,9 +456,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
               <label className="text-xs uppercase tracking-wide text-mist font-mono block mt-2 mb-1">Task 1 chart / graph image (optional)</label>
 
               {mockTask1Image ? (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
                   <span className="text-sm text-paper truncate max-w-[220px]">
-                    {mockTask1Image.name}
+                    📎 {mockTask1Image.name}
                   </span>
                   <button
                     type="button"
@@ -402,13 +469,22 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
                   </button>
                 </div>
               ) : (
-                <input
-                  ref={mockTask1ImageInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
-                  className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
-                />
+                <div
+                  tabIndex={0}
+                  onPaste={handleMockTask1ImagePaste}
+                  onClick={() => mockTask1ImageInputRef.current?.click()}
+                  className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+                >
+                  <input
+                    ref={mockTask1ImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                  />
+                  <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+                </div>
               )}
 
               <p className="text-xs text-mist mt-1">Shown to students inline in the writing window — no extra tab needed.</p>
@@ -463,25 +539,34 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Optional teacher attachment</label>
 
           {file ? (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel-2 px-3 py-2.5">
               <span className="text-sm text-paper truncate max-w-[220px]">
-                {file.name}
+                📎 {file.name}
               </span>
               <button
                 type="button"
                 onClick={clearFile}
-                className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel-2 text-coral hover:bg-coral hover:text-white transition"
+                className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel text-coral hover:bg-coral hover:text-white transition"
               >
                 Remove
               </button>
             </div>
           ) : (
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
-            />
+            <div
+              tabIndex={0}
+              onPaste={handleAttachmentPaste}
+              onClick={() => fileInputRef.current?.click()}
+              className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel-2 px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onClick={(e) => e.stopPropagation()}
+                className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+              />
+              <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+            </div>
           )}
         </div>
       )}
@@ -490,6 +575,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         <button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-50">{saving ? 'Posting…' : 'Post to group'}</button>
         <button type="button" onClick={() => setOpen(false)} className="focus-ring px-4 py-2 rounded-md border border-line text-mist">Cancel</button>
       </div>
-    </form>
+      </form>
+      </div>
+    </div>
   )
 }

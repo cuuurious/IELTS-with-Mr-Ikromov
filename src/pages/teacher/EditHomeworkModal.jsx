@@ -38,6 +38,36 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
     if (attachmentInputRef.current) attachmentInputRef.current.value = ''
   }
 
+  const handleAttachmentPaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const pasted = item.getAsFile()
+        if (pasted) {
+          e.preventDefault()
+          setAttachmentFile(pasted)
+          break
+        }
+      }
+    }
+  }
+
+  const handleMockTask1ImagePaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const pasted = item.getAsFile()
+        if (pasted) {
+          e.preventDefault()
+          setMockTask1Image(pasted)
+          break
+        }
+      }
+    }
+  }
+
   // Writing Mock Test fields — only relevant, and only shown, for a
   // homework whose type was already set to writing_mock at creation.
   // The type itself isn't editable here: switching it after students
@@ -179,7 +209,30 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2" required />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring w-full min-h-[88px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
         <div className="grid sm:grid-cols-2 gap-3">
-          <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm" />
+          <div className="rounded-lg border border-brass/25 bg-gradient-to-br from-brass/10 to-panel-2 p-3">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
+                <span className="text-sm leading-none">📅</span> Deadline
+              </label>
+
+              {dueDate && (
+                <button
+                  type="button"
+                  onClick={() => setDueDate('')}
+                  className="focus-ring text-xs font-medium text-coral hover:underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <input
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="focus-ring w-full bg-panel border border-line rounded-md px-3 py-2 text-sm text-paper transition-colors focus:border-brass/60"
+            />
+          </div>
           {!isMock && (
             <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer"><input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} /> Include speaking recording</label>
           )}
@@ -217,23 +270,32 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
             )}
 
             {attachmentFile ? (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-paper truncate max-w-[220px]">{attachmentFile.name}</span>
+              <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
+                <span className="text-sm text-paper truncate max-w-[220px]">📎 {attachmentFile.name}</span>
                 <button
                   type="button"
                   onClick={clearAttachmentFile}
-                  className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel text-coral hover:bg-coral hover:text-white transition"
+                  className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel-2 text-coral hover:bg-coral hover:text-white transition"
                 >
                   Remove
                 </button>
               </div>
             ) : (
-              <input
-                ref={attachmentInputRef}
-                type="file"
-                onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
-                className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
-              />
+              <div
+                tabIndex={0}
+                onPaste={handleAttachmentPaste}
+                onClick={() => attachmentInputRef.current?.click()}
+                className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+              >
+                <input
+                  ref={attachmentInputRef}
+                  type="file"
+                  onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                />
+                <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+              </div>
             )}
           </div>
         )}
@@ -279,24 +341,33 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                   </div>
                 )}
                 {mockTask1Image ? (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-paper truncate max-w-[220px]">{mockTask1Image.name}</span>
+                  <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
+                    <span className="text-sm text-paper truncate max-w-[220px]">📎 {mockTask1Image.name}</span>
                     <button
                       type="button"
                       onClick={clearMockTask1Image}
-                      className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel text-coral hover:bg-coral hover:text-white transition"
+                      className="focus-ring px-2.5 py-1 rounded-md text-xs bg-panel-2 text-coral hover:bg-coral hover:text-white transition"
                     >
                       Remove
                     </button>
                   </div>
                 ) : (
-                  <input
-                    ref={mockTask1ImageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
-                    className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
-                  />
+                  <div
+                    tabIndex={0}
+                    onPaste={handleMockTask1ImagePaste}
+                    onClick={() => mockTask1ImageInputRef.current?.click()}
+                    className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+                  >
+                    <input
+                      ref={mockTask1ImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setMockTask1Image(e.target.files?.[0] || null)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
+                    />
+                    <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+                  </div>
                 )}
               </div>
             )}
