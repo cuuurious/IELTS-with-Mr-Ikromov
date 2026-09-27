@@ -2217,18 +2217,34 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
+  // Optimistic toggle — found and fixed 2026-09-27 after Jasur reported
+  // the Draft/Published pill "reacting slowly." It used to wait on TWO
+  // full network round trips in a row (the update, then reloadWritingExams
+  // re-fetching every writing exam from scratch) before the badge changed
+  // at all, with no loading state in between — so a click looked like it
+  // did nothing for however long that took, easy to mistake for broken
+  // and click again. Now the badge flips the instant you click; the
+  // server call happens in the background and only reverts + explains
+  // itself if it actually fails.
   const toggleExamActive = async (exam) => {
+    const nextActive = !exam.is_active
+    setWritingExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_active: nextActive } : e)))
+
     const { error } = await supabase
       .from('writing_mock_exams')
-      .update({ is_active: !exam.is_active })
+      .update({ is_active: nextActive })
       .eq('id', exam.id)
 
     if (error) {
       console.error('Could not update exam status:', error)
-      return
+      setWritingExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_active: exam.is_active } : e)))
+      setConfirmDialog({
+        title: "Couldn't update this exam",
+        message: error.message || 'Could not change its published status — please try again.',
+        hideCancel: true,
+        tone: 'coral',
+      })
     }
-
-    await reloadWritingExams()
   }
 
   /*
@@ -2494,18 +2510,27 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }
 
+  // Optimistic toggle — same fix and same reason as toggleExamActive
+  // above (Jasur: the Draft/Published pill "reacting slowly").
   const toggleRlExamActive = async (exam) => {
+    const nextActive = !exam.is_active
+    setRlExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_active: nextActive } : e)))
+
     const { error } = await supabase
       .from('mock_exams')
-      .update({ is_active: !exam.is_active })
+      .update({ is_active: nextActive })
       .eq('id', exam.id)
 
     if (error) {
       console.error('Could not update exam status:', error)
-      return
+      setRlExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_active: exam.is_active } : e)))
+      setConfirmDialog({
+        title: "Couldn't update this exam",
+        message: error.message || 'Could not change its published status — please try again.',
+        hideCancel: true,
+        tone: 'coral',
+      })
     }
-
-    await reloadRlExams()
   }
 
   /*
@@ -2912,18 +2937,28 @@ export default function TeacherMockCenter({ onExit }) {
     })
   }
 
+  // Optimistic toggle — same fix and same reason as toggleExamActive/
+  // toggleRlExamActive above (Jasur: the Draft/Published pill "reacting
+  // slowly").
   const toggleFullMockActive = async (set) => {
+    const nextActive = !set.is_active
+    setFullMockSets((prev) => prev.map((s) => (s.id === set.id ? { ...s, is_active: nextActive } : s)))
+
     const { error } = await supabase
       .from('full_mock_sets')
-      .update({ is_active: !set.is_active })
+      .update({ is_active: nextActive })
       .eq('id', set.id)
 
     if (error) {
       console.error('Could not update full mock status:', error)
-      return
+      setFullMockSets((prev) => prev.map((s) => (s.id === set.id ? { ...s, is_active: set.is_active } : s)))
+      setConfirmDialog({
+        title: "Couldn't update this full mock",
+        message: error.message || 'Could not change its published status — please try again.',
+        hideCancel: true,
+        tone: 'coral',
+      })
     }
-
-    await reloadFullMockSets()
   }
 
   /*
