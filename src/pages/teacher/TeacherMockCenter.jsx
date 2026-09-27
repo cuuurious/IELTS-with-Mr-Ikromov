@@ -907,6 +907,15 @@ export default function TeacherMockCenter({ onExit }) {
     setRlSections([])
     setRlSelectedSectionId(null)
     setRlQuestions([])
+    // Bug (found 2026-09-27, from a screenshot): the Reading/Listening tab
+    // buttons call this to reset back to the exam list, but it never
+    // cleared examPreview — so opening "View test" on a Reading exam, then
+    // clicking the Listening tab, kept showing that Reading exam's preview
+    // (the exam-list/preview/question-editor block below is shared by both
+    // tabs, gated on `examPreview` truthiness, not on which tab/module it
+    // belongs to). Clearing it here means switching tabs always lands back
+    // on that tab's own exam list, never a stale preview from the other one.
+    setExamPreview(null)
   }
 
   const backToRlSections = () => {
