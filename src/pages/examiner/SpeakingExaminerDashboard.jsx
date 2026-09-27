@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import Layout, { IconStudents, IconMockExam, IconChat } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
+import ConfirmModal from '../../components/ConfirmModal'
 import { formatTargetBand } from '../../lib/targetBands'
 import { downloadSpeakingSlotIcs } from '../../lib/calendarEvent'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
@@ -93,6 +94,45 @@ export default function SpeakingExaminerDashboard() {
   const [scoreModal, setScoreModal] = useState(null) // { slot } once a session is completed
   const [scoreSaving, setScoreSaving] = useState(false)
   const [scoreError, setScoreError] = useState('')
+
+  // Delete a cancelled/no-show slot from the Past/other list — Jasur,
+  // 2026-09-27: these are dead rows with no real exam data attached
+  // (unlike a completed one, which holds a real band/feedback record
+  // worth keeping), so clearing them out of the list should be possible.
+  // Kept as a two-step confirm (this app's ConfirmModal, not
+  // window.confirm) since delete is permanent — RLS already lets an
+  // examiner delete their own mock_speaking_slots rows (migration_29).
+  const [confirmDialog, setConfirmDialog] = useState(null)
+
+  const confirmDeleteSlot = (slot) => {
+    setConfirmDialog({
+      title: 'Delete this slot?',
+      message: "This removes it from your timetable for good — there's no undo.",
+      tone: 'coral',
+      confirmLabel: 'Delete',
+      onConfirm: () => deleteSlot(slot),
+    })
+  }
+
+  const deleteSlot = async (slot) => {
+    const { error: deleteError } = await supabase
+      .from('mock_speaking_slots')
+      .delete()
+      .eq('id', slot.id)
+
+    if (deleteError) {
+      console.error('Could not delete speaking slot:', deleteError)
+      setConfirmDialog({
+        title: "Couldn't delete this slot",
+        message: deleteError.message || 'Something went wrong. Please try again.',
+        tone: 'coral',
+        hideCancel: true,
+      })
+      return
+    }
+
+    await loadAll()
+  }
 
   // Examiner workload auto-balancing (2026-09-26, migration_55) — one of
   // the ~15 "build everything" brainstorm items. Booking has always been
@@ -441,6 +481,7 @@ export default function SpeakingExaminerDashboard() {
                       onEdit={() => openEditModal(slot)}
                       onStatus={(status) => updateStatus(slot, status)}
                       onScore={() => openScoreModal(slot)}
+                      onDelete={() => confirmDeleteSlot(slot)}
                     />
                   ))}
                 </div>
@@ -459,6 +500,7 @@ export default function SpeakingExaminerDashboard() {
                       onEdit={() => openEditModal(slot)}
                       onStatus={(status) => updateStatus(slot, status)}
                       onScore={() => openScoreModal(slot)}
+                      onDelete={() => confirmDeleteSlot(slot)}
                     />
                   ))}
                 </div>
@@ -523,13 +565,29 @@ export default function SpeakingExaminerDashboard() {
           onSave={saveScore}
         />
       )}
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
     </Layout>
   )
 }
 
-function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
+function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
   const meta = STATUS_META[slot.status] || STATUS_META.scheduled
   const scored = slot.examiner_band != null || slot.examiner_feedback
+
+  // No-show can only be reported once the exam's own scheduled time has
+  // actually passed — Jasur, 2026-09-27: it shouldn't be possible to mark
+  // a student a no-show before the session was even due to start.
+  const slotTimeHasPassed = new Date(slot.scheduled_at).getTime() <= Date.now()
 
   return (
     <div className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-col gap-2">
@@ -568,7 +626,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
                     description: slot.notes || undefined,
                   })
                 }
-                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                className="focus-ring text-[11px] font-semibold rounded-full border border-cyan/30 bg-cyan/10 text-cyan px-2.5 py-1 hover:bg-cyan/20 transition-colors"
                 title="Download a calendar file for this slot"
               >
                 📅 Calendar
@@ -576,31 +634,36 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
               <button
                 type="button"
                 onClick={onEdit}
-                className="focus-ring text-xs text-mist hover:text-paper px-2 py-1"
+                className="focus-ring text-[11px] font-semibold rounded-full border border-lavender/30 bg-lavender/10 text-lavender px-2.5 py-1 hover:bg-lavender/20 transition-colors"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => onStatus('completed')}
-                className="focus-ring text-xs text-sage hover:text-sage/80 px-2 py-1"
+                className="focus-ring text-[11px] font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors"
               >
                 Mark done
               </button>
               <button
                 type="button"
-                onClick={() => onStatus('cancelled')}
-                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
+                onClick={() => onStatus('no_show')}
+                disabled={!slotTimeHasPassed}
+                className="focus-ring text-[11px] font-semibold rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1 hover:bg-amber/20 transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber/10"
+                title={
+                  slotTimeHasPassed
+                    ? "Student didn't attend — notifies the teacher"
+                    : "Can't mark no-show until this slot's scheduled time has passed"
+                }
               >
-                Cancel
+                No-show
               </button>
               <button
                 type="button"
-                onClick={() => onStatus('no_show')}
-                className="focus-ring text-xs text-coral hover:text-coral/80 px-2 py-1"
-                title="Student didn't attend — notifies the teacher"
+                onClick={() => onStatus('cancelled')}
+                className="focus-ring text-[11px] font-semibold rounded-full border border-coral/30 bg-coral/10 text-coral px-2.5 py-1 hover:bg-coral/20 transition-colors"
               >
-                No-show
+                Cancel
               </button>
             </>
           )}
@@ -624,6 +687,17 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore }) {
                 {scored ? 'View / edit' : 'Mark'}
               </button>
             </>
+          )}
+
+          {(slot.status === 'cancelled' || slot.status === 'no_show') && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="focus-ring text-[11px] font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-coral/50 hover:text-coral transition-colors"
+              title="Remove this slot from your timetable"
+            >
+              Delete
+            </button>
           )}
         </div>
       </div>
