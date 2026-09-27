@@ -643,11 +643,6 @@ export default function TeacherMockCenter({ onExit }) {
     [rlExams, contentTab, contentFilterQuery, contentFilterStatus, contentSort]
   )
 
-  const pendingMockRequests = useMemo(
-    () => mockAccessRequests.filter((r) => r.status === 'pending'),
-    [mockAccessRequests]
-  )
-
   /*
    * ============================================================
    * ACCESS CODES — real-IELTS-style candidate check-in (migration_45)
@@ -732,6 +727,11 @@ export default function TeacherMockCenter({ onExit }) {
   const [selectedRequestIds, setSelectedRequestIds] = useState(() => new Set())
   const [decidingRequests, setDecidingRequests] = useState(false)
   const [requestActionError, setRequestActionError] = useState('')
+
+  const pendingMockRequests = useMemo(
+    () => mockAccessRequests.filter((r) => r.status === 'pending'),
+    [mockAccessRequests]
+  )
 
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
