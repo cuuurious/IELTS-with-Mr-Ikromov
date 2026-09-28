@@ -138,6 +138,90 @@ function isChoiceMarkedCorrect(choice, question) {
   return choice === (question.correct_answer ?? question.correctAnswer)
 }
 
+// True unless a SAVED (already in the database) choice-based question's
+// correct_answer doesn't actually match any of its own choices — added
+// 2026-09-28 after tracing Jasur's "scores are being calculated
+// incorrectly" report to exactly this shape of row. submit_mock_attempt
+// (the grading RPC) does a plain exact-text match between correct_answer
+// and whatever the student picked, so a correct_answer that isn't one of
+// the choices verbatim can NEVER match anything a student selects — that
+// question silently fails every single attempt, no matter what's picked.
+// A blank answer is a different, already-visible problem (existing UI
+// already flags it in coral) so this only fires on a non-blank mismatch.
+function isChoiceBasedAnswerValid(q) {
+  if (!CHOICE_BASED_TYPES.includes(q.type)) return true
+  const choices = q.options?.choices || []
+  if (choices.length === 0) return true
+  const answer = (q.correct_answer || '').trim()
+  if (!answer) return true
+  if (q.type === 'multi_select') {
+    return answer
+      .split(MULTI_SELECT_SEPARATOR)
+      .map((s) => s.trim())
+      .every((a) => choices.includes(a))
+  }
+  return choices.includes(answer)
+}
+
+// Roman numerals up to xx — real IELTS "matching headings" answer keys
+// almost always print these (i, ii, iii...) rather than the full heading
+// text, and single letters (A, B, C...) are just as common for
+// multiple_choice/matching-other answer keys.
+const ROMAN_NUMERALS = [
+  'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x',
+  'xi', 'xii', 'xiii', 'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'xix', 'xx',
+]
+
+function letterOrRomanIndex(token) {
+  const t = token.trim().toLowerCase()
+  if (/^[a-z]$/.test(t)) return t.charCodeAt(0) - 97 // a -> 0, b -> 1, ...
+  const romanIdx = ROMAN_NUMERALS.indexOf(t)
+  return romanIdx !== -1 ? romanIdx : -1
+}
+
+// Resolves ONE answer-key token against a question's own choice bank —
+// either it's already the exact choice text (case/whitespace-insensitive,
+// the well-behaved case), or it's a bare letter/roman numeral naming a
+// position in that same list. Returns null, never a guess, when neither
+// applies, so the caller can leave the question for the teacher instead
+// of silently saving something that will never match a student's answer.
+function resolveChoiceToken(token, choices) {
+  const trimmed = (token || '').trim()
+  if (!trimmed) return null
+  const exact = choices.find((c) => c.trim().toLowerCase() === trimmed.toLowerCase())
+  if (exact) return exact
+  const idx = letterOrRomanIndex(trimmed)
+  return idx >= 0 && idx < choices.length ? choices[idx] : null
+}
+
+// Resolves a whole answer-key entry (from the "Upload answer key" AI
+// import) into the exact value that belongs in correct_answer for a
+// specific question — see isChoiceBasedAnswerValid above for why this
+// matters. Non-choice types pass through unchanged (this bug is specific
+// to a fixed choice bank); multi_select re-splits/re-resolves/
+// re-canonicalizes every token so it comes out in the same authored
+// order the grading RPC expects, regardless of what order the answer key
+// happened to print them in.
+function resolveAnswerKeyValue(rawValue, question) {
+  const value = String(rawValue ?? '').trim()
+  if (!value) return null
+
+  if (!CHOICE_BASED_TYPES.includes(question.type)) return value
+
+  const choices = question.options?.choices || []
+  if (choices.length === 0) return null
+
+  if (question.type === 'multi_select') {
+    const tokens = value.split(MULTI_SELECT_SEPARATOR).map((t) => t.trim()).filter(Boolean)
+    if (tokens.length === 0) return null
+    const resolved = tokens.map((t) => resolveChoiceToken(t, choices))
+    if (resolved.some((r) => r === null)) return null
+    return canonicalizeMultiSelect(resolved, choices)
+  }
+
+  return resolveChoiceToken(value, choices)
+}
+
 // Shared by ListeningExamWizard's isPartValid and ReadingExamWizard's
 // isPassageValid — both were only ever special-casing 'multiple_choice'
 // (choices.length >= 2 && choices.includes(correctAnswer)) and treating
@@ -1087,6 +1171,7 @@ export default function TeacherMockCenter({ onExit }) {
 
       let filled = 0
       let leftAlone = 0
+      let needsReview = 0
 
       for (const q of rlQuestions) {
         if (!(q.order_index in answerByIndex)) continue
@@ -1095,9 +1180,25 @@ export default function TeacherMockCenter({ onExit }) {
           continue
         }
 
+        // For multiple_choice/multi_select/matching, a real answer key
+        // almost always prints a bare letter or roman numeral ("B",
+        // "iv"), never the full choice text — resolve it against this
+        // question's own choices instead of saving it as-is. See
+        // resolveAnswerKeyValue's comment: an unresolvable value is left
+        // for the teacher rather than silently saved, since a wrong
+        // guess here would grade that question wrong for every student
+        // forever (this is exactly the bug behind Jasur's 2026-09-28
+        // "scores calculated incorrectly" report).
+        const resolved = resolveAnswerKeyValue(answerByIndex[q.order_index], q)
+
+        if (resolved === null) {
+          needsReview++
+          continue
+        }
+
         const { error: updateError } = await supabase
           .from('mock_questions')
-          .update({ correct_answer: String(answerByIndex[q.order_index] ?? '').trim() })
+          .update({ correct_answer: resolved })
           .eq('id', q.id)
 
         if (updateError) throw updateError
@@ -1116,6 +1217,11 @@ export default function TeacherMockCenter({ onExit }) {
             ? ` ${leftAlone} question${leftAlone === 1 ? '' : 's'} already had an answer and ${
                 leftAlone === 1 ? 'was' : 'were'
               } left alone.`
+            : '') +
+          (needsReview
+            ? ` ${needsReview} question${needsReview === 1 ? '' : 's'} in the key couldn't be matched to one of that question's own choices (e.g. a bare letter/numeral the choices don't line up with) — please open ${
+                needsReview === 1 ? 'it' : 'them'
+              } and set the correct answer by hand so grading isn't silently wrong.`
             : '') +
           (unmatched
             ? ` ${unmatched} entr${unmatched === 1 ? 'y' : 'ies'} in the key didn't match a question number here.`
@@ -4408,6 +4514,11 @@ export default function TeacherMockCenter({ onExit }) {
                                 <p className="text-xs text-mist font-mono mt-0.5">
                                   {QUESTION_TYPE_LABELS[q.type] || q.type} · Answer: {q.correct_answer}
                                 </p>
+                                {!isChoiceBasedAnswerValid(q) && (
+                                  <p className="text-xs font-semibold text-coral mt-0.5">
+                                    ⚠ Doesn't match any of this question's choices — grading will always mark it wrong until it's fixed.
+                                  </p>
+                                )}
                               </div>
 
                               <div className="flex items-center gap-2 shrink-0">
@@ -4540,12 +4651,19 @@ export default function TeacherMockCenter({ onExit }) {
                                             )}
                                           <p
                                             className={`text-xs font-mono mt-1 ${
-                                              q.correct_answer?.trim() ? 'text-mist' : 'text-coral'
+                                              !q.correct_answer?.trim() || !isChoiceBasedAnswerValid(q)
+                                                ? 'text-coral'
+                                                : 'text-mist'
                                             }`}
                                           >
                                             {QUESTION_TYPE_LABELS[q.type] || q.type} · Answer:{' '}
                                             {q.correct_answer?.trim() || '(blank)'}
                                           </p>
+                                          {q.correct_answer?.trim() && !isChoiceBasedAnswerValid(q) && (
+                                            <p className="text-xs font-semibold text-coral mt-0.5">
+                                              ⚠ Doesn't match any choice above — grading will always mark this wrong until it's fixed.
+                                            </p>
+                                          )}
                                         </div>
                                         <button
                                           type="button"

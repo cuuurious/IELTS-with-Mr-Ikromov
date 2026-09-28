@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import ConfirmModal from './ConfirmModal'
 
 /*
  * ================================================================
@@ -373,6 +374,7 @@ export function ExamTaker({
   const [deadline, setDeadline] = useState(null)
   const [remainingMs, setRemainingMs] = useState(0)
   const [result, setResult] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   // ------------------------------------------------------------------
   // Refs mirroring the state above — fixes a real bug found 2026-09-26
@@ -892,16 +894,28 @@ export function ExamTaker({
     const currentAttemptId = attemptIdRef.current
     if (!currentAttemptId || submittingRef.current) return
 
+    if (attempt === 1 && !auto && answeredCount < totalQuestions) {
+      // Styled stand-in for window.confirm() — matches the rest of the
+      // app's convention (see ConfirmModal.jsx) instead of a native
+      // browser dialog, which looked jarring and out of place mid-exam.
+      setConfirmDialog({
+        title: 'Submit anyway?',
+        message: `You've answered ${answeredCount} of ${totalQuestions} questions.`,
+        tone: 'brass',
+        confirmLabel: 'Submit',
+        onConfirm: () => runSubmit(auto, attempt),
+      })
+      return
+    }
+
+    runSubmit(auto, attempt)
+  }
+
+  const runSubmit = async (auto, attempt) => {
+    const currentAttemptId = attemptIdRef.current
+    if (!currentAttemptId || submittingRef.current) return
+
     if (attempt === 1) {
-      if (!auto && answeredCount < totalQuestions) {
-        const ok = window.confirm(
-          `You've answered ${answeredCount} of ${totalQuestions} questions. Submit anyway?`
-        )
-        if (!ok) return
-        // Re-check after the confirm dialog closes — it's an async gap the
-        // auto-submit timer could have slipped through while it was open.
-        if (submittingRef.current) return
-      }
       lastSubmitAutoRef.current = auto
     }
 
@@ -999,19 +1013,26 @@ export function ExamTaker({
   }
 
   if (phase === 'done' && result) {
-    const pct = result.maxScore > 0 ? Math.round((result.score / result.maxScore) * 100) : 0
-
+    // No score, percentage, or transcript here on purpose — same
+    // release-gate rule the rest of the app already applies to Writing/
+    // Speaking (mock_attempts.released_at, migration_48): a real exam
+    // gives no feedback the moment you submit, so this screen doesn't
+    // either. The raw score is still saved via submit_mock_attempt() and
+    // reaches the student once a teacher releases it on the Results tab
+    // (MockTestCenter.jsx) — this screen only confirms the submission
+    // went through.
     return (
       <div className="flex flex-col gap-5">
         <div className="ticket rounded-2xl p-8 text-center">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-brass">
             Test submitted
           </span>
-          <p className="mt-2 font-display text-4xl text-paper">
-            {result.score}
-            <span className="text-lg font-medium text-mist"> / {result.maxScore}</span>
+          <p className="mt-3 font-display text-lg text-paper">
+            Your answers have been recorded.
           </p>
-          <p className="mt-1 text-sm text-mist">{pct}% correct</p>
+          <p className="mt-1 text-sm text-mist">
+            Your teacher will release your score once it's confirmed.
+          </p>
           <button
             type="button"
             onClick={onExit}
@@ -1020,25 +1041,6 @@ export function ExamTaker({
             {ctaLabel}
           </button>
         </div>
-
-        {exam.module === 'listening' && (
-          <div className="ticket rounded-2xl p-6">
-            <p className="font-display text-base text-paper">Transcripts</p>
-            <p className="mt-1 text-xs text-mist">For review now that the test is over.</p>
-            <div className="mt-4 flex flex-col gap-4">
-              {sections.map((s, i) => (
-                <details key={s.id} className="rounded-xl border border-line bg-panel-2 p-4">
-                  <summary className="cursor-pointer text-sm font-semibold text-paper">
-                    {s.title || `Section ${i + 1}`}
-                  </summary>
-                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-mist">
-                    {s.passage_text || 'No transcript available.'}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     )
   }
@@ -1048,24 +1050,49 @@ export function ExamTaker({
     : remainingMs <= 10 * 60_000
       ? 'warning'
       : 'normal'
-  const timerClass =
-    timerLevel === 'critical'
-      ? 'text-coral animate-pulse'
-      : timerLevel === 'warning'
-        ? 'text-amber'
-        : 'text-onbrass'
+  const timerClass = timerLevel === 'critical' ? 'animate-pulse' : ''
+  const timerColor =
+    timerLevel === 'critical' ? '#c81e3a' : timerLevel === 'warning' ? '#9a5b00' : '#1c1b29'
+
+  // Fixed light pink/candidate-ID chrome bar, deliberately NOT using the
+  // app's own dark brass theme tokens — same reasoning as the restyled
+  // confirm-before-start gate in FullMockRunner.jsx: this one screen is
+  // meant to look like the real exam regardless of the site's own
+  // light/dark mode, not blend in with the rest of the app. Colors and
+  // layout (candidate name top-left, live countdown, a bordered "Finish
+  // test" button, disabled-during-test network/notification icons) match
+  // Jasur's own screenshots of the official IELTS-on-computer
+  // familiarisation test (cdielts.gelielts.com), 2026-09-28.
+  const examChromeBg = '#e3a7ae'
+  const examChromeText = '#1c1b29'
 
   return (
     <div className="flex flex-col gap-5 pb-10">
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
       {flashMessage && (
         <div className="fixed top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-ink/95 px-4 py-2 text-sm font-semibold text-paper shadow-lg animate-pulse">
           ⏱ {flashMessage}
         </div>
       )}
 
-      <div className="sticky top-3 z-10 flex flex-col gap-2.5 rounded-2xl bg-brass px-5 py-3.5 text-onbrass shadow-md">
+      <div
+        className="sticky top-3 z-10 flex flex-col gap-2.5 rounded-md px-5 py-3 shadow-md"
+        style={{ background: examChromeBg, color: examChromeText }}
+      >
         {(!isOnline || saveFailing || submitRetry) && (
-          <div className="flex items-center gap-2 rounded-xl bg-ink/20 px-3 py-2 text-xs font-semibold">
+          <div
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold"
+            style={{ background: 'rgba(0,0,0,0.1)' }}
+          >
             <span aria-hidden>⚠</span>
             {submitRetry ? (
               <span>
@@ -1087,28 +1114,41 @@ export function ExamTaker({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-onbrass/70">
+            <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60">
               {reviewPhase ? 'Review time' : exam.module}
             </p>
             <p className="font-display text-sm font-bold leading-tight">{exam.title}</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-onbrass/70">
+            <span className="text-xs opacity-70">
               {answeredCount}/{totalQuestions} answered
             </span>
-            <span className={`font-display text-lg font-bold tabular-nums ${timerClass}`}>
+            <span
+              className={`font-display text-lg font-bold tabular-nums ${timerClass}`}
+              style={{ color: timerColor }}
+            >
               {formatClock(remainingMs)}
+            </span>
+            {/* Network/notification icons — cosmetic only, matching the real
+                exam's own icons, which are shown but disabled throughout
+                the test. */}
+            <span className="opacity-40" title="Network connection" aria-hidden>
+              📶
+            </span>
+            <span className="opacity-40" title="Notifications" aria-hidden>
+              🔔
             </span>
             <div className="relative" ref={settingsRef}>
               <button
                 type="button"
                 onClick={() => setSettingsOpen((o) => !o)}
-                className="focus-ring rounded-full bg-onbrass/15 px-3 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-onbrass/25"
+                title="Settings"
+                className="focus-ring rounded-md px-2 py-1.5 text-sm opacity-80 hover:opacity-100"
               >
-                ⚙ Settings
+                ☰
               </button>
               {settingsOpen && (
-                <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg">
+                <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg text-paper">
                   <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Text size</p>
                   <div className="mb-4 flex gap-2">
                     {FONT_SCALE_STEPS.map((step, i) => (
@@ -1152,14 +1192,13 @@ export function ExamTaker({
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => handleSubmit(false)}
-              disabled={phase === 'submitting'}
-              className="focus-ring rounded-full bg-onbrass px-4 py-1.5 text-xs font-bold text-brass shadow-sm disabled:opacity-60"
-            >
-              {phase === 'submitting' ? 'Submitting…' : 'Submit test'}
-            </button>
+            {/* No manual "Finish test"/submit control here — Jasur,
+                verbatim: "finish test button has to be removed/ submit
+                button shouldnt be available." Matches the real exam:
+                a section ends only when its own clock runs out
+                (handleSubmit(true) above, on the deadline timer), never
+                by the student's own choice. Do not re-add a manual
+                submit button to this bar. */}
           </div>
         </div>
 
@@ -1173,68 +1212,215 @@ export function ExamTaker({
         )}
 
         {reviewPhase && (
-          <p className="text-[11px] font-medium text-onbrass/85">
+          <p className="text-[11px] font-medium opacity-85">
             All audio has finished — no more will play. You have 2 minutes to review your
             answers before this submits automatically.
           </p>
         )}
       </div>
 
-      {sections.map((section, sIdx) => (
-        <div
-          key={section.id}
-          className="ticket rounded-2xl p-5 sm:p-6"
-          style={sectionThemeStyle}
-        >
-          <p
-            className="mb-3 font-display text-base"
-            style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
-          >
-            {section.title ||
-              `${exam.module === 'reading' ? 'Passage' : 'Section'} ${sIdx + 1}`}
-          </p>
+      {sections.map((section, sIdx) => {
+        const sectionTitle =
+          section.title || `${exam.module === 'reading' ? 'Passage' : 'Section'} ${sIdx + 1}`
 
-          {exam.module === 'reading' && section.passage_text && (
-            <div className="mb-5">
-              <HighlightablePassage
-                text={section.passage_text}
-                highlights={highlightsBySection[section.id] || []}
-                onAdd={(range) => addHighlight(section.id, range)}
-                onUpdateNote={(id, note) => updateHighlightNote(section.id, id, note)}
-                onRemove={(id) => removeHighlight(section.id, id)}
-                fontScale={activeFontScale}
-                theme={activeTheme}
-              />
-            </div>
-          )}
+        // "Matching headings"-style questions — a "matching" question
+        // whose prompt names a specific paragraph ("Paragraph B") — get
+        // their drop target rendered inline at the start of that
+        // paragraph instead of only in the question list, per Jasur's
+        // 2026-09-28 request ("make a space before the beginning of the
+        // paragraph and options should be draggable"). Only kicks in when
+        // the passage actually has recognizable lettered paragraphs
+        // (splitLetteredParagraphs returns null otherwise) — every other
+        // Reading section (no paragraph letters, or matching questions
+        // that don't reference one) renders exactly as before.
+        const paragraphMatchRe = /^paragraph\s+([a-z0-9]+)\b/i
+        const paragraphMatchQuestions = new Map()
+        section.questions.forEach((q) => {
+          if (q.type !== 'matching') return
+          const m = paragraphMatchRe.exec((q.prompt || '').trim())
+          if (m) paragraphMatchQuestions.set(m[1].toUpperCase(), q)
+        })
+        const letteredParagraphs =
+          exam.module === 'reading' && section.passage_text && paragraphMatchQuestions.size > 0
+            ? splitLetteredParagraphs(section.passage_text)
+            : null
+        // Only the questions that actually land on a real paragraph in
+        // this passage get pulled out of the question list — a matching
+        // question naming a letter the passage doesn't have (shouldn't
+        // happen, but never trust it blindly) simply stays in the normal
+        // list rather than disappearing from both places.
+        const renderedLetters = letteredParagraphs
+          ? new Set(
+              letteredParagraphs
+                .filter((p) => p.letter && paragraphMatchQuestions.has(p.letter))
+                .map((p) => p.letter)
+            )
+          : new Set()
+        const useParagraphDrops = renderedLetters.size > 0
+        const inlineQuestionIds = useParagraphDrops
+          ? new Set(Array.from(renderedLetters).map((letter) => paragraphMatchQuestions.get(letter).id))
+          : null
 
-          {exam.module === 'listening' && section.audio_url && (
-            <div className="mb-5">
-              <SectionAudioPlayer
-                url={section.audio_url}
-                onEnded={() => handleAudioEnded(section.id)}
-                alreadyEnded={!!audioEndedBySection[section.id]}
-              />
-            </div>
-          )}
+        const visibleQuestions = section.questions.filter(
+          (q) => !inlineQuestionIds || !inlineQuestionIds.has(q.id)
+        )
 
+        // Group consecutive `matching` questions that share the exact
+        // same choice bank so it renders once instead of being repeated
+        // under every question — see MatchingQuestion's hideBank comment
+        // for the full story. A lone matching question (no matching
+        // neighbor with the same bank) falls through to the single-item
+        // branch unchanged.
+        const questionRenderGroups = []
+        for (let i = 0; i < visibleQuestions.length; ) {
+          const q = visibleQuestions[i]
+          if (q.type !== 'matching') {
+            questionRenderGroups.push({ kind: 'single', question: q })
+            i++
+            continue
+          }
+          const bankKey = JSON.stringify(q.options?.choices || [])
+          let j = i + 1
+          while (
+            j < visibleQuestions.length &&
+            visibleQuestions[j].type === 'matching' &&
+            JSON.stringify(visibleQuestions[j].options?.choices || []) === bankKey
+          ) {
+            j++
+          }
+          const run = visibleQuestions.slice(i, j)
+          if (run.length > 1) {
+            questionRenderGroups.push({ kind: 'group', questions: run, choices: q.options?.choices || [] })
+          } else {
+            questionRenderGroups.push({ kind: 'single', question: run[0] })
+          }
+          i = j
+        }
+
+        const questionsList = (
           <div className="flex flex-col gap-4">
-            {section.questions.map((q) => (
-              <QuestionBlock
-                key={q.id}
-                index={questionIndexById[q.id]}
-                question={q}
-                value={answers[q.id] ?? ''}
-                onChange={(v) => setAnswer(q.id, v)}
-                flagged={flags.has(q.id)}
-                onToggleFlag={() => toggleFlag(q.id)}
-                fontScale={activeFontScale}
-                theme={activeTheme}
-              />
-            ))}
+            {questionRenderGroups.map((g) =>
+              g.kind === 'group' ? (
+                <MatchingQuestionGroup
+                  key={g.questions[0].id}
+                  questions={g.questions}
+                  choices={g.choices}
+                  answers={answers}
+                  onChange={setAnswer}
+                  flags={flags}
+                  onToggleFlag={toggleFlag}
+                  questionIndexById={questionIndexById}
+                  fontScale={activeFontScale}
+                  theme={activeTheme}
+                />
+              ) : (
+                <QuestionBlock
+                  key={g.question.id}
+                  index={questionIndexById[g.question.id]}
+                  question={g.question}
+                  value={answers[g.question.id] ?? ''}
+                  onChange={(v) => setAnswer(g.question.id, v)}
+                  flagged={flags.has(g.question.id)}
+                  onToggleFlag={() => toggleFlag(g.question.id)}
+                  fontScale={activeFontScale}
+                  theme={activeTheme}
+                />
+              )
+            )}
           </div>
-        </div>
-      ))}
+        )
+
+        // Reading gets the real computer-delivered exam's split screen —
+        // passage on the left, questions on the right, divided by a
+        // vertical line — instead of the passage stacked above the
+        // questions. Each scrolls independently (the passage stays put
+        // while you scroll through questions, same as the real test)
+        // once there's room for two columns; on a narrow screen it falls
+        // back to stacked, since there's no room for a real split there.
+        if (exam.module === 'reading' && section.passage_text) {
+          return (
+            <div
+              key={section.id}
+              className="ticket rounded-2xl p-5 sm:p-6"
+              style={sectionThemeStyle}
+            >
+              <p
+                className="mb-3 font-display text-base"
+                style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
+              >
+                {sectionTitle}
+              </p>
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-0">
+                <div className="lg:sticky lg:top-24 lg:max-h-[75vh] lg:self-start lg:overflow-y-auto lg:pr-6">
+                  {useParagraphDrops ? (
+                    <LetteredMatchingPassage
+                      fullText={section.passage_text}
+                      paragraphs={letteredParagraphs}
+                      matchingByParagraph={Object.fromEntries(paragraphMatchQuestions)}
+                      bankChoices={Array.from(
+                        new Set(
+                          Array.from(paragraphMatchQuestions.values()).flatMap(
+                            (q) => q.options?.choices || []
+                          )
+                        )
+                      )}
+                      answers={answers}
+                      setAnswer={setAnswer}
+                      flags={flags}
+                      toggleFlag={toggleFlag}
+                      questionIndexById={questionIndexById}
+                      highlights={highlightsBySection[section.id] || []}
+                      onAdd={(range) => addHighlight(section.id, range)}
+                      onUpdateNote={(id, note) => updateHighlightNote(section.id, id, note)}
+                      onRemove={(id) => removeHighlight(section.id, id)}
+                      fontScale={activeFontScale}
+                      theme={activeTheme}
+                    />
+                  ) : (
+                    <HighlightablePassage
+                      text={section.passage_text}
+                      highlights={highlightsBySection[section.id] || []}
+                      onAdd={(range) => addHighlight(section.id, range)}
+                      onUpdateNote={(id, note) => updateHighlightNote(section.id, id, note)}
+                      onRemove={(id) => removeHighlight(section.id, id)}
+                      fontScale={activeFontScale}
+                      theme={activeTheme}
+                    />
+                  )}
+                </div>
+                <div className="lg:border-l lg:border-line lg:pl-6">{questionsList}</div>
+              </div>
+            </div>
+          )
+        }
+
+        return (
+          <div
+            key={section.id}
+            className="ticket rounded-2xl p-5 sm:p-6"
+            style={sectionThemeStyle}
+          >
+            <p
+              className="mb-3 font-display text-base"
+              style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
+            >
+              {sectionTitle}
+            </p>
+
+            {exam.module === 'listening' && section.audio_url && (
+              <div className="mb-5">
+                <SectionAudioPlayer
+                  url={section.audio_url}
+                  onEnded={() => handleAudioEnded(section.id)}
+                  alreadyEnded={!!audioEndedBySection[section.id]}
+                />
+              </div>
+            )}
+
+            {questionsList}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -1562,6 +1748,187 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
   )
 }
 
+// Splits a Reading passage into its lettered paragraphs (A, B, C, ...) —
+// each one printed as a bare capital letter on its own line, blank-line
+// separated from its body text, exactly the convention real "matching
+// headings" passages use (and the one mock-content-import's own AI
+// extraction preserves verbatim when the source document has it). Added
+// 2026-09-28 so a "matching" question whose prompt is "Paragraph B" can
+// get its drop target rendered right at the start of paragraph B itself,
+// per Jasur's request, instead of only in the separate question list.
+//
+// Offsets in the returned array are into the ORIGINAL passage text, not
+// the individual paragraph slices — this matters because every stored
+// highlight (highlightsBySection) is a {start, end} pair against that
+// same original text, and this split has to stay reversible: a highlight
+// made inside one paragraph's own mini highlighter gets its LOCAL offset
+// translated back to a GLOBAL one before it's ever stored, so nothing
+// about how highlights are created, stored, or rendered elsewhere has to
+// change. Returns null when the text doesn't actually contain at least
+// two of these letter markers, so the caller can fall back to the
+// existing single-block passage instead of guessing at a structure that
+// isn't really there.
+function splitLetteredParagraphs(text) {
+  const lines = text.split('\n')
+  // lineStarts[i] — the character offset in the ORIGINAL text where
+  // lines[i] begins, so a marker found by scanning `lines` can still be
+  // reported in terms of the original string's own offsets.
+  const lineStarts = []
+  let offset = 0
+  for (const line of lines) {
+    lineStarts.push(offset)
+    offset += line.length + 1 // +1 for the '\n' every split() boundary consumed
+  }
+
+  const isBlank = (i) => i < 0 || i >= lines.length || lines[i].trim() === ''
+  const letterLineRe = /^[ \t]*([A-Z])[ \t]*$/
+
+  const markers = []
+  for (let i = 0; i < lines.length; i++) {
+    const match = letterLineRe.exec(lines[i])
+    if (!match) continue
+    if (i !== 0 && !isBlank(i - 1)) continue // must open a new paragraph, not sit mid-line-group
+    if (!isBlank(i + 1)) continue // must be followed by the blank line that separates it from its body
+
+    let bodyLine = i + 1
+    while (bodyLine < lines.length && lines[bodyLine].trim() === '') bodyLine++
+    if (bodyLine >= lines.length) continue // nothing after it — not a real paragraph label
+
+    markers.push({ letter: match[1], labelStart: lineStarts[i], bodyStart: lineStarts[bodyLine] })
+  }
+  if (markers.length < 2) return null
+
+  const paragraphs = []
+  if (markers[0].labelStart > 0) {
+    paragraphs.push({ letter: null, start: 0, end: markers[0].labelStart })
+  }
+  markers.forEach((marker, i) => {
+    const end = i + 1 < markers.length ? markers[i + 1].labelStart : text.length
+    paragraphs.push({ letter: marker.letter, start: marker.bodyStart, end })
+  })
+  return paragraphs
+}
+
+// The passage side of a "matching headings" (or matching-anything-per-
+// paragraph) Reading section — one HighlightablePassage per paragraph
+// (so highlighting/notes keep working exactly as before, just scoped to
+// that paragraph's own slice) with a draggable-drop-target inserted right
+// before any paragraph a "matching" question's prompt names ("Paragraph
+// B"). The bank of headings is rendered once, at the top, shared by every
+// slot — the same drag chips as MatchingQuestion below, so dragging one
+// onto a slot (or a slot further down) behaves identically; a slot can
+// also be tapped to open... no — kept drag-or-nothing here deliberately
+// simple since every slot is visible at once (unlike MatchingQuestion's
+// single hidden target), a student can just drag from the bank straight
+// to the right paragraph without needing a tap fallback.
+function LetteredMatchingPassage({
+  fullText,
+  paragraphs,
+  matchingByParagraph,
+  bankChoices,
+  answers,
+  setAnswer,
+  flags,
+  toggleFlag,
+  questionIndexById,
+  highlights,
+  onAdd,
+  onUpdateNote,
+  onRemove,
+  fontScale = 1,
+  theme,
+}) {
+  const [dragOverLetter, setDragOverLetter] = useState(null)
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="rounded-xl border border-dashed border-line bg-panel p-3">
+        <p className="mb-2 text-[11px] text-mist">
+          Drag a heading onto the blank at the start of the paragraph it belongs to.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {bankChoices.map((choice) => {
+            const used = Object.values(matchingByParagraph).some((q) => answers[q.id] === choice)
+            return (
+              <button
+                key={choice}
+                type="button"
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+                style={{ fontSize: `${0.8125 * fontScale}rem`, ...themedOptionStyle(theme, used) }}
+                className={`focus-ring cursor-grab rounded-full border px-3 py-1.5 transition-colors active:cursor-grabbing ${
+                  used
+                    ? 'border-brass/40 bg-brass/10 text-paper'
+                    : 'border-line bg-panel-2 text-mist hover:border-brass/30'
+                }`}
+              >
+                {choice}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {paragraphs.map((p) => {
+        const q = p.letter ? matchingByParagraph[p.letter] : null
+        const localHighlights = highlights
+          .filter((h) => h.start >= p.start && h.end <= p.end)
+          .map((h) => ({ ...h, start: h.start - p.start, end: h.end - p.start }))
+
+        return (
+          <div key={`${p.letter || 'lead'}-${p.start}`}>
+            {q && (
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragOverLetter(p.letter)
+                }}
+                onDragLeave={() => setDragOverLetter((cur) => (cur === p.letter ? null : cur))}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setDragOverLetter(null)
+                  const choice = e.dataTransfer.getData('text/plain')
+                  if (choice) setAnswer(q.id, choice)
+                }}
+                style={{ fontSize: `${0.8125 * fontScale}rem` }}
+                className={`mb-1.5 flex items-center gap-2 rounded-lg border-2 border-dashed px-3 py-1.5 transition-colors ${
+                  dragOverLetter === p.letter
+                    ? 'border-brass bg-brass/10 text-paper'
+                    : answers[q.id]
+                      ? 'border-brass/40 bg-brass/5 text-paper'
+                      : 'border-line bg-panel text-mist'
+                }`}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-line bg-panel-2 text-[10px] font-bold text-paper">
+                  {questionIndexById[q.id]}
+                </span>
+                <span className="flex-1">{answers[q.id] || 'Drag a heading here'}</span>
+                <button
+                  type="button"
+                  onClick={() => toggleFlag(q.id)}
+                  title={flags.has(q.id) ? 'Unflag this question' : 'Flag this question for review'}
+                  className={`shrink-0 text-xs ${flags.has(q.id) ? 'text-coral' : 'text-mist hover:text-paper'}`}
+                >
+                  ⚑
+                </button>
+              </div>
+            )}
+            <HighlightablePassage
+              text={fullText.slice(p.start, p.end).replace(/\s+$/, '')}
+              highlights={localHighlights}
+              onAdd={(range) => onAdd({ ...range, start: range.start + p.start, end: range.end + p.start })}
+              onUpdateNote={onUpdateNote}
+              onRemove={onRemove}
+              fontScale={fontScale}
+              theme={theme}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // Shared theme helper for every answer control below — a selected
 // option always uses the accent-brass look regardless of background
 // (it's the app's own selection color, still legible on any of the
@@ -1576,7 +1943,7 @@ function themedOptionStyle(theme, selected) {
   return { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text }
 }
 
-export function QuestionBlock({ index, question, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme }) {
+export function QuestionBlock({ index, question, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme, hideMatchingBank = false }) {
   const promptStyle = {
     fontSize: `${0.875 * fontScale}rem`,
     ...(theme?.bg ? { color: theme.text } : {}),
@@ -1696,6 +2063,7 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           onChange={onChange}
           fontScale={fontScale}
           theme={theme}
+          hideBank={hideMatchingBank}
         />
       )}
 
@@ -1765,7 +2133,18 @@ function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }
 // for touch/mobile, where HTML5 drag-and-drop doesn't work) both set
 // the same single answer; dragging/clicking a different chip replaces
 // it, same as picking a different radio would.
-function MatchingQuestion({ question, value, onChange, fontScale = 1, theme }) {
+// `hideBank` — added 2026-09-28: when several `matching` questions in a
+// row share the exact same choice bank (a "matching headings"/"matching
+// information" group), MatchingQuestionGroup below renders that bank
+// ONCE above all of them and passes hideBank=true to every question's own
+// MatchingQuestion, instead of the bank being repeated, identically,
+// under each and every question — Jasur, verbatim, about the Listening
+// exam's matching questions: "the options are grouped and not repeated
+// under each question". A lone matching question with no shared-bank
+// neighbor (hideBank left false, the default) is completely unaffected —
+// still shows its own bank right below its own drop target, exactly as
+// before.
+function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hideBank = false }) {
   const choices = question.options?.choices ?? []
   const [dragOver, setDragOver] = useState(false)
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
@@ -1795,28 +2174,106 @@ function MatchingQuestion({ question, value, onChange, fontScale = 1, theme }) {
               : 'border-line bg-panel text-mist'
         }`}
       >
-        {value || 'Drag an option here, or tap one below'}
+        {value || (hideBank ? 'Drag an option here' : 'Drag an option here, or tap one below')}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {choices.map((choice) => (
+      {!hideBank && (
+        <div className="flex flex-wrap gap-2">
+          {choices.map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+              onClick={() => onChange(choice)}
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+              className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 transition-colors active:cursor-grabbing ${
+                value === choice
+                  ? 'border-brass/40 bg-brass/10 text-paper'
+                  : 'border-line bg-panel text-mist hover:border-brass/30'
+              }`}
+            >
+              {choice}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// The chip bank shared by a MatchingQuestionGroup — same drag chip
+// markup as MatchingQuestion's own (unhidden) bank above, just rendered
+// once for the whole group instead of once per question. Tapping a chip
+// (the touch/mobile fallback, since HTML5 drag-and-drop doesn't work
+// there) fills the first still-unanswered question in the group; drag-
+// and-drop instead targets whichever question's own drop zone it's
+// dropped on, so a chip can still be placed anywhere in the group
+// regardless of tap order.
+function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme }) {
+  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {choices.map((choice) => {
+        const used = usedValues.includes(choice)
+        return (
           <button
             key={choice}
             type="button"
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
-            onClick={() => onChange(choice)}
-            style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
+            onClick={() => onPick(choice)}
+            style={{ ...optionTextStyle, ...themedOptionStyle(theme, used) }}
             className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 transition-colors active:cursor-grabbing ${
-              value === choice
+              used
                 ? 'border-brass/40 bg-brass/10 text-paper'
                 : 'border-line bg-panel text-mist hover:border-brass/30'
             }`}
           >
             {choice}
           </button>
-        ))}
-      </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// A run of consecutive `matching` questions that share the exact same
+// choice bank — see MatchingQuestion's hideBank comment above for why
+// this exists. Each question keeps its own QuestionBlock (own number,
+// own prompt, own flag button) so nothing about navigation/flagging/
+// answered-count changes; only the repeated bank underneath every one of
+// them collapses into this single shared bank up top.
+function MatchingQuestionGroup({ questions, choices, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
+  const usedValues = questions.map((q) => answers[q.id] ?? '').filter(Boolean)
+
+  return (
+    <div className="border-t border-line pt-4 first:border-0 first:pt-0 flex flex-col gap-4">
+      <MatchingBank
+        choices={choices}
+        usedValues={usedValues}
+        onPick={(choice) => {
+          const target = questions.find((q) => !(answers[q.id] ?? '').trim())
+          if (target) onChange(target.id, choice)
+        }}
+        fontScale={fontScale}
+        theme={theme}
+      />
+
+      {questions.map((q) => (
+        <QuestionBlock
+          key={q.id}
+          index={questionIndexById[q.id]}
+          question={q}
+          value={answers[q.id] ?? ''}
+          onChange={(v) => onChange(q.id, v)}
+          flagged={flags.has(q.id)}
+          onToggleFlag={() => onToggleFlag(q.id)}
+          fontScale={fontScale}
+          theme={theme}
+          hideMatchingBank
+        />
+      ))}
     </div>
   )
 }
