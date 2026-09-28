@@ -1900,6 +1900,17 @@ function LetteredMatchingPassage({
 }) {
   const [dragOverLetter, setDragOverLetter] = useState(null)
 
+  // Once a heading is placed on a paragraph, it drops out of this bank
+  // entirely instead of staying visible-but-dimmed — Jasur, 2026-09-28:
+  // "once the answer is dragged it should disappear from the list."
+  // Re-dragging a DIFFERENT heading onto an already-answered paragraph
+  // still works and still overwrites it (setAnswer just replaces the
+  // value), which naturally puts the old heading straight back in this
+  // list the next render, since it's no longer any paragraph's answer.
+  const remainingBankChoices = bankChoices.filter(
+    (choice) => !Object.values(matchingByParagraph).some((q) => answers[q.id] === choice)
+  )
+
   return (
     <div className="flex flex-col gap-3">
       <div className="rounded-xl border border-dashed border-line bg-panel p-3">
@@ -1907,25 +1918,22 @@ function LetteredMatchingPassage({
           Drag a heading onto the blank at the start of the paragraph it belongs to.
         </p>
         <div className="flex flex-wrap gap-2">
-          {bankChoices.map((choice) => {
-            const used = Object.values(matchingByParagraph).some((q) => answers[q.id] === choice)
-            return (
+          {remainingBankChoices.length > 0 ? (
+            remainingBankChoices.map((choice) => (
               <button
                 key={choice}
                 type="button"
                 draggable
                 onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
-                style={{ fontSize: `${0.8125 * fontScale}rem`, ...themedOptionStyle(theme, used) }}
-                className={`focus-ring cursor-grab rounded-full border px-3 py-1.5 transition-colors active:cursor-grabbing ${
-                  used
-                    ? 'border-brass/40 bg-brass/10 text-paper'
-                    : 'border-line bg-panel-2 text-mist hover:border-brass/30'
-                }`}
+                style={{ fontSize: `${0.8125 * fontScale}rem`, ...themedOptionStyle(theme, false) }}
+                className="focus-ring cursor-grab rounded-full border border-line bg-panel-2 px-3 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
               >
                 {choice}
               </button>
-            )
-          })}
+            ))
+          ) : (
+            <p className="text-[11px] text-mist">All headings placed.</p>
+          )}
         </div>
       </div>
 
@@ -2303,21 +2311,22 @@ function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hid
         {value || (hideBank ? 'Drag an option here' : 'Drag an option here, or tap one below')}
       </div>
 
+      {/* A choice already sitting in the drop target above disappears from
+          this list instead of staying visible-but-highlighted — Jasur,
+          2026-09-28: "once the answer is dragged it should disappear from
+          the list." Dragging/tapping a different one still overwrites the
+          drop target as before. */}
       {!hideBank && (
         <div className="flex flex-wrap gap-2">
-          {choices.map((choice) => (
+          {choices.filter((choice) => choice !== value).map((choice) => (
             <button
               key={choice}
               type="button"
               draggable
               onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
               onClick={() => onChange(choice)}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 transition-colors active:cursor-grabbing ${
-                value === choice
-                  ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-mist hover:border-brass/30'
-              }`}
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
+              className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
             >
               {choice}
             </button>
@@ -2336,30 +2345,36 @@ function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hid
 // and-drop instead targets whichever question's own drop zone it's
 // dropped on, so a chip can still be placed anywhere in the group
 // regardless of tap order.
+//
+// A chip already used by one of this group's questions is removed from
+// this list entirely rather than just dimmed — Jasur, 2026-09-28: "once
+// the answer is dragged it should disappear from the list." Dragging (or
+// tapping) a DIFFERENT chip onto an already-answered question still
+// overwrites it, which naturally returns the old chip to this list on
+// the next render, since `usedValues` is recomputed from live answers
+// every time, never a frozen snapshot.
 function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme }) {
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const remaining = choices.filter((choice) => !usedValues.includes(choice))
   return (
     <div className="flex flex-wrap gap-2">
-      {choices.map((choice) => {
-        const used = usedValues.includes(choice)
-        return (
+      {remaining.length > 0 ? (
+        remaining.map((choice) => (
           <button
             key={choice}
             type="button"
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
             onClick={() => onPick(choice)}
-            style={{ ...optionTextStyle, ...themedOptionStyle(theme, used) }}
-            className={`focus-ring cursor-grab rounded-full border px-3.5 py-1.5 transition-colors active:cursor-grabbing ${
-              used
-                ? 'border-brass/40 bg-brass/10 text-paper'
-                : 'border-line bg-panel text-mist hover:border-brass/30'
-            }`}
+            style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
+            className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
           >
             {choice}
           </button>
-        )
-      })}
+        ))
+      ) : (
+        <p className="text-xs text-mist">All options placed.</p>
+      )}
     </div>
   )
 }
