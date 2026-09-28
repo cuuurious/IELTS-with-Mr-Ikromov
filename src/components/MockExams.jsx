@@ -566,6 +566,33 @@ export function ExamTaker({
   const [reviewPhase, setReviewPhase] = useState(false)
   const reviewStartedAtRef = useRef(null)
 
+  // ------------------------------------------------------------------
+  // Notes — the real exam's pencil icon (Jasur's screenshot, 2026-09-28,
+  // showing the full chrome bar: signal / bell / hamburger / pencil-in-
+  // a-box) opens a free-text notepad available throughout the test, not
+  // tied to any passage — the one real, working icon in that row, unlike
+  // the network/notification icons beside it which the real exam shows
+  // but never wires up either. A single running note per attempt (not
+  // per-section) since the real tool works the same way in every part,
+  // including Listening where there's no passage to select text in at
+  // all. Persisted the same way answers/audioEnded already are, so a
+  // refresh mid-test doesn't wipe out what the student jotted down; kept
+  // out of grading entirely, same as Reading's highlight notes — a study
+  // aid, never scored or sent anywhere else.
+  // ------------------------------------------------------------------
+  const [notes, setNotes] = useState('')
+  const notesRef = useRef(notes)
+  useEffect(() => {
+    notesRef.current = notes
+  }, [notes])
+  const [notesOpen, setNotesOpen] = useState(false)
+
+  // One volume setting for every section's audio, adjusted from the ☰
+  // Settings panel (see EXAM_THEMES block) — the real exam's own chrome
+  // bar has no visible slider next to the audio status line, so this
+  // lives alongside Text size/Background instead of in that line.
+  const [volume, setVolume] = useState(1)
+
   const handleAudioEnded = (sectionId) => {
     setAudioEndedBySection((prev) => (prev[sectionId] ? prev : { ...prev, [sectionId]: true }))
   }
@@ -665,6 +692,7 @@ export function ExamTaker({
             answers: answersRef.current,
             audioEnded: Object.keys(audioEndedBySectionRef.current),
             reviewStartedAt: reviewStartedAtRef.current,
+            notes: notesRef.current,
           },
         })
         .eq('id', attemptId)
@@ -749,6 +777,7 @@ export function ExamTaker({
           restoredAudioEnded[sectionId] = true
         })
         setAudioEndedBySection(restoredAudioEnded)
+        setNotes(draft.notes || '')
 
         if (draft.reviewStartedAt) {
           // Resuming mid-review-window: restore the REMAINING review time
@@ -869,6 +898,7 @@ export function ExamTaker({
             answers: answersRef.current,
             audioEnded: Object.keys(audioEndedBySectionRef.current),
             reviewStartedAt: startedAt,
+            notes: notesRef.current,
           },
         })
         .eq('id', currentAttemptId)
@@ -1189,9 +1219,39 @@ export function ExamTaker({
                       </button>
                     ))}
                   </div>
+
+                  {exam.module === 'listening' && (
+                    <>
+                      <p className="mb-2 mt-4 font-mono text-[11px] uppercase tracking-wide text-mist">Volume</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm" aria-hidden>🔊</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={volume}
+                          onChange={(e) => setVolume(Number(e.target.value))}
+                          className="w-full accent-brass"
+                          aria-label="Volume"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setNotesOpen((o) => !o)}
+              title="Notes"
+              aria-pressed={notesOpen}
+              className={`focus-ring rounded-md px-2 py-1.5 text-sm transition-colors ${
+                notesOpen ? 'bg-black/10 opacity-100' : 'opacity-80 hover:opacity-100'
+              }`}
+            >
+              ✏️
+            </button>
             {/* No manual "Finish test"/submit control here — Jasur,
                 verbatim: "finish test button has to be removed/ submit
                 button shouldnt be available." Matches the real exam:
@@ -1218,6 +1278,32 @@ export function ExamTaker({
           </p>
         )}
       </div>
+
+      {notesOpen && (
+        <div
+          className="fixed right-3 top-20 bottom-3 z-30 flex w-80 max-w-[calc(100vw-1.5rem)] flex-col rounded-xl border border-line bg-panel shadow-xl"
+          role="dialog"
+          aria-label="Notes"
+        >
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+            <p className="font-display text-sm font-bold text-paper">Notes</p>
+            <button
+              type="button"
+              onClick={() => setNotesOpen(false)}
+              title="Close notes"
+              className="focus-ring rounded-md px-1.5 py-0.5 text-mist hover:text-paper"
+            >
+              ✕
+            </button>
+          </div>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Jot anything down here — nothing in this box is graded or seen by anyone else, just like the real test's notepad."
+            className="focus-ring flex-1 resize-none rounded-b-xl bg-panel-2 p-4 text-sm text-paper placeholder:text-mist"
+          />
+        </div>
+      )}
 
       {sections.map((section, sIdx) => {
         const sectionTitle =
@@ -1408,11 +1494,12 @@ export function ExamTaker({
             </p>
 
             {exam.module === 'listening' && section.audio_url && (
-              <div className="mb-5">
+              <div className="mb-4">
                 <SectionAudioPlayer
                   url={section.audio_url}
                   onEnded={() => handleAudioEnded(section.id)}
                   alreadyEnded={!!audioEndedBySection[section.id]}
+                  volume={volume}
                 />
               </div>
             )}
@@ -1470,14 +1557,24 @@ function QuestionNavigator({ questions, answers, flags, onJump }) {
 // remount this component fresh (status defaulting back to 'ready'),
 // silently letting a student re-hear audio the real exam only ever plays
 // once. When true, this mounts straight into the 'done' state instead —
-// a full progress bar, "Played" label, no play button — matching exactly
-// what the student would already be looking at if the page had never
-// reloaded.
-function SectionAudioPlayer({ url, onEnded, alreadyEnded = false }) {
+// matching exactly what the student would already be looking at if the
+// page had never reloaded.
+//
+// RESTYLED 2026-09-28 — Jasur's own screenshot of the real chrome bar
+// shows the audio status as one plain line next to the timer: a small
+// speaker icon and the words "Audio is playing," nothing else — no
+// bordered card, no progress bar, no "transcript available" caption. He
+// then asked, of the old version: "why is this box at the top." Browsers
+// still won't auto-play without a click, so the one-time "Play audio"
+// button stays (the real exam doesn't need it — it starts itself), but
+// everything after that click is now this same plain line, and nothing
+// at all is shown once the audio has finished instead of a lingering
+// "Played" state. The volume slider moved into the ☰ Settings panel
+// (see EXAM_THEMES block below) alongside the other display controls,
+// rather than sitting in this line the real exam doesn't show it in.
+function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume }) {
   const audioRef = useRef(null)
   const [status, setStatus] = useState(alreadyEnded ? 'done' : 'ready') // ready | playing | done
-  const [volume, setVolume] = useState(1)
-  const [progressPct, setProgressPct] = useState(alreadyEnded ? 100 : 0)
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
@@ -1489,74 +1586,37 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false }) {
     audioRef.current?.play()
   }
 
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current
-    if (!audio || !audio.duration) return
-    setProgressPct(Math.min(100, (audio.currentTime / audio.duration) * 100))
-  }
-
   const handleEnded = () => {
-    setProgressPct(100)
     setStatus('done')
     onEnded?.()
   }
 
   return (
-    <div className="rounded-xl border border-line bg-panel-2 p-4">
+    <div className="flex items-center gap-2">
       <audio
         ref={audioRef}
         src={url}
         preload="none"
-        onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onContextMenu={(e) => e.preventDefault()}
         controlsList="nodownload noplaybackrate nofullscreen"
         className="hidden"
       />
 
-      <div className="flex items-center gap-3">
-        {status === 'ready' ? (
-          <button
-            type="button"
-            onClick={handlePlay}
-            className="focus-ring shrink-0 rounded-full bg-brass px-4 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-brass-dim"
-          >
-            ▶ Play audio
-          </button>
-        ) : (
-          <>
-            <span className="w-14 shrink-0 text-[11px] font-semibold text-mist">
-              {status === 'playing' ? 'Playing…' : 'Played'}
-            </span>
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-panel">
-              <div
-                className="h-full rounded-full bg-brass transition-[width]"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </>
-        )}
-
-        <div className="flex shrink-0 items-center gap-1.5">
-          <span className="text-xs text-mist" aria-hidden>🔊</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            onChange={(e) => setVolume(Number(e.target.value))}
-            className="w-16 accent-brass"
-            aria-label="Volume"
-          />
-        </div>
-      </div>
-
-      <p className="mt-2 text-[11px] text-mist">
-        {status === 'ready'
-          ? 'Plays once, start to finish — no pausing or rewinding, just like the real test.'
-          : 'The transcript will be available for review after you submit.'}
-      </p>
+      {status === 'ready' && (
+        <button
+          type="button"
+          onClick={handlePlay}
+          className="focus-ring shrink-0 rounded-full bg-brass px-4 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+        >
+          ▶ Play audio
+        </button>
+      )}
+      {status === 'playing' && (
+        <p className="text-xs font-medium text-mist">
+          <span aria-hidden>🔊</span> Audio is playing
+        </p>
+      )}
     </div>
   )
 }
@@ -1929,6 +1989,40 @@ function LetteredMatchingPassage({
   )
 }
 
+// Splits a short_answer prompt around its blank so the answer box can
+// be dropped INLINE, exactly where the blank is — real exam screenshots
+// (Jasur, 2026-09-28) show the gap as part of the running sentence
+// ("The lecture will be useful for any students who are writing [box]
+// and theses.") with the question's own number shown only as light
+// placeholder text inside that box, never typed into the sentence
+// itself and never a separate "N." prefix or a full-width input on its
+// own line below. mock-content-import's AI extraction already writes a
+// run of underscores at the blank (e.g. "A wooden 1 _____ (a model)."),
+// but — unlike the real exam — it also writes the question's own number
+// as plain text right before the underscores, duplicating what the
+// input box's placeholder is about to show; this strips that duplicate
+// number so it isn't printed twice.
+//
+// Returns { before, after } to render as `{before}<input/>{after}`. When
+// no blank run is found at all (a standalone question like "What number
+// room will Mr Griffin be in at the Sunrise Hotel?"), `after` is '' and
+// the input simply lands inline at the end of the sentence — the same
+// real-exam screenshots show that's just the blank-at-the-very-end case
+// of the same pattern, not a different one.
+function splitPromptBlank(prompt, index) {
+  const text = prompt || ''
+  const blankMatch = /_{2,}/.exec(text)
+  if (!blankMatch) return { before: text, after: '' }
+
+  let before = text.slice(0, blankMatch.index)
+  const after = text.slice(blankMatch.index + blankMatch[0].length)
+
+  const dupNumber = new RegExp(`(^|\\s)${index}\\s*$`).exec(before)
+  if (dupNumber) before = before.slice(0, dupNumber.index) + (dupNumber[1] === '' ? '' : dupNumber[1])
+
+  return { before, after }
+}
+
 // Shared theme helper for every answer control below — a selected
 // option always uses the accent-brass look regardless of background
 // (it's the app's own selection color, still legible on any of the
@@ -1950,12 +2044,51 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
   }
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
 
+  // Short-answer questions (a standalone sentence ending in a real
+  // question, not a note with an inline blank) get the real exam's own
+  // treatment — Jasur, sending a screenshot of the real interface:
+  // "like this." There, the sentence carries no leading number at all;
+  // the number only appears (as light placeholder text) inside its own
+  // small answer box, and consecutive questions run straight into each
+  // other with no divider line between them — a continuous form, not a
+  // stack of separately-bordered cards. The QuestionNavigator strip in
+  // the sticky header already shows which number is which, so nothing
+  // is lost by dropping the inline "N." prefix here.
+  const isShortAnswer = question.type === 'short_answer'
+  const shortAnswerParts = isShortAnswer ? splitPromptBlank(question.prompt, index) : null
+  const shortAnswerInput = isShortAnswer && (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={String(index)}
+      style={{ ...optionTextStyle, ...(theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : {}) }}
+      className="focus-ring mx-1 inline-block w-28 rounded-lg border border-line bg-panel px-2 py-1 text-center align-baseline text-paper"
+    />
+  )
+
   return (
-    <div id={`q-${question.id}`} className="border-t border-line pt-4 first:border-0 first:pt-0 scroll-mt-40">
+    <div
+      id={`q-${question.id}`}
+      className={
+        isShortAnswer
+          ? 'pt-3 first:pt-0 scroll-mt-40'
+          : 'border-t border-line pt-4 first:border-0 first:pt-0 scroll-mt-40'
+      }
+    >
       <div className="mb-2.5 flex items-start justify-between gap-2">
         <p className="font-medium text-paper" style={promptStyle}>
-          <span className="mr-1.5 text-mist">{index}.</span>
-          {question.prompt}
+          {isShortAnswer ? (
+            <>
+              {shortAnswerParts.before}
+              {shortAnswerInput}
+              {shortAnswerParts.after}
+            </>
+          ) : (
+            <>
+              <span className="mr-1.5 text-mist">{index}.</span>
+              {question.prompt}
+            </>
+          )}
         </p>
         {onToggleFlag && (
           <button
@@ -2067,15 +2200,8 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
         />
       )}
 
-      {question.type === 'short_answer' && (
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Your answer"
-          style={{ ...optionTextStyle, ...(theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : {}) }}
-          className="focus-ring w-full max-w-sm rounded-xl border border-line bg-panel px-3.5 py-2 text-paper"
-        />
-      )}
+      {/* short_answer's own input is now embedded inline in the prompt
+          paragraph above, right at the blank — see shortAnswerInput. */}
     </div>
   )
 }
