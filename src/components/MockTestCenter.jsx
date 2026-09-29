@@ -99,6 +99,69 @@ export default function MockTestCenter({ onExit }) {
   // below, opened by its own "Review in exam view" button per attempt.
   const [reviewingAttempt, setReviewingAttempt] = useState(null)
 
+  // ------------------------------------------------------------------
+  // EXAM LOCKDOWN (2026-09-29) — Jasur: "students can freely press back
+  // to dashboard and interrupt the mock" and "it is just taking the
+  // middle part of the screen." Both traced to the same cause: this
+  // component's own header (candidate strip + "Exit to dashboard") and
+  // its Overview/Take a Test/Speaking/Message tab row stayed visible and
+  // fully clickable the entire time, ABOVE a centered `max-w-5xl` column
+  // that the actual exam content (MockCheckIn -> FullMockRunner ->
+  // ExamTaker/WritingTaker) was squeezed into — so a real attempt in
+  // progress still looked like a narrow section of an ordinary page, with
+  // one-click, unconfirmed ways out of it at all times.
+  //
+  // The checked-in Full Mock set lives HERE, not inside MockCheckIn,
+  // purely so the layout can switch without losing it: going from the
+  // normal chrome'd layout to the locked full-screen one below moves
+  // MockCheckIn to a different spot in the tree, which remounts it — if
+  // this were still MockCheckIn's own local state, it would reset to null
+  // at that exact moment and dump the student back on the check-in form
+  // with their (already-consumed) code burned. Lifted, it survives.
+  //
+  // `examActive` is true from the moment a code checks out (there's no
+  // going back to "pick a different one" by then anyway — the code is
+  // already used) until the full mock ends and MockCheckIn clears it.
+  // While true, this component skips its own header/nav/max-width chrome
+  // entirely (see the early return below) and renders nothing but
+  // MockCheckIn's own tree, edge to edge — the exam's own internal chrome
+  // (ExamTaker's sticky pink IELTS bar, WritingTaker's own header)
+  // becomes the only thing on screen.
+  const [checkedInSet, setCheckedInSet] = useState(null)
+  const examActive = !!checkedInSet
+
+  // While a mock is running, also blunt the two browser-level ways out
+  // that no in-app button controls:
+  //   - Reload/close tab: the standard `beforeunload` prompt ("Leave
+  //     site?"). Browsers don't allow blocking this outright, only
+  //     warning — and answers are autosaved server-side regardless — but
+  //     it stops the accidental case.
+  //   - The browser's own Back button: pushes a duplicate history entry
+  //     and re-pushes it on every popstate, so Back does nothing while
+  //     the exam is on screen (the standard exam-platform approach).
+  // Both are removed the moment the mock ends.
+  useEffect(() => {
+    if (!examActive) return undefined
+
+    const onBeforeUnload = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+      return ''
+    }
+    const onPopState = () => {
+      window.history.pushState({ mockLock: true }, '', window.location.href)
+    }
+
+    window.history.pushState({ mockLock: true }, '', window.location.href)
+    window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener('popstate', onPopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('popstate', onPopState)
+    }
+  }, [examActive])
+
   const toggleBreakdown = async (attemptId) => {
     if (openBreakdownId === attemptId) {
       setOpenBreakdownId(null)
@@ -397,6 +460,20 @@ export default function MockTestCenter({ onExit }) {
   const speakingExaminer = examiners.find((e) => e.role === 'speaking_examiner')
   const writingExaminer = examiners.find((e) => e.role === 'writing_examiner')
 
+  // Locked, full-screen exam mode — see the EXAM LOCKDOWN note on
+  // `examActive` above. No header, no section tabs, no "Exit to
+  // dashboard," no max-width column: MockCheckIn (now showing
+  // FullMockRunner) owns the entire viewport until the full mock ends.
+  // Same `fixed inset-0 z-[9998]` root as the normal render below, so
+  // it still sits above the regular app shell exactly as before.
+  if (examActive) {
+    return (
+      <div className="fixed inset-0 z-[9998] overflow-y-auto bg-ink text-paper px-3 py-3 sm:px-5">
+        <MockCheckIn selfId={profile.id} checkedInSet={checkedInSet} onCheckedInSetChange={setCheckedInSet} />
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[9998] flex flex-col bg-ink text-paper">
 
@@ -688,7 +765,7 @@ export default function MockTestCenter({ onExit }) {
             // every attempt now needs a teacher-issued code first, real
             // IELTS candidate check-in style. MockCheckIn renders
             // <FullMockRunner> itself once a code checks out.
-            <MockCheckIn selfId={profile.id} />
+            <MockCheckIn selfId={profile.id} checkedInSet={checkedInSet} onCheckedInSetChange={setCheckedInSet} />
           )}
 
           {!loading && section === 'speaking' && (

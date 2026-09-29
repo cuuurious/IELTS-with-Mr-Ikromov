@@ -8,6 +8,7 @@ import { guessMimeType } from '../../lib/mime'
 import ConfirmModal from '../../components/ConfirmModal'
 import FrozenAttemptReview from '../../components/FrozenAttemptReview'
 import ThemeToggle from '../../components/ThemeToggle'
+import LiveMocksPanel from './LiveMocksPanel'
 
 /*
  * ================================================================
@@ -49,6 +50,9 @@ import ThemeToggle from '../../components/ThemeToggle'
 
 const SECTIONS = [
   { key: 'progress', label: 'Student Progress' },
+  // Live Mocks (2026-09-29, migration_62) — pause/resume, extra time,
+  // end/skip a section, void & retake, delete sittings. See LiveMocksPanel.jsx.
+  { key: 'live', label: 'Live Mocks' },
   { key: 'results', label: 'Results' },
   { key: 'analytics', label: 'Analytics' },
   { key: 'students', label: 'Students' },
@@ -811,6 +815,9 @@ export default function TeacherMockCenter({ onExit }) {
   const [selectedRequestIds, setSelectedRequestIds] = useState(() => new Set())
   const [decidingRequests, setDecidingRequests] = useState(false)
   const [requestActionError, setRequestActionError] = useState('')
+  // Which sections an approved request's code covers (migration_62) —
+  // all three unless the teacher unticks some before approving.
+  const [requestSections, setRequestSections] = useState(['listening', 'reading', 'writing'])
 
   const pendingMockRequests = useMemo(
     () => mockAccessRequests.filter((r) => r.status === 'pending'),
@@ -2991,6 +2998,10 @@ export default function TeacherMockCenter({ onExit }) {
         writing_exam_id: values.writingExamId,
         is_active: values.isActive,
         sort_order: Number(values.sortOrder) || 0,
+        max_attempts:
+          String(values.maxAttempts ?? '').trim() && Number(values.maxAttempts) > 0
+            ? Math.floor(Number(values.maxAttempts))
+            : null,
       }
 
       if (fullMockModal.mode === 'create') {
@@ -3105,7 +3116,43 @@ export default function TeacherMockCenter({ onExit }) {
    * away and retry with a fresh set of random codes rather than
    * figure out which single row collided.
    */
-  const generateAccessCodeBatch = async (fullMockSetId, studentIds) => {
+  // `sections` (migration_62): which of Listening/Reading/Writing this code
+  // lets the student sit — e.g. ['writing'] to test Writing only. Omitted
+  // = all three (the column's own default).
+  //
+  // Retake limit (migration_62): a Full Mock can cap how many sittings one
+  // student gets. The database already refuses to START a sitting past the
+  // cap, but a code issued past it would just be a dead code the student
+  // can't use — so this stops before issuing and says why.
+  const generateAccessCodeBatch = async (fullMockSetId, studentIds, sections = null) => {
+    const targetSet = fullMockSets.find((s) => s.id === fullMockSetId)
+    if (targetSet?.max_attempts) {
+      const { data: sittingRows, error: sittingsError } = await supabase
+        .from('full_mock_attempts')
+        .select('student_id')
+        .eq('set_id', fullMockSetId)
+        .in('student_id', studentIds)
+      if (sittingsError) throw sittingsError
+
+      const counts = {}
+      ;(sittingRows || []).forEach((r) => {
+        counts[r.student_id] = (counts[r.student_id] || 0) + 1
+      })
+      const blocked = studentIds.filter((id) => (counts[id] || 0) >= targetSet.max_attempts)
+      if (blocked.length > 0) {
+        const names = blocked
+          .map((id) => {
+            const s = students.find((st) => st.id === id)
+            return s?.full_name || s?.username || 'a student'
+          })
+          .join(', ')
+        throw new Error(
+          `${names} already used all ${targetSet.max_attempts} sitting(s) allowed for "${targetSet.title}". ` +
+            'Raise the limit on the Full Mock, or delete an old sitting in Live Mocks first.'
+        )
+      }
+    }
+
     const batchId = crypto.randomUUID()
     let rows = null
     let lastError = null
@@ -3124,6 +3171,7 @@ export default function TeacherMockCenter({ onExit }) {
           full_mock_set_id: fullMockSetId,
           created_by: profile.id,
           batch_id: batchId,
+          ...(sections ? { sections } : {}),
         }
       })
 
@@ -3204,14 +3252,14 @@ export default function TeacherMockCenter({ onExit }) {
               !c.used_at
           )
           if (existing) {
-            requestUpdates.push({ id: r.id, access_code_id: existing.id })
+            requestUpdates.push({ id: r.id, access_code_id: existing.id, reusedCodeId: existing.id })
           } else {
             studentIdsNeedingNewCode.push(r.student_id)
           }
         })
 
         if (studentIdsNeedingNewCode.length > 0) {
-          const newRows = await generateAccessCodeBatch(setId, studentIdsNeedingNewCode)
+          const newRows = await generateAccessCodeBatch(setId, studentIdsNeedingNewCode, requestSections)
           newRows.forEach((row) => {
             allGeneratedCodeIds.push(row.id)
             const req = reqs.find((r) => r.student_id === row.student_id)
@@ -3222,6 +3270,17 @@ export default function TeacherMockCenter({ onExit }) {
 
       if (allGeneratedCodeIds.length > 0) {
         await sendAccessCodesViaTelegram(allGeneratedCodeIds)
+      }
+
+      // A reused, still-unused code gets the sections chosen now, so what
+      // the teacher ticked is what the student sits either way.
+      const reusedCodeIds = requestUpdates.filter((u) => u.reusedCodeId).map((u) => u.reusedCodeId)
+      if (reusedCodeIds.length > 0) {
+        const { error: sectionsError } = await supabase
+          .from('mock_access_codes')
+          .update({ sections: requestSections })
+          .in('id', reusedCodeIds)
+        if (sectionsError) throw sectionsError
       }
 
       const nowIso = new Date().toISOString()
@@ -3240,6 +3299,57 @@ export default function TeacherMockCenter({ onExit }) {
       setRequestActionError(err?.message || 'Could not approve — please try again.')
     } finally {
       setDecidingRequests(false)
+    }
+  }
+
+  // Delete one attempt from the Student Profile modal (migration_62) — for
+  // test runs and anything else that shouldn't count. Removes it from the
+  // on-screen lists right away rather than reloading everything.
+  const deleteStudentAttempt = (kind, attempt) => {
+    setConfirmDialog({
+      title: 'Delete this attempt?',
+      message:
+        `${attempt.examTitle || 'This attempt'} — its score, answers${kind === 'writing' ? ' and essay' : ''} are ` +
+        "removed and it stops counting in results and progress. This can't be undone.",
+      confirmLabel: 'Delete',
+      tone: 'coral',
+      onConfirm: async () => {
+        const { error } = await supabase.rpc(
+          kind === 'writing' ? 'teacher_delete_writing_attempt' : 'teacher_delete_mock_attempt',
+          { p_attempt_id: attempt.id }
+        )
+        if (error) {
+          setConfirmDialog({
+            title: "Couldn't delete this attempt",
+            message: error.message || 'Please try again.',
+            hideCancel: true,
+            tone: 'coral',
+          })
+          return
+        }
+        if (kind === 'writing') setWritingReviews((prev) => prev.filter((r) => r.id !== attempt.id))
+        else setAttempts((prev) => prev.filter((a) => a.id !== attempt.id))
+      },
+    })
+  }
+
+  // Void & retake / "Give another sitting" from Live Mocks: one new code for
+  // one student, same set and sections, sent over Telegram right away.
+  // Returns { code, sent, reason } for the panel to report — a Telegram
+  // failure doesn't undo the code, the teacher just shares it manually.
+  const reissueAccessCode = async (studentId, setId, sections) => {
+    const rows = await generateAccessCodeBatch(setId, [studentId], sections)
+    const row = rows[0]
+    try {
+      const results = await sendAccessCodesViaTelegram([row.id])
+      const result = results?.[0]
+      return {
+        code: row.code,
+        sent: Boolean(result?.sent),
+        reason: result?.sent ? null : accessCodeSendReasonLabel(result?.reason),
+      }
+    } catch (err) {
+      return { code: row.code, sent: false, reason: err?.message || 'Telegram sending failed' }
     }
   }
 
@@ -3601,6 +3711,14 @@ export default function TeacherMockCenter({ onExit }) {
               Reading/Listening's already-computed score — that's the
               whole point of this tab existing.
              ====================================================== */}
+          {!loading && section === 'live' && (
+            <LiveMocksPanel
+              students={students}
+              fullMockSets={fullMockSets}
+              onReissueCode={reissueAccessCode}
+            />
+          )}
+
           {!loading && section === 'results' && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -4832,6 +4950,15 @@ export default function TeacherMockCenter({ onExit }) {
                       )}
                     </div>
 
+                    {pendingMockRequests.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-xs text-mist font-mono uppercase tracking-wide">
+                          Approved codes cover
+                        </span>
+                        <SectionPicker value={requestSections} onChange={setRequestSections} disabled={decidingRequests} />
+                      </div>
+                    )}
+
                     {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
 
                     {pendingMockRequests.length === 0 ? (
@@ -5245,6 +5372,7 @@ export default function TeacherMockCenter({ onExit }) {
           }}
           expandedEssays={expandedEssays}
           onToggleEssay={toggleEssay}
+          onDeleteAttempt={deleteStudentAttempt}
         />
       )}
     </div>
@@ -5497,7 +5625,7 @@ function BandTrendCard({ label, history }) {
 // — one attempt row with a "View mistakes" toggle that lazily fetches and
 // shows only the wrong answers, given → correct, in the shape Jasur asked
 // for ("mountin → mountain").
-function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview }) {
+function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview, onDelete }) {
   const mistakes = bd?.rows ? bd.rows.filter((r) => r.is_correct === false) : null
 
   return (
@@ -5526,6 +5654,16 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview }) {
             title="Open a full-screen, read-only replay styled like the actual exam screen"
           >
             🖥 Review in exam view
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="focus-ring ml-auto text-xs text-coral hover:underline"
+            title="Remove this attempt and its answers (e.g. a test run)"
+          >
+            Delete
           </button>
         )}
       </div>
@@ -5562,7 +5700,7 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview }) {
   )
 }
 
-function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay }) {
+function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay, onDeleteAttempt }) {
   const { profile } = useAuth()
 
   // Teacher-side PDF score report (2026-09-26) — one of the ~15 "build
@@ -5889,6 +6027,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                           bd={breakdowns[a.id]}
                           onToggle={toggleBreakdown}
                           onReview={() => setReviewingAttempt(a)}
+                          onDelete={onDeleteAttempt ? () => onDeleteAttempt('rl', a) : undefined}
                         />
                       ))}
                   </div>
@@ -5914,6 +6053,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                           bd={breakdowns[a.id]}
                           onToggle={toggleBreakdown}
                           onReview={() => setReviewingAttempt(a)}
+                          onDelete={onDeleteAttempt ? () => onDeleteAttempt('rl', a) : undefined}
                         />
                       ))}
                   </div>
@@ -5938,13 +6078,25 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                         <div key={r.id} className="rounded-lg border border-line bg-panel-2 px-3.5 py-2.5">
                           <div className="flex items-center justify-between gap-3 text-sm">
                             <span className="text-paper">{r.examTitle}</span>
-                            {r.examiner_band != null ? (
-                              <span className="text-sage font-semibold text-xs">
-                                Band {r.examiner_band}
-                              </span>
-                            ) : (
-                              <span className="text-amber text-xs">Awaiting review</span>
-                            )}
+                            <span className="flex items-center gap-3">
+                              {r.examiner_band != null ? (
+                                <span className="text-sage font-semibold text-xs">
+                                  Band {r.examiner_band}
+                                </span>
+                              ) : (
+                                <span className="text-amber text-xs">Awaiting review</span>
+                              )}
+                              {onDeleteAttempt && (
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteAttempt('writing', r)}
+                                  className="focus-ring text-xs text-coral hover:underline"
+                                  title="Remove this writing attempt (e.g. a test run)"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </span>
                           </div>
 
                           {hasCriteria && (
@@ -8054,6 +8206,8 @@ function FullMockSetFormModal({
   const [writingExamId, setWritingExamId] = useState(set?.writing_exam_id || '')
   const [isActive, setIsActive] = useState(set ? set.is_active : true)
   const [sortOrder, setSortOrder] = useState(set?.sort_order ?? 0)
+  // Retake limit (migration_62): '' = unlimited.
+  const [maxAttempts, setMaxAttempts] = useState(set?.max_attempts ? String(set.max_attempts) : '')
 
   // Editing an existing set: its own currently-linked exam might no
   // longer be in the "published" list passed in (e.g. it got
@@ -8172,6 +8326,21 @@ function FullMockSetFormModal({
             </span>
           </label>
 
+          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+            Sittings allowed per student
+            <input
+              type="number"
+              min="1"
+              value={maxAttempts}
+              onChange={(e) => setMaxAttempts(e.target.value)}
+              placeholder="Unlimited"
+              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            />
+            <span className="mt-1 block text-[11px] normal-case tracking-normal text-mist/70">
+              Leave empty for no limit. Deleted sittings don't count towards it.
+            </span>
+          </label>
+
           <label className="flex items-center gap-2 text-sm text-paper">
             <input
               type="checkbox"
@@ -8197,7 +8366,7 @@ function FullMockSetFormModal({
           <button
             type="button"
             onClick={() =>
-              onSave({ title, listeningExamId, readingExamId, writingExamId, isActive, sortOrder })
+              onSave({ title, listeningExamId, readingExamId, writingExamId, isActive, sortOrder, maxAttempts })
             }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
@@ -8229,6 +8398,46 @@ function FullMockSetFormModal({
  * then the send-mock-access-codes Edge Function) — this component
  * only owns the picker UI and which step it's on.
  */
+// Listening / Reading / Writing toggles for which sections a code covers
+// (migration_62). At least one always stays on — the database requires it.
+const SECTION_OPTIONS = [
+  { key: 'listening', label: 'Listening' },
+  { key: 'reading', label: 'Reading' },
+  { key: 'writing', label: 'Writing' },
+]
+
+function SectionPicker({ value, onChange, disabled = false }) {
+  const toggle = (key) => {
+    const has = value.includes(key)
+    if (has && value.length === 1) return
+    const next = has ? value.filter((k) => k !== key) : [...value, key]
+    onChange(SECTION_OPTIONS.map((o) => o.key).filter((k) => next.includes(k)))
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {SECTION_OPTIONS.map((o) => {
+        const on = value.includes(o.key)
+        return (
+          <button
+            key={o.key}
+            type="button"
+            disabled={disabled}
+            onClick={() => toggle(o.key)}
+            aria-pressed={on}
+            className={`focus-ring rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+              on ? 'border-brass/50 bg-brass/15 text-brass' : 'border-line text-mist line-through hover:border-brass/40'
+            }`}
+          >
+            {on ? '✓ ' : ''}
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function AccessCodeIssueModal({
   students,
   groups,
@@ -8250,6 +8459,7 @@ function AccessCodeIssueModal({
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [sendResults, setSendResults] = useState(null)
+  const [sections, setSections] = useState(['listening', 'reading', 'writing'])
 
   const groupIdsByStudent = useMemo(() => {
     const map = {}
@@ -8315,7 +8525,7 @@ function AccessCodeIssueModal({
     setGenerating(true)
     setGenerateError('')
     try {
-      const rows = await onGenerate(fullMockSetId, Array.from(selectedIds))
+      const rows = await onGenerate(fullMockSetId, Array.from(selectedIds), sections)
       setGeneratedRows(rows)
       setStep('review')
     } catch (err) {
@@ -8369,6 +8579,14 @@ function AccessCodeIssueModal({
                 ))}
               </select>
             </label>
+
+            <div className="mt-4">
+              <span className="text-xs text-mist font-mono uppercase tracking-wide">Sections</span>
+              <p className="text-[11px] text-mist mt-0.5 mb-1.5">
+                Untick any the student should skip — e.g. only Writing to test Writing alone.
+              </p>
+              <SectionPicker value={sections} onChange={setSections} disabled={generating} />
+            </div>
 
             <div className="mt-4">
               <div className="flex items-center justify-between gap-2">

@@ -377,6 +377,26 @@ export function ExamTaker({
   const [confirmDialog, setConfirmDialog] = useState(null)
 
   // ------------------------------------------------------------------
+  // Teacher control (migration_62, 2026-09-29). The deadline is now the
+  // server's own `deadline_at` (set by trigger when the attempt is
+  // created) instead of being recomputed here from started_at — that's
+  // what lets the teacher pause (resume pushes deadline_at forward by
+  // however long it was paused) or add minutes from Live Mocks. This
+  // component polls its own row every few seconds to pick those up:
+  //   pausedAt        — ms timestamp while the teacher has it paused; the
+  //                     clock freezes at (deadline - pausedAt) and a
+  //                     full-screen "paused" cover blocks the test.
+  //   endedExternally — 'submitted' if the teacher ended this section
+  //                     (graded from the last autosave), 'deleted' if the
+  //                     sitting was cancelled. FullMockRunner's own poll
+  //                     then moves the student on.
+  // Before migration_62 is run, deadline_at/paused_at simply don't come
+  // back and everything behaves exactly as before.
+  // ------------------------------------------------------------------
+  const [pausedAt, setPausedAt] = useState(null)
+  const [endedExternally, setEndedExternally] = useState(null)
+
+  // ------------------------------------------------------------------
   // Refs mirroring the state above — fixes a real bug found 2026-09-26
   // during a full audit: the auto-submit timer's `tick` closure (below)
   // is only re-created when `phase`/`deadline` change, which for
@@ -679,7 +699,9 @@ export function ExamTaker({
     let timeoutId
     let failures = 0
 
-    const NORMAL_DELAY = 30_000
+    // 15s (was 30s) since 2026-09-29: "End section now" from Live Mocks
+    // grades whatever was last autosaved, so a shorter gap loses less.
+    const NORMAL_DELAY = 15_000
     const MIN_RETRY_DELAY = 5_000
     const MAX_RETRY_DELAY = 30_000
 
@@ -750,7 +772,7 @@ export function ExamTaker({
     const start = async () => {
       const { data: existing, error: lookupError } = await supabase
         .from('mock_attempts')
-        .select('id, started_at, draft_answers')
+        .select('*')
         .eq('exam_id', exam.id)
         .eq('user_id', selfId)
         .is('submitted_at', null)
@@ -788,10 +810,19 @@ export function ExamTaker({
           // this with a brand-new window.
           reviewStartedAtRef.current = draft.reviewStartedAt
           setReviewPhase(true)
-          setDeadline(new Date(draft.reviewStartedAt).getTime() + REVIEW_WINDOW_MS)
+          setDeadline(
+            existing.deadline_at
+              ? new Date(existing.deadline_at).getTime()
+              : new Date(draft.reviewStartedAt).getTime() + REVIEW_WINDOW_MS
+          )
         } else {
-          setDeadline(new Date(existing.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
+          setDeadline(
+            existing.deadline_at
+              ? new Date(existing.deadline_at).getTime()
+              : new Date(existing.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
+          )
         }
+        setPausedAt(existing.paused_at ? new Date(existing.paused_at).getTime() : null)
 
         setPhase('in-progress')
         onAttemptStarted?.(existing.id)
@@ -801,7 +832,7 @@ export function ExamTaker({
       const { data, error: startError } = await supabase
         .from('mock_attempts')
         .insert({ exam_id: exam.id, user_id: selfId })
-        .select('id, started_at')
+        .select('*')
         .single()
 
       if (cancelled) return
@@ -816,7 +847,11 @@ export function ExamTaker({
       // started_at comes back from the row itself (server-assigned) rather
       // than Date.now() here, so the very first render already agrees with
       // whatever a resume later computes from the same column.
-      setDeadline(new Date(data.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000)
+      setDeadline(
+        data.deadline_at
+          ? new Date(data.deadline_at).getTime()
+          : new Date(data.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
+      )
       setPhase('in-progress')
       onAttemptStarted?.(data.id)
     }
@@ -829,8 +864,37 @@ export function ExamTaker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exam.id])
 
+  // One-off immediate save of the current draft — same payload as the
+  // periodic autosave below. Used the moment a teacher pause is detected.
+  const saveDraftNow = () => {
+    const currentAttemptId = attemptIdRef.current
+    if (!currentAttemptId) return
+    supabase
+      .from('mock_attempts')
+      .update({
+        tab_switch_count: tabSwitchCountRef.current,
+        draft_answers: {
+          answers: answersRef.current,
+          audioEnded: Object.keys(audioEndedBySectionRef.current),
+          reviewStartedAt: reviewStartedAtRef.current,
+          notes: notesRef.current,
+        },
+      })
+      .eq('id', currentAttemptId)
+      .then(({ error: saveError }) => {
+        if (saveError) console.error('Could not save on pause:', saveError)
+      })
+  }
+
   useEffect(() => {
     if (phase !== 'in-progress' || !deadline) return
+
+    // Paused by the teacher: the clock shows exactly the time that was
+    // left at the moment of pausing and never runs out.
+    if (pausedAt) {
+      setRemainingMs(Math.max(0, deadline - pausedAt))
+      return
+    }
 
     const tick = () => {
       const left = deadline - Date.now()
@@ -844,7 +908,59 @@ export function ExamTaker({
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, deadline])
+  }, [phase, deadline, pausedAt])
+
+  // Poll this attempt's own row for teacher actions (pause/resume, extra
+  // time, section ended, sitting cancelled) — see the TEACHER CONTROL note
+  // at the top of this component. Every 5s is quick enough that a pause
+  // lands almost immediately, and it's one tiny single-row read.
+  const pausedAtRef = useRef(pausedAt)
+  pausedAtRef.current = pausedAt
+  useEffect(() => {
+    if (phase !== 'in-progress' || !attemptId) return
+    let cancelled = false
+
+    const poll = async () => {
+      const { data: row, error: pollError } = await supabase
+        .from('mock_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .maybeSingle()
+
+      if (cancelled || pollError) return
+
+      if (!row) {
+        setEndedExternally('deleted')
+        setPhase('ended')
+        return
+      }
+      if (row.submitted_at && !submittingRef.current) {
+        setEndedExternally('submitted')
+        setPhase('ended')
+        return
+      }
+
+      if (row.deadline_at) {
+        const serverDeadline = new Date(row.deadline_at).getTime()
+        setDeadline((prev) => (prev === serverDeadline ? prev : serverDeadline))
+      }
+
+      const nextPaused = row.paused_at ? new Date(row.paused_at).getTime() : null
+      if (nextPaused && !pausedAtRef.current) {
+        // Just got paused — save everything right now so nothing typed
+        // since the last autosave is lost if the break is a long one.
+        saveDraftNow()
+      }
+      setPausedAt((prev) => (prev === nextPaused ? prev : nextPaused))
+    }
+
+    const id = setInterval(poll, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, attemptId])
 
   // Flash the 10-minute / 5-minute warnings, exactly once each, per the
   // real computer-delivered test's own "timer flashes at 10 and 5
@@ -1075,6 +1191,23 @@ export function ExamTaker({
     )
   }
 
+  if (phase === 'ended') {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-900 shadow-sm">
+        <p className="text-lg font-bold">
+          {endedExternally === 'deleted'
+            ? 'This sitting was cancelled by your teacher.'
+            : 'Your teacher has ended this section.'}
+        </p>
+        <p className="mt-2 text-sm text-slate-500">
+          {endedExternally === 'deleted'
+            ? 'Please wait — you will be taken back in a moment.'
+            : 'Your answers have been recorded. Please wait — the next part will open in a moment.'}
+        </p>
+      </div>
+    )
+  }
+
   const timerLevel = reviewPhase || remainingMs <= 5 * 60_000
     ? 'critical'
     : remainingMs <= 10 * 60_000
@@ -1108,6 +1241,17 @@ export function ExamTaker({
           run?.()
         }}
       />
+      {pausedAt && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 p-6">
+          <div className="max-w-md rounded-xl bg-white px-8 py-7 text-center text-slate-900 shadow-2xl">
+            <p className="text-xl font-bold">Your test has been paused</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Your teacher has paused this test. The timer is stopped and your answers are saved.
+              It will continue from exactly where you are when your teacher resumes it.
+            </p>
+          </div>
+        </div>
+      )}
       {flashMessage && (
         <div className="fixed top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-ink/95 px-4 py-2 text-sm font-semibold text-paper shadow-lg animate-pulse">
           ⏱ {flashMessage}
@@ -1500,6 +1644,7 @@ export function ExamTaker({
                   onEnded={() => handleAudioEnded(section.id)}
                   alreadyEnded={!!audioEndedBySection[section.id]}
                   volume={volume}
+                  paused={Boolean(pausedAt)}
                 />
               </div>
             )}
@@ -1572,13 +1717,23 @@ function QuestionNavigator({ questions, answers, flags, onJump }) {
 // "Played" state. The volume slider moved into the ☰ Settings panel
 // (see EXAM_THEMES block below) alongside the other display controls,
 // rather than sitting in this line the real exam doesn't show it in.
-function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume }) {
+function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false }) {
   const audioRef = useRef(null)
   const [status, setStatus] = useState(alreadyEnded ? 'done' : 'ready') // ready | playing | done
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
+
+  // Teacher pause (migration_62) stops the recording where it is; resume
+  // carries on from the same second — the only way this player is ever
+  // paused, since the student has no pause control of their own.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || status !== 'playing') return
+    if (paused) audio.pause()
+    else audio.play().catch(() => {})
+  }, [paused, status])
 
   const handlePlay = () => {
     if (status !== 'ready') return
@@ -1666,15 +1821,42 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
     setToolbar(getSelectionOffsets())
   }
 
+  // BUG FIX 2026-09-29 (Jasur: "highlighting, note taking is not
+  // working"): this outside-click handler used to close the toolbar on
+  // ANY mousedown outside the passage container — and the toolbar itself
+  // is rendered outside that container. So pressing "Highlight" or
+  // "Note" fired this first, unmounted the toolbar, and the button's own
+  // click never happened. Neither action could ever succeed with a mouse.
+  // Clicks inside the toolbar (and the note editor) are now ignored here.
+  const toolbarRef = useRef(null)
+  const noteEditorRef = useRef(null)
+  const noteDraftRef = useRef('')
+  noteDraftRef.current = noteDraft
   useEffect(() => {
     if (!toolbar) return
     const onDown = (e) => {
       if (containerRef.current?.contains(e.target)) return
+      if (toolbarRef.current?.contains(e.target)) return
       setToolbar(null)
     }
     window.addEventListener('mousedown', onDown)
     return () => window.removeEventListener('mousedown', onDown)
   }, [toolbar])
+
+  // The note editor had no way to close by clicking elsewhere, and was
+  // pinned to the bottom of the passage box rather than near anything —
+  // close it on an outside click, keeping whatever was typed saved.
+  useEffect(() => {
+    if (!openNoteFor) return
+    const onDown = (e) => {
+      if (noteEditorRef.current?.contains(e.target)) return
+      onUpdateNote(openNoteFor, noteDraftRef.current)
+      setOpenNoteFor(null)
+    }
+    window.addEventListener('mousedown', onDown)
+    return () => window.removeEventListener('mousedown', onDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNoteFor])
 
   const handleHighlight = () => {
     if (!toolbar) return
@@ -1750,6 +1932,8 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
 
       {toolbar && (
         <div
+          ref={toolbarRef}
+          onMouseDown={(e) => e.preventDefault()}
           style={{ position: 'fixed', left: Math.max(8, toolbar.rect.left), top: Math.max(8, toolbar.rect.top - 46) }}
           className="z-30 flex items-center gap-1.5 rounded-full border border-line bg-panel px-2 py-1.5 shadow-lg"
         >
@@ -1771,7 +1955,7 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
       )}
 
       {openNoteFor && (
-        <div className="absolute z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-3 shadow-lg">
+        <div ref={noteEditorRef} className="absolute z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-3 shadow-lg">
           <p className="mb-1.5 text-[11px] uppercase tracking-wide text-mist font-mono">Note</p>
           <textarea
             value={noteDraft}

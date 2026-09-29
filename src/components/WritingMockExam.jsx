@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import ConfirmModal from './ConfirmModal'
-import { MIN_WORDS, countWords, secondsRemaining, formatClock } from '../lib/writingMock'
+import { MIN_WORDS, countWords, formatClock } from '../lib/writingMock'
 
 const AUTOSAVE_MS = 5000
 
@@ -202,13 +201,28 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     task2: attempt.task2_text || '',
   })
 
+  // Server deadline + teacher pause (migration_62, 2026-09-29) — same model
+  // as MockExams.jsx's ExamTaker: deadline_at is set by the database when
+  // the attempt is created and only a teacher can move it (pause/resume,
+  // extra time). Falls back to started_at + the exam's limit for a row
+  // created before migration_62, and to 60 minutes if the exam object
+  // passed in has no time_limit_minutes at all.
+  const [deadlineMs, setDeadlineMs] = useState(() =>
+    attempt.deadline_at
+      ? new Date(attempt.deadline_at).getTime()
+      : new Date(attempt.started_at).getTime() + (exam.time_limit_minutes || 60) * 60_000
+  )
+  const [pausedAt, setPausedAt] = useState(() =>
+    attempt.paused_at ? new Date(attempt.paused_at).getTime() : null
+  )
+  const [endedExternally, setEndedExternally] = useState(null) // 'submitted' | 'deleted' | null
+
   const [remaining, setRemaining] = useState(() =>
-    secondsRemaining(attempt.started_at, exam.time_limit_minutes)
+    Math.max(0, Math.round((deadlineMs - (pausedAt ?? Date.now())) / 1000))
   )
 
   const [submitting, setSubmitting] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState(null)
-  const [confirmDialog, setConfirmDialog] = useState(null)
   const [error, setError] = useState('')
 
   const textsRef = useRef(texts)
@@ -251,8 +265,15 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   }
 
   useEffect(() => {
+    if (endedExternally) return
+
+    if (pausedAt) {
+      setRemaining(Math.max(0, Math.round((deadlineMs - pausedAt) / 1000)))
+      return
+    }
+
     const tick = () => {
-      const left = secondsRemaining(attempt.started_at, exam.time_limit_minutes)
+      const left = Math.max(0, Math.round((deadlineMs - Date.now()) / 1000))
       setRemaining(left)
 
       if (left <= 0 && !submittedRef.current && !submittingRef.current) {
@@ -264,7 +285,48 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [deadlineMs, pausedAt, endedExternally])
+
+  // Poll this attempt's own row for teacher actions — pause/resume, extra
+  // time, "end section now", or the sitting being cancelled.
+  useEffect(() => {
+    if (endedExternally) return
+    let cancelled = false
+
+    const id = setInterval(async () => {
+      if (submittedRef.current) return
+      const { data: row, error: pollError } = await supabase
+        .from('writing_mock_attempts')
+        .select('*')
+        .eq('id', attempt.id)
+        .maybeSingle()
+
+      if (cancelled || pollError) return
+
+      if (!row) {
+        submittedRef.current = true
+        setEndedExternally('deleted')
+        return
+      }
+      if (row.submitted_at && !submittingRef.current) {
+        submittedRef.current = true
+        setEndedExternally('submitted')
+        return
+      }
+      if (row.deadline_at) {
+        const serverDeadline = new Date(row.deadline_at).getTime()
+        setDeadlineMs((prev) => (prev === serverDeadline ? prev : serverDeadline))
+      }
+      const nextPaused = row.paused_at ? new Date(row.paused_at).getTime() : null
+      setPausedAt((prev) => (prev === nextPaused ? prev : nextPaused))
+    }, 5000)
+
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endedExternally])
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -333,60 +395,34 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     }
   }, [])
 
-  const handleManualSubmit = () => {
-    const short = tasks.filter((t) => MIN_WORDS[t] && countWords(texts[t]) < MIN_WORDS[t])
-
-    if (short.length) {
-      setConfirmDialog({
-        title: 'Short on words',
-        points: short.map(
-          (t) =>
-            `${t === 'task1' ? 'Task 1' : 'Task 2'}: ${countWords(texts[t])} words (IELTS recommends at least ${MIN_WORDS[t]})`
-        ),
-        message: 'You can still submit as-is, or go back and keep writing.',
-        confirmLabel: 'Submit anyway',
-        cancelLabel: 'Keep writing',
-        tone: 'coral',
-        onConfirm: () => finishTest({ auto: false }),
-      })
-      return
-    }
-
-    setConfirmDialog({
-      title: 'Submit your writing mock?',
-      message:
-        "You won't be able to make further changes after this. A writing examiner will mark it and you'll see your band on the Overview tab.",
-      confirmLabel: 'Submit Now',
-      cancelLabel: 'Keep writing',
-      onConfirm: () => finishTest({ auto: false }),
-    })
-  }
-
-  const handleMinimize = () => {
-    setConfirmDialog({
-      title: 'Hide the writing window?',
-      message:
-        'The timer keeps running in the background. Come back to "Take a Test" anytime — it opens straight back up where you left off.',
-      confirmLabel: 'Minimize',
-      cancelLabel: 'Stay here',
-      onConfirm: async () => {
-        await supabase
-          .from('writing_mock_attempts')
-          .update({
-            task1_text: textsRef.current.task1,
-            task2_text: textsRef.current.task2,
-            tab_switch_count: tabSwitchCountRef.current,
-          })
-          .eq('id', attempt.id)
-
-        onMinimize()
-      },
-    })
-  }
+  // No "Submit Now" and no "Minimize" any more (2026-09-29) — same rule
+  // Jasur set for Listening/Reading ("submit button shouldnt be
+  // available") and his "students can freely press back to dashboard and
+  // interrupt the mock": Writing ends only when its time runs out, or when
+  // the teacher ends it from Live Mocks. `onMinimize` is still accepted as
+  // a prop so existing callers don't break, but nothing calls it.
+  void onMinimize
 
   const blockPaste = (e) => e.preventDefault()
 
   const timeUp = remaining <= 0
+
+  if (endedExternally) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-900 shadow-sm">
+        <p className="text-lg font-bold">
+          {endedExternally === 'deleted'
+            ? 'This sitting was cancelled by your teacher.'
+            : 'Your teacher has ended the Writing test.'}
+        </p>
+        <p className="mt-2 text-sm text-slate-500">
+          {endedExternally === 'deleted'
+            ? 'Please wait — you will be taken back in a moment.'
+            : 'Your writing up to the last save has been recorded. Please wait a moment.'}
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col rounded-2xl border border-line bg-panel overflow-hidden">
@@ -410,15 +446,6 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
           >
             {formatClock(remaining)}
           </div>
-
-          <button
-            type="button"
-            onClick={handleMinimize}
-            disabled={submitting}
-            className="focus-ring text-xs text-mist hover:text-paper disabled:opacity-40"
-          >
-            Minimize
-          </button>
         </div>
       </div>
 
@@ -503,7 +530,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
                   onPaste={blockPaste}
                   onDrop={blockPaste}
                   onContextMenu={(e) => e.preventDefault()}
-                  disabled={submitting || timeUp}
+                  disabled={submitting || timeUp || Boolean(pausedAt)}
                   placeholder={`Write your ${t === 'task1' ? 'Task 1' : 'Task 2'} answer here…`}
                   className="focus-ring min-h-[320px] w-full resize-none bg-panel-2 border border-line rounded-lg px-4 py-3 text-sm leading-6 text-paper"
                   spellCheck={false}
@@ -531,18 +558,22 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
 
       <div className="shrink-0 flex items-center justify-between gap-3 border-t border-line bg-panel px-4 py-3 sm:px-6">
         <p className="text-xs text-mist">
-          Pasting is disabled — type your answer directly. Your work is saved automatically.
+          Pasting is disabled — type your answer directly. Your work is saved automatically, and
+          the test finishes by itself when the time runs out.
         </p>
-
-        <button
-          type="button"
-          onClick={handleManualSubmit}
-          disabled={submitting}
-          className="focus-ring px-5 py-2.5 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
-        >
-          {submitting ? 'Submitting…' : 'Submit Now'}
-        </button>
       </div>
+
+      {pausedAt && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 p-6">
+          <div className="max-w-md rounded-xl bg-white px-8 py-7 text-center text-slate-900 shadow-2xl">
+            <p className="text-xl font-bold">Your test has been paused</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Your teacher has paused this test. The timer is stopped and your writing is saved.
+              It will continue from exactly where you are when your teacher resumes it.
+            </p>
+          </div>
+        </div>
+      )}
 
       {timeUp && (
         <div className="px-4 sm:px-6 pb-4">
@@ -552,16 +583,6 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
         </div>
       )}
 
-      <ConfirmModal
-        open={Boolean(confirmDialog)}
-        {...confirmDialog}
-        onCancel={() => setConfirmDialog(null)}
-        onConfirm={() => {
-          const run = confirmDialog?.onConfirm
-          setConfirmDialog(null)
-          run?.()
-        }}
-      />
     </div>
   )
 }

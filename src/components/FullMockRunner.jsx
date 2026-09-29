@@ -84,6 +84,20 @@ import { isTestToneSupported, playTestTone } from '../lib/testTone'
 
 const STAGE_ORDER = ['listening', 'reading', 'writing']
 
+// A sitting can include only some sections (migration_62 — chosen per
+// code by the teacher, e.g. Writing only). The next stage is the next one
+// in Listening -> Reading -> Writing order that this sitting includes,
+// or 'done'. Must stay identical to public.full_mock_next_stage() in SQL,
+// which the database uses to reject any other transition.
+function nextStageAfter(stage, sections) {
+  const included = Array.isArray(sections) && sections.length ? sections : STAGE_ORDER
+  const idx = STAGE_ORDER.indexOf(stage)
+  for (let i = idx + 1; i < STAGE_ORDER.length; i++) {
+    if (included.includes(STAGE_ORDER[i])) return STAGE_ORDER[i]
+  }
+  return 'done'
+}
+
 const STAGE_META = {
   listening: {
     label: 'Listening',
@@ -120,6 +134,24 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const [currentStageAttemptId, setCurrentStageAttemptId] = useState(null)
   const [justFinished, setJustFinished] = useState(null) // { score, maxScore } | 'writing' | null, shown before advancing
   const [writingStarting, setWritingStarting] = useState(false) // guards startWriting() from firing more than once
+
+  // The Writing exam row itself (prompts, image, time limit). BUG FIX
+  // 2026-09-29: this used to pass WritingTaker a hand-built exam object
+  // reading `task1_prompt_snapshot`/`task2_prompt_snapshot` off the attempt
+  // row — columns that don't exist anywhere — and no time_limit_minutes,
+  // so in a Full Mock the Writing test showed no prompt and its timer
+  // computed 0 seconds left and auto-submitted a blank essay immediately.
+  // Now the real writing_mock_exams row is loaded and passed through.
+  const [writingExam, setWritingExam] = useState(null)
+
+  // The teacher deleted/voided this sitting from Live Mocks while it was
+  // open (see the poll below).
+  const [cancelledByTeacher, setCancelledByTeacher] = useState(false)
+
+  // A move to the next section that has to wait because the teacher has
+  // the sitting paused (the database refuses stage changes while paused).
+  // Runs by itself the moment the pause is lifted — see requestAdvance.
+  const [pendingAdvance, setPendingAdvance] = useState(null) // { nextStage, extra } | null
 
   // Pre-exam system check (2026-09-26) — real computer-delivered IELTS
   // runs a short system/sound check before the test proper begins; this
@@ -175,10 +207,16 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     // exactly which set this is for — no free pick, and no need to load
     // every published set just to show one.
     if (restrictedSet) {
+      // Only an unfinished sitting of THIS set — with pausing, a student
+      // can now legitimately have an unfinished sitting of another set
+      // waiting (resumed from MockCheckIn's "Continue" instead); resuming
+      // that one here would have run the wrong set's exams under this
+      // set's title.
       const { data: attemptRows, error: attemptsError } = await supabase
         .from('full_mock_attempts')
         .select('*')
         .eq('student_id', selfId)
+        .eq('set_id', restrictedSet.id)
         .neq('stage', 'done')
         .order('started_at', { ascending: false })
         .limit(1)
@@ -296,6 +334,34 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         .maybeSingle()
       if (!cancelled && inProgress) setGateConfirmed(true)
 
+      // Already FINISHED this section in this sitting, but the stage never
+      // moved on — e.g. the page was closed on the "Test submitted" screen
+      // before pressing Continue, or the teacher paused it right then.
+      // Without this, the gate would show again and "Start" would begin a
+      // brand-new attempt at a section already sat. Move on instead
+      // (or queue that move until the teacher resumes, if paused).
+      if (!inProgress) {
+        const { data: finished } = await supabase
+          .from('mock_attempts')
+          .select('id')
+          .eq('exam_id', examId)
+          .eq('user_id', selfId)
+          .not('submitted_at', 'is', null)
+          .gte('started_at', activeAttempt.attempt.started_at)
+          .order('submitted_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (cancelled) return
+        if (finished) {
+          requestAdvance(nextStageAfter(stage, activeAttempt.attempt.sections), {
+            [stage === 'listening' ? 'listening_attempt_id' : 'reading_attempt_id']: finished.id,
+          })
+          setModuleLoading(false)
+          return
+        }
+      }
+
       const { data: sections, error: sectionsError } = await supabase
         .from('mock_sections')
         .select('*')
@@ -388,6 +454,102 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     }
   }, [activeAttempt?.attempt?.stage, activeAttempt?.set, selfId])
 
+  // Writing stage: load the real writing exam row (see writingExam's note).
+  useEffect(() => {
+    const setRow = activeAttempt?.set
+    if (activeAttempt?.attempt?.stage !== 'writing' || !setRow) {
+      setWritingExam(null)
+      return
+    }
+
+    let cancelled = false
+    supabase
+      .from('writing_mock_exams')
+      .select('*')
+      .eq('id', setRow.writing_exam_id)
+      .single()
+      .then(({ data, error: examError }) => {
+        if (cancelled) return
+        if (examError) {
+          setError(examError.message || 'Could not load the writing test.')
+          return
+        }
+        setWritingExam(data)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeAttempt?.attempt?.stage, activeAttempt?.set])
+
+  // Teacher control (migration_62): watch this sitting's own row every 5s
+  // for a pause/resume, a section skipped or ended from Live Mocks, or the
+  // sitting being deleted. The stage-change effect right below then resets
+  // the gate for whatever section comes next.
+  useEffect(() => {
+    const attemptRowId = activeAttempt?.attempt?.id
+    if (!attemptRowId || activeAttempt.attempt.stage === 'done' || cancelledByTeacher) return
+
+    let cancelled = false
+    const timer = setInterval(async () => {
+      const { data: row, error: pollError } = await supabase
+        .from('full_mock_attempts')
+        .select('*')
+        .eq('id', attemptRowId)
+        .maybeSingle()
+
+      if (cancelled || pollError) return
+      if (!row) {
+        setCancelledByTeacher(true)
+        return
+      }
+
+      setActiveAttempt((prev) => {
+        if (!prev || prev.attempt.id !== row.id) return prev
+        const a = prev.attempt
+        if (
+          a.stage === row.stage &&
+          a.paused_at === row.paused_at &&
+          JSON.stringify(a.sections) === JSON.stringify(row.sections)
+        ) {
+          return prev
+        }
+        return { ...prev, attempt: row }
+      })
+    }, 5000)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [activeAttempt?.attempt?.id, activeAttempt?.attempt?.stage, cancelledByTeacher])
+
+  // Latest activeAttempt for callbacks created in older renders (the
+  // module-load effect, ExamTaker's onExit) — same stale-closure reason as
+  // the refs in MockExams.jsx.
+  const activeAttemptRef = useRef(activeAttempt)
+  activeAttemptRef.current = activeAttempt
+
+  // Run a queued move as soon as the teacher resumes.
+  useEffect(() => {
+    if (!pendingAdvance || activeAttempt?.attempt?.paused_at) return
+    const queued = pendingAdvance
+    setPendingAdvance(null)
+    advanceStage(queued.nextStage, queued.extra)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAdvance, activeAttempt?.attempt?.paused_at])
+
+  const prevStageRef = useRef(null)
+  useEffect(() => {
+    const stage = activeAttempt?.attempt?.stage ?? null
+    if (prevStageRef.current && stage && prevStageRef.current !== stage) {
+      setGateConfirmed(false)
+      setReadyToStart(false)
+      setCurrentStageAttemptId(null)
+      setJustFinished(null)
+    }
+    prevStageRef.current = stage
+  }, [activeAttempt?.attempt?.stage])
+
   // Writing stage: once confirmed and we know there's nothing to resume,
   // start a fresh writing_mock_attempts row exactly once. This has to be
   // an effect (not a call inside the render body) — a render-body call
@@ -397,6 +559,7 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   useEffect(() => {
     const stage = activeAttempt?.attempt?.stage
     if (stage !== 'writing' || !gateConfirmed || writingResume !== null || writingStarting) return
+    if (activeAttempt?.attempt?.paused_at) return
 
     let cancelled = false
     setWritingStarting(true)
@@ -407,7 +570,7 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAttempt?.attempt?.stage, gateConfirmed, writingResume, writingStarting])
+  }, [activeAttempt?.attempt?.stage, activeAttempt?.attempt?.paused_at, gateConfirmed, writingResume, writingStarting])
 
   const startFullMock = async (set) => {
     setError('')
@@ -451,6 +614,15 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     setCurrentStageAttemptId(null)
     setModuleExamData(null)
     setJustFinished(null)
+  }
+
+  // advanceStage, unless the sitting is paused right now — then queue it.
+  const requestAdvance = (nextStage, extra = {}) => {
+    if (activeAttemptRef.current?.attempt?.paused_at) {
+      setPendingAdvance({ nextStage, extra })
+      return
+    }
+    advanceStage(nextStage, extra)
   }
 
   const startWriting = async () => {
@@ -543,10 +715,51 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const stage = activeAttempt.attempt.stage
   const meta = STAGE_META[stage]
   const setTitle = activeAttempt.set?.title || 'Full Mock'
+  const sittingSections = activeAttempt.attempt.sections
+  const isPaused = Boolean(activeAttempt.attempt.paused_at)
 
-  // ---- System check (once, before Listening's gate only) ----
-  if (stage === 'listening' && !gateConfirmed && !systemCheckPassed) {
-    return <SystemCheckGate setTitle={setTitle} onContinue={() => setSystemCheckPassed(true)} />
+  const pausedScreen = (
+      <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-8 text-center shadow-sm">
+        <span className="text-[11px] uppercase tracking-[0.18em] text-red-600 font-semibold">
+          {setTitle}
+        </span>
+        <p className="mt-2 text-xl font-bold">Your test has been paused</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
+          Your teacher has paused this test. Nothing is lost — when your teacher resumes it, you
+          will continue with the {meta?.label || "next"} test from here. If it's being continued another
+          day, you can leave now and come back through Take a Test → Continue.
+        </p>
+        {/* The one way out of the locked exam screen — and only while the
+            teacher has it paused, so it can never be used to walk out of a
+            running section. */}
+        <button
+          type="button"
+          onClick={finishUp}
+          className="focus-ring mt-6 inline-block rounded-full border-2 border-slate-900 px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-900 hover:text-white transition-colors"
+        >
+          Leave for now
+        </button>
+      </div>
+  )
+
+  // ---- Sitting deleted/voided by the teacher while open ----
+  if (cancelledByTeacher) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-8 text-center shadow-sm">
+        <p className="text-lg font-bold">This sitting was cancelled by your teacher.</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
+          Nothing from it will count. If your teacher has sent you a new code, you can check in
+          with it.
+        </p>
+        <button
+          type="button"
+          onClick={finishUp}
+          className="focus-ring mt-6 inline-block rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          OK
+        </button>
+      </div>
+    )
   }
 
   // ---- Done ----
@@ -559,7 +772,7 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         <p className="mt-2 font-display text-2xl text-paper">{setTitle}</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-mist">
           Submitted. Just like a real exam, your results aren't out yet — your teacher will
-          release your Listening, Reading and Writing bands to Overview once they're ready.
+          release your bands to Overview once they're ready.
         </p>
         <button
           type="button"
@@ -572,16 +785,32 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     )
   }
 
+  // ---- A move to the next section is queued behind a teacher pause ----
+  if (pendingAdvance) {
+    return isPaused ? (
+      pausedScreen
+    ) : (
+      <div className="ticket rounded-2xl p-8 text-center">
+        <p className="text-sm text-mist">Continuing…</p>
+      </div>
+    )
+  }
+
   // ---- Writing stage: resume straight in if already started ----
+  // (pausing is handled inside WritingTaker itself, so nothing typed is
+  // ever lost by unmounting it)
   if (stage === 'writing' && writingResume) {
+    if (!writingExam) {
+      return (
+        <div className="ticket rounded-2xl p-8 text-center">
+          <p className="text-sm text-mist">Loading the writing test…</p>
+          {error && <p className="mt-3 text-sm text-coral">{error}</p>}
+        </div>
+      )
+    }
     return (
       <WritingTaker
-        exam={{
-          id: activeAttempt.set.writing_exam_id,
-          title: activeAttempt.set.title,
-          task1_prompt: writingResume.task1_prompt_snapshot,
-          task2_prompt: writingResume.task2_prompt_snapshot,
-        }}
+        exam={writingExam}
         attempt={writingResume}
         onDone={() => advanceStage('done', { writing_attempt_id: writingResume.id })}
         onMinimize={backToPicker}
@@ -590,6 +819,7 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   }
 
   // ---- Listening/Reading stage: exam already confirmed+started ----
+  // (same: ExamTaker shows its own "paused" cover and freezes its clock)
   if ((stage === 'listening' || stage === 'reading') && gateConfirmed) {
     if (moduleLoading || !moduleExamData) {
       return (
@@ -599,24 +829,34 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       )
     }
 
-    const nextStage = stage === 'listening' ? 'reading' : 'writing'
-    const nextLabel = stage === 'listening' ? 'Reading' : 'Writing'
+    const nextStage = nextStageAfter(stage, sittingSections)
+    const nextLabel = nextStage === 'done' ? null : STAGE_META[nextStage].label
 
     return (
       <ExamTaker
         selfId={selfId}
         exam={moduleExamData.exam}
         sections={moduleExamData.sections}
-        ctaLabel={`Continue to ${nextLabel} →`}
+        ctaLabel={nextLabel ? `Continue to ${nextLabel} →` : 'Finish →'}
         onAttemptStarted={setCurrentStageAttemptId}
         onExit={() =>
-          advanceStage(nextStage, {
+          requestAdvance(nextStage, {
             [stage === 'listening' ? 'listening_attempt_id' : 'reading_attempt_id']:
               currentStageAttemptId,
           })
         }
       />
     )
+  }
+
+  // ---- Paused by the teacher between/before sections ----
+  if (isPaused) {
+    return pausedScreen
+  }
+
+  // ---- System check (once, before Listening's gate only) ----
+  if (stage === 'listening' && !gateConfirmed && !systemCheckPassed) {
+    return <SystemCheckGate setTitle={setTitle} onContinue={() => setSystemCheckPassed(true)} />
   }
 
   // ---- Writing stage: confirmed, no in-progress attempt yet — the effect

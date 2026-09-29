@@ -48,12 +48,17 @@ function normalizeCode(raw) {
   return raw.trim().toUpperCase().replace(/\s+/g, '')
 }
 
-export default function MockCheckIn({ selfId }) {
+// `checkedInSet` (a full_mock_sets row, once a code checks out) is owned
+// by MockTestCenter, not held here — see the EXAM LOCKDOWN note there.
+// Setting it is what switches MockTestCenter into its locked full-screen
+// layout, which remounts this component in a new spot; keeping it up
+// there means that remount can't wipe it.
+export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange }) {
   const [fullName, setFullName] = useState('')
   const [code, setCode] = useState('')
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState('')
-  const [checkedInSet, setCheckedInSet] = useState(null) // a full_mock_sets row, once the code checks out
+  const setCheckedInSet = onCheckedInSetChange
 
   /*
    * ================================================================
@@ -115,6 +120,63 @@ export default function MockCheckIn({ selfId }) {
     reloadAvailableMocks()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selfId])
+
+  /*
+   * UNFINISHED SITTINGS — "Continue" (2026-09-29, migration_62). A code
+   * is single-use, so before teacher pausing existed there was no way
+   * back into a sitting once its window was closed. Now a teacher can
+   * pause a mock so the student finishes (say) Writing another day — this
+   * lists every sitting the student hasn't finished, with a Continue
+   * button that re-enters it without a new code. FullMockRunner then
+   * resumes exactly where it was (and shows "paused" if it still is).
+   */
+  const [unfinished, setUnfinished] = useState([]) // [{ attempt, set }]
+  const [continueError, setContinueError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const { data: rows, error: rowsError } = await supabase
+        .from('full_mock_attempts')
+        .select('*')
+        .eq('student_id', selfId)
+        .neq('stage', 'done')
+        .order('started_at', { ascending: false })
+
+      if (cancelled) return
+      if (rowsError) {
+        console.error('Failed to load unfinished mocks:', rowsError)
+        return
+      }
+      const setIds = [...new Set((rows || []).map((r) => r.set_id))]
+      if (setIds.length === 0) {
+        setUnfinished([])
+        return
+      }
+      const { data: setRows } = await supabase.from('full_mock_sets').select('*').in('id', setIds)
+      if (cancelled) return
+      const setById = {}
+      ;(setRows || []).forEach((s) => {
+        setById[s.id] = s
+      })
+      setUnfinished(
+        (rows || []).filter((r) => setById[r.set_id]).map((r) => ({ attempt: r, set: setById[r.set_id] }))
+      )
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [selfId])
+
+  const continueSitting = (set) => {
+    setContinueError('')
+    if (!set) {
+      setContinueError('This mock is no longer available — ask your teacher.')
+      return
+    }
+    setCheckedInSet(set)
+  }
 
   // What to show for one set: an unused/unrevoked code takes priority
   // (they can act on it right now), then a pending request, then their
@@ -208,7 +270,11 @@ export default function MockCheckIn({ selfId }) {
         return
       }
       if (row.used_at) {
-        setError('This code has already been used to start a mock. Ask your teacher for a new one if you need to retake it.')
+        setError(
+          unfinished.some((u) => u.set.id === row.full_mock_set_id)
+            ? 'This code has already been used — to carry on with that mock, press Continue above.'
+            : 'This code has already been used to start a mock. Ask your teacher for a new one if you need to retake it.'
+        )
         return
       }
 
@@ -268,8 +334,42 @@ export default function MockCheckIn({ selfId }) {
     )
   }
 
+  const STAGE_LABELS = { listening: 'Listening', reading: 'Reading', writing: 'Writing' }
+
   return (
     <div className="mx-auto w-full max-w-md flex flex-col gap-6">
+      {unfinished.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 shadow-sm">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Unfinished mock{unfinished.length === 1 ? '' : 's'}
+          </h3>
+          {continueError && <p className="mt-2 text-sm text-red-600">{continueError}</p>}
+          <div className="mt-3 flex flex-col gap-2.5">
+            {unfinished.map(({ attempt, set }) => (
+              <div
+                key={attempt.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{set.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {attempt.paused_at ? 'Paused by your teacher · ' : ''}
+                    Next: {STAGE_LABELS[attempt.stage] || attempt.stage}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => continueSitting(set)}
+                  className="shrink-0 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                >
+                  Continue →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-10 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-red-600" aria-hidden />
