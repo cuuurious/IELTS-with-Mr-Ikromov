@@ -544,6 +544,14 @@ export default function TeacherMockCenter({ onExit }) {
   // only written once that item is actually released.
   const [bandDrafts, setBandDrafts] = useState({})
   const [selectedReleaseKeys, setSelectedReleaseKeys] = useState(() => new Set())
+  // Bumped to re-fetch students/attempts/writing/speaking (the main load
+  // effect below depends on it). Before 2026-09-29 that data loaded once
+  // on open and never again, so deleting a sitting in Live Mocks left its
+  // results sitting in the Results tab until a full page reload — Jasur:
+  // "i have deleted sitting of mavluda, why there it is not automatically
+  // deleted? isnt it synced?" Now Live Mocks bumps it after every action,
+  // and switching to Student Progress/Results/Students re-fetches too.
+  const [dataVersion, setDataVersion] = useState(0)
   const [releasing, setReleasing] = useState(false)
   const [releaseError, setReleaseError] = useState('')
 
@@ -1639,7 +1647,20 @@ export default function TeacherMockCenter({ onExit }) {
     reloadScheduledSessions()
     reloadMockAccessRequests()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [dataVersion])
+
+  // Re-fetch when coming back to a tab that shows attempts, so it always
+  // reflects what happened elsewhere (Live Mocks, new submissions).
+  const firstSectionRef = useRef(true)
+  useEffect(() => {
+    if (firstSectionRef.current) {
+      firstSectionRef.current = false
+      return
+    }
+    if (section === 'progress' || section === 'results' || section === 'students') {
+      setDataVersion((v) => v + 1)
+    }
+  }, [section])
 
   // Rolls the per-question rows from get_mock_question_stats up by
   // question TYPE — the headline view of "which kinds of questions trip
@@ -3767,6 +3788,7 @@ export default function TeacherMockCenter({ onExit }) {
               students={students}
               fullMockSets={fullMockSets}
               onReissueCode={reissueAccessCode}
+              onDataChanged={() => setDataVersion((v) => v + 1)}
             />
           )}
 

@@ -67,7 +67,7 @@ function countWords(text) {
   return t ? t.split(/\s+/).length : 0
 }
 
-export default function LiveMocksPanel({ students, fullMockSets, onReissueCode }) {
+export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, onDataChanged }) {
   const [filter, setFilter] = useState('live')
   const [sittings, setSittings] = useState([])
   const [rlAttempts, setRlAttempts] = useState([])
@@ -169,6 +169,9 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode }
       await fn()
       if (successText) setNotice({ tone: 'sage', text: successText })
       await load()
+      // Results / Student Progress live in the parent and must drop (or
+      // pick up) whatever this action just changed.
+      onDataChanged?.()
     } catch (err) {
       console.error('Live mock action failed:', err)
       setNotice({ tone: 'coral', text: err?.message || 'That did not work — please try again.' })
