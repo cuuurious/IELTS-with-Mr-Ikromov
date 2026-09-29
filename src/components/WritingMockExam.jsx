@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { MIN_WORDS, countWords, formatClock } from '../lib/writingMock'
+import { readSession, writeSession } from '../lib/sessionState'
 
 const AUTOSAVE_MS = 5000
 
@@ -193,7 +194,10 @@ export default function WritingMockExam({ selfId }) {
 
 export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   const tasks = useMemo(() => tasksFor(exam), [exam])
-  const [activeTask, setActiveTask] = useState(tasks[0])
+  const [activeTask, setActiveTask] = useState(() => {
+    const saved = readSession(`ielts:writingPart:${attempt.id}`, null)
+    return saved && tasks.includes(saved) ? saved : tasks[0]
+  })
   const [imageLightboxOpen, setImageLightboxOpen] = useState(false)
 
   const [texts, setTexts] = useState({
@@ -424,83 +428,115 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     )
   }
 
-  return (
-    <div className="flex flex-col rounded-2xl border border-line bg-panel overflow-hidden">
-      <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-panel px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="font-display text-lg text-paper truncate">{exam.title}</div>
-          <span className="shrink-0 text-xs font-mono text-mist">
-            {tasks.length > 1 ? 'Full Test' : 'Task 2'}
-          </span>
-        </div>
+  // REAL-EXAM LAYOUT (2026-09-29) — Jasur: "in task 1, the graph has to
+  // be on the left side of the screen, like in the screenshot i sent you.
+  // task 2 has to be like in the screenshot as well." His screenshots of
+  // the real computer-delivered test: pink bar on top; a "Part 1" box
+  // with "You should spend about 20 minutes on this task. Write at least
+  // 150 words."; below it a split screen — the task (and Task 1's chart)
+  // on the LEFT, the answer box on the RIGHT with "Word count: N" under
+  // it; ← / → arrows bottom-right; and a footer with "Part 1  0 of 1" /
+  // "Part 2  [2]". The whole screen never scrolls — only the task pane
+  // (e.g. a tall chart) scrolls on its own, and the answer box.
+  const partNo = (t) => (t === 'task1' ? 1 : 2)
+  const partGuide = (t) =>
+    t === 'task1'
+      ? `You should spend about 20 minutes on this task. Write at least ${MIN_WORDS.task1 || 150} words.`
+      : `You should spend about 40 minutes on this task. Write at least ${MIN_WORDS.task2 || 250} words.`
+  const activeIdx = Math.max(0, tasks.indexOf(activeTask))
+  const goTask = (t) => {
+    setActiveTask(t)
+    writeSession(`ielts:writingPart:${attempt.id}`, t)
+  }
 
-        <div className="flex shrink-0 items-center gap-3">
-          <div
-            className={`font-mono text-lg tabular-nums px-3 py-1 rounded-md border ${
-              remaining <= 60
-                ? 'border-coral text-coral animate-pulse'
-                : remaining <= 300
-                ? 'border-amber text-amber'
-                : 'border-line text-paper'
-            }`}
+  return (
+    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-ink text-paper">
+      <div
+        className="relative z-20 flex shrink-0 flex-wrap items-center justify-between gap-3 px-5 py-2.5 shadow-md"
+        style={{ background: '#e3a7ae', color: '#1c1b29' }}
+      >
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60">Writing</p>
+          <p className="truncate font-display text-sm font-bold leading-tight">{exam.title}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-4">
+          {lastSavedAt && (
+            <span className="hidden text-xs opacity-70 sm:inline">saved {lastSavedAt.toLocaleTimeString()}</span>
+          )}
+          <span
+            className={`font-display text-lg font-bold tabular-nums ${remaining <= 60 ? 'animate-pulse' : ''}`}
+            style={{ color: remaining <= 300 ? '#b3261e' : undefined }}
           >
             {formatClock(remaining)}
-          </div>
+          </span>
         </div>
       </div>
 
-      {tasks.length > 1 && (
-        <div className="shrink-0 flex gap-2 border-b border-line bg-panel-2 px-4 py-2 sm:px-6">
-          {tasks.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setActiveTask(t)}
-              className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                activeTask === t ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
-              }`}
-            >
-              {t === 'task1' ? 'Task 1' : 'Task 2'} · {countWords(texts[t])} words
-            </button>
-          ))}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 pt-4 sm:px-6">
+        <div className="shrink-0 rounded-md border border-line bg-panel px-5 py-3">
+          <p className="font-display text-2xl leading-tight text-paper">Part {partNo(activeTask)}</p>
+          <p className="mt-1 text-sm text-paper/85">{partGuide(activeTask)}</p>
         </div>
-      )}
 
-      <div className="px-4 py-5 sm:px-6">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4">
+        <div className="relative min-h-0 flex-1">
           {tasks.map((t) => {
             if (t !== activeTask) return null
 
             const prompt = t === 'task1' ? exam.task1_prompt : exam.task2_prompt
             const image = t === 'task1' ? exam.task1_image_url : null
             const words = countWords(texts[t])
-            const min = MIN_WORDS[t]
-            const under = min && words < min
 
             return (
-              <div key={t} className="flex flex-col gap-3">
-                {(prompt || image) && (
-                  <div className="shrink-0 rounded-lg border border-line bg-panel-2 p-4">
-                    {prompt && (
-                      <p className="text-sm text-paper-dim whitespace-pre-wrap">{prompt}</p>
-                    )}
+              <div
+                key={t}
+                className="grid h-full grid-cols-1 gap-5 overflow-y-auto overscroll-contain pb-20 lg:grid-cols-2 lg:gap-0 lg:overflow-hidden lg:pb-0"
+              >
+                {/* LEFT — the task itself (and Task 1's chart/graph/table). */}
+                <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:border-line lg:pr-6">
+                  {prompt && (
+                    <p className="whitespace-pre-wrap text-[0.95rem] font-semibold leading-relaxed text-paper">
+                      {prompt}
+                    </p>
+                  )}
+                  {image && (
+                    <button
+                      type="button"
+                      onClick={() => setImageLightboxOpen(true)}
+                      className="focus-ring mt-4 block w-full cursor-zoom-in"
+                      title="Click to enlarge"
+                    >
+                      <img
+                        src={image}
+                        alt="Task 1 chart"
+                        className="w-full rounded-sm border border-line bg-white object-contain"
+                      />
+                    </button>
+                  )}
+                </div>
 
-                    {image && (
-                      <button
-                        type="button"
-                        onClick={() => setImageLightboxOpen(true)}
-                        className="focus-ring mt-3 block cursor-zoom-in"
-                        title="Click to enlarge"
-                      >
-                        <img
-                          src={image}
-                          alt="Task 1 chart"
-                          className="max-h-72 w-auto rounded-md border border-line object-contain"
-                        />
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* RIGHT — the answer box, "Word count: N" underneath. */}
+                <div className="flex min-h-[320px] flex-col lg:h-full lg:pl-6 lg:pb-16">
+                  <textarea
+                    value={texts[t]}
+                    onChange={(e) => setTexts((prev) => ({ ...prev, [t]: e.target.value }))}
+                    onPaste={blockPaste}
+                    onDrop={blockPaste}
+                    onContextMenu={(e) => e.preventDefault()}
+                    disabled={submitting || timeUp || Boolean(pausedAt)}
+                    className="focus-ring min-h-0 w-full flex-1 resize-none rounded-sm border border-line bg-panel-2 px-4 py-3 text-[0.95rem] leading-7 text-paper"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    aria-label={`Part ${partNo(t)} answer`}
+                  />
+                  <p className="mt-2 shrink-0 text-sm text-paper/85">Word count: {words}</p>
+                  {error && <p className="mt-1 text-sm text-coral">{error}</p>}
+                  {timeUp && (
+                    <p className="mt-1 text-sm text-mist">
+                      Time's up — {submitting ? 'submitting your answer…' : 'your answer is being submitted.'}
+                    </p>
+                  )}
+                </div>
 
                 {image && imageLightboxOpen && (
                   <div
@@ -510,57 +546,73 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
                     <img
                       src={image}
                       alt="Task 1 chart, enlarged"
-                      className="max-h-full max-w-full rounded-lg border border-line object-contain"
+                      className="max-h-full max-w-full rounded-lg border border-line bg-white object-contain"
                     />
-
                     <button
                       type="button"
                       onClick={() => setImageLightboxOpen(false)}
-                      className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
+                      className="focus-ring absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-panel text-paper transition hover:border-brass hover:text-brass"
                       title="Close"
                     >
                       ✕
                     </button>
                   </div>
                 )}
-
-                <textarea
-                  value={texts[t]}
-                  onChange={(e) => setTexts((prev) => ({ ...prev, [t]: e.target.value }))}
-                  onPaste={blockPaste}
-                  onDrop={blockPaste}
-                  onContextMenu={(e) => e.preventDefault()}
-                  disabled={submitting || timeUp || Boolean(pausedAt)}
-                  placeholder={`Write your ${t === 'task1' ? 'Task 1' : 'Task 2'} answer here…`}
-                  className="focus-ring min-h-[320px] w-full resize-none bg-panel-2 border border-line rounded-lg px-4 py-3 text-sm leading-6 text-paper"
-                  spellCheck={false}
-                />
-
-                <div className="shrink-0 flex items-center justify-between text-xs">
-                  <span className={under ? 'text-coral font-medium' : 'text-mist'}>
-                    {words} word{words === 1 ? '' : 's'}
-                    {min ? ` · minimum ${min}` : ''}
-                  </span>
-
-                  {lastSavedAt && (
-                    <span className="text-mist font-mono">
-                      saved {lastSavedAt.toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
               </div>
             )
           })}
+
+          {tasks.length > 1 && (
+            <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => activeIdx > 0 && goTask(tasks[activeIdx - 1])}
+                title="Previous part"
+                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-[#8a8a8a] text-2xl font-bold text-white shadow hover:bg-[#777]"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => activeIdx < tasks.length - 1 && goTask(tasks[activeIdx + 1])}
+                title="Next part"
+                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-black text-2xl font-bold text-white shadow hover:bg-[#222]"
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {error && <p className="px-4 sm:px-6 pb-3 text-sm text-coral">{error}</p>}
-
-      <div className="shrink-0 flex items-center justify-between gap-3 border-t border-line bg-panel px-4 py-3 sm:px-6">
-        <p className="text-xs text-mist">
-          Pasting is disabled — type your answer directly. Your work is saved automatically, and
-          the test finishes by itself when the time runs out.
-        </p>
+      {/* Footer part navigator — "Part 1  0 of 1" for the part you're not
+          on (1 of 1 once anything is written), "Part 2  [2]" for the one
+          you're on. */}
+      <div className="flex shrink-0 items-stretch gap-6 border-t border-line bg-panel px-3 pb-2 sm:px-4">
+        {tasks.map((t) =>
+          t === activeTask ? (
+            <div key={t} className="flex flex-1 items-center gap-2 pt-1.5">
+              <span className="px-2 pt-1 text-sm font-bold text-paper">Part {partNo(t)}</span>
+              <span
+                className={`flex h-8 min-w-[2.1rem] items-center justify-center rounded-sm border-t-2 px-1 text-sm font-bold text-paper outline outline-2 outline-brass ${
+                  texts[t].trim() ? 'border-t-paper' : 'border-t-line'
+                }`}
+              >
+                {partNo(t)}
+              </span>
+            </div>
+          ) : (
+            <button
+              key={t}
+              type="button"
+              onClick={() => goTask(t)}
+              className="focus-ring flex shrink-0 items-center gap-4 border-t-2 border-line px-2 pt-2.5 text-sm text-paper/80 hover:text-paper"
+            >
+              <span>Part {partNo(t)}</span>
+              <span className="text-mist">{texts[t].trim() ? 1 : 0} of 1</span>
+            </button>
+          )
+        )}
       </div>
 
       {pausedAt && (
@@ -574,15 +626,6 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
           </div>
         </div>
       )}
-
-      {timeUp && (
-        <div className="px-4 sm:px-6 pb-4">
-          <div className="rounded-xl border border-line bg-panel-2 px-4 py-3 text-center text-sm text-mist">
-            Time's up — {submitting ? 'submitting your answer…' : 'your answer is being submitted.'}
-          </div>
-        </div>
-      )}
-
     </div>
   )
 }

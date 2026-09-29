@@ -4,6 +4,7 @@ import { ExamTaker, buildAttemptQuestions } from './MockExams'
 import { WritingTaker } from './WritingMockExam'
 import { isSpeechSupported, speak, stopSpeaking } from '../lib/speech'
 import { isTestToneSupported, playTestTone } from '../lib/testTone'
+import { readSession, writeSession } from '../lib/sessionState'
 
 /*
  * ================================================================
@@ -171,9 +172,22 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   const narratedStagesRef = useRef(new Set())
 
   const narrationKey = activeAttempt ? `${activeAttempt.attempt.id}:${activeAttempt.attempt.stage}` : null
+  // True only while the instructions + "I confirm" screen itself is on
+  // screen — that's the only place the instructions are read aloud.
+  // BUG FIX 2026-09-29 (Jasur: "the instructions are playing when i press
+  // continue after pasting my name and code... this window is just for
+  // checking the internet and sound"): this used to also be true while the
+  // System check screen was showing before Listening (the check is drawn
+  // in place of the gate, but nothing here knew that), so the narration
+  // started over the sound check. Same for the paused / cancelled / "move
+  // on" screens, which also replace the gate.
   const gateIsShowing = Boolean(
     activeAttempt && activeAttempt.attempt.stage !== 'done' && !gateConfirmed &&
-      !(activeAttempt.attempt.stage === 'writing' && writingResume)
+      !(activeAttempt.attempt.stage === 'writing' && writingResume) &&
+      !(activeAttempt.attempt.stage === 'listening' && !systemCheckPassed) &&
+      !activeAttempt.attempt.paused_at &&
+      !pendingAdvance &&
+      !cancelledByTeacher
   )
 
   const speakInstructions = () => {
@@ -538,6 +552,15 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAdvance, activeAttempt?.attempt?.paused_at])
 
+  // The system check is shown once per sitting — a refresh after passing it
+  // shouldn't put the student through it again (sessionStorage, per sitting).
+  const sittingIdForCheck = activeAttempt?.attempt?.id
+  useEffect(() => {
+    if (sittingIdForCheck && readSession(`ielts:systemCheck:${sittingIdForCheck}`, false)) {
+      setSystemCheckPassed(true)
+    }
+  }, [sittingIdForCheck])
+
   const prevStageRef = useRef(null)
   useEffect(() => {
     const stage = activeAttempt?.attempt?.stage ?? null
@@ -856,7 +879,15 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
 
   // ---- System check (once, before Listening's gate only) ----
   if (stage === 'listening' && !gateConfirmed && !systemCheckPassed) {
-    return <SystemCheckGate setTitle={setTitle} onContinue={() => setSystemCheckPassed(true)} />
+    return (
+      <SystemCheckGate
+        setTitle={setTitle}
+        onContinue={() => {
+          writeSession(`ielts:systemCheck:${activeAttempt.attempt.id}`, true)
+          setSystemCheckPassed(true)
+        }}
+      />
+    )
   }
 
   // ---- Writing stage: confirmed, no in-progress attempt yet — the effect

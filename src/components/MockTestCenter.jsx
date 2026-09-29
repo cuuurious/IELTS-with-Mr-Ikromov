@@ -12,6 +12,7 @@ import { estimateBandFromPercent, roundOverallBand, formatBand } from '../lib/ie
 import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
 import FrozenAttemptReview from './FrozenAttemptReview'
+import { readSession, useSessionState, writeSession } from '../lib/sessionState'
 
 /*
  * ================================================================
@@ -71,7 +72,8 @@ function formatSlotTime(iso) {
 
 export default function MockTestCenter({ onExit }) {
   const { profile, refreshProfile } = useAuth()
-  const [section, setSection] = useState('overview')
+  // Remembered across a refresh — see lib/sessionState.js.
+  const [section, setSection] = useSessionState(`ielts:${profile?.id}:mockCenter:section`, 'overview')
 
   const [attempts, setAttempts] = useState([])
   const [examsById, setExamsById] = useState({})
@@ -129,6 +131,53 @@ export default function MockTestCenter({ onExit }) {
   // becomes the only thing on screen.
   const [checkedInSet, setCheckedInSet] = useState(null)
   const examActive = !!checkedInSet
+
+  // REFRESH MID-EXAM (2026-09-29, Jasur: after a refresh "it has to stay
+  // in the window that we are in rn"). The checked-in set's id is kept in
+  // sessionStorage; on load, if that sitting is still unfinished, the
+  // locked exam screen comes straight back (FullMockRunner/ExamTaker then
+  // resume exactly where they were, answers and clock included). Nothing
+  // else is shown while that check runs, so the exit button never flashes.
+  const checkedInKey = `ielts:${profile?.id}:mockCenter:checkedInSetId`
+  const [restoringExam, setRestoringExam] = useState(() => Boolean(readSession(checkedInKey, null)))
+
+  useEffect(() => {
+    if (checkedInSet) writeSession(checkedInKey, checkedInSet.id)
+    else if (!restoringExam) writeSession(checkedInKey, null)
+  }, [checkedInSet, restoringExam, checkedInKey])
+
+  useEffect(() => {
+    const setId = readSession(checkedInKey, null)
+    if (!setId || !profile?.id) {
+      setRestoringExam(false)
+      return undefined
+    }
+    let cancelled = false
+    ;(async () => {
+      const [{ data: setRow }, { data: openRows }] = await Promise.all([
+        supabase.from('full_mock_sets').select('*').eq('id', setId).maybeSingle(),
+        supabase
+          .from('full_mock_attempts')
+          .select('id')
+          .eq('student_id', profile.id)
+          .eq('set_id', setId)
+          .neq('stage', 'done')
+          .limit(1),
+      ])
+      if (cancelled) return
+      if (setRow && openRows && openRows.length > 0) {
+        setCheckedInSet(setRow)
+        setSection('take-test')
+      } else {
+        writeSession(checkedInKey, null)
+      }
+      setRestoringExam(false)
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // While a mock is running, also blunt the two browser-level ways out
   // that no in-app button controls:
@@ -466,6 +515,14 @@ export default function MockTestCenter({ onExit }) {
   // FullMockRunner) owns the entire viewport until the full mock ends.
   // Same `fixed inset-0 z-[9998]` root as the normal render below, so
   // it still sits above the regular app shell exactly as before.
+  if (restoringExam) {
+    return (
+      <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-ink text-mist text-sm">
+        Loading…
+      </div>
+    )
+  }
+
   if (examActive) {
     return (
       <div className="fixed inset-0 z-[9998] overflow-y-auto bg-ink text-paper px-3 py-3 sm:px-5">

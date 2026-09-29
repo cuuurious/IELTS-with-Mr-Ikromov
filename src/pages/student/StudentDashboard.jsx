@@ -24,6 +24,7 @@ import Leaderboard from '../../components/Leaderboard'
 import StudentWordlists from './StudentWordlists'
 import PrivateChats from '../../components/PrivateChats'
 import MockTestCenter from '../../components/MockTestCenter'
+import { useSessionState } from '../../lib/sessionState'
 import HowToUseGuide from '../../components/HowToUseGuide'
 
 // One-line description shown under the top bar's own title — see the
@@ -43,8 +44,9 @@ const PAGE_SUBTITLES = {
 export default function StudentDashboard() {
   const { profile } = useAuth()
 
+  // Remembered across a refresh (see lib/sessionState.js).
   const [tab, setTab] =
-    useState('homework')
+    useSessionState(`ielts:${profile?.id}:student:tab`, 'homework')
 
   // The Mock Test Center is its OWN full-screen portal now, not a tab
   // in this dashboard's sidebar — see MockTestCenter.jsx's header
@@ -52,7 +54,7 @@ export default function StudentDashboard() {
   // environment, not another section of the everyday site). Clicking
   // its sidebar entry below sets this instead of changing `tab`.
   const [mockCenterOpen, setMockCenterOpen] =
-    useState(false)
+    useSessionState(`ielts:${profile?.id}:student:mockCenterOpen`, false)
 
   const [myGroups, setMyGroups] =
     useState([])

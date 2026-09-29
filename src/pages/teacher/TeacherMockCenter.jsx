@@ -9,6 +9,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import FrozenAttemptReview from '../../components/FrozenAttemptReview'
 import ThemeToggle from '../../components/ThemeToggle'
 import LiveMocksPanel from './LiveMocksPanel'
+import { useSessionState } from '../../lib/sessionState'
 
 /*
  * ================================================================
@@ -525,7 +526,8 @@ function printAccessCodeSlips(slips) {
 
 export default function TeacherMockCenter({ onExit }) {
   const { profile } = useAuth()
-  const [section, setSection] = useState('progress')
+  // Which tab you're on is remembered across a refresh (lib/sessionState.js).
+  const [section, setSection] = useSessionState(`ielts:${profile?.id}:teacherMock:section`, 'progress')
 
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
@@ -607,7 +609,7 @@ export default function TeacherMockCenter({ onExit }) {
    * explicitly at the app level instead of assuming the database will
    * do it.
    */
-  const [contentTab, setContentTab] = useState('writing') // 'writing' | 'reading' | 'listening' | 'full-mocks'
+  const [contentTab, setContentTab] = useSessionState(`ielts:${profile?.id}:teacherMock:contentTab`, 'writing') // 'writing' | 'reading' | 'listening' | 'full-mocks'
 
   // Lingrow-parity filter bar (search / status / sort), shared across the
   // Writing/Reading/Listening exam-list views below — see
@@ -2101,6 +2103,39 @@ export default function TeacherMockCenter({ onExit }) {
         if (a.neverAttempted !== b.neverAttempted) return a.neverAttempted ? -1 : 1
         return b.gap - a.gap
       })
+  }, [studentBandSummary])
+
+  // Student Progress ranking — Jasur, 2026-09-29: "this list has to be
+  // according to the rank of students band score and if the scores are
+  // the same the latest taken result should be at the top, and the test
+  // taken students are at the upper part than non test takers."
+  //   1. Students with an estimated overall band, highest band first;
+  //      same band → whoever took a test most recently first.
+  //   2. Students who have taken a test but have no band yet (e.g. Writing
+  //      still waiting for the examiner) — most recent first.
+  //   3. Students who have never taken a test — A→Z.
+  const rankedProgressRows = useMemo(() => {
+    const latestMs = (row) => {
+      const dates = [
+        ...row.readingAttempts.map((a) => a.submitted_at),
+        ...row.listeningAttempts.map((a) => a.submitted_at),
+        ...row.writingReviews.map((r) => r.submitted_at || r.examiner_reviewed_at),
+        ...row.speakingSlots.filter((sl) => sl.status === 'completed').map((sl) => sl.scheduled_at),
+      ]
+        .map((d) => (d ? new Date(d).getTime() : 0))
+        .filter((t) => Number.isFinite(t))
+      return dates.length ? Math.max(...dates) : 0
+    }
+    const tier = (s) => (s.overallBand != null ? 0 : s.hasAnyActivity ? 1 : 2)
+    return studentBandSummary
+      .map((s) => ({ s, tier: tier(s), latest: latestMs(s.row) }))
+      .sort((a, b) => {
+        if (a.tier !== b.tier) return a.tier - b.tier
+        if (a.tier === 0 && a.s.overallBand !== b.s.overallBand) return b.s.overallBand - a.s.overallBand
+        if (a.tier !== 2 && a.latest !== b.latest) return b.latest - a.latest
+        return studentLabel(a.s.row.student).localeCompare(studentLabel(b.s.row.student))
+      })
+      .map(({ s }) => s.row)
   }, [studentBandSummary])
 
   const groupIdsByStudent = useMemo(() => {
@@ -3770,7 +3805,7 @@ export default function TeacherMockCenter({ onExit }) {
               )}
 
               <StudentRowList
-                rows={rows}
+                rows={rankedProgressRows}
                 onOpenProfile={setProfileStudentId}
                 emptyLabel="No students yet."
               />

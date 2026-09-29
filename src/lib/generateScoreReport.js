@@ -71,7 +71,10 @@ export async function downloadScoreReport({ studentName, targetBand, generatedFo
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text(
-    new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+    // Always English month names: the PDF's built-in Helvetica font has no
+    // Cyrillic letters, so a Russian/Uzbek computer's own date ("29
+    // сентября 2026") printed as garbage like "29 A5=BO1@O 2026".
+    new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }),
     pageWidth - marginX,
     y,
     { align: 'right' }

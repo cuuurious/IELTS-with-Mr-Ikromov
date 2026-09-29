@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ConfirmModal from './ConfirmModal'
+import { readSession, writeSession } from '../lib/sessionState'
 
 /*
  * ================================================================
@@ -499,8 +500,72 @@ export function ExamTaker({
     })
   }
 
+  // ------------------------------------------------------------------
+  // ONE PART AT A TIME (2026-09-29, Jasur: "switching to passage 2 should
+  // be possible, it is not supposed to be in the continuation of the
+  // passage 1"). Every section stays MOUNTED (so a Listening part's audio
+  // keeps playing and nothing typed is lost) but only `activeSectionIdx`
+  // is shown; the footer's Part 1 / Part 2 / Part 3 buttons switch it,
+  // exactly like the real exam's own footer. Remembered for this attempt
+  // in sessionStorage so a refresh comes back to the same part.
+  // `currentQuestionId` is the question the ← / → arrows move from —
+  // set by clicking a footer number, by the arrows themselves, or by
+  // clicking/typing inside any question.
+  // ------------------------------------------------------------------
+  const partKey = attemptId ? `ielts:examPart:${attemptId}` : null
+  const [activeSectionIdx, setActiveSectionIdxRaw] = useState(0)
+  const [currentQuestionId, setCurrentQuestionId] = useState(null)
+  useEffect(() => {
+    if (!partKey) return
+    const saved = Number(readSession(partKey, 0))
+    if (Number.isInteger(saved) && saved > 0 && saved < sections.length) setActiveSectionIdxRaw(saved)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partKey])
+  const setActiveSectionIdx = (idx) => {
+    setActiveSectionIdxRaw(idx)
+    if (partKey) writeSession(partKey, idx)
+  }
+  const sectionIdxByQuestionId = useMemo(() => {
+    const map = {}
+    sections.forEach((s, i) => s.questions.forEach((q) => { map[q.id] = i }))
+    return map
+  }, [sections])
+
   const jumpToQuestion = (questionId) => {
-    document.getElementById(`q-${questionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const idx = sectionIdxByQuestionId[questionId]
+    if (idx !== undefined && idx !== activeSectionIdx) setActiveSectionIdx(idx)
+    setCurrentQuestionId(questionId)
+    // Wait one frame for a just-unhidden part to lay out before scrolling.
+    setTimeout(() => {
+      const el = document.getElementById(`q-${questionId}`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const input = el.querySelector('input[type="text"], input:not([type]), textarea')
+      if (input) input.focus({ preventScroll: true })
+    }, 60)
+  }
+
+  const stepQuestion = (dir) => {
+    if (!flatQuestions.length) return
+    const cur = currentQuestionId ? flatQuestions.findIndex((q) => q.id === currentQuestionId) : -1
+    let next
+    if (cur === -1) {
+      // Nothing picked yet: → goes to the first question of the part on
+      // screen, ← to the previous part's last question.
+      const first = sections[activeSectionIdx]?.questions?.[0]
+      const firstIdx = first ? flatQuestions.findIndex((q) => q.id === first.id) : 0
+      next = dir > 0 ? firstIdx : firstIdx - 1
+    } else {
+      next = cur + dir
+    }
+    if (next < 0 || next >= flatQuestions.length) return
+    jumpToQuestion(flatQuestions[next].id)
+  }
+
+  // Clicking or typing anywhere inside a question makes it "current".
+  const trackCurrentQuestion = (e) => {
+    const holder = e.target.closest?.('[id^="q-"]')
+    if (holder) setCurrentQuestionId(holder.id.slice(2))
   }
 
   // ------------------------------------------------------------------
@@ -615,6 +680,16 @@ export function ExamTaker({
 
   const handleAudioEnded = (sectionId) => {
     setAudioEndedBySection((prev) => (prev[sectionId] ? prev : { ...prev, [sectionId]: true }))
+    // Real exam: when one part's recording finishes, the screen moves on
+    // to the next part by itself (whose recording then starts — see
+    // SectionAudioPlayer's autoStart). Only if the student is still
+    // looking at the part that just ended; never yanks them off a part
+    // they switched to on purpose.
+    const idx = sections.findIndex((s) => s.id === sectionId)
+    if (idx !== -1 && idx === activeSectionIdx && idx + 1 < sections.length) {
+      setActiveSectionIdx(idx + 1)
+      setCurrentQuestionId(null)
+    }
   }
 
   // ------------------------------------------------------------------
@@ -1226,11 +1301,22 @@ export function ExamTaker({
   // test" button, disabled-during-test network/notification icons) match
   // Jasur's own screenshots of the official IELTS-on-computer
   // familiarisation test (cdielts.gelielts.com), 2026-09-28.
+  const activeSection = sections[activeSectionIdx] || null
+  const activeRange = (() => {
+    const qs = activeSection?.questions || []
+    if (!qs.length) return { from: '', to: '' }
+    return { from: questionIndexById[qs[0].id], to: questionIndexById[qs[qs.length - 1].id] }
+  })()
+
   const examChromeBg = '#e3a7ae'
   const examChromeText = '#1c1b29'
 
   return (
-    <div className="flex flex-col gap-5 pb-10">
+    // Whole exam = exactly one screen (Jasur, 2026-09-29: "scrolling the
+    // whole window shouldnt be possible"). Fixed to the viewport, never
+    // scrolls itself; only the passage pane and the questions pane
+    // (whichever one the mouse is over) scroll, each on its own.
+    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-ink text-paper">
       <ConfirmModal
         open={Boolean(confirmDialog)}
         {...confirmDialog}
@@ -1259,7 +1345,7 @@ export function ExamTaker({
       )}
 
       <div
-        className="sticky top-3 z-10 flex flex-col gap-2.5 rounded-md px-5 py-3 shadow-md"
+        className="relative z-20 flex shrink-0 flex-col gap-2.5 px-5 py-2.5 shadow-md"
         style={{ background: examChromeBg, color: examChromeText }}
       >
         {(!isOnline || saveFailing || submitRetry) && (
@@ -1406,15 +1492,6 @@ export function ExamTaker({
           </div>
         </div>
 
-        {flatQuestions.length > 0 && (
-          <QuestionNavigator
-            questions={flatQuestions}
-            answers={answers}
-            flags={flags}
-            onJump={jumpToQuestion}
-          />
-        )}
-
         {reviewPhase && (
           <p className="text-[11px] font-medium opacity-85">
             All audio has finished — no more will play. You have 2 minutes to review your
@@ -1449,7 +1526,21 @@ export function ExamTaker({
         </div>
       )}
 
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 pt-4 sm:px-6">
+        {activeSection && (
+          <div className="shrink-0 rounded-md border border-line bg-panel px-5 py-3">
+            <p className="font-display text-2xl leading-tight text-paper">Part {activeSectionIdx + 1}</p>
+            <p className="mt-1 text-sm text-paper/85">
+              {exam.module === 'listening' ? 'Listen and answer' : 'Read the text below and answer'} questions{' '}
+              {activeRange.from}
+              {activeRange.to !== activeRange.from ? ` - ${activeRange.to}` : ''}.
+            </p>
+          </div>
+        )}
+
+        <div className="relative min-h-0 flex-1">
       {sections.map((section, sIdx) => {
+        const isActivePart = sIdx === activeSectionIdx
         const sectionTitle =
           section.title || `${exam.module === 'reading' ? 'Passage' : 'Section'} ${sIdx + 1}`
 
@@ -1571,17 +1662,22 @@ export function ExamTaker({
           return (
             <div
               key={section.id}
-              className="ticket rounded-2xl p-5 sm:p-6"
+              className={`${isActivePart ? '' : 'hidden'} ticket h-full overflow-y-auto overscroll-contain rounded-2xl p-5 sm:p-6 lg:overflow-hidden`}
               style={sectionThemeStyle}
+              onFocusCapture={trackCurrentQuestion}
+              onMouseDownCapture={trackCurrentQuestion}
             >
-              <p
-                className="mb-3 font-display text-base"
-                style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
-              >
-                {sectionTitle}
-              </p>
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-0">
-                <div className="lg:sticky lg:top-24 lg:max-h-[75vh] lg:self-start lg:overflow-y-auto lg:pr-6">
+              <div className="grid grid-cols-1 gap-5 lg:h-full lg:grid-cols-2 lg:gap-0">
+                {/* Left pane = the whole passage, filling the screen height
+                    below the exam bar and scrolling on its own (real exam
+                    layout), title in bold at the top of it. */}
+                <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-6">
+                  <p
+                    className="mb-4 font-bold"
+                    style={{ fontSize: `${activeFontScale}rem`, ...(sectionThemeStyle ? { color: activeTheme.text } : {}) }}
+                  >
+                    {sectionTitle}
+                  </p>
                   {useParagraphDrops ? (
                     <LetteredMatchingPassage
                       fullText={section.passage_text}
@@ -1615,10 +1711,13 @@ export function ExamTaker({
                       onRemove={(id) => removeHighlight(section.id, id)}
                       fontScale={activeFontScale}
                       theme={activeTheme}
+                      fill
                     />
                   )}
                 </div>
-                <div className="lg:border-l lg:border-line lg:pl-6">{questionsList}</div>
+                <div className="pb-16 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-line lg:pl-6">
+                  {questionsList}
+                </div>
               </div>
             </div>
           )
@@ -1627,8 +1726,10 @@ export function ExamTaker({
         return (
           <div
             key={section.id}
-            className="ticket rounded-2xl p-5 sm:p-6"
+            className={`${isActivePart ? '' : 'hidden'} ticket h-full overflow-y-auto overscroll-contain rounded-2xl p-5 pb-20 sm:p-6 sm:pb-20`}
             style={sectionThemeStyle}
+            onFocusCapture={trackCurrentQuestion}
+            onMouseDownCapture={trackCurrentQuestion}
           >
             <p
               className="mb-3 font-display text-base"
@@ -1641,6 +1742,10 @@ export function ExamTaker({
               <div className="mb-4">
                 <SectionAudioPlayer
                   url={section.audio_url}
+                  autoStart={(() => {
+                    const prevAudio = sections.slice(0, sIdx).reverse().find((s) => s.audio_url)
+                    return prevAudio ? Boolean(audioEndedBySection[prevAudio.id]) : false
+                  })()}
                   onEnded={() => handleAudioEnded(section.id)}
                   alreadyEnded={!!audioEndedBySection[section.id]}
                   volume={volume}
@@ -1653,37 +1758,107 @@ export function ExamTaker({
           </div>
         )
       })}
+
+          {/* ← / → : previous / next question, across parts — the real
+              exam's two square arrow buttons, bottom-right. */}
+          {flatQuestions.length > 0 && (
+            <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => stepQuestion(-1)}
+                title="Previous question"
+                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-[#8a8a8a] text-2xl font-bold text-white shadow hover:bg-[#777]"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => stepQuestion(1)}
+                title="Next question"
+                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-black text-2xl font-bold text-white shadow hover:bg-[#222]"
+              >
+                →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {flatQuestions.length > 0 && (
+        <PartNavigator
+          sections={sections}
+          activeIdx={activeSectionIdx}
+          answers={answers}
+          flags={flags}
+          currentQuestionId={currentQuestionId}
+          questionIndexById={questionIndexById}
+          onSelectPart={(idx) => {
+            setActiveSectionIdx(idx)
+            setCurrentQuestionId(null)
+          }}
+          onJump={jumpToQuestion}
+        />
+      )}
     </div>
   )
 }
 
-// Numbered chips the student can click to jump straight to any
-// question — answered ones fill in, an unanswered one stays hollow, and
-// a flagged one (regardless of answered state) gets a small coral dot,
-// mirroring the real test's own flag-for-review navigator.
-function QuestionNavigator({ questions, answers, flags, onJump }) {
+// The real exam's footer (Jasur's screenshots, 2026-09-28/29): one
+// block per part along the bottom. The part on screen shows "Part 3"
+// followed by every question number in it (click one to go straight
+// there; the one you're on is boxed); every other part is collapsed to
+// "Part 1   0 of 14" — how many of its questions are answered — and
+// clicking it switches to that part. The thin line above each number
+// turns solid once that question is answered; a flagged one gets a dot.
+function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId, questionIndexById, onSelectPart, onJump }) {
+  const isAnswered = (q) => Boolean(String(answers[q.id] ?? '').trim())
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-      {questions.map((q, i) => {
-        const answered = Boolean((answers[q.id] ?? '').trim())
-        const flagged = flags.has(q.id)
+    <div className="flex shrink-0 items-stretch gap-4 overflow-x-auto border-t border-line bg-panel px-3 pb-2 sm:px-4">
+      {sections.map((section, i) => {
+        const qs = section.questions
+        const answered = qs.filter(isAnswered).length
+        if (i !== activeIdx) {
+          return (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => onSelectPart(i)}
+              className="focus-ring flex shrink-0 items-center gap-4 border-t-2 border-line px-2 pt-2.5 text-sm text-paper/80 hover:text-paper"
+            >
+              <span>Part {i + 1}</span>
+              <span className="text-mist">
+                {answered} of {qs.length}
+              </span>
+            </button>
+          )
+        }
         return (
-          <button
-            key={q.id}
-            type="button"
-            onClick={() => onJump(q.id)}
-            title={flagged ? `Question ${i + 1} — flagged for review` : `Question ${i + 1}`}
-            className={`focus-ring relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold transition-colors ${
-              answered
-                ? 'bg-onbrass text-brass'
-                : 'bg-onbrass/20 text-onbrass/80 hover:bg-onbrass/35'
-            }`}
-          >
-            {i + 1}
-            {flagged && (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-brass bg-coral" />
-            )}
-          </button>
+          <div key={section.id} className="flex min-w-0 flex-1 items-center gap-2 pt-1.5">
+            <span className="shrink-0 px-2 pt-1 text-sm font-bold text-paper">Part {i + 1}</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {qs.map((q) => {
+                const num = questionIndexById[q.id]
+                const current = q.id === currentQuestionId
+                const done = isAnswered(q)
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => onJump(q.id)}
+                    title={flags.has(q.id) ? `Question ${num} — flagged for review` : `Question ${num}`}
+                    className={`focus-ring relative flex h-8 min-w-[2.1rem] items-center justify-center border-t-2 px-1 text-sm font-bold transition-colors ${
+                      done ? 'border-t-paper' : 'border-t-line'
+                    } ${current ? 'rounded-sm outline outline-2 outline-brass text-paper' : 'text-paper/85 hover:text-paper'}`}
+                  >
+                    {num}
+                    {flags.has(q.id) && (
+                      <span className="absolute -right-0.5 top-0.5 h-2 w-2 rounded-full bg-coral" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         )
       })}
     </div>
@@ -1717,7 +1892,7 @@ function QuestionNavigator({ questions, answers, flags, onJump }) {
 // "Played" state. The volume slider moved into the ☰ Settings panel
 // (see EXAM_THEMES block below) alongside the other display controls,
 // rather than sitting in this line the real exam doesn't show it in.
-function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false }) {
+function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false, autoStart = false }) {
   const audioRef = useRef(null)
   const [status, setStatus] = useState(alreadyEnded ? 'done' : 'ready') // ready | playing | done
 
@@ -1738,8 +1913,17 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
   const handlePlay = () => {
     if (status !== 'ready') return
     setStatus('playing')
-    audioRef.current?.play()
+    // If the browser refuses to start sound on its own (e.g. straight
+    // after a page refresh, before any click), fall back to the button.
+    audioRef.current?.play()?.catch?.(() => setStatus('ready'))
   }
+
+  // Next part's recording starts by itself once the previous part's
+  // recording has finished — no extra click, same as the real exam.
+  useEffect(() => {
+    if (autoStart && !paused && status === 'ready') handlePlay()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, paused])
 
   const handleEnded = () => {
     setStatus('done')
@@ -1785,7 +1969,7 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
 // Deliberately simple for v1: an overlapping selection is rejected
 // rather than merged/split — good enough for what a real passage
 // actually needs, and a lot less code to get wrong.
-function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove, fontScale = 1, theme }) {
+function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove, fontScale = 1, theme, fill = false }) {
   const themeStyle = theme?.bg ? { backgroundColor: theme.bg, color: theme.text } : undefined
   const containerRef = useRef(null)
   const [toolbar, setToolbar] = useState(null) // { start, end, rect }
@@ -1901,7 +2085,16 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
       <div
         ref={containerRef}
         onMouseUp={handleMouseUp}
-        className="max-h-72 overflow-y-auto rounded-xl border border-line bg-panel-2 p-4 leading-relaxed text-paper whitespace-pre-wrap"
+        className={
+          // `fill` (Reading split screen, 2026-09-29): the passage is plain
+          // text using the whole left pane, like the real exam — Jasur: "why
+          // it is inside of a tiny box?? ... the real exam uses the whole left
+          // side". The pane itself scrolls. Without `fill` it keeps the old
+          // compact scrolling box.
+          fill
+            ? 'leading-relaxed text-paper whitespace-pre-wrap'
+            : 'max-h-72 overflow-y-auto rounded-xl border border-line bg-panel-2 p-4 leading-relaxed text-paper whitespace-pre-wrap'
+        }
         style={{ fontSize: `${0.875 * fontScale}rem`, ...(themeStyle || {}) }}
       >
         {segments.map((seg) =>
@@ -1924,11 +2117,13 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
         )}
       </div>
 
-      <p className={`mt-1.5 text-[11px] ${rejectFlash ? 'text-coral font-medium' : 'text-mist'}`}>
-        {rejectFlash
-          ? "That overlaps a highlight you already made — remove it first, or select different text."
-          : 'Select any text above to highlight it or attach a note.'}
-      </p>
+      {(!fill || rejectFlash) && (
+        <p className={`mt-1.5 text-[11px] ${rejectFlash ? 'text-coral font-medium' : 'text-mist'}`}>
+          {rejectFlash
+            ? "That overlaps a highlight you already made — remove it first, or select different text."
+            : 'Select any text above to highlight it or attach a note.'}
+        </p>
+      )}
 
       {toolbar && (
         <div
@@ -2053,6 +2248,25 @@ function splitLetteredParagraphs(text) {
   return paragraphs
 }
 
+// Answer-option chips carry their value under their OWN drag type, not
+// as plain text. Jasur, 2026-09-29 (screenshot: option "A The
+// character of the company…" dropped into question 22's word gap, while
+// A was still sitting in the list): with plain text, the browser itself
+// let an option be dropped into ANY typing box, where it landed as raw
+// text and never counted as "used". Now only the drop boxes of matching
+// questions accept an option, and once it's placed there it leaves the
+// list (see MatchingBank / MatchingQuestion / LetteredMatchingPassage).
+// A gap that expects words from the passage stays a typing box only —
+// same as the real exam.
+const CHOICE_DRAG_TYPE = 'application/x-ielts-choice'
+function startChoiceDrag(e, choice) {
+  e.dataTransfer.setData(CHOICE_DRAG_TYPE, choice)
+  e.dataTransfer.effectAllowed = 'move'
+}
+function readChoiceDrop(e) {
+  return e.dataTransfer.getData(CHOICE_DRAG_TYPE)
+}
+
 // The passage side of a "matching headings" (or matching-anything-per-
 // paragraph) Reading section — one HighlightablePassage per paragraph
 // (so highlighting/notes keep working exactly as before, just scoped to
@@ -2108,7 +2322,7 @@ function LetteredMatchingPassage({
                 key={choice}
                 type="button"
                 draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+                onDragStart={(e) => startChoiceDrag(e, choice)}
                 style={{ fontSize: `${0.8125 * fontScale}rem`, ...themedOptionStyle(theme, false) }}
                 className="focus-ring cursor-grab rounded-full border border-line bg-panel-2 px-3 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
               >
@@ -2128,9 +2342,11 @@ function LetteredMatchingPassage({
           .map((h) => ({ ...h, start: h.start - p.start, end: h.end - p.start }))
 
         return (
-          <div key={`${p.letter || 'lead'}-${p.start}`}>
+          <div key={`${p.letter || 'lead'}-${p.start}`} className="mb-4">
+            {p.letter && <p className="mb-2 font-bold text-paper">{p.letter}</p>}
             {q && (
               <div
+                id={`q-${q.id}`}
                 onDragOver={(e) => {
                   e.preventDefault()
                   setDragOverLetter(p.letter)
@@ -2139,7 +2355,7 @@ function LetteredMatchingPassage({
                 onDrop={(e) => {
                   e.preventDefault()
                   setDragOverLetter(null)
-                  const choice = e.dataTransfer.getData('text/plain')
+                  const choice = readChoiceDrop(e)
                   if (choice) setAnswer(q.id, choice)
                 }}
                 style={{ fontSize: `${0.8125 * fontScale}rem` }}
@@ -2173,6 +2389,7 @@ function LetteredMatchingPassage({
               onRemove={onRemove}
               fontScale={fontScale}
               theme={theme}
+              fill
             />
           </div>
         )
@@ -2470,7 +2687,7 @@ function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hid
   const handleDrop = (e) => {
     e.preventDefault()
     setDragOver(false)
-    const choice = e.dataTransfer.getData('text/plain')
+    const choice = readChoiceDrop(e)
     if (choice) onChange(choice)
   }
 
@@ -2507,7 +2724,7 @@ function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hid
               key={choice}
               type="button"
               draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+              onDragStart={(e) => startChoiceDrag(e, choice)}
               onClick={() => onChange(choice)}
               style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
               className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
@@ -2548,7 +2765,7 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme }) {
             key={choice}
             type="button"
             draggable
-            onDragStart={(e) => e.dataTransfer.setData('text/plain', choice)}
+            onDragStart={(e) => startChoiceDrag(e, choice)}
             onClick={() => onPick(choice)}
             style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
             className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"

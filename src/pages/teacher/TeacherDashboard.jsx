@@ -24,14 +24,16 @@ import TeacherWordlists from './TeacherWordlists'
 import AiGradingSettings from './AiGradingSettings'
 import TeacherAccounts from './TeacherAccounts'
 import TeacherMockCenter from './TeacherMockCenter'
+import { useSessionState } from '../../lib/sessionState'
 import HowToUseGuide from '../../components/HowToUseGuide'
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
 
-  const [tab, setTab] = useState('groups')
+  // Remembered across a refresh (see lib/sessionState.js).
+  const [tab, setTab] = useSessionState(`ielts:${profile?.id}:teacher:tab`, 'groups')
   const [pendingCount, setPendingCount] = useState(0)
-  const [mockCenterOpen, setMockCenterOpen] = useState(false)
+  const [mockCenterOpen, setMockCenterOpen] = useSessionState(`ielts:${profile?.id}:teacher:mockCenterOpen`, false)
 
   const [notificationChat, setNotificationChat] = useState(null)
   const [notificationGroup, setNotificationGroup] = useState(null)
