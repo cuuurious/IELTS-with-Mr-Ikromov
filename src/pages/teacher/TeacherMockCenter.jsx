@@ -1840,6 +1840,57 @@ export default function TeacherMockCenter({ onExit }) {
 
   const allPendingItems = useMemo(() => pendingRelease.flatMap((g) => g.items), [pendingRelease])
 
+  // Delete unreleased results straight from the Results list (2026-09-29,
+  // Jasur: "HOW DO I DELETE THEM" about a pile of 0/40 test-run attempts).
+  // Reading/Listening/Writing only — a Speaking slot is a booking, not an
+  // attempt, and is managed from the Speaking tab. Uses the same
+  // teacher-only functions as Live Mocks / Student Profile (migration_62).
+  const deleteResultItems = (items) => {
+    const deletable = items.filter((it) => it.table === 'mock_attempts' || it.table === 'writing_mock_attempts')
+    if (deletable.length === 0) return
+    setConfirmDialog({
+      title: deletable.length === 1 ? 'Delete this result?' : `Delete ${deletable.length} results?`,
+      message:
+        "The attempt, its answers and its score are removed for good and it won't count anywhere " +
+        "(results, progress, retake limit). This can't be undone.",
+      confirmLabel: deletable.length === 1 ? 'Delete' : `Delete ${deletable.length}`,
+      tone: 'coral',
+      onConfirm: async () => {
+        setReleasing(true)
+        setReleaseError('')
+        const deletedRl = new Set()
+        const deletedWriting = new Set()
+        try {
+          for (const it of deletable) {
+            const { error } = await supabase.rpc(
+              it.table === 'writing_mock_attempts' ? 'teacher_delete_writing_attempt' : 'teacher_delete_mock_attempt',
+              { p_attempt_id: it.id }
+            )
+            if (error) throw error
+            if (it.table === 'writing_mock_attempts') deletedWriting.add(it.id)
+            else deletedRl.add(it.id)
+          }
+        } catch (err) {
+          console.error('Could not delete result(s):', err)
+          setReleaseError(
+            /function|schema cache/i.test(err?.message || '')
+              ? 'Deleting needs migration_62.sql — run it in the Supabase SQL Editor first, then try again.'
+              : err?.message || 'Could not delete — please try again.'
+          )
+        } finally {
+          if (deletedRl.size) setAttempts((prev) => prev.filter((a) => !deletedRl.has(a.id)))
+          if (deletedWriting.size) setWritingReviews((prev) => prev.filter((r) => !deletedWriting.has(r.id)))
+          setSelectedReleaseKeys((prev) => {
+            const next = new Set(prev)
+            deletable.forEach((it) => next.delete(it.key))
+            return next
+          })
+          setReleasing(false)
+        }
+      },
+    })
+  }
+
   const releaseItems = async (items) => {
     if (items.length === 0) return
     setReleasing(true)
@@ -3731,6 +3782,14 @@ export default function TeacherMockCenter({ onExit }) {
                   <button
                     type="button"
                     disabled={releasing || selectedReleaseKeys.size === 0}
+                    onClick={() => deleteResultItems(allPendingItems.filter((it) => selectedReleaseKeys.has(it.key)))}
+                    className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40"
+                  >
+                    Delete selected ({selectedReleaseKeys.size})
+                  </button>
+                  <button
+                    type="button"
+                    disabled={releasing || selectedReleaseKeys.size === 0}
                     onClick={() => releaseItems(allPendingItems.filter((it) => selectedReleaseKeys.has(it.key)))}
                     className="focus-ring rounded-full border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40"
                   >
@@ -3817,6 +3876,16 @@ export default function TeacherMockCenter({ onExit }) {
                           >
                             Release
                           </button>
+                          {it.table !== 'mock_speaking_slots' && (
+                            <button
+                              type="button"
+                              disabled={releasing}
+                              onClick={() => deleteResultItems([it])}
+                              className="focus-ring shrink-0 rounded-full border border-coral/30 text-xs font-semibold px-3 py-1.5 text-coral hover:bg-coral/10 transition-colors disabled:opacity-40"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
