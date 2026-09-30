@@ -3,6 +3,10 @@ import { supabase } from '../lib/supabaseClient'
 
 export default function NotificationBell({ profile }) {
   const [items, setItems] = useState([])
+  // Latest list, for the window-event handler below (set up once).
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const loadedRef = useRef(false)
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const boxRef = useRef(null)
@@ -48,6 +52,8 @@ export default function NotificationBell({ profile }) {
         error
       )
     } else {
+      itemsRef.current = data || []
+      loadedRef.current = true
       setItems(data || [])
     }
 
@@ -141,6 +147,21 @@ export default function NotificationBell({ profile }) {
     const handleExternalRead = async (event) => {
       const link = event.detail?.link
       if (!link) return
+
+      // SPEED (2026-09-30): this fired a database write every single
+      // time a homework was opened — even with nothing unread for it,
+      // and once per bell on screen. The bell already holds every unread
+      // notification (up to 30), so if none of them points here there
+      // is nothing to mark. Only when the list is full (30) might an
+      // older unread one be hiding, so then it still asks the database.
+      const current = itemsRef.current
+      if (
+        loadedRef.current &&
+        current.length < 30 &&
+        !current.some((item) => item.link === link)
+      ) {
+        return
+      }
 
       setItems((previous) =>
         previous.filter(

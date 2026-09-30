@@ -1,15 +1,23 @@
+import { Component, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoadingScreen from './components/LoadingScreen'
 import Login from './pages/Login'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import Register from './pages/Register'
 import PendingApproval from './pages/PendingApproval'
-import StudentDashboard from './pages/student/StudentDashboard'
-import TeacherDashboard from './pages/teacher/TeacherDashboard'
-import SpeakingExaminerDashboard from './pages/examiner/SpeakingExaminerDashboard'
-import WritingExaminerDashboard from './pages/examiner/WritingExaminerDashboard'
+import { lazyWithReload } from './lib/lazyWithReload'
+
+// SPEED (2026-09-30): each dashboard is now its own download instead of
+// one ~1 MB file with everything in it. A student never downloads the
+// teacher's Mock Center (the single biggest piece of code), a teacher
+// never downloads the student screens, and nobody downloads the
+// examiner dashboards unless they are an examiner.
+const StudentDashboard = lazyWithReload(() => import('./pages/student/StudentDashboard'))
+const TeacherDashboard = lazyWithReload(() => import('./pages/teacher/TeacherDashboard'))
+const SpeakingExaminerDashboard = lazyWithReload(() => import('./pages/examiner/SpeakingExaminerDashboard'))
+const WritingExaminerDashboard = lazyWithReload(() => import('./pages/examiner/WritingExaminerDashboard'))
+const ForgotPassword = lazyWithReload(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazyWithReload(() => import('./pages/ResetPassword'))
+const Register = lazyWithReload(() => import('./pages/Register'))
 
 function Gate() {
   const {
@@ -74,10 +82,53 @@ function Gate() {
   // before this, both examiner roles fell through the ": " default
   // straight into StudentDashboard, which is exactly the bug Jasur
   // hit logging in as a freshly-created examiner account.
-  if (profile.role === 'teacher') return <TeacherDashboard />
-  if (profile.role === 'speaking_examiner') return <SpeakingExaminerDashboard />
-  if (profile.role === 'writing_examiner') return <WritingExaminerDashboard />
-  return <StudentDashboard />
+  const Dashboard =
+    profile.role === 'teacher'
+      ? TeacherDashboard
+      : profile.role === 'speaking_examiner'
+        ? SpeakingExaminerDashboard
+        : profile.role === 'writing_examiner'
+          ? WritingExaminerDashboard
+          : StudentDashboard
+
+  return (
+    <ChunkErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <Dashboard />
+      </Suspense>
+    </ChunkErrorBoundary>
+  )
+}
+
+// If a dashboard's download fails even after lazyWithReload's one
+// automatic reload (e.g. the internet dropped), show a clear "try
+// again" screen instead of a blank page.
+class ChunkErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { failed: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error) {
+    console.error('Could not load this part of the app:', error)
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <LoadingScreen
+          label="Couldn't load this page — please check your internet connection."
+          onRetry={() => window.location.reload()}
+          retryLabel="Reload"
+        />
+      )
+    }
+    return this.props.children
+  }
 }
 
 function PublicOnly({ children }) {
@@ -96,6 +147,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Suspense fallback={<LoadingScreen />}>
         <Routes>
 
           {/* Normal authentication pages */}
@@ -148,6 +200,7 @@ export default function App() {
           />
 
         </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   )

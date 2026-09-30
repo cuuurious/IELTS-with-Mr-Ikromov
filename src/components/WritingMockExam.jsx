@@ -332,23 +332,40 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endedExternally])
 
+  // Only save when something actually changed (2026-09-30 speed-up) —
+  // this used to write every 5 s even with nobody typing, and every
+  // write is also pushed live to teachers/examiners over Realtime.
+  // Starts as what's already saved, so an untouched essay isn't re-sent.
+  const lastAutosavedRef = useRef(
+    JSON.stringify({
+      task1_text: attempt.task1_text || '',
+      task2_text: attempt.task2_text || '',
+      tab_switch_count: attempt.tab_switch_count || 0,
+    })
+  )
+
   useEffect(() => {
     const id = setInterval(() => {
       if (submittedRef.current) return
 
+      const payload = {
+        task1_text: textsRef.current.task1,
+        task2_text: textsRef.current.task2,
+        tab_switch_count: tabSwitchCountRef.current,
+      }
+      const key = JSON.stringify(payload)
+      if (key === lastAutosavedRef.current) return
+
       supabase
         .from('writing_mock_attempts')
-        .update({
-          task1_text: textsRef.current.task1,
-          task2_text: textsRef.current.task2,
-          tab_switch_count: tabSwitchCountRef.current,
-        })
+        .update(payload)
         .eq('id', attempt.id)
         .then(({ error: autosaveError }) => {
           if (autosaveError) {
             console.error('Autosave failed:', autosaveError)
             return
           }
+          lastAutosavedRef.current = key
           setLastSavedAt(new Date())
         })
     }, AUTOSAVE_MS)

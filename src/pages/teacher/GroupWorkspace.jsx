@@ -6,10 +6,14 @@ import EditHomeworkModal from './EditHomeworkModal'
 import ConfirmModal from '../../components/ConfirmModal'
 import { getSubmissionStatus } from '../../components/StampBadge'
 import { notifyGroup } from '../../lib/notify'
+import { useSessionState } from '../../lib/sessionState'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
-  const [activeGroup, setActiveGroup] = useState(null)
+  // Remembered across a refresh (Jasur, 2026-09-30: "i dont want refresh
+  // me to take to this window constantly") — the group you had open and
+  // whether you were inside it, see lib/sessionState.js.
+  const [activeGroup, setActiveGroup] = useSessionState(`ielts:${teacherId}:groups:activeGroup`, null)
 
   // Keeps the latest activeGroup readable from inside async callbacks
   // without them closing over a stale value. Used so a slow-loading
@@ -24,7 +28,7 @@ export default function GroupWorkspace({ teacherId }) {
   // click into it, and there's an explicit way back — instead of
   // every group's homework table living permanently on the same
   // screen as the group picker.
-  const [screen, setScreen] = useState('groups')
+  const [screen, setScreen] = useSessionState(`ielts:${teacherId}:groups:screen`, 'groups')
 
   // Lightweight per-group counts (students, assignments) shown on
   // each tile in the overview grid. Loaded once — in bulk, for every
@@ -86,8 +90,11 @@ export default function GroupWorkspace({ teacherId }) {
     setGroups(data || [])
     loadGroupCounts(data || [])
 
-    if (!activeGroup && data?.length) {
-      setActiveGroup(data[0].id)
+    const stillExists = activeGroup && (data || []).some((g) => g.id === activeGroup)
+    if (!stillExists) {
+      // Nothing remembered, or the remembered group was deleted since.
+      setActiveGroup(data?.length ? data[0].id : null)
+      setScreen('groups')
     }
   }
 

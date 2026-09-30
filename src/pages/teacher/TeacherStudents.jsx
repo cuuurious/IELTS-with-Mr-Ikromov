@@ -5,6 +5,7 @@ import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 import TargetBandIcon from '../../components/TargetBandIcon'
 import ConfirmModal from '../../components/ConfirmModal'
 import ResetStudentPasswordModal from '../../components/ResetStudentPasswordModal'
+import { useSessionState } from '../../lib/sessionState'
 
 export default function TeacherStudents({ onStartChat }) {
   const [students, setStudents] = useState([])
@@ -14,13 +15,30 @@ export default function TeacherStudents({ onStartChat }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [search, setSearch] = useState('')
-  const [groupFilter, setGroupFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('approved')
-  const [sortBy, setSortBy] = useState('name-asc')
+  // Filters, and the student whose Details window is open, are
+  // remembered across a refresh (Jasur, 2026-09-30) — lib/sessionState.js.
+  const [search, setSearch] = useSessionState('ielts:teacher:students:search', '')
+  const [groupFilter, setGroupFilter] = useSessionState('ielts:teacher:students:group', 'all')
+  const [statusFilter, setStatusFilter] = useSessionState('ielts:teacher:students:status', 'approved')
+  const [sortBy, setSortBy] = useSessionState('ielts:teacher:students:sort', 'name-asc')
 
-  const [view, setView] = useState('all')
+  const [view, setView] = useSessionState('ielts:teacher:students:view', 'all')
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [savedStudentId, setSavedStudentId] = useSessionState('ielts:teacher:students:details', null)
+  const detailsRestoredRef = useRef(false)
+  useEffect(() => {
+    if (detailsRestoredRef.current) setSavedStudentId(selectedStudent?.id ?? null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStudent])
+  useEffect(() => {
+    if (detailsRestoredRef.current || students.length === 0) return
+    detailsRestoredRef.current = true
+    if (!savedStudentId) return
+    const s = students.find((st) => st.id === savedStudentId)
+    if (s) setSelectedStudent(s)
+    else setSavedStudentId(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [students])
   const [busyAction, setBusyAction] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [resetPasswordStudent, setResetPasswordStudent] =

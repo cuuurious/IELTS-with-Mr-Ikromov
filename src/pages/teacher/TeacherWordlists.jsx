@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
+import { useSessionState } from '../../lib/sessionState'
 
 // Same rotation used everywhere else in the app (Groups & homework,
 // Students, Leaderboards, Group chats) — keyed by a group's position
@@ -40,7 +41,8 @@ const groupAccentPalette = [
 
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
-  const [activeGroup, setActiveGroup] = useState(null)
+  // Remembered across a refresh (Jasur, 2026-09-30).
+  const [activeGroup, setActiveGroup] = useSessionState(`ielts:${teacherId}:wordlists:group`, null)
 
   // Every word list this teacher owns, and every group it's linked to
   // (across ALL groups, not just the active tab) — fetched together
@@ -81,7 +83,7 @@ export default function TeacherWordlists({ teacherId }) {
 
       setGroups(data || [])
 
-      if (data?.length && !activeGroup) {
+      if (data?.length && (!activeGroup || !data.some((g) => g.id === activeGroup))) {
         setActiveGroup(data[0].id)
       }
     }

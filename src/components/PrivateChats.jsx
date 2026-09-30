@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Chat from './Chat'
 import ConfirmModal from './ConfirmModal'
+import { useSessionState } from '../lib/sessionState'
 
 /*
  * ================================================================
@@ -103,8 +104,11 @@ export default function PrivateChats({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [selectedId, setSelectedId] = useState(initialPeerId)
-  const [selectedName, setSelectedName] = useState(initialPeerName)
+  // The open conversation is remembered across a refresh (Jasur,
+  // 2026-09-30) — see lib/sessionState.js. A notification tap
+  // (initialPeerId) still wins, via the effect below.
+  const [selectedId, setSelectedId] = useSessionState(`ielts:${selfId}:privateChat:peerId`, initialPeerId)
+  const [selectedName, setSelectedName] = useSessionState(`ielts:${selfId}:privateChat:peerName`, initialPeerName)
 
   const [confirmDialog, setConfirmDialog] = useState(null)
 

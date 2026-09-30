@@ -780,18 +780,29 @@ export function ExamTaker({
     const MIN_RETRY_DELAY = 5_000
     const MAX_RETRY_DELAY = 30_000
 
+    // Last payload that was saved successfully — nothing is sent again
+    // until something actually changes (2026-09-30 speed-up).
+    let lastSavedKey = null
+
     const save = async () => {
+      const payload = {
+        tab_switch_count: tabSwitchCountRef.current,
+        draft_answers: {
+          answers: answersRef.current,
+          audioEnded: Object.keys(audioEndedBySectionRef.current),
+          reviewStartedAt: reviewStartedAtRef.current,
+          notes: notesRef.current,
+        },
+      }
+      const key = JSON.stringify(payload)
+      if (key === lastSavedKey) {
+        timeoutId = setTimeout(save, NORMAL_DELAY)
+        return
+      }
+
       const { error: saveError } = await supabase
         .from('mock_attempts')
-        .update({
-          tab_switch_count: tabSwitchCountRef.current,
-          draft_answers: {
-            answers: answersRef.current,
-            audioEnded: Object.keys(audioEndedBySectionRef.current),
-            reviewStartedAt: reviewStartedAtRef.current,
-            notes: notesRef.current,
-          },
-        })
+        .update(payload)
         .eq('id', attemptId)
 
       if (cancelled) return
@@ -806,6 +817,7 @@ export function ExamTaker({
       }
 
       failures = 0
+      lastSavedKey = key
       setSaveFailing(false)
       timeoutId = setTimeout(save, NORMAL_DELAY)
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import GroupChat from './GroupChat'
+import { useSessionState } from '../lib/sessionState'
 
 /*
  * ================================================================
@@ -115,8 +116,10 @@ export default function GroupChats({
   const [search, setSearch] = useState('')
 
   // Independent of any other tab's group filter — see file header.
-  const [activeGroupId, setActiveGroupId] = useState(initialGroupId)
-  const [activeGroupName, setActiveGroupName] = useState(initialGroupName)
+  // Remembered across a refresh (Jasur, 2026-09-30) — see
+  // lib/sessionState.js. A notification tap still wins (effect below).
+  const [activeGroupId, setActiveGroupId] = useSessionState(`ielts:${selfId}:groupChat:groupId`, initialGroupId)
+  const [activeGroupName, setActiveGroupName] = useSessionState(`ielts:${selfId}:groupChat:groupName`, initialGroupName)
 
   const [previewGroup, setPreviewGroup] = useState(null)
   const [previewPosition, setPreviewPosition] = useState(null)

@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
@@ -68,6 +69,10 @@ function isAuthTokenError(err) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  // Latest profile, readable from inside the auth listener below
+  // (which is created once and would otherwise see a stale value).
+  const profileRef = useRef(null)
+  profileRef.current = profile
   const [loading, setLoading] = useState(true)
   // Set whenever the initial session check or a profile fetch fails
   // or times out, so Gate() in App.jsx can show a real "something went
@@ -104,7 +109,13 @@ export function AuthProvider({ children }) {
       throw error
     }
 
-    setProfile(data || null)
+    // Keep the very same object when nothing changed, so screens that
+    // depend on `profile` don't re-render / re-fetch for no reason.
+    setProfile((prev) =>
+      prev && data && JSON.stringify(prev) === JSON.stringify(data)
+        ? prev
+        : data || null
+    )
   }, [])
 
   const loadProfile = useCallback(async (userId) => {
@@ -305,6 +316,26 @@ export function AuthProvider({ children }) {
         if (
           event === 'INITIAL_SESSION' ||
           event === 'TOKEN_REFRESHED'
+        ) {
+          return
+        }
+
+        /*
+         * SPEED (2026-09-30): supabase-js also fires SIGNED_IN every
+         * time the tab regains focus (switching back from Telegram, a
+         * phone waking up…) — for the SAME, already signed-in user.
+         * That re-downloaded the profile on every switch back (~600
+         * `profiles` requests a day) and briefly flagged the profile as
+         * loading. Only a different user signing in (or an account
+         * still waiting for approval) needs a fetch.
+         */
+        if (
+          event === 'SIGNED_IN' &&
+          sess?.user?.id &&
+          profileRef.current?.id === sess.user.id &&
+          // Someone still waiting for approval keeps the old behaviour,
+          // so coming back to the tab still notices they've been let in.
+          profileRef.current?.status === 'approved'
         ) {
           return
         }

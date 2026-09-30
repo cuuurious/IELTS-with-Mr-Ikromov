@@ -133,15 +133,28 @@ export default function WritingMockTest({
      most a few seconds of typing.
   ============================================================ */
 
+  // Last thing actually sent — see below.
+  const lastAutosavedRef = useRef(null)
+
   useEffect(() => {
     const id = setInterval(() => {
       if (submittedRef.current) return
 
-      onAutosave({
+      const payload = {
         task1_text: textsRef.current.task1,
         task2_text: textsRef.current.task2,
         tab_switch_count: tabSwitchCountRef.current,
-      })
+      }
+
+      // SPEED (2026-09-30): this used to save every 5 seconds even when
+      // nothing had been typed — 380,000+ saves so far, each one also
+      // broadcast live to the teacher. Now it only saves when the text
+      // (or tab-switch count) actually changed since the last save.
+      const key = JSON.stringify(payload)
+      if (key === lastAutosavedRef.current) return
+      lastAutosavedRef.current = key
+
+      onAutosave(payload)
 
       setLastSavedAt(new Date())
     }, AUTOSAVE_MS)

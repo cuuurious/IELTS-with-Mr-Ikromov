@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { lazyWithReload } from '../../lib/lazyWithReload'
+import LoadingScreen from '../../components/LoadingScreen'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import Layout, {
@@ -15,17 +17,18 @@ import Layout, {
   IconHelp,
 } from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
-import TeacherStudents from './TeacherStudents'
-import PendingApprovals from './PendingApprovals'
-import PrivateChats from '../../components/PrivateChats'
-import GroupChats from '../../components/GroupChats'
-import TeacherLeaderboards from './TeacherLeaderboards'
-import TeacherWordlists from './TeacherWordlists'
-import AiGradingSettings from './AiGradingSettings'
-import TeacherAccounts from './TeacherAccounts'
-import TeacherMockCenter from './TeacherMockCenter'
 import { useSessionState } from '../../lib/sessionState'
-import HowToUseGuide from '../../components/HowToUseGuide'
+
+const TeacherStudents = lazyWithReload(() => import('./TeacherStudents'))
+const PendingApprovals = lazyWithReload(() => import('./PendingApprovals'))
+const PrivateChats = lazyWithReload(() => import('../../components/PrivateChats'))
+const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
+const TeacherLeaderboards = lazyWithReload(() => import('./TeacherLeaderboards'))
+const TeacherWordlists = lazyWithReload(() => import('./TeacherWordlists'))
+const AiGradingSettings = lazyWithReload(() => import('./AiGradingSettings'))
+const TeacherAccounts = lazyWithReload(() => import('./TeacherAccounts'))
+const TeacherMockCenter = lazyWithReload(() => import('./TeacherMockCenter'))
+const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -291,7 +294,11 @@ export default function TeacherDashboard() {
   }
 
   if (mockCenterOpen) {
-    return <TeacherMockCenter onExit={() => setMockCenterOpen(false)} />
+    return (
+      <Suspense fallback={<LoadingScreen label="Opening Mock Center…" />}>
+        <TeacherMockCenter onExit={() => setMockCenterOpen(false)} />
+      </Suspense>
+    )
   }
 
   return (
@@ -306,6 +313,9 @@ export default function TeacherDashboard() {
         icon: IconMockExam,
       }}
     >
+      {/* Every tab except Groups & Homework is its own small download,
+          fetched the first time it's opened (2026-09-30 speed-up). */}
+      <Suspense fallback={<TabLoading />}>
       {tab === 'groups' && (
         <GroupWorkspace
           teacherId={profile.id}
@@ -375,6 +385,11 @@ export default function TeacherDashboard() {
       )}
 
       {tab === 'howto' && <HowToUseGuide />}
+      </Suspense>
     </Layout>
   )
+}
+
+function TabLoading() {
+  return <div className="py-16 text-center text-sm text-mist">Loading…</div>
 }

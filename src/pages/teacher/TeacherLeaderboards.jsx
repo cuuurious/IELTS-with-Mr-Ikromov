@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Leaderboard from '../../components/Leaderboard'
+import { useSessionState } from '../../lib/sessionState'
 
 export default function TeacherLeaderboards() {
   const [groups, setGroups] = useState([])
-  const [activeGroup, setActiveGroup] = useState('all')
+  const [activeGroup, setActiveGroup] = useSessionState('ielts:teacher:leaderboards:group', 'all')
 
   useEffect(() => {
     const loadGroups = async () => {
@@ -22,6 +23,7 @@ export default function TeacherLeaderboards() {
       }
 
       setGroups(data || [])
+      if (activeGroup !== 'all' && !(data || []).some((g) => g.id === activeGroup)) setActiveGroup('all')
     }
 
     loadGroups()

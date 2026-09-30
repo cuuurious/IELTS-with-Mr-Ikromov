@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 /*
  * Remember which screen someone is on across a page refresh (2026-09-29).
@@ -31,10 +31,27 @@ export function writeSession(key, value) {
 }
 
 // useState that is restored from, and saved to, sessionStorage.
+// If `key` changes (e.g. a user id arriving a moment after the first
+// render), the value is re-read for the NEW key instead of the old
+// value being written over whatever was saved under it.
 export function useSessionState(key, fallback) {
-  const [value, setValue] = useState(() => readSession(key, fallback))
+  const [state, setState] = useState(() => ({ key, value: readSession(key, fallback) }))
+  let current = state
+  if (state.key !== key) {
+    current = { key, value: readSession(key, fallback) }
+    setState(current)
+  }
+
   useEffect(() => {
-    writeSession(key, value)
-  }, [key, value])
-  return [value, setValue]
+    writeSession(current.key, current.value)
+  }, [current.key, current.value])
+
+  const setValue = useCallback((next) => {
+    setState((prev) => ({
+      key: prev.key,
+      value: typeof next === 'function' ? next(prev.value) : next,
+    }))
+  }, [])
+
+  return [current.value, setValue]
 }

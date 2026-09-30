@@ -1533,6 +1533,8 @@ export default function TeacherMockCenter({ onExit }) {
         { data: examinerRows, error: examinersError },
         { data: groupRows, error: groupsError },
         { data: groupMemberRows, error: groupMembersError },
+        { data: examRows, error: examsError },
+        { data: writingExamRows, error: writingExamsError },
       ] = await Promise.all([
         // Bug found 2026-09-27 (from Jasur asking why the Issue Codes
         // picker looked empty): this used to have no status filter at
@@ -1586,6 +1588,12 @@ export default function TeacherMockCenter({ onExit }) {
         supabase
           .from('group_members')
           .select('group_id, student_id'),
+        // Exam titles used to be a second and third round trip AFTER
+        // all of the above (~0.8 s extra from Uzbekistan). Both tables
+        // are tiny, so fetch every title in the same batch instead
+        // (2026-09-30 speed-up).
+        supabase.from('mock_exams').select('id, title, module'),
+        supabase.from('writing_mock_exams').select('id, title'),
       ])
 
       if (studentsError) console.error('Failed to load students:', studentsError)
@@ -1596,31 +1604,13 @@ export default function TeacherMockCenter({ onExit }) {
       if (groupsError) console.error('Failed to load groups:', groupsError)
       if (groupMembersError) console.error('Failed to load group members:', groupMembersError)
 
-      const examIds = [...new Set((attemptRows || []).map((a) => a.exam_id))]
-      const writingExamIds = [...new Set((writingAttemptRows || []).map((a) => a.exam_id))]
-      let examMap = {}
+      const examMap = {}
+      if (examsError) console.error('Failed to load exam titles:', examsError)
+      ;(examRows || []).forEach((e) => { examMap[e.id] = e })
 
-      if (examIds.length > 0) {
-        const { data: examRows, error: examsError } = await supabase
-          .from('mock_exams')
-          .select('id, title, module')
-          .in('id', examIds)
-
-        if (examsError) console.error('Failed to load exam titles:', examsError)
-        ;(examRows || []).forEach((e) => { examMap[e.id] = e })
-      }
-
-      let writingExamTitleById = {}
-
-      if (writingExamIds.length > 0) {
-        const { data: writingExamRows, error: writingExamsError } = await supabase
-          .from('writing_mock_exams')
-          .select('id, title')
-          .in('id', writingExamIds)
-
-        if (writingExamsError) console.error('Failed to load writing exam titles:', writingExamsError)
-        ;(writingExamRows || []).forEach((e) => { writingExamTitleById[e.id] = e.title })
-      }
+      const writingExamTitleById = {}
+      if (writingExamsError) console.error('Failed to load writing exam titles:', writingExamsError)
+      ;(writingExamRows || []).forEach((e) => { writingExamTitleById[e.id] = e.title })
 
       const reviews = (writingAttemptRows || []).map((a) => ({
         ...a,

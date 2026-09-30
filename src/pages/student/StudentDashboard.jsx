@@ -1,13 +1,13 @@
 import {
+  Suspense,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
-
+import { lazyWithReload } from '../../lib/lazyWithReload'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
-
 import Layout, {
   IconHomework,
   IconMockExam,
@@ -19,13 +19,14 @@ import Layout, {
 } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
-import GroupChats from '../../components/GroupChats'
-import Leaderboard from '../../components/Leaderboard'
-import StudentWordlists from './StudentWordlists'
-import PrivateChats from '../../components/PrivateChats'
-import MockTestCenter from '../../components/MockTestCenter'
 import { useSessionState } from '../../lib/sessionState'
-import HowToUseGuide from '../../components/HowToUseGuide'
+
+const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
+const Leaderboard = lazyWithReload(() => import('../../components/Leaderboard'))
+const StudentWordlists = lazyWithReload(() => import('./StudentWordlists'))
+const PrivateChats = lazyWithReload(() => import('../../components/PrivateChats'))
+const MockTestCenter = lazyWithReload(() => import('../../components/MockTestCenter'))
+const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 
 // One-line description shown under the top bar's own title — see the
 // "PAGE INTRO" comment below for why this no longer repeats the title
@@ -59,8 +60,9 @@ export default function StudentDashboard() {
   const [myGroups, setMyGroups] =
     useState([])
 
+  // Remembered across a refresh (Jasur, 2026-09-30).
   const [activeGroup, setActiveGroup] =
-    useState(null)
+    useSessionState(`ielts:${profile?.id}:student:activeGroup`, null)
 
   // The notification-tap handler below is wired up once (its effect
   // only depends on profile?.id, so it doesn't re-subscribe every
@@ -107,6 +109,29 @@ const [loading, setLoading] =
     if (!profile?.id) return
 
     const load = async () => {
+      // SPEED (2026-09-30): the student's groups and the teacher's row
+      // don't depend on each other — ask for both at once instead of
+      // one after the other (each round trip to the database is
+      // ~0.4 s from Uzbekistan).
+      const teacherRequest = supabase
+        .from('profiles')
+        .select(
+          'id, full_name, username'
+        )
+        .eq(
+          'role',
+          'teacher'
+        )
+        .eq(
+          'status',
+          'approved'
+        )
+        .limit(1)
+        .maybeSingle()
+        // .then() is what actually sends a Supabase request — without
+        // it, this would only start when awaited further down.
+        .then((result) => result)
+
       const {
         data: gm,
         error: groupError,
@@ -137,9 +162,12 @@ const [loading, setLoading] =
 
       setMyGroups(groups)
 
-      setActiveGroup(
-        groups[0]?.id ||
-          null
+      // Keep the group the student had open before a refresh, as long
+      // as they're still in it.
+      setActiveGroup((prev) =>
+        prev && groups.some((g) => g.id === prev)
+          ? prev
+          : groups[0]?.id || null
       )
 
       /*
@@ -148,21 +176,7 @@ const [loading, setLoading] =
       const {
         data: teacherRow,
         error: teacherError,
-      } = await supabase
-        .from('profiles')
-        .select(
-          'id, full_name, username'
-        )
-        .eq(
-          'role',
-          'teacher'
-        )
-        .eq(
-          'status',
-          'approved'
-        )
-        .limit(1)
-        .maybeSingle()
+      } = await teacherRequest
 
       if (teacherError) {
         console.error(
@@ -196,6 +210,21 @@ const [loading, setLoading] =
     }
 
     const load = async () => {
+      // Homework list and this student's own submissions are fetched
+      // together (2026-09-30 speed-up) — see the note above.
+      const submissionsRequest = supabase
+        .from('submissions')
+        .select('*')
+        .eq(
+          'student_id',
+          profile.id
+        )
+        .eq(
+          'group_id',
+          activeGroup
+        )
+        .then((result) => result) // start it now (see above)
+
       const {
         data: hw,
         error: homeworkError,
@@ -227,17 +256,7 @@ const [loading, setLoading] =
       const {
         data: subs,
         error: submissionError,
-      } = await supabase
-        .from('submissions')
-        .select('*')
-        .eq(
-          'student_id',
-          profile.id
-        )
-        .eq(
-          'group_id',
-          activeGroup
-        )
+      } = await submissionsRequest
 
       if (submissionError) {
         console.error(
@@ -629,9 +648,11 @@ const messageId = linkParts[2] || null
 
   if (mockCenterOpen) {
     return (
-      <MockTestCenter
-        onExit={() => setMockCenterOpen(false)}
-      />
+      <Suspense fallback={<LoadingScreen label="Opening Mock Test Center…" />}>
+        <MockTestCenter
+          onExit={() => setMockCenterOpen(false)}
+        />
+      </Suspense>
     )
   }
 
@@ -653,6 +674,7 @@ const messageId = linkParts[2] || null
         icon: IconMockExam,
       }}
     >
+      <Suspense fallback={<div className="py-16 text-center text-sm text-mist">Loading…</div>}>
       <div className="space-y-5">
 
         {/* ======================================================
@@ -900,6 +922,7 @@ const messageId = linkParts[2] || null
            ====================================================== */}
         {tab === 'howto' && <HowToUseGuide />}
       </div>
+      </Suspense>
     </Layout>
   )
 }
