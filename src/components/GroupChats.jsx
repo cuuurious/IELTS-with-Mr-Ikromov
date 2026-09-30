@@ -52,6 +52,22 @@ function previewText(content) {
   return content
 }
 
+// Group messages keep media in media_type/media_url columns (not JSON
+// in `content` like private chats), so a photo/voice/round video/file
+// with no caption used to show as an empty preview line.
+function groupMessagePreview(message) {
+  if (!message) return ''
+  if (message.content) return previewText(message.content)
+  switch (message.media_type) {
+    case 'image': return '📷 Photo'
+    case 'video': return '🎥 Video'
+    case 'video_note': return '📹 Video message'
+    case 'audio': return '🎤 Voice message'
+    case 'file': return `📎 ${message.media_name || 'File'}`
+    default: return ''
+  }
+}
+
 function formatListTime(value) {
   if (!value) return ''
 
@@ -171,7 +187,7 @@ export default function GroupChats({
 
       const { data: messages, error: messagesError } = await supabase
         .from('group_messages')
-        .select('id, group_id, sender_id, content, created_at')
+        .select('id, group_id, sender_id, content, media_type, media_name, created_at')
         .in('group_id', groupIds)
         .order('created_at', { ascending: false })
 
@@ -299,7 +315,7 @@ export default function GroupChats({
 
     const { data, error: previewError } = await supabase
       .from('group_messages')
-      .select('id, sender_id, content, created_at')
+      .select('id, sender_id, content, media_type, media_name, created_at')
       .eq('group_id', group.id)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -472,7 +488,7 @@ export default function GroupChats({
 
                       <div className="truncate text-xs text-mist mt-0.5">
                         {group.lastMessage
-                          ? previewText(group.lastMessage.content)
+                          ? groupMessagePreview(group.lastMessage) || 'Media message'
                           : group.description || 'No messages yet'}
                       </div>
                     </div>
@@ -577,7 +593,7 @@ export default function GroupChats({
                             : 'border border-line bg-panel-2 text-paper'
                         }`}
                       >
-                        {previewText(m.content) || 'Media message'}
+                        {groupMessagePreview(m) || 'Media message'}
                       </div>
                     </div>
                   )

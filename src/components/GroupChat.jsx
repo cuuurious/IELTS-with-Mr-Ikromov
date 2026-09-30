@@ -7,6 +7,8 @@ import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
 import ConfirmModal from './ConfirmModal'
 import GroupSettingsModal from './GroupSettingsModal'
+import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
+import { FileBubble, isDocumentFile, DOCUMENT_ACCEPT } from './chatFiles'
 
 const MAX_FILE_MB = 25
 
@@ -567,6 +569,7 @@ export default function GroupChat({
     content = null,
     mediaUrl = null,
     mediaType = null,
+    mediaName = null,
     replyToId = null,
   }) => {
     const payload = {
@@ -575,6 +578,11 @@ export default function GroupChat({
       content,
       media_url: mediaUrl,
       media_type: mediaType,
+    }
+
+    // A shared document keeps its original file name (migration_65).
+    if (mediaType === 'file' && mediaName) {
+      payload.media_name = mediaName
     }
 
     if (replyToId) {
@@ -699,6 +707,7 @@ export default function GroupChat({
       await insertMessage({
         mediaUrl: data.publicUrl,
         mediaType,
+        mediaName: file.name || null,
         replyToId: replyingTo?.id || null,
       })
 
@@ -730,11 +739,14 @@ export default function GroupChat({
       )
     ) {
       mediaType = 'audio'
+    } else if (isDocumentFile(file)) {
+      // PDFs, Word, Excel, PowerPoint, text — same as private chats.
+      mediaType = 'file'
     }
 
     if (!mediaType) {
       setError(
-        'Only photos, videos and audio files are supported.'
+        'This type of file can\'t be sent. Photos, videos, audio, PDF, Word, Excel, PowerPoint and text files are supported.'
       )
       return
     }
@@ -2036,6 +2048,12 @@ export default function GroupChat({
                       )}
                     </span>
 
+                    {message.edited_at && (
+                      <span className="italic text-mist">
+                        edited
+                      </span>
+                    )}
+
                     <button
                       type="button"
                       onClick={(e) => openMessageMenu(e, message)}
@@ -2188,6 +2206,15 @@ export default function GroupChat({
                       <VoiceBubble
                         src={message.media_url}
                         tone={mine ? 'mine' : 'theirs'}
+                      />
+                    )}
+
+                    {message.media_type ===
+                      'file' && (
+                      <FileBubble
+                        url={message.media_url}
+                        name={message.media_name}
+                        mine={mine}
                       />
                     )}
 
@@ -2388,21 +2415,10 @@ export default function GroupChat({
       {recordedBlob && (
         <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 px-3 py-2.5">
 
-          {recordingKind === 'video' ? (
-            <video
-              controls
-              src={URL.createObjectURL(recordedBlob)}
-              className="h-24 rounded-lg"
-            />
-          ) : (
-            <audio
-              controls
-              src={URL.createObjectURL(
-                recordedBlob
-              )}
-              className="flex-1"
-            />
-          )}
+          <RecordedClipPreview
+            blob={recordedBlob}
+            kind={recordingKind}
+          />
 
           <button
             type="button"
@@ -2432,6 +2448,10 @@ export default function GroupChat({
 
       {recording && (
         <div className="flex items-center gap-3 border-t border-line bg-coral/5 px-4 py-2.5 text-sm text-coral">
+
+          {recordingKind === 'video' && (
+            <RoundCameraPreview stream={streamRef.current} />
+          )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
@@ -2523,7 +2543,7 @@ export default function GroupChat({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg"
+              accept={`image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg,${DOCUMENT_ACCEPT}`}
               onChange={handleFile}
               className="hidden"
             />
@@ -2536,7 +2556,7 @@ export default function GroupChat({
                 fileInputRef.current?.click()
               }
               disabled={uploading}
-              title="Send photo, video or audio"
+              title="Send photo, video, audio or file"
               className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">

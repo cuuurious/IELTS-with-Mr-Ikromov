@@ -6,6 +6,11 @@ import ReactionPicker from './ReactionPicker'
 import VoiceBubble from './VoiceBubble'
 import VideoNoteBubble from './VideoNoteBubble'
 import ConfirmModal from './ConfirmModal'
+import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
+import { FileBubble, DOCUMENT_ACCEPT } from './chatFiles'
+
+// Same upload limit as the group chat.
+const MAX_FILE_MB = 25
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👏']
 
@@ -743,6 +748,11 @@ export default function Chat({
     if (!file || !peerId) return
 
     const { asVideoNote = false } = options
+
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      setError(`Maximum file size is ${MAX_FILE_MB}MB.`)
+      return
+    }
 
     setUploading(true)
     setError('')
@@ -1724,7 +1734,7 @@ export default function Chat({
           <img
             src={parsed.url}
             alt={parsed.name || 'Photo'}
-            className="max-w-full max-h-72 rounded-lg object-contain"
+            className="max-w-full max-h-72 rounded-xl object-contain"
           />
         </a>
       )
@@ -1736,7 +1746,7 @@ export default function Chat({
           controls
           preload="metadata"
           src={parsed.url}
-          className="max-w-full max-h-72 rounded-lg"
+          className="max-w-full max-h-72 rounded-xl"
         />
       )
     }
@@ -1751,16 +1761,7 @@ export default function Chat({
     }
 
     if (parsed.type === 'file') {
-      return (
-        <a
-          href={parsed.url}
-          target="_blank"
-          rel="noreferrer"
-          className="underline break-all"
-        >
-          📎 {parsed.name || 'Open file'}
-        </a>
-      )
+      return <FileBubble url={parsed.url} name={parsed.name} mine={mine} />
     }
 
     return (
@@ -1768,6 +1769,20 @@ export default function Chat({
         {parsed.text}
       </div>
     )
+  }
+
+  // Paste a screenshot/photo straight into the message box to send it
+  // — same as the group chat.
+  const handlePaste = async (event) => {
+    const items = Array.from(event.clipboardData?.items || [])
+    const imageItem = items.find(
+      (item) => item.kind === 'file' && item.type.startsWith('image/')
+    )
+    if (!imageItem) return
+    const file = imageItem.getAsFile()
+    if (!file) return
+    event.preventDefault()
+    await uploadChatFile(file)
   }
 
   if (!peerId) {
@@ -1787,33 +1802,47 @@ export default function Chat({
     selectedMessages.every((m) => canDeleteEveryone(m))
 
   return (
-    <div className="flex flex-col h-[28rem] bg-panel border border-line rounded-lg overflow-hidden">
+    // Same look as the group chat (GroupChat.jsx) — Jasur, 2026-09-30:
+    // "apply to every chat in the website be it private or group".
+    <div className="flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
 
       {/* HEADER — tap the name/photo to view their profile, or use
           Select to pick several messages at once */}
 
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-line">
+      <div className="relative z-20 flex items-center gap-2 border-b border-line bg-panel-2/70 px-4 py-3">
+
+        {/* Soft glow, clipped to the header on its own so the "Delete
+            chat" dropdown below can still open outside the header. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 blur-3xl" />
+        </div>
 
         <button
           type="button"
           onClick={() => setViewingProfileId(peerId)}
-          className="focus-ring flex-1 min-w-0 flex items-center gap-3 text-left hover:opacity-80"
+          className="focus-ring relative flex-1 min-w-0 flex items-center gap-3 text-left"
+          title="View profile"
         >
           {peerAvatarUrl ? (
             <img
               src={peerAvatarUrl}
               alt={peerName}
-              className="w-9 h-9 rounded-full object-cover shrink-0"
+              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brass/30 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-brass flex items-center justify-center text-sm font-semibold text-onbrass shrink-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
               {String(peerName || '?').charAt(0).toUpperCase()}
             </div>
           )}
 
-          <span className="font-display text-lg truncate">
-            {peerName}
-          </span>
+          <div className="min-w-0">
+            <div className="font-display text-lg truncate">
+              {peerName}
+            </div>
+            <div className="text-xs text-mist truncate">
+              Tap to view profile
+            </div>
+          </div>
         </button>
 
         <button
@@ -1827,7 +1856,11 @@ export default function Chat({
               setSelectMode(true)
             }
           }}
-          className="focus-ring shrink-0 text-xs px-3 py-1.5 rounded-full border border-line text-mist hover:border-brass hover:text-brass"
+          className={`focus-ring relative shrink-0 rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
+            selectMode
+              ? 'border-coral/50 bg-coral/10 text-coral'
+              : 'border-line text-mist hover:border-brass hover:text-brass'
+          }`}
         >
           {selectMode ? 'Cancel' : 'Select'}
         </button>
@@ -1841,7 +1874,7 @@ export default function Chat({
             how a bulk delete of a few messages ends up wiping the
             whole conversation by accident. */}
         {!selectMode && (
-        <div className="relative shrink-0">
+        <div className="relative z-10 shrink-0">
           <button
             type="button"
             onClick={() => setChatMenuOpen((v) => !v)}
@@ -1985,7 +2018,7 @@ export default function Chat({
         if (!pinnedMessage) return null
 
         return (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-line bg-panel-2/60">
+          <div className="flex items-center gap-2 border-b border-l-2 border-line border-l-brass bg-brass/5 px-4 py-2">
 
             <button
               type="button"
@@ -2036,12 +2069,12 @@ export default function Chat({
 
       {/* MESSAGES */}
 
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
 
         {messages.length === 0 && (
-          <p className="text-mist text-sm">
+          <div className="h-full flex items-center justify-center text-mist text-sm">
             No messages yet — say hello.
-          </p>
+          </div>
         )}
 
         {messages
@@ -2135,7 +2168,7 @@ export default function Chat({
               )}
 
               <div
-                className={`max-w-[75%] flex flex-col ${
+                className={`max-w-[82%] flex flex-col ${
                   mine ? 'items-end' : 'items-start'
                 } ${
                   selectMode ? 'pointer-events-none' : ''
@@ -2178,10 +2211,10 @@ export default function Chat({
                         ? 'none'
                         : 'transform 160ms ease',
                   }}
-                  className={`relative select-none px-3 py-2 rounded-lg text-sm ${
+                  className={`relative select-none rounded-2xl px-3 py-2.5 text-sm ${
                     mine
-                      ? 'bg-brass text-onbrass'
-                      : 'bg-panel-2 text-paper'
+                      ? 'rounded-tr-md bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
+                      : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
                   }`}
                 >
 
@@ -2271,7 +2304,7 @@ export default function Chat({
                 {/* META ROW — timestamp, edited tag, and the
                     "⋯" actions menu, all in one inline row
                     instead of floating over the bubble */}
-                <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-mist">
+                <div className="flex items-center gap-2 mt-1 px-1 text-[11px] text-mist">
 
                   <span className="opacity-70">
                     {new Date(
@@ -2394,7 +2427,7 @@ export default function Chat({
       {/* ERROR */}
 
       {error && (
-        <div className="px-3 py-2 border-t border-line text-coral text-xs">
+        <div className="px-4 py-2 text-xs text-coral border-t border-line">
           {error}
         </div>
       )}
@@ -2434,7 +2467,7 @@ export default function Chat({
           messages to bulk-delete */}
 
       {selectMode && (
-        <div className="flex items-center gap-2 p-3 border-t border-line">
+        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3">
 
           <span className="text-sm text-mist">
             {selectedIds.size} selected
@@ -2444,7 +2477,7 @@ export default function Chat({
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-line text-mist hover:text-paper"
+              className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:text-paper"
             >
               Cancel
             </button>
@@ -2453,7 +2486,7 @@ export default function Chat({
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring text-xs px-3 py-1.5 rounded-md border border-coral text-coral disabled:opacity-40"
+              className="focus-ring rounded-full border border-coral/50 px-3 py-1.5 text-xs text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -2463,7 +2496,7 @@ export default function Chat({
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring text-xs px-3 py-1.5 rounded-md bg-coral text-onbrass disabled:opacity-40"
+                className="focus-ring rounded-full bg-coral px-3 py-1.5 text-xs text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -2478,27 +2511,18 @@ export default function Chat({
           out the moment you stop recording. */}
 
       {recordedBlob && (
-        <div className="flex items-center gap-2 p-3 border-t border-line bg-panel-2/60">
+        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 px-3 py-2.5">
 
-          {recordingKind === 'video' ? (
-            <video
-              controls
-              src={URL.createObjectURL(recordedBlob)}
-              className="h-24 rounded-lg"
-            />
-          ) : (
-            <audio
-              controls
-              src={URL.createObjectURL(recordedBlob)}
-              className="flex-1"
-            />
-          )}
+          <RecordedClipPreview
+            blob={recordedBlob}
+            kind={recordingKind}
+          />
 
           <button
             type="button"
             onClick={discardRecording}
             disabled={uploading}
-            className="focus-ring shrink-0 px-3 py-1.5 rounded-md border border-line text-xs text-mist hover:border-coral hover:text-coral disabled:opacity-40"
+            className="focus-ring ml-auto shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-coral hover:text-coral disabled:opacity-40"
           >
             Discard
           </button>
@@ -2507,7 +2531,7 @@ export default function Chat({
             type="button"
             onClick={sendRecording}
             disabled={uploading}
-            className="focus-ring shrink-0 px-4 py-1.5 rounded-md bg-brass text-onbrass text-xs font-medium disabled:opacity-40"
+            className="focus-ring shrink-0 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
           >
             {uploading ? 'Sending…' : 'Send'}
           </button>
@@ -2518,20 +2542,37 @@ export default function Chat({
       {/* RECORDING IN PROGRESS */}
 
       {recording && !recordedBlob && (
-        <div className="flex items-center gap-3 p-3 border-t border-line bg-coral/5 text-sm text-coral">
+        <div className="flex items-center gap-3 border-t border-line bg-coral/5 px-4 py-2.5 text-sm text-coral">
+
+          {recordingKind === 'video' && (
+            <RoundCameraPreview stream={recordStreamRef.current} />
+          )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-coral" />
           </span>
 
-          {recordingKind === 'video' ? '📹' : '🎤'}{' '}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
+            {recordingKind === 'video' ? (
+              <>
+                <rect x="2" y="6" width="14" height="12" rx="2" />
+                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
+              </>
+            ) : (
+              <>
+                <rect x="9" y="2" width="6" height="11" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+              </>
+            )}
+          </svg>
+
           Recording {formatRecordSeconds(recordSeconds)}
 
           <button
             type="button"
             onClick={stopRecording}
-            className="focus-ring ml-auto shrink-0 px-3 py-1.5 rounded-md border border-coral/50 text-xs hover:bg-coral hover:text-paper"
+            className="focus-ring ml-auto shrink-0 rounded-full border border-coral/50 px-3 py-1.5 text-xs transition hover:bg-coral hover:text-paper"
           >
             Stop
           </button>
@@ -2544,71 +2585,84 @@ export default function Chat({
       {!selectMode && !recording && !recordedBlob && (
       <form
         onSubmit={sendText}
-        className="flex gap-2 p-3 border-t border-line items-center"
+        onPaste={handlePaste}
+        className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3"
       >
-
-        {/* FILE INPUT */}
 
         <input
           ref={fileRef}
           type="file"
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+          accept={`image/*,video/*,audio/*,${DOCUMENT_ACCEPT}`}
           onChange={handleFile}
           className="hidden"
         />
 
         {/* PHOTO / VIDEO / FILE */}
-
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
-          title="Photo, video or file"
-          aria-label="Photo, video or file"
+          title="Send photo, video, audio or file"
+          aria-label="Send photo, video, audio or file"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
         >
-          📎
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+            <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+          </svg>
         </button>
 
-        {/* VOICE / VIDEO */}
-
+        {/* VOICE MESSAGE */}
         <button
           type="button"
           onClick={() => startRecording('audio')}
           disabled={uploading}
-          className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
           title="Record voice message"
           aria-label="Record voice message"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
         >
-          🎤
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+            <rect x="9" y="2" width="6" height="11" rx="3" />
+            <path d="M5 10a7 7 0 0 0 14 0" />
+            <path d="M12 17v4" />
+            <path d="M9 21h6" />
+          </svg>
         </button>
 
+        {/* ROUND VIDEO MESSAGE */}
         <button
           type="button"
           onClick={() => startRecording('video')}
           disabled={uploading}
-          className="focus-ring w-10 h-10 rounded-md border border-line text-lg disabled:opacity-40"
           title="Record video message"
           aria-label="Record video message"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
         >
-          📹
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+            <rect x="2" y="6" width="14" height="12" rx="2" />
+            <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
+          </svg>
         </button>
 
         <input
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message…"
+          placeholder="Write a message..."
           disabled={uploading}
-          className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist disabled:opacity-50"
+          className="focus-ring flex-1 min-w-0 rounded-full border border-line bg-panel px-4 py-2.5 text-sm text-paper shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)] placeholder:text-mist disabled:opacity-50"
         />
 
         <button
           type="submit"
           disabled={sending || uploading || !text.trim()}
-          className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
+          aria-label={uploading ? 'Sending…' : 'Send message'}
+          title={uploading ? 'Sending…' : 'Send'}
         >
-          {uploading ? 'Sending…' : 'Send'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+            <path d="M22 2L11 13" />
+            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
         </button>
 
       </form>
