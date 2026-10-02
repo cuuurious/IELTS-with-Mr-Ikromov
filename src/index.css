@@ -1851,3 +1851,85 @@ html:not([data-theme='light']) .progress-due-date-overdue {
     scroll-behavior: auto !important;
   }
 }
+
+/* =========================================================
+   PROGRESS TABLE — homework titles get the full column width
+   (2026-10-02)
+
+   The edit / reset / delete buttons (and the new "Remind" bell)
+   were only invisible at rest (opacity 0) — they still took up
+   their width next to the title, so with four of them the title
+   was squeezed into ~25px ("Pod ca…", "IELT S…"). Now the buttons
+   float as a small bar over the due-date line, only while the
+   column header is hovered/focused, and take no space otherwise.
+   On touch screens (no hover) they sit under the title instead.
+   ========================================================= */
+
+.progress-homework-header {
+  position: relative;
+}
+
+.progress-homework-heading {
+  display: block;
+}
+
+.progress-homework-title {
+  max-width: 100%;
+  margin: 0 auto;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.progress-homework-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  z-index: 3;
+
+  gap: 2px;
+  padding: 2px;
+
+  border: 1px solid var(--color-line);
+  border-radius: 9px;
+  background: var(--color-panel-2);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .45);
+
+  transform: translateX(-50%);
+
+  /* invisible buttons must not be clickable by accident */
+  pointer-events: none;
+}
+
+.progress-homework-header:hover .progress-homework-actions,
+.progress-homework-header:focus-within .progress-homework-actions {
+  pointer-events: auto;
+}
+
+html[data-theme='light'] .progress-homework-actions {
+  background: #f1efe9;
+  border-color: #dedbd3;
+}
+
+html[data-theme='dark'] .progress-homework-actions,
+html:not([data-theme='light']) .progress-homework-actions {
+  background: #2d2d33;
+  border-color: #3b3b43;
+}
+
+@media (hover: none) {
+  .progress-table thead th.progress-homework-header {
+    height: auto;
+  }
+
+  .progress-homework-actions {
+    position: static;
+    display: flex;
+    justify-content: center;
+    width: max-content;
+    margin: 6px auto 0;
+    transform: none;
+    box-shadow: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
