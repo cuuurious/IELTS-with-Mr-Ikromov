@@ -3,10 +3,13 @@
 // Receives updates from Telegram's Bot API (configured as this bot's
 // webhook URL via https://api.telegram.org/bot<token>/setWebhook).
 //
-// 1) "Connect Telegram" (unchanged since migration_29/41): the website
-//    opens t.me/<bot>?start=<token>; we remember the chat, ask for the
-//    user's contact, and on "Share my contact" link the account in
-//    telegram_links.
+// 1) "Connect Telegram": the website opens t.me/<bot>?start=<token>; we
+//    remember the chat, ask for the user's contact, and on "Share my
+//    contact" link the account in telegram_links. 2026-10-02: every reply
+//    after that removes the "Share my contact" button (it used to stay on
+//    screen if a connected user tapped it again), and students who send
+//    the bot files/text get a short "submit on the website" answer
+//    instead of silence — only the teacher's files go to the Library.
 //
 // 2) MATERIALS INBOX (2026-09-30, migration_66). Jasur: "most of my
 //    files … are in telegram … i want my telegram account to be used for
@@ -168,6 +171,33 @@ async function teacherForChat(supabase: any, chatId: number) {
     .maybeSingle()
   if (!profile || profile.role !== 'teacher' || profile.status !== 'approved') return null
   return profile
+}
+
+// Any connected account (student, examiner or teacher) for this chat.
+async function linkedProfileForChat(supabase: any, chatId: number) {
+  const { data: link } = await supabase
+    .from('telegram_links')
+    .select('user_id')
+    .eq('telegram_chat_id', chatId)
+    .maybeSingle()
+  if (!link?.user_id) return null
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, role, status, full_name')
+    .eq('id', link.user_id)
+    .maybeSingle()
+  return profile || null
+}
+
+// Removes the "📱 Share my contact" button from the chat (Telegram keeps
+// a reply keyboard on screen until a message explicitly removes it).
+const REMOVE_KEYBOARD = { remove_keyboard: true }
+
+function studentInfoText(siteUrl?: string) {
+  const site = (siteUrl || 'https://ieltswithmrikromov.com').replace(/\/+$/, '')
+  return "You're connected ✅\n\n" +
+    'This bot sends you homework, deadline reminders, messages and results from the website.\n\n' +
+    'It does not accept homework — please submit your work on the website:\n' + site
 }
 
 async function findOrCreateFolder(supabase: any, name: string, userId: string) {
@@ -356,7 +386,7 @@ async function handleTeacherText(supabase: any, botToken: string, message: any, 
     return
   }
 
-  await sendTelegramMessage(botToken, chatId, HELP_TEXT)
+  await sendTelegramMessage(botToken, chatId, HELP_TEXT, REMOVE_KEYBOARD)
 }
 
 async function handleCallback(supabase: any, botToken: string, callback: any) {
@@ -393,7 +423,7 @@ async function handleCallback(supabase: any, botToken: string, callback: any) {
 // ------------------------------------------------------------------
 // Connect-Telegram flow (unchanged behaviour)
 // ------------------------------------------------------------------
-async function handleLinking(supabase: any, botToken: string, message: any): Promise<boolean> {
+async function handleLinking(supabase: any, botToken: string, message: any, siteUrl?: string): Promise<boolean> {
   const chatId = message.chat.id
 
   if (message.contact) {
@@ -409,7 +439,16 @@ async function handleLinking(supabase: any, botToken: string, message: any): Pro
     if (tokenLookupError) throw tokenLookupError
 
     if (!tokenRow) {
-      await sendTelegramMessage(botToken, chatId, "This link has expired or wasn't started from the website. Go back and tap \"Connect Telegram\" again.")
+      // Most often: already connected and tapped "Share my contact" again.
+      const linked = await linkedProfileForChat(supabase, chatId)
+      await sendTelegramMessage(
+        botToken,
+        chatId,
+        linked
+          ? (linked.role === 'teacher' ? "You're already connected ✅\n\n" + HELP_TEXT : studentInfoText(siteUrl))
+          : "This link has expired or wasn't started from the website. Go back and tap \"Connect Telegram\" again.",
+        REMOVE_KEYBOARD
+      )
       return true
     }
 
@@ -432,8 +471,8 @@ async function handleLinking(supabase: any, botToken: string, message: any): Pro
       chatId,
       profile?.role === 'teacher'
         ? "You're connected! ✅\n\n" + HELP_TEXT
-        : "You're all set! You'll get your speaking-exam reminders here too, alongside the website's push notifications.",
-      { remove_keyboard: true }
+        : studentInfoText(siteUrl),
+      REMOVE_KEYBOARD
     )
     return true
   }
@@ -443,12 +482,15 @@ async function handleLinking(supabase: any, botToken: string, message: any): Pro
     const token = text.split(' ')[1]?.trim()
 
     if (!token) {
-      // A connected teacher just opening the bot: show what it does.
-      const teacher = await teacherForChat(supabase, chatId)
+      // Someone opening the bot directly (not from the website button).
+      const linked = await linkedProfileForChat(supabase, chatId)
       await sendTelegramMessage(
         botToken,
         chatId,
-        teacher ? HELP_TEXT : 'Open this from the "Connect Telegram" button on the website — that link carries the code this bot needs.'
+        linked
+          ? (linked.role === 'teacher' && linked.status === 'approved' ? HELP_TEXT : studentInfoText(siteUrl))
+          : 'Open this from the "Connect Telegram" button on the website — that link carries the code this bot needs.',
+        REMOVE_KEYBOARD
       )
       return true
     }
@@ -505,10 +547,27 @@ export async function handleUpdate(update: any, env: {
   // Only private chats with the bot — never act on group messages.
   if (message.chat.type && message.chat.type !== 'private') return 'ignored'
 
-  if (await handleLinking(supabase, botToken, message)) return 'linking'
+  if (await handleLinking(supabase, botToken, message, env.siteUrl)) return 'linking'
 
   const teacher = await teacherForChat(supabase, chatId)
-  if (!teacher) return 'not-teacher'
+  if (!teacher) {
+    // Students (and anyone else) can't save files to the Materials
+    // Library — tell them once per message instead of silently ignoring
+    // it, and point them to the website for homework. Albums arrive as
+    // one message per photo: answer only the first one (the one with a
+    // caption, or a lone message).
+    if (message.media_group_id && !message.caption) return 'not-teacher'
+    const linked = await linkedProfileForChat(supabase, chatId)
+    await sendTelegramMessage(
+      botToken,
+      chatId,
+      linked
+        ? studentInfoText(env.siteUrl)
+        : 'Open this from the "Connect Telegram" button on the website — that link carries the code this bot needs.',
+      REMOVE_KEYBOARD
+    )
+    return 'not-teacher'
+  }
 
   if (extractFile(message)) {
     return await saveFileMessage({ ...env, message, teacher })
