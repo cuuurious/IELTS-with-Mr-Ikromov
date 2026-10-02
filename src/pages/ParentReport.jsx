@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { downloadParentReport } from '../lib/generateParentReport'
 
 /*
  * PARENT PROGRESS REPORT (2026-10-02) — /report/<secret link>
@@ -41,6 +42,21 @@ export default function ParentReport() {
   const { token } = useParams()
   const [state, setState] = useState('loading') // loading | ok | off | error
   const [report, setReport] = useState(null)
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfError, setPdfError] = useState('')
+
+  const downloadPdf = async () => {
+    setPdfBusy(true)
+    setPdfError('')
+    try {
+      await downloadParentReport(report)
+    } catch (err) {
+      console.error('Parent report PDF failed:', err)
+      setPdfError('Could not make the PDF — please check the internet connection and try again.')
+    } finally {
+      setPdfBusy(false)
+    }
+  }
 
   useEffect(() => {
     document.title = 'Progress report — IELTS with Mr Ikromov'
@@ -110,7 +126,7 @@ export default function ParentReport() {
 
   return shell(
     <>
-      <header className="flex items-center gap-4">
+      <header className="flex flex-wrap items-center gap-4">
         {student.avatar_url ? (
           <img src={student.avatar_url} alt="" className="h-14 w-14 rounded-full border border-line object-cover" />
         ) : (
@@ -125,7 +141,21 @@ export default function ParentReport() {
             {student.target_band ? `Target band ${student.target_band}` : 'IELTS preparation'}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={downloadPdf}
+          disabled={pdfBusy}
+          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-2 text-sm font-semibold text-onbrass shadow disabled:opacity-60"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3v12" />
+            <path d="m7 10 5 5 5-5" />
+            <path d="M5 21h14" />
+          </svg>
+          {pdfBusy ? 'Making PDF…' : 'Download PDF'}
+        </button>
       </header>
+      {pdfError && <p className="-mt-3 text-sm text-coral">{pdfError}</p>}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-xl">Homework — last 60 days</h2>

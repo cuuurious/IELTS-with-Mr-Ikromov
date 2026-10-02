@@ -75,7 +75,7 @@ Then set the secrets on the new project (same values as the old one):
 - **Telegram bot** — tell Telegram the new address:
   `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://NEWREF.supabase.co/functions/v1/telegram-webhook&secret_token=<TELEGRAM_WEBHOOK_SECRET>`
 - **Auth settings** (new project → Authentication → URL configuration): Site URL `https://ieltswithmrikromov.com`, same redirect URLs as the old project. Copy SMTP / email templates if you customised them.
-- **Website** — in `.env` change `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the new project's values, then `npm run deploy`.
+- **Website** — Cloudflare → Workers & Pages → **ielts-with-mr-ikromov** → Settings → build variables: change `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the new project's values (also in your local `.env`). Then trigger a new build: push any commit from GitHub Desktop, or Deployments → Retry/redeploy. (Don't use `npm run deploy` — it publishes to a different, unused worker.)
 - **GitHub → Settings → Secrets → Actions**: update `VITE_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (used by the reminder / digest workflows).
 
 ### 7. Check (10 min)
@@ -90,4 +90,4 @@ Keep the old Sydney project **paused, not deleted**, for 2 weeks as a backup. Th
 
 ## If something goes wrong
 
-Until step 6, the live site still uses Sydney — just stop and nothing changed for students. After step 6, roll back by putting the old `VITE_SUPABASE_URL` / key back in `.env`, `npm run deploy`, and re-pointing the Telegram webhook to the old address.
+Until step 6, the live site still uses Sydney — just stop and nothing changed for students. After step 6, roll back by putting the old `VITE_SUPABASE_URL` / key back in the Cloudflare build variables and redeploying, and re-pointing the Telegram webhook to the old address.
