@@ -5,7 +5,7 @@ import SubmissionPanel from './SubmissionPanel'
 import EditHomeworkModal from './EditHomeworkModal'
 import ConfirmModal from '../../components/ConfirmModal'
 import { getSubmissionStatus } from '../../components/StampBadge'
-import { notifyGroup } from '../../lib/notify'
+import { notifyGroup, notifyUsers } from '../../lib/notify'
 import { useSessionState } from '../../lib/sessionState'
 
 export default function GroupWorkspace({ teacherId }) {
@@ -741,6 +741,67 @@ export default function GroupWorkspace({ teacherId }) {
   /* =========================================================
      RESET HOMEWORK
   ========================================================= */
+
+  /*
+   * REMIND (2026-10-02) — one tap nudges only the students who haven't
+   * completed this homework yet: in-app bell, phone push and Telegram
+   * (for students who connected the bot). Replaces chasing people in
+   * the Telegram group.
+   */
+  const remindHomework = (hw) => {
+    const notDone = roster.filter(
+      (student) => submissions[`${hw.id}_${student.id}`]?.status !== 'done'
+    )
+
+    if (!notDone.length) {
+      setConfirmDialog({
+        title: 'Everyone has done it',
+        message: `All students in this group have completed "${hw.title}".`,
+        confirmLabel: 'OK',
+        tone: 'brass',
+        onConfirm: () => {},
+      })
+      return
+    }
+
+    const overdue = hw.due_date && new Date(hw.due_date) < new Date()
+
+    setConfirmDialog({
+      title: `Remind ${notDone.length} student${notDone.length === 1 ? '' : 's'}?`,
+      message:
+        `They haven't completed "${hw.title}" yet:\n` +
+        notDone
+          .slice(0, 12)
+          .map((s) => `• ${s.full_name || s.username}`)
+          .join('\n') +
+        (notDone.length > 12 ? `\n…and ${notDone.length - 12} more` : ''),
+      confirmLabel: 'Send reminder',
+      cancelLabel: 'Cancel',
+      tone: 'brass',
+      onConfirm: async () => {
+        setBusyAction(`remind-${hw.id}`)
+        const result = await notifyUsers({
+          userIds: notDone.map((s) => s.id),
+          type: 'homework_reminder',
+          title: overdue ? 'Homework overdue' : 'Homework reminder',
+          body: overdue
+            ? `"${hw.title}" was due — please complete it as soon as possible.`
+            : `Don't forget "${hw.title}"${hw.due_date ? ` — due ${new Date(hw.due_date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}.`,
+          link: `homework:${hw.id}`,
+        })
+        setBusyAction('')
+        if (!result.ok && result.reason === 'all') {
+          setConfirmDialog({
+            title: "Reminder wasn't sent",
+            message: result.detail || 'Unknown error',
+            tone: 'coral',
+            confirmLabel: 'OK',
+            onConfirm: () => {},
+          })
+        }
+      },
+    })
+  }
 
   const clearHomeworkContent = (hw) => {
     setConfirmDialog({
@@ -1568,6 +1629,20 @@ export default function GroupWorkspace({ teacherId }) {
 
                                 <button
                                   type="button"
+                                  onClick={() => remindHomework(hw)}
+                                  disabled={busyAction === `remind-${hw.id}`}
+                                  className="progress-action"
+                                  title="Remind students who haven't done it"
+                                  aria-label="Remind students who haven't done it"
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                                  </svg>
+                                </button>
+
+                                <button
+                                  type="button"
                                   onClick={() =>
                                     setEditingHomework(hw)
                                   }
@@ -1885,7 +1960,7 @@ export default function GroupWorkspace({ teacherId }) {
           onClose={() =>
             setEditingHomework(null)
           }
-          onSaved={(updated) => {
+          onSaved={(updated, options = {}) => {
             setHomeworks((prev) =>
               prev.map((homework) =>
                 homework.id === updated.id
@@ -1893,6 +1968,10 @@ export default function GroupWorkspace({ teacherId }) {
                   : homework
               )
             )
+
+            // Only when the teacher ticked "Notify students about this
+            // change" in the edit window (2026-10-02).
+            if (!options.notify) return
 
             notifyGroup({
               groupId: activeGroup,

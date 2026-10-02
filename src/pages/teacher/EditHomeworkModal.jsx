@@ -23,6 +23,10 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [minFiles, setMinFiles] = useState(homework.min_submission_files ?? 1)
   const [maxFiles, setMaxFiles] = useState(homework.max_submission_files ?? 10)
   const [saving, setSaving] = useState(false)
+  // Off by default (2026-10-02): every edit used to notify the whole
+  // group — ~14,000 "Homework updated" notifications so far, mostly for
+  // small fixes, which teaches students to ignore notifications.
+  const [notifyStudents, setNotifyStudents] = useState(false)
   const [error, setError] = useState('')
 
   // Library files on this homework (migration_66). `existing` are rows
@@ -214,7 +218,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         }
       }
 
-      onSaved(data)
+      onSaved(data, { notify: notifyStudents })
       onClose()
     } catch (err) {
       setError(err?.message || 'Could not save these changes.')
@@ -462,6 +466,15 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           </div>
         )}
         {error && <p className="text-coral text-sm">{error}</p>}
+        <label className="flex items-center gap-2 text-sm text-mist cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={notifyStudents}
+            onChange={(e) => setNotifyStudents(e.target.checked)}
+            className="accent-brass"
+          />
+          Notify students about this change
+        </label>
         <div className="flex gap-2 mt-2"><button disabled={saving} className="focus-ring px-4 py-2 rounded-md bg-brass text-onbrass font-medium hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass">{saving ? 'Saving…' : 'Save changes'}</button><button type="button" onClick={onClose} className="focus-ring px-4 py-2 rounded-md border border-line text-mist hover:border-brass hover:text-brass transition-colors">Cancel</button></div>
       </form>
       </div>

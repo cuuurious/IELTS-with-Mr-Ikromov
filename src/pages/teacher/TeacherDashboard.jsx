@@ -29,6 +29,7 @@ const AiGradingSettings = lazyWithReload(() => import('./AiGradingSettings'))
 const TeacherAccounts = lazyWithReload(() => import('./TeacherAccounts'))
 const TeacherMockCenter = lazyWithReload(() => import('./TeacherMockCenter'))
 const MaterialsLibrary = lazyWithReload(() => import('./MaterialsLibrary'))
+const ClientErrors = lazyWithReload(() => import('./ClientErrors'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 
 export default function TeacherDashboard() {
@@ -261,7 +262,11 @@ export default function TeacherDashboard() {
         // from "teacher accounts" to "staff accounts" (teacher +
         // speaking_examiner + writing_examiner all live here now).
         ...(profile.is_admin
-          ? [{ key: 'staff-accounts', label: 'Staff accounts', icon: IconStaff }]
+          ? [
+              { key: 'staff-accounts', label: 'Staff accounts', icon: IconStaff },
+              // Errors students hit on their devices (lib/errorReporter.js).
+              { key: 'errors', label: 'Errors', icon: IconAlert },
+            ]
           : []),
       ],
     },
@@ -390,6 +395,8 @@ export default function TeacherDashboard() {
         />
       )}
 
+      {tab === 'errors' && profile.is_admin && <ClientErrors />}
+
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>
     </Layout>
@@ -398,6 +405,16 @@ export default function TeacherDashboard() {
 
 function TabLoading() {
   return <div className="py-16 text-center text-sm text-mist">Loading…</div>
+}
+
+function IconAlert({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
 }
 
 function IconFolder({ className }) {

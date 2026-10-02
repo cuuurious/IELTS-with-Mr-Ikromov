@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { compressImageIfNeeded } from '../lib/compressImage'
 import ProfileModal from './ProfileModal'
 import MessageActionMenu from './MessageActionMenu'
 import ReactionPicker from './ReactionPicker'
@@ -744,8 +745,15 @@ export default function Chat({
     setSending(false)
   }
 
-  const uploadChatFile = async (file, options = {}) => {
-    if (!file || !peerId) return
+  const uploadChatFile = async (incomingFile, options = {}) => {
+    if (!incomingFile || !peerId) return
+
+    // Phone photos are 3-10MB; shrink them in the browser first (same
+    // helper as homework uploads) — faster sending, faster loading for
+    // the other person. Never fails: returns the original on any error.
+    const file = incomingFile.type?.startsWith('image/')
+      ? await compressImageIfNeeded(incomingFile)
+      : incomingFile
 
     const { asVideoNote = false } = options
 

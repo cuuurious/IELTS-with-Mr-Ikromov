@@ -149,3 +149,39 @@ export async function notifyGroup({
     }
   }
 }
+
+/*
+ * Notify a specific list of users (2026-10-02) — e.g. the teacher's
+ * "Remind" button, which only nudges students who haven't done a
+ * homework yet. Same delivery as notifyGroup: in-app bell + phone/
+ * browser push here, and Telegram automatically (a database trigger
+ * forwards every new notification to students who connected the bot).
+ */
+export async function notifyUsers({ userIds, type, title, body, link = '/app' }) {
+  const ids = [...new Set((userIds || []).filter(Boolean))]
+  if (!ids.length) return { ok: true, count: 0 }
+
+  try {
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert(ids.map((id) => ({ user_id: id, type, title, body, link })))
+
+    if (notificationError) throw notificationError
+  } catch (error) {
+    console.error('notifyUsers failed:', error)
+    return { ok: false, reason: 'all', detail: error?.message }
+  }
+
+  try {
+    const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push', {
+      body: { userIds: ids, title, body, link },
+    })
+    if (pushError || pushData?.error) {
+      return { ok: false, reason: 'push', detail: pushError?.message || pushData?.error, count: ids.length }
+    }
+  } catch (pushCatchError) {
+    return { ok: false, reason: 'push', detail: pushCatchError?.message, count: ids.length }
+  }
+
+  return { ok: true, count: ids.length }
+}

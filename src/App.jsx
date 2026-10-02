@@ -5,6 +5,7 @@ import LoadingScreen from './components/LoadingScreen'
 import Login from './pages/Login'
 import PendingApproval from './pages/PendingApproval'
 import { lazyWithReload } from './lib/lazyWithReload'
+import { reportError, setErrorUser } from './lib/errorReporter'
 
 // SPEED (2026-09-30): each dashboard is now its own download instead of
 // one ~1 MB file with everything in it. A student never downloads the
@@ -18,6 +19,7 @@ const WritingExaminerDashboard = lazyWithReload(() => import('./pages/examiner/W
 const ForgotPassword = lazyWithReload(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazyWithReload(() => import('./pages/ResetPassword'))
 const Register = lazyWithReload(() => import('./pages/Register'))
+const ParentReport = lazyWithReload(() => import('./pages/ParentReport'))
 
 function Gate() {
   const {
@@ -82,6 +84,9 @@ function Gate() {
   // before this, both examiner roles fell through the ": " default
   // straight into StudentDashboard, which is exactly the bug Jasur
   // hit logging in as a freshly-created examiner account.
+  // Errors reported from here on are tagged with who saw them.
+  setErrorUser(profile)
+
   const Dashboard =
     profile.role === 'teacher'
       ? TeacherDashboard
@@ -113,8 +118,9 @@ class ChunkErrorBoundary extends Component {
     return { failed: true }
   }
 
-  componentDidCatch(error) {
+  componentDidCatch(error, info) {
     console.error('Could not load this part of the app:', error)
+    reportError(error, info?.componentStack)
   }
 
   render() {
@@ -191,6 +197,12 @@ export default function App() {
           <Route
             path="/app"
             element={<Gate />}
+          />
+
+          {/* Parent progress report — public, secret link (2026-10-02) */}
+          <Route
+            path="/report/:token"
+            element={<ParentReport />}
           />
 
           {/* Unknown routes */}

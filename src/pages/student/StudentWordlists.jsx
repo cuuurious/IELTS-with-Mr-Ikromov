@@ -1,6 +1,95 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import WordlistPlayer from './WordlistPlayer'
+import WordReview, { REVIEW_SESSION_SIZE } from './WordReview'
+
+/*
+ * "Daily review" card (2026-10-02): how many words are due today in the
+ * spaced-repetition boxes (see WordReview.jsx) + the student's practice
+ * streak (days in a row with any word quiz or review).
+ */
+function localDay(value) {
+  const d = new Date(value)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
+  const [due, setDue] = useState(null)
+  const [streak, setStreak] = useState(0)
+  const [doneToday, setDoneToday] = useState(false)
+
+  useEffect(() => {
+    if (!studentId || !wordlistIds.length) return
+    let cancelled = false
+    const since = new Date(Date.now() - 90 * 86400000).toISOString()
+    Promise.all([
+      supabase
+        .from('word_progress')
+        .select('item_id', { count: 'exact', head: true })
+        .eq('student_id', studentId)
+        .in('wordlist_id', wordlistIds)
+        .lte('due_at', new Date().toISOString()),
+      supabase.from('wordlist_attempts').select('created_at').eq('student_id', studentId).gte('created_at', since),
+      supabase.from('word_review_sessions').select('created_at').eq('student_id', studentId).gte('created_at', since),
+    ])
+      .then(([dueRes, attemptsRes, reviewsRes]) => {
+        if (cancelled) return
+        setDue(dueRes.count ?? 0)
+        const days = new Set(
+          [...(attemptsRes.data || []), ...(reviewsRes.data || [])].map((r) => localDay(r.created_at))
+        )
+        const today = new Date()
+        setDoneToday(days.has(localDay(today)))
+        // Streak counts back from today (or from yesterday, if today
+        // isn't done yet — the streak isn't lost until the day ends).
+        let count = 0
+        const cursor = new Date(today)
+        if (!days.has(localDay(cursor))) cursor.setDate(cursor.getDate() - 1)
+        while (days.has(localDay(cursor))) {
+          count += 1
+          cursor.setDate(cursor.getDate() - 1)
+        }
+        setStreak(count)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentId, wordlistIds.join(','), refreshKey])
+
+  if (due === null) return null
+
+  const sessionSize = Math.min(due, REVIEW_SESSION_SIZE)
+
+  return (
+    <div className="rounded-xl border border-brass/40 bg-gradient-to-br from-brass/10 to-transparent px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-brass">Daily review</p>
+          <p className="mt-1 font-display text-lg">
+            {due > 0 ? `${sessionSize} word${sessionSize === 1 ? '' : 's'} to review today` : 'All caught up for today'}
+          </p>
+          <p className="mt-0.5 text-xs text-mist">
+            {streak > 0
+              ? `🔥 ${streak}-day streak${doneToday ? '' : ' — practise today to keep it'}`
+              : 'Practise every day to build a streak.'}
+            {due > REVIEW_SESSION_SIZE ? ` · ${due} due in total` : ''}
+          </p>
+        </div>
+        {due > 0 && (
+          <button
+            type="button"
+            onClick={onStart}
+            className="focus-ring rounded-full bg-gradient-to-br from-brass to-brass-dim px-5 py-2 text-sm font-semibold text-onbrass"
+          >
+            Start review
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function Icon({ name, size = 18 }) {
   const common = {
@@ -62,6 +151,8 @@ export default function StudentWordlists({
   const [lists, setLists] = useState([])
   const [myAttempts, setMyAttempts] = useState({})
   const [playing, setPlaying] = useState(null)
+  const [reviewing, setReviewing] = useState(false)
+  const [reviewRefresh, setReviewRefresh] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
@@ -120,13 +211,6 @@ const {
   .select('wordlist_id, group_id')
   .in('group_id', groupIds)
 
-console.log('WORDLIST DEBUG')
-console.log('Student group IDs:', groupIds)
-console.log('Assignments returned:', assignments)
-console.error(
-  'Assignments error details:',
-  JSON.stringify(assignmentsError, null, 2)
-)
 if (assignmentsError) {
   throw assignmentsError
 }
@@ -159,9 +243,6 @@ const {
     ascending: false,
   })
 
-console.log('Wordlist IDs:', wordlistIds)
-console.log('Wordlists returned:', wordlists)
-console.log('Wordlists error:', wordlistError)
 
 if (wordlistError) {
   throw wordlistError
@@ -287,6 +368,19 @@ setLists(wordlists || [])
    * -------------------------------------------------------
    */
 
+  if (reviewing) {
+    return (
+      <WordReview
+        studentId={studentId}
+        wordlistIds={lists.map((l) => l.id)}
+        onExit={() => {
+          setReviewing(false)
+          setReviewRefresh((n) => n + 1)
+        }}
+      />
+    )
+  }
+
   if (playing) {
     return (
       <WordlistPlayer
@@ -294,6 +388,7 @@ setLists(wordlists || [])
         studentId={studentId}
         onExit={() => {
           setPlaying(null)
+          setReviewRefresh((n) => n + 1)
           load()
         }}
       />
@@ -382,6 +477,13 @@ setLists(wordlists || [])
         </p>
 
       </div>
+
+      <DailyReviewCard
+        studentId={studentId}
+        wordlistIds={lists.map((l) => l.id)}
+        refreshKey={reviewRefresh}
+        onStart={() => setReviewing(true)}
+      />
 
       {/* LISTS */}
 

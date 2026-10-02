@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 import TargetBandIcon from '../../components/TargetBandIcon'
 import ConfirmModal from '../../components/ConfirmModal'
+import ParentReportLink from '../../components/ParentReportLink'
 import ResetStudentPasswordModal from '../../components/ResetStudentPasswordModal'
 import { useSessionState } from '../../lib/sessionState'
 
@@ -1581,6 +1582,8 @@ export default function TeacherStudents({ onStartChat }) {
 
                   </div>
                 </div>
+
+                <ParentReportLink studentId={selectedStudent.id} />
 
               </div>
 

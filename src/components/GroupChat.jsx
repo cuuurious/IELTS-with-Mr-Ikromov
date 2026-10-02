@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { compressImageIfNeeded } from '../lib/compressImage'
 import ProfileModal from './ProfileModal'
 import MessageActionMenu from './MessageActionMenu'
 import ReactionPicker from './ReactionPicker'
@@ -659,8 +660,13 @@ export default function GroupChat({
     }
   }
 
-  const uploadFile = async (file, mediaType) => {
-    if (!file) return
+  const uploadFile = async (incomingFile, mediaType) => {
+    if (!incomingFile) return
+
+    // Shrink phone photos before upload (see lib/compressImage.js).
+    const file = incomingFile.type?.startsWith('image/')
+      ? await compressImageIfNeeded(incomingFile)
+      : incomingFile
 
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       setError(

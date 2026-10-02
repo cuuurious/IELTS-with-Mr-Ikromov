@@ -19,6 +19,7 @@ import Layout, {
 } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
+import NotificationSetupGate from '../../components/NotificationSetupGate'
 import { useSessionState } from '../../lib/sessionState'
 
 const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
@@ -43,7 +44,7 @@ const PAGE_SUBTITLES = {
 }
 
 export default function StudentDashboard() {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
 
   // Remembered across a refresh (see lib/sessionState.js).
   const [tab, setTab] =
@@ -664,6 +665,9 @@ const messageId = linkParts[2] || null
    */
 
   return (
+    <>
+    {/* Required once: phone notifications or the Telegram bot (2026-10-02). */}
+    {profile?.id && <NotificationSetupGate profile={profile} onSignOut={signOut} />}
     <Layout
       sections={sections}
       activeTab={tab}
@@ -925,6 +929,7 @@ const messageId = linkParts[2] || null
       </div>
       </Suspense>
     </Layout>
+    </>
   )
 }
 
