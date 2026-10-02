@@ -18,6 +18,7 @@ import StampBadge, {
 import AiFeedbackCard from '../../components/AiFeedbackCard'
 import ConfirmModal from '../../components/ConfirmModal'
 import WritingMockTest from './WritingMockTest'
+import HomeworkFiles from '../../components/HomeworkFiles'
 import {
   DEFAULT_TIME_LIMITS,
   TASK_MODE_LABELS,
@@ -1432,6 +1433,9 @@ export default function HomeworkCard({
               </a>
             </div>
           )}
+
+          {/* Files from the teacher's Materials Library (any number). */}
+          <HomeworkFiles files={homework.homework_attachments} />
 
           {/* =================================================
               WRITING MOCK TEST

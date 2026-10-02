@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES, DEFAULT_TIME_LIMITS } from '../../lib/writingMock'
+import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
 
 const DEFAULT_TYPES = ['image']
 const DEFAULT_MOCK_MODE = 'task2'
@@ -18,6 +19,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [minFiles, setMinFiles] = useState(1)
   const [maxFiles, setMaxFiles] = useState(10)
   const [file, setFile] = useState(null)
+  // Files ticked in the Materials Library (any number) — 2026-09-30.
+  const [libraryFiles, setLibraryFiles] = useState([])
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -234,7 +238,21 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         )
       }
 
+      // Library files go on after the homework exists. If this part
+      // fails the homework is still posted — say so rather than hide it.
+      if (!isMock && libraryFiles.length) {
+        try {
+          await attachMaterialsToHomework(posted.id, libraryFiles)
+        } catch (attachErr) {
+          onPosted(posted)
+          throw new Error(
+            `The homework was posted, but its library files couldn't be attached (${attachErr.message}). Open "Edit" on it to add them again.`
+          )
+        }
+      }
+
       onPosted(posted)
+      setLibraryFiles([])
       setTitle('')
       setDescription('')
       setDueDate('')
@@ -535,8 +553,35 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       )}
 
       {homeworkType === 'standard' && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs uppercase tracking-wide text-mist font-mono block">
+              Files from Materials Library {libraryFiles.length ? `(${libraryFiles.length})` : '(optional)'}
+            </label>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="focus-ring rounded-full border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
+            >
+              ＋ Add from Library
+            </button>
+          </div>
+          <PickedMaterialsList
+            items={libraryFiles}
+            onRemove={(m) => setLibraryFiles((prev) => prev.filter((x) => x.id !== m.id))}
+          />
+          <MaterialPicker
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            alreadyPickedIds={libraryFiles.map((m) => m.id)}
+            onPick={(rows) => setLibraryFiles((prev) => [...prev, ...rows.filter((r) => !prev.some((p) => p.id === r.id))])}
+          />
+        </div>
+      )}
+
+      {homeworkType === 'standard' && (
         <div>
-          <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Optional teacher attachment</label>
+          <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">Or upload a file from this computer (optional)</label>
 
           {file ? (
             <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel-2 px-3 py-2.5">

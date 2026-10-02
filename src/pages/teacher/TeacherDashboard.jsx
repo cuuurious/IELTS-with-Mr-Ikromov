@@ -28,6 +28,7 @@ const TeacherWordlists = lazyWithReload(() => import('./TeacherWordlists'))
 const AiGradingSettings = lazyWithReload(() => import('./AiGradingSettings'))
 const TeacherAccounts = lazyWithReload(() => import('./TeacherAccounts'))
 const TeacherMockCenter = lazyWithReload(() => import('./TeacherMockCenter'))
+const MaterialsLibrary = lazyWithReload(() => import('./MaterialsLibrary'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 
 export default function TeacherDashboard() {
@@ -226,6 +227,9 @@ export default function TeacherDashboard() {
         { key: 'groups', label: 'Groups & Homework', icon: IconGroups },
         { key: 'students', label: 'Students', icon: IconStudents },
         { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
+        // All teaching files in one place — uploaded here or forwarded
+        // from Telegram to the bot (2026-09-30).
+        { key: 'materials', label: 'Materials Library', icon: IconFolder },
       ],
     },
     {
@@ -332,6 +336,8 @@ export default function TeacherDashboard() {
         />
       )}
 
+      {tab === 'materials' && <MaterialsLibrary />}
+
       {tab === 'leaderboards' && (
         <TeacherLeaderboards />
       )}
@@ -392,4 +398,21 @@ export default function TeacherDashboard() {
 
 function TabLoading() {
   return <div className="py-16 text-center text-sm text-mist">Loading…</div>
+}
+
+function IconFolder({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 7.5A2 2 0 0 1 5 5.5h4l2 2.5h8a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-10Z" />
+      <path d="M3 10.5h18" />
+    </svg>
+  )
 }

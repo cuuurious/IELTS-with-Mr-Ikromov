@@ -230,7 +230,8 @@ const [loading, setLoading] =
         error: homeworkError,
       } = await supabase
         .from('homeworks')
-        .select('*')
+        // + the files attached from the teacher's Materials Library
+        .select('*, homework_attachments(id, url, name, mime_type, size_bytes, sort_order)')
         .eq(
           'group_id',
           activeGroup

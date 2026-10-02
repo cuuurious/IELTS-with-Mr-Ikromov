@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES } from '../../lib/writingMock'
+import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
 
 function toLocalInputValue(iso) {
   if (!iso) return ''
@@ -23,6 +24,29 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [maxFiles, setMaxFiles] = useState(homework.max_submission_files ?? 10)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Library files on this homework (migration_66). `existing` are rows
+  // already saved; `added` are newly ticked library files; `removedIds`
+  // are saved rows to delete on Save — nothing changes until Save.
+  const [existingFiles, setExistingFiles] = useState([])
+  const [addedFiles, setAddedFiles] = useState([])
+  const [removedIds, setRemovedIds] = useState(() => new Set())
+  const [pickerOpen, setPickerOpen] = useState(false)
+
+  useEffect(() => {
+    if (isMock) return
+    supabase
+      .from('homework_attachments')
+      .select('*')
+      .eq('homework_id', homework.id)
+      .order('sort_order')
+      .then(({ data }) => setExistingFiles(data || []))
+  }, [homework.id, isMock])
+
+  const shownFiles = [
+    ...existingFiles.filter((f) => !removedIds.has(f.id)),
+    ...addedFiles.map((m) => ({ ...m, _new: true })),
+  ]
 
   // Standard homework's optional teacher attachment — kept as plain
   // url/name state (like the mock Task 1 image below) so "Remove" can
@@ -176,6 +200,20 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
 
       if (updErr) throw updErr
 
+      if (!isMock) {
+        if (removedIds.size) {
+          const { error: delErr } = await supabase
+            .from('homework_attachments')
+            .delete()
+            .in('id', [...removedIds])
+          if (delErr) throw delErr
+        }
+        if (addedFiles.length) {
+          const nextOrder = existingFiles.reduce((max, f) => Math.max(max, f.sort_order ?? 0), -1) + 1
+          await attachMaterialsToHomework(homework.id, addedFiles, nextOrder)
+        }
+      }
+
       onSaved(data)
       onClose()
     } catch (err) {
@@ -239,9 +277,42 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         </div>
 
         {!isMock && (
+          <div className="bg-panel-2 border border-line rounded-lg p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs uppercase tracking-wide text-mist font-mono block">
+                Files from Materials Library {shownFiles.length ? `(${shownFiles.length})` : ''}
+              </label>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="focus-ring rounded-full border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
+              >
+                ＋ Add from Library
+              </button>
+            </div>
+            <PickedMaterialsList
+              items={shownFiles}
+              onRemove={(f) => {
+                if (f._new) setAddedFiles((prev) => prev.filter((x) => x.id !== f.id))
+                else setRemovedIds((prev) => new Set(prev).add(f.id))
+              }}
+            />
+            <MaterialPicker
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              alreadyPickedIds={[
+                ...existingFiles.filter((f) => !removedIds.has(f.id)).map((f) => f.material_id).filter(Boolean),
+                ...addedFiles.map((m) => m.id),
+              ]}
+              onPick={(rows) => setAddedFiles((prev) => [...prev, ...rows.filter((r) => !prev.some((p) => p.id === r.id))])}
+            />
+          </div>
+        )}
+
+        {!isMock && (
           <div className="bg-panel-2 border border-line rounded-lg p-3">
             <label className="text-xs uppercase tracking-wide text-mist font-mono block mb-1">
-              Teacher attachment {attachmentUrl ? '(replace)' : '(optional)'}
+              Upload from this computer {attachmentUrl ? '(replace)' : '(optional)'}
             </label>
 
             {attachmentUrl && !attachmentFile && (
