@@ -328,7 +328,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-  <div className="rounded-lg border border-brass/25 bg-gradient-to-br from-brass/10 to-panel-2 p-3">
+  <div className="rounded-lg border border-brass/25 bg-panel-2 p-3">
     <div className="flex items-center justify-between gap-2 mb-1.5">
       <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
         <span className="text-sm leading-none">📅</span> Deadline

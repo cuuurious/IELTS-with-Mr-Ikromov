@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
+import AuthShell, { AuthField, AuthNotice, authInputClass, authPrimaryButtonClass } from '../components/AuthShell'
 import {
   TARGET_BANDS,
   DEFAULT_TARGET_BAND,
@@ -78,230 +79,130 @@ export default function Register() {
   }
 
   return (
-    <div
-      className="auth-light min-h-screen text-[#171A31] flex items-center justify-center px-4 py-10 relative overflow-hidden"
-      style={{
-        background:
-          'radial-gradient(circle at 75% 15%, rgba(113,104,255,0.16), transparent 30%), radial-gradient(circle at 12% 85%, rgba(69,214,208,0.10), transparent 28%), linear-gradient(135deg, #F7F8FC 0%, #EEF0FA 48%, #F9F9FC 100%)',
-        fontFamily:
-          "'Gilroy', 'Product Sans', 'Manrope', 'Inter', system-ui, sans-serif",
-      }}
+    <AuthShell
+      title="Join Mr Ikromov's IELTS class."
+      subtitle="Create your account, choose your group and your target band. Mr Ikromov approves every new student before the first sign-in."
+      cardTitle="Create your account"
+      cardSubtitle="It takes about a minute."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="focus-ring rounded font-semibold text-paper hover:underline">
+            Sign in
+          </Link>
+        </>
+      }
     >
-
-      {/* Soft angled accent line, echoes the login page */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.15]">
-        <div
-          className="absolute w-[120%] h-px bg-[#6C63FF] rotate-[-18deg]"
-          style={{ top: '18%', left: '-10%' }}
-        />
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
-
-        <div className="text-center mb-7">
-          <img
-            src="/ielts.png"
-            alt="IELTS with Mr Ikromov"
-            className="w-14 h-14 mx-auto rounded-[16px] object-cover mb-4"
-            style={{ boxShadow: '0 8px 25px rgba(30,35,70,0.14)' }}
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <AuthField label="Full name">
+          <input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className={authInputClass}
+            placeholder="Aziz Karimov"
+            autoComplete="name"
+            required
           />
+        </AuthField>
 
-          <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-[#6C63FF]">
-            Join the class
-          </p>
+        <AuthField label="Username" hint="Letters, numbers, dots and underscores. No spaces.">
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={authInputClass}
+            placeholder="aziz_08"
+            pattern="[A-Za-z0-9_.]+"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+          />
+        </AuthField>
 
-          <h1 className="mt-2 text-[28px] leading-tight tracking-[-0.03em] font-bold text-[#171A31]">
-            Create your account
-          </h1>
+        <AuthField label="Password" hint="At least 6 characters.">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={authInputClass}
+            placeholder="Choose a password"
+            autoComplete="new-password"
+            minLength={6}
+            required
+          />
+        </AuthField>
 
-          <p className="text-[#747A91] text-sm mt-2 max-w-[320px] mx-auto">
-            Your account needs Mr Ikromov's approval before you can log in.
-          </p>
-        </div>
+        <AuthField label="Email" hint="Only used to send you a link if you forget your password.">
+          <input
+            type="email"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            className={authInputClass}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
+        </AuthField>
 
-        <div
-          className="rounded-[27px] bg-white/95 backdrop-blur-xl overflow-hidden"
-          style={{
-            border: '1px solid rgba(214,217,234,0.9)',
-            boxShadow:
-              '0 25px 75px rgba(39,44,82,0.13), 0 8px 25px rgba(39,44,82,0.05)',
-          }}
-        >
-
-          <form
-            onSubmit={submit}
-            className="px-6 sm:px-8 py-6 flex flex-col gap-4"
-          >
-
-            <div>
-              <label className="block text-sm font-bold text-[#30354D]">
-                Full name
-              </label>
-              <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="focus-ring w-full mt-1.5 bg-[#F8F9FC] border border-[#D9DCE8] rounded-[14px] px-4 py-3 text-[#171A31] placeholder:text-[#AAB0C0] outline-none focus:border-[#6C63FF] focus:ring-4 focus:ring-[#6C63FF]/10 transition"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#30354D]">
-                Username
-              </label>
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="focus-ring w-full mt-1.5 bg-[#F8F9FC] border border-[#D9DCE8] rounded-[14px] px-4 py-3 text-[#171A31] placeholder:text-[#AAB0C0] outline-none focus:border-[#6C63FF] focus:ring-4 focus:ring-[#6C63FF]/10 transition"
-                placeholder="letters, numbers, no spaces"
-                pattern="[A-Za-z0-9_.]+"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#30354D]">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="focus-ring w-full mt-1.5 bg-[#F8F9FC] border border-[#D9DCE8] rounded-[14px] px-4 py-3 text-[#171A31] placeholder:text-[#AAB0C0] outline-none focus:border-[#6C63FF] focus:ring-4 focus:ring-[#6C63FF]/10 transition"
-                minLength={6}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#30354D]">
-                Recovery email
-              </label>
-              <input
-                type="email"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                className="focus-ring w-full mt-1.5 bg-[#F8F9FC] border border-[#D9DCE8] rounded-[14px] px-4 py-3 text-[#171A31] placeholder:text-[#AAB0C0] outline-none focus:border-[#6C63FF] focus:ring-4 focus:ring-[#6C63FF]/10 transition"
-                placeholder="you will receive password reset emails here"
-                required
-              />
-            </div>
-
-            <div>
-                <label className="block text-sm font-bold text-[#30354D]">
-                  Your group(s) — choose up to 2
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium text-paper">Your group, up to 2</legend>
+          {groups.length === 0 && (
+            <p className="mt-1.5 text-sm text-mist">No groups yet. Ask Mr Ikromov to add one first.</p>
+          )}
+          <div className="mt-1.5 flex max-h-48 flex-col gap-2 overflow-y-auto">
+            {groups.map((g) => {
+              const checked = selectedGroups.includes(g.id)
+              return (
+                <label
+                  key={g.id}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                    checked ? 'border-paper bg-panel-2 font-medium' : 'border-line hover:bg-panel-2'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleGroup(g.id)}
+                    className="h-4 w-4 accent-[var(--color-brass)]"
+                  />
+                  {g.name}
                 </label>
-
-                <div className="mt-2 flex flex-col gap-2 max-h-48 overflow-y-auto">
-                  {groups.length === 0 && (
-                    <p className="text-[#747A91] text-sm">
-                      No groups yet — ask your teacher to add one first.
-                    </p>
-                  )}
-
-                  {groups.map((g) => (
-                    <label
-                      key={g.id}
-                      className="flex items-center gap-2 bg-[#F8F9FC] border border-[#D9DCE8] rounded-[14px] px-4 py-2.5 cursor-pointer transition hover:border-[#6C63FF]/40"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedGroups.includes(g.id)}
-                        onChange={() => toggleGroup(g.id)}
-                        className="accent-[#6C63FF]"
-                      />
-                      <span className="text-[#30354D] text-sm font-medium">{g.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-            <div>
-                <label className="block text-sm font-bold text-[#30354D]">
-                  Your target band
-                </label>
-
-                <div className="mt-2 grid grid-cols-5 gap-1.5">
-                  {TARGET_BANDS.map((band) => (
-                    <button
-                      type="button"
-                      key={band.value}
-                      onClick={() =>
-                        setTargetBand(band.value)
-                      }
-                      aria-pressed={
-                        targetBand === band.value
-                      }
-                      className={`focus-ring flex flex-col items-center gap-0.5 rounded-[12px] border px-1.5 py-2 text-center transition-colors ${
-                        targetBand === band.value
-                          ? 'border-[#6C63FF] bg-[#6C63FF]/10 text-[#6C63FF]'
-                          : 'border-[#D9DCE8] text-[#7A8092] hover:border-[#6C63FF]/40'
-                      }`}
-                      /* Inline color (not just the class) for both
-                         states, so neither can go invisible in dark
-                         mode regardless of theme — a site-wide
-                         "button { color: ... }" rule was winning over
-                         the class here otherwise. */
-                      style={
-                        targetBand === band.value
-                          ? { color: '#6C63FF' }
-                          : { color: '#7A8092' }
-                      }
-                    >
-                      <span className="text-lg leading-none">
-                        {band.emoji}
-                      </span>
-                      <span className="text-sm font-semibold leading-none">
-                        {formatTargetBand(band.value)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                <p className="text-[#8A8FA2] text-xs mt-2">
-                  {
-                    TARGET_BANDS.find(
-                      (b) => b.value === targetBand
-                    )?.label
-                  }{' '}
-                  — you can change this anytime later in
-                  Account Settings.
-                </p>
-              </div>
-
-            {error && (
-              <div className="rounded-[12px] border border-[#F0C4C1] bg-[#FFF1F0] px-4 py-2.5">
-                <p className="text-sm text-[#B64D46] font-medium">{error}</p>
-              </div>
-            )}
-
-            <button
-              disabled={loading}
-              className="w-full rounded-[14px] py-3.5 text-white font-bold text-[15px] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-[1px] active:translate-y-0"
-              style={{
-                background:
-                  'linear-gradient(135deg, #6C63FF 0%, #5A50E8 100%)',
-                boxShadow: '0 12px 28px rgba(100,91,238,0.24)',
-              }}
-            >
-              {loading ? 'Creating account…' : 'Create account'}
-            </button>
-          </form>
-
-          <div className="border-t border-[#E5E6ED] bg-[#F7F8FB] px-6 sm:px-8 py-3.5 text-center">
-            <p className="text-sm text-[#7A8092]">
-              Already registered?{' '}
-              <Link
-                to="/login"
-                className="font-bold text-[#555DE0] hover:text-[#4038B8] hover:underline underline-offset-4"
-              >
-                Sign in
-              </Link>
-            </p>
+              )
+            })}
           </div>
+        </fieldset>
 
-        </div>
-      </div>
-    </div>
+        <fieldset>
+          <legend className="text-sm font-medium text-paper">Your target band</legend>
+          <div className="mt-2 grid grid-cols-5 gap-1.5">
+            {TARGET_BANDS.map((band) => {
+              const on = targetBand === band.value
+              return (
+                <button
+                  type="button"
+                  key={band.value}
+                  onClick={() => setTargetBand(band.value)}
+                  aria-pressed={on}
+                  className={`focus-ring h-11 rounded-xl border text-sm font-semibold tabular-nums transition-colors ${
+                    on ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
+                  }`}
+                >
+                  {formatTargetBand(band.value)}
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-xs text-mist">
+            {TARGET_BANDS.find((b) => b.value === targetBand)?.label}. You can change it later in Account settings.
+          </p>
+        </fieldset>
+
+        {error && <AuthNotice>{error}</AuthNotice>}
+
+        <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
+          {loading ? 'Creating your account…' : 'Create account'}
+        </button>
+      </form>
+    </AuthShell>
   )
 }

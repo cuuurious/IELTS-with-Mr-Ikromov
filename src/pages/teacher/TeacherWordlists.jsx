@@ -1082,7 +1082,7 @@ const saveEditWordlist = async () => {
                     return (
                       <div
                         key={list.id}
-                        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border ${accent.border} bg-gradient-to-b from-panel-2 to-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]`}
+                        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border ${accent.border} bg-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]`}
                       >
 
                         <div className="relative flex items-start gap-3">

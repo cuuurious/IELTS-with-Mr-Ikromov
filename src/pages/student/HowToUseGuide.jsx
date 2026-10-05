@@ -383,8 +383,8 @@ export default function HowToUseGuide() {
       {/* Header / intro card */}
       <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 blur-3xl" />
-          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
+          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 hidden" />
+          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 hidden" />
         </div>
         <div className="relative px-5 py-5 sm:px-7 sm:py-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mist">

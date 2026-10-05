@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import PhotoViewer from './PhotoViewer'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { formatTargetBand } from '../lib/targetBands'
@@ -22,6 +23,8 @@ export default function Leaderboard({
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [viewingPhoto, setViewingPhoto] = useState(false)
+  useEffect(() => setViewingPhoto(false), [selectedStudent?.student_id])
 
   // Whether the currently-shown rows are the last known good result for
   // this group while a fresh copy loads underneath — as opposed to
@@ -1273,14 +1276,14 @@ export default function Leaderboard({
               isHighlighted ? 'border-brass' : ''
             } ${
               isTopRank
-                ? 'border-[#c8963e]/50 bg-gradient-to-r from-[#c8963e]/[0.08] via-transparent to-transparent shadow-[0_10px_24px_-16px_rgba(200,150,62,0.5)]'
+                ? 'border-[#c8963e]/50 bg-vocab-tint shadow-[0_10px_24px_-16px_rgba(200,150,62,0.5)]'
                 : 'shadow-[0_10px_22px_-18px_rgba(0,0,0,0.5)]'
             }`}
           >
             {isTopRank && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#c8963e]/20 blur-3xl"
+                className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#c8963e]/20 hidden"
               />
             )}
 
@@ -1379,6 +1382,13 @@ export default function Leaderboard({
                 event.stopPropagation()
               }
             >
+              {viewingPhoto && (
+                <PhotoViewer
+                  src={selectedStudent.avatar_url}
+                  alt={selectedStudent.full_name || 'Student photo'}
+                  onClose={() => setViewingPhoto(false)}
+                />
+              )}
               <div className="flex-shrink-0 border-b border-line bg-panel px-5 py-4 sm:px-7">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -1394,6 +1404,13 @@ export default function Leaderboard({
                               src={selectedStudent.avatar_url}
                               alt=""
                               className="absolute inset-0 h-full w-full rounded-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setViewingPhoto(true)}
+                              aria-label="Open photo"
+                              title="Open photo"
+                              className="focus-ring absolute inset-0 z-[1] rounded-full cursor-zoom-in"
                             />
                             <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-panel bg-brass text-[10px] font-bold leading-none text-onbrass">
                               {selectedStudent.rank}

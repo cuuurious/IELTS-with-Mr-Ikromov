@@ -215,7 +215,7 @@ export default function WordReview({ studentId, wordlistIds, onExit }) {
         <button
           type="button"
           onClick={onExit}
-          className="focus-ring self-center rounded-full bg-gradient-to-br from-brass to-brass-dim px-6 py-2.5 text-sm font-semibold text-onbrass"
+          className="focus-ring self-center rounded-full bg-brass hover:bg-brass-dim px-6 py-2.5 text-sm font-semibold text-onbrass"
         >
           Done
         </button>

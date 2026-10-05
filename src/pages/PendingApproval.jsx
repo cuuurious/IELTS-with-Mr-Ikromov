@@ -42,7 +42,7 @@ export default function PendingApproval() {
             h-[38rem]
             rounded-full
             bg-indigo/10
-            blur-3xl
+            hidden
           "
         />
 
@@ -55,7 +55,7 @@ export default function PendingApproval() {
             h-[34rem]
             rounded-full
             bg-cyan/10
-            blur-3xl
+            hidden
           "
         />
 
@@ -67,7 +67,7 @@ export default function PendingApproval() {
             w-[75rem]
             h-[1px]
             bg-indigo/10
-            rotate-[-17deg]
+            rotate-[-17deg] hidden
           "
         />
       </div>
@@ -160,10 +160,9 @@ export default function PendingApproval() {
                 focus-ring
                 px-5 py-2.5
                 rounded-[0.85rem]
-                bg-gradient-to-r from-brass to-lavender
+                bg-brass hover:bg-brass-dim
                 text-onbrass
                 text-sm font-semibold
-                shadow-[0_7px_18px_rgba(101,89,236,0.25)]
                 hover:brightness-105
                 transition-all
               "

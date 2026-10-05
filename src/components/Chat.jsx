@@ -1812,7 +1812,7 @@ export default function Chat({
   return (
     // Same look as the group chat (GroupChat.jsx) — Jasur, 2026-09-30:
     // "apply to every chat in the website be it private or group".
-    <div className="flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
+    <div className="flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
 
       {/* HEADER — tap the name/photo to view their profile, or use
           Select to pick several messages at once */}
@@ -1822,7 +1822,7 @@ export default function Chat({
         {/* Soft glow, clipped to the header on its own so the "Delete
             chat" dropdown below can still open outside the header. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 blur-3xl" />
+          <div className="absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 hidden" />
         </div>
 
         <button
@@ -2221,7 +2221,7 @@ export default function Chat({
                   }}
                   className={`relative select-none rounded-2xl px-3 py-2.5 text-sm ${
                     mine
-                      ? 'rounded-tr-md bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
+                      ? 'rounded-tr-md bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
                       : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
                   }`}
                 >
@@ -2539,7 +2539,7 @@ export default function Chat({
             type="button"
             onClick={sendRecording}
             disabled={uploading}
-            className="focus-ring shrink-0 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+            className="focus-ring shrink-0 rounded-full bg-brass hover:bg-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
           >
             {uploading ? 'Sending…' : 'Send'}
           </button>
@@ -2663,7 +2663,7 @@ export default function Chat({
         <button
           type="submit"
           disabled={sending || uploading || !text.trim()}
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
           aria-label={uploading ? 'Sending…' : 'Send message'}
           title={uploading ? 'Sending…' : 'Send'}
         >

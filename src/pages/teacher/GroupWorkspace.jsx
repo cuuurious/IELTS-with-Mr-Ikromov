@@ -1081,7 +1081,7 @@ export default function GroupWorkspace({ teacherId }) {
                         openGroup(group.id)
                       }
                     }}
-                    className={`focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border ${accent.border} bg-gradient-to-b from-panel-2 to-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer`}
+                    className={`focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border ${accent.border} bg-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer`}
                   >
 
                     <div className="relative flex items-start justify-between gap-3">
@@ -1284,7 +1284,7 @@ export default function GroupWorkspace({ teacherId }) {
             const accent = getGroupAccent(activeGroup)
 
             return (
-              <section className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel px-5 py-4 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] sm:px-7 sm:py-5">
+              <section className="relative overflow-hidden rounded-2xl border border-line bg-panel px-5 py-4 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] sm:px-7 sm:py-5">
 
                 <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 

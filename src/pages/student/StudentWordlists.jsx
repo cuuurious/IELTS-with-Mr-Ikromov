@@ -63,7 +63,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
   const sessionSize = Math.min(due, REVIEW_SESSION_SIZE)
 
   return (
-    <div className="rounded-xl border border-brass/40 bg-gradient-to-br from-brass/10 to-transparent px-4 py-4 sm:px-5">
+    <div className="rounded-xl border border-brass/40 bg-panel-2 px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-brass">Daily review</p>
@@ -81,7 +81,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
           <button
             type="button"
             onClick={onStart}
-            className="focus-ring rounded-full bg-gradient-to-br from-brass to-brass-dim px-5 py-2 text-sm font-semibold text-onbrass"
+            className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-5 py-2 text-sm font-semibold text-onbrass"
           >
             Start review
           </button>

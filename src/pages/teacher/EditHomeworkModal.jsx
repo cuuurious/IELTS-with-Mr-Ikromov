@@ -251,7 +251,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2" required />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="focus-ring w-full min-h-[88px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
         <div className="grid sm:grid-cols-2 gap-3">
-          <div className="rounded-lg border border-brass/25 bg-gradient-to-br from-brass/10 to-panel-2 p-3">
+          <div className="rounded-lg border border-brass/25 bg-panel-2 p-3">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
                 <span className="text-sm leading-none">📅</span> Deadline

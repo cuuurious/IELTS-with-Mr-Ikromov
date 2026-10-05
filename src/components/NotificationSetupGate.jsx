@@ -170,7 +170,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
                   type="button"
                   onClick={turnOnPush}
                   disabled={Boolean(busy)}
-                  className="focus-ring mt-3 rounded-full bg-gradient-to-br from-brass to-brass-dim px-5 py-2.5 text-sm font-semibold text-onbrass shadow disabled:opacity-50"
+                  className="focus-ring mt-3 rounded-full bg-brass hover:bg-brass-dim px-5 py-2.5 text-sm font-semibold text-onbrass disabled:opacity-50"
                 >
                   {busy === 'push' ? 'Turning on…' : 'Turn on'}
                 </button>

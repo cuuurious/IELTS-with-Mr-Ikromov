@@ -1573,7 +1573,7 @@ export default function GroupChat({
   // instead of letting the chat area error out trying to keep loading.
   if (leftGroup) {
     return (
-      <div className="flex h-[36rem] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel p-6 text-center shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)]">
+      <div className="flex h-[36rem] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-panel p-6 text-center shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)]">
         <div className="font-display text-lg text-paper">You've left this group</div>
         <p className="max-w-xs text-sm text-mist">
           Switch to another group above, or ask a teacher to add you back to this one.
@@ -1583,7 +1583,7 @@ export default function GroupChat({
   }
 
   return (
-    <div className="group-chat-shell flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
+    <div className="group-chat-shell flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
 
       <ProfileModal
         userId={viewingProfileId}
@@ -1695,7 +1695,7 @@ export default function GroupChat({
 
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 blur-3xl"
+          className="pointer-events-none absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 hidden"
         />
 
         {/*
@@ -2125,7 +2125,7 @@ export default function GroupChat({
                     }}
                     className={`relative rounded-2xl px-3 py-2.5 select-none ${
                       mine
-                        ? 'rounded-tr-md bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
+                        ? 'rounded-tr-md bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
                         : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
                     }`}
                   >
@@ -2442,7 +2442,7 @@ export default function GroupChat({
               sendRecording
             }
             disabled={uploading}
-            className="focus-ring shrink-0 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+            className="focus-ring shrink-0 rounded-full bg-brass hover:bg-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
           >
             {uploading
               ? 'Sending...'
@@ -2620,7 +2620,7 @@ export default function GroupChat({
               uploading ||
               !text.trim()
             }
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brass to-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
             aria-label="Send message"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">

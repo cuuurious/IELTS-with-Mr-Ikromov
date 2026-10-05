@@ -417,7 +417,7 @@ export default function MaterialsLibrary() {
             <button
               type="button"
               onClick={connectBot}
-              className="focus-ring rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-2 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
+              className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
             >
               Connect the bot
             </button>
@@ -539,7 +539,7 @@ export default function MaterialsLibrary() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="focus-ring rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-2.5 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
+              className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-4 py-2.5 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
             >
               Upload files
             </button>

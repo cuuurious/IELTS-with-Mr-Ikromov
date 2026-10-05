@@ -276,12 +276,12 @@ export default function PendingApprovals() {
           {filteredPending.map((student) => (
             <div
               key={student.id}
-              className="group relative overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-panel-2 to-panel p-4 sm:p-5 shadow-[0_14px_32px_-22px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/[0.03] flex items-center justify-between gap-4 flex-wrap transition hover:-translate-y-0.5 hover:border-brass/40 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.65)]"
+              className="group relative overflow-hidden rounded-2xl border border-line bg-panel p-4 sm:p-5 shadow-[0_14px_32px_-22px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/[0.03] flex items-center justify-between gap-4 flex-wrap transition hover:-translate-y-0.5 hover:border-brass/40 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.65)]"
             >
 
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -left-10 -top-14 h-40 w-40 rounded-full bg-brass/10 blur-3xl"
+                className="pointer-events-none absolute -left-10 -top-14 h-40 w-40 rounded-full bg-brass/10 hidden"
               />
 
               <div className="relative flex items-center gap-3.5 min-w-0">

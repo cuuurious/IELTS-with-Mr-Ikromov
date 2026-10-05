@@ -217,7 +217,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
             type="button"
             disabled={!picked.size || uploading > 0}
             onClick={confirm}
-            className="focus-ring rounded-full bg-gradient-to-br from-brass to-brass-dim px-5 py-2 text-sm font-medium text-onbrass disabled:opacity-40"
+            className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-5 py-2 text-sm font-medium text-onbrass disabled:opacity-40"
           >
             Add {picked.size || ''} file{picked.size === 1 ? '' : 's'}
           </button>

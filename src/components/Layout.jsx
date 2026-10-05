@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import AccountSettingsModal from './AccountSettingsModal'
+import TargetBandModal from './TargetBandModal'
 import { formatTargetBand } from '../lib/targetBands'
 import TargetBandIcon from './TargetBandIcon'
 
@@ -202,6 +203,9 @@ function IconChevron({ className }) {
  *   - "How to use" moves to the "?" button on the right;
  *   - below 1280px wide the whole menu folds into a drawer.
  *
+ * Speaking Spin (teacher) and the target band (students) live in the
+ * account menu so they can never push into the main menu (2026-10-05).
+ *
  * NotificationBell is mounted exactly once (it opens a realtime
  * channel — mounting it twice crashed the site on 2026-09-23).
  */
@@ -243,6 +247,7 @@ export default function Layout({
 }) {
   const { profile, signOut } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [targetOpen, setTargetOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openMenu, setOpenMenu] = useState(null)
   const navRef = useRef(null)
@@ -260,7 +265,10 @@ export default function Layout({
     return () => mq.removeEventListener('change', handleChange)
   }, [])
 
-  // Close an open dropdown on outside click or Escape.
+  // Close an open dropdown on outside click or Escape. The ref sits on
+  // the whole header so the account menu counts as "inside" — when it
+  // only covered the nav, pressing "Log out" closed the menu before
+  // the click landed, so logging out did nothing (2026-10-05).
   useEffect(() => {
     if (!openMenu) return
     const onDown = (e) => {
@@ -317,11 +325,11 @@ export default function Layout({
       active ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper hover:bg-panel-2'
     }`
 
-  const subtitle = isTeacher ? 'Teacher' : isExaminer ? 'Examiner' : 'IELTS school'
+  const subtitle = isTeacher ? 'Teacher' : isExaminer ? 'Examiner' : 'Student'
 
   return (
     <div className="min-h-screen flex flex-col text-paper bg-ink">
-      <header className="sticky top-0 z-40 border-b border-line bg-panel">
+      <header ref={navRef} className="sticky top-0 z-40 border-b border-line bg-panel">
         <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 xl:gap-6 xl:px-8">
           <button
             type="button"
@@ -343,12 +351,12 @@ export default function Layout({
               className="h-[38px] w-[38px] rounded-xl object-cover"
             />
             <span className="hidden sm:flex flex-col leading-tight">
-              <span className="text-[17px] font-semibold">Ikromov</span>
+              <span className="text-[16px] font-semibold whitespace-nowrap">IELTS with Mr Ikromov</span>
               <span className="text-xs text-mist">{subtitle}</span>
             </span>
           </button>
 
-          <nav ref={navRef} aria-label="Main" className="hidden xl:flex items-center gap-0.5 2xl:gap-1 min-w-0">
+          <nav aria-label="Main" className="hidden xl:flex items-center gap-0.5 2xl:gap-1 min-w-0">
             {entries.map((entry) => {
               if (entry.type === 'item') {
                 const Icon = entry.item.icon
@@ -361,7 +369,7 @@ export default function Layout({
                     className={navButtonClass(active)}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {Icon && <Icon className="hidden 2xl:block h-[18px] w-[18px] shrink-0" />}
+                    {Icon && entries.length <= 7 && <Icon className="hidden min-[1720px]:block h-[18px] w-[18px] shrink-0" />}
                     {SHORT_LABELS[entry.item.label] || entry.item.label}
                   </button>
                 )
@@ -408,30 +416,6 @@ export default function Layout({
           </nav>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            {!isTeacher && !isExaminer && profile?.target_band != null && (
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                title="Change your target band in Account settings"
-                className="focus-ring hidden 2xl:flex h-[42px] items-center gap-1.5 rounded-xl border border-line bg-panel px-3 text-sm font-medium hover:bg-panel-2"
-              >
-                <TargetBandIcon value={profile.target_band} className="h-4 w-4" />
-                Target {formatTargetBand(profile.target_band)}
-              </button>
-            )}
-
-            {isTeacher && (
-              <a
-                href="https://speaking.ieltswithmrikromov.com/admin"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Manage Speaking Spin practice content"
-                className="focus-ring hidden 2xl:inline-flex h-[42px] items-center gap-1.5 rounded-xl border border-line bg-panel px-3 text-sm font-medium hover:bg-panel-2"
-              >
-                Speaking Spin
-              </a>
-            )}
-
             {helpItem && (
               <button
                 type="button"
@@ -451,7 +435,7 @@ export default function Layout({
               <button
                 type="button"
                 onClick={() => setOpenMenu(openMenu === 'account' ? null : 'account')}
-                className="focus-ring flex h-[42px] items-center gap-2.5 rounded-xl border border-line bg-panel pl-[5px] pr-1.5 2xl:pr-3 hover:bg-panel-2"
+                className="focus-ring flex h-[42px] items-center gap-2.5 rounded-xl border border-line bg-panel pl-[5px] pr-1.5 min-[1720px]:pr-3 hover:bg-panel-2"
                 aria-label="Account"
                 aria-expanded={openMenu === 'account'}
               >
@@ -462,7 +446,7 @@ export default function Layout({
                     {initials(profile?.full_name)}
                   </span>
                 )}
-                <span className="hidden 2xl:inline max-w-[120px] truncate text-sm">
+                <span className="hidden min-[1720px]:inline max-w-[120px] truncate text-sm">
                   {(profile?.full_name || '').split(' ')[0]}
                 </span>
               </button>
@@ -472,6 +456,37 @@ export default function Layout({
                     <div className="truncate text-sm font-medium">{profile?.full_name}</div>
                     {profile?.username && <div className="truncate text-xs text-mist">@{profile.username}</div>}
                   </div>
+                  {!isTeacher && !isExaminer && profile?.target_band != null && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenu(null)
+                        setTargetOpen(true)
+                      }}
+                      title="Change your target band"
+                      className="focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-paper-dim hover:bg-panel-2 hover:text-paper"
+                    >
+                      <TargetBandIcon value={profile.target_band} className="h-[18px] w-[18px]" />
+                      Target band {formatTargetBand(profile.target_band)}
+                    </button>
+                  )}
+                  {isTeacher && (
+                    <a
+                      role="menuitem"
+                      href="https://speaking.ieltswithmrikromov.com/admin"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpenMenu(null)}
+                      className="focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-paper-dim hover:bg-panel-2 hover:text-paper"
+                    >
+                      <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" />
+                        <path d="M17 3v4h-4M7 21v-4h4" />
+                      </svg>
+                      Speaking Spin admin
+                    </a>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
@@ -513,7 +528,7 @@ export default function Layout({
             <div className="flex h-[72px] items-center gap-3 border-b border-line px-4">
               <img src="/mrikromov.jpg" alt="" className="h-[38px] w-[38px] rounded-xl object-cover" />
               <span className="flex flex-1 flex-col leading-tight">
-                <span className="text-[17px] font-semibold">Ikromov</span>
+                <span className="text-[16px] font-semibold">IELTS with Mr Ikromov</span>
                 <span className="text-xs text-mist">{subtitle}</span>
               </span>
               <button type="button" onClick={() => setMobileOpen(false)} className={ICON_BUTTON_CLASS} aria-label="Close menu">
@@ -583,6 +598,7 @@ export default function Layout({
       </main>
 
       {settingsOpen && <AccountSettingsModal onClose={() => setSettingsOpen(false)} />}
+      {targetOpen && <TargetBandModal onClose={() => setTargetOpen(false)} />}
     </div>
   )
 }

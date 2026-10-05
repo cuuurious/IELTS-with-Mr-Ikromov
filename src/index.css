@@ -273,8 +273,13 @@ h4 {
   outline-offset: 3px;
 }
 
-a {
-  color: inherit;
+/* In @layer base (2026-10-05): unlayered, this beat every Tailwind
+   text colour on links, so a link styled as a navy button
+   ("bg-brass text-onbrass") had navy text — invisible. */
+@layer base {
+  a {
+    color: inherit;
+  }
 }
 
 /* In @layer base (2026-10-05): unlayered, this rule beat every

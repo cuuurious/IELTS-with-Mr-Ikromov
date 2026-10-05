@@ -145,7 +145,7 @@ export default function ParentReport() {
           type="button"
           onClick={downloadPdf}
           disabled={pdfBusy}
-          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-brass to-brass-dim px-4 py-2 text-sm font-semibold text-onbrass shadow disabled:opacity-60"
+          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-full bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-semibold text-onbrass disabled:opacity-60"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 3v12" />

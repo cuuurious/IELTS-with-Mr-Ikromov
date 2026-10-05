@@ -9,6 +9,7 @@ import {
   STATE_PILL,
 } from '../../lib/skills'
 import SkillArt, { SkillIcon, VocabArt } from '../../components/SkillArt'
+import TargetBandModal from '../../components/TargetBandModal'
 
 /*
  * STUDENT HOME — "Study room" design (approved 2026-10-05).
@@ -191,6 +192,7 @@ export default function StudentHome({
   onOpenMockCenter,
 }) {
   const bands = useReleasedBands(profile?.id)
+  const [targetOpen, setTargetOpen] = useState(false)
   const words = useWordsDue(profile?.id)
   const feedback = useLatestFeedback(profile?.id)
 
@@ -325,11 +327,18 @@ export default function StudentHome({
       <Card className="lg:col-span-4 flex flex-col gap-4 p-6">
         <div className="flex items-baseline justify-between">
           <h2 className="text-[17px] font-semibold">Your bands</h2>
-          {target != null && (
-            <span className="text-[13px] text-mist">
-              Target <strong className="font-semibold text-paper">{formatBand(target)}</strong>
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={() => setTargetOpen(true)}
+            className="focus-ring rounded-lg px-1.5 py-0.5 text-[13px] text-mist hover:bg-panel-2 hover:text-paper"
+            title="Change your target band"
+          >
+            {target != null ? (
+              <>Target <strong className="font-semibold text-paper">{formatBand(target)}</strong></>
+            ) : (
+              'Set your target'
+            )}
+          </button>
         </div>
         <ul className="flex flex-col gap-3.5">
           {skillRows.map(({ skill, band }) => (
@@ -371,12 +380,13 @@ export default function StudentHome({
               All homework
             </button>
           </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-12 lg:grid-cols-4">
           {rest.map(({ hw, skill, state }) => (
             <button
               key={hw.id}
               type="button"
               onClick={() => onOpenHomework(hw.id)}
-              className="focus-ring group flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel text-left transition-colors hover:border-paper/30 sm:col-span-1 lg:col-span-3"
+              className="focus-ring group flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel text-left transition-colors hover:border-paper/30"
             >
               <div className={`flex h-[118px] items-center justify-center ${skill.tint}`}>
                 <SkillArt skill={skill.key} title={hw.title} className="h-[96px] w-[220px]" />
@@ -397,6 +407,7 @@ export default function StudentHome({
               </div>
             </button>
           ))}
+          </div>
         </>
       )}
 
@@ -471,6 +482,7 @@ export default function StudentHome({
           See your place
         </button>
       </Card>
+      {targetOpen && <TargetBandModal onClose={() => setTargetOpen(false)} />}
     </div>
   )
 }

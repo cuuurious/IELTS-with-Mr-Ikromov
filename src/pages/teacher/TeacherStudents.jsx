@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import PhotoViewer from '../../components/PhotoViewer'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
@@ -25,6 +26,9 @@ export default function TeacherStudents({ onStartChat }) {
 
   const [view, setView] = useSessionState('ielts:teacher:students:view', 'all')
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [viewingPhoto, setViewingPhoto] = useState(false)
+  // Never carry an open photo over to the next student's window.
+  useEffect(() => setViewingPhoto(false), [selectedStudent?.id])
   const [savedStudentId, setSavedStudentId] = useSessionState('ielts:teacher:students:details', null)
   const detailsRestoredRef = useRef(false)
   useEffect(() => {
@@ -1441,16 +1445,32 @@ export default function TeacherStudents({ onStartChat }) {
               onMouseDown={(e) => e.stopPropagation()}
             >
 
+              {viewingPhoto && (
+                <PhotoViewer
+                  src={selectedStudent.avatar_url}
+                  alt={selectedStudent.full_name || 'Student photo'}
+                  onClose={() => setViewingPhoto(false)}
+                />
+              )}
+
               <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
 
                 <div className="flex items-start gap-3 min-w-0">
 
                   {selectedStudent.avatar_url ? (
-                    <img
-                      src={selectedStudent.avatar_url}
-                      alt={selectedStudent.full_name || 'Student photo'}
-                      className="w-12 h-12 rounded-full object-cover border border-line shrink-0"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setViewingPhoto(true)}
+                      className="focus-ring shrink-0 rounded-full cursor-zoom-in"
+                      aria-label="Open photo"
+                      title="Open photo"
+                    >
+                      <img
+                        src={selectedStudent.avatar_url}
+                        alt={selectedStudent.full_name || 'Student photo'}
+                        className="w-12 h-12 rounded-full object-cover border border-line"
+                      />
+                    </button>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-brass flex items-center justify-center text-lg font-semibold text-onbrass shrink-0">
                       {String(

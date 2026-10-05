@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import TargetBandIcon from './TargetBandIcon'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -1217,9 +1218,7 @@ const deleteAccount = async () => {
                       : 'border-line text-mist hover:border-brass/50'
                   }`}
                 >
-                  <span className="text-lg leading-none">
-                    {band.emoji}
-                  </span>
+<TargetBandIcon value={band.value} className="h-[18px] w-[18px]" />
                   <span className="text-sm font-semibold leading-none">
                     {formatTargetBand(band.value)}
                   </span>

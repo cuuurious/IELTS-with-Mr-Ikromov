@@ -824,7 +824,7 @@ const messageId = linkParts[2] || null
                         id={`homework-${homework.id}`}
                         className="group relative rounded-3xl border border-line bg-panel shadow-sm overflow-hidden transition-all duration-200 hover:border-brass-dim/40 hover:-translate-y-0.5 hover:shadow-xl"
                       >
-                        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brass/30 via-brass to-brass/30 opacity-70 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-x-0 top-0 h-0.5 hidden opacity-70 group-hover:opacity-100 transition-opacity" />
 
                         <HomeworkCard
                           homework={homework}
