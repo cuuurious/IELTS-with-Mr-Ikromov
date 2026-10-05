@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
@@ -150,15 +150,6 @@ function IconClose({ className }) {
   )
 }
 
-function IconCollapse({ className }) {
-  return (
-    <svg className={className} {...iconProps}>
-      <rect x="3.5" y="4" width="17" height="16" rx="2.5" />
-      <path d="M9.5 4v16" />
-    </svg>
-  )
-}
-
 function IconSettings({ className }) {
   return (
     <svg className={className} {...iconProps}>
@@ -178,19 +169,70 @@ function IconLogout({ className }) {
   )
 }
 
-/*
- * Shared recipe for the small square icon-only buttons in the top
- * bar (settings, and — via the className overrides in ThemeToggle.jsx
- * / NotificationBell.jsx — theme + notifications). Rectangular
- * (10px radius), one neutral resting state, brass on hover/focus —
- * replaces the old "every icon button is its own tinted-color pill"
- * pattern (amber for notifications, lavender for theme, brass for
- * settings, coral for logout) with one consistent, calmer vocabulary.
- */
-const ICON_BUTTON_CLASS =
-  'focus-ring flex items-center justify-center w-9 h-9 rounded-[10px] border border-line bg-panel-2 text-mist hover:text-paper hover:border-brass/40 transition-colors shrink-0'
+export function IconHome({ className }) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 11l8-7 8 7v9H4z" />
+      <path d="M10 20v-6h4v6" />
+    </svg>
+  )
+}
 
-const SIDEBAR_STORAGE_KEY = 'ielts-mrikromov-sidebar-collapsed'
+function IconChevron({ className }) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
+/*
+ * =============================================================
+ * LAYOUT — "Study room" top navigation (2026-10-05)
+ * =============================================================
+ * Replaces the old left sidebar. Same props as before (sections,
+ * activeTab, onTabChange, spotlight, children), so every dashboard
+ * that uses it keeps working and keeps every menu item:
+ *
+ *   - the first section's items are shown directly in the top bar,
+ *     with the spotlight (Mock Center) right after them;
+ *   - later sections with one item are shown directly too, sections
+ *     with several items become a small dropdown named after the
+ *     section (e.g. "Admin", "Messages");
+ *   - "How to use" moves to the "?" button on the right;
+ *   - below 1280px wide the whole menu folds into a drawer.
+ *
+ * NotificationBell is mounted exactly once (it opens a realtime
+ * channel — mounting it twice crashed the site on 2026-09-23).
+ */
+
+const ICON_BUTTON_CLASS =
+  'focus-ring flex items-center justify-center w-[42px] h-[42px] rounded-xl border border-line bg-panel text-paper hover:bg-panel-2 transition-colors shrink-0'
+
+const SECTION_LABELS = {
+  Communication: 'Messages',
+  Reference: 'Help',
+}
+
+// Shorter names in the top bar only (the drawer and page titles keep
+// the full names), so the whole menu fits on a 1280px laptop.
+const SHORT_LABELS = {
+  'Groups & Homework': 'Groups',
+  'Materials Library': 'Materials',
+  'Mock Test Center': 'Mock Center',
+  'Word Lists': 'Word lists',
+  'Group Chats': 'Group chats',
+  'Group Chat': 'Group chat',
+}
+
+function initials(name) {
+  return (name || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
 
 export default function Layout({
   sections,
@@ -202,26 +244,15 @@ export default function Layout({
   const { profile, signOut } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
-    } catch {
-      return false
-    }
-  })
+  const [openMenu, setOpenMenu] = useState(null)
+  const navRef = useRef(null)
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0')
-    } catch {
-      // Ignore — collapsed state just won't persist across reloads.
-    }
-  }, [collapsed])
+  const isTeacher = profile?.role === 'teacher'
+  const isExaminer = profile?.role === 'examiner'
 
-  // Close the mobile drawer automatically if the viewport grows past
-  // the mobile breakpoint while it's open (e.g. rotating a tablet).
+  // Close the drawer if the window grows to desktop width.
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
+    const mq = window.matchMedia('(min-width: 1280px)')
     const handleChange = (e) => {
       if (e.matches) setMobileOpen(false)
     }
@@ -229,301 +260,163 @@ export default function Layout({
     return () => mq.removeEventListener('change', handleChange)
   }, [])
 
-  const isTeacher = profile?.role === 'teacher'
+  // Close an open dropdown on outside click or Escape.
+  useEffect(() => {
+    if (!openMenu) return
+    const onDown = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setOpenMenu(null)
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpenMenu(null)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [openMenu])
 
   const safeSections = sections || []
-  const activeItem = safeSections
-    .flatMap((section) => section.items || [])
-    .find((item) => item.key === activeTab)
+  const allItems = safeSections.flatMap((section) => section.items || [])
+  const activeItem = allItems.find((item) => item.key === activeTab)
   const pageTitle = activeItem?.label || ''
+  const helpItem = allItems.find((item) => item.key === 'howto')
 
   const goToTab = (key) => {
     onTabChange(key)
     setMobileOpen(false)
+    setOpenMenu(null)
   }
 
-  const sidebarContent = (
-    <>
-      {/* BRAND */}
-      <div className="flex items-center gap-3 h-[76px] px-4 border-b border-line shrink-0">
-        <div className="relative shrink-0">
-          <img
-            src="/mrikromov.jpg"
-            alt="IELTS with Mr Ikromov"
-            className="w-10 h-10 rounded-[0.85rem] object-cover object-center border border-line"
-          />
-          <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-full bg-sage border-2 border-panel" />
-        </div>
+  // Build the top-bar entries.
+  const entries = []
+  safeSections.forEach((section, index) => {
+    const items = (section.items || []).filter((item) => item.key !== 'howto')
+    if (!items.length) return
+    if (index === 0 || items.length === 1) {
+      items.forEach((item) => entries.push({ type: 'item', item }))
+    } else {
+      const label = SECTION_LABELS[section.title] || section.title || 'More'
+      entries.push({ type: 'menu', key: `menu-${index}`, label, items })
+    }
+    if (index === 0 && spotlight) {
+      entries.push({
+        type: 'item',
+        item: {
+          key: spotlight.key,
+          label: spotlight.navLabel || spotlight.label,
+          icon: spotlight.icon,
+        },
+      })
+    }
+  })
 
-        {!collapsed && (
-          <div className="min-w-0">
-            <div className="text-[14px] leading-tight font-semibold tracking-[-0.01em] text-paper truncate">
-              IELTS with Mr Ikromov
-            </div>
-            <div className="text-[10px] text-mist font-mono uppercase tracking-[0.14em] mt-0.5">
-              {isTeacher ? 'Examiner desk' : 'Candidate portal'}
-            </div>
-          </div>
-        )}
+  const navButtonClass = (active) =>
+    `focus-ring inline-flex items-center gap-2 h-10 px-2.5 2xl:px-3 rounded-[11px] text-sm whitespace-nowrap transition-colors ${
+      active ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper hover:bg-panel-2'
+    }`
 
-        <button
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          className="focus-ring lg:hidden ml-auto shrink-0 flex items-center justify-center w-8 h-8 rounded-[10px] text-mist hover:text-paper hover:bg-panel-2"
-          aria-label="Close menu"
-        >
-          <IconClose className="h-4.5 w-4.5" />
-        </button>
-      </div>
-
-      {/* SPOTLIGHT
-          A single, deliberately different-looking entry point —
-          Jasur's own words: "I want this to be separate and visually
-          catching, maybe somewhere else." Everything else in this
-          sidebar is a plain list row grouped under a section label;
-          this instead gets its own solid, gradient-filled card ABOVE
-          all the regular sections, so it reads as a distinct feature
-          to jump to rather than one more line in a list. */}
-      {spotlight && (
-        <div className={`pt-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-          <button
-            type="button"
-            onClick={() => goToTab(spotlight.key)}
-            title={collapsed ? spotlight.label : undefined}
-            className={`
-              focus-ring group w-full flex items-center gap-3 rounded-2xl
-              bg-gradient-to-br from-brass to-brass-dim text-onbrass
-              shadow-[0_10px_24px_-10px_var(--color-brass)]
-              transition-transform hover:-translate-y-0.5
-              ${collapsed ? 'justify-center p-2.5' : 'px-3.5 py-3'}
-            `}
-          >
-            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/15 shrink-0">
-              {spotlight.icon && <spotlight.icon className="h-[19px] w-[19px]" />}
-            </span>
-
-            {!collapsed && (
-              <span className="min-w-0 text-left">
-                <span className="block text-sm font-semibold truncate">
-                  {spotlight.label}
-                </span>
-                {spotlight.description && (
-                  <span className="block text-[11px] opacity-80 truncate">
-                    {spotlight.description}
-                  </span>
-                )}
-              </span>
-            )}
-
-            {!collapsed && (
-              <svg
-                className="h-4 w-4 ml-auto shrink-0 opacity-80 transition-transform group-hover:translate-x-0.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 5l7 7-7 7" />
-              </svg>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* NAV */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {safeSections.map((section, sectionIndex) => (
-          <div key={section.title || sectionIndex} className={sectionIndex === 0 ? '' : 'mt-5'}>
-            {section.title && !collapsed && (
-              <p className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-mist/60">
-                {section.title}
-              </p>
-            )}
-
-            <div className="flex flex-col gap-0.5">
-              {(section.items || []).map((item) => {
-                const active = activeTab === item.key
-                const Icon = item.icon
-
-                return (
-                  <button
-                    type="button"
-                    key={item.key}
-                    onClick={() => goToTab(item.key)}
-                    title={collapsed ? item.label : undefined}
-                    className={`
-                      focus-ring group flex items-center gap-3 rounded-[10px]
-                      border-l-2 px-3 py-2.5 text-sm transition-colors
-                      ${collapsed ? 'justify-center px-0' : ''}
-                      ${
-                        active
-                          ? 'border-brass bg-brass/10 text-brass font-semibold'
-                          : 'border-transparent text-mist hover:text-paper hover:bg-panel-2'
-                      }
-                    `}
-                  >
-                    {Icon && (
-                      <Icon
-                        className={`h-[18px] w-[18px] shrink-0 ${
-                          active ? 'text-brass' : 'text-mist group-hover:text-paper'
-                        }`}
-                      />
-                    )}
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* SIGNED-IN USER + LOG OUT */}
-      <div className="border-t border-line px-3 py-3 shrink-0">
-        {!collapsed && (
-          <p className="px-1 mb-2 text-xs text-mist truncate">
-            {profile?.full_name}
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={signOut}
-          title={collapsed ? 'Log out' : undefined}
-          className={`
-            focus-ring w-full flex items-center gap-2.5 rounded-[10px]
-            px-3 py-2 text-sm text-coral hover:bg-coral/10 transition-colors
-            ${collapsed ? 'justify-center px-0' : ''}
-          `}
-        >
-          <IconLogout className="h-[18px] w-[18px] shrink-0" />
-          {!collapsed && <span>Log out</span>}
-        </button>
-      </div>
-
-      {/* COLLAPSE TOGGLE (desktop only) */}
-      <button
-        type="button"
-        onClick={() => setCollapsed((c) => !c)}
-        className={`
-          focus-ring hidden lg:flex items-center gap-2 mx-3 mb-3 rounded-[10px]
-          border border-line px-3 py-2 text-xs text-mist hover:text-paper hover:bg-panel-2
-          ${collapsed ? 'justify-center px-0' : ''}
-        `}
-      >
-        <IconCollapse className="h-4 w-4 shrink-0" />
-        {!collapsed && <span>Collapse</span>}
-      </button>
-    </>
-  )
+  const subtitle = isTeacher ? 'Teacher' : isExaminer ? 'Examiner' : 'IELTS school'
 
   return (
-    <div className="min-h-screen flex text-paper bg-ink">
-
-      {/* =====================================================
-          MOBILE BACKDROP
-          ===================================================== */}
-
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-ink/60 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* =====================================================
-          SIDEBAR
-          ===================================================== */}
-
-      {/*
-        * lg:static (a normal flow flex item) was the bug behind "the
-        * sidebar goes blank once I scroll down": at desktop width this
-        * aside sits in a `flex` row next to the main column, and a
-        * flex row's default align-items:stretch makes it MATCH the
-        * height of whichever sibling is taller — so once a page's main
-        * content (a long leaderboard, a long table) grew past one
-        * screen, this aside stretched just as tall and scrolled away
-        * WITH the page instead of staying put, leaving a big empty gap
-        * between the real nav items (scrolled out of view) and the
-        * user/logout footer (now stranded far down at the bottom of
-        * that stretched column). lg:sticky + lg:top-0 + lg:h-screen
-        * pins it to the viewport instead, exactly like the top bar's
-        * own `sticky top-0` already does, so it never stretches or
-        * scrolls away regardless of how long the page next to it gets.
-        */}
-      <aside
-        className={`
-          fixed inset-y-0 left-0 z-50 flex flex-col
-          bg-panel border-r border-line
-          transition-transform duration-200 ease-out
-          lg:sticky lg:top-0 lg:h-screen lg:translate-x-0
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${collapsed ? 'lg:w-[76px]' : 'lg:w-64'}
-          w-72
-        `}
-      >
-        {sidebarContent}
-      </aside>
-
-      {/* =====================================================
-          MAIN COLUMN
-          ===================================================== */}
-
-      <div className="flex-1 flex flex-col min-w-0">
-
-        {/* Mobile top bar */}
-        <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 h-14 px-3 border-b border-line bg-panel/90 backdrop-blur-xl">
+    <div className="min-h-screen flex flex-col text-paper bg-ink">
+      <header className="sticky top-0 z-40 border-b border-line bg-panel">
+        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 xl:gap-6 xl:px-8">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="focus-ring flex items-center justify-center w-9 h-9 rounded-[10px] border border-line bg-panel-2 text-mist hover:text-paper"
+            className={`${ICON_BUTTON_CLASS} xl:hidden`}
             aria-label="Open menu"
           >
             <IconMenu className="h-5 w-5" />
           </button>
 
-          <span className="flex-1 min-w-0 text-sm font-semibold text-paper truncate">
-            {pageTitle}
-          </span>
-
-          <ThemeToggle />
-          <NotificationBell profile={profile} />
-
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
-            className={ICON_BUTTON_CLASS}
-            aria-label="Account settings"
+            onClick={() => goToTab(safeSections[0]?.items?.[0]?.key)}
+            className="focus-ring flex items-center gap-3 rounded-xl text-left shrink-0"
           >
-            <IconSettings className="h-4.5 w-4.5" />
+            <img
+              src="/mrikromov.jpg"
+              alt=""
+              className="h-[38px] w-[38px] rounded-xl object-cover"
+            />
+            <span className="hidden sm:flex flex-col leading-tight">
+              <span className="text-[17px] font-semibold">Ikromov</span>
+              <span className="text-xs text-mist">{subtitle}</span>
+            </span>
           </button>
-        </div>
 
-        {/* Desktop top bar */}
-        <header className="hidden lg:flex sticky top-0 z-30 items-center justify-between gap-4 h-[76px] px-6 border-b border-line bg-panel/80 backdrop-blur-xl">
-          <div className="min-w-0">
-            <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-mist">
-              {isTeacher ? 'Examiner desk' : 'Candidate portal'}
-            </p>
-            <h1 className="font-display text-xl font-semibold text-paper truncate">
-              {pageTitle}
-            </h1>
-          </div>
+          <nav ref={navRef} aria-label="Main" className="hidden xl:flex items-center gap-0.5 2xl:gap-1 min-w-0">
+            {entries.map((entry) => {
+              if (entry.type === 'item') {
+                const Icon = entry.item.icon
+                const active = activeTab === entry.item.key
+                return (
+                  <button
+                    key={entry.item.key}
+                    type="button"
+                    onClick={() => goToTab(entry.item.key)}
+                    className={navButtonClass(active)}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {Icon && <Icon className="hidden 2xl:block h-[18px] w-[18px] shrink-0" />}
+                    {SHORT_LABELS[entry.item.label] || entry.item.label}
+                  </button>
+                )
+              }
+              const active = entry.items.some((item) => item.key === activeTab)
+              const open = openMenu === entry.key
+              return (
+                <div key={entry.key} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenMenu(open ? null : entry.key)}
+                    className={navButtonClass(active)}
+                    aria-expanded={open}
+                    aria-haspopup="menu"
+                  >
+                    {entry.label}
+                    <IconChevron className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  </button>
+                  {open && (
+                    <div role="menu" className="absolute left-0 top-[calc(100%+8px)] z-50 min-w-[220px] rounded-2xl border border-line bg-panel p-1.5 shadow-[0_16px_40px_-12px_rgba(20,22,45,0.25)]">
+                      {entry.items.map((item) => {
+                        const Icon = item.icon
+                        const itemActive = item.key === activeTab
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => goToTab(item.key)}
+                            className={`focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm ${
+                              itemActive ? 'bg-panel-2 font-medium text-paper' : 'text-paper-dim hover:bg-panel-2 hover:text-paper'
+                            }`}
+                          >
+                            {Icon && <Icon className="h-[18px] w-[18px] shrink-0" />}
+                            {item.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </nav>
 
-          <div className="flex items-center gap-2 shrink-0">
-
-            {!isTeacher && profile?.target_band != null && (
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            {!isTeacher && !isExaminer && profile?.target_band != null && (
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
-                title="Change your target band in Account Settings"
-                className="focus-ring flex items-center gap-1.5 rounded-[10px] border border-line bg-panel-2 px-3 h-9 text-xs font-semibold text-paper hover:border-brass/40 transition-colors"
+                title="Change your target band in Account settings"
+                className="focus-ring hidden 2xl:flex h-[42px] items-center gap-1.5 rounded-xl border border-line bg-panel px-3 text-sm font-medium hover:bg-panel-2"
               >
-                <TargetBandIcon value={profile.target_band} className="h-3.5 w-3.5 text-brass" />
-                <span>Target {formatTargetBand(profile.target_band)}</span>
+                <TargetBandIcon value={profile.target_band} className="h-4 w-4" />
+                Target {formatTargetBand(profile.target_band)}
               </button>
             )}
 
@@ -533,50 +426,163 @@ export default function Layout({
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Manage Speaking Spin practice content"
-                className="focus-ring inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] border border-line bg-panel-2 text-sm text-cyan hover:border-cyan/40 transition-colors"
+                className="focus-ring hidden 2xl:inline-flex h-[42px] items-center gap-1.5 rounded-xl border border-line bg-panel px-3 text-sm font-medium hover:bg-panel-2"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                  <path d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66" />
-                  <path d="M17 3v4h-4M7 21v-4h4" strokeLinejoin="round" />
-                </svg>
-                <span>Speaking Spin</span>
+                Speaking Spin
               </a>
+            )}
+
+            {helpItem && (
+              <button
+                type="button"
+                onClick={() => goToTab(helpItem.key)}
+                className={`${ICON_BUTTON_CLASS} hidden sm:flex ${activeTab === helpItem.key ? 'bg-panel-2' : ''}`}
+                title={helpItem.label}
+                aria-label={helpItem.label}
+              >
+                <IconHelp className="h-[19px] w-[19px]" />
+              </button>
             )}
 
             <ThemeToggle />
             <NotificationBell profile={profile} />
 
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(true)}
-              className={ICON_BUTTON_CLASS}
-              title="Account settings"
-              aria-label="Account settings"
-            >
-              <IconSettings className="h-4.5 w-4.5" />
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="animate-fade-up">
-              {children}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenMenu(openMenu === 'account' ? null : 'account')}
+                className="focus-ring flex h-[42px] items-center gap-2.5 rounded-xl border border-line bg-panel pl-[5px] pr-1.5 2xl:pr-3 hover:bg-panel-2"
+                aria-label="Account"
+                aria-expanded={openMenu === 'account'}
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-8 w-8 rounded-[9px] object-cover" />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-speaking-tint text-[13px] font-semibold text-speaking">
+                    {initials(profile?.full_name)}
+                  </span>
+                )}
+                <span className="hidden 2xl:inline max-w-[120px] truncate text-sm">
+                  {(profile?.full_name || '').split(' ')[0]}
+                </span>
+              </button>
+              {openMenu === 'account' && (
+                <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl border border-line bg-panel p-1.5 shadow-[0_16px_40px_-12px_rgba(20,22,45,0.25)]">
+                  <div className="px-3 py-2.5">
+                    <div className="truncate text-sm font-medium">{profile?.full_name}</div>
+                    {profile?.username && <div className="truncate text-xs text-mist">@{profile.username}</div>}
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpenMenu(null)
+                      setSettingsOpen(true)
+                    }}
+                    className="focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-paper-dim hover:bg-panel-2 hover:text-paper"
+                  >
+                    <IconSettings className="h-[18px] w-[18px]" />
+                    Account settings
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={signOut}
+                    className="focus-ring flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-coral hover:bg-panel-2"
+                  >
+                    <IconLogout className="h-[18px] w-[18px]" />
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </header>
 
-      {/* =====================================================
-          ACCOUNT SETTINGS
-          ===================================================== */}
-
-      {settingsOpen && (
-        <AccountSettingsModal
-          onClose={() => setSettingsOpen(false)}
-        />
+      {/* Click-away layer for the account menu (the nav has its own). */}
+      {openMenu === 'account' && (
+        <div className="fixed inset-0 z-30" onMouseDown={() => setOpenMenu(null)} aria-hidden="true" />
       )}
 
+      {/* MOBILE / TABLET DRAWER */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 xl:hidden">
+          <div className="absolute inset-0 bg-paper/40" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <aside className="absolute inset-y-0 left-0 flex w-[300px] max-w-[85vw] flex-col bg-panel shadow-xl">
+            <div className="flex h-[72px] items-center gap-3 border-b border-line px-4">
+              <img src="/mrikromov.jpg" alt="" className="h-[38px] w-[38px] rounded-xl object-cover" />
+              <span className="flex flex-1 flex-col leading-tight">
+                <span className="text-[17px] font-semibold">Ikromov</span>
+                <span className="text-xs text-mist">{subtitle}</span>
+              </span>
+              <button type="button" onClick={() => setMobileOpen(false)} className={ICON_BUTTON_CLASS} aria-label="Close menu">
+                <IconClose className="h-5 w-5" />
+              </button>
+            </div>
+            <nav aria-label="Main" className="flex-1 overflow-y-auto p-3">
+              {spotlight && (
+                <button
+                  type="button"
+                  onClick={() => goToTab(spotlight.key)}
+                  className="focus-ring mb-3 flex w-full items-center gap-3 rounded-2xl bg-brass px-3.5 py-3 text-left text-onbrass"
+                >
+                  {spotlight.icon && <spotlight.icon className="h-5 w-5 shrink-0" />}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{spotlight.label}</span>
+                    {spotlight.description && <span className="block truncate text-xs opacity-80">{spotlight.description}</span>}
+                  </span>
+                </button>
+              )}
+              {safeSections.map((section, index) => (
+                <div key={section.title || index} className={index ? 'mt-4' : ''}>
+                  {section.title && (
+                    <p className="mb-1 px-3 text-xs font-medium text-mist">{SECTION_LABELS[section.title] || section.title}</p>
+                  )}
+                  {(section.items || []).map((item) => {
+                    const Icon = item.icon
+                    const active = activeTab === item.key
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => goToTab(item.key)}
+                        className={`focus-ring flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] ${
+                          active ? 'bg-brass font-medium text-onbrass' : 'text-paper-dim hover:bg-panel-2 hover:text-paper'
+                        }`}
+                      >
+                        {Icon && <Icon className="h-5 w-5 shrink-0" />}
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </nav>
+            <div className="border-t border-line p-3">
+              <button
+                type="button"
+                onClick={signOut}
+                className="focus-ring flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] text-coral hover:bg-panel-2"
+              >
+                <IconLogout className="h-5 w-5" />
+                Log out
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      <main className="flex-1">
+        <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 xl:px-8 xl:py-7">
+          {pageTitle && !activeItem?.hideTitle && (
+            <h1 className="mb-5 text-[26px] font-semibold tracking-[-0.02em]">{pageTitle}</h1>
+          )}
+          <div className="animate-fade-up">{children}</div>
+        </div>
+      </main>
+
+      {settingsOpen && <AccountSettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>
   )
 }

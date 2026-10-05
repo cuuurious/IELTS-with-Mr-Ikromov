@@ -9,6 +9,7 @@ import { lazyWithReload } from '../../lib/lazyWithReload'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import Layout, {
+  IconHome,
   IconHomework,
   IconMockExam,
   IconWordlist,
@@ -19,6 +20,7 @@ import Layout, {
 } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
+import StudentHome from './StudentHome'
 import NotificationSetupGate from '../../components/NotificationSetupGate'
 import { useSessionState } from '../../lib/sessionState'
 
@@ -48,7 +50,7 @@ export default function StudentDashboard() {
 
   // Remembered across a refresh (see lib/sessionState.js).
   const [tab, setTab] =
-    useSessionState(`ielts:${profile?.id}:student:tab`, 'homework')
+    useSessionState(`ielts:${profile?.id}:student:tab`, 'home')
 
   // The Mock Test Center is its OWN full-screen portal now, not a tab
   // in this dashboard's sidebar — see MockTestCenter.jsx's header
@@ -540,16 +542,17 @@ const messageId = linkParts[2] || null
     () => [
       {
         items: [
+          { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'homework', label: 'Homework', icon: IconHomework },
-          { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
+          { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
-          { key: 'group-chat', label: 'Group Chat', icon: IconGroupChat },
+          { key: 'group-chat', label: 'Group chat', icon: IconGroupChat },
           { key: 'chats', label: 'Chats', icon: IconChat },
         ],
       },
       {
         items: [
-          { key: 'howto', label: 'How to Use', icon: IconHelp },
+          { key: 'howto', label: 'How to use', icon: IconHelp },
         ],
       },
     ],
@@ -693,10 +696,6 @@ const messageId = linkParts[2] || null
            ====================================================== */}
         {PAGE_SUBTITLES[tab] && (
           <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 blur-3xl" />
-              <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
-            </div>
 
             <div className="relative px-5 py-4 sm:px-7 sm:py-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -733,6 +732,32 @@ const messageId = linkParts[2] || null
         {/* ======================================================
             HOMEWORK
            ====================================================== */}
+        {/* ======================================================
+            HOME — "Study room" overview (2026-10-05)
+           ====================================================== */}
+        {tab === 'home' && (
+          <StudentHome
+            profile={profile}
+            groups={myGroups}
+            activeGroup={activeGroup}
+            onSelectGroup={setActiveGroup}
+            homeworks={homeworks}
+            submissions={submissions}
+            onNavigate={handleTabChange}
+            onOpenMockCenter={() => setMockCenterOpen(true)}
+            onOpenHomework={(homeworkId) => {
+              setTab('homework')
+              // Wait for the Homework tab to render, then bring the
+              // card into view (HomeworkCard rows carry this id).
+              setTimeout(() => {
+                document
+                  .getElementById(`homework-${homeworkId}`)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 120)
+            }}
+          />
+        )}
+
         {tab === 'homework' && (
           <section className="space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
