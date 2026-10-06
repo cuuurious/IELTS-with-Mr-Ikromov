@@ -10,6 +10,7 @@ import FrozenAttemptReview from '../../components/FrozenAttemptReview'
 import ThemeToggle from '../../components/ThemeToggle'
 import LiveMocksPanel from './LiveMocksPanel'
 import { useSessionState } from '../../lib/sessionState'
+import { cleanPrompt } from '../../components/exam/questionGroups'
 
 /*
  * ================================================================
@@ -5800,7 +5801,7 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview, onDelete }) {
                       {r.section_title}
                     </p>
                   )}
-                  <p className="text-paper-dim">{r.prompt}</p>
+                  <p className="text-paper-dim">{cleanPrompt(r.prompt)}</p>
                   <p className="mt-1">
                     <span className="text-coral">{r.student_answer || '(no answer)'}</span>
                     <span className="text-mist mx-1.5">→</span>

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ConfirmModal from './ConfirmModal'
 import { readSession, writeSession } from '../lib/sessionState'
+import { ChoiceDragProvider, useActiveChoiceDrag, useChoiceDragSource } from './exam/choiceDrag'
+import { buildQuestionGroups } from './exam/questionGroups'
+import QuestionHighlighter from './exam/QuestionHighlighter'
 
 /*
  * ================================================================
@@ -1115,6 +1118,61 @@ export function ExamTaker({
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
   }
 
+  // Drag-and-drop result from the drag engine (exam/choiceDrag.jsx):
+  //   onto a gap  → that gap gets the option; if it came out of another
+  //                 gap, that one is emptied (a move). Whatever the target
+  //                 gap held before goes back to the bank by itself, since
+  //                 banks list every option no gap is using.
+  //   onto a bank → the gap it came from is emptied.
+  // An option can only land in a gap whose own question offers it.
+  const questionById = useMemo(() => {
+    const map = {}
+    flatQuestions.forEach((q) => {
+      map[q.id] = q
+    })
+    return map
+  }, [flatQuestions])
+
+  const handleChoiceDrop = ({ choice, from, target }) => {
+    if (target.startsWith('q:')) {
+      const qid = target.slice(2)
+      if (qid === from) return
+      const q = questionById[qid]
+      if (!q || !(q.options?.choices || []).includes(choice)) return
+      setAnswers((prev) => {
+        const next = { ...prev, [qid]: choice }
+        if (from) next[from] = ''
+        return next
+      })
+      setCurrentQuestionId(qid)
+      return
+    }
+    if (target === 'bank' && from) setAnswer(from, '')
+  }
+
+  // "Go to submission page" (2026-10-06). Jasur removed Finish on
+  // 2026-09-28; after Mock #1 students complained about having to sit and
+  // wait, and Mavluda chose to bring finishing early back the way the
+  // real computer test does it: Options → Go to submission page → a
+  // review of every part → Submit, with a confirmation.
+  const [submissionOpen, setSubmissionOpen] = useState(false)
+  const confirmFinishEarly = () => {
+    const missing = totalQuestions - answeredCount
+    setConfirmDialog({
+      title: 'Submit your answers now?',
+      message:
+        missing > 0
+          ? `You have ${missing} unanswered question${missing === 1 ? '' : 's'}. After you submit, you can't change any answers.`
+          : "After you submit, you can't change any answers.",
+      tone: 'brass',
+      confirmLabel: 'Submit',
+      onConfirm: () => {
+        setSubmissionOpen(false)
+        runSubmit(false, 1)
+      },
+    })
+  }
+
   // MAX_SUBMIT_ATTEMPTS total tries (1 initial + 4 automatic retries)
   // spread over roughly a minute — long enough to ride out a genuine
   // blip (wifi drop, a phone briefly losing signal) without leaving the
@@ -1328,7 +1386,23 @@ export function ExamTaker({
     // whole window shouldnt be possible"). Fixed to the viewport, never
     // scrolls itself; only the passage pane and the questions pane
     // (whichever one the mouse is over) scroll, each on its own.
+    <ChoiceDragProvider onDrop={handleChoiceDrop}>
     <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-ink text-paper">
+      {submissionOpen && (
+        <SubmissionPage
+          sections={sections}
+          answers={answers}
+          flags={flags}
+          questionIndexById={questionIndexById}
+          module={exam.module}
+          onBack={() => setSubmissionOpen(false)}
+          onJump={(qid) => {
+            setSubmissionOpen(false)
+            jumpToQuestion(qid)
+          }}
+          onSubmit={confirmFinishEarly}
+        />
+      )}
       <ConfirmModal
         open={Boolean(confirmDialog)}
         {...confirmDialog}
@@ -1421,6 +1495,17 @@ export function ExamTaker({
               </button>
               {settingsOpen && (
                 <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg text-paper">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettingsOpen(false)
+                      setSubmissionOpen(true)
+                    }}
+                    className="focus-ring mb-4 flex w-full items-center justify-between rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm font-medium text-paper hover:border-brass/40"
+                  >
+                    Go to submission page
+                    <span aria-hidden>→</span>
+                  </button>
                   <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Text size</p>
                   <div className="mb-4 flex gap-2">
                     {FONT_SCALE_STEPS.map((step, i) => (
@@ -1494,13 +1579,10 @@ export function ExamTaker({
             >
               ✏️
             </button>
-            {/* No manual "Finish test"/submit control here — Jasur,
-                verbatim: "finish test button has to be removed/ submit
-                button shouldnt be available." Matches the real exam:
-                a section ends only when its own clock runs out
-                (handleSubmit(true) above, on the deadline timer), never
-                by the student's own choice. Do not re-add a manual
-                submit button to this bar. */}
+            {/* No "Finish" button in this bar (Jasur, 2026-09-28). Since
+                2026-10-06 a student can still finish early the way the
+                real computer test allows it: ☰ → "Go to submission page"
+                → review → Submit (SubmissionPage below). */}
           </div>
         </div>
 
@@ -1598,46 +1680,18 @@ export function ExamTaker({
           (q) => !inlineQuestionIds || !inlineQuestionIds.has(q.id)
         )
 
-        // Group consecutive `matching` questions that share the exact
-        // same choice bank so it renders once instead of being repeated
-        // under every question — see MatchingQuestion's hideBank comment
-        // for the full story. A lone matching question (no matching
-        // neighbor with the same bank) falls through to the single-item
-        // branch unchanged.
-        const questionRenderGroups = []
-        for (let i = 0; i < visibleQuestions.length; ) {
-          const q = visibleQuestions[i]
-          if (q.type !== 'matching') {
-            questionRenderGroups.push({ kind: 'single', question: q })
-            i++
-            continue
-          }
-          const bankKey = JSON.stringify(q.options?.choices || [])
-          let j = i + 1
-          while (
-            j < visibleQuestions.length &&
-            visibleQuestions[j].type === 'matching' &&
-            JSON.stringify(visibleQuestions[j].options?.choices || []) === bankKey
-          ) {
-            j++
-          }
-          const run = visibleQuestions.slice(i, j)
-          if (run.length > 1) {
-            questionRenderGroups.push({ kind: 'group', questions: run, choices: q.options?.choices || [] })
-          } else {
-            questionRenderGroups.push({ kind: 'single', question: run[0] })
-          }
-          i = j
-        }
+        // Questions are shown in their IELTS groups ("Questions 1–7" +
+        // the instruction once) — see exam/questionGroups.js. Each
+        // matching group gets one option bank beside its gaps.
+        const questionGroups = buildQuestionGroups(visibleQuestions, questionIndexById)
 
         const questionsList = (
-          <div className="flex flex-col gap-4">
-            {questionRenderGroups.map((g) =>
-              g.kind === 'group' ? (
-                <MatchingQuestionGroup
-                  key={g.questions[0].id}
-                  questions={g.questions}
-                  choices={g.choices}
+          <QuestionHighlighter>
+            <div className="flex flex-col gap-8">
+              {questionGroups.map((g) => (
+                <QuestionGroupView
+                  key={g.key}
+                  group={g}
                   answers={answers}
                   onChange={setAnswer}
                   flags={flags}
@@ -1646,21 +1700,9 @@ export function ExamTaker({
                   fontScale={activeFontScale}
                   theme={activeTheme}
                 />
-              ) : (
-                <QuestionBlock
-                  key={g.question.id}
-                  index={questionIndexById[g.question.id]}
-                  question={g.question}
-                  value={answers[g.question.id] ?? ''}
-                  onChange={(v) => setAnswer(g.question.id, v)}
-                  flagged={flags.has(g.question.id)}
-                  onToggleFlag={() => toggleFlag(g.question.id)}
-                  fontScale={activeFontScale}
-                  theme={activeTheme}
-                />
-              )
-            )}
-          </div>
+              ))}
+            </div>
+          </QuestionHighlighter>
         )
 
         // Reading gets the real computer-delivered exam's split screen —
@@ -1812,6 +1854,82 @@ export function ExamTaker({
         />
       )}
     </div>
+    </ChoiceDragProvider>
+  )
+}
+
+// "Go to submission page" — the real computer test's review screen:
+// every part with how many questions are answered, each number clickable
+// to go back to it, then Submit (confirmed in ExamTaker).
+function SubmissionPage({ sections, answers, flags, questionIndexById, module, onBack, onJump, onSubmit }) {
+  const isAnswered = (q) => Boolean(String(answers[q.id] ?? '').trim())
+  return (
+    <div className="fixed inset-0 z-[10000] flex flex-col bg-white text-[#1a1a1a]" role="dialog" aria-label="Submission page">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#d8d8d8] px-6 py-4">
+        <p className="text-lg font-semibold">Submission page</p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="focus-ring rounded-md border border-[#bdbdbd] px-4 py-2 text-sm font-medium hover:bg-[#f2f2f2]"
+        >
+          ← Back to the test
+        </button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="mx-auto flex max-w-3xl flex-col gap-5">
+          <p className="text-[15px] text-[#444]">
+            Check your answers before you submit. Click a question number to go back to it.
+            {module === 'listening' && ' If the recording is still playing, submitting stops it.'}
+          </p>
+          {sections.map((section, i) => {
+            const done = section.questions.filter(isAnswered).length
+            return (
+              <div key={section.id} className="rounded-lg border border-[#d8d8d8] p-4">
+                <div className="mb-3 flex items-baseline justify-between gap-3">
+                  <p className="font-semibold">Part {i + 1}</p>
+                  <p className="text-sm text-[#555]">
+                    {done} of {section.questions.length} answered
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {section.questions.map((q) => {
+                    const answered = isAnswered(q)
+                    return (
+                      <button
+                        key={q.id}
+                        type="button"
+                        onClick={() => onJump(q.id)}
+                        title={answered ? `Question ${questionIndexById[q.id]}: answered` : `Question ${questionIndexById[q.id]}: not answered`}
+                        className={`focus-ring relative flex h-9 w-9 items-center justify-center rounded-md border text-sm font-medium ${
+                          answered ? 'border-[#1f2340] bg-[#1f2340] text-white' : 'border-[#9a9a9a] bg-white text-[#1a1a1a] hover:bg-[#f2f2f2]'
+                        }`}
+                      >
+                        {questionIndexById[q.id]}
+                        {flags.has(q.id) && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+          <div className="flex items-center gap-4 text-xs text-[#555]">
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[#1f2340]" /> Answered</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-[#9a9a9a]" /> Not answered</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#b23a22]" /> Flagged</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex shrink-0 justify-end border-t border-[#d8d8d8] px-6 py-4">
+        <button
+          type="button"
+          onClick={onSubmit}
+          className="focus-ring rounded-md bg-[#1f2340] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#2c3157]"
+        >
+          Submit answers
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -1845,7 +1963,7 @@ function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId,
           )
         }
         return (
-          <div key={section.id} className="flex min-w-0 flex-1 items-center gap-2 pt-1.5">
+          <div key={section.id} className="order-first flex min-w-[17rem] flex-1 items-center gap-2 pt-1.5 sm:order-none">
             <span className="shrink-0 px-2 pt-1 text-sm font-bold text-paper">Part {i + 1}</span>
             <div className="flex min-w-0 flex-wrap items-center gap-1">
               {qs.map((q) => {
@@ -2119,7 +2237,7 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
                 setOpenNoteFor(seg.highlight.id)
               }}
               title={seg.highlight.note ? `Note: ${seg.highlight.note}` : 'Click to add a note or remove'}
-              className="cursor-pointer rounded bg-amber/35 px-0.5"
+              className="cursor-pointer rounded-sm bg-[#ffe14d] px-0.5 text-[#1a1a1a]"
             >
               {seg.plain}
             </mark>
@@ -2149,14 +2267,14 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
             onClick={handleHighlight}
             className="focus-ring rounded-full bg-amber/20 px-3 py-1 text-xs font-semibold text-amber hover:bg-amber/30"
           >
-            🖊 Highlight
+            Highlight
           </button>
           <button
             type="button"
             onClick={handleAddNote}
             className="focus-ring rounded-full bg-panel-2 px-3 py-1 text-xs font-semibold text-paper-dim hover:text-paper"
           >
-            📝 Note
+            Note
           </button>
         </div>
       )}
@@ -2260,37 +2378,13 @@ function splitLetteredParagraphs(text) {
   return paragraphs
 }
 
-// Answer-option chips carry their value under their OWN drag type, not
-// as plain text. Jasur, 2026-09-29 (screenshot: option "A The
-// character of the company…" dropped into question 22's word gap, while
-// A was still sitting in the list): with plain text, the browser itself
-// let an option be dropped into ANY typing box, where it landed as raw
-// text and never counted as "used". Now only the drop boxes of matching
-// questions accept an option, and once it's placed there it leaves the
-// list (see MatchingBank / MatchingQuestion / LetteredMatchingPassage).
-// A gap that expects words from the passage stays a typing box only —
-// same as the real exam.
-const CHOICE_DRAG_TYPE = 'application/x-ielts-choice'
-function startChoiceDrag(e, choice) {
-  e.dataTransfer.setData(CHOICE_DRAG_TYPE, choice)
-  e.dataTransfer.effectAllowed = 'move'
-}
-function readChoiceDrop(e) {
-  return e.dataTransfer.getData(CHOICE_DRAG_TYPE)
-}
-
-// The passage side of a "matching headings" (or matching-anything-per-
-// paragraph) Reading section — one HighlightablePassage per paragraph
-// (so highlighting/notes keep working exactly as before, just scoped to
-// that paragraph's own slice) with a draggable-drop-target inserted right
-// before any paragraph a "matching" question's prompt names ("Paragraph
-// B"). The bank of headings is rendered once, at the top, shared by every
-// slot — the same drag chips as MatchingQuestion below, so dragging one
-// onto a slot (or a slot further down) behaves identically; a slot can
-// also be tapped to open... no — kept drag-or-nothing here deliberately
-// simple since every slot is visible at once (unlike MatchingQuestion's
-// single hidden target), a student can just drag from the bank straight
-// to the right paragraph without needing a tap fallback.
+// The passage side of a "matching headings" Reading section — one
+// HighlightablePassage per paragraph (highlights/notes still scoped to
+// each paragraph's slice) with a gap right before every paragraph a
+// "matching" question names ("Paragraph B"). The list of headings stays
+// pinned at the top of the passage pane while it scrolls, so every gap
+// can be reached mid-drag (2026-10-06 drag rewrite — see
+// exam/choiceDrag.jsx).
 function LetteredMatchingPassage({
   fullText,
   paragraphs,
@@ -2308,43 +2402,27 @@ function LetteredMatchingPassage({
   fontScale = 1,
   theme,
 }) {
-  const [dragOverLetter, setDragOverLetter] = useState(null)
-
-  // Once a heading is placed on a paragraph, it drops out of this bank
-  // entirely instead of staying visible-but-dimmed — Jasur, 2026-09-28:
-  // "once the answer is dragged it should disappear from the list."
-  // Re-dragging a DIFFERENT heading onto an already-answered paragraph
-  // still works and still overwrites it (setAnswer just replaces the
-  // value), which naturally puts the old heading straight back in this
-  // list the next render, since it's no longer any paragraph's answer.
-  const remainingBankChoices = bankChoices.filter(
-    (choice) => !Object.values(matchingByParagraph).some((q) => answers[q.id] === choice)
-  )
+  const questions = Object.values(matchingByParagraph)
+  const usedValues = questions.map((q) => answers[q.id] ?? '').filter(Boolean)
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-xl border border-dashed border-line bg-panel p-3">
-        <p className="mb-2 text-[11px] text-mist">
-          Drag a heading onto the blank at the start of the paragraph it belongs to.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {remainingBankChoices.length > 0 ? (
-            remainingBankChoices.map((choice) => (
-              <button
-                key={choice}
-                type="button"
-                draggable
-                onDragStart={(e) => startChoiceDrag(e, choice)}
-                style={{ fontSize: `${0.8125 * fontScale}rem`, ...themedOptionStyle(theme, false) }}
-                className="focus-ring cursor-grab rounded-full border border-line bg-panel-2 px-3 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
-              >
-                {choice}
-              </button>
-            ))
-          ) : (
-            <p className="text-[11px] text-mist">All headings placed.</p>
-          )}
-        </div>
+      <div
+        className="sticky top-0 z-10 pb-2"
+        style={{ backgroundColor: theme?.bg || 'var(--color-panel)' }}
+      >
+        <MatchingBank
+          choices={bankChoices}
+          usedValues={usedValues}
+          hint="Drag a heading onto the gap above the paragraph it belongs to."
+          onPick={(choice) => {
+            const target = questions.find((q) => !(answers[q.id] ?? '').trim())
+            if (target) setAnswer(target.id, choice)
+          }}
+          fontScale={fontScale}
+          theme={theme}
+          layout="wrap"
+        />
       </div>
 
       {paragraphs.map((p) => {
@@ -2357,40 +2435,17 @@ function LetteredMatchingPassage({
           <div key={`${p.letter || 'lead'}-${p.start}`} className="mb-4">
             {p.letter && <p className="mb-2 font-bold text-paper">{p.letter}</p>}
             {q && (
-              <div
-                id={`q-${q.id}`}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setDragOverLetter(p.letter)
-                }}
-                onDragLeave={() => setDragOverLetter((cur) => (cur === p.letter ? null : cur))}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setDragOverLetter(null)
-                  const choice = readChoiceDrop(e)
-                  if (choice) setAnswer(q.id, choice)
-                }}
-                style={{ fontSize: `${0.8125 * fontScale}rem` }}
-                className={`mb-1.5 flex items-center gap-2 rounded-lg border-2 border-dashed px-3 py-1.5 transition-colors ${
-                  dragOverLetter === p.letter
-                    ? 'border-brass bg-brass/10 text-paper'
-                    : answers[q.id]
-                      ? 'border-brass/40 bg-brass/5 text-paper'
-                      : 'border-line bg-panel text-mist'
-                }`}
-              >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-line bg-panel-2 text-[10px] font-bold text-paper">
-                  {questionIndexById[q.id]}
-                </span>
-                <span className="flex-1">{answers[q.id] || 'Drag a heading here'}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleFlag(q.id)}
-                  title={flags.has(q.id) ? 'Unflag this question' : 'Flag this question for review'}
-                  className={`shrink-0 text-xs ${flags.has(q.id) ? 'text-coral' : 'text-mist hover:text-paper'}`}
-                >
-                  ⚑
-                </button>
+              <div id={`q-${q.id}`} className="mb-2 flex items-center gap-2 scroll-mt-24">
+                <DropGap
+                  questionId={q.id}
+                  index={questionIndexById[q.id]}
+                  value={answers[q.id] ?? ''}
+                  onClear={() => setAnswer(q.id, '')}
+                  fontScale={fontScale}
+                  theme={theme}
+                  wide
+                />
+                <FlagButton flagged={flags.has(q.id)} onToggle={() => toggleFlag(q.id)} />
               </div>
             )}
             <HighlightablePassage
@@ -2409,6 +2464,7 @@ function LetteredMatchingPassage({
     </div>
   )
 }
+
 
 // Splits a short_answer prompt around its blank so the answer box can
 // be dropped INLINE, exactly where the blank is — real exam screenshots
@@ -2438,8 +2494,10 @@ function splitPromptBlank(prompt, index) {
   let before = text.slice(0, blankMatch.index)
   const after = text.slice(blankMatch.index + blankMatch[0].length)
 
-  const dupNumber = new RegExp(`(^|\\s)${index}\\s*$`).exec(before)
-  if (dupNumber) before = before.slice(0, dupNumber.index) + (dupNumber[1] === '' ? '' : dupNumber[1])
+  // "A wooden 1 ______" and "Price: £4 ______" — the number right
+  // before the blank is the question number, not part of the sentence.
+  const dupNumber = new RegExp(`(^|[^0-9A-Za-z])${index}\\s*$`).exec(before)
+  if (dupNumber) before = before.slice(0, dupNumber.index) + dupNumber[1]
 
   return { before, after }
 }
@@ -2458,46 +2516,62 @@ function themedOptionStyle(theme, selected) {
   return { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text }
 }
 
-export function QuestionBlock({ index, question, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme, hideMatchingBank = false }) {
+function FlagButton({ flagged, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={flagged ? 'Remove flag' : 'Flag for review'}
+      aria-pressed={flagged}
+      className={`focus-ring shrink-0 rounded-md p-1 transition-colors ${flagged ? 'text-coral' : 'text-mist/60 hover:text-coral'}`}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill={flagged ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 21V4h11l-2 4 2 4H5" />
+      </svg>
+    </button>
+  )
+}
+
+// One question. `prompt` is the cleaned-up prompt from its group (title,
+// instruction and typed-in number removed — exam/questionGroups.js);
+// falls back to the raw prompt. Matching questions never come through
+// here any more — MatchingQuestionGroup draws them with their bank.
+export function QuestionBlock({ index, question, prompt, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme }) {
+  const text = prompt ?? question.prompt
   const promptStyle = {
     fontSize: `${0.875 * fontScale}rem`,
     ...(theme?.bg ? { color: theme.text } : {}),
   }
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
 
-  // Short-answer questions (a standalone sentence ending in a real
-  // question, not a note with an inline blank) get the real exam's own
-  // treatment — Jasur, sending a screenshot of the real interface:
-  // "like this." There, the sentence carries no leading number at all;
-  // the number only appears (as light placeholder text) inside its own
-  // small answer box, and consecutive questions run straight into each
-  // other with no divider line between them — a continuous form, not a
-  // stack of separately-bordered cards. The QuestionNavigator strip in
-  // the sticky header already shows which number is which, so nothing
-  // is lost by dropping the inline "N." prefix here.
+  // Short-answer: the gap sits INSIDE the sentence, exactly where the
+  // blank is, with the question number as light text in the box (real
+  // test). See splitPromptBlank.
   const isShortAnswer = question.type === 'short_answer'
-  const shortAnswerParts = isShortAnswer ? splitPromptBlank(question.prompt, index) : null
+  const shortAnswerParts = isShortAnswer ? splitPromptBlank(text, index) : null
   const shortAnswerInput = isShortAnswer && (
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={String(index)}
+      aria-label={`Question ${index}`}
+      spellCheck={false}
+      autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="off"
+      size={Math.max(10, Math.min(28, (value || '').length + 2))}
       style={{ ...optionTextStyle, ...(theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : {}) }}
-      className="focus-ring mx-1 inline-block w-28 rounded-lg border border-line bg-panel px-2 py-1 text-center align-baseline text-paper"
+      className="focus-ring mx-1 inline-block rounded-md border border-line bg-panel px-2 py-1 text-center align-baseline text-paper"
     />
   )
 
   return (
     <div
       id={`q-${question.id}`}
-      className={
-        isShortAnswer
-          ? 'pt-3 first:pt-0 scroll-mt-40'
-          : 'border-t border-line pt-4 first:border-0 first:pt-0 scroll-mt-40'
-      }
+      className={isShortAnswer ? 'pt-2.5 first:pt-0 scroll-mt-40' : 'pt-1 scroll-mt-40'}
     >
       <div className="mb-2.5 flex items-start justify-between gap-2">
-        <p className="font-medium text-paper" style={promptStyle}>
+        <p className="leading-relaxed text-paper" style={promptStyle}>
           {isShortAnswer ? (
             <>
               {shortAnswerParts.before}
@@ -2506,23 +2580,12 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
             </>
           ) : (
             <>
-              <span className="mr-1.5 text-mist">{index}.</span>
-              {question.prompt}
+              <span className="mr-2 font-semibold">{index}</span>
+              {text}
             </>
           )}
         </p>
-        {onToggleFlag && (
-          <button
-            type="button"
-            onClick={onToggleFlag}
-            title={flagged ? 'Remove flag' : 'Flag for review'}
-            className={`focus-ring shrink-0 rounded-full px-2 py-1 text-xs transition-colors ${
-              flagged ? 'bg-coral/15 text-coral' : 'text-mist hover:text-coral'
-            }`}
-          >
-            🚩
-          </button>
-        )}
+        {onToggleFlag && <FlagButton flagged={flagged} onToggle={onToggleFlag} />}
       </div>
 
       {question.type === 'multiple_choice' && (
@@ -2531,10 +2594,10 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
             <label
               key={choice}
               style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 transition-colors ${
+              className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3.5 py-2 transition-colors ${
                 value === choice
                   ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-mist hover:border-brass/30'
+                  : 'border-line bg-panel text-paper-dim hover:border-brass/30'
               }`}
             >
               <input
@@ -2550,16 +2613,16 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
         </div>
       )}
 
-      {question.type === 'true_false_ng' && (
+      {(question.type === 'true_false_ng' || question.type === 'yes_no_ng') && (
         <div className="flex flex-wrap gap-2">
-          {TRUE_FALSE_NG_CHOICES.map((choice) => (
+          {(question.type === 'true_false_ng' ? TRUE_FALSE_NG_CHOICES : YES_NO_NG_CHOICES).map((choice) => (
             <label
               key={choice}
               style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 transition-colors ${
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-1.5 transition-colors ${
                 value === choice
                   ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-mist hover:border-brass/30'
+                  : 'border-line bg-panel text-paper-dim hover:border-brass/30'
               }`}
             >
               <input
@@ -2569,32 +2632,7 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
                 onChange={() => onChange(choice)}
                 className="accent-brass"
               />
-              {choice}
-            </label>
-          ))}
-        </div>
-      )}
-
-      {question.type === 'yes_no_ng' && (
-        <div className="flex flex-wrap gap-2">
-          {YES_NO_NG_CHOICES.map((choice) => (
-            <label
-              key={choice}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-1.5 transition-colors ${
-                value === choice
-                  ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-mist hover:border-brass/30'
-              }`}
-            >
-              <input
-                type="radio"
-                name={question.id}
-                checked={value === choice}
-                onChange={() => onChange(choice)}
-                className="accent-brass"
-              />
-              {choice}
+              {choice.toUpperCase()}
             </label>
           ))}
         </div>
@@ -2609,23 +2647,10 @@ export function QuestionBlock({ index, question, value, onChange, flagged = fals
           theme={theme}
         />
       )}
-
-      {question.type === 'matching' && (
-        <MatchingQuestion
-          question={question}
-          value={value}
-          onChange={onChange}
-          fontScale={fontScale}
-          theme={theme}
-          hideBank={hideMatchingBank}
-        />
-      )}
-
-      {/* short_answer's own input is now embedded inline in the prompt
-          paragraph above, right at the blank — see shortAnswerInput. */}
     </div>
   )
 }
+
 
 // choose MORE THAN ONE from a list. `value` is the canonical
 // comma-joined string (see canonicalizeMultiSelect above) — this
@@ -2672,162 +2697,234 @@ function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }
   )
 }
 
-// match a statement/heading/paragraph-ref/name to one item from a bank
-// of options — the same single-pick data shape as multiple_choice
-// (one options.choices bank, one correct_answer), but given the drag-
-// and-drop interaction Jasur specifically asked for. Dragging a chip
-// into the drop target (or just clicking a chip — kept as a fallback
-// for touch/mobile, where HTML5 drag-and-drop doesn't work) both set
-// the same single answer; dragging/clicking a different chip replaces
-// it, same as picking a different radio would.
-// `hideBank` — added 2026-09-28: when several `matching` questions in a
-// row share the exact same choice bank (a "matching headings"/"matching
-// information" group), MatchingQuestionGroup below renders that bank
-// ONCE above all of them and passes hideBank=true to every question's own
-// MatchingQuestion, instead of the bank being repeated, identically,
-// under each and every question — Jasur, verbatim, about the Listening
-// exam's matching questions: "the options are grouped and not repeated
-// under each question". A lone matching question with no shared-bank
-// neighbor (hideBank left false, the default) is completely unaffected —
-// still shows its own bank right below its own drop target, exactly as
-// before.
-function MatchingQuestion({ question, value, onChange, fontScale = 1, theme, hideBank = false }) {
-  const choices = question.options?.choices ?? []
-  const [dragOver, setDragOver] = useState(false)
-  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+// ------------------------------------------------------------------
+// MATCHING (drag-and-drop) — rewritten 2026-10-06 after Mock #1.
+//
+// A gap (DropGap) and an option bank (MatchingBank) per group, like the
+// real computer test:
+//   - the bank sits BESIDE the gaps (to the right) and stays pinned
+//     while the pane scrolls, so the last gaps of a long group (Listening
+//     Q15, Q28–30, Reading Q23–26 in Mock #1) can always be reached; on a
+//     narrow pane it is pinned at the top instead;
+//   - an option used in a gap disappears from the bank and comes back,
+//     in its original place, when the gap is emptied or given another
+//     option;
+//   - a filled gap can be dragged to another gap (move) or back to the
+//     bank (clear), and has a small × to clear it;
+//   - clicking an option (or tapping on a phone) puts it in the first
+//     empty gap of the group.
+// Values saved are still the full option text — grading is unchanged.
+// The drag itself lives in exam/choiceDrag.jsx.
+// ------------------------------------------------------------------
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragOver(false)
-    const choice = readChoiceDrop(e)
-    if (choice) onChange(choice)
-  }
+function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inline = false, wide = false }) {
+  const source = useChoiceDragSource()
+  const active = useActiveChoiceDrag()
+  const textStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const filledStyle = theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : undefined
 
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragOver(true)
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        style={{ ...optionTextStyle, ...(!dragOver && !value ? themedOptionStyle(theme, false) : {}) }}
-        className={`flex min-h-[2.75rem] items-center rounded-xl border-2 border-dashed px-3.5 py-2 transition-colors ${
-          dragOver
-            ? 'border-brass bg-brass/10 text-paper'
-            : value
-              ? 'border-brass/40 bg-brass/5 text-paper'
-              : 'border-line bg-panel text-mist'
-        }`}
-      >
-        {value || (hideBank ? 'Drag an option here' : 'Drag an option here, or tap one below')}
-      </div>
-
-      {/* A choice already sitting in the drop target above disappears from
-          this list instead of staying visible-but-highlighted — Jasur,
-          2026-09-28: "once the answer is dragged it should disappear from
-          the list." Dragging/tapping a different one still overwrites the
-          drop target as before. */}
-      {!hideBank && (
-        <div className="flex flex-wrap gap-2">
-          {choices.filter((choice) => choice !== value).map((choice) => (
-            <button
-              key={choice}
-              type="button"
-              draggable
-              onDragStart={(e) => startChoiceDrag(e, choice)}
-              onClick={() => onChange(choice)}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
-              className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
-            >
-              {choice}
-            </button>
-          ))}
-        </div>
+    <span
+      data-drop={`q:${questionId}`}
+      style={textStyle}
+      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.25rem] items-stretch rounded-md border-2 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/10 ${
+        value ? 'border-line' : active ? 'border-dashed border-brass/60' : 'border-dashed border-line'
+      }`}
+    >
+      {value ? (
+        <>
+          <span
+            {...source({ choice: value, from: questionId })}
+            style={filledStyle}
+            title="Drag to another gap, or back to the options to remove it"
+            className="flex flex-1 cursor-grab touch-none select-none items-center rounded-l-[4px] bg-panel-2 px-2.5 py-1 text-left leading-snug text-paper data-[dragging]:opacity-40"
+          >
+            {value}
+          </span>
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label={`Clear answer ${index}`}
+            title="Clear this answer"
+            className="focus-ring flex w-7 shrink-0 items-center justify-center rounded-r-[4px] text-mist hover:bg-panel-2 hover:text-paper"
+          >
+            ×
+          </button>
+        </>
+      ) : (
+        <span className="flex flex-1 items-center justify-center px-3 font-semibold text-mist">{index}</span>
       )}
-    </div>
+    </span>
   )
 }
 
-// The chip bank shared by a MatchingQuestionGroup — same drag chip
-// markup as MatchingQuestion's own (unhidden) bank above, just rendered
-// once for the whole group instead of once per question. Tapping a chip
-// (the touch/mobile fallback, since HTML5 drag-and-drop doesn't work
-// there) fills the first still-unanswered question in the group; drag-
-// and-drop instead targets whichever question's own drop zone it's
-// dropped on, so a chip can still be placed anywhere in the group
-// regardless of tap order.
-//
-// A chip already used by one of this group's questions is removed from
-// this list entirely rather than just dimmed — Jasur, 2026-09-28: "once
-// the answer is dragged it should disappear from the list." Dragging (or
-// tapping) a DIFFERENT chip onto an already-answered question still
-// overwrites it, which naturally returns the old chip to this list on
-// the next render, since `usedValues` is recomputed from live answers
-// every time, never a frozen snapshot.
-function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme }) {
+function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, layout = 'stack' }) {
+  const source = useChoiceDragSource()
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
   const remaining = choices.filter((choice) => !usedValues.includes(choice))
   return (
-    <div className="flex flex-wrap gap-2">
-      {remaining.length > 0 ? (
-        remaining.map((choice) => (
-          <button
-            key={choice}
-            type="button"
-            draggable
-            onDragStart={(e) => startChoiceDrag(e, choice)}
-            onClick={() => onPick(choice)}
-            style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
-            className="focus-ring cursor-grab rounded-full border border-line bg-panel px-3.5 py-1.5 text-mist transition-colors hover:border-brass/30 active:cursor-grabbing"
-          >
-            {choice}
-          </button>
-        ))
-      ) : (
-        <p className="text-xs text-mist">All options placed.</p>
-      )}
+    <div
+      data-drop="bank"
+      className="rounded-lg border border-line bg-panel p-3 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/5"
+      style={theme?.bg ? { backgroundColor: theme.bg, borderColor: theme.surfaceBorder } : undefined}
+    >
+      <p className="mb-2 text-xs text-mist" style={theme?.bg ? { color: theme.mutedText } : undefined}>
+        {hint || 'Drag an option into a gap, or click it to fill the next empty gap.'}
+      </p>
+      <div className={layout === 'wrap' ? 'flex flex-wrap gap-1.5' : 'flex flex-col gap-1.5'}>
+        {remaining.length > 0 ? (
+          remaining.map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              {...source({ choice, onClick: () => onPick(choice) })}
+              style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
+              className="focus-ring cursor-grab touch-none select-none rounded-md border border-line bg-panel px-3 py-1.5 text-left leading-snug text-paper transition-colors hover:border-brass/50 data-[dragging]:opacity-40"
+            >
+              {choice}
+            </button>
+          ))
+        ) : (
+          <p className="text-xs text-mist">All options used. Drag one back here to change it.</p>
+        )}
+      </div>
     </div>
   )
 }
 
-// A run of consecutive `matching` questions that share the exact same
-// choice bank — see MatchingQuestion's hideBank comment above for why
-// this exists. Each question keeps its own QuestionBlock (own number,
-// own prompt, own flag button) so nothing about navigation/flagging/
-// answered-count changes; only the repeated bank underneath every one of
-// them collapses into this single shared bank up top.
-function MatchingQuestionGroup({ questions, choices, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
+// A whole matching group: gaps on the left, bank on the right.
+function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
+  const { questions } = group
+  const choices = questions[0].options?.choices || []
   const usedValues = questions.map((q) => answers[q.id] ?? '').filter(Boolean)
+  const promptStyle = { fontSize: `${0.875 * fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
 
   return (
-    <div className="border-t border-line pt-4 first:border-0 first:pt-0 flex flex-col gap-4">
-      <MatchingBank
-        choices={choices}
-        usedValues={usedValues}
-        onPick={(choice) => {
-          const target = questions.find((q) => !(answers[q.id] ?? '').trim())
-          if (target) onChange(target.id, choice)
-        }}
-        fontScale={fontScale}
-        theme={theme}
-      />
+    <div className="@container">
+      <div className="grid items-start gap-4 @[560px]:grid-cols-[minmax(0,1fr)_minmax(170px,38%)]">
+        <div className="order-2 flex flex-col gap-3 @[560px]:order-1">
+          {questions.map((q) => {
+            const index = questionIndexById[q.id]
+            const text = group.prompts[q.id] ?? q.prompt
+            const blank = /_{2,}/.test(text)
+            const gap = (
+              <DropGap
+                questionId={q.id}
+                index={index}
+                value={answers[q.id] ?? ''}
+                onClear={() => onChange(q.id, '')}
+                fontScale={fontScale}
+                theme={theme}
+                inline={blank}
+              />
+            )
+            const parts = blank ? splitPromptBlank(text, index) : null
+            return (
+              <div key={q.id} id={`q-${q.id}`} className="scroll-mt-40">
+                {group.subheadings[q.id] && <p className="mb-1.5 mt-1 font-semibold text-paper" style={promptStyle}>{group.subheadings[q.id]}</p>}
+                <div className="flex items-start justify-between gap-2">
+                  {blank ? (
+                    <p className="leading-[2.4] text-paper" style={promptStyle}>
+                      {parts.before}
+                      {gap}
+                      {parts.after}
+                    </p>
+                  ) : (
+                    <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
+                      <p className="leading-relaxed text-paper" style={promptStyle}>
+                        <span className="mr-2 font-semibold">{index}</span>
+                        {text}
+                      </p>
+                      {gap}
+                    </div>
+                  )}
+                  <FlagButton flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div
+          className="sticky top-0 z-10 order-1 @[560px]:order-2"
+          style={{ backgroundColor: theme?.bg || 'var(--color-panel)' }}
+        >
+          <div className="max-h-[42vh] overflow-y-auto @[560px]:max-h-none @[560px]:overflow-visible">
+            <MatchingBank
+              choices={choices}
+              usedValues={usedValues}
+              onPick={(choice) => {
+                const target = questions.find((q) => !(answers[q.id] ?? '').trim())
+                if (target) onChange(target.id, choice)
+              }}
+              fontScale={fontScale}
+              theme={theme}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-      {questions.map((q) => (
-        <QuestionBlock
-          key={q.id}
-          index={questionIndexById[q.id]}
-          question={q}
-          value={answers[q.id] ?? ''}
-          onChange={(v) => onChange(q.id, v)}
-          flagged={flags.has(q.id)}
-          onToggleFlag={() => onToggleFlag(q.id)}
+// One IELTS question group: "Questions 11–15", the instruction once,
+// then the questions.
+function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
+  const headStyle = theme?.bg ? { color: theme.text } : undefined
+  const isMatching = group.questions[0].type === 'matching'
+  return (
+    <section className="flex flex-col gap-3" aria-label={`Questions ${group.from}–${group.to}`}>
+      <div style={headStyle}>
+        <p className="font-semibold text-paper" style={{ fontSize: `${0.95 * fontScale}rem`, ...(headStyle || {}) }}>
+          Questions {group.from}
+          {group.to !== group.from ? `–${group.to}` : ''}
+        </p>
+        {group.instruction && (
+          <p className="mt-1 text-paper-dim" style={{ fontSize: `${0.875 * fontScale}rem`, ...(headStyle || {}) }}>
+            {group.instruction}
+          </p>
+        )}
+        {group.title && (
+          <p className="mt-3 font-semibold text-paper" style={{ fontSize: `${0.95 * fontScale}rem`, ...(headStyle || {}) }}>
+            {group.title}
+          </p>
+        )}
+      </div>
+
+      {isMatching ? (
+        <MatchingQuestionGroup
+          group={group}
+          answers={answers}
+          onChange={onChange}
+          flags={flags}
+          onToggleFlag={onToggleFlag}
+          questionIndexById={questionIndexById}
           fontScale={fontScale}
           theme={theme}
-          hideMatchingBank
         />
-      ))}
-    </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {group.questions.map((q) => (
+            <div key={q.id}>
+              {group.subheadings[q.id] && (
+                <p className="mb-1 mt-1 font-semibold text-paper" style={{ fontSize: `${0.875 * fontScale}rem`, ...(headStyle || {}) }}>
+                  {group.subheadings[q.id]}
+                </p>
+              )}
+              <QuestionBlock
+                index={questionIndexById[q.id]}
+                question={q}
+                prompt={group.prompts[q.id]}
+                value={answers[q.id] ?? ''}
+                onChange={(v) => onChange(q.id, v)}
+                flagged={flags.has(q.id)}
+                onToggleFlag={() => onToggleFlag(q.id)}
+                fontScale={fontScale}
+                theme={theme}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

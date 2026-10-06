@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { cleanPrompt } from './exam/questionGroups'
 
 /*
  * Frozen real-interface review of a graded attempt — one of the ~15
@@ -147,7 +148,7 @@ export default function FrozenAttemptReview({ attemptId, examTitle, onClose }) {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-mist font-mono mb-1">Question {runningNumber}</p>
-                          <p className="text-sm text-paper">{q.prompt}</p>
+                          <p className="text-sm text-paper">{cleanPrompt(q.prompt)}</p>
 
                           <p className="mt-2 text-sm">
                             <span className="text-paper-dim">Your answer: </span>

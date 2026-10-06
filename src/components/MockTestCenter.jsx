@@ -14,6 +14,7 @@ import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
 import FrozenAttemptReview from './FrozenAttemptReview'
 import { readSession, useSessionState, writeSession } from '../lib/sessionState'
+import { cleanPrompt } from './exam/questionGroups'
 
 /*
  * ================================================================
@@ -694,7 +695,7 @@ export default function MockTestCenter({ onExit }) {
                                           {r.section_title}
                                         </p>
                                       )}
-                                      <p className="text-paper-dim">{r.prompt}</p>
+                                      <p className="text-paper-dim">{cleanPrompt(r.prompt)}</p>
                                       <p className="mt-1">
                                         <span className="text-coral">{r.student_answer || '(no answer)'}</span>
                                         <span className="text-mist mx-1.5">→</span>

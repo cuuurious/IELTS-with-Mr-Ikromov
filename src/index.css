@@ -488,35 +488,22 @@ input[type="radio"] {
   border: 1px solid var(--color-line);
   border-radius: 20px;
 
-  overflow: hidden;
-
   box-shadow: none;
+}
+
+/* The card's overflow lives in @layer components (2026-10-06) so a
+   Tailwind overflow utility on a card wins. Unlayered, `overflow: hidden`
+   beat `overflow-y-auto`, so the Listening exam pane (a .ticket) never
+   scrolled with the mouse wheel — one of the Mock #1 complaints. */
+@layer components {
+  .ticket {
+    overflow: hidden;
+  }
 }
 
 .ticket::before,
 .ticket::after {
   content: none;
-
-  position: absolute;
-  z-index: 2;
-
-  width: 12px;
-  height: 12px;
-
-  top: 50%;
-
-  background: var(--color-ink);
-  border-radius: 9999px;
-
-  transform: translateY(-50%);
-}
-
-.ticket::before {
-  left: -7px;
-}
-
-.ticket::after {
-  right: -7px;
 }
 
 /* =========================================================
@@ -1941,4 +1928,42 @@ html:not([data-theme='light']) .progress-homework-actions {
 [class*="text-[10px]"][class*="tracking-"],
 [class*="text-[10.5px]"][class*="tracking-"] {
   font-size: 12px !important;
+}
+
+/* =========================================================
+   EXAM — drag engine + question highlighter (2026-10-06)
+   See src/components/exam/choiceDrag.jsx and QuestionHighlighter.jsx.
+   ========================================================= */
+
+/* While an answer option is being dragged: no text selection anywhere,
+   grabbing cursor everywhere. */
+html.choice-dragging,
+html.choice-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: grabbing !important;
+}
+
+/* The option that follows the pointer. */
+.choice-drag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10050;
+  pointer-events: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #1f2340;
+  background: #ffffff;
+  color: #1f2340;
+  font-size: 14px;
+  line-height: 1.35;
+  box-shadow: 0 10px 24px rgba(31, 35, 64, 0.22);
+  white-space: normal;
+}
+
+/* Text highlighted in the questions (same yellow as the passage tool). */
+::highlight(exam-hl) {
+  background-color: #ffe14d;
+  color: #1a1a1a;
 }
