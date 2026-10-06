@@ -584,7 +584,7 @@ export default function MockTestCenter({ onExit }) {
       </nav>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className={`${section === 'take-test' ? 'max-w-6xl' : 'max-w-5xl'} mx-auto px-4 sm:px-6 py-6 space-y-6`}>
 
           {loading && <p className="text-sm text-mist">Loading…</p>}
 

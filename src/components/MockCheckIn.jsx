@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import FullMockRunner from './FullMockRunner'
+import MockLibrary from './MockLibrary'
 
 /*
  * ================================================================
@@ -92,7 +93,11 @@ export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange
   const reloadAvailableMocks = async () => {
     const [{ data: setRows, error: setsError }, { data: requestRows, error: requestsError }, { data: codeRows, error: codesError }] =
       await Promise.all([
-        supabase.from('full_mock_sets').select('id, title').eq('is_active', true).order('title', { ascending: true }),
+        supabase
+          .from('full_mock_sets')
+          .select('id, title, listening_exam_id, reading_exam_id, writing_exam_id, created_at')
+          .eq('is_active', true)
+          .order('title', { ascending: true }),
         supabase
           .from('mock_access_requests')
           .select('*')
@@ -337,7 +342,10 @@ export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange
   const STAGE_LABELS = { listening: 'Listening', reading: 'Reading', writing: 'Writing' }
 
   return (
-    <div className="mx-auto w-full max-w-md flex flex-col gap-6">
+    // Check-in on the left, the mock library on the right (2026-10-06);
+    // stacked on narrow screens.
+    <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+    <div className="flex flex-col gap-6 lg:sticky lg:top-6">
       {unfinished.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 shadow-sm">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -404,6 +412,7 @@ export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange
           </span>
           <input
             type="text"
+            id="mock-access-code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. K3F-9QT"
@@ -428,93 +437,30 @@ export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange
       </form>
 
         <p className="mt-6 text-[11px] text-slate-400">
-          Don't have a code yet? Request one for any mock below and your teacher will send it once
+          Don't have a code yet? Request one for any mock in the library and your teacher will send it once
           they approve.
         </p>
       </div>
 
-      <AvailableMocks
+    </div>
+
+      <MockLibrary
+        selfId={selfId}
         fullMockSets={fullMockSets}
         loading={availableLoading}
         statusForSet={statusForSet}
+        unfinishedSetIds={unfinished.map((u) => u.set.id)}
         requestingSetId={requestingSetId}
         requestError={requestError}
         onRequest={requestAccess}
-        onUseCode={(code) => setCode(code)}
+        onUseCode={(value) => {
+          setCode(value)
+          const input = document.getElementById('mock-access-code')
+          input?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          input?.focus({ preventScroll: true })
+        }}
+        onContinue={(setId) => continueSitting(unfinished.find((u) => u.set.id === setId)?.set)}
       />
-    </div>
-  )
-}
-
-/*
- * Every published Full Mock, with whatever this student's own state is
- * for it — request it, wait, see why it wasn't approved, or (once
- * approved) jump straight to using the code above instead of having to
- * go dig it out of Telegram.
- */
-function AvailableMocks({ fullMockSets, loading, statusForSet, requestingSetId, requestError, onRequest, onUseCode }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white text-slate-900 p-6 sm:p-8 shadow-sm">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Available mocks</h3>
-
-      {requestError && <p className="mt-2 text-sm text-red-600">{requestError}</p>}
-
-      {loading ? (
-        <p className="mt-3 text-sm text-slate-400">Loading…</p>
-      ) : fullMockSets.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-400">Nothing published yet — check back later.</p>
-      ) : (
-        <div className="mt-3 flex flex-col gap-2.5">
-          {fullMockSets.map((set) => {
-            const status = statusForSet(set.id)
-            return (
-              <div
-                key={set.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3"
-              >
-                <p className="font-medium text-slate-900 truncate">{set.title}</p>
-
-                {status.kind === 'has-code' ? (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-sm font-semibold tracking-wide text-slate-900">
-                      {status.code.code}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onUseCode(status.code.code)}
-                      className="text-xs font-semibold text-slate-900 underline hover:no-underline"
-                    >
-                      Use this code above
-                    </button>
-                  </div>
-                ) : status.kind === 'pending' ? (
-                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide rounded-full border border-amber-300 bg-amber-50 text-amber-700 px-2.5 py-1">
-                    Requested — waiting on your teacher
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-2 shrink-0">
-                    {status.kind === 'rejected' && (
-                      <span className="text-xs text-slate-400">Not approved last time —</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => onRequest(set.id)}
-                      disabled={requestingSetId === set.id}
-                      className="text-xs font-semibold rounded-full border border-slate-900 text-slate-900 px-3 py-1.5 hover:bg-slate-900 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {requestingSetId === set.id
-                        ? 'Requesting…'
-                        : status.kind === 'rejected'
-                        ? 'Request again'
-                        : 'Request access'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
     </div>
   )
 }

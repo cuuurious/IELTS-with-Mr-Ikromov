@@ -10,6 +10,7 @@ import {
 } from '../../lib/skills'
 import SkillArt, { SkillIcon, VocabArt } from '../../components/SkillArt'
 import TargetBandModal from '../../components/TargetBandModal'
+import { LearningCurve, PracticeTime, WordOfTheDay, useStudyActivity } from './HomeExtras'
 
 /*
  * STUDENT HOME — "Study room" design (approved 2026-10-05).
@@ -195,6 +196,7 @@ export default function StudentHome({
   const [targetOpen, setTargetOpen] = useState(false)
   const words = useWordsDue(profile?.id)
   const feedback = useLatestFeedback(profile?.id)
+  const activity = useStudyActivity(profile?.id)
 
   const now = useMemo(() => new Date(), [])
   const group = groups.find((g) => g.id === activeGroup)
@@ -482,6 +484,10 @@ export default function StudentHome({
           See your place
         </button>
       </Card>
+      {/* LEARNING CURVE · WHEN YOU STUDY · WORD OF THE DAY (2026-10-06) */}
+      <LearningCurve activity={activity} onNavigate={onNavigate} className="lg:col-span-5" />
+      <PracticeTime activity={activity} className="lg:col-span-3" />
+      <WordOfTheDay onNavigate={onNavigate} className="lg:col-span-4" />
       {targetOpen && <TargetBandModal onClose={() => setTargetOpen(false)} />}
     </div>
   )
