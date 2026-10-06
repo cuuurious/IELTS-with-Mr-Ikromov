@@ -4,6 +4,7 @@ import LoadingScreen from '../../components/LoadingScreen'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import Layout, {
+  IconHome,
   IconGroups,
   IconStudents,
   IconWordlist,
@@ -17,7 +18,8 @@ import Layout, {
   IconHelp,
 } from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
-import { useSessionState } from '../../lib/sessionState'
+import TeacherHome from './TeacherHome'
+import { useSessionState, writeSession } from '../../lib/sessionState'
 
 const TeacherStudents = lazyWithReload(() => import('./TeacherStudents'))
 const PendingApprovals = lazyWithReload(() => import('./PendingApprovals'))
@@ -36,7 +38,7 @@ export default function TeacherDashboard() {
   const { profile } = useAuth()
 
   // Remembered across a refresh (see lib/sessionState.js).
-  const [tab, setTab] = useSessionState(`ielts:${profile?.id}:teacher:tab`, 'groups')
+  const [tab, setTab] = useSessionState(`ielts:${profile?.id}:teacher:tab`, 'home')
   const [pendingCount, setPendingCount] = useState(0)
   const [mockCenterOpen, setMockCenterOpen] = useSessionState(`ielts:${profile?.id}:teacher:mockCenterOpen`, false)
 
@@ -225,6 +227,8 @@ export default function TeacherDashboard() {
     {
       title: 'Teaching',
       items: [
+        // Overview of every group (2026-10-06) — the teacher's Home.
+        { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
         { key: 'groups', label: 'Groups & Homework', icon: IconGroups },
         { key: 'students', label: 'Students', icon: IconStudents },
         { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
@@ -282,6 +286,15 @@ export default function TeacherDashboard() {
     },
   ]
 
+  // From Home straight into one group's homework screen: Groups &
+  // Homework restores the open group from sessionStorage when it mounts
+  // (see GroupWorkspace's useSessionState keys), so set those first.
+  const openGroup = (groupId) => {
+    writeSession(`ielts:${profile.id}:groups:activeGroup`, groupId)
+    writeSession(`ielts:${profile.id}:groups:screen`, 'detail')
+    handleTabChange('groups')
+  }
+
   const handleTabChange = (nextTab) => {
     // Mock Center is its own full-screen portal (see TeacherMockCenter.jsx)
     // — nothing about groups, leaderboards or homework belongs in it, per
@@ -325,6 +338,16 @@ export default function TeacherDashboard() {
       {/* Every tab except Groups & Homework is its own small download,
           fetched the first time it's opened (2026-09-30 speed-up). */}
       <Suspense fallback={<TabLoading />}>
+      {tab === 'home' && (
+        <TeacherHome
+          profile={profile}
+          pendingCount={pendingCount}
+          onNavigate={handleTabChange}
+          onOpenGroup={openGroup}
+          onOpenMockCenter={() => setMockCenterOpen(true)}
+        />
+      )}
+
       {tab === 'groups' && (
         <GroupWorkspace
           teacherId={profile.id}

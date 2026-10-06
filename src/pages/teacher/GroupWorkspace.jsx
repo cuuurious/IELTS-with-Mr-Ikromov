@@ -7,6 +7,8 @@ import ConfirmModal from '../../components/ConfirmModal'
 import { getSubmissionStatus } from '../../components/StampBadge'
 import { notifyGroup, notifyUsers } from '../../lib/notify'
 import { useSessionState } from '../../lib/sessionState'
+import { skillOfHomework, formatDue } from '../../lib/skills'
+import { SkillIcon } from '../../components/SkillArt'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -117,14 +119,14 @@ export default function GroupWorkspace({ teacherId }) {
         .eq('profiles.status', 'approved'),
       supabase
         .from('homeworks')
-        .select('group_id')
+        .select('id, group_id, title, description, homework_type, enable_speaking, due_date, created_at')
         .in('group_id', groupIds),
     ])
 
     const counts = {}
 
     groupIds.forEach((id) => {
-      counts[id] = { students: 0, tasks: 0 }
+      counts[id] = { students: 0, tasks: 0, latest: null, latestDone: 0 }
     })
 
     ;(members || []).forEach((member) => {
@@ -134,12 +136,37 @@ export default function GroupWorkspace({ teacherId }) {
     })
 
     ;(hw || []).forEach((homework) => {
-      if (counts[homework.group_id]) {
-        counts[homework.group_id].tasks += 1
+      const c = counts[homework.group_id]
+      if (c) {
+        c.tasks += 1
+        // Newest homework per group, shown on its tile (2026-10-06).
+        if (!c.latest || new Date(homework.created_at) > new Date(c.latest.created_at)) c.latest = homework
       }
     })
 
     setGroupCounts(counts)
+
+    // How many have handed in each group's newest homework.
+    const latestIds = Object.values(counts).map((c) => c.latest?.id).filter(Boolean)
+    if (latestIds.length) {
+      const { data: done } = await supabase
+        .from('submissions')
+        .select('homework_id')
+        .in('homework_id', latestIds)
+        .eq('status', 'done')
+      const doneBy = {}
+      ;(done || []).forEach((row) => {
+        doneBy[row.homework_id] = (doneBy[row.homework_id] || 0) + 1
+      })
+      setGroupCounts((prev) => {
+        const next = { ...prev }
+        Object.keys(next).forEach((id) => {
+          const latest = next[id].latest
+          if (latest) next[id] = { ...next[id], latestDone: doneBy[latest.id] || 0 }
+        })
+        return next
+      })
+    }
   }
 
   useEffect(() => {
@@ -161,10 +188,13 @@ export default function GroupWorkspace({ teacherId }) {
     if (activeGroup) {
       setGroupCounts((prev) => ({
         ...prev,
-        [activeGroup]: {
-          students: roster.length,
-          tasks: homeworks.length,
-        },
+        [activeGroup]: (() => {
+          const latest = [...homeworks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null
+          const latestDone = latest
+            ? roster.filter((st) => submissions[`${latest.id}_${st.id}`]?.status === 'done').length
+            : 0
+          return { ...prev[activeGroup], students: roster.length, tasks: homeworks.length, latest, latestDone }
+        })(),
       }))
     }
 
@@ -1187,6 +1217,33 @@ export default function GroupWorkspace({ teacherId }) {
                       * card's own accent color at rest instead ties
                       * the "Open" action back to the badge above it.
                       */}
+                    {/* Newest homework + how many handed it in (2026-10-06,
+                        so a tile isn't just a number and two counts). */}
+                    {counts.latest && (() => {
+                      const skill = skillOfHomework(counts.latest)
+                      const pct = counts.students ? Math.min(100, Math.round((counts.latestDone / counts.students) * 100)) : 0
+                      return (
+                        <div className="relative mt-5 rounded-2xl bg-panel-2 px-3.5 py-3">
+                          <div className="flex items-center gap-2 text-[13px] text-mist">
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${skill.tint} ${skill.key === 'general' ? 'text-paper' : skill.text}`}>
+                              <SkillIcon skill={skill.key} className="h-3.5 w-3.5" />
+                            </span>
+                            <span>Latest</span>
+                            <span className="ml-auto">{counts.latest.due_date ? `Due ${formatDue(counts.latest.due_date)}` : 'No deadline'}</span>
+                          </div>
+                          <div className="mt-1.5 truncate text-[15px] font-medium text-paper">{counts.latest.title}</div>
+                          <div className="mt-2 flex items-center gap-2.5">
+                            <div className="h-1.5 flex-1 rounded bg-panel">
+                              <div className={`h-full rounded ${skill.key === 'general' ? 'bg-paper' : skill.bg}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-[13px] font-semibold tabular-nums text-paper">
+                              {counts.latestDone}/{counts.students}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
                     <div className={`relative mt-5 flex items-center gap-1.5 text-sm font-semibold transition ${accent.text}`}>
                       Open
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition group-hover:translate-x-0.5">

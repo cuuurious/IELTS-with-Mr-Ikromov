@@ -321,7 +321,7 @@ export default function Layout({
   })
 
   const navButtonClass = (active) =>
-    `focus-ring inline-flex items-center gap-2 h-10 px-2.5 2xl:px-3 rounded-[11px] text-sm whitespace-nowrap transition-colors ${
+    `focus-ring inline-flex items-center gap-2 h-10 px-2 min-[1400px]:px-2.5 2xl:px-3 rounded-[11px] text-sm whitespace-nowrap transition-colors ${
       active ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper hover:bg-panel-2'
     }`
 
@@ -330,7 +330,7 @@ export default function Layout({
   return (
     <div className="min-h-screen flex flex-col text-paper bg-ink">
       <header ref={navRef} className="sticky top-0 z-40 border-b border-line bg-panel">
-        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 xl:gap-6 xl:px-8">
+        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 xl:gap-4 min-[1400px]:gap-6 xl:px-8">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
