@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
 import { countWords } from '../../lib/writingMock'
+import Icon from '../../components/Icon'
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 4
@@ -237,7 +238,7 @@ export default function SubmissionPanel({
                       className="flex items-center gap-3 rounded-2xl border border-line bg-panel-2 px-4 py-3 text-sm text-paper transition hover:border-accent/40 hover:bg-accent/5"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-base">
-                        📎
+                        <Icon name="paperclip" className="h-4 w-4" />
                       </span>
 
                       <span className="min-w-0 truncate">

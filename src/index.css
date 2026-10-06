@@ -1508,176 +1508,9 @@ html:not([data-theme='light']) textarea::placeholder {
   color: var(--color-amber);
 }
 
-/* =========================================================
-   LIGHT PROGRESS TABLE
-   ========================================================= */
-
-html[data-theme='light']
-.progress-table-shell {
-  background: linear-gradient(to bottom, #f1efe9, #fffdfa);
-  border-color: #dedbd3;
-
-  box-shadow:
-    0 20px 50px -20px rgba(20, 20, 25, .18),
-    0 2px 6px rgba(20, 20, 25, .06);
-}
-
-html[data-theme='light']
-.progress-table thead th {
-  background: #f1efe9;
-  border-bottom-color: #dedbd3;
-}
-
-html[data-theme='light']
-.progress-student-cell {
-  background: #fffdfa;
-}
-
-html[data-theme='light']
-.progress-student-row:hover
-.progress-student-cell {
-  background: #faf9f5;
-}
-
-html[data-theme='light']
-.progress-table tbody td {
-  border-bottom-color: #e7e4dd;
-}
-
-html[data-theme='light']
-.progress-student-name,
-html[data-theme='light']
-.progress-homework-title {
-  color: #24232a !important;
-}
-
-html[data-theme='light']
-.progress-student-username,
-html[data-theme='light']
-.progress-due-date {
-  color: #85838c !important;
-}
-
-html[data-theme='light']
-.progress-avatar {
-  background:
-    linear-gradient(
-      135deg,
-      #eeeaff,
-      #e9f6f4
-    );
-
-  border-color: #dad5f5;
-  color: #7565df;
-}
-
-/*
- * The "STUDENT" column label and the edit/reset/delete icon
- * buttons were relying only on var(--color-paper)/var(--color-mist)
- * with no explicit per-theme fallback like everything else in this
- * table has — that gap is what was going invisible in dark mode.
- */
-html[data-theme='light']
-.progress-student-header {
-  color: #24232a !important;
-}
-
-html[data-theme='light']
-.progress-action {
-  background: rgba(36, 35, 42, .06) !important;
-  color: #85838c !important;
-}
-
-/* =========================================================
-   DARK PROGRESS TABLE
-   ========================================================= */
-
-html[data-theme='dark']
-.progress-table-shell,
-html:not([data-theme='light'])
-.progress-table-shell {
-  background: linear-gradient(to bottom, #2d2d33, #26262b);
-  border-color: #3b3b43;
-}
-
-html[data-theme='dark']
-.progress-table thead th,
-html:not([data-theme='light'])
-.progress-table thead th {
-  background: #2d2d33;
-  border-bottom-color: #3b3b43;
-}
-
-html[data-theme='dark']
-.progress-student-cell,
-html:not([data-theme='light'])
-.progress-student-cell {
-  background: #26262b;
-}
-
-html[data-theme='dark']
-.progress-student-row:hover
-.progress-student-cell,
-html:not([data-theme='light'])
-.progress-student-row:hover
-.progress-student-cell {
-  background: #2d2d33;
-}
-
-html[data-theme='dark']
-.progress-student-name,
-html[data-theme='dark']
-.progress-homework-title,
-html:not([data-theme='light'])
-.progress-student-name,
-html:not([data-theme='light'])
-.progress-homework-title {
-  color: #f3f1eb !important;
-}
-
-html[data-theme='dark']
-.progress-student-username,
-html[data-theme='dark']
-.progress-due-date,
-html:not([data-theme='light'])
-.progress-student-username,
-html:not([data-theme='light'])
-.progress-due-date {
-  color: #9b99a0 !important;
-}
-
-html[data-theme='dark']
-.progress-student-header,
-html:not([data-theme='light'])
-.progress-student-header {
-  color: #f3f1eb !important;
-}
-
-html[data-theme='dark']
-.progress-action,
-html:not([data-theme='light'])
-.progress-action {
-  background: rgba(243, 241, 235, .07) !important;
-  color: #9b99a0 !important;
-}
-
-/*
- * Once a deadline has actually passed, the date itself is the
- * fastest signal a teacher can scan for — no need to open the
- * column or count red pills to notice it's overdue. Placed after
- * both theme blocks above (rather than back with the base
- * .progress-due-date rule) on purpose: this and their color rules
- * are tied on specificity and both use !important, so with equal
- * specificity the LATER rule in the file wins — this has to come
- * after them to actually take effect in either theme.
- */
-.progress-due-date-overdue,
-html[data-theme='light'] .progress-due-date-overdue,
-html[data-theme='dark'] .progress-due-date-overdue,
-html:not([data-theme='light']) .progress-due-date-overdue {
-  color: var(--color-coral) !important;
-  font-weight: 700;
-}
+/* Light/dark progress-table overrides with hard-coded colours were
+   removed 2026-10-06 — the table uses the theme tokens now (see
+   "PROGRESS TABLE — Study room restyle" at the end of this file). */
 
 /* =========================================================
    ANIMATION
@@ -1944,6 +1777,14 @@ html.choice-dragging * {
   cursor: grabbing !important;
 }
 
+/* Resizing the Reading split. */
+html.split-dragging,
+html.split-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: col-resize !important;
+}
+
 /* The option that follows the pointer. */
 .choice-drag-ghost {
   position: fixed;
@@ -1966,4 +1807,180 @@ html.choice-dragging * {
 ::highlight(exam-hl) {
   background-color: #ffe14d;
   color: #1a1a1a;
+}
+
+/* =========================================================
+   WORD PRACTICE — flashcards + test animations (2026-10-06)
+   See src/pages/student/wordPractice.jsx.
+   ========================================================= */
+@keyframes wp-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wp-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wp-flip {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(0.02); }
+  100% { transform: scaleX(1); }
+}
+@keyframes wp-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes wp-press {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+@keyframes wp-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes wp-cheer {
+  0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+  15% { opacity: 1; transform: translateY(0) scale(1.05); }
+  30% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes wp-ring {
+  from { stroke-dashoffset: var(--ring-from); }
+}
+@keyframes wp-confetti {
+  0% { transform: translate3d(0, 0, 0) rotate(var(--rot)); opacity: 1; }
+  100% { transform: translate3d(var(--drift), 105vh, 0) rotate(calc(var(--rot) + 540deg)); opacity: 0.9; }
+}
+.wp-pop { animation: wp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.wp-card-in { animation: wp-card-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.wp-flip { animation: wp-flip 0.34s ease-in-out; }
+.wp-shake { animation: wp-shake 0.4s ease-in-out; }
+.wp-press { animation: wp-press 0.25s ease-out; }
+.wp-bump { animation: wp-bump 0.35s ease-out; }
+.wp-cheer { animation: wp-cheer 1.4s ease-out both; }
+.wp-ring { animation: wp-ring 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.wp-confetti { animation-name: wp-confetti; animation-timing-function: cubic-bezier(0.25, 0.6, 0.4, 1); animation-fill-mode: both; }
+@media (prefers-reduced-motion: reduce) {
+  .wp-pop, .wp-card-in, .wp-flip, .wp-shake, .wp-press, .wp-bump, .wp-cheer, .wp-ring, .wp-confetti { animation: none !important; }
+}
+
+/* =========================================================
+   PROGRESS TABLE — Study room restyle (2026-10-06)
+   Calmer table: white card, sentence-case status chips with a small
+   mark, and a hand-in bar under every homework column in that
+   homework's skill colour.
+   ========================================================= */
+.progress-table-shell {
+  background: var(--color-panel);
+  box-shadow: 0 10px 30px -18px rgba(31, 35, 64, 0.28);
+}
+.progress-table thead th {
+  height: auto;
+  padding: 14px 10px 12px;
+  background: var(--color-panel);
+}
+.progress-student-header {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-mist);
+}
+.progress-due-date {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-panel-2);
+  font-size: 10.5px;
+}
+.progress-due-date-overdue {
+  background: var(--color-urgent-tint);
+  color: var(--color-urgent);
+}
+.progress-handin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  max-width: 118px;
+  --hand: var(--color-paper);
+}
+.progress-handin-listening { --hand: var(--color-listening); }
+.progress-handin-reading { --hand: var(--color-reading); }
+.progress-handin-writing { --hand: var(--color-writing); }
+.progress-handin-speaking { --hand: var(--color-speaking); }
+.progress-handin-vocab { --hand: var(--color-vocab); }
+.progress-handin-bar {
+  position: relative;
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-panel-2);
+}
+.progress-handin-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--hand);
+  transition: width .6s cubic-bezier(.22, 1, .36, 1);
+}
+.progress-handin-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-paper-dim);
+  font-variant-numeric: tabular-nums;
+}
+.progress-table tbody td {
+  height: 52px;
+}
+.progress-student-row:hover {
+  background: var(--color-panel-2);
+}
+.progress-status {
+  gap: 5px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  border-width: 0 !important;
+}
+.progress-status::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: var(--mark) center / contain no-repeat;
+  mask: var(--mark) center / contain no-repeat;
+}
+.progress-status-done {
+  background: var(--color-reading-tint);
+  color: var(--color-reading);
+  --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E");
+}
+.progress-status-late {
+  background: var(--color-vocab-tint);
+  color: var(--color-vocab);
+  --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");
+}
+.progress-status-incomplete {
+  background: var(--color-urgent-tint);
+  color: var(--color-urgent);
+  --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E");
+}
+.progress-status-pending {
+  background: transparent;
+  color: var(--color-mist);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  --mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-dasharray='3 3'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3C/svg%3E");
 }

@@ -8,6 +8,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import { formatTargetBand } from '../../lib/targetBands'
 import { downloadSpeakingSlotIcs } from '../../lib/calendarEvent'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
+import Icon from '../../components/Icon'
 
 /*
  * ================================================================
@@ -394,7 +395,7 @@ export default function SpeakingExaminerDashboard() {
                     : 'border-line bg-panel-2 text-mist'
                 }`}
               >
-                {isOverloaded ? '⚖ ' : ''}
+                {isOverloaded ? <><Icon name="scale" className="h-3.5 w-3.5" /> </> : ''}
                 Your workload this week: <strong className="text-paper">{myWorkload.this_week_count}</strong>{' '}
                 · Team average: <strong className="text-paper">{teamAverageThisWeek.toFixed(1)}</strong>
                 {isOverloaded && ' — you\'re carrying noticeably more than others right now.'}
@@ -629,7 +630,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
                 className="focus-ring text-[11px] font-semibold rounded-full border border-cyan/30 bg-cyan/10 text-cyan px-2.5 py-1 hover:bg-cyan/20 transition-colors"
                 title="Download a calendar file for this slot"
               >
-                📅 Calendar
+                <Icon name="calendar" className="h-3 w-3" /> Calendar
               </button>
               <button
                 type="button"
@@ -713,7 +714,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
           rel="noopener noreferrer"
           className="text-xs text-brass hover:text-brass-dim inline-block truncate max-w-xs"
         >
-          🎙 Session recording
+          <Icon name="mic" className="h-3.5 w-3.5" /> Session recording
         </a>
       )}
     </div>
@@ -853,7 +854,7 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
 
         {workloadNote && (
           <div className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-amber">
-            ⚖ {workloadNote}
+            <Icon name="scale" className="h-3.5 w-3.5" /> {workloadNote}
           </div>
         )}
 

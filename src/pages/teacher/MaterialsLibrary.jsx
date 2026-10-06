@@ -13,6 +13,7 @@ import {
   formatBytes,
   uploadMaterial,
 } from '../../lib/materials'
+import Icon from '../../components/Icon'
 
 const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME
 
@@ -659,7 +660,7 @@ export default function MaterialsLibrary() {
                           formatBytes(m.size_bytes),
                           new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
                           m.source === 'telegram' ? 'from Telegram' : null,
-                          (search.trim() || currentFolder === ALL) && m.folder_id ? `📁 ${folderPath(m.folder_id, foldersById)}` : null,
+                          (search.trim() || currentFolder === ALL) && m.folder_id ? `${folderPath(m.folder_id, foldersById)}` : null,
                           usage[m.id] ? `used in ${usage[m.id]} homework` : null,
                         ]
                           .filter(Boolean)
@@ -702,7 +703,7 @@ function FolderRow({ label, count, active, onClick, depth = 0, onRename, onDelet
     >
       <button type="button" onClick={onClick} className="focus-ring flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-sm">
         <span className={active ? 'text-brass' : 'text-mist'} aria-hidden>
-          {onDelete ? '📁' : '🗂'}
+          {onDelete ? <Icon name="folder" className="h-4 w-4" /> : <Icon name="file" className="h-4 w-4" />}
         </span>
         <span className={`truncate ${active ? 'font-medium text-paper' : 'text-paper/90'}`}>{label}</span>
         <span className="ml-auto text-[11px] text-mist">{count}</span>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabaseClient'
+import Icon from './Icon'
 
 /*
  * Most students register with a username only — there's no real
@@ -161,7 +162,7 @@ export default function ResetStudentPasswordModal({
                 }
                 className="focus-ring shrink-0 rounded-md border border-line px-3 py-2 text-sm text-mist transition hover:border-brass hover:text-brass"
               >
-                🎲 New
+                <Icon name="dice" className="h-4 w-4" /> New
               </button>
             </div>
 
@@ -195,7 +196,7 @@ export default function ResetStudentPasswordModal({
           <div className="flex flex-col gap-3">
             <div>
               <div className="font-display text-lg text-paper">
-                Password reset ✅
+                Password reset <Icon name="checkCircle" className="h-5 w-5 text-emerald-500" />
               </div>
               <p className="mt-1 text-sm text-paper-dim">
                 Share this new password with{' '}

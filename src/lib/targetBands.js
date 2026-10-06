@@ -3,11 +3,11 @@
 // and this app only accepts 7.0 and up per Mr Ikromov's own rule
 // (anything below isn't a realistic target for this class).
 export const TARGET_BANDS = [
-  { value: 7, label: 'Solid Start', emoji: '🎯' },
-  { value: 7.5, label: 'Strong Push', emoji: '💪' },
-  { value: 8, label: 'High Achiever', emoji: '🚀' },
-  { value: 8.5, label: 'Elite Level', emoji: '🔥' },
-  { value: 9, label: 'Perfect Score', emoji: '👑' },
+  { value: 7, label: 'Solid Start' },
+  { value: 7.5, label: 'Strong Push' },
+  { value: 8, label: 'High Achiever' },
+  { value: 8.5, label: 'Elite Level' },
+  { value: 9, label: 'Perfect Score' },
 ]
 
 export const DEFAULT_TARGET_BAND = 7.5

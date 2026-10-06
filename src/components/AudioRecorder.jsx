@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Icon from './Icon'
 
 export default function AudioRecorder({
   label,
@@ -654,7 +655,7 @@ export default function AudioRecorder({
             disabled={uploading}
             className="focus-ring px-3 py-2 rounded-md bg-brass text-onbrass font-medium disabled:opacity-40"
           >
-            🎙 Start recording
+            <Icon name="mic" className="h-4 w-4" /> Start recording
           </button>
         )}
 
@@ -796,7 +797,7 @@ export default function AudioRecorder({
             }
             className="focus-ring px-3 py-2 rounded-md border border-line text-mist hover:border-brass hover:text-brass text-sm disabled:opacity-40"
           >
-            📎 Upload audio file
+            <Icon name="paperclip" className="h-4 w-4" /> Upload audio file
           </button>
         </>
       )}
@@ -809,7 +810,7 @@ export default function AudioRecorder({
         !finishing &&
         (compressingAudio ? (
           <span className="text-brass text-xs">
-            ⏳ Compressing your recording — usually just a few
+            <Icon name="hourglass" className="h-3.5 w-3.5" /> Compressing your recording — usually just a few
             seconds, up to a minute or so for a longer one. Please
             keep this page open; it hasn't frozen.
           </span>

@@ -196,7 +196,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-paper">{m.title}</span>
                         <span className="block truncate text-[11px] text-mist">
-                          {[formatBytes(m.size_bytes), m.folder_id ? `📁 ${folderPath(m.folder_id, foldersById)}` : null, isAlready ? 'already attached' : null]
+                          {[formatBytes(m.size_bytes), m.folder_id ? `${folderPath(m.folder_id, foldersById)}` : null, isAlready ? 'already attached' : null]
                             .filter(Boolean)
                             .join(' · ')}
                         </span>

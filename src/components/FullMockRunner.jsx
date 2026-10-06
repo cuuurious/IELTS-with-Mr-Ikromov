@@ -1,3 +1,4 @@
+import { loadQuestionGroups } from './exam/questionGroups'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { ExamTaker, buildAttemptQuestions } from './MockExams'
@@ -5,6 +6,7 @@ import { WritingTaker } from './WritingMockExam'
 import { isSpeechSupported, speak, stopSpeaking } from '../lib/speech'
 import { isTestToneSupported, playTestTone } from '../lib/testTone'
 import { readSession, writeSession } from '../lib/sessionState'
+import Icon from './Icon'
 
 /*
  * ================================================================
@@ -412,11 +414,15 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       }
 
       const questions = [...(questionsRaw || [])].sort((a, b) => a.order_index - b.order_index)
+      // Stored question groups (migration_74) — [] if not there yet.
+      const storedGroups = await loadQuestionGroups(supabase, sectionIds)
+      if (cancelled) return
 
       setModuleExamData({
         exam,
         sections: (sections || []).map((s) => ({
           ...s,
+          groups: storedGroups.filter((g) => g.section_id === s.id),
           // Randomized question bank (2026-09-25) — draws a fresh random
           // subset/order each time this stage loads, if the exam has it
           // turned on. See MockExams.jsx's buildAttemptQuestions comment.
@@ -984,9 +990,9 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
           className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-colors"
         >
           {narrating ? (
-            <>⏸ Stop reading</>
+            <><Icon name="pause" className="h-3.5 w-3.5" /> Stop reading</>
           ) : (
-            <>🔊 Hear these instructions again</>
+            <><Icon name="speaker" className="h-3.5 w-3.5" /> Hear these instructions again</>
           )}
         </button>
       )}

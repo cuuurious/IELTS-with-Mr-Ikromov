@@ -37,12 +37,12 @@ function previewText(content) {
     const parsed = JSON.parse(content)
 
     if (parsed?.type && parsed?.url) {
-      if (parsed.type === 'image') return '📷 Photo'
-      if (parsed.type === 'video') return '🎥 Video'
-      if (parsed.type === 'video_note') return '📹 Video message'
-      if (parsed.type === 'audio') return '🎤 Voice message'
+      if (parsed.type === 'image') return 'Photo'
+      if (parsed.type === 'video') return 'Video'
+      if (parsed.type === 'video_note') return 'Video message'
+      if (parsed.type === 'audio') return 'Voice message'
       if (parsed.type === 'file') {
-        return `📎 ${parsed.name || 'File'}`
+        return `${parsed.name || 'File'}`
       }
     }
   } catch {
@@ -59,11 +59,11 @@ function groupMessagePreview(message) {
   if (!message) return ''
   if (message.content) return previewText(message.content)
   switch (message.media_type) {
-    case 'image': return '📷 Photo'
-    case 'video': return '🎥 Video'
-    case 'video_note': return '📹 Video message'
-    case 'audio': return '🎤 Voice message'
-    case 'file': return `📎 ${message.media_name || 'File'}`
+    case 'image': return 'Photo'
+    case 'video': return 'Video'
+    case 'video_note': return 'Video message'
+    case 'audio': return 'Voice message'
+    case 'file': return `${message.media_name || 'File'}`
     default: return ''
   }
 }

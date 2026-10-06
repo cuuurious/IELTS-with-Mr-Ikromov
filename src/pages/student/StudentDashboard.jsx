@@ -23,6 +23,7 @@ import HomeworkCard from './HomeworkCard'
 import StudentHome from './StudentHome'
 import NotificationSetupGate from '../../components/NotificationSetupGate'
 import { useSessionState } from '../../lib/sessionState'
+import { homeworkState } from '../../lib/skills'
 
 const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
 const Leaderboard = lazyWithReload(() => import('../../components/Leaderboard'))
@@ -43,6 +44,54 @@ const PAGE_SUBTITLES = {
   // 'howto' intentionally has no entry — HowToUseGuide.jsx renders its
   // own header card (eyebrow + title + description), so this generic
   // subtitle card would just duplicate it right above.
+}
+
+function HomeworkFilterBar({ counts, value, onChange }) {
+  const chips = [
+    ['todo', 'To do', 'bg-vocab-tint text-vocab'],
+    ['done', 'Handed in', 'bg-reading-tint text-reading'],
+    ['missed', 'Missed', 'bg-urgent-tint text-urgent'],
+    ['all', 'All', 'bg-panel-2 text-paper'],
+  ]
+  const total = counts.all || 1
+  return (
+    <div className="flex flex-col gap-3 rounded-[22px] border border-line bg-panel p-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-lg font-semibold text-paper">
+            {counts.todo ? `${counts.todo} to do` : 'All caught up'}
+          </p>
+          <p className="text-xs text-mist">
+            {counts.done} of {counts.all} handed in{counts.missed ? ` · ${counts.missed} missed` : ''}
+          </p>
+        </div>
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-panel-2 sm:w-56" aria-hidden="true">
+          <span className="h-full bg-reading transition-[width] duration-700" style={{ width: `${(counts.done / total) * 100}%` }} />
+          <span className="h-full bg-[#F3D27A] transition-[width] duration-700" style={{ width: `${(counts.todo / total) * 100}%` }} />
+          <span className="h-full bg-urgent/70 transition-[width] duration-700" style={{ width: `${(counts.missed / total) * 100}%` }} />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter homework">
+        {chips.map(([key, label, tone]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={value === key}
+            onClick={() => onChange(key)}
+            className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              value === key ? 'bg-brass text-onbrass' : 'border border-line text-paper-dim hover:border-brass/40'
+            }`}
+          >
+            {label}
+            <span className={`rounded-full px-1.5 text-xs font-semibold tabular-nums ${value === key ? 'bg-white/20 text-onbrass' : tone}`}>
+              {counts[key]}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function StudentDashboard() {
@@ -81,6 +130,44 @@ export default function StudentDashboard() {
 
   const [submissions, setSubmissions] =
     useState({})
+
+  // Homework page filter (2026-10-06): open work first, newest deadline
+  // order; "Done" and "Missed" tucked behind their own chips.
+  const [homeworkFilter, setHomeworkFilter] = useState('todo')
+  const homeworkStateById = useMemo(() => {
+    const now = new Date()
+    return Object.fromEntries(homeworks.map((h) => [h.id, homeworkState(h, submissions[h.id], now)]))
+  }, [homeworks, submissions])
+  const homeworkCounts = useMemo(() => {
+    const c = { all: homeworks.length, todo: 0, done: 0, missed: 0 }
+    for (const h of homeworks) {
+      const k = homeworkStateById[h.id]?.key
+      if (k === 'todo' || k === 'today') c.todo += 1
+      else if (k === 'overdue') c.missed += 1
+      else c.done += 1
+    }
+    return c
+  }, [homeworks, homeworkStateById])
+  const visibleHomeworks = useMemo(() => {
+    const due = (h) => (h.due_date ? new Date(h.due_date).getTime() : Infinity)
+    const pick = homeworks.filter((h) => {
+      const k = homeworkStateById[h.id]?.key
+      if (homeworkFilter === 'todo') return k === 'todo' || k === 'today'
+      if (homeworkFilter === 'done') return k === 'sent' || k === 'late' || k === 'marked'
+      if (homeworkFilter === 'missed') return k === 'overdue'
+      return true
+    })
+    if (homeworkFilter === 'todo') return [...pick].sort((a, b) => due(a) - due(b))
+    return pick
+  }, [homeworks, homeworkStateById, homeworkFilter])
+
+  // Land on "All" when there's nothing open, so the page is never empty.
+  const autoFilterDone = useRef(false)
+  useEffect(() => {
+    if (autoFilterDone.current || !homeworks.length) return
+    autoFilterDone.current = true
+    if (homeworkCounts.todo === 0) setHomeworkFilter('all')
+  }, [homeworks.length, homeworkCounts.todo])
 
   const [teacher, setTeacher] =
     useState(null)
@@ -716,7 +803,7 @@ const messageId = linkParts[2] || null
             (which the top bar doesn't have room for) plus the
             homework tab's group/task-count readout.
            ====================================================== */}
-        {PAGE_SUBTITLES[tab] && (
+        {PAGE_SUBTITLES[tab] && tab !== 'homework' && (
           <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
 
             <div className="relative px-5 py-4 sm:px-7 sm:py-5">
@@ -769,6 +856,7 @@ const messageId = linkParts[2] || null
             onOpenMockCenter={() => setMockCenterOpen(true)}
             onOpenHomework={(homeworkId) => {
               setTab('homework')
+              setHomeworkFilter('all')
               // Wait for the Homework tab to render, then bring the
               // card into view (HomeworkCard rows carry this id).
               setTimeout(() => {
@@ -810,17 +898,15 @@ const messageId = linkParts[2] || null
 
             {myGroups.length > 0 && (
               <>
-                <div className="flex items-center justify-between gap-4 px-1">
-                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                    Assignments
-                  </div>
-
-                  <div className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-panel-2 px-3 py-1.5 text-xs text-mist font-mono">
-                    {homeworks.length}{' '}
-                    {homeworks.length === 1 ? 'assignment' : 'assignments'}
-                  </div>
-                </div>
+                {/* Summary + filter (2026-10-06): what's left to do at a
+                    glance, then only the cards that matter right now. */}
+                {homeworks.length > 0 && (
+                  <HomeworkFilterBar
+                    counts={homeworkCounts}
+                    value={homeworkFilter}
+                    onChange={setHomeworkFilter}
+                  />
+                )}
 
                 {homeworks.length === 0 && (
                   <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
@@ -838,15 +924,25 @@ const messageId = linkParts[2] || null
                   </div>
                 )}
 
-                {homeworks.length > 0 && (
-                  <div className="space-y-4">
-                    {homeworks.map((homework) => (
+                {homeworks.length > 0 && visibleHomeworks.length === 0 && (
+                  <div className="rounded-[22px] border border-dashed border-line bg-panel px-6 py-10 text-center text-sm text-mist">
+                    {homeworkFilter === 'todo' ? 'Nothing left to do — well done!' : 'Nothing here.'}
+                  </div>
+                )}
+
+                {visibleHomeworks.length > 0 && (
+                  <div className="space-y-3">
+                    {visibleHomeworks.map((homework, i) => (
                       <div
                         key={homework.id}
                         id={`homework-${homework.id}`}
-                        className="group relative rounded-3xl border border-line bg-panel shadow-sm overflow-hidden transition-all duration-200 hover:border-brass-dim/40 hover:-translate-y-0.5 hover:shadow-xl"
+                        className={`wp-pop group relative overflow-hidden rounded-[22px] border bg-panel transition-shadow duration-200 hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)] ${
+                          homeworkStateById[homework.id]?.key === 'overdue' || homeworkStateById[homework.id]?.key === 'today'
+                            ? 'border-urgent/30'
+                            : 'border-line'
+                        }`}
+                        style={{ animationDelay: `${Math.min(i, 6) * 30}ms` }}
                       >
-                        <div className="absolute inset-x-0 top-0 h-0.5 hidden opacity-70 group-hover:opacity-100 transition-opacity" />
 
                         <HomeworkCard
                           homework={homework}

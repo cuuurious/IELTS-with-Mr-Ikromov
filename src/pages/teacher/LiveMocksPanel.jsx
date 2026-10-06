@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
+import Icon from '../../components/Icon'
 
 /*
  * ================================================================
@@ -488,7 +489,7 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, 
                           onClick={() => pause(sitting)}
                           className="focus-ring rounded-full border border-amber/40 text-amber px-3.5 py-1.5 text-xs font-bold hover:bg-amber/10 disabled:opacity-50"
                         >
-                          ⏸ Pause
+                          <Icon name="pause" className="h-3.5 w-3.5" /> Pause
                         </button>
                       )}
                       {live && (

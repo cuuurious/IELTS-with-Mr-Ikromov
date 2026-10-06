@@ -35,12 +35,12 @@ function previewText(content) {
     const parsed = JSON.parse(content)
 
     if (parsed?.type && parsed?.url) {
-      if (parsed.type === 'image') return '📷 Photo'
-      if (parsed.type === 'video') return '🎥 Video'
-      if (parsed.type === 'video_note') return '📹 Video message'
-      if (parsed.type === 'audio') return '🎤 Voice message'
+      if (parsed.type === 'image') return 'Photo'
+      if (parsed.type === 'video') return 'Video'
+      if (parsed.type === 'video_note') return 'Video message'
+      if (parsed.type === 'audio') return 'Voice message'
       if (parsed.type === 'file') {
-        return `📎 ${parsed.name || 'File'}`
+        return `${parsed.name || 'File'}`
       }
     }
   } catch {
@@ -54,11 +54,11 @@ function previewText(content) {
 // (migration_72) returns — the RPC only sends the kind + a short
 // text/file name, never the whole message (2026-10-06).
 function previewFromKind(kind, preview) {
-  if (kind === 'image') return '📷 Photo'
-  if (kind === 'video') return '🎥 Video'
-  if (kind === 'video_note') return '📹 Video message'
-  if (kind === 'audio') return '🎤 Voice message'
-  if (kind === 'file') return `📎 ${preview || 'File'}`
+  if (kind === 'image') return 'Photo'
+  if (kind === 'video') return 'Video'
+  if (kind === 'video_note') return 'Video message'
+  if (kind === 'audio') return 'Voice message'
+  if (kind === 'file') return `${preview || 'File'}`
   return preview || ''
 }
 

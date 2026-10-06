@@ -13,7 +13,7 @@ import {
 import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { safeFileName as storageSafeName } from '../../lib/storageKey'
 import AudioRecorder from '../../components/AudioRecorder'
-import StampBadge, {
+import {
   getSubmissionStatus,
   isLateSubmission,
 } from '../../components/StampBadge'
@@ -21,6 +21,9 @@ import AiFeedbackCard from '../../components/AiFeedbackCard'
 import ConfirmModal from '../../components/ConfirmModal'
 import WritingMockTest from './WritingMockTest'
 import HomeworkFiles from '../../components/HomeworkFiles'
+import Icon from '../../components/Icon'
+import { SkillIcon } from '../../components/SkillArt'
+import { SKILLS, skillOfHomework, homeworkState, formatDue, STATE_PILL } from '../../lib/skills'
 import {
   DEFAULT_TIME_LIMITS,
   TASK_MODE_LABELS,
@@ -213,6 +216,8 @@ export default function HomeworkCard({
     submission,
     homework.due_date
   )
+  const skill = skillOfHomework(homework) || SKILLS.general
+  const hwState = homeworkState(homework, submission)
 
   const submittedLate = isLateSubmission(
     submission,
@@ -1419,45 +1424,51 @@ export default function HomeworkCard({
           HOMEWORK HEADER
       ===================================================== */}
 
+      {/* Study-room header (2026-10-06): skill colour + icon, title,
+          due date and a plain state pill instead of the round stamp. */}
       <button
         type="button"
         onClick={() =>
           setOpen((o) => !o)
         }
-        className="focus-ring w-full flex items-center justify-between gap-4 p-4 text-left"
+        aria-expanded={open}
+        className="focus-ring group/hw w-full flex items-center gap-3 sm:gap-4 p-4 text-left"
       >
-        <div>
-          <div className="font-display text-lg">
-            {homework.title}
-          </div>
-
-          <div className="text-mist text-xs font-mono mt-1 flex flex-wrap gap-x-3">
-            <span>
-              posted{' '}
-              {new Date(
-                homework.created_at
-              ).toLocaleDateString()}
-            </span>
-
-            {dueLabel && (
-              <span
-                className={
-                  status ===
-                  'overdue'
-                    ? 'text-coral'
-                    : ''
-                }
-              >
-                due {dueLabel}
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${skill.tint} ${skill.text}`}>
+          <SkillIcon skill={skill.key} className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className={`text-xs font-semibold ${skill.text}`}>{skill.label}</span>
+            {homework.due_date && (
+              <span className={`inline-flex items-center gap-1 text-xs ${status === 'overdue' ? 'text-urgent' : 'text-mist'}`}>
+                <Icon name="calendar" className="h-3.5 w-3.5" />
+                Due {formatDue(homework.due_date)}
               </span>
             )}
           </div>
+          <div className="mt-0.5 text-base font-semibold leading-snug text-paper sm:text-lg">
+            {homework.title}
+          </div>
+          {dueLabel && (
+            <div className="mt-0.5 text-[11px] text-mist">
+              {dueLabel} · posted {new Date(homework.created_at).toLocaleDateString()}
+            </div>
+          )}
         </div>
-
-        <StampBadge
-          status={status}
-        />
+        <span className={`hidden shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold sm:inline-block ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
+          {hwState.label}
+        </span>
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line text-mist transition-transform duration-200 group-hover/hw:border-brass/50 ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+        </span>
       </button>
+      <span className={`mx-4 -mt-2 mb-3 inline-block rounded-full px-2.5 py-1 text-xs font-semibold sm:hidden ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
+        {hwState.label}
+      </span>
 
       {open && (
         <div className="border-t border-line p-4 flex flex-col gap-4">
@@ -1502,7 +1513,7 @@ export default function HomeworkCard({
                 rel="noreferrer"
                 className="text-brass text-sm hover:underline w-fit"
               >
-                📎{' '}
+                <Icon name="paperclip" className="mr-1 h-4 w-4" />
                 {homework.attachment_name ||
                   'Download attachment'}
               </a>
@@ -1577,7 +1588,7 @@ export default function HomeworkCard({
                   </div>
                 ) : (
                   <div className="rounded-md border border-dashed border-line bg-panel px-3 py-2.5 flex items-center gap-2">
-                    <span className="text-mist">🔒</span>
+                    <Icon name="lock" className="h-4 w-4 text-mist" />
                     <span className="text-sm text-mist">
                       Task 1 prompt is hidden until you start the test
                     </span>
@@ -1593,7 +1604,7 @@ export default function HomeworkCard({
                   </div>
                 ) : (
                   <div className="rounded-md border border-dashed border-line bg-panel px-3 py-2.5 flex items-center gap-2">
-                    <span className="text-mist">🔒</span>
+                    <Icon name="lock" className="h-4 w-4 text-mist" />
                     <span className="text-sm text-mist">
                       Task 2 prompt is hidden until you start the test
                     </span>
@@ -1605,7 +1616,7 @@ export default function HomeworkCard({
                 <div className="text-xs">
                   {submittedLate ? (
                     <span className="text-amber">
-                      ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}
+                      Submitted late — {new Date(submission.submitted_at).toLocaleString()}
                       {mockEssay?.auto_submitted && ' (auto-submitted when time ran out)'}
                     </span>
                   ) : (
@@ -1730,7 +1741,7 @@ export default function HomeworkCard({
 
                 {compressingAudio && (
                   <p className="text-xs text-brass mt-2">
-                    ⏳ Compressing your audio file — usually just a
+                    Compressing your audio file — usually just a
                     few seconds, up to a minute or so for a longer
                     recording. This page hasn't frozen; please keep
                     it open and wait for it to finish instead of
@@ -1815,7 +1826,7 @@ export default function HomeworkCard({
                         rel="noreferrer"
                         className="text-sm text-brass hover:underline truncate"
                       >
-                        📎{' '}
+                        <Icon name="paperclip" className="mr-1 h-4 w-4" />
                         {
                           file.name
                         }
@@ -1857,7 +1868,7 @@ export default function HomeworkCard({
                   <p className="mt-2 text-xs">
                     {submittedLate ? (
                       <span className="text-amber">
-                        ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
+                        Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
                       </span>
                     ) : (
                       <span className="text-brass">
@@ -1971,7 +1982,7 @@ export default function HomeworkCard({
                     <p className="mt-2 text-xs">
                       {submittedLate ? (
                         <span className="text-amber">
-                          ⏰ Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
+                          Submitted late — {new Date(submission.submitted_at).toLocaleString()}.
                         </span>
                       ) : (
                         <span className="text-brass">

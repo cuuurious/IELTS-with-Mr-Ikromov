@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchAll } from '../../lib/fetchAll'
 import WordlistPlayer from './WordlistPlayer'
 import WordReview, { REVIEW_SESSION_SIZE } from './WordReview'
 
@@ -17,6 +18,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
   const [due, setDue] = useState(null)
   const [streak, setStreak] = useState(0)
   const [doneToday, setDoneToday] = useState(false)
+  const [activeDays, setActiveDays] = useState(() => new Set())
 
   useEffect(() => {
     if (!studentId || !wordlistIds.length) return
@@ -40,6 +42,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
         )
         const today = new Date()
         setDoneToday(days.has(localDay(today)))
+        setActiveDays(days)
         // Streak counts back from today (or from yesterday, if today
         // isn't done yet — the streak isn't lost until the day ends).
         let count = 0
@@ -61,33 +64,76 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
   if (due === null) return null
 
   const sessionSize = Math.min(due, REVIEW_SESSION_SIZE)
+  // The last 7 days, oldest first, for the streak dots.
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    return { key: localDay(d), label: d.toLocaleDateString('en-GB', { weekday: 'narrow' }), today: i === 6 }
+  })
 
   return (
-    <div className="rounded-xl border border-brass/40 bg-panel-2 px-4 py-4 sm:px-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-brass">Daily review</p>
-          <p className="mt-1 font-display text-lg">
-            {due > 0 ? `${sessionSize} word${sessionSize === 1 ? '' : 's'} to review today` : 'All caught up for today'}
+    <div className="relative overflow-hidden rounded-[22px] border border-[#F3D27A] bg-vocab-tint px-5 py-5 sm:px-6">
+      <div className="flex flex-wrap items-center gap-5">
+        <CardStackArt className="hidden h-24 w-28 shrink-0 sm:block" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-vocab">Daily review</p>
+          <p className="mt-1 text-xl font-semibold text-paper">
+            {due > 0 ? `${sessionSize} word${sessionSize === 1 ? '' : 's'} ready to review` : 'All caught up for today'}
           </p>
-          <p className="mt-0.5 text-xs text-mist">
-            {streak > 0
-              ? `🔥 ${streak}-day streak${doneToday ? '' : ' — practise today to keep it'}`
-              : 'Practise every day to build a streak.'}
-            {due > REVIEW_SESSION_SIZE ? ` · ${due} due in total` : ''}
+          <p className="mt-1 text-sm text-paper-dim">
+            {due > 0
+              ? 'A few minutes a day moves words into long-term memory.'
+              : 'Words come back here when it is time to see them again.'}
+            {due > REVIEW_SESSION_SIZE ? ` ${due} are due in total.` : ''}
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5" aria-label={`${streak}-day streak`}>
+              {week.map((d) => {
+                const on = activeDays.has(d.key)
+                return (
+                  <span key={d.key} className="flex flex-col items-center gap-0.5">
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${
+                        on ? 'bg-vocab text-white' : d.today ? 'border-2 border-dashed border-vocab/50 text-vocab' : 'bg-white/70 text-mist'
+                      }`}
+                    >
+                      {on ? '✓' : d.label}
+                    </span>
+                  </span>
+                )
+              })}
+            </div>
+            <span className="text-xs font-medium text-vocab">
+              {streak > 0 ? `${streak}-day streak${doneToday ? '' : ' — practise today to keep it'}` : 'Practise today to start a streak'}
+            </span>
+          </div>
         </div>
         {due > 0 && (
           <button
             type="button"
             onClick={onStart}
-            className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-5 py-2 text-sm font-semibold text-onbrass"
+            className="focus-ring rounded-full bg-brass px-6 py-2.5 text-sm font-semibold text-onbrass transition-transform hover:scale-[1.03] hover:bg-brass-dim active:scale-95"
           >
             Start review
           </button>
         )}
       </div>
     </div>
+  )
+}
+
+function CardStackArt({ className = '' }) {
+  return (
+    <svg viewBox="0 0 120 100" className={className} aria-hidden="true">
+      <rect x="22" y="18" width="72" height="54" rx="10" fill="#fff" stroke="#F3D27A" strokeWidth="2" transform="rotate(-10 58 45)" />
+      <rect x="26" y="20" width="72" height="54" rx="10" fill="#fff" stroke="#F3D27A" strokeWidth="2" transform="rotate(6 62 47)" />
+      <rect x="24" y="24" width="72" height="54" rx="10" fill="#fff" stroke="#7F5B00" strokeWidth="2" />
+      <rect x="36" y="38" width="38" height="7" rx="3.5" fill="#7F5B00" />
+      <rect x="36" y="52" width="48" height="4" rx="2" fill="#F3D27A" />
+      <rect x="36" y="61" width="30" height="4" rx="2" fill="#F3D27A" />
+      <circle cx="98" cy="22" r="11" fill="#9ACFAA" />
+      <path d="m92.5 22 4 4 7-8" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
@@ -150,6 +196,8 @@ export default function StudentWordlists({
   const [myGroups, setMyGroups] = useState([])
   const [lists, setLists] = useState([])
   const [myAttempts, setMyAttempts] = useState({})
+  // Per list: how many words are known (review box 3+) / being learnt.
+  const [mastery, setMastery] = useState({})
   const [playing, setPlaying] = useState(null)
   const [reviewing, setReviewing] = useState(false)
   const [reviewRefresh, setReviewRefresh] = useState(0)
@@ -347,6 +395,27 @@ setLists(wordlists || [])
       )
 
       setMyAttempts(map)
+
+      // Word mastery per list (spaced-repetition boxes, migration_69).
+      try {
+        const { data: progress } = await fetchAll(() =>
+          supabase
+            .from('word_progress')
+            .select('item_id, wordlist_id, box')
+            .eq('student_id', studentId)
+            .in('wordlist_id', wordlistIds)
+            .order('item_id')
+        )
+        const m = {}
+        for (const row of progress || []) {
+          const entry = (m[row.wordlist_id] ||= { known: 0, learning: 0 })
+          if (row.box >= 3) entry.known += 1
+          else entry.learning += 1
+        }
+        setMastery(m)
+      } catch {
+        setMastery({})
+      }
     } catch (error) {
       console.error(
         'Could not load word lists:',
@@ -512,222 +581,86 @@ setLists(wordlists || [])
         onStart={() => setReviewing(true)}
       />
 
-      {/* LISTS */}
+      {/* LISTS — one card per list with word mastery (2026-10-06) */}
 
-      <div className="flex flex-col gap-3">
-
-        {lists.map((list) => {
-          const attempt =
-            myAttempts[list.id]
-
-          const count =
-            list.wordlist_items?.[0]
-              ?.count ?? 0
-
-          const isFresh =
-            Boolean(
-              list.completion_reset_at
-            ) && !attempt
-
+      <div className="grid gap-3 sm:grid-cols-2">
+        {lists.map((list, i) => {
+          const attempt = myAttempts[list.id]
+          const count = list.wordlist_items?.[0]?.count ?? 0
+          const isFresh = Boolean(list.completion_reset_at) && !attempt
+          const m = mastery[list.id] || { known: 0, learning: 0 }
+          const known = Math.min(m.known, count)
+          const learning = Math.min(m.learning, Math.max(0, count - known))
+          const fresh = Math.max(0, count - known - learning)
+          const pctKnown = count ? Math.round((known / count) * 100) : 0
           return (
             <button
               key={list.id}
               type="button"
-              onClick={() =>
-                setPlaying(list)
-              }
-              className="
-                focus-ring
-                group
-                w-full
-                text-left
-                border border-line
-                bg-panel-2
-                rounded-lg
-                px-4 sm:px-5
-                py-4
-                transition-all
-                hover:border-brass/50
-              "
+              onClick={() => setPlaying(list)}
+              className="wp-pop focus-ring group flex w-full min-w-0 flex-col gap-3 rounded-[22px] border border-line bg-panel p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[#F3D27A] hover:shadow-[0_10px_24px_-14px_rgba(31,35,64,0.35)] sm:p-5"
+              style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
             >
-
-              <div className="flex items-center gap-4">
-
-                {/* ICON */}
-
-                <div
-                  className="
-                    shrink-0
-                    w-10 h-10
-                    rounded-md
-                    border border-line
-                    bg-panel
-                    flex items-center justify-center
-                    text-brass
-                    group-hover:border-brass/50
-                    transition-colors
-                  "
-                >
-                  <Icon
-                    name="book"
-                    size={19}
-                  />
+              <div className="flex items-start gap-3">
+                <div className="relative h-11 w-11 shrink-0">
+                  <span className="absolute inset-0 rotate-[-8deg] rounded-xl border border-[#F3D27A] bg-white transition-transform group-hover:rotate-[-14deg]" />
+                  <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-vocab-tint text-vocab transition-transform group-hover:rotate-[4deg]">
+                    <Icon name="book" size={19} />
+                  </span>
                 </div>
-
-                {/* MAIN CONTENT */}
-
                 <div className="min-w-0 flex-1">
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-
-                    <span className="text-[10px] uppercase tracking-[0.16em] font-mono text-brass">
-                      Vocabulary
+                  <p className="truncate text-base font-semibold text-paper sm:text-lg">{list.title}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-mist">
+                    <span>
+                      {count} word{count === 1 ? '' : 's'}
                     </span>
-
                     {isFresh && (
-                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-mono text-sage">
-                        <Icon
-                          name="refresh"
-                          size={11}
-                        />
-                        Fresh practice
+                      <span className="inline-flex items-center gap-1 font-medium text-reading">
+                        <Icon name="refresh" size={11} /> Fresh practice
                       </span>
                     )}
-
-                  </div>
-
-                  <div className="font-display text-lg sm:text-xl text-paper mt-1 truncate">
-                    {list.title}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-mist font-mono mt-1.5">
-
-                    <span>
-                      {count}{' '}
-                      {count === 1
-                        ? 'item'
-                        : 'items'}
-                    </span>
-
-                    <span className="text-line">
-                      В·
-                    </span>
-
-                    <span>
-                      {count > 0
-                        ? 'IELTS vocabulary practice'
-                        : 'No items'}
-                    </span>
-
-                  </div>
-
+                  </p>
                 </div>
-
-                {/* STATUS */}
-
-                <div className="shrink-0 flex items-center gap-3">
-
-                  {attempt ? (
-                    <div className="text-right">
-
-                      <div className="font-mono text-lg text-brass leading-none">
-                        {attempt.percentage}%
-                      </div>
-
-                      <div className="text-[9px] uppercase tracking-[0.12em] text-mist mt-1">
-                        completed
-                      </div>
-
-                    </div>
-                  ) : (
-                    <div className="hidden sm:block text-right">
-
-                      <div className="text-sm text-paper">
-                        {isFresh
-                          ? 'Start again'
-                          : 'Start practice'}
-                      </div>
-
-                      <div className="text-[10px] text-mist font-mono mt-1">
-                        {count}{' '}
-                        {count === 1
-                          ? 'item'
-                          : 'items'}
-                      </div>
-
-                    </div>
-                  )}
-
-                  <span
-                    className="
-                      w-9 h-9
-                      rounded-full
-                      border border-line
-                      flex items-center justify-center
-                      text-mist
-                      group-hover:border-brass/60
-                      group-hover:text-brass
-                      transition-colors
-                    "
-                  >
-                    <Icon
-                      name="arrow"
-                      size={17}
-                    />
+                {attempt ? (
+                  <span className="shrink-0 rounded-full bg-panel-2 px-2.5 py-1 text-xs font-semibold tabular-nums text-paper" title="Latest test result">
+                    {attempt.percentage}%
                   </span>
-
-                </div>
-
+                ) : (
+                  <span className="shrink-0 rounded-full bg-vocab-tint px-2.5 py-1 text-xs font-semibold text-vocab">New</span>
+                )}
               </div>
 
-              {/* COMPLETED PROGRESS */}
-
-              {attempt && (
-                <div className="mt-4">
-
-                  <div className="h-1 bg-panel rounded-full overflow-hidden">
-
-                    <div
-                      className="h-full bg-brass rounded-full transition-all"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(
-                            0,
-                            Number(
-                              attempt.percentage
-                            ) || 0
-                          )
-                        )}%`,
-                      }}
-                    />
-
+              {count > 0 && (
+                <div>
+                  <div className="flex h-2 overflow-hidden rounded-full bg-panel-2" aria-hidden="true">
+                    <span className="h-full bg-reading transition-[width] duration-700" style={{ width: `${(known / count) * 100}%` }} />
+                    <span className="h-full bg-[#F3D27A] transition-[width] duration-700" style={{ width: `${(learning / count) * 100}%` }} />
                   </div>
-
-                  <div className="flex items-center justify-between mt-2 text-[10px] font-mono text-mist">
-
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-mist">
                     <span>
-                      Latest result
+                      <b className="font-semibold text-reading">{known}</b> known
                     </span>
-
                     <span>
-                      {attempt.score != null &&
-                      attempt.total != null
-                        ? `${attempt.score}/${attempt.total}`
-                        : `${attempt.percentage}%`}
+                      <b className="font-semibold text-vocab">{learning}</b> learning
                     </span>
-
+                    <span>
+                      <b className="font-semibold text-paper-dim">{fresh}</b> new
+                    </span>
+                    <span className="ml-auto font-medium text-paper">{pctKnown}% mastered</span>
                   </div>
-
                 </div>
               )}
 
+              <span className="flex items-center justify-between text-sm font-medium text-paper">
+                {attempt ? 'Practise again' : isFresh ? 'Start again' : 'Start with the cards'}
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-mist transition-colors group-hover:border-brass/60 group-hover:bg-brass group-hover:text-onbrass">
+                  <Icon name="arrow" size={16} />
+                </span>
+              </span>
             </button>
           )
         })}
-
       </div>
-
     </div>
   )
 }

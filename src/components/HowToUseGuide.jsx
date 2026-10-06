@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Icon from './Icon'
 
 /*
  * ================================================================
@@ -54,14 +55,20 @@ const STEP_STYLES = {
   amber: 'bg-amber/15 text-amber',
 }
 
+// WebP copies next to each PNG (2026-10-06): ~10× smaller; browsers
+// without WebP still get the PNG.
 function Shot({ src, alt, wide }) {
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={`w-full rounded-xl border border-line shadow-sm ${wide ? '' : 'max-w-[360px]'}`}
-      loading="lazy"
-    />
+    <picture>
+      <source srcSet={src.replace(/\.png$/, '.webp')} type="image/webp" />
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full rounded-xl border border-line shadow-sm ${wide ? '' : 'max-w-[360px]'}`}
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
   )
 }
 
@@ -153,7 +160,7 @@ export default function HowToUseGuide() {
             download
             className="focus-ring mt-5 inline-flex items-center gap-2 rounded-full bg-brass px-4 py-2.5 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
           >
-            ⬇ Download as PDF
+            <Icon name="download" className="h-4 w-4" /> Download as PDF
           </a>
         </div>
       </section>
@@ -289,7 +296,7 @@ export default function HowToUseGuide() {
           </Step>,
           <Step key={2} n={2}>
             The percentage and purple bar show your overall progress; the badges under each name
-            show tasks done (like 8/18) and a streak counter (🔥 2 days).
+            show tasks done (like 8/18) and a streak counter (<Icon name="flame" className="h-3.5 w-3.5" /> 2 days).
           </Step>,
           <Step key={3} n={3}>
             Tap any student to see their progress in more detail.

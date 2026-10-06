@@ -6,6 +6,7 @@ import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
+import Icon from '../../components/Icon'
 
 function toLocalInputValue(iso) {
   if (!iso) return ''
@@ -271,7 +272,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           <div className="rounded-lg border border-brass/25 bg-panel-2 p-3">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
-                <span className="text-sm leading-none">📅</span> Deadline
+                <span className="text-sm leading-none"><Icon name="calendar" className="h-3.5 w-3.5" /></span> Deadline
               </label>
 
               {dueDate && (
@@ -344,7 +345,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
 
                 <div className="flex items-center gap-3">
                   <a href={attachmentUrl} target="_blank" rel="noreferrer" className="text-brass text-sm hover:underline truncate">
-                    📎 {attachmentName || 'Current attachment'}
+                    <Icon name="paperclip" className="h-4 w-4" /> {attachmentName || 'Current attachment'}
                   </a>
 
                   <button
@@ -363,7 +364,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
 
             {attachmentFile ? (
               <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
-                <span className="text-sm text-paper truncate max-w-[220px]">📎 {attachmentFile.name}</span>
+                <span className="text-sm text-paper truncate max-w-[220px]"><Icon name="paperclip" className="h-4 w-4" /> {attachmentFile.name}</span>
                 <button
                   type="button"
                   onClick={clearAttachmentFile}
@@ -436,7 +437,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                 )}
                 {mockTask1Image ? (
                   <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
-                    <span className="text-sm text-paper truncate max-w-[220px]">📎 {mockTask1Image.name}</span>
+                    <span className="text-sm text-paper truncate max-w-[220px]"><Icon name="paperclip" className="h-4 w-4" /> {mockTask1Image.name}</span>
                     <button
                       type="button"
                       onClick={clearMockTask1Image}

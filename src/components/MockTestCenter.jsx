@@ -541,9 +541,7 @@ export default function MockTestCenter({ onExit }) {
           sidebar) so this reads as its own environment. */}
       <header className="shrink-0 border-b border-line bg-panel px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 rounded-xl bg-brass/15 border border-brass-dim/30 flex items-center justify-center text-brass font-display text-sm shrink-0">
-            IC
-          </div>
+          <img src="/mrikromov.jpg" alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
               Mock Test Center
@@ -590,26 +588,30 @@ export default function MockTestCenter({ onExit }) {
 
           {!loading && section === 'overview' && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-line bg-panel p-5">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
-                  Your results
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {[
-                    { label: 'Listening', band: resultBands.listening },
-                    { label: 'Reading', band: resultBands.reading },
-                    { label: 'Writing', band: resultBands.writing },
-                    { label: 'Speaking', band: resultBands.speaking },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-center">
-                      <p className="text-[10px] font-mono uppercase tracking-wide text-paper-dim">{s.label}</p>
-                      <p className="mt-1 text-lg font-semibold text-paper">{formatBand(s.band)}</p>
-                    </div>
-                  ))}
-                  <div className="rounded-xl border border-brass/40 bg-brass/10 px-3 py-2.5 text-center">
-                    <p className="text-[10px] font-mono uppercase tracking-wide text-brass">Overall</p>
-                    <p className="mt-1 text-lg font-semibold text-brass">{formatBand(resultBands.overall)}</p>
+              {/* Results in skill colours with a band gauge each (2026-10-06). */}
+              <div className="rounded-[22px] border border-line bg-panel p-5">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-medium text-mist">Your results</p>
+                    <p className="text-lg font-semibold text-paper">
+                      {resultBands.overall != null ? `Overall band ${formatBand(resultBands.overall)}` : 'No bands released yet'}
+                    </p>
                   </div>
+                  {profile?.target_band != null && (
+                    <p className="text-xs text-mist">
+                      Target <b className="font-semibold text-paper">{formatTargetBand(profile.target_band)}</b>
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    { key: 'listening', label: 'Listening', band: resultBands.listening },
+                    { key: 'reading', label: 'Reading', band: resultBands.reading },
+                    { key: 'writing', label: 'Writing', band: resultBands.writing },
+                    { key: 'speaking', label: 'Speaking', band: resultBands.speaking },
+                  ].map((s) => (
+                    <BandGauge key={s.key} skill={s.key} label={s.label} band={s.band} target={profile?.target_band} />
+                  ))}
                 </div>
                 {resultBands.availableCount > 0 && resultBands.availableCount < 4 && (
                   <p className="text-xs text-mist mt-3">
@@ -700,6 +702,9 @@ export default function MockTestCenter({ onExit }) {
                                         <span className="text-coral">{r.student_answer || '(no answer)'}</span>
                                         <span className="text-mist mx-1.5">→</span>
                                         <span className="text-sage">{r.correct_answer}</span>
+                                        {r.accepted_answers?.length > 0 && (
+                                          <span className="text-mist"> (also: {r.accepted_answers.join(', ')})</span>
+                                        )}
                                       </p>
                                     </div>
                                   ))}
@@ -1021,6 +1026,56 @@ function BandTrendCard({ label, history }) {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+const SKILL_TONE = {
+  listening: { text: 'text-listening', tint: 'bg-listening-tint', stroke: '#2C5D9C', soft: '#94BCEB' },
+  reading: { text: 'text-reading', tint: 'bg-reading-tint', stroke: '#2D6B45', soft: '#9ACFAA' },
+  writing: { text: 'text-writing', tint: 'bg-writing-tint', stroke: '#A44E1A', soft: '#F2B48A' },
+  speaking: { text: 'text-speaking', tint: 'bg-speaking-tint', stroke: '#5B3F9A', soft: '#BBA6E6' },
+}
+
+// Half-circle gauge: band out of 9, with a tick at the target band.
+function BandGauge({ skill, label, band, target }) {
+  const tone = SKILL_TONE[skill]
+  const r = 40
+  const half = Math.PI * r
+  const has = band != null && !Number.isNaN(Number(band))
+  const frac = has ? Math.min(1, Number(band) / 9) : 0
+  const tAngle = target != null ? Math.PI * (1 - Math.min(1, Number(target) / 9)) : null
+  return (
+    <div className={`flex flex-col items-center rounded-2xl ${tone.tint} px-3 pb-3 pt-2`}>
+      <svg viewBox="0 0 100 58" className="w-full max-w-[140px]" aria-hidden="true">
+        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#fff" strokeWidth="9" strokeLinecap="round" />
+        {has && (
+          <path
+            d="M10 50 A40 40 0 0 1 90 50"
+            fill="none"
+            stroke={tone.stroke}
+            strokeWidth="9"
+            strokeLinecap="round"
+            className="wp-ring"
+            style={{ strokeDasharray: half, strokeDashoffset: half * (1 - frac), '--ring-from': half }}
+          />
+        )}
+        {tAngle != null && (
+          <line
+            x1={50 + 31 * Math.cos(tAngle)}
+            y1={50 - 31 * Math.sin(tAngle)}
+            x2={50 + 49 * Math.cos(tAngle)}
+            y2={50 - 49 * Math.sin(tAngle)}
+            stroke={tone.soft}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        )}
+        <text x="50" y="48" textAnchor="middle" fill="currentColor" className="fill-paper" style={{ font: '600 20px var(--font-body, sans-serif)' }}>
+          {has ? formatBand(band) : '—'}
+        </text>
+      </svg>
+      <p className={`text-xs font-semibold ${tone.text}`}>{label}</p>
     </div>
   )
 }

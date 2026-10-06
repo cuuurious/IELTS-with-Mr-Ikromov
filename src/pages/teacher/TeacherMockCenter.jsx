@@ -11,8 +11,10 @@ import ConfirmModal from '../../components/ConfirmModal'
 import FrozenAttemptReview from '../../components/FrozenAttemptReview'
 import ThemeToggle from '../../components/ThemeToggle'
 import LiveMocksPanel from './LiveMocksPanel'
+import QuestionGroupsPanel, { autoGroupSection } from './QuestionGroupsPanel'
 import { useSessionState } from '../../lib/sessionState'
 import { cleanPrompt } from '../../components/exam/questionGroups'
+import Icon from '../../components/Icon'
 
 /*
  * ================================================================
@@ -1432,6 +1434,8 @@ export default function TeacherMockCenter({ onExit }) {
         if (questionRows.length > 0) {
           const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
           if (questionsInsertError) throw questionsInsertError
+          // "Questions X–Y" groups from the imported prompts (migration_74).
+          await autoGroupSection(sectionId, { replace: true })
         }
       }
 
@@ -1514,6 +1518,7 @@ export default function TeacherMockCenter({ onExit }) {
         if (questionRows.length > 0) {
           const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
           if (questionsInsertError) throw questionsInsertError
+          await autoGroupSection(newSection.id, { replace: true })
         }
       }
 
@@ -2736,9 +2741,12 @@ export default function TeacherMockCenter({ onExit }) {
             type: q.type,
             options: q.options,
             correct_answer: q.correct_answer,
+            // undefined (dropped) before migration_74
+            accepted_answers: q.accepted_answers,
           }))
           const { error: questionsInsertError } = await supabase.from('mock_questions').insert(questionRows)
           if (questionsInsertError) throw questionsInsertError
+          await autoGroupSection(newSection.id, { replace: true })
         }
       }
 
@@ -3056,6 +3064,13 @@ export default function TeacherMockCenter({ onExit }) {
         type: values.type,
         options: CHOICE_BASED_TYPES.includes(values.type) ? { choices: values.choices } : null,
         correct_answer: values.correctAnswer.trim(),
+      }
+
+      // accepted_answers only exists after migration_74 — only sent when
+      // the teacher actually uses it, so saving still works before that.
+      const accepted = CHOICE_BASED_TYPES.includes(values.type) ? [] : values.acceptedAnswers || []
+      if (accepted.length || values.hadAccepted) {
+        payload.accepted_answers = accepted
       }
 
       if (questionModal.mode === 'create') {
@@ -3781,7 +3796,7 @@ export default function TeacherMockCenter({ onExit }) {
                   title="Downloads every row below as a spreadsheet-ready CSV"
                   className="focus-ring shrink-0 rounded-full border border-line bg-panel-2 text-paper text-sm font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-40"
                 >
-                  ⬇ Export CSV
+                  <Icon name="download" className="h-4 w-4" /> Export CSV
                 </button>
               </div>
 
@@ -4300,7 +4315,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 className="ml-2 rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-semibold text-amber align-middle"
                                 title={`Noticeably more than the team average (${examinerWorkloadAvgThisWeek.toFixed(1)}) this week`}
                               >
-                                ⚖ above average
+                                <Icon name="scale" className="h-3 w-3" /> above average
                               </span>
                             )}
                           </span>
@@ -4768,6 +4783,13 @@ export default function TeacherMockCenter({ onExit }) {
                         </button>
                       </div>
 
+                      <QuestionGroupsPanel
+                        exam={rlSelectedExam}
+                        section={rlSelectedSection}
+                        questions={rlQuestions}
+                        onChanged={() => reloadRlQuestions(rlSelectedSectionId)}
+                      />
+
                       <div className="rounded-lg border border-dashed border-brass/40 bg-brass/5 p-3">
                         <span className="text-xs font-semibold text-brass">Upload answer key</span>
                         <div className="mt-1.5">
@@ -4815,7 +4837,7 @@ export default function TeacherMockCenter({ onExit }) {
                                 </p>
                                 {!isChoiceBasedAnswerValid(q) && (
                                   <p className="text-xs font-semibold text-coral mt-0.5">
-                                    ⚠ Doesn't match any of this question's choices — grading will always mark it wrong until it's fixed.
+                                    <Icon name="warning" className="h-3.5 w-3.5" /> Doesn't match any of this question's choices — grading will always mark it wrong until it's fixed.
                                   </p>
                                 )}
                               </div>
@@ -4960,7 +4982,7 @@ export default function TeacherMockCenter({ onExit }) {
                                           </p>
                                           {q.correct_answer?.trim() && !isChoiceBasedAnswerValid(q) && (
                                             <p className="text-xs font-semibold text-coral mt-0.5">
-                                              ⚠ Doesn't match any choice above — grading will always mark this wrong until it's fixed.
+                                              <Icon name="warning" className="h-3.5 w-3.5" /> Doesn't match any choice above — grading will always mark this wrong until it's fixed.
                                             </p>
                                           )}
                                         </div>
@@ -5237,7 +5259,7 @@ export default function TeacherMockCenter({ onExit }) {
                           className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           title="Opens a printable page with one slip per unused code — handy for anyone not on Telegram"
                         >
-                          🖨 Print unused
+                          <Icon name="printer" className="h-4 w-4" /> Print unused
                         </button>
                         <button
                           type="button"
@@ -5834,7 +5856,7 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview, onDelete }) {
             className="focus-ring text-xs text-brass hover:text-brass-dim"
             title="Open a full-screen, read-only replay styled like the actual exam screen"
           >
-            🖥 Review in exam view
+            <Icon name="monitor" className="h-3.5 w-3.5" /> Review in exam view
           </button>
         )}
         {onDelete && (
@@ -6189,7 +6211,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
             title="Downloads a PDF using each skill's most recently RELEASED result only — never a score the student hasn't been shown yet"
             className="focus-ring ml-auto rounded-full border border-line bg-panel-2 text-paper text-xs font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-60"
           >
-            {downloadingReport ? 'Generating…' : '📄 Download PDF report'}
+            {downloadingReport ? 'Generating…' : <><Icon name="file" className="h-3.5 w-3.5" /> Download PDF report</>}
           </button>
           <button
             type="button"
@@ -6430,7 +6452,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                                 rel="noopener noreferrer"
                                 className="text-xs text-brass hover:text-brass-dim mt-2 inline-block"
                               >
-                                🎙 Session recording
+                                <Icon name="mic" className="h-3.5 w-3.5" /> Session recording
                               </a>
                             )}
                           </div>
@@ -7286,8 +7308,8 @@ function QuestionAnswerFields({
         className={inputClassName}
       />
       <span className="mt-1 block text-[11px] normal-case tracking-normal text-paper-dim/80">
-        Grading trims spaces and ignores case, but otherwise needs an exact match — keep it to one
-        accepted spelling.
+        Marking ignores capitals, extra spaces and full stops/commas at either end. Add other
+        spellings in "Also accept" below.
       </span>
     </label>
   )
@@ -7315,6 +7337,9 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
     (question?.options?.choices || []).join('\n')
   )
   const [correctAnswer, setCorrectAnswer] = useState(question?.correct_answer || '')
+  // Other spellings that also count as correct ("colour" / "color",
+  // "10" / "ten") — mock_questions.accepted_answers (migration_74).
+  const [acceptedText, setAcceptedText] = useState((question?.accepted_answers || []).join('\n'))
 
   const choices = choicesText
     .split('\n')
@@ -7350,7 +7375,7 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
           </button>
         </div>
         <p className="text-sm text-mist mt-0.5">
-          Grading is an exact, case-insensitive text match against the correct answer below.
+          Marking compares the answer with the correct answer below, ignoring capitals and extra spaces.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -7399,6 +7424,19 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
             labelClassName="text-xs text-mist font-mono uppercase tracking-wide"
             inputClassName="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
           />
+
+          {!CHOICE_BASED_TYPES.includes(type) && type !== 'true_false_ng' && type !== 'yes_no_ng' && (
+            <label className="text-xs text-mist font-mono uppercase tracking-wide">
+              Also accept (one per line, optional)
+              <textarea
+                value={acceptedText}
+                onChange={(e) => setAcceptedText(e.target.value)}
+                rows={2}
+                placeholder={'color\nten'}
+                className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+              />
+            </label>
+          )}
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}
@@ -7414,7 +7452,20 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
           </button>
           <button
             type="button"
-            onClick={() => onSave({ prompt, orderIndex, type, choices, correctAnswer })}
+            onClick={() =>
+              onSave({
+                prompt,
+                orderIndex,
+                type,
+                choices,
+                correctAnswer,
+                acceptedAnswers: acceptedText
+                  .split('\n')
+                  .map((a) => a.trim())
+                  .filter(Boolean),
+                hadAccepted: (question?.accepted_answers || []).length > 0,
+              })
+            }
             disabled={saving || !canSave}
             className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
@@ -8938,7 +8989,7 @@ function AccessCodeIssueModal({
                 }
                 className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass"
               >
-                🖨 Print slips
+                <Icon name="printer" className="h-4 w-4" /> Print slips
               </button>
               <button
                 type="button"
@@ -9005,7 +9056,7 @@ function AccessCodeIssueModal({
                 }
                 className="focus-ring rounded-md border border-line px-4 py-2 text-sm text-mist transition-colors hover:border-brass hover:text-brass"
               >
-                🖨 Print slips
+                <Icon name="printer" className="h-4 w-4" /> Print slips
               </button>
               <button
                 type="button"

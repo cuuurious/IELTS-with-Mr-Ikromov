@@ -79,12 +79,105 @@ function defaultInstruction(family, questions) {
   }
 }
 
+/* ------------------------------------------------------------------
+ * Stored groups (migration_74, 2026-10-06): mock_question_groups holds
+ * each "Questions X–Y" block once — task type (kind), word limit, title
+ * and an optional custom instruction. When a question has a group_id,
+ * that group decides the header; otherwise the guesswork above is used
+ * (older tests, or before the migration is run).
+ * ------------------------------------------------------------------ */
+
+export const GROUP_KINDS = [
+  { value: 'note_completion', label: 'Note completion', family: 'gap', text: 'Complete the notes below.' },
+  { value: 'form_completion', label: 'Form completion', family: 'gap', text: 'Complete the form below.' },
+  { value: 'table_completion', label: 'Table completion', family: 'gap', text: 'Complete the table below.' },
+  { value: 'sentence_completion', label: 'Sentence completion', family: 'gap', text: 'Complete the sentences below.' },
+  { value: 'summary_completion', label: 'Summary completion', family: 'gap', text: 'Complete the summary below.' },
+  { value: 'flow_chart', label: 'Flow-chart completion', family: 'gap', text: 'Complete the flow-chart below.' },
+  { value: 'diagram_labelling', label: 'Diagram labelling', family: 'gap', text: 'Label the diagram below.' },
+  { value: 'map_labelling', label: 'Map / plan labelling', family: 'gap', text: 'Label the map below.' },
+  { value: 'short_answer', label: 'Short answer', family: 'gap', text: 'Answer the questions below.' },
+  { value: 'mcq_single', label: 'Multiple choice (one answer)', family: 'choice', text: 'Choose the correct letter, A, B, C or D.' },
+  { value: 'mcq_multi', label: 'Multiple choice (several answers)', family: 'choice', text: 'Choose the correct letters.' },
+  { value: 'tfng', label: 'True / False / Not Given', family: 'choice', text: '' },
+  { value: 'ynng', label: 'Yes / No / Not Given', family: 'choice', text: '' },
+  { value: 'matching_headings', label: 'Matching headings', family: 'match', text: 'Choose the correct heading for each paragraph from the list of headings below.' },
+  { value: 'matching_info', label: 'Matching information', family: 'match', text: 'Which paragraph contains the following information?' },
+  { value: 'matching_features', label: 'Matching features', family: 'match', text: 'Match each statement with the correct option from the box.' },
+  { value: 'matching_sentence_endings', label: 'Matching sentence endings', family: 'match', text: 'Complete each sentence with the correct ending from the box.' },
+  { value: 'other', label: 'Other', family: 'other', text: '' },
+]
+
+export const WORD_LIMITS = [
+  { value: 'one_word', label: 'One word only', words: 'ONE WORD ONLY' },
+  { value: 'one_word_and_or_number', label: 'One word and/or a number', words: 'ONE WORD AND/OR A NUMBER' },
+  { value: 'two_words', label: 'No more than two words', words: 'NO MORE THAN TWO WORDS' },
+  { value: 'two_words_and_or_number', label: 'No more than two words and/or a number', words: 'NO MORE THAN TWO WORDS AND/OR A NUMBER' },
+  { value: 'three_words', label: 'No more than three words', words: 'NO MORE THAN THREE WORDS' },
+  { value: 'three_words_and_or_number', label: 'No more than three words and/or a number', words: 'NO MORE THAN THREE WORDS AND/OR A NUMBER' },
+  { value: 'number_only', label: 'A number only', words: 'A NUMBER' },
+]
+
+const KIND_BY_VALUE = Object.fromEntries(GROUP_KINDS.map((k) => [k.value, k]))
+const LIMIT_BY_VALUE = Object.fromEntries(WORD_LIMITS.map((w) => [w.value, w]))
+
+/** The instruction the real test prints, built from the group's settings. */
+export function generateInstruction(group, { module, questions = [] } = {}) {
+  if (!group) return ''
+  if (group.instruction && group.instruction.trim()) return group.instruction.trim()
+  const kind = KIND_BY_VALUE[group.kind]
+  const parts = []
+  if (group.kind === 'tfng' || group.kind === 'ynng') {
+    return defaultInstruction(null, [{ type: group.kind === 'tfng' ? 'true_false_ng' : 'yes_no_ng' }])
+  }
+  if (group.kind === 'mcq_single' || group.kind === 'mcq_multi') {
+    const letters = (questions[0]?.options?.choices || []).map((_, i) => String.fromCharCode(65 + i))
+    if (group.kind === 'mcq_multi') {
+      const n = questions.length
+      parts.push(`Choose ${NUMBER_WORDS[n] || n} letters${letters.length ? `, ${letters[0]}–${letters[letters.length - 1]}` : ''}.`)
+    } else {
+      parts.push(letters.length > 1 ? `Choose the correct letter, ${letters.slice(0, -1).join(', ')} or ${letters[letters.length - 1]}.` : 'Choose the correct answer.')
+    }
+    return parts.join(' ')
+  }
+  if (kind?.text) parts.push(kind.text)
+  const limit = LIMIT_BY_VALUE[group.word_limit]
+  if (limit) {
+    parts.push(
+      module === 'reading'
+        ? `Choose ${limit.words} from the passage for each answer.`
+        : `Write ${limit.words} for each answer.`
+    )
+  }
+  if (kind?.family === 'match') {
+    const n = questions.length
+    if (group.kind !== 'matching_info' && n) {
+      parts.push(`Choose ${NUMBER_WORDS[n] || n} answer${n === 1 ? '' : 's'} from the box.`)
+    }
+    if (group.options_reusable) parts.push('You may use any letter more than once.')
+  }
+  return parts.join(' ')
+}
+
+/** Groups for these sections, or [] when the table isn't there yet. */
+export async function loadQuestionGroups(supabase, sectionIds) {
+  if (!sectionIds?.length) return []
+  try {
+    const { data, error } = await supabase.rpc('get_mock_question_groups', { p_section_ids: sectionIds })
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}
+
 /**
  * Split a section's questions into display groups.
  * Returns [{ key, questions, from, to, title, instruction, family,
  *            prompts: {id: cleanedPrompt}, subheadings: {id: text} }]
  */
-export function buildQuestionGroups(questions, questionIndexById) {
+export function buildQuestionGroups(questions, questionIndexById, { groups = [], module } = {}) {
+  const groupById = Object.fromEntries((groups || []).map((g) => [g.id, g]))
   const rows = questions.map((q) => {
     let text = (q.prompt || '').trim()
     let instruction = ''
@@ -102,7 +195,8 @@ export function buildQuestionGroups(questions, questionIndexById) {
       text = text.slice(t[0].length).trim()
     }
     text = stripBakedNumber(text, questionIndexById[q.id])
-    return { q, text, instruction, title, subheading, family: familyOf(q) }
+    const stored = q.group_id ? groupById[q.group_id] : null
+    return { q, text, instruction, title, subheading, family: familyOf(q), stored }
   })
 
   // Runs: same family, same title, and the same instruction (an
@@ -110,6 +204,15 @@ export function buildQuestionGroups(questions, questionIndexById) {
   const runs = []
   for (const row of rows) {
     const last = runs[runs.length - 1]
+    // A stored group keeps its questions together, whatever the text says.
+    if (row.stored || last?.stored) {
+      if (last && last.stored && row.stored && last.stored.id === row.stored.id) {
+        last.rows.push(row)
+      } else {
+        runs.push({ family: row.family, title: row.title, instruction: row.instruction, rows: [row], stored: row.stored })
+      }
+      continue
+    }
     const fits =
       last &&
       last.family === row.family &&
@@ -138,7 +241,30 @@ export function buildQuestionGroups(questions, questionIndexById) {
       lastSub = r.subheading || lastSub
     })
 
+    if (run.stored) {
+      const g = run.stored
+      const generated = generateInstruction(g, { module, questions: qs })
+      const isInfo = g.kind === 'matching_info'
+      return {
+        key: g.id,
+        questions: qs,
+        family: run.family,
+        from: questionIndexById[qs[0].id],
+        to: questionIndexById[qs[qs.length - 1].id],
+        title: g.title || run.title,
+        // The stored instruction already says what a shared stem would
+        // ("Which paragraph contains…"), so don't print it twice.
+        instruction: [isInfo && !g.instruction ? '' : stem, generated].filter(Boolean).join(' '),
+        prompts,
+        subheadings,
+        reusable: Boolean(g.options_reusable),
+        kind: g.kind,
+        wordLimit: g.word_limit || null,
+      }
+    }
+
     const instructionParts = [stem, run.instruction || defaultInstruction(run.family, qs)].filter(Boolean)
+    const allText = instructionParts.join(' ')
     return {
       key: qs[0].id,
       questions: qs,
@@ -146,9 +272,10 @@ export function buildQuestionGroups(questions, questionIndexById) {
       from: questionIndexById[qs[0].id],
       to: questionIndexById[qs[qs.length - 1].id],
       title: run.title,
-      instruction: instructionParts.join(' '),
+      instruction: allText,
       prompts,
       subheadings,
+      reusable: /any letter more than once|any (?:option|answer) more than once/i.test(allText),
     }
   })
 }

@@ -6,6 +6,7 @@ import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES, DEFAULT_TIME_LIMITS } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
+import Icon from '../../components/Icon'
 
 const DEFAULT_TYPES = ['image']
 const DEFAULT_MOCK_MODE = 'task2'
@@ -348,7 +349,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   <div className="rounded-lg border border-brass/25 bg-panel-2 p-3">
     <div className="flex items-center justify-between gap-2 mb-1.5">
       <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-brass font-mono font-semibold">
-        <span className="text-sm leading-none">📅</span> Deadline
+        <span className="text-sm leading-none"><Icon name="calendar" className="h-3.5 w-3.5" /></span> Deadline
       </label>
 
       {dueDate && (
@@ -493,7 +494,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
               {mockTask1Image ? (
                 <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel px-3 py-2.5">
                   <span className="text-sm text-paper truncate max-w-[220px]">
-                    📎 {mockTask1Image.name}
+                    <Icon name="paperclip" className="h-4 w-4" /> {mockTask1Image.name}
                   </span>
                   <button
                     type="button"
@@ -605,7 +606,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           {file ? (
             <div className="flex items-center gap-2 flex-wrap rounded-md border border-line bg-panel-2 px-3 py-2.5">
               <span className="text-sm text-paper truncate max-w-[220px]">
-                📎 {file.name}
+                <Icon name="paperclip" className="h-4 w-4" /> {file.name}
               </span>
               <button
                 type="button"

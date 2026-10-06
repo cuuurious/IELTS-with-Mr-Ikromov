@@ -11,6 +11,7 @@ import GroupSettingsModal from './GroupSettingsModal'
 import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, isDocumentFile, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
+import Icon from './Icon'
 
 // 2026-10-06: a group chat now opens with only its latest 100 messages
 // ("Load older messages" fetches the next 100), and reactions / "delete
@@ -1873,7 +1874,7 @@ export default function GroupChat({
               ? [
                   {
                     key: 'copy',
-                    icon: '📋',
+                    icon: <Icon name="clipboard" className="h-4 w-4" />,
                     label: 'Copy text',
                     onClick: () => copyMessageText(menuMessage),
                   },
@@ -1883,7 +1884,7 @@ export default function GroupChat({
               ? [
                   {
                     key: 'pin',
-                    icon: '📌',
+                    icon: <Icon name="pin" className="h-4 w-4" />,
                     label: isPinned(menuMessage.id)
                       ? 'Unpin'
                       : 'Pin message',
@@ -1899,7 +1900,7 @@ export default function GroupChat({
               ? [
                   {
                     key: 'edit',
-                    icon: '✏️',
+                    icon: <Icon name="pencil" className="h-4 w-4" />,
                     label: 'Edit',
                     onClick: () => startEdit(menuMessage),
                   },
@@ -1907,7 +1908,7 @@ export default function GroupChat({
               : []),
             {
               key: 'select',
-              icon: '☑️',
+              icon: <Icon name="checkCircle" className="h-4 w-4" />,
               label: 'Select',
               onClick: () => startSelecting(menuMessage.id),
             },
@@ -1915,7 +1916,7 @@ export default function GroupChat({
               ? [
                   {
                     key: 'delete-everyone',
-                    icon: '🗑️',
+                    icon: <Icon name="trash" className="h-4 w-4" />,
                     label: 'Delete for everyone',
                     danger: true,
                     divider: true,
@@ -1926,7 +1927,7 @@ export default function GroupChat({
               : []),
             {
               key: 'delete-me',
-              icon: '🗑️',
+              icon: <Icon name="trash" className="h-4 w-4" />,
               label: 'Delete for me',
               danger: true,
               divider: !canDeleteEveryone(menuMessage),
@@ -2036,7 +2037,7 @@ export default function GroupChat({
               onClick={() => jumpToMessage(pinnedMessage.id)}
               className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
             >
-              <span className="text-brass shrink-0">📌</span>
+              <span className="text-brass shrink-0"><Icon name="pin" className="h-4 w-4" /></span>
 
               <div className="min-w-0">
                 <div className="text-[10px] text-mist">
@@ -2305,7 +2306,7 @@ export default function GroupChat({
                         className="text-brass"
                         title="Pinned"
                       >
-                        📌
+                        <Icon name="pin" className="h-3.5 w-3.5" />
                       </span>
                     )}
 

@@ -327,6 +327,9 @@ export default function Layout({
 
   const subtitle = isTeacher ? 'Teacher' : isExaminer ? 'Examiner' : 'Student'
 
+  // Phone tab bar: first four items with an icon from the first sections.
+  const bottomTabs = allItems.filter((item) => item.key !== 'howto' && item.icon).slice(0, 4)
+
   return (
     <div className="min-h-screen flex flex-col text-paper bg-ink">
       <header ref={navRef} className="sticky top-0 z-40 border-b border-line bg-panel">
@@ -588,7 +591,7 @@ export default function Layout({
         </div>
       )}
 
-      <main className="flex-1">
+      <main className="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 xl:px-8 xl:py-7">
           {pageTitle && !activeItem?.hideTitle && (
             <h1 className="mb-5 text-[26px] font-semibold tracking-[-0.02em]">{pageTitle}</h1>
@@ -596,6 +599,56 @@ export default function Layout({
           <div className="animate-fade-up">{children}</div>
         </div>
       </main>
+
+      {/* PHONE TAB BAR (2026-10-06): the four main pages one thumb away;
+          everything else stays in the drawer behind "More". */}
+      {bottomTabs.length > 0 && (
+        <nav
+          aria-label="Quick"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        >
+          <div className="mx-auto grid max-w-md grid-cols-5">
+            {bottomTabs.map((item) => {
+              const TabIcon = item.icon
+              const active = activeTab === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => goToTab(item.key)}
+                  aria-current={active ? 'page' : undefined}
+                  className="focus-ring relative flex h-[62px] flex-col items-center justify-center gap-1 text-[11px] font-medium"
+                >
+                  <span
+                    className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-200 ${
+                      active ? 'bg-brass text-onbrass' : 'text-paper-dim'
+                    }`}
+                  >
+                    {TabIcon && <TabIcon className="h-5 w-5" />}
+                  </span>
+                  <span className={`max-w-full truncate px-1 ${active ? 'text-paper' : 'text-mist'}`}>
+                    {SHORT_LABELS[item.label] || item.label}
+                  </span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="focus-ring flex h-[62px] flex-col items-center justify-center gap-1 text-[11px] font-medium"
+            >
+              <span
+                className={`flex h-8 w-12 items-center justify-center rounded-full ${
+                  activeTab && !bottomTabs.some((t) => t.key === activeTab) ? 'bg-panel-2 text-paper' : 'text-paper-dim'
+                }`}
+              >
+                <IconMenu className="h-5 w-5" />
+              </span>
+              <span className="text-mist">More</span>
+            </button>
+          </div>
+        </nav>
+      )}
 
       {settingsOpen && <AccountSettingsModal onClose={() => setSettingsOpen(false)} />}
       {targetOpen && <TargetBandModal onClose={() => setTargetOpen(false)} />}

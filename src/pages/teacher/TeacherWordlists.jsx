@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useSessionState } from '../../lib/sessionState'
+import Icon from '../../components/Icon'
 
 // Same rotation used everywhere else in the app (Groups & homework,
 // Students, Leaderboards, Group chats) — keyed by a group's position
@@ -1404,7 +1405,7 @@ function EditWordlistModal({
                   >
                     {generating
                       ? 'Generating details...'
-                      : '✨ Generate details for new words'}
+                      : <><Icon name="sparkle" className="h-3.5 w-3.5" /> Generate details for new words</>}
                   </button>
 
                   <button
@@ -1419,7 +1420,7 @@ function EditWordlistModal({
                   >
                     {regeneratingAll
                       ? 'Regenerating all...'
-                      : '🔄 Regenerate all definitions'}
+                      : <><Icon name="refresh" className="h-3.5 w-3.5" /> Regenerate all definitions</>}
                   </button>
 
                   <button

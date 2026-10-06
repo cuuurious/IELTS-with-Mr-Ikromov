@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { enablePush, getPushStatus, pushSupported } from '../lib/push'
 import { readSession, writeSession } from '../lib/sessionState'
+import Icon from './Icon'
 
 const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME
 
@@ -148,7 +149,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
         {/* OPTION 1 — push */}
         <div className="rounded-2xl border border-line bg-panel p-5">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brass/15 text-xl">🔔</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brass/15 text-xl text-brass"><Icon name="bell" className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1">
               <p className="font-display text-lg">Notifications on this {ios || /Android/i.test(navigator.userAgent) ? 'phone' : 'device'}</p>
               <p className="mt-1 text-sm text-mist">Pop-up alerts, like any other app.</p>
@@ -156,7 +157,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
               {pushState === 'denied' ? (
                 <p className="mt-3 rounded-lg border border-coral/40 bg-coral/10 px-3 py-2 text-sm text-coral">
                   Notifications are blocked for this site. Allow them in your browser&apos;s site settings
-                  (tap the 🔒 next to the address), then reload — or use Telegram below.
+                  (tap the <Icon name="lock" className="h-3.5 w-3.5" /> next to the address), then reload — or use Telegram below.
                 </p>
               ) : iosNeedsInstall ? (
                 <p className="mt-3 rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper-dim">
@@ -183,7 +184,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
         {TELEGRAM_BOT_USERNAME && (
           <div className="rounded-2xl border border-line bg-panel p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan/15 text-xl">✈️</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan/15 text-xl text-cyan"><Icon name="send" className="h-5 w-5" /></span>
               <div className="min-w-0 flex-1">
                 <p className="font-display text-lg">Telegram bot</p>
                 <p className="mt-1 text-sm text-mist">

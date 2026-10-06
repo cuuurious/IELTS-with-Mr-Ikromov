@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import Icon from '../../components/Icon'
 
 /*
  * ERRORS (2026-10-02) — what broke on students' / staff phones.
@@ -81,7 +82,7 @@ export default function ClientErrors() {
       {error && <p className="text-sm text-coral">{error}</p>}
 
       {groups.length === 0 ? (
-        <div className="rounded-lg border border-line bg-panel-2 px-5 py-8 text-sm text-mist">No errors reported. 🎉</div>
+        <div className="rounded-lg border border-line bg-panel-2 px-5 py-8 text-sm text-mist">No errors reported. <Icon name="party" className="h-4 w-4" /></div>
       ) : (
         <ul className="flex flex-col gap-2">
           {groups.map((group) => {

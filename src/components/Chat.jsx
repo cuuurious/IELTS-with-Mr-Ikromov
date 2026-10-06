@@ -11,6 +11,7 @@ import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
 import { fetchAll } from '../lib/fetchAll'
+import Icon from './Icon'
 
 // 2026-10-06: a chat now opens with only its latest 100 messages
 // ("Load older messages" fetches the next 100), and reactions/pins are
@@ -222,12 +223,12 @@ export default function Chat({
 
     const parsed = parseMessage(message.content)
 
-    if (parsed.type === 'image') return '📷 Photo'
-    if (parsed.type === 'video') return '🎥 Video'
-    if (parsed.type === 'video_note') return '📹 Video message'
-    if (parsed.type === 'audio') return '🎤 Voice message'
+    if (parsed.type === 'image') return 'Photo'
+    if (parsed.type === 'video') return 'Video'
+    if (parsed.type === 'video_note') return 'Video message'
+    if (parsed.type === 'audio') return 'Voice message'
     if (parsed.type === 'file') {
-      return `📎 ${parsed.name || 'File'}`
+      return `${parsed.name || 'File'}`
     }
 
     return parsed.text
@@ -2219,7 +2220,7 @@ export default function Chat({
                 : 'border-line text-mist hover:border-coral hover:text-coral'
             }`}
           >
-            🗑
+            <Icon name="trash" className="h-4 w-4" />
           </button>
 
           {chatMenuOpen && (
@@ -2271,7 +2272,7 @@ export default function Chat({
               ? [
                   {
                     key: 'copy',
-                    icon: '📋',
+                    icon: <Icon name="clipboard" className="h-4 w-4" />,
                     label: 'Copy text',
                     onClick: () => copyMessageText(menuMessage),
                   },
@@ -2279,7 +2280,7 @@ export default function Chat({
               : []),
             {
               key: 'pin',
-              icon: '📌',
+              icon: <Icon name="pin" className="h-4 w-4" />,
               label: isPinned(menuMessage.id)
                 ? 'Unpin'
                 : 'Pin message',
@@ -2292,7 +2293,7 @@ export default function Chat({
               ? [
                   {
                     key: 'edit',
-                    icon: '✏️',
+                    icon: <Icon name="pencil" className="h-4 w-4" />,
                     label: 'Edit',
                     onClick: () => startEdit(menuMessage),
                   },
@@ -2300,7 +2301,7 @@ export default function Chat({
               : []),
             {
               key: 'select',
-              icon: '☑️',
+              icon: <Icon name="checkCircle" className="h-4 w-4" />,
               label: 'Select',
               onClick: () => startSelecting(menuMessage.id),
             },
@@ -2308,7 +2309,7 @@ export default function Chat({
               ? [
                   {
                     key: 'delete-everyone',
-                    icon: '🗑️',
+                    icon: <Icon name="trash" className="h-4 w-4" />,
                     label: 'Delete for everyone',
                     danger: true,
                     divider: true,
@@ -2319,7 +2320,7 @@ export default function Chat({
               : []),
             {
               key: 'delete-me',
-              icon: '🗑️',
+              icon: <Icon name="trash" className="h-4 w-4" />,
               label: 'Delete for me',
               danger: true,
               divider: !canDeleteEveryone(menuMessage),
@@ -2358,7 +2359,7 @@ export default function Chat({
               onClick={() => jumpToMessage(pinnedMessage.id)}
               className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
             >
-              <span className="text-brass shrink-0">📌</span>
+              <span className="text-brass shrink-0"><Icon name="pin" className="h-4 w-4" /></span>
 
               <div className="min-w-0">
                 <div className="text-[10px] text-mist">
@@ -2697,7 +2698,7 @@ export default function Chat({
 
                   {messagePinned && (
                     <span className="text-brass" title="Pinned">
-                      📌
+                      <Icon name="pin" className="h-3.5 w-3.5" />
                     </span>
                   )}
 

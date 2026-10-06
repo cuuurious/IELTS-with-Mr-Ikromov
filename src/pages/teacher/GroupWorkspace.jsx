@@ -10,6 +10,7 @@ import { useSessionState } from '../../lib/sessionState'
 import { skillOfHomework, formatDue } from '../../lib/skills'
 import { SkillIcon } from '../../components/SkillArt'
 import { fetchAll } from '../../lib/fetchAll'
+import Icon from '../../components/Icon'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -1172,7 +1173,7 @@ export default function GroupWorkspace({ teacherId }) {
                           title="Rename group"
                           aria-label="Rename group"
                         >
-                          ✎
+                          <Icon name="pencil" className="h-4 w-4" />
                         </button>
 
                         <button
@@ -1439,7 +1440,7 @@ export default function GroupWorkspace({ teacherId }) {
                       title="Rename group"
                       aria-label="Rename group"
                     >
-                      ✎
+                      <Icon name="pencil" className="h-4 w-4" />
                     </button>
 
                     <button
@@ -1809,6 +1810,25 @@ export default function GroupWorkspace({ teacherId }) {
                               </div>
                             )}
 
+                            {/* Hand-in count for this column (2026-10-06). */}
+                            {roster.length > 0 && (() => {
+                              const handed = roster.filter((st) => {
+                                const st2 = getSubmissionStatus(submissions[`${hw.id}_${st.id}`], hw.due_date)
+                                return st2 === 'done' || st2 === 'late'
+                              }).length
+                              const skillKey = skillOfHomework(hw)?.key || 'general'
+                              return (
+                                <div className={`progress-handin progress-handin-${skillKey}`} title={`${handed} of ${roster.length} handed in`}>
+                                  <span className="progress-handin-bar">
+                                    <span style={{ width: `${(handed / roster.length) * 100}%` }} />
+                                  </span>
+                                  <span className="progress-handin-count">
+                                    {handed}/{roster.length}
+                                  </span>
+                                </div>
+                              )
+                            })()}
+
                           </th>
 
                         ))}
@@ -1958,14 +1978,14 @@ export default function GroupWorkspace({ teacherId }) {
 
                             const statusLabel =
                               status === 'done'
-                                ? 'DONE'
+                                ? 'Done'
                                 : status === 'late'
-                                  ? 'LATE'
+                                  ? 'Late'
                                   : status === 'overdue'
-                                    ? 'INCOMPLETE'
+                                    ? 'Missed'
                                     : mockInProgress
-                                      ? 'WRITING…'
-                                      : 'NOT YET'
+                                      ? 'Writing…'
+                                      : 'Not yet'
 
                             const statusClassName =
                               status === 'done'

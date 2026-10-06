@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Icon from '../../components/Icon'
 
 /*
  * ================================================================
@@ -179,10 +180,10 @@ function IllustrationDashboard() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="flex h-6 w-6 items-center justify-center rounded-md border border-line bg-panel-2 text-[10px] text-mist">
-                ☾
+                <Icon name="moon" className="h-3 w-3" />
               </span>
               <span className="flex h-6 w-6 items-center justify-center rounded-md border border-line bg-panel-2 text-[10px] text-mist">
-                🔔
+                <Icon name="bell" className="h-3 w-3" />
               </span>
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brass text-[10px] font-semibold text-onbrass">
                 A
@@ -296,7 +297,7 @@ function IllustrationChat() {
         </div>
         <div className="mt-2 flex items-center gap-2 rounded-full border border-line bg-panel-2 px-3 py-1.5">
           <span className="flex-1 text-[10px] text-mist">Write a message…</span>
-          <span className="text-[10px] text-brass">➤</span>
+          <span className="text-[10px] text-brass"><Icon name="send" className="h-3 w-3" /></span>
         </div>
       </div>
     </MockFrame>
@@ -403,7 +404,7 @@ export default function HowToUseGuide() {
             download
             className="focus-ring mt-4 inline-flex items-center gap-2 rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
           >
-            ⬇ Download as PDF
+            <Icon name="download" className="h-4 w-4" /> Download as PDF
           </a>
         </div>
       </section>

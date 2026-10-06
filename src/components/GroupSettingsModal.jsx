@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import ProfileModal from './ProfileModal'
 import ConfirmModal from './ConfirmModal'
 import { compressImageIfNeeded } from '../lib/compressImage'
+import Icon from './Icon'
 
 /*
  * ================================================================
@@ -810,10 +811,10 @@ export default function GroupSettingsModal({
 
               <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
                 {[
-                  { key: 'image', label: 'Photos', icon: '🖼️' },
-                  { key: 'video', label: 'Videos', icon: '🎥' },
-                  { key: 'audio', label: 'Voice messages', icon: '🎤' },
-                  { key: 'video_note', label: 'Video messages', icon: '📹' },
+                  { key: 'image', label: 'Photos', icon: <Icon name="image" className="h-4 w-4" /> },
+                  { key: 'video', label: 'Videos', icon: <Icon name="video" className="h-4 w-4" /> },
+                  { key: 'audio', label: 'Voice messages', icon: <Icon name="mic" className="h-4 w-4" /> },
+                  { key: 'video_note', label: 'Video messages', icon: <Icon name="camera" className="h-4 w-4" /> },
                 ]
                   .filter((row) => mediaCounts[row.key] > 0)
                   .map((row) => (

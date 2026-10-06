@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { formatTargetBand } from '../lib/targetBands'
 import TargetBandIcon from './TargetBandIcon'
+import Icon from './Icon'
 
 // A word list now counts toward a student's homework completion
 // percentage, but only once they've actually scored well on it — not
@@ -1347,7 +1348,7 @@ export default function Leaderboard({
 
                 {student.streak > 0 && (
                   <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('streak')}`}>
-                    🔥 {student.streak}{' '}
+                    <Icon name="flame" className="h-3 w-3 mr-1" />{student.streak}{' '}
                     {student.streak === 1 ? 'day' : 'days'}
                   </span>
                 )}
@@ -1480,7 +1481,7 @@ export default function Leaderboard({
                       Streak
                     </div>
                     <div className="mt-1 text-xl font-display text-brass">
-                      🔥 {selectedStudent.streak ?? 0}
+                      <Icon name="flame" className="h-5 w-5" /> {selectedStudent.streak ?? 0}
                     </div>
                   </div>
                 </div>

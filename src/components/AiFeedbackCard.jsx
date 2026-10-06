@@ -1,3 +1,4 @@
+import Icon from './Icon'
 /*
  * Shows the AI's band score + feedback for one submission — used by
  * both HomeworkCard.jsx (student view) and SubmissionPanel.jsx
@@ -37,7 +38,7 @@ export default function AiFeedbackCard({
         </div>
 
         <div className="rounded-2xl border border-line bg-panel-2 px-4 py-4 text-sm text-paper-dim">
-          🤖 The AI is reading this submission now — this usually takes
+          <Icon name="robot" className="h-4 w-4" /> The AI is reading this submission now — this usually takes
           under a minute.
         </div>
       </section>

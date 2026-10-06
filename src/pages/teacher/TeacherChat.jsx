@@ -16,11 +16,11 @@ function previewText(content) {
     const parsed = JSON.parse(content)
 
     if (parsed?.type && parsed?.url) {
-      if (parsed.type === 'image') return '📷 Photo'
-      if (parsed.type === 'video') return '🎥 Video'
-      if (parsed.type === 'audio') return '🎤 Voice message'
+      if (parsed.type === 'image') return 'Photo'
+      if (parsed.type === 'video') return 'Video'
+      if (parsed.type === 'audio') return 'Voice message'
       if (parsed.type === 'file') {
-        return `📎 ${parsed.name || 'File'}`
+        return `${parsed.name || 'File'}`
       }
     }
   } catch {

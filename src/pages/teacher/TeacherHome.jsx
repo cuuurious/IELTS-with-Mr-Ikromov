@@ -20,8 +20,8 @@ import SkillArt, { SkillIcon } from '../../components/SkillArt'
  *   - the latest hand-ins and this week's word practice.
  * Everything links into the existing screens; nothing here edits data.
  *
- * "Handed in" = a submissions row with status 'done' (same rule the
- * Groups screen and the student Home use).
+ * "Handed in" = a submissions row with status 'done'; for deadlines that
+ * have passed, a homework_completions row also counts (kept after a reset).
  */
 
 const DAY = 86400000
@@ -79,6 +79,7 @@ function useTeacherOverview() {
 
         const homeworks = hwRes.data || []
         let submissions = []
+        let completions = []
         if (homeworks.length) {
           // fetchAll (2026-10-06): the API caps a request at 1000 rows no
           // matter what .limit() says, so completion stats came out short.
@@ -91,6 +92,17 @@ function useTeacherOverview() {
               .order('id')
           )
           submissions = subsRes.data || []
+          // A teacher reset puts the submission back to pending but keeps
+          // the homework_completions row. Past deadlines count those too
+          // (same rule as the leaderboard and the parent report).
+          const compRes = await fetchAll(() =>
+            supabase
+              .from('homework_completions')
+              .select('homework_id, student_id, completed_at')
+              .in('homework_id', homeworks.map((h) => h.id))
+              .order('id')
+          )
+          completions = compRes.data || []
         }
 
         // Titles for feed rows whose homework is older than the window.
@@ -114,6 +126,7 @@ function useTeacherOverview() {
           homeworks,
           extraHomeworks,
           submissions,
+          completions,
           feed,
           accessRequests: accessRes.count || 0,
           unreleased: (mockRes.count || 0) + (writingRes.count || 0),
@@ -239,7 +252,9 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     }
 
     const doneSet = new Set(data.submissions.map((s) => `${s.homework_id}:${s.student_id}`))
-    const isDone = (hwId, studentId) => doneSet.has(`${hwId}:${studentId}`)
+    const completedSet = new Set((data.completions || []).map((c) => `${c.homework_id}:${c.student_id}`))
+    const isDone = (hwId, studentId, countCompletions = false) =>
+      doneSet.has(`${hwId}:${studentId}`) || (countCompletions && completedSet.has(`${hwId}:${studentId}`))
 
     // Expected students for a homework: members of its group who had
     // joined before the deadline.
@@ -248,10 +263,13 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
       return (membersByGroup[hw.group_id] || []).filter((m) => !due || !m.created_at || new Date(m.created_at) <= due)
     }
 
+    // Upcoming deadlines: the current hand-in (a reset means "do it again").
+    // Past deadlines: also count a completion recorded before the reset.
     const progress = (hw) => {
       const expected = expectedFor(hw)
-      const done = expected.filter((m) => isDone(hw.id, m.student_id))
-      const missing = expected.filter((m) => !isDone(hw.id, m.student_id))
+      const past = hw.due_date && new Date(hw.due_date) < now
+      const done = expected.filter((m) => isDone(hw.id, m.student_id, past))
+      const missing = expected.filter((m) => !isDone(hw.id, m.student_id, past))
       return { total: expected.length, done: done.length, missing }
     }
 

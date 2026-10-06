@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabaseClient'
 import ConfirmModal from './ConfirmModal'
 import { readSession, writeSession } from '../lib/sessionState'
 import { ChoiceDragProvider, useActiveChoiceDrag, useChoiceDragSource } from './exam/choiceDrag'
-import { buildQuestionGroups } from './exam/questionGroups'
+import { buildQuestionGroups, loadQuestionGroups } from './exam/questionGroups'
 import QuestionHighlighter from './exam/QuestionHighlighter'
+import Icon from './Icon'
 
 /*
  * ================================================================
@@ -117,7 +118,7 @@ const FONT_SCALE_STEPS = [
 // oddly on top of a white/cream/black override — see the components
 // below that consume `theme` for exactly this.
 const EXAM_THEMES = [
-  { key: 'default', label: 'App theme (default)', bg: null, text: null, surface: null, surfaceBorder: null, mutedText: null },
+  { key: 'default', label: 'Site colours', bg: null, text: null, surface: null, surfaceBorder: null, mutedText: null },
   { key: 'light', label: 'White background, black text', bg: '#ffffff', text: '#1a1a1a', surface: '#f2f2f0', surfaceBorder: '#d8d6d0', mutedText: '#57534e' },
   { key: 'cream', label: 'Cream background, black text', bg: '#fdf6e3', text: '#2b2313', surface: '#f5ecd0', surfaceBorder: '#ddcf9e', mutedText: '#6b5d33' },
   { key: 'contrast', label: 'Black background, yellow text', bg: '#0a0a0a', text: '#ffe066', surface: '#1a1a1a', surfaceBorder: '#4a4420', mutedText: '#c9b94d' },
@@ -261,11 +262,14 @@ export default function MockExams({ selfId }) {
     }
 
     const questions = [...(questionsRaw || [])].sort((a, b) => a.order_index - b.order_index)
+    // Stored question groups (migration_74) — [] if not there yet.
+    const storedGroups = await loadQuestionGroups(supabase, sectionIds)
 
     setActiveExam({
       exam,
       sections: (sections || []).map((s) => ({
         ...s,
+        groups: storedGroups.filter((g) => g.section_id === s.id),
         questions: buildAttemptQuestions((questions || []).filter((q) => q.section_id === s.id), exam),
       })),
     })
@@ -613,8 +617,28 @@ export function ExamTaker({
 
   // Settings panel state — see FONT_SCALE_STEPS/EXAM_THEMES comment above.
   const [fontScaleIdx, setFontScaleIdx] = useState(0)
-  const [themeIdx, setThemeIdx] = useState(0)
+  // White page, black text by default — like the real computer test.
+  const [themeIdx, setThemeIdx] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // Reading: width of the passage pane in % (the real test's ↔ handle).
+  const [splitPct, setSplitPct] = useState(50)
+  const startSplitDrag = (e) => {
+    const box = e.currentTarget.parentElement?.getBoundingClientRect()
+    if (!box) return
+    e.preventDefault()
+    const move = (ev) => {
+      const pct = ((ev.clientX - box.left) / box.width) * 100
+      setSplitPct(Math.min(75, Math.max(25, pct)))
+    }
+    const up = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      document.documentElement.classList.remove('split-dragging')
+    }
+    document.documentElement.classList.add('split-dragging')
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
   const activeFontScale = FONT_SCALE_STEPS[fontScaleIdx].scale
   const activeTheme = EXAM_THEMES[themeIdx]
   const sectionThemeStyle = activeTheme.bg ? { backgroundColor: activeTheme.bg, color: activeTheme.text } : undefined
@@ -706,6 +730,12 @@ export function ExamTaker({
     notesRef.current = notes
   }, [notes])
   const [notesOpen, setNotesOpen] = useState(false)
+
+  // Listening: where each part's recording had got to (seconds), saved
+  // with the draft so a refresh carries on from the same point — the
+  // real test saves the audio position to its server too (2026-10-06).
+  const audioPosRef = useRef({})
+  const [audioStartAt, setAudioStartAt] = useState({})
 
   // One volume setting for every section's audio, adjusted from the ☰
   // Settings panel (see EXAM_THEMES block) — the real exam's own chrome
@@ -827,6 +857,7 @@ export function ExamTaker({
           audioEnded: Object.keys(audioEndedBySectionRef.current),
           reviewStartedAt: reviewStartedAtRef.current,
           notes: notesRef.current,
+          audioPos: audioPosRef.current,
         },
       }
       const key = JSON.stringify(payload)
@@ -944,6 +975,8 @@ export function ExamTaker({
         })
         setAudioEndedBySection(restoredAudioEnded)
         setNotes(draft.notes || '')
+        audioPosRef.current = draft.audioPos || {}
+        setAudioStartAt(draft.audioPos || {})
 
         if (draft.reviewStartedAt) {
           // Resuming mid-review-window: restore the REMAINING review time
@@ -1049,6 +1082,7 @@ export function ExamTaker({
           audioEnded: Object.keys(audioEndedBySectionRef.current),
           reviewStartedAt: reviewStartedAtRef.current,
           notes: notesRef.current,
+          audioPos: audioPosRef.current,
         },
       })
       .eq('id', currentAttemptId)
@@ -1205,6 +1239,7 @@ export function ExamTaker({
             audioEnded: Object.keys(audioEndedBySectionRef.current),
             reviewStartedAt: startedAt,
             notes: notesRef.current,
+          audioPos: audioPosRef.current,
           },
         })
         .eq('id', currentAttemptId)
@@ -1504,6 +1539,16 @@ export function ExamTaker({
     return { from: questionIndexById[qs[0].id], to: questionIndexById[qs[qs.length - 1].id] }
   })()
 
+  const allHighlights = sections.flatMap((sec, sectionIdx) =>
+    (highlightsBySection[sec.id] || [])
+      .slice()
+      .sort((a, b) => a.start - b.start)
+      .map((h) => {
+        const raw = (sec.passage_text || '').slice(h.start, h.end).replace(/\s+/g, ' ').trim()
+        return { ...h, sectionId: sec.id, sectionIdx, excerpt: raw.length > 90 ? `${raw.slice(0, 88)}…` : raw }
+      })
+  )
+
   const examChromeBg = '#e3a7ae'
   const examChromeText = '#1c1b29'
 
@@ -1552,7 +1597,7 @@ export function ExamTaker({
       )}
       {flashMessage && (
         <div className="fixed top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-ink/95 px-4 py-2 text-sm font-semibold text-paper shadow-lg animate-pulse">
-          ⏱ {flashMessage}
+          <Icon name="timer" className="h-4 w-4" /> {flashMessage}
         </div>
       )}
 
@@ -1565,7 +1610,7 @@ export function ExamTaker({
             className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold"
             style={{ background: 'rgba(0,0,0,0.1)' }}
           >
-            <span aria-hidden>⚠</span>
+            <span aria-hidden><Icon name="warning" className="h-3.5 w-3.5" /></span>
             {submitRetry ? (
               <span>
                 Couldn't reach the server — retrying your submission (attempt {submitRetry.attempt} of{' '}
@@ -1605,10 +1650,10 @@ export function ExamTaker({
                 exam's own icons, which are shown but disabled throughout
                 the test. */}
             <span className="opacity-40" title="Network connection" aria-hidden>
-              📶
+              <Icon name="signal" className="h-4 w-4" />
             </span>
             <span className="opacity-40" title="Notifications" aria-hidden>
-              🔔
+              <Icon name="bell" className="h-4 w-4" />
             </span>
             <div className="relative" ref={settingsRef}>
               <button
@@ -1617,7 +1662,7 @@ export function ExamTaker({
                 title="Settings"
                 className="focus-ring rounded-md px-2 py-1.5 text-sm opacity-80 hover:opacity-100"
               >
-                ☰
+                <Icon name="menu" className="h-4 w-4" />
               </button>
               {settingsOpen && (
                 <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg text-paper">
@@ -1677,7 +1722,7 @@ export function ExamTaker({
                     <>
                       <p className="mb-2 mt-4 font-mono text-[11px] uppercase tracking-wide text-mist">Volume</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm" aria-hidden>🔊</span>
+                        <span className="text-sm" aria-hidden><Icon name="speaker" className="h-4 w-4" /></span>
                         <input
                           type="range"
                           min="0"
@@ -1703,7 +1748,7 @@ export function ExamTaker({
                 notesOpen ? 'bg-black/10 opacity-100' : 'opacity-80 hover:opacity-100'
               }`}
             >
-              ✏️
+              <Icon name="pencil" className="h-4 w-4" />
             </button>
             {/* No "Finish" button in this bar (Jasur, 2026-09-28). Since
                 2026-10-06 a student can still finish early the way the
@@ -1741,8 +1786,35 @@ export function ExamTaker({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Jot anything down here — nothing in this box is graded or seen by anyone else, just like the real test's notepad."
-            className="focus-ring flex-1 resize-none rounded-b-xl bg-panel-2 p-4 text-sm text-paper placeholder:text-mist"
+            className={`focus-ring min-h-[8rem] flex-1 resize-none bg-panel-2 p-4 text-sm text-paper placeholder:text-mist ${allHighlights.length ? '' : 'rounded-b-xl'}`}
           />
+          {/* Every passage highlight in one list (2026-10-06), like the real
+              test's notes panel: click one to go to its part. */}
+          {allHighlights.length > 0 && (
+            <div className="max-h-[45%] shrink-0 overflow-y-auto border-t border-line px-3 py-3">
+              <p className="mb-2 px-1 text-xs font-semibold text-mist">Highlights ({allHighlights.length})</p>
+              <ul className="flex flex-col gap-1.5">
+                {allHighlights.map((h) => (
+                  <li key={`${h.sectionId}:${h.id}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSectionIdx(h.sectionIdx)
+                        setCurrentQuestionId(null)
+                      }}
+                      className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-left hover:border-brass/40"
+                    >
+                      <span className="block text-[11px] text-mist">Part {h.sectionIdx + 1}</span>
+                      <span className="mt-0.5 block text-sm leading-snug text-paper">
+                        <mark className="rounded-sm bg-[#ffe14d] px-0.5 text-[#1a1a1a]">{h.excerpt}</mark>
+                      </span>
+                      {h.note && <span className="mt-1 block text-xs text-paper-dim">{h.note}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -1809,7 +1881,10 @@ export function ExamTaker({
         // Questions are shown in their IELTS groups ("Questions 1–7" +
         // the instruction once) — see exam/questionGroups.js. Each
         // matching group gets one option bank beside its gaps.
-        const questionGroups = buildQuestionGroups(visibleQuestions, questionIndexById)
+        const questionGroups = buildQuestionGroups(visibleQuestions, questionIndexById, {
+          groups: section.groups,
+          module: exam.module,
+        })
 
         const questionsList = (
           <QuestionHighlighter>
@@ -1847,11 +1922,15 @@ export function ExamTaker({
               onFocusCapture={trackCurrentQuestion}
               onMouseDownCapture={trackCurrentQuestion}
             >
-              <div className="grid grid-cols-1 gap-5 lg:h-full lg:grid-cols-2 lg:gap-0">
+              <div
+                className="flex flex-col gap-5 lg:h-full lg:flex-row lg:gap-0"
+                style={{ '--split': `${splitPct}%` }}
+              >
                 {/* Left pane = the whole passage, filling the screen height
                     below the exam bar and scrolling on its own (real exam
-                    layout), title in bold at the top of it. */}
-                <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-6">
+                    layout), title in bold at the top of it. Its width is
+                    set by the ↔ handle between the panes. */}
+                <div className="lg:h-full lg:w-[var(--split)] lg:shrink-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-5">
                   <p
                     className="mb-4 font-bold"
                     style={{ fontSize: `${activeFontScale}rem`, ...(sectionThemeStyle ? { color: activeTheme.text } : {}) }}
@@ -1895,7 +1974,30 @@ export function ExamTaker({
                     />
                   )}
                 </div>
-                <div className="pb-16 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-line lg:pl-6">
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Drag to resize the passage and questions"
+                  tabIndex={0}
+                  onPointerDown={startSplitDrag}
+                  onDoubleClick={() => setSplitPct(50)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowLeft') setSplitPct((v) => Math.max(25, v - 5))
+                    if (e.key === 'ArrowRight') setSplitPct((v) => Math.min(75, v + 5))
+                  }}
+                  title="Drag to resize (double-click to reset)"
+                  className="group relative hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center lg:flex"
+                >
+                  <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line group-hover:bg-brass/60" />
+                  <span
+                    className="relative z-[1] flex h-9 w-5 items-center justify-center rounded border border-line bg-panel text-[11px] text-mist group-hover:border-brass/60"
+                    style={sectionThemeStyle ? { backgroundColor: activeTheme.surface, borderColor: activeTheme.surfaceBorder, color: activeTheme.mutedText } : undefined}
+                    aria-hidden
+                  >
+                    ↔
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1 pb-16 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pl-5">
                   {questionsList}
                 </div>
               </div>
@@ -1928,6 +2030,10 @@ export function ExamTaker({
                   })()}
                   onEnded={() => handleAudioEnded(section.id)}
                   alreadyEnded={!!audioEndedBySection[section.id]}
+                  startAt={audioStartAt[section.id] || 0}
+                  onProgress={(sec) => {
+                    audioPosRef.current = { ...audioPosRef.current, [section.id]: sec }
+                  }}
                   volume={volume}
                   paused={Boolean(pausedAt)}
                 />
@@ -2148,8 +2254,10 @@ function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId,
 // "Played" state. The volume slider moved into the ☰ Settings panel
 // (see EXAM_THEMES block below) alongside the other display controls,
 // rather than sitting in this line the real exam doesn't show it in.
-function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false, autoStart = false }) {
+function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false, autoStart = false, startAt = 0, onProgress }) {
   const audioRef = useRef(null)
+  const seekedRef = useRef(false)
+  const lastReportRef = useRef(-1)
   const [status, setStatus] = useState(alreadyEnded ? 'done' : 'ready') // ready | playing | done
 
   useEffect(() => {
@@ -2169,9 +2277,23 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
   const handlePlay = () => {
     if (status !== 'ready') return
     setStatus('playing')
+    // Carry on from the saved position after a refresh (once).
+    const audio = audioRef.current
+    if (audio && startAt > 0 && !seekedRef.current) {
+      const seek = () => {
+        try {
+          audio.currentTime = Math.max(0, startAt - 2)
+        } catch {
+          /* ignore — plays from the start */
+        }
+      }
+      seekedRef.current = true
+      if (audio.readyState >= 1) seek()
+      else audio.addEventListener('loadedmetadata', seek, { once: true })
+    }
     // If the browser refuses to start sound on its own (e.g. straight
     // after a page refresh, before any click), fall back to the button.
-    audioRef.current?.play()?.catch?.(() => setStatus('ready'))
+    audio?.play()?.catch?.(() => setStatus('ready'))
   }
 
   // Next part's recording starts by itself once the previous part's
@@ -2193,6 +2315,13 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
         src={url}
         preload="none"
         onEnded={handleEnded}
+        onTimeUpdate={(e) => {
+          const sec = Math.floor(e.currentTarget.currentTime)
+          if (sec !== lastReportRef.current && sec > 0) {
+            lastReportRef.current = sec
+            onProgress?.(sec)
+          }
+        }}
         onContextMenu={(e) => e.preventDefault()}
         controlsList="nodownload noplaybackrate nofullscreen"
         className="hidden"
@@ -2204,12 +2333,12 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
           onClick={handlePlay}
           className="focus-ring shrink-0 rounded-full bg-brass px-4 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-brass-dim"
         >
-          ▶ Play audio
+          {startAt > 0 ? '▶ Continue audio' : '▶ Play audio'}
         </button>
       )}
       {status === 'playing' && (
         <p className="text-xs font-medium text-mist">
-          <span aria-hidden>🔊</span> Audio is playing
+          <span aria-hidden><Icon name="speaker" className="h-3.5 w-3.5" /></span> Audio is playing
         </p>
       )}
     </div>
@@ -2861,8 +2990,15 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
         <>
           <span
             {...source({ choice: value, from: questionId })}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault()
+                onClear?.()
+              }
+            }}
             style={filledStyle}
-            title="Drag to another gap, or back to the options to remove it"
+            title="Drag to another gap, or back to the options to remove it (Delete clears it)"
             className="flex flex-1 cursor-grab touch-none select-none items-center rounded-l-[4px] bg-panel-2 px-2.5 py-1 text-left leading-snug text-paper data-[dragging]:opacity-40"
           >
             {value}
@@ -2884,10 +3020,26 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
   )
 }
 
-function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, layout = 'stack' }) {
+// Keyboard (2026-10-06): arrow keys move between options, Enter/Space
+// puts the focused option into the next empty gap.
+function moveFocusAmongSiblings(e) {
+  const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
+  const step = keys[e.key]
+  if (!step) return
+  const list = Array.from(e.currentTarget.parentElement?.querySelectorAll('button[data-bank-option]') || [])
+  const i = list.indexOf(e.currentTarget)
+  const next = list[(i + step + list.length) % list.length]
+  if (next) {
+    e.preventDefault()
+    next.focus()
+  }
+}
+
+function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, layout = 'stack', reusable = false }) {
   const source = useChoiceDragSource()
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
-  const remaining = choices.filter((choice) => !usedValues.includes(choice))
+  // "You may use any letter more than once" — options never leave the box.
+  const remaining = reusable ? choices : choices.filter((choice) => !usedValues.includes(choice))
   return (
     <div
       data-drop="bank"
@@ -2896,6 +3048,7 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
     >
       <p className="mb-2 text-xs text-mist" style={theme?.bg ? { color: theme.mutedText } : undefined}>
         {hint || 'Drag an option into a gap, or click it to fill the next empty gap.'}
+        {reusable && ' Each option can be used more than once.'}
       </p>
       <div className={layout === 'wrap' ? 'flex flex-wrap gap-1.5' : 'flex flex-col gap-1.5'}>
         {remaining.length > 0 ? (
@@ -2904,6 +3057,8 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
               key={choice}
               type="button"
               {...source({ choice, onClick: () => onPick(choice) })}
+              data-bank-option=""
+              onKeyDown={moveFocusAmongSiblings}
               style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
               className="focus-ring cursor-grab touch-none select-none rounded-md border border-line bg-panel px-3 py-1.5 text-left leading-snug text-paper transition-colors hover:border-brass/50 data-[dragging]:opacity-40"
             >
@@ -2978,6 +3133,7 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
             <MatchingBank
               choices={choices}
               usedValues={usedValues}
+              reusable={group.reusable}
               onPick={(choice) => {
                 const target = questions.find((q) => !(answers[q.id] ?? '').trim())
                 if (target) onChange(target.id, choice)

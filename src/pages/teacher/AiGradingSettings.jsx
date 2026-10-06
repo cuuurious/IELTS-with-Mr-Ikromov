@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { safeFileName } from '../../lib/storageKey'
 import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
+import Icon from '../../components/Icon'
 
 /*
  * Where the teacher uploads the grading rubric the AI evaluates
@@ -183,7 +184,7 @@ function CriteriaCard({ skill, row, teacherId, onSaved }) {
       {row?.file_name ? (
         <div className="rounded-md border border-line bg-panel-2 px-3 py-2.5">
           <div className="text-sm text-paper truncate">
-            📎 {row.file_name}
+            <Icon name="paperclip" className="h-4 w-4" /> {row.file_name}
           </div>
 
           <div className="text-[10px] text-mist font-mono mt-1">

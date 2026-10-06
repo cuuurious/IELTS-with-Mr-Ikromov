@@ -35,14 +35,27 @@ export function useStudyActivity(studentId) {
       supabase.from('word_review_sessions').select('correct, total, created_at').eq('student_id', studentId).gte('created_at', since),
       supabase
         .from('submissions')
-        .select('submitted_at')
+        .select('homework_id, submitted_at')
         .eq('student_id', studentId)
         .eq('status', 'done')
         .gte('submitted_at', since),
+      // Completions survive a teacher reset — count those hand-ins too.
+      supabase
+        .from('homework_completions')
+        .select('homework_id, completed_at')
+        .eq('student_id', studentId)
+        .gte('completed_at', since),
     ])
-      .then(([tests, reviews, subs]) => {
+      .then(([tests, reviews, subs, comps]) => {
         if (cancelled) return
-        setData({ tests: tests.data || [], reviews: reviews.data || [], subs: subs.data || [] })
+        const seen = new Set((subs.data || []).map((s) => s.homework_id))
+        const merged = [...(subs.data || [])]
+        for (const c of comps.data || []) {
+          if (seen.has(c.homework_id)) continue
+          seen.add(c.homework_id)
+          merged.push({ homework_id: c.homework_id, submitted_at: c.completed_at })
+        }
+        setData({ tests: tests.data || [], reviews: reviews.data || [], subs: merged })
       })
       .catch(() => {
         if (!cancelled) setData({ tests: [], reviews: [], subs: [] })
