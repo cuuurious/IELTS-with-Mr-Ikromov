@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchAll } from '../../lib/fetchAll'
+import { safeFileName } from '../../lib/storageKey'
 import { formatTargetBand } from '../../lib/targetBands'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import { downloadScoreReport } from '../../lib/generateScoreReport'
@@ -1161,7 +1163,7 @@ export default function TeacherMockCenter({ onExit }) {
     setAnswerKeyInfo('')
 
     try {
-      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+      const path = `${profile.id}/mock-content/${safeFileName(file.name)}` // ASCII-safe key (2026-10-06)
 
       const { error: uploadError } = await supabase.storage
         .from('mock-content-uploads')
@@ -1190,6 +1192,11 @@ export default function TeacherMockCenter({ onExit }) {
       let filled = 0
       let leftAlone = 0
       let needsReview = 0
+      // Collected here and written in ONE upsert below (2026-10-06 review)
+      // instead of one UPDATE request per question. rlQuestions are full
+      // mock_questions rows (select('*')), so the upsert carries every
+      // column and only correct_answer actually changes.
+      const fills = []
 
       for (const q of rlQuestions) {
         if (!(q.order_index in answerByIndex)) continue
@@ -1214,13 +1221,16 @@ export default function TeacherMockCenter({ onExit }) {
           continue
         }
 
+        fills.push({ ...q, correct_answer: resolved })
+      }
+
+      if (fills.length) {
         const { error: updateError } = await supabase
           .from('mock_questions')
-          .update({ correct_answer: resolved })
-          .eq('id', q.id)
+          .upsert(fills, { onConflict: 'id' })
 
         if (updateError) throw updateError
-        filled++
+        filled = fills.length
       }
 
       const matchedIndexes = new Set(rlQuestions.map((q) => q.order_index))
@@ -1353,7 +1363,7 @@ export default function TeacherMockCenter({ onExit }) {
 
         let audioUrl = part.audioUrl || null
         if (part.audioFile) {
-          const path = `${profile.id}/mock-audio/${Date.now()}-part${i + 1}-${part.audioFile.name}`
+          const path = `${profile.id}/mock-audio/part${i + 1}-${safeFileName(part.audioFile.name)}` // ASCII-safe key (2026-10-06)
           const { error: uploadError } = await supabase.storage
             .from('homework-files')
             .upload(path, part.audioFile, {
@@ -1550,11 +1560,17 @@ export default function TeacherMockCenter({ onExit }) {
           .eq('role', 'student')
           .eq('status', 'approved')
           .order('full_name', { ascending: true }),
-        supabase
-          .from('mock_attempts')
-          .select('*')
-          .not('submitted_at', 'is', null)
-          .order('submitted_at', { ascending: false }),
+        // fetchAll + named columns (2026-10-06 review): select('*') of
+        // every attempt pulled each one's whole draft_answers jsonb and
+        // silently stopped at 1000 rows (older results just vanished).
+        fetchAll(() =>
+          supabase
+            .from('mock_attempts')
+            .select('id, exam_id, user_id, started_at, submitted_at, score, max_score, band, released_at, released_by, tab_switch_count')
+            .not('submitted_at', 'is', null)
+            .order('submitted_at', { ascending: false })
+            .order('id')
+        ),
         // Writing bands live in the brand new self-service system
         // (migration_34) — NEVER homeworks/submissions, which is a
         // separate, teacher-posted homework flow that doesn't count
@@ -1562,22 +1578,30 @@ export default function TeacherMockCenter({ onExit }) {
         //
         // Fetches every SUBMITTED attempt, reviewed or not — not just
         // reviewed ones, so "never attempted" and "attempted, awaiting
-        // review" don't look identical. select('*') also brings back
-        // task1_text/task2_text — the actual essay — which the
-        // expanded row below can now show a teacher on request.
-        supabase
-          .from('writing_mock_attempts')
-          .select('*')
-          .not('submitted_at', 'is', null)
-          .order('submitted_at', { ascending: false }),
+        // review" don't look identical. The essays themselves are NOT
+        // read here any more (2026-10-06 review — every essay of every
+        // student on each load, and capped at 1000 rows): the Student
+        // Profile modal fetches one attempt's essay when "View essay" is
+        // pressed (see StudentProfileModal's loadEssay).
+        fetchAll(() =>
+          supabase
+            .from('writing_mock_attempts')
+            .select('id, exam_id, student_id, started_at, submitted_at, auto_submitted, examiner_band, examiner_feedback, examiner_reviewed_by, examiner_reviewed_at, ta_band, cc_band, lr_band, gra_band, released_at, released_by')
+            .not('submitted_at', 'is', null)
+            .order('submitted_at', { ascending: false })
+            .order('id')
+        ),
         // Every speaking slot, every examiner — not filtered to one
         // examiner_id like SpeakingExaminerDashboard.jsx does, since a
         // teacher needs the whole timetable. RLS (migration_29) already
         // grants a teacher select on every row here.
-        supabase
-          .from('mock_speaking_slots')
-          .select('*')
-          .order('scheduled_at', { ascending: false }),
+        fetchAll(() =>
+          supabase
+            .from('mock_speaking_slots')
+            .select('*')
+            .order('scheduled_at', { ascending: false })
+            .order('id')
+        ),
         supabase
           .from('profiles')
           .select('id, full_name, username')
@@ -1586,9 +1610,13 @@ export default function TeacherMockCenter({ onExit }) {
           .from('groups')
           .select('id, name')
           .order('name', { ascending: true }),
-        supabase
-          .from('group_members')
-          .select('group_id, student_id'),
+        fetchAll(() =>
+          supabase
+            .from('group_members')
+            .select('group_id, student_id')
+            .order('group_id')
+            .order('student_id')
+        ),
         // Exam titles used to be a second and third round trip AFTER
         // all of the above (~0.8 s extra from Uzbekistan). Both tables
         // are tiny, so fetch every title in the same batch instead
@@ -1875,15 +1903,31 @@ export default function TeacherMockCenter({ onExit }) {
         const deletedRl = new Set()
         const deletedWriting = new Set()
         try {
-          for (const it of deletable) {
-            const { error } = await supabase.rpc(
-              it.table === 'writing_mock_attempts' ? 'teacher_delete_writing_attempt' : 'teacher_delete_mock_attempt',
-              { p_attempt_id: it.id }
-            )
-            if (error) throw error
-            if (it.table === 'writing_mock_attempts') deletedWriting.add(it.id)
-            else deletedRl.add(it.id)
+          // Up to 6 deletes in flight at once (2026-10-06 review) instead
+          // of strictly one after another. Each still goes through the
+          // teacher-only per-attempt function (it cleans up related rows),
+          // which takes a single id, so they can't be one .in() request.
+          // Rows that did delete are still dropped from the list below
+          // even if another one failed.
+          const queue = [...deletable]
+          let firstError = null
+          const worker = async () => {
+            while (queue.length && !firstError) {
+              const it = queue.shift()
+              const { error } = await supabase.rpc(
+                it.table === 'writing_mock_attempts' ? 'teacher_delete_writing_attempt' : 'teacher_delete_mock_attempt',
+                { p_attempt_id: it.id }
+              )
+              if (error) {
+                firstError = firstError || error
+                return
+              }
+              if (it.table === 'writing_mock_attempts') deletedWriting.add(it.id)
+              else deletedRl.add(it.id)
+            }
           }
+          await Promise.all(Array.from({ length: Math.min(6, deletable.length) }, worker))
+          if (firstError) throw firstError
         } catch (err) {
           console.error('Could not delete result(s):', err)
           setReleaseError(
@@ -1914,32 +1958,41 @@ export default function TeacherMockCenter({ onExit }) {
       const byTable = { mock_attempts: [], writing_mock_attempts: [], mock_speaking_slots: [] }
       items.forEach((it) => byTable[it.table]?.push(it))
 
-      // mock_attempts: one UPDATE per row — each can carry a different
-      // (possibly teacher-edited) band, so these can't be batched with
-      // a single .in() the way the other two tables' plain confirms can.
-      for (const it of byTable.mock_attempts) {
-        const band = bandOverride(it.key, it.suggestedBand)
-        const { error } = await supabase
-          .from('mock_attempts')
-          .update({ released_at: nowIso, released_by: profile.id, band })
-          .eq('id', it.id)
-        if (error) throw error
-      }
-
-      if (byTable.writing_mock_attempts.length > 0) {
-        const { error } = await supabase
-          .from('writing_mock_attempts')
-          .update({ released_at: nowIso, released_by: profile.id })
-          .in('id', byTable.writing_mock_attempts.map((it) => it.id))
-        if (error) throw error
-      }
-
-      if (byTable.mock_speaking_slots.length > 0) {
-        const { error } = await supabase
-          .from('mock_speaking_slots')
-          .update({ released_at: nowIso, released_by: profile.id })
-          .in('id', byTable.mock_speaking_slots.map((it) => it.id))
-        if (error) throw error
+      // ONE call for everything (2026-10-06 review): release_mock_results
+      // releases every item in a single transaction (released_at,
+      // released_by, and the — possibly teacher-edited — band for
+      // mock_attempts). It used to be one UPDATE per Reading/Listening
+      // row, so a failure halfway left some results released and others
+      // not, and 40 results meant 40 round trips.
+      const p_items = [
+        ...byTable.mock_attempts.map((it) => ({
+          table: 'mock_attempts',
+          id: it.id,
+          band: bandOverride(it.key, it.suggestedBand) ?? null,
+        })),
+        ...byTable.writing_mock_attempts.map((it) => ({ table: 'writing_mock_attempts', id: it.id, band: null })),
+        ...byTable.mock_speaking_slots.map((it) => ({ table: 'mock_speaking_slots', id: it.id, band: null })),
+      ]
+      const { error: releaseRpcError } = await supabase.rpc('release_mock_results', { p_items })
+      if (releaseRpcError) {
+        // Until migration_70 is applied the RPC doesn't exist (PGRST202 /
+        // 42883) — fall back to the old per-table updates so releasing
+        // still works.
+        const missing = releaseRpcError.code === 'PGRST202' || releaseRpcError.code === '42883'
+        if (!missing) throw releaseRpcError
+        for (const it of p_items.filter((p) => p.table === 'mock_attempts')) {
+          const { error } = await supabase
+            .from('mock_attempts')
+            .update({ released_at: nowIso, released_by: profile.id, band: it.band })
+            .eq('id', it.id)
+          if (error) throw error
+        }
+        for (const table of ['writing_mock_attempts', 'mock_speaking_slots']) {
+          const ids = p_items.filter((p) => p.table === table).map((p) => p.id)
+          if (!ids.length) continue
+          const { error } = await supabase.from(table).update({ released_at: nowIso, released_by: profile.id }).in('id', ids)
+          if (error) throw error
+        }
       }
 
       const releasedMockAttemptBandById = {}
@@ -2319,7 +2372,7 @@ export default function TeacherMockCenter({ onExit }) {
       let task1ImageUrl = examFormModal.mode === 'edit' ? examFormModal.exam.task1_image_url : null
 
       if (values.task1ImageFile) {
-        const path = `${profile.id}/writing-mock/${Date.now()}-${values.task1ImageFile.name}`
+        const path = `${profile.id}/writing-mock/${safeFileName(values.task1ImageFile.name)}` // ASCII-safe key (2026-10-06)
         const { error: uploadError } = await supabase.storage
           .from('homework-files')
           .upload(path, values.task1ImageFile, {
@@ -2774,7 +2827,7 @@ export default function TeacherMockCenter({ onExit }) {
         sectionModal.mode === 'edit' ? sectionModal.section.audio_url : null
 
       if (values.audioFile) {
-        const path = `${profile.id}/mock-audio/${Date.now()}-${values.audioFile.name}`
+        const path = `${profile.id}/mock-audio/${safeFileName(values.audioFile.name)}` // ASCII-safe key (2026-10-06)
         const { error: uploadError } = await supabase.storage
           .from('homework-files')
           .upload(path, values.audioFile, {
@@ -3381,14 +3434,25 @@ export default function TeacherMockCenter({ onExit }) {
         if (sectionsError) throw sectionsError
       }
 
+      // Each request points at its own code, so these can't be a single
+      // .in() update; an upsert would need teacher INSERT rights on this
+      // table. Instead (2026-10-06 review) they now run in parallel — up
+      // to 6 at a time — rather than strictly one after another.
       const nowIso = new Date().toISOString()
-      for (const { id, access_code_id } of requestUpdates) {
-        const { error } = await supabase
-          .from('mock_access_requests')
-          .update({ status: 'approved', decided_at: nowIso, decided_by: profile.id, access_code_id })
-          .eq('id', id)
-        if (error) throw error
+      const queue = [...requestUpdates]
+      let firstError = null
+      const worker = async () => {
+        while (queue.length && !firstError) {
+          const { id, access_code_id } = queue.shift()
+          const { error } = await supabase
+            .from('mock_access_requests')
+            .update({ status: 'approved', decided_at: nowIso, decided_by: profile.id, access_code_id })
+            .eq('id', id)
+          if (error) firstError = firstError || error
+        }
       }
+      await Promise.all(Array.from({ length: Math.min(6, requestUpdates.length) }, worker))
+      if (firstError) throw firstError
 
       await reloadMockAccessRequests()
       setSelectedRequestIds(new Set())
@@ -5817,7 +5881,30 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview, onDelete }) {
   )
 }
 
-function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay, onDeleteAttempt }) {
+function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay: toggleEssayOpen, onDeleteAttempt }) {
+  // Essays are loaded on demand (2026-10-06): the results list no longer
+  // downloads every essay up front. id -> { loading } | { task1_text,
+  // task2_text } | { error }.
+  const [essays, setEssays] = useState({})
+  const onToggleEssay = (id) => {
+    toggleEssayOpen(id)
+    if (essays[id] && !essays[id].error) return
+    setEssays((prev) => ({ ...prev, [id]: { loading: true } }))
+    supabase
+      .from('writing_mock_attempts')
+      .select('id, task1_text, task2_text')
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        setEssays((prev) => ({
+          ...prev,
+          [id]: error
+            ? { error: error.message || 'Could not load the essay.' }
+            : { task1_text: data?.task1_text || '', task2_text: data?.task2_text || '' },
+        }))
+      })
+  }
+
   const { profile } = useAuth()
 
   // Teacher-side PDF score report (2026-09-26) — one of the ~15 "build
@@ -6187,7 +6274,13 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                   <div className="flex flex-col gap-2">
                     {row.writingReviews.map((r) => {
                       const essayOpen = Boolean(expandedEssays[r.id])
-                      const hasEssay = Boolean(r.task1_text || r.task2_text)
+                      const essay = essays[r.id]
+                      // Unknown until loaded — offer the button; once
+                      // loaded and both tasks are empty, hide it as before.
+                      const hasEssay =
+                        !essay || essay.loading || essay.error
+                          ? true
+                          : Boolean(essay.task1_text || essay.task2_text)
                       const hasCriteria =
                         r.ta_band != null || r.cc_band != null || r.lr_band != null || r.gra_band != null
 
@@ -6241,25 +6334,31 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                                 {essayOpen ? 'Hide essay ▲' : 'View essay ▼'}
                               </button>
 
-                              {essayOpen && (
+                              {essayOpen && essay?.loading && (
+                                <p className="mt-2 text-xs text-mist">Loading essay…</p>
+                              )}
+                              {essayOpen && essay?.error && (
+                                <p className="mt-2 text-xs text-coral">{essay.error}</p>
+                              )}
+                              {essayOpen && essay && !essay.loading && !essay.error && (
                                 <div className="mt-2 space-y-2.5">
-                                  {r.task1_text && (
+                                  {essay.task1_text && (
                                     <div>
                                       <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
                                         Task 1
                                       </p>
                                       <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
-                                        {r.task1_text}
+                                        {essay.task1_text}
                                       </p>
                                     </div>
                                   )}
-                                  {r.task2_text && (
+                                  {essay.task2_text && (
                                     <div>
                                       <p className="text-[10px] uppercase tracking-wide text-paper-dim font-mono mb-1">
                                         Task 2
                                       </p>
                                       <p className="text-xs text-paper whitespace-pre-wrap rounded-md bg-panel p-2.5 max-h-64 overflow-y-auto">
-                                        {r.task2_text}
+                                        {essay.task2_text}
                                       </p>
                                     </div>
                                   )}
@@ -6788,7 +6887,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
     setExtraSections([])
 
     try {
-      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+      const path = `${profile.id}/mock-content/${safeFileName(file.name)}` // ASCII-safe key (2026-10-06)
 
       const { error: uploadError } = await supabase.storage
         .from('mock-content-uploads')
@@ -7668,7 +7767,7 @@ function ListeningPartEditor({ part, index, valid, onChange, onAddQuestion, onUp
     setImportInfo('')
 
     try {
-      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+      const path = `${profile.id}/mock-content/${safeFileName(file.name)}` // ASCII-safe key (2026-10-06)
 
       const { error: uploadError } = await supabase.storage
         .from('mock-content-uploads')
@@ -8130,7 +8229,7 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
     setImportInfo('')
 
     try {
-      const path = `${profile.id}/mock-content/${Date.now()}-${file.name}`
+      const path = `${profile.id}/mock-content/${safeFileName(file.name)}` // ASCII-safe key (2026-10-06)
 
       const { error: uploadError } = await supabase.storage
         .from('mock-content-uploads')

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import Layout, { IconHomework, IconChat } from '../../components/Layout'
@@ -6,6 +6,7 @@ import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { countWords } from '../../lib/writingMock'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
+import { fetchAll } from '../../lib/fetchAll'
 
 /*
  * ================================================================
@@ -69,46 +70,166 @@ export default function WritingExaminerDashboard() {
   const [reviewTarget, setReviewTarget] = useState(null)
   const [notificationChat, setNotificationChat] = useState(null)
 
-  const loadAll = async () => {
+  // 2026-10-06 review: this page used to reload EVERYTHING (three
+  // sequential queries incl. select('*') of every essay) on every change
+  // to writing_mock_attempts — i.e. every 5 s autosave of every student
+  // mid-test. Now:
+  //   - only the columns this page shows are read (essays are still
+  //     needed: word counts in the queue + the review modal);
+  //   - realtime events for unsubmitted rows (autosaves) are ignored;
+  //   - a submitted row that is new, or whose review/release fields
+  //     changed, is re-read on its own (debounced, batched by id) and
+  //     patched into the list;
+  //   - a request token stops an older full load overwriting a newer one.
+  const ATTEMPT_COLUMNS =
+    'id, exam_id, student_id, submitted_at, task1_text, task2_text, examiner_band, examiner_feedback, examiner_reviewed_by, examiner_reviewed_at, ta_band, cc_band, lr_band, gra_band'
+  const WATCHED_FIELDS = [
+    'submitted_at', 'examiner_band', 'examiner_feedback', 'examiner_reviewed_at',
+    'ta_band', 'cc_band', 'lr_band', 'gra_band', 'released_at',
+  ]
+
+  const loadTokenRef = useRef(0)
+  const attemptsRef = useRef([])
+  attemptsRef.current = attempts
+  const studentsRef = useRef({})
+  studentsRef.current = studentsById
+  const examsRef = useRef([])
+  examsRef.current = exams
+  const releasedRef = useRef({}) // id -> released_at last seen over realtime
+  const pendingIdsRef = useRef(new Set())
+  const flushTimerRef = useRef(null)
+
+  const loadExams = async () => {
     const { data: examRows, error: examsError } = await supabase
       .from('writing_mock_exams')
-      .select('*')
+      .select('id, title, task1_prompt, task2_prompt, task1_image_url')
 
     if (examsError) {
       console.error('Failed to load writing mock exams:', examsError)
+      return null
     }
+    return examRows || []
+  }
 
-    const { data: attemptRows, error: attemptError } = await supabase
-      .from('writing_mock_attempts')
-      .select('*')
-      .not('submitted_at', 'is', null)
-      .order('submitted_at', { ascending: false })
-
-    if (attemptError) {
-      console.error('Failed to load writing mock attempts:', attemptError)
+  const loadProfiles = async (ids) => {
+    const map = {}
+    if (ids.length === 0) return map
+    const { data: studentRows, error: studentsError } = await supabase
+      .from('profiles')
+      .select('id, full_name, username')
+      .in('id', ids)
+    if (studentsError) {
+      console.error('Failed to load students for review queue:', studentsError)
     }
+    ;(studentRows || []).forEach((st) => { map[st.id] = st })
+    return map
+  }
 
-    const studentIds = [...new Set((attemptRows || []).map((a) => a.student_id))]
+  const loadAll = async () => {
+    const token = ++loadTokenRef.current
 
-    let studentMap = {}
+    const [examRows, attemptRes] = await Promise.all([
+      loadExams(),
+      fetchAll(() =>
+        supabase
+          .from('writing_mock_attempts')
+          .select(ATTEMPT_COLUMNS)
+          .not('submitted_at', 'is', null)
+          .order('submitted_at', { ascending: false })
+          .order('id')
+      ),
+    ])
 
-    if (studentIds.length > 0) {
-      const { data: studentRows, error: studentsError } = await supabase
-        .from('profiles')
-        .select('id, full_name, username')
-        .in('id', studentIds)
-
-      if (studentsError) {
-        console.error('Failed to load students for review queue:', studentsError)
-      }
-
-      ;(studentRows || []).forEach((s) => { studentMap[s.id] = s })
+    if (attemptRes.error) {
+      console.error('Failed to load writing mock attempts:', attemptRes.error)
     }
+    const attemptRows = attemptRes.data || []
 
-    setExams(examRows || [])
-    setAttempts(attemptRows || [])
+    const studentIds = [...new Set(attemptRows.map((a) => a.student_id))]
+    const studentMap = await loadProfiles(studentIds)
+
+    if (token !== loadTokenRef.current) return // a newer load started meanwhile
+
+    if (examRows) setExams(examRows)
+    setAttempts(attemptRows)
     setStudentsById(studentMap)
     setLoading(false)
+  }
+
+  // Re-read just the queued attempt ids and patch them into the list.
+  const flushPending = async () => {
+    flushTimerRef.current = null
+    const ids = [...pendingIdsRef.current]
+    pendingIdsRef.current = new Set()
+    if (ids.length === 0) return
+    const token = loadTokenRef.current
+
+    const { data: rows, error: rowsError } = await supabase
+      .from('writing_mock_attempts')
+      .select(ATTEMPT_COLUMNS)
+      .in('id', ids)
+    if (rowsError) {
+      console.error('Failed to refresh writing mock attempts:', rowsError)
+      return
+    }
+    const submitted = (rows || []).filter((r) => r.submitted_at)
+
+    const missingStudents = [...new Set(submitted.map((r) => r.student_id))].filter(
+      (id) => !studentsRef.current[id]
+    )
+    const knownExamIds = new Set(examsRef.current.map((e) => e.id))
+    const needExams = submitted.some((r) => !knownExamIds.has(r.exam_id))
+    const [newStudents, examRows] = await Promise.all([
+      loadProfiles(missingStudents),
+      needExams ? loadExams() : Promise.resolve(null),
+    ])
+
+    if (token !== loadTokenRef.current) return // a full reload superseded this
+    if (examRows) setExams(examRows)
+    if (Object.keys(newStudents).length) setStudentsById((prev) => ({ ...prev, ...newStudents }))
+    const byId = {}
+    submitted.forEach((r) => { byId[r.id] = r })
+    setAttempts((prev) => {
+      const seen = new Set()
+      const next = []
+      prev.forEach((a) => {
+        if (!ids.includes(a.id)) return next.push(a)
+        seen.add(a.id)
+        if (byId[a.id]) next.push(byId[a.id]) // still submitted → patch; gone → drop
+      })
+      submitted.forEach((r) => { if (!seen.has(r.id)) next.push(r) })
+      next.sort((a, b) => String(b.submitted_at).localeCompare(String(a.submitted_at)))
+      return next
+    })
+  }
+
+  const queueRefresh = (id) => {
+    pendingIdsRef.current.add(id)
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
+    flushTimerRef.current = setTimeout(flushPending, 800)
+  }
+
+  const onAttemptChange = (payload) => {
+    if (payload.eventType === 'DELETE') {
+      const id = payload.old?.id
+      if (id) setAttempts((prev) => prev.filter((a) => a.id !== id))
+      return
+    }
+    const row = payload.new
+    if (!row?.id) return
+    // Unsubmitted = a student autosaving mid-test: nothing to show yet.
+    if (!row.submitted_at) return
+    const local = attemptsRef.current.find((a) => a.id === row.id)
+    const prevReleased = releasedRef.current[row.id]
+    releasedRef.current[row.id] = row.released_at ?? null
+    if (local) {
+      const changed = WATCHED_FIELDS.some((f) => {
+        if (f === 'released_at') return prevReleased !== undefined && prevReleased !== (row.released_at ?? null)
+        return (local[f] ?? null) !== (row[f] ?? null)
+      })
+      if (!changed) return
+    }
+    queueRefresh(row.id)
   }
 
   useEffect(() => {
@@ -117,10 +238,13 @@ export default function WritingExaminerDashboard() {
 
     const channel = supabase
       .channel('writing-examiner-attempts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_mock_attempts' }, loadAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_mock_attempts' }, onAttemptChange)
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+    return () => {
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
+      supabase.removeChannel(channel)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
@@ -188,7 +312,9 @@ export default function WritingExaminerDashboard() {
     }
 
     setReviewTarget(null)
-    await loadAll()
+    // Re-read just this attempt (2026-10-06) instead of reloading everything.
+    pendingIdsRef.current.add(attempt.id)
+    await flushPending()
   }
 
   const sections = useMemo(

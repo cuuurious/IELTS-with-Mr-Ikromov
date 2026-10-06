@@ -9,6 +9,7 @@ import { notifyGroup, notifyUsers } from '../../lib/notify'
 import { useSessionState } from '../../lib/sessionState'
 import { skillOfHomework, formatDue } from '../../lib/skills'
 import { SkillIcon } from '../../components/SkillArt'
+import { fetchAll } from '../../lib/fetchAll'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -149,11 +150,15 @@ export default function GroupWorkspace({ teacherId }) {
     // How many have handed in each group's newest homework.
     const latestIds = Object.values(counts).map((c) => c.latest?.id).filter(Boolean)
     if (latestIds.length) {
-      const { data: done } = await supabase
-        .from('submissions')
-        .select('homework_id')
-        .in('homework_id', latestIds)
-        .eq('status', 'done')
+      // fetchAll (2026-10-06): past 1000 rows the counts came out short.
+      const { data: done } = await fetchAll(() =>
+        supabase
+          .from('submissions')
+          .select('id, homework_id')
+          .in('homework_id', latestIds)
+          .eq('status', 'done')
+          .order('id')
+      )
       const doneBy = {}
       ;(done || []).forEach((row) => {
         doneBy[row.homework_id] = (doneBy[row.homework_id] || 0) + 1
@@ -406,6 +411,9 @@ export default function GroupWorkspace({ teacherId }) {
      GROUP DATA
   ========================================================= */
 
+  const SUBMISSION_COLUMNS =
+    'id, homework_id, student_id, group_id, status, submitted_at, screenshot_urls, submission_files, audio_part1_url, audio_part2_url, audio_part3_url, comment, mock_essay, ai_status, ai_result, ai_error, ai_evaluated_at'
+
   const loadGroupData = async () => {
     // Snapshot which group this call was made for. If the teacher
     // switches groups again before these requests come back (Group A
@@ -458,10 +466,17 @@ export default function GroupWorkspace({ teacherId }) {
         .select('*')
         .eq('group_id', requestedGroup)
         .order('created_at', { ascending: false }),
-      supabase
-        .from('submissions')
-        .select('*')
-        .eq('group_id', requestedGroup),
+      // fetchAll + named columns (2026-10-06): a plain select('*') stopped
+      // silently at 1000 rows, so big groups lost submissions off the end.
+      // These are the columns the progress table and SubmissionPanel /
+      // AiFeedbackCard read.
+      fetchAll(() =>
+        supabase
+          .from('submissions')
+          .select(SUBMISSION_COLUMNS)
+          .eq('group_id', requestedGroup)
+          .order('id')
+      ),
     ])
 
     // A newer request has since started (or completed) for a
@@ -536,13 +551,24 @@ export default function GroupWorkspace({ teacherId }) {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          // '*' not just UPDATE (2026-10-06): a student's FIRST hand-in is
+          // an INSERT, which never showed up live before.
+          event: '*',
           schema: 'public',
           table: 'submissions',
           filter: `group_id=eq.${activeGroup}`,
         },
         (payload) => {
+          if (payload.eventType === 'DELETE') {
+            const goneId = payload.old?.id
+            if (!goneId) return
+            setSubmissions((prev) =>
+              Object.fromEntries(Object.entries(prev).filter(([, sub]) => sub?.id !== goneId))
+            )
+            return
+          }
           const submission = payload.new
+          if (!submission?.homework_id || !submission?.student_id) return
           const key = `${submission.homework_id}_${submission.student_id}`
 
           setSubmissions((prev) => ({
@@ -698,15 +724,6 @@ export default function GroupWorkspace({ teacherId }) {
         ...new Set(submissionPaths),
       ]
 
-      if (uniqueSubmissionPaths.length) {
-        const { error: storageError } =
-          await supabase.storage
-            .from('submissions')
-            .remove(uniqueSubmissionPaths)
-
-        if (storageError) throw storageError
-      }
-
       const homeworkFilePaths = [
         storagePathFromPublicUrl(
           hw.attachment_url,
@@ -718,6 +735,27 @@ export default function GroupWorkspace({ teacherId }) {
         ),
       ].filter(Boolean)
 
+      // DB row FIRST, files after (2026-10-06 review): the files used to
+      // be removed first, so a failed delete left a homework whose
+      // submissions pointed at files that no longer existed. Now a failed
+      // delete changes nothing, and a failed file cleanup only leaves
+      // orphaned files behind (logged), never broken rows.
+      const { error } = await supabase
+        .from('homeworks')
+        .delete()
+        .eq('id', hw.id)
+
+      if (error) throw error
+
+      if (uniqueSubmissionPaths.length) {
+        const { error: storageError } =
+          await supabase.storage
+            .from('submissions')
+            .remove(uniqueSubmissionPaths)
+
+        if (storageError) console.error('Homework deleted, but some submission files could not be removed:', storageError)
+      }
+
       if (homeworkFilePaths.length) {
         const { error: homeworkStorageError } =
           await supabase.storage
@@ -725,16 +763,9 @@ export default function GroupWorkspace({ teacherId }) {
             .remove(homeworkFilePaths)
 
         if (homeworkStorageError) {
-          throw homeworkStorageError
+          console.error('Homework deleted, but its attachment could not be removed:', homeworkStorageError)
         }
       }
-
-      const { error } = await supabase
-        .from('homeworks')
-        .delete()
-        .eq('id', hw.id)
-
-      if (error) throw error
 
       setHomeworks((prev) =>
         prev.filter(
@@ -948,17 +979,9 @@ export default function GroupWorkspace({ teacherId }) {
         ...new Set(submissionPaths),
       ]
 
-      if (uniqueSubmissionPaths.length) {
-        const { error: storageError } =
-          await supabase.storage
-            .from('submissions')
-            .remove(uniqueSubmissionPaths)
-
-        if (storageError) {
-          throw storageError
-        }
-      }
-
+      // DB reset FIRST, files after (2026-10-06 review) — see
+      // doDeleteHomework. A failed reset no longer leaves submissions
+      // pointing at files that were already deleted.
       const { error: updateError } =
         await supabase
           .from('submissions')
@@ -982,6 +1005,17 @@ export default function GroupWorkspace({ teacherId }) {
 
       if (updateError) {
         throw updateError
+      }
+
+      if (uniqueSubmissionPaths.length) {
+        const { error: storageError } =
+          await supabase.storage
+            .from('submissions')
+            .remove(uniqueSubmissionPaths)
+
+        if (storageError) {
+          console.error('Homework reset, but some files could not be removed:', storageError)
+        }
       }
 
       await loadGroupData()

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { skillOfHomework, formatDue, isSameDay } from '../../lib/skills'
 import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
+import { fetchAll } from '../../lib/fetchAll'
 import SkillArt, { SkillIcon } from '../../components/SkillArt'
 
 /*
@@ -40,10 +41,15 @@ function useTeacherOverview() {
       try {
         const [groupsRes, membersRes, hwRes, accessRes, mockRes, writingRes, wordRes, reviewRes, feedRes] = await Promise.all([
           supabase.from('groups').select('id, name, created_at').order('created_at'),
-          supabase
-            .from('group_members')
-            .select('group_id, student_id, created_at, profiles!inner(id, full_name, username, avatar_url, status)')
-            .eq('profiles.status', 'approved'),
+          // fetchAll (2026-10-06) — same 1000-row cap.
+          fetchAll(() =>
+            supabase
+              .from('group_members')
+              .select('group_id, student_id, created_at, profiles!inner(id, full_name, username, avatar_url, status)')
+              .eq('profiles.status', 'approved')
+              .order('group_id')
+              .order('student_id')
+          ),
           supabase
             .from('homeworks')
             .select('id, group_id, title, description, homework_type, enable_speaking, due_date, created_at')
@@ -74,12 +80,16 @@ function useTeacherOverview() {
         const homeworks = hwRes.data || []
         let submissions = []
         if (homeworks.length) {
-          const subsRes = await supabase
-            .from('submissions')
-            .select('homework_id, student_id, status, submitted_at')
-            .in('homework_id', homeworks.map((h) => h.id))
-            .eq('status', 'done')
-            .limit(10000)
+          // fetchAll (2026-10-06): the API caps a request at 1000 rows no
+          // matter what .limit() says, so completion stats came out short.
+          const subsRes = await fetchAll(() =>
+            supabase
+              .from('submissions')
+              .select('id, homework_id, student_id, status, submitted_at')
+              .in('homework_id', homeworks.map((h) => h.id))
+              .eq('status', 'done')
+              .order('id')
+          )
           submissions = subsRes.data || []
         }
 
@@ -223,6 +233,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     const membersByGroup = {}
     const personById = {}
     for (const m of data.members) {
+      if (!m.profiles) continue // only approved students (inner join) — never crash on a missing profile
       ;(membersByGroup[m.group_id] ||= []).push(m)
       personById[m.student_id] = m.profiles
     }
@@ -478,7 +489,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
                       {nextProgress.missing.slice(0, 6).map((m) => (
                         <span key={m.student_id} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-panel-2 pl-1 pr-2.5 text-[13px]">
                           <Avatar person={m.profiles} size="h-6 w-6" />
-                          <span className="max-w-[9rem] truncate">{(m.profiles.full_name || m.profiles.username || '').split(' ')[0]}</span>
+                          <span className="max-w-[9rem] truncate">{(m.profiles?.full_name || m.profiles?.username || '').split(' ')[0]}</span>
                         </span>
                       ))}
                       {nextProgress.missing.length > 6 && (

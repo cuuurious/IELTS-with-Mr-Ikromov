@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useSessionState } from '../../lib/sessionState'
+import { useFileDrop } from '../../lib/useFileDrop'
 import {
   KIND_LABEL,
   MATERIALS_BUCKET,
@@ -45,7 +46,6 @@ export default function MaterialsLibrary() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(() => new Set())
   const [uploads, setUploads] = useState([]) // {id, name, status: 'uploading'|'done'|'error', error}
-  const [dragOver, setDragOver] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [newFolderOpen, setNewFolderOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
@@ -54,7 +54,6 @@ export default function MaterialsLibrary() {
   const [botState, setBotState] = useState({ linked: false, folderId: null, loading: true })
 
   const fileInputRef = useRef(null)
-  const dragDepth = useRef(0)
 
   const foldersById = useMemo(() => Object.fromEntries(folders.map((f) => [f.id, f])), [folders])
 
@@ -164,23 +163,12 @@ export default function MaterialsLibrary() {
     await Promise.all([worker(), worker(), worker()])
   }
 
-  const onDragEnter = (e) => {
-    if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return
-    e.preventDefault()
-    dragDepth.current += 1
-    setDragOver(true)
-  }
-  const onDragLeave = () => {
-    dragDepth.current = Math.max(0, dragDepth.current - 1)
-    if (dragDepth.current === 0) setDragOver(false)
-  }
-  const onDrop = (e) => {
-    if (!e.dataTransfer?.files?.length) return
-    e.preventDefault()
-    dragDepth.current = 0
-    setDragOver(false)
-    uploadFiles(e.dataTransfer.files)
-  }
+  // Desktop drag-and-drop now goes through the shared useFileDrop hook
+  // (2026-10-06): same uploadFiles handler as the "Upload files" button,
+  // same full-page overlay — and a file dropped just outside the page area
+  // no longer makes the browser open it and leave the site.
+  const pageDrop = useFileDrop({ onFiles: (files) => uploadFiles(files) })
+  const dragOver = pageDrop.isDragging
 
   // ---------------- folders ----------------
   const createFolder = async () => {
@@ -345,10 +333,7 @@ export default function MaterialsLibrary() {
   return (
     <div
       className="relative flex flex-col gap-5"
-      onDragEnter={onDragEnter}
-      onDragOver={(e) => dragOver && e.preventDefault()}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      {...pageDrop.dropProps}
     >
       <ConfirmModal
         open={Boolean(confirmDialog)}

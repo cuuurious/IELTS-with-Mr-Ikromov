@@ -68,6 +68,26 @@ function groupMessagePreview(message) {
   }
 }
 
+// Newest conversation first (groups with no messages last).
+function byLastMessage(a, b) {
+  const timeA = a.lastMessage ? new Date(a.lastMessage.created_at).getTime() : 0
+  const timeB = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : 0
+  return timeB - timeA
+}
+
+// get_group_chat_list() isn't there until migration_72 is applied —
+// PostgREST answers PGRST202. Until then the old query is used
+// (2026-10-06).
+function isMissingRpc(err) {
+  if (!err) return false
+  return (
+    err.code === 'PGRST202' ||
+    err.code === '42883' ||
+    err.status === 404 ||
+    /could not find the function|does not exist/i.test(err.message || '')
+  )
+}
+
 function formatListTime(value) {
   if (!value) return ''
 
@@ -144,11 +164,95 @@ export default function GroupChats({
 
   const rowGestureRef = useRef({ timer: null, startX: 0, startY: 0, fired: false })
 
+  // 2026-10-06: the list used to re-download every group message ever
+  // (and blank itself with "Loading…") on each new message or delete
+  // anywhere in the school. Now: one cheap RPC (migration_72), the
+  // "Loading…" state only on the very first load, new messages applied
+  // in place, and any other refresh debounced and silent.
+  const rpcMissingRef = useRef(false)
+  const loadedOnceRef = useRef(false)
+  const loadSeqRef = useRef(0)
+  const refreshTimerRef = useRef(null)
+  const loadRef = useRef(null)
+  const groupIdsRef = useRef(new Set())
+  const groupsRef = useRef([])
+  groupsRef.current = groups
+
+  // Old path (before migration_72 is applied): every message of every
+  // group, newest first, summarised in the browser.
+  const loadLastByGroupLegacy = async (groupIds) => {
+    const { data: messages, error: messagesError } = await supabase
+      .from('group_messages')
+      .select('id, group_id, sender_id, content, media_type, media_name, created_at')
+      .in('group_id', groupIds)
+      .order('created_at', { ascending: false })
+
+    if (messagesError) throw messagesError
+
+    const { data: deletions, error: deletionsError } = await supabase
+      .from('group_message_deletions')
+      .select('message_id')
+      .eq('user_id', selfId)
+
+    if (deletionsError) throw deletionsError
+
+    const hiddenIds = new Set((deletions || []).map((d) => d.message_id))
+    const visible = (messages || []).filter((m) => !hiddenIds.has(m.id))
+
+    // Messages come back newest-first, so the first time we see a
+    // given group here is automatically its most recent message.
+    const lastByGroup = new Map()
+
+    visible.forEach((m) => {
+      if (!lastByGroup.has(m.group_id)) {
+        lastByGroup.set(m.group_id, m)
+      }
+    })
+
+    return { lastByGroup, unreadByGroup: new Map() }
+  }
+
+  const loadLastByGroupRpc = async () => {
+    const { data: rpcRows, error: rpcError } = await supabase.rpc('get_group_chat_list')
+
+    if (rpcError) {
+      if (!isMissingRpc(rpcError)) throw rpcError
+      rpcMissingRef.current = true
+      return null
+    }
+
+    const lastByGroup = new Map()
+    const unreadByGroup = new Map()
+
+    ;(rpcRows || []).forEach((r) => {
+      if (!r.group_id) return
+
+      if (r.last_message_id) {
+        const isText = !r.last_kind || r.last_kind === 'text'
+        lastByGroup.set(r.group_id, {
+          id: r.last_message_id,
+          group_id: r.group_id,
+          sender_id: r.last_sender_id,
+          // Same shape groupMessagePreview() reads.
+          content: isText ? r.last_preview : null,
+          media_type: r.last_media_type || (isText ? null : r.last_kind),
+          media_name: r.last_media_name || (isText ? null : r.last_preview),
+          created_at: r.last_created_at,
+        })
+      }
+
+      if (r.unread_count) unreadByGroup.set(r.group_id, r.unread_count)
+    })
+
+    return { lastByGroup, unreadByGroup }
+  }
+
   const loadGroups = async () => {
     if (!selfId) return
 
-    setLoading(true)
-    setError('')
+    const seq = ++loadSeqRef.current
+
+    if (!loadedOnceRef.current) setLoading(true)
 
     try {
       let rows = []
@@ -179,68 +283,70 @@ export default function GroupChats({
       }
 
       if (rows.length === 0) {
-        setGroups([])
+        if (seq === loadSeqRef.current) {
+          groupIdsRef.current = new Set()
+          setGroups([])
+          setError('')
+        }
         return
       }
 
       const groupIds = rows.map((g) => g.id)
 
-      const { data: messages, error: messagesError } = await supabase
-        .from('group_messages')
-        .select('id, group_id, sender_id, content, media_type, media_name, created_at')
-        .in('group_id', groupIds)
-        .order('created_at', { ascending: false })
+      let summary = null
+      if (!rpcMissingRef.current) summary = await loadLastByGroupRpc()
+      if (!summary) summary = await loadLastByGroupLegacy(groupIds)
 
-      if (messagesError) throw messagesError
+      const { lastByGroup, unreadByGroup } = summary
 
-      const { data: deletions, error: deletionsError } = await supabase
-        .from('group_message_deletions')
-        .select('message_id')
-        .eq('user_id', selfId)
-
-      if (deletionsError) throw deletionsError
-
-      const hiddenIds = new Set((deletions || []).map((d) => d.message_id))
-      const visible = (messages || []).filter((m) => !hiddenIds.has(m.id))
-
-      // Messages come back newest-first, so the first time we see a
-      // given group here is automatically its most recent message.
-      const lastByGroup = new Map()
-
-      visible.forEach((m) => {
-        if (!lastByGroup.has(m.group_id)) {
-          lastByGroup.set(m.group_id, m)
-        }
-      })
+      // A slower, older refresh must not overwrite a newer one.
+      if (seq !== loadSeqRef.current) return
 
       const merged = rows.map((group, index) => ({
         ...group,
         accent: GROUP_ACCENT_PALETTE[index % GROUP_ACCENT_PALETTE.length],
         lastMessage: lastByGroup.get(group.id) || null,
+        unreadCount: unreadByGroup.get(group.id) || 0,
       }))
 
-      merged.sort((a, b) => {
-        const timeA = a.lastMessage ? new Date(a.lastMessage.created_at).getTime() : 0
-        const timeB = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : 0
-        return timeB - timeA
-      })
+      merged.sort(byLastMessage)
 
+      groupIdsRef.current = new Set(groupIds)
       setGroups(merged)
+      setError('')
     } catch (err) {
       console.error('Failed to load group chats:', err)
-      setError(err?.message || 'Could not load your group chats.')
+      if (seq === loadSeqRef.current) {
+        setError(err?.message || 'Could not load your group chats.')
+      }
     } finally {
-      setLoading(false)
+      if (seq === loadSeqRef.current) {
+        loadedOnceRef.current = true
+        setLoading(false)
+      }
     }
   }
 
+  loadRef.current = loadGroups
+
+  // Bursts of realtime events collapse into one quiet refresh.
+  const scheduleRefresh = () => {
+    clearTimeout(refreshTimerRef.current)
+    refreshTimerRef.current = setTimeout(() => loadRef.current?.(), 600)
+  }
+
+  useEffect(() => () => clearTimeout(refreshTimerRef.current), [])
+
   useEffect(() => {
+    loadedOnceRef.current = false
     loadGroups()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selfId, selfRole])
 
   // Keep the list live: a new message anywhere should bump that
   // group to the top and update its preview without leaving the tab.
+  // 2026-10-06: applied in place from the realtime row (no refetch);
+  // only a delete of a group's current last message needs a refresh.
   useEffect(() => {
     if (!selfId) return
 
@@ -249,12 +355,46 @@ export default function GroupChats({
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'group_messages' },
-        () => loadGroups()
+        (payload) => {
+          const m = payload.new
+          if (!m?.group_id || !groupIdsRef.current.has(m.group_id)) return
+
+          setGroups((prev) =>
+            prev
+              .map((g) => {
+                if (g.id !== m.group_id) return g
+                const prevTime = g.lastMessage ? new Date(g.lastMessage.created_at).getTime() : 0
+                if (new Date(m.created_at).getTime() < prevTime) return g
+                return {
+                  ...g,
+                  lastMessage: {
+                    id: m.id,
+                    group_id: m.group_id,
+                    sender_id: m.sender_id,
+                    content: m.content,
+                    media_type: m.media_type,
+                    media_name: m.media_name,
+                    created_at: m.created_at,
+                  },
+                  unreadCount:
+                    m.sender_id === selfId ? g.unreadCount || 0 : (g.unreadCount || 0) + 1,
+                }
+              })
+              .sort(byLastMessage)
+          )
+        }
       )
       .on(
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'group_messages' },
-        () => loadGroups()
+        (payload) => {
+          // Realtime only sends the primary key of a deleted row.
+          const deletedId = payload.old?.id
+          if (!deletedId) return
+          if (groupsRef.current.some((g) => g.lastMessage?.id === deletedId)) {
+            scheduleRefresh()
+          }
+        }
       )
       .subscribe()
 

@@ -497,14 +497,19 @@ export default function Leaderboard({
         )
       }
 
+      // 2026-10-06: contact_email is a student's login email — only
+      // teachers may see it. Students no longer even fetch it for
+      // their classmates.
+      const profileCols = isTeacher
+        ? 'id, full_name, username, contact_email, status, target_band, avatar_url'
+        : 'id, full_name, username, status, target_band, avatar_url'
+
       const rosterQuery =
         requestedGroup === 'all'
           ? Promise.all([
               supabase
                 .from('profiles')
-                .select(
-                  'id, full_name, username, contact_email, status, target_band, avatar_url'
-                )
+                .select(profileCols)
                 .eq('role', 'student'),
               supabase
                 .from('group_members')
@@ -512,9 +517,7 @@ export default function Leaderboard({
             ])
           : supabase
               .from('group_members')
-              .select(
-                'student_id, profiles(id, full_name, username, contact_email, status, target_band, avatar_url)'
-              )
+              .select(`student_id, profiles(${profileCols})`)
               .eq('group_id', requestedGroup)
 
       const wordlistsQuery = supabase
@@ -546,7 +549,7 @@ export default function Leaderboard({
           student_id: p.id,
           full_name: p.full_name,
           username: p.username,
-          contact_email: p.contact_email,
+          contact_email: isTeacher ? p.contact_email : null,
           status: p.status,
           target_band: p.target_band,
           avatar_url: p.avatar_url,
@@ -576,7 +579,7 @@ export default function Leaderboard({
             student_id: m.student_id,
             full_name: m.profiles.full_name,
             username: m.profiles.username,
-            contact_email: m.profiles.contact_email,
+            contact_email: isTeacher ? m.profiles.contact_email : null,
             status: m.profiles.status,
             target_band: m.profiles.target_band,
             avatar_url: m.profiles.avatar_url,
@@ -853,8 +856,16 @@ export default function Leaderboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId])
 
+  // 2026-10-06: tapping student A then B quickly used to let A's slower
+  // response land under B's name. Each call takes a token; only the
+  // newest one may write state.
+  const dailyRequestRef = useRef(0)
+
   const loadDailyProgress = async (student) => {
     if (!student?.student_id || !groupId) return null
+
+    const requestId = ++dailyRequestRef.current
+    const isStale = () => requestId !== dailyRequestRef.current
 
     setLoadingDaily(true)
     setDailyError('')
@@ -875,44 +886,6 @@ export default function Leaderboard({
         homeworkQuery = homeworkQuery.eq('group_id', groupId)
       }
 
-      const { data: allHomeworks, error: homeworkError } =
-        await homeworkQuery.order('created_at', {
-          ascending: false,
-        })
-
-      if (homeworkError) throw homeworkError
-
-      let homeworks = allHomeworks || []
-
-      // Also reused below for word lists — hoisted out of the
-      // "all students" branch so both can filter by the same set.
-      let studentGroupIds = null
-
-      /*
-       * For "all students", only count homeworks from groups
-       * this specific student actually belongs to — not every
-       * homework that exists across every group.
-       */
-      if (groupId === 'all') {
-        const {
-          data: memberRows,
-          error: memberError,
-        } = await supabase
-          .from('group_members')
-          .select('group_id')
-          .eq('student_id', student.student_id)
-
-        if (memberError) throw memberError
-
-        studentGroupIds = new Set(
-          (memberRows || []).map((row) => row.group_id)
-        )
-
-        homeworks = homeworks.filter((homework) =>
-          studentGroupIds.has(homework.group_id)
-        )
-      }
-
       let submissionQuery = supabase
         .from('submissions')
         .select(`
@@ -931,41 +904,67 @@ export default function Leaderboard({
         )
       }
 
-      const { data: submissions, error: submissionError } =
-        await submissionQuery.order('submitted_at', {
-          ascending: false,
-        })
+      // 2026-10-06: these five don't depend on each other — run them in
+      // parallel instead of one round trip after another.
+      const [
+        { data: allHomeworks, error: homeworkError },
+        memberResult,
+        { data: submissions, error: submissionError },
+        { data: historicalCompletions, error: completionError },
+        { data: studentWordlistsRaw, error: studentWordlistsError },
+      ] = await Promise.all([
+        homeworkQuery.order('created_at', { ascending: false }),
+        groupId === 'all'
+          ? supabase
+              .from('group_members')
+              .select('group_id')
+              .eq('student_id', student.student_id)
+          : Promise.resolve({ data: null, error: null }),
+        submissionQuery.order('submitted_at', { ascending: false }),
+        supabase
+          .from('homework_completions')
+          .select(`
+            homework_id,
+            completed_at,
+            group_id
+          `)
+          .eq('student_id', student.student_id),
+        /*
+         * Same word-list scoping as loadLeaderboard() above, just for
+         * this one student.
+         */
+        supabase
+          .from('wordlists')
+          .select(
+            'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
+          ),
+      ])
 
+      if (homeworkError) throw homeworkError
+      if (memberResult.error) throw memberResult.error
       if (submissionError) throw submissionError
-
-      const {
-        data: historicalCompletions,
-        error: completionError,
-      } = await supabase
-        .from('homework_completions')
-        .select(`
-          homework_id,
-          completed_at,
-          group_id
-        `)
-        .eq('student_id', student.student_id)
-
       if (completionError) throw completionError
+      if (studentWordlistsError) throw studentWordlistsError
+
+      let homeworks = allHomeworks || []
+
+      // Also reused below for word lists.
+      let studentGroupIds = null
 
       /*
-       * Same word-list scoping as loadLeaderboard() above, just for
-       * this one student.
+       * For "all students", only count homeworks from groups
+       * this specific student actually belongs to — not every
+       * homework that exists across every group.
        */
-      const {
-        data: studentWordlistsRaw,
-        error: studentWordlistsError,
-      } = await supabase
-        .from('wordlists')
-        .select(
-          'id, title, created_at, completion_reset_at, wordlist_groups(group_id)'
+      if (groupId === 'all') {
+        studentGroupIds = new Set(
+          (memberResult.data || []).map((row) => row.group_id)
         )
 
-      if (studentWordlistsError) throw studentWordlistsError
+        homeworks = homeworks.filter((homework) =>
+          studentGroupIds.has(homework.group_id)
+        )
+      }
 
       const wordlists = (studentWordlistsRaw || []).filter(
         (wordlist) => {
@@ -1001,6 +1000,8 @@ export default function Leaderboard({
         wordlistAttempts = wordlistAttemptsData || []
       }
 
+      if (isStale()) return null
+
       const {
         days,
         completed,
@@ -1024,7 +1025,7 @@ export default function Leaderboard({
        * now come from the exact same calculation.
        */
       setSelectedStudent((previous) =>
-        previous
+        previous && previous.student_id === student.student_id
           ? {
               ...previous,
               completed,
@@ -1036,6 +1037,7 @@ export default function Leaderboard({
 
       return streak
     } catch (err) {
+      if (isStale()) return null
       console.error('Daily progress error:', err)
 
       setDailyError(
@@ -1046,7 +1048,7 @@ export default function Leaderboard({
       setDailyProgress([])
       return null
     } finally {
-      setLoadingDaily(false)
+      if (!isStale()) setLoadingDaily(false)
     }
   }
 
@@ -1060,7 +1062,7 @@ export default function Leaderboard({
 
     if (streak !== null) {
       setSelectedStudent((previous) =>
-        previous
+        previous && previous.student_id === student.student_id
           ? {
               ...previous,
               streak,
@@ -1512,7 +1514,7 @@ export default function Leaderboard({
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {selectedStudent.contact_email && (
+                  {isTeacher && selectedStudent.contact_email && (
                     <div className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper">
                       <span className="text-mist">
                         Email:{' '}

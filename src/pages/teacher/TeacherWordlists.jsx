@@ -747,10 +747,12 @@ const saveEditWordlist = async () => {
      * stored in the database.
      */
 
+    // Current values too (2026-10-06) so step 4 only writes rows that
+    // actually changed.
     const { data: existingItems, error: existingError } =
       await supabase
         .from('wordlist_items')
-        .select('id')
+        .select('id, word, definition, uzbek_translation, example_sentence, position')
         .eq('wordlist_id', editingList.id)
 
     if (existingError) throw existingError
@@ -804,24 +806,38 @@ const saveEditWordlist = async () => {
         existingIds.has(item.id)
     )
 
-    for (const item of existingToUpdate) {
+    // ONE upsert of only the changed rows (2026-10-06 review) instead of
+    // one UPDATE request per word — a 100-word list was 100 round trips.
+    const existingById = new Map(
+      (existingItems || []).map((row) => [row.id, row])
+    )
+    const changedRows = existingToUpdate
+      .filter((item) => {
+        const before = existingById.get(item.id)
+        return (
+          !before ||
+          (before.word ?? '') !== (item.word ?? '') ||
+          (before.definition ?? '') !== (item.definition ?? '') ||
+          (before.uzbek_translation ?? '') !== (item.uzbek_translation ?? '') ||
+          (before.example_sentence ?? '') !== (item.example_sentence ?? '') ||
+          before.position !== item.position
+        )
+      })
+      .map((item) => ({
+        id: item.id,
+        wordlist_id: editingList.id,
+        word: item.word,
+        definition: item.definition,
+        uzbek_translation: item.uzbek_translation,
+        example_sentence: item.example_sentence,
+        position: item.position,
+      }))
+
+    if (changedRows.length) {
       const { error: updateItemError } =
         await supabase
           .from('wordlist_items')
-          .update({
-            word: item.word,
-            definition: item.definition,
-            uzbek_translation:
-              item.uzbek_translation,
-            example_sentence:
-              item.example_sentence,
-            position: item.position,
-          })
-          .eq('id', item.id)
-          .eq(
-            'wordlist_id',
-            editingList.id
-          )
+          .upsert(changedRows, { onConflict: 'id' })
 
       if (updateItemError) {
         throw updateItemError
@@ -866,30 +882,57 @@ const saveEditWordlist = async () => {
      * 6. Replace group assignments.
      */
 
-    const { error: deleteLinksError } =
+    // Add new links FIRST, then remove only the dropped ones (2026-10-06
+    // review). It used to delete every link and re-insert — if the
+    // insert failed, the list was left in no group at all.
+    const { data: currentLinks, error: currentLinksError } =
       await supabase
         .from('wordlist_groups')
-        .delete()
+        .select('group_id')
         .eq('wordlist_id', editingList.id)
 
-    if (deleteLinksError) {
-      throw deleteLinksError
+    if (currentLinksError) {
+      throw currentLinksError
     }
 
-    const newLinks = editGroupIds.map(
-      (groupId) => ({
+    const currentGroupIds = new Set(
+      (currentLinks || []).map((link) => link.group_id)
+    )
+    const wantedGroupIds = new Set(editGroupIds)
+
+    const newLinks = editGroupIds
+      .filter((groupId) => !currentGroupIds.has(groupId))
+      .map((groupId) => ({
         wordlist_id: editingList.id,
         group_id: groupId,
-      })
+      }))
+
+    if (newLinks.length) {
+      const { error: insertLinksError } =
+        await supabase
+          .from('wordlist_groups')
+          .insert(newLinks)
+
+      if (insertLinksError) {
+        throw insertLinksError
+      }
+    }
+
+    const removedGroupIds = [...currentGroupIds].filter(
+      (groupId) => !wantedGroupIds.has(groupId)
     )
 
-    const { error: insertLinksError } =
-      await supabase
-        .from('wordlist_groups')
-        .insert(newLinks)
+    if (removedGroupIds.length) {
+      const { error: deleteLinksError } =
+        await supabase
+          .from('wordlist_groups')
+          .delete()
+          .eq('wordlist_id', editingList.id)
+          .in('group_id', removedGroupIds)
 
-    if (insertLinksError) {
-      throw insertLinksError
+      if (deleteLinksError) {
+        throw deleteLinksError
+      }
     }
 
 

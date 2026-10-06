@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { fetchAll } from '../../lib/fetchAll'
 import Chat from '../../components/Chat'
 
 /*
@@ -81,6 +82,8 @@ export default function TeacherChat({
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
+  const conversationsRef = useRef([])
+  conversationsRef.current = conversations
 
   /*
    * Loads only the students the teacher has an actual message history
@@ -93,23 +96,35 @@ export default function TeacherChat({
   useEffect(() => {
     let active = true
 
-    const loadConversations = async () => {
-      if (!teacherId) return
+    // Request token: only the newest load may write state (2026-10-06).
+    let loadToken = 0
 
-      setLoading(true)
+    const loadConversations = async ({ quiet = false } = {}) => {
+      if (!teacherId) return
+      const token = ++loadToken
+
+      if (!quiet) setLoading(true)
       setError('')
 
       try {
+        // 2026-10-06 review: this read the WHOLE history incl. every
+        // message body on every new message, and silently stopped at 1000
+        // rows (older conversations vanished from the list). Now it pages
+        // through everything with fetchAll but reads only who/when, then
+        // fetches the bodies of just each conversation's last message.
         const { data: messages, error: messagesError } =
-          await supabase
-            .from('messages')
-            .select(
-              'sender_id, receiver_id, content, created_at'
-            )
-            .or(
-              `sender_id.eq.${teacherId},receiver_id.eq.${teacherId}`
-            )
-            .order('created_at', { ascending: false })
+          await fetchAll(() =>
+            supabase
+              .from('messages')
+              .select(
+                'id, sender_id, receiver_id, created_at'
+              )
+              .or(
+                `sender_id.eq.${teacherId},receiver_id.eq.${teacherId}`
+              )
+              .order('created_at', { ascending: false })
+              .order('id')
+          )
 
         if (messagesError) throw messagesError
 
@@ -130,7 +145,8 @@ export default function TeacherChat({
 
           if (!lastByPeer.has(peerId)) {
             lastByPeer.set(peerId, {
-              content: message.content,
+              id: message.id,
+              content: '',
               created_at: message.created_at,
             })
           }
@@ -139,9 +155,21 @@ export default function TeacherChat({
         const peerIds = [...lastByPeer.keys()]
 
         if (peerIds.length === 0) {
-          if (active) setConversations([])
+          if (active && token === loadToken) setConversations([])
           return
         }
+
+        const lastIds = [...lastByPeer.values()].map((m) => m.id)
+        const contentById = {}
+        for (let i = 0; i < lastIds.length; i += 200) {
+          const { data: bodies, error: bodiesError } = await supabase
+            .from('messages')
+            .select('id, content')
+            .in('id', lastIds.slice(i, i + 200))
+          if (bodiesError) throw bodiesError
+          ;(bodies || []).forEach((b) => { contentById[b.id] = b.content })
+        }
+        lastByPeer.forEach((m) => { m.content = contentById[m.id] || '' })
 
         const { data: profiles, error: profilesError } =
           await supabase
@@ -170,24 +198,36 @@ export default function TeacherChat({
             return timeB - timeA
           })
 
-        if (active) setConversations(merged)
+        if (active && token === loadToken) setConversations(merged)
       } catch (err) {
         console.error(
           'Failed to load conversations:',
           err
         )
 
-        if (active) {
+        if (active && token === loadToken) {
           setError(
             err?.message || 'Could not load your chats.'
           )
         }
       } finally {
-        if (active) setLoading(false)
+        if (active && token === loadToken) setLoading(false)
       }
     }
 
     loadConversations()
+
+    // A message from/to someone already in the list just bumps that
+    // conversation from the realtime payload; only a brand-new peer
+    // (needs their profile) triggers a reload, debounced (2026-10-06).
+    let reloadTimer = null
+    const scheduleReload = () => {
+      if (reloadTimer) clearTimeout(reloadTimer)
+      reloadTimer = setTimeout(() => {
+        reloadTimer = null
+        loadConversations({ quiet: true })
+      }, 1000)
+    }
 
     /*
      * Keep the list live: a brand new conversation (or a bump back
@@ -210,7 +250,25 @@ export default function TeacherChat({
             message.sender_id === teacherId ||
             message.receiver_id === teacherId
           ) {
-            loadConversations()
+            const peerId =
+              message.sender_id === teacherId
+                ? message.receiver_id
+                : message.sender_id
+            if (!peerId || peerId === teacherId) return
+            const known = conversationsRef.current.some((c) => c.id === peerId)
+            if (!known) {
+              scheduleReload()
+              return
+            }
+            setConversations((prev) => {
+              const idx = prev.findIndex((c) => c.id === peerId)
+              if (idx < 0) return prev
+              const updated = {
+                ...prev[idx],
+                lastMessage: { id: message.id, content: message.content, created_at: message.created_at },
+              }
+              return [updated, ...prev.slice(0, idx), ...prev.slice(idx + 1)]
+            })
           }
         }
       )
@@ -218,6 +276,7 @@ export default function TeacherChat({
 
     return () => {
       active = false
+      if (reloadTimer) clearTimeout(reloadTimer)
       supabase.removeChannel(channel)
     }
   }, [teacherId])

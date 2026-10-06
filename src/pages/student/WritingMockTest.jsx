@@ -138,7 +138,10 @@ export default function WritingMockTest({
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (submittedRef.current) return
+      // 2026-10-06: also skip while a submit is in flight — a late
+      // autosave used to land right after the final submit and flip
+      // the essay back to "pending".
+      if (submittedRef.current || submittingRef.current) return
 
       const payload = {
         task1_text: textsRef.current.task1,
@@ -272,6 +275,11 @@ export default function WritingMockTest({
       confirmLabel: 'Minimize',
       cancelLabel: 'Stay here',
       onConfirm: () => {
+        if (submittedRef.current || submittingRef.current) {
+          onClose()
+          return
+        }
+
         onAutosave({
           task1_text: textsRef.current.task1,
           task2_text: textsRef.current.task2,

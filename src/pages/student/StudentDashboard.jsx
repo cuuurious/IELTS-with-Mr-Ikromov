@@ -212,7 +212,18 @@ const [loading, setLoading] =
       return
     }
 
+    // 2026-10-06: switching groups quickly could let the previous
+    // group's slower response land under the new group. Each run of
+    // this effect has its own `cancelled` flag, and the old group's
+    // list is cleared straight away instead of lingering.
+    let cancelled = false
+    let lastLoadAt = 0
+
+    setHomeworks([])
+    setSubmissions({})
+
     const load = async () => {
+      lastLoadAt = Date.now()
       // Homework list and this student's own submissions are fetched
       // together (2026-09-30 speed-up) — see the note above.
       const submissionsRequest = supabase
@@ -246,6 +257,8 @@ const [loading, setLoading] =
           }
         )
 
+      if (cancelled) return
+
       if (homeworkError) {
         console.error(
           'Failed to load homework:',
@@ -261,6 +274,8 @@ const [loading, setLoading] =
         data: subs,
         error: submissionError,
       } = await submissionsRequest
+
+      if (cancelled) return
 
       if (submissionError) {
         console.error(
@@ -300,8 +315,13 @@ const [loading, setLoading] =
      * the tab becomes visible again (or is restored from that cache)
      * catches the app back up to what actually happened.
      */
+    // 2026-10-06: at most once a minute — every tab switch used to
+    // refetch the whole homework list.
     const handleVisible = () => {
-      if (document.visibilityState === 'visible') {
+      if (
+        document.visibilityState === 'visible' &&
+        Date.now() - lastLoadAt > 60000
+      ) {
         load()
       }
     }
@@ -323,6 +343,8 @@ const [loading, setLoading] =
     )
 
     return () => {
+      cancelled = true
+
       document.removeEventListener(
         'visibilitychange',
         handleVisible

@@ -10,6 +10,8 @@ import {
   extensionOf,
   isImageExtension,
 } from '../../lib/submissionTypes'
+import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
+import { safeFileName as storageSafeName } from '../../lib/storageKey'
 import AudioRecorder from '../../components/AudioRecorder'
 import StampBadge, {
   getSubmissionStatus,
@@ -63,6 +65,14 @@ const requestAiEvaluation = (submissionId, homework) => {
       console.error('AI evaluation request failed:', err)
     })
 }
+
+// 2026-10-06: every expanded card used to add its own window 'paste'
+// listener, so one Ctrl+V uploaded the image into EVERY open homework.
+// Now only one card takes a paste: the one the student last clicked,
+// focused or hovered — or, if they haven't touched any yet, the only
+// open one.
+const openPasteCards = new Set()
+let activePasteCard = null
 
 const PARTS = [
   {
@@ -178,6 +188,26 @@ export default function HomeworkCard({
   // racing it — both would otherwise read the same "existing files"
   // snapshot and the second upsert would overwrite the first.
   const saveQueueRef = useRef(Promise.resolve())
+
+  // Paste routing (see openPasteCards above) — 2026-10-06.
+  const pasteCardKeyRef = useRef(null)
+  if (!pasteCardKeyRef.current) pasteCardKeyRef.current = {}
+
+  useEffect(() => {
+    const key = pasteCardKeyRef.current
+    if (!open) return undefined
+
+    openPasteCards.add(key)
+
+    return () => {
+      openPasteCards.delete(key)
+      if (activePasteCard === key) activePasteCard = null
+    }
+  }, [open])
+
+  const claimPaste = () => {
+    activePasteCard = pasteCardKeyRef.current
+  }
 
   const status = getSubmissionStatus(
     submission,
@@ -301,6 +331,11 @@ export default function HomeworkCard({
       throw error
     }
 
+    // 2026-10-06: keep the ref current after EVERY save (not only file
+    // uploads), so queued deletes/uploads and the mock autosave guard
+    // always see the real latest row.
+    submissionRef.current = data
+
     onChange(data)
 
     setSpeakingParts((previous) => ({
@@ -412,43 +447,13 @@ export default function HomeworkCard({
         ? originalName.trim()
         : file.name || 'file'
 
-    const rawExtension =
-      name.includes('.')
-        ? name
-            .split('.')
-            .pop()
-            .toLowerCase()
-        : ''
-
-    const extension =
-      /^[a-z0-9]{1,10}$/.test(
-        rawExtension
-      )
-        ? rawExtension
-        : ''
-
-    let uniqueId
-
-    if (
-      typeof crypto !== 'undefined' &&
-      typeof crypto.randomUUID ===
-        'function'
-    ) {
-      uniqueId = crypto.randomUUID()
-    } else {
-      uniqueId =
-        `${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 12)}`
-    }
-
-    const safeFileName =
-      extension
-        ? `${uniqueId}.${extension}`
-        : uniqueId
-
+    // 2026-10-06: storage key built with safeFileName() (lib/
+    // storageKey.js) — ASCII only, unique, keeps a readable
+    // transliterated name and the extension even for Cyrillic/Uzbek
+    // file names. The original name is still what's saved in the row
+    // for display.
     const path =
-      `${studentId}/${homework.id}/${safeFileName}`
+      `${studentId}/${homework.id}/${storageSafeName(name)}`
 
     console.log(
       'Uploading homework file:',
@@ -682,19 +687,44 @@ export default function HomeworkCard({
     }
   }
 
-  const saveFiles = (files) => {
-    // Chain onto the queue regardless of whether the previous save
-    // succeeded or failed, so one failed upload doesn't permanently
-    // jam the queue for later pastes/uploads.
-    const next = saveQueueRef.current.then(
-      () => runSaveFiles(files),
-      () => runSaveFiles(files)
-    )
+  // Chain onto the queue regardless of whether the previous save
+  // succeeded or failed, so one failed upload doesn't permanently
+  // jam the queue for later pastes/uploads. 2026-10-06: deletes go
+  // through the same queue now too (see handleScreenshotDelete).
+  const enqueueSave = (task) => {
+    const next = saveQueueRef.current.then(task, task)
 
     saveQueueRef.current = next.catch(() => {})
 
     return next
   }
+
+  const saveFiles = (files) =>
+    // 2026-10-06: the max-count / file-type checks in runSaveFiles
+    // throw before its own try/catch, so their message never reached
+    // the student (an unhandled rejection instead). Show it.
+    enqueueSave(() => runSaveFiles(files)).catch((err) => {
+      setError(err?.message || 'Failed to upload homework files.')
+    })
+
+  // Drag files from the desktop onto "Your files / pictures"
+  // (2026-10-06) — same accept rules, count limits, compression and
+  // upload path as the file button and paste.
+  const { isDragging, dropProps } = useFileDrop({
+    onFiles: (files) => {
+      activePasteCard = pasteCardKeyRef.current
+      setError('')
+      saveFiles(files)
+    },
+    onReject: (files) =>
+      setError(
+        `${files.map((f) => f.name).join(', ')} ${
+          files.length === 1 ? 'is not an allowed file type' : 'are not allowed file types'
+        } for this homework.`
+      ),
+    accept: buildAccept(allowedTypes),
+    disabled: !open || submissionLocked || isMockHomework || uploading,
+  })
 
   /*
    * ============================================================
@@ -740,10 +770,20 @@ export default function HomeworkCard({
           )
           .filter(Boolean)
 
-      if (images.length) {
-        e.preventDefault()
-        saveFiles(images)
-      }
+      if (!images.length) return
+
+      // Only ONE open card takes the paste (2026-10-06): the one the
+      // student last clicked/focused/hovered, else the latest opened.
+      const me = pasteCardKeyRef.current
+      const target =
+        activePasteCard && openPasteCards.has(activePasteCard)
+          ? activePasteCard
+          : [...openPasteCards].pop()
+
+      if (target !== me) return
+
+      e.preventDefault()
+      saveFiles(images)
     }
 
     window.addEventListener(
@@ -1175,14 +1215,26 @@ export default function HomeworkCard({
     }
   }
 
+  // 2026-10-06: autosave and the final submit share the save queue, and
+  // an autosave whose turn comes after the essay was submitted is
+  // dropped — a late autosave used to flip a submitted essay back to
+  // "pending".
+  const mockIsSubmitted = () =>
+    submissionRef.current?.status === 'done' &&
+    Boolean(submissionRef.current?.submitted_at)
+
   const handleMockAutosave = async (patch) => {
     try {
-      await upsertSubmission({
-        mock_essay: {
-          ...(submissionRef.current?.mock_essay || {}),
-          ...patch,
-        },
-        status: 'pending',
+      await enqueueSave(async () => {
+        if (mockIsSubmitted()) return
+
+        await upsertSubmission({
+          mock_essay: {
+            ...(submissionRef.current?.mock_essay || {}),
+            ...patch,
+          },
+          status: 'pending',
+        })
       })
     } catch (err) {
       // Silent by design — this fires every few seconds in the
@@ -1194,14 +1246,16 @@ export default function HomeworkCard({
   }
 
   const handleMockSubmit = async (patch) => {
-    const saved = await upsertSubmission({
-      mock_essay: {
-        ...(submissionRef.current?.mock_essay || {}),
-        ...patch,
-      },
-      status: 'done',
-      submitted_at: new Date().toISOString(),
-    })
+    const saved = await enqueueSave(() =>
+      upsertSubmission({
+        mock_essay: {
+          ...(submissionRef.current?.mock_essay || {}),
+          ...patch,
+        },
+        status: 'done',
+        submitted_at: new Date().toISOString(),
+      })
+    )
 
     await markHomeworkCompleted()
 
@@ -1218,25 +1272,33 @@ export default function HomeworkCard({
    * ============================================================
    */
 
+  // 2026-10-06: deletes run through the same save queue as uploads and
+  // read the latest row from submissionRef — two quick deletes used to
+  // both start from the same old list, so the second brought the
+  // first file back.
   const handleScreenshotDelete =
     async (urlToRemove) => {
       setError('')
 
       try {
-        const remaining =
-          existingImages.filter(
+        await enqueueSave(async () => {
+          const current = submissionRef.current
+          const remaining = (
+            current?.screenshot_urls || []
+          ).filter(
             (url) =>
               url !==
               urlToRemove
           )
 
-        await upsertSubmission({
-          screenshot_urls:
-            remaining,
-          status: 'pending',
-          submitted_at:
-            submission?.submitted_at ||
-            null,
+          await upsertSubmission({
+            screenshot_urls:
+              remaining,
+            status: 'pending',
+            submitted_at:
+              current?.submitted_at ||
+              null,
+          })
         })
       } catch (err) {
         setError(
@@ -1257,20 +1319,25 @@ export default function HomeworkCard({
       setError('')
 
       try {
-        const remaining =
-          existingFiles.filter(
+        // Same queue + latest-row rule as handleScreenshotDelete.
+        await enqueueSave(async () => {
+          const current = submissionRef.current
+          const remaining = (
+            current?.submission_files || []
+          ).filter(
             (file) =>
               file.url !==
               fileToRemove.url
           )
 
-        await upsertSubmission({
-          submission_files:
-            remaining,
-          status: 'pending',
-          submitted_at:
-            submission?.submitted_at ||
-            null,
+          await upsertSubmission({
+            submission_files:
+              remaining,
+            status: 'pending',
+            submitted_at:
+              current?.submitted_at ||
+              null,
+          })
         })
       } catch (err) {
         setError(
@@ -1338,7 +1405,15 @@ export default function HomeworkCard({
 
   return (
     <>
-    <div className="ticket rounded-lg overflow-hidden">
+    <div
+      className="ticket rounded-lg overflow-hidden"
+      // The card the student is working in takes Ctrl+V (2026-10-06).
+      onPointerDown={claimPaste}
+      onFocusCapture={claimPaste}
+      onMouseEnter={() => {
+        if (open) claimPaste()
+      }}
+    >
 
       {/* =====================================================
           HOMEWORK HEADER
@@ -1589,7 +1664,12 @@ export default function HomeworkCard({
 
           {!isMockHomework && (
           <>
-          <div className="rounded-lg border border-line bg-panel-2 p-3">
+          <div
+            {...dropProps}
+            className="relative rounded-lg border border-line bg-panel-2 p-3"
+          >
+
+            <DropOverlay show={isDragging} label="Drop files to upload" />
 
             <div className="flex flex-wrap justify-between gap-2">
 

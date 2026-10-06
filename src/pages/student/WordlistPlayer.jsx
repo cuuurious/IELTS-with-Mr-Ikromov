@@ -218,6 +218,10 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
   const [detail, setDetail] = useState([])
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState(null)
+  // 2026-10-06: the attempt insert used to be fire-and-forget — a
+  // failure lost the result silently. Now it's checked; on failure the
+  // local autosave copy is kept and the results screen offers Retry.
+  const [saveFailed, setSaveFailed] = useState(false)
 
   // Whether we just restored an in-progress attempt from a previous
   // visit, so a small "picked up where you left off" note can be
@@ -443,28 +447,52 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
         const score = newDetail.filter((d) => d.isCorrect).length
         const total = newDetail.length
         const percentage = Math.round((score / total) * 100)
-        setSaving(true)
-        await supabase.from('wordlist_attempts').insert({
-          wordlist_id: wordlist.id,
-          student_id: studentId,
-          score,
-          total,
-          percentage,
-          detail: newDetail,
-        })
-        setSaving(false)
-        setResult({ score, total, percentage, detail: newDetail })
+        const finalResult = { score, total, percentage, detail: newDetail }
+        setResult(finalResult)
+        await saveAttempt(finalResult)
         setMode('results')
-
-        // The real result now lives in the database — the autosaved
-        // in-progress copy would only be stale from here on.
-        try {
-          localStorage.removeItem(progressKey)
-        } catch {
-          // Ignore — nothing to clean up if storage isn't available.
-        }
       }
     }, 600)
+  }
+
+  const saveAttempt = async (finalResult) => {
+    setSaving(true)
+    setSaveFailed(false)
+
+    let failed = false
+
+    try {
+      const { error: insertError } = await supabase
+        .from('wordlist_attempts')
+        .insert({
+          wordlist_id: wordlist.id,
+          student_id: studentId,
+          score: finalResult.score,
+          total: finalResult.total,
+          percentage: finalResult.percentage,
+          detail: finalResult.detail,
+        })
+
+      if (insertError) throw insertError
+    } catch (err) {
+      console.error('Failed to save word list attempt:', err)
+      failed = true
+    }
+
+    setSaving(false)
+    setSaveFailed(failed)
+
+    // Keep the autosaved in-progress copy until the result is really
+    // in the database.
+    if (failed) return
+
+    // The real result now lives in the database — the autosaved
+    // in-progress copy would only be stale from here on.
+    try {
+      localStorage.removeItem(progressKey)
+    } catch {
+      // Ignore — nothing to clean up if storage isn't available.
+    }
   }
 
   const category = result ? categoryFor(result.percentage) : null
@@ -628,6 +656,25 @@ export default function WordlistPlayer({ wordlist, studentId, onExit }) {
         <p className="text-sm">
           {result.score} / {result.total} correct
         </p>
+
+        {(saveFailed || saving) && (
+          <div className="flex items-center justify-center gap-3 rounded-md border border-coral/40 bg-coral/10 px-3 py-2 text-sm text-coral">
+            {saving ? (
+              <span className="text-mist">Saving…</span>
+            ) : (
+              <>
+                <span>Couldn't save your result.</span>
+                <button
+                  type="button"
+                  onClick={() => saveAttempt(result)}
+                  className="focus-ring rounded-md border border-coral/50 px-2 py-1 text-xs font-medium hover:bg-coral hover:text-paper"
+                >
+                  Retry
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {result.detail.some((d) => !d.isCorrect) && (
           <div className="text-left bg-panel-2 border border-line rounded-md p-3 max-h-40 overflow-y-auto">

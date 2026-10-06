@@ -362,6 +362,25 @@ export default function MockExams({ selfId }) {
   )
 }
 
+// Exam clocks use the DATABASE's time, not the student's computer clock
+// (2026-10-06): a laptop set a few minutes wrong used to show the wrong
+// time left (and auto-submit early or late). Returns serverNow - Date.now()
+// in ms (midpoint of the round trip), or 0 if server_now() isn't
+// reachable. Also used by WritingMockExam.jsx.
+export async function fetchServerClockOffset() {
+  try {
+    const sentAt = Date.now()
+    const { data, error } = await supabase.rpc('server_now')
+    const receivedAt = Date.now()
+    if (error || !data) return 0
+    const serverMs = new Date(Array.isArray(data) ? data[0] : data).getTime()
+    if (!Number.isFinite(serverMs)) return 0
+    return Math.round(serverMs - (sentAt + receivedAt) / 2)
+  } catch {
+    return 0
+  }
+}
+
 export function ExamTaker({
   selfId,
   exam,
@@ -370,10 +389,23 @@ export function ExamTaker({
   ctaLabel = 'Back to exams',
   onAttemptStarted,
   onSubmitted,
+  // false in a Full Mock (2026-10-06): there the "exit" button advances the
+  // sitting to the next section, so the error screen must never offer it
+  // while this section has no submitted attempt — only "Try again".
+  allowExitOnError = true,
 }) {
   const [phase, setPhase] = useState('starting')
   const [attemptId, setAttemptId] = useState(null)
   const [error, setError] = useState(null)
+  // Which step failed — 'start' retries starting/resuming, 'submit'
+  // retries the submit (2026-10-06; "Try submitting again" used to be the
+  // only button, and it did nothing when the attempt never started).
+  const [errorKind, setErrorKind] = useState(null)
+  const [startNonce, setStartNonce] = useState(0)
+  // serverNow - Date.now(), measured once when the attempt starts, so a
+  // wrong clock on the student's computer can't change their time left.
+  const clockOffsetRef = useRef(0)
+  const serverNow = () => Date.now() + clockOffsetRef.current
   const [answers, setAnswers] = useState({})
   const [deadline, setDeadline] = useState(null)
   const [remainingMs, setRemainingMs] = useState(0)
@@ -856,33 +888,55 @@ export function ExamTaker({
   // from the real started_at, not "now"), and whatever answers were last
   // autosaved (see the periodic-save effect below, which now also writes
   // draft_answers alongside tab_switch_count).
+  //
+  // START RETRIES (2026-10-06 review): if the "in-progress attempt?"
+  // lookup itself failed (offline for a moment), this used to fall through
+  // and INSERT a brand-new attempt — fresh clock, empty answers, the old
+  // one orphaned. Now the lookup is retried with backoff and, if it still
+  // fails, the student gets an error with "Try again" instead of a new
+  // attempt. The database also allows only ONE unsubmitted attempt per
+  // student+exam now (unique partial index), so an insert that loses a race
+  // (two tabs, a double mount) comes back as 23505 — then we look again and
+  // resume the one that won.
   useEffect(() => {
     let cancelled = false
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const start = async () => {
-      const { data: existing, error: lookupError } = await supabase
-        .from('mock_attempts')
-        .select('*')
-        .eq('exam_id', exam.id)
-        .eq('user_id', selfId)
-        .is('submitted_at', null)
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (cancelled) return
-
-      if (lookupError) {
-        // Not fatal on its own — fall through to starting a fresh attempt
-        // rather than blocking the student entirely over a transient read
-        // error (e.g. offline for a moment).
+    const lookup = async () => {
+      let lastError = null
+      for (let i = 0; i < 4; i += 1) {
+        if (i > 0) await sleep(1000 * 2 ** (i - 1))
+        if (cancelled) return { cancelled: true }
+        const { data, error: lookupError } = await supabase
+          .from('mock_attempts')
+          .select('*')
+          .eq('exam_id', exam.id)
+          .eq('user_id', selfId)
+          .is('submitted_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (!lookupError) return { existing: data || null }
+        lastError = lookupError
         console.error('Could not check for an in-progress attempt:', lookupError)
       }
+      return { error: lastError }
+    }
 
-      if (existing) {
+    const failStart = (message) => {
+      setError(message)
+      setErrorKind('start')
+      setPhase('error')
+    }
+
+    const resume = (existing) => {
         const draft = existing.draft_answers || {}
         setAttemptId(existing.id)
         setAnswers(draft.answers || {})
+        // Keep counting from what's already saved (2026-10-06) — the
+        // autosave and the presence heartbeat write this value back, so
+        // starting from 0 on a refresh wiped the teacher's integrity log.
+        tabSwitchCountRef.current = existing.tab_switch_count || 0
 
         const restoredAudioEnded = {}
         ;(draft.audioEnded || []).forEach((sectionId) => {
@@ -916,6 +970,25 @@ export function ExamTaker({
 
         setPhase('in-progress')
         onAttemptStarted?.(existing.id)
+    }
+
+    const start = async () => {
+      // Server clock (2026-10-06): measured once per start, in parallel
+      // with the lookup; 0 if the call fails.
+      const offsetPromise = fetchServerClockOffset()
+
+      const found = await lookup()
+      if (cancelled || found.cancelled) return
+      if (found.error) {
+        failStart("Couldn't check for a test already in progress. Please check your connection and try again.")
+        return
+      }
+
+      clockOffsetRef.current = await offsetPromise
+      if (cancelled) return
+
+      if (found.existing) {
+        resume(found.existing)
         return
       }
 
@@ -928,8 +1001,16 @@ export function ExamTaker({
       if (cancelled) return
 
       if (startError) {
-        setError(startError.message)
-        setPhase('error')
+        if (startError.code === '23505') {
+          // Another start won the race — resume that one instead.
+          const again = await lookup()
+          if (cancelled || again.cancelled) return
+          if (again.existing) {
+            resume(again.existing)
+            return
+          }
+        }
+        failStart(startError.message || 'Could not start this test.')
         return
       }
 
@@ -952,7 +1033,7 @@ export function ExamTaker({
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exam.id])
+  }, [exam.id, startNonce])
 
   // One-off immediate save of the current draft — same payload as the
   // periodic autosave below. Used the moment a teacher pause is detected.
@@ -987,7 +1068,7 @@ export function ExamTaker({
     }
 
     const tick = () => {
-      const left = deadline - Date.now()
+      const left = deadline - serverNow()
       setRemainingMs(Math.max(0, left))
       if (left <= 0) {
         handleSubmit(true)
@@ -1009,15 +1090,33 @@ export function ExamTaker({
   useEffect(() => {
     if (phase !== 'in-progress' || !attemptId) return
     let cancelled = false
+    let lastHeartbeatAt = Date.now()
 
     const poll = async () => {
+      // Only the status columns (2026-10-06) — select('*') re-downloaded
+      // the whole draft_answers jsonb every 5 s for every student.
       const { data: row, error: pollError } = await supabase
         .from('mock_attempts')
-        .select('*')
+        .select('id, submitted_at, deadline_at, paused_at')
         .eq('id', attemptId)
         .maybeSingle()
 
       if (cancelled || pollError) return
+
+      // Presence heartbeat (2026-10-06): the autosave skips unchanged
+      // payloads, so a student reading without answering stopped moving
+      // last_seen_at and looked disconnected in Live Mocks. A tiny no-op
+      // update at most every 30 s lets the server trigger bump it.
+      if (row && !row.submitted_at && Date.now() - lastHeartbeatAt >= 30_000) {
+        lastHeartbeatAt = Date.now()
+        supabase
+          .from('mock_attempts')
+          .update({ tab_switch_count: tabSwitchCountRef.current })
+          .eq('id', attemptId)
+          .then(({ error: beatError }) => {
+            if (beatError) console.error('Presence heartbeat failed:', beatError)
+          })
+      }
 
       if (!row) {
         setEndedExternally('deleted')
@@ -1085,10 +1184,11 @@ export function ExamTaker({
     const allDone = sectionsWithAudio.every((s) => audioEndedBySection[s.id])
     if (!allDone) return
 
-    const startedAt = new Date().toISOString()
+    // Server time (2026-10-06) — same clock the countdown ticks against.
+    const startedAt = new Date(serverNow()).toISOString()
     reviewStartedAtRef.current = startedAt
     setReviewPhase(true)
-    setDeadline(Date.now() + REVIEW_WINDOW_MS)
+    setDeadline(serverNow() + REVIEW_WINDOW_MS)
     setFlashMessage('Audio finished — 2 minutes to review your answers')
 
     // Save immediately rather than waiting for the next 30s autosave tick
@@ -1254,6 +1354,7 @@ export function ExamTaker({
 
       setSubmitRetry(null)
       setError(submitError.message)
+      setErrorKind('submit')
       setPhase('error')
       submittingRef.current = false // allow a manual retry rather than permanently locking up
       return
@@ -1261,7 +1362,10 @@ export function ExamTaker({
 
     setSubmitRetry(null)
     const row = Array.isArray(data) ? data[0] : data
-    const finalResult = { score: row?.score ?? 0, maxScore: row?.max_score ?? 0 }
+    // submit_mock_attempt returns score/max_score = null for students now
+    // (2026-10-06 — only teachers get numbers), so pass through null rather
+    // than inventing a 0/0; nothing on the student side shows them.
+    const finalResult = { score: row?.score ?? null, maxScore: row?.max_score ?? null }
     setResult(finalResult)
     setPhase('done')
     onSubmitted?.(finalResult)
@@ -1281,23 +1385,45 @@ export function ExamTaker({
         <p className="font-display text-lg text-paper">Something went wrong</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-coral">{error}</p>
         <p className="mx-auto mt-2 max-w-sm text-xs text-mist">
-          Your answers are still saved on this device — retrying won't lose anything.
+          {errorKind === 'start'
+            ? 'Nothing has been lost — any answers already saved will be there when you try again.'
+            : 'Your answers are still saved on this device — retrying won\'t lose anything.'}
         </p>
         <div className="mt-5 flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => handleSubmit(lastSubmitAutoRef.current)}
-            className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
-          >
-            Try submitting again
-          </button>
-          <button
-            type="button"
-            onClick={onExit}
-            className="focus-ring inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
-          >
-            {ctaLabel}
-          </button>
+          {errorKind === 'start' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null)
+                setErrorKind(null)
+                setPhase('starting')
+                setStartNonce((n) => n + 1)
+              }}
+              className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+            >
+              Try again
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSubmit(lastSubmitAutoRef.current)}
+              className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+            >
+              Try submitting again
+            </button>
+          )}
+          {/* Full Mock (2026-10-06): this button moves the sitting on, so a
+              section that was never started/submitted would be skipped for
+              good — only offered outside a Full Mock. */}
+          {allowExitOnError && (
+            <button
+              type="button"
+              onClick={onExit}
+              className="focus-ring inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
+            >
+              {ctaLabel}
+            </button>
+          )}
         </div>
       </div>
     )

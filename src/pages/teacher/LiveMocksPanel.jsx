@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
 
@@ -95,16 +95,30 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, 
     return map
   }, [fullMockSets])
 
+  // 2026-10-06 review:
+  //  - request token: a slow load started under the previous filter could
+  //    land after the new one and overwrite it — only the newest load may
+  //    write state now;
+  //  - the 10 s poll read select('*') of every live attempt (whole
+  //    draft_answers jsonb, essays…) — now only the columns shown here
+  //    (answers only, not notes/audio state; essays are still needed for
+  //    the word counts);
+  //  - polling pauses while this browser tab is hidden and refreshes as
+  //    soon as it's visible again.
+  const loadTokenRef = useRef(0)
+
   const load = useCallback(async () => {
+    const token = ++loadTokenRef.current
     let query = supabase
       .from('full_mock_attempts')
-      .select('*')
+      .select('id, set_id, student_id, stage, sections, paused_at, started_at, completed_at')
       .order('started_at', { ascending: false })
       .limit(200)
     if (filter === 'live') query = query.neq('stage', 'done')
     if (filter === 'finished') query = query.eq('stage', 'done')
 
     const { data: rows, error } = await query
+    if (token !== loadTokenRef.current) return
     if (error) {
       setLoadError(error.message || 'Could not load sittings.')
       setLoading(false)
@@ -117,9 +131,18 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, 
     let w = []
     if (liveStudentIds.length > 0) {
       const [rlRes, wRes] = await Promise.all([
-        supabase.from('mock_attempts').select('*').in('user_id', liveStudentIds).is('submitted_at', null),
-        supabase.from('writing_mock_attempts').select('*').in('student_id', liveStudentIds).is('submitted_at', null),
+        supabase
+          .from('mock_attempts')
+          .select('id, user_id, exam_id, started_at, deadline_at, paused_at, tab_switch_count, last_seen_at, answers:draft_answers->answers')
+          .in('user_id', liveStudentIds)
+          .is('submitted_at', null),
+        supabase
+          .from('writing_mock_attempts')
+          .select('id, student_id, exam_id, started_at, deadline_at, paused_at, tab_switch_count, last_seen_at, task1_text, task2_text')
+          .in('student_id', liveStudentIds)
+          .is('submitted_at', null),
       ])
+      if (token !== loadTokenRef.current) return
       rl = rlRes.data || []
       w = wRes.data || []
     }
@@ -134,8 +157,17 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, 
   useEffect(() => {
     setLoading(true)
     load()
-    const id = setInterval(load, 10_000)
-    return () => clearInterval(id)
+    const id = setInterval(() => {
+      if (!document.hidden) load()
+    }, 10_000)
+    const onVisible = () => {
+      if (!document.hidden) load()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [load])
 
   useEffect(() => {
@@ -361,7 +393,7 @@ export default function LiveMocksPanel({ students, fullMockSets, onReissueCode, 
 
             let progress = null
             if (live?.kind === 'rl') {
-              const answers = live.row.draft_answers?.answers || {}
+              const answers = live.row.answers || {}
               const answered = Object.values(answers).filter((v) => String(v || '').trim() !== '').length
               progress = `${answered} answered`
             } else if (live?.kind === 'writing') {

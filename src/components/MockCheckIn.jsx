@@ -304,6 +304,9 @@ export default function MockCheckIn({ selfId, checkedInSet, onCheckedInSetChange
         return
       }
 
+      // Only these two columns (2026-10-06): for students the server now
+      // forces used_at := now() (the value sent here is ignored) and
+      // rejects a change to any other column.
       const { data: updatedRow, error: updateError } = await supabase
         .from('mock_access_codes')
         .update({ used_at: new Date().toISOString(), entered_full_name: trimmedName })

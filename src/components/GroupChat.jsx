@@ -10,6 +10,22 @@ import ConfirmModal from './ConfirmModal'
 import GroupSettingsModal from './GroupSettingsModal'
 import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, isDocumentFile, DOCUMENT_ACCEPT } from './chatFiles'
+import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
+
+// 2026-10-06: a group chat now opens with only its latest 100 messages
+// ("Load older messages" fetches the next 100), and reactions / "delete
+// for me" markers are fetched for the loaded messages only, 100 ids per
+// request — asking for every id at once made the URL too long.
+const PAGE_SIZE = 100
+
+const chunkIds = (ids, size = 100) => {
+  const clean = ids.filter((id) => id && !String(id).startsWith('temp-'))
+  const out = []
+  for (let i = 0; i < clean.length; i += size) out.push(clean.slice(i, i + size))
+  return out
+}
+
+const GROUP_CHAT_ACCEPT = `image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg,${DOCUMENT_ACCEPT}`
 
 const MAX_FILE_MB = 25
 
@@ -153,8 +169,22 @@ export default function GroupChat({
   const chunksRef = useRef([])
   const timerRef = useRef(null)
 
+  // Paging + "is this about a loaded message?" checks (2026-10-06).
+  const [hasOlder, setHasOlder] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const scrollBoxRef = useRef(null)
+  const keepScrollRef = useRef(null)
+  const messagesRef = useRef([])
+  messagesRef.current = messages
+  const profilesRef = useRef({})
+  profilesRef.current = profiles
+
+  // Only fetches people not loaded yet (2026-10-06 — it used to refetch
+  // the sender's profile on every single incoming message).
   const loadProfiles = async (ids) => {
-    const uniqueIds = [...new Set((ids || []).filter(Boolean))]
+    const uniqueIds = [...new Set((ids || []).filter(Boolean))].filter(
+      (id) => !profilesRef.current[id]
+    )
 
     if (!uniqueIds.length) return
 
@@ -180,29 +210,36 @@ export default function GroupChat({
     }))
   }
 
-  const loadReactions = async (messageRows) => {
+  // merge=true adds to what's loaded (older page); otherwise replaces.
+  const loadReactions = async (messageRows, { merge = false } = {}) => {
     const ids = (messageRows || [])
       .map((m) => m.id)
       .filter(Boolean)
 
     if (!ids.length) {
-      setReactions({})
+      if (!merge) setReactions({})
       return
     }
 
-    const { data, error } = await supabase
-      .from('group_message_reactions')
-      .select('*')
-      .in('message_id', ids)
+    const all = []
 
-    if (error) {
-      console.error('Reaction loading error:', error)
-      return
+    for (const part of chunkIds(ids)) {
+      const { data, error } = await supabase
+        .from('group_message_reactions')
+        .select('*')
+        .in('message_id', part)
+
+      if (error) {
+        console.error('Reaction loading error:', error)
+        return
+      }
+
+      all.push(...(data || []))
     }
 
     const grouped = {}
 
-    ;(data || []).forEach((reaction) => {
+    all.forEach((reaction) => {
       if (!grouped[reaction.message_id]) {
         grouped[reaction.message_id] = []
       }
@@ -210,56 +247,150 @@ export default function GroupChat({
       grouped[reaction.message_id].push(reaction)
     })
 
-    setReactions(grouped)
+    setReactions((prev) => (merge ? { ...prev, ...grouped } : grouped))
 
     await loadProfiles(
-      (data || []).map((reaction) => reaction.user_id)
+      all.map((reaction) => reaction.user_id)
     )
   }
 
+  // Latest PAGE_SIZE messages (2026-10-06). If a notification points at
+  // an older message, everything from that message onward is loaded so
+  // it can be scrolled to.
   const loadMessages = async () => {
-    if (!groupId) return
+    if (!groupId) return []
 
     const { data, error } = await supabase
       .from('group_messages')
       .select('*')
       .eq('group_id', groupId)
       .order('created_at', {
-        ascending: true,
+        ascending: false,
       })
+      .limit(PAGE_SIZE)
 
     if (error) {
       setError(error.message)
-      return
+      return []
     }
 
-    const rows = data || []
+    let rows = (data || []).slice().reverse()
+    const more = (data || []).length === PAGE_SIZE
 
+    if (
+      initialMessageId &&
+      more &&
+      rows.length &&
+      !rows.some((r) => String(r.id) === String(initialMessageId))
+    ) {
+      const { data: target } = await supabase
+        .from('group_messages')
+        .select('created_at')
+        .eq('id', initialMessageId)
+        .maybeSingle()
+
+      if (target?.created_at) {
+        const { data: between } = await supabase
+          .from('group_messages')
+          .select('*')
+          .eq('group_id', groupId)
+          .gte('created_at', target.created_at)
+          .lt('created_at', rows[0].created_at)
+          .order('created_at', { ascending: true })
+          .limit(500)
+
+        if (between?.length) rows = [...between, ...rows]
+      }
+    }
+
+    messagesRef.current = rows
     setMessages(rows)
+    setHasOlder(more)
 
     await loadProfiles(
       rows.map((message) => message.sender_id)
     )
 
     await loadReactions(rows)
+
+    return rows
   }
 
-  const loadHiddenForMe = async () => {
+  // "Delete for me" markers for the given (loaded) messages only — the
+  // old query read every marker ever, which stops at 1000 rows.
+  const loadHiddenForMe = async (ids, { merge = false } = {}) => {
     if (!selfId) return
 
-    const { data, error } = await supabase
-      .from('group_message_deletions')
-      .select('message_id')
-      .eq('user_id', selfId)
+    const found = []
 
-    if (error) {
-      console.error(error)
-      return
+    for (const part of chunkIds(ids || [])) {
+      const { data, error } = await supabase
+        .from('group_message_deletions')
+        .select('message_id')
+        .eq('user_id', selfId)
+        .in('message_id', part)
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      ;(data || []).forEach((row) => found.push(row.message_id))
     }
 
-    setHiddenIds(
-      new Set((data || []).map((row) => row.message_id))
-    )
+    setHiddenIds((prev) => {
+      const next = merge ? new Set(prev) : new Set()
+      found.forEach((id) => next.add(id))
+      return next
+    })
+  }
+
+  const loadOlder = async () => {
+    if (loadingOlder || !groupId) return
+
+    const oldest = messagesRef.current.find((m) => !m._optimistic)
+    if (!oldest) return
+
+    setLoadingOlder(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('group_messages')
+        .select('*')
+        .eq('group_id', groupId)
+        .lt('created_at', oldest.created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE)
+
+      if (error) throw error
+
+      const older = (data || []).slice().reverse()
+      setHasOlder((data || []).length === PAGE_SIZE)
+
+      if (!older.length) return
+
+      const box = scrollBoxRef.current
+      if (box) {
+        keepScrollRef.current = { height: box.scrollHeight, top: box.scrollTop }
+      }
+
+      const known = new Set(messagesRef.current.map((m) => m.id))
+      const fresh = older.filter((m) => !known.has(m.id))
+
+      setMessages((prev) => {
+        const ids = new Set(prev.map((m) => m.id))
+        return [...older.filter((m) => !ids.has(m.id)), ...prev]
+      })
+
+      await loadProfiles(fresh.map((m) => m.sender_id))
+      await loadReactions(fresh, { merge: true })
+      await loadHiddenForMe(fresh.map((m) => m.id), { merge: true })
+    } catch (err) {
+      console.error('Failed to load older messages:', err)
+      setError(err?.message || 'Could not load older messages.')
+    } finally {
+      setLoadingOlder(false)
+    }
   }
 
   const loadPins = async () => {
@@ -307,8 +438,8 @@ export default function GroupChat({
         setGroupInfo(groupRow)
       }
 
-      await loadMessages()
-      await loadHiddenForMe()
+      const rows = await loadMessages()
+      await loadHiddenForMe(rows.map((m) => m.id))
       await loadPins()
     }
 
@@ -406,13 +537,36 @@ export default function GroupChat({
         async (payload) => {
           const reaction = payload.new
 
-          setReactions((prev) => ({
-            ...prev,
-            [reaction.message_id]: [
-              ...(prev[reaction.message_id] || []),
-              reaction,
-            ],
-          }))
+          // This table has no group_id to filter on, so ignore
+          // reactions on messages not loaded here (2026-10-06).
+          if (
+            !reaction ||
+            !messagesRef.current.some((m) => m.id === reaction.message_id)
+          ) {
+            return
+          }
+
+          setReactions((prev) => {
+            const list = prev[reaction.message_id] || []
+
+            if (list.some((item) => item.id === reaction.id)) return prev
+
+            return {
+              ...prev,
+              // Replaces this person's optimistic placeholder, if any.
+              [reaction.message_id]: [
+                ...list.filter(
+                  (item) =>
+                    !(
+                      String(item.id).startsWith('temp-') &&
+                      item.user_id === reaction.user_id &&
+                      item.reaction === reaction.reaction
+                    )
+                ),
+                reaction,
+              ],
+            }
+          })
 
           await loadProfiles([reaction.user_id])
         }
@@ -426,15 +580,24 @@ export default function GroupChat({
           table: 'group_message_reactions',
         },
         (payload) => {
-          setReactions((prev) => ({
-            ...prev,
-            [payload.old.message_id]: (
-              prev[payload.old.message_id] || []
-            ).filter(
-              (reaction) =>
-                reaction.id !== payload.old.id
-            ),
-          }))
+          // 2026-10-06: realtime sends only the primary key of a
+          // deleted row (no message_id), so remove it by id wherever
+          // it is.
+          const deletedId = payload.old?.id
+          if (!deletedId) return
+
+          setReactions((prev) => {
+            let changed = false
+            const next = {}
+
+            Object.entries(prev).forEach(([messageId, list]) => {
+              const kept = list.filter((reaction) => reaction.id !== deletedId)
+              if (kept.length !== list.length) changed = true
+              next[messageId] = kept
+            })
+
+            return changed ? next : prev
+          })
         }
       )
 
@@ -487,6 +650,16 @@ export default function GroupChat({
   }, [groupId, selfRole, selfId])
 
   useEffect(() => {
+    // After "Load older messages", stay where the reader was instead
+    // of jumping to the bottom (2026-10-06).
+    const keep = keepScrollRef.current
+    if (keep && scrollBoxRef.current) {
+      keepScrollRef.current = null
+      const box = scrollBoxRef.current
+      box.scrollTop = box.scrollHeight - keep.height + keep.top
+      return
+    }
+
     bottomRef.current?.scrollIntoView({
       behavior: 'smooth',
     })
@@ -660,8 +833,10 @@ export default function GroupChat({
     }
   }
 
+  // Returns true once sent, false on failure — so a recorded voice /
+  // video note is only discarded after it was really sent (2026-10-06).
   const uploadFile = async (incomingFile, mediaType) => {
-    if (!incomingFile) return
+    if (!incomingFile) return false
 
     // Shrink phone photos before upload (see lib/compressImage.js).
     const file = incomingFile.type?.startsWith('image/')
@@ -672,7 +847,7 @@ export default function GroupChat({
       setError(
         `Maximum file size is ${MAX_FILE_MB}MB.`
       )
-      return
+      return false
     }
 
     setUploading(true)
@@ -718,8 +893,10 @@ export default function GroupChat({
       })
 
       setReplyingTo(null)
+      return true
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Could not send the file.')
+      return false
     } finally {
       setUploading(false)
     }
@@ -732,6 +909,11 @@ export default function GroupChat({
 
     if (!file) return
 
+    await sendPickedFile(file)
+  }
+
+  // Shared by the attach button and drag-and-drop (2026-10-06).
+  const sendPickedFile = async (file) => {
     let mediaType = null
 
     if (file.type.startsWith('image/')) {
@@ -877,7 +1059,11 @@ export default function GroupChat({
       }
     )
 
-    await uploadFile(file, isVideo ? 'video_note' : 'audio')
+    const sent = await uploadFile(file, isVideo ? 'video_note' : 'audio')
+
+    // Keep the recording on failure so it can be sent again (the
+    // error is shown above the composer).
+    if (!sent) return
 
     setRecordedBlob(null)
     setRecordSeconds(0)
@@ -1408,6 +1594,8 @@ export default function GroupChat({
   // this user has on the message (not just a same-emoji match) also
   // cleans up any leftover double-reaction from before this rule
   // existed the next time they react here.
+  // 2026-10-06: shows immediately (optimistic), rolled back if the
+  // server refuses it.
   const toggleReaction = async (
     message,
     reaction
@@ -1421,28 +1609,55 @@ export default function GroupChat({
       (item) => item.reaction === reaction
     )
 
-    if (mine.length) {
+    const mineIds = mine.map((item) => item.id)
+
+    const placeholder = existingSame
+      ? null
+      : {
+          id: `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          message_id: message.id,
+          user_id: selfId,
+          reaction,
+          created_at: new Date().toISOString(),
+        }
+
+    setReactions((prev) => ({
+      ...prev,
+      [message.id]: [
+        ...(prev[message.id] || []).filter((item) => !mineIds.includes(item.id)),
+        ...(placeholder ? [placeholder] : []),
+      ],
+    }))
+
+    const serverIds = mineIds.filter((id) => !String(id).startsWith('temp-'))
+
+    if (serverIds.length) {
       const { error } =
         await supabase
           .from('group_message_reactions')
           .delete()
-          .in(
-            'id',
-            mine.map((item) => item.id)
-          )
+          .in('id', serverIds)
 
       if (error) {
         setError(error.message)
+        setReactions((prev) => {
+          const list = (prev[message.id] || []).filter(
+            (item) => item.id !== placeholder?.id
+          )
+          const missing = mine.filter((item) => !list.some((r) => r.id === item.id))
+          return { ...prev, [message.id]: [...list, ...missing] }
+        })
+        return
       }
     }
 
     // Clicking the reaction they already had just removes it (the
     // "take it back" case) — anything else replaces it.
-    if (existingSame) {
+    if (!placeholder) {
       return
     }
 
-    const { error } =
+    const { data: inserted, error } =
       await supabase
         .from('group_message_reactions')
         .insert({
@@ -1450,6 +1665,18 @@ export default function GroupChat({
           user_id: selfId,
           reaction,
         })
+        .select()
+        .single()
+
+    setReactions((prev) => {
+      const list = (prev[message.id] || []).filter(
+        (item) => item.id !== placeholder.id
+      )
+      if (error || !inserted || list.some((item) => item.id === inserted.id)) {
+        return { ...prev, [message.id]: list }
+      }
+      return { ...prev, [message.id]: [...list, inserted] }
+    })
 
     if (error) {
       setError(error.message)
@@ -1530,6 +1757,30 @@ export default function GroupChat({
     await uploadFile(file, 'image')
   }
 
+  // Drag a file from the computer onto the chat to send it — same path
+  // as the attach button, and only where that button is shown
+  // (2026-10-06).
+  const { isDragging, dropProps } = useFileDrop({
+    accept: GROUP_CHAT_ACCEPT,
+    multiple: false,
+    disabled:
+      !groupId ||
+      leftGroup ||
+      uploading ||
+      recording ||
+      Boolean(recordedBlob) ||
+      selectMode ||
+      !(selfRole === 'teacher' || groupInfo?.allow_media !== false),
+    onFiles: (files) => {
+      setError('')
+      sendPickedFile(files[0])
+    },
+    onReject: () =>
+      setError(
+        'This type of file can\'t be sent. Photos, videos, audio, PDF, Word, Excel, PowerPoint and text files are supported.'
+      ),
+  })
+
   if (!groupId) {
     return (
       <p className="text-mist">
@@ -1583,7 +1834,12 @@ export default function GroupChat({
   }
 
   return (
-    <div className="group-chat-shell flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
+    <div
+      {...dropProps}
+      className="group-chat-shell relative flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]"
+    >
+
+      <DropOverlay show={isDragging} label="Drop to send" />
 
       <ProfileModal
         userId={viewingProfileId}
@@ -1833,7 +2089,20 @@ export default function GroupChat({
 
       <div className="flex-1 min-h-0 flex">
 
-        <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4">
+        <div ref={scrollBoxRef} className="flex-1 min-w-0 overflow-y-auto px-4 py-4">
+
+          {hasOlder && (
+            <div className="mb-3 flex justify-center">
+              <button
+                type="button"
+                onClick={loadOlder}
+                disabled={loadingOlder}
+                className="focus-ring rounded-full border border-line px-3 py-1 text-xs text-mist transition hover:border-brass hover:text-brass disabled:opacity-40"
+              >
+                {loadingOlder ? 'Loading…' : 'Load older messages'}
+              </button>
+            </div>
+          )}
 
           {messages.length === 0 && (
             <div className="h-full flex items-center justify-center text-mist text-sm">
@@ -2549,7 +2818,7 @@ export default function GroupChat({
             <input
               ref={fileInputRef}
               type="file"
-              accept={`image/*,video/*,audio/*,.mp3,.wav,.m4a,.ogg,${DOCUMENT_ACCEPT}`}
+              accept={GROUP_CHAT_ACCEPT}
               onChange={handleFile}
               className="hidden"
             />

@@ -118,12 +118,33 @@ export function AuthProvider({ children }) {
     )
   }, [])
 
-  const loadProfile = useCallback(async (userId) => {
+  // 2026-10-06: one profile fetch per user at a time. Signing in used
+  // to fetch the profile twice (once from signIn(), once from the
+  // SIGNED_IN event) — a second call while one is in flight now just
+  // waits for the first.
+  const profileInFlightRef = useRef(null)
+
+  const loadProfile = useCallback((userId) => {
     if (!userId) {
       setProfile(null)
-      return
+      return Promise.resolve()
     }
 
+    const inFlight = profileInFlightRef.current
+    if (inFlight && inFlight.userId === userId) return inFlight.promise
+
+    const promise = loadProfileNow(userId).finally(() => {
+      if (profileInFlightRef.current?.promise === promise) {
+        profileInFlightRef.current = null
+      }
+    })
+
+    profileInFlightRef.current = { userId, promise }
+    return promise
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const loadProfileNow = async (userId) => {
     setProfileLoading(true)
     setAuthError('')
 
@@ -180,6 +201,13 @@ export function AuthProvider({ children }) {
       // with nothing here to catch it and let the app move on.
       console.error('Could not load profile:', err)
 
+      // 2026-10-06: a failed BACKGROUND refresh (this user's profile is
+      // already on screen) keeps that profile instead of throwing the
+      // person out to an error screen over a network blip.
+      if (profileRef.current?.id === userId) {
+        return
+      }
+
       setProfile(null)
       setAuthError(
         err?.message ||
@@ -188,7 +216,7 @@ export function AuthProvider({ children }) {
     } finally {
       setProfileLoading(false)
     }
-  }, [fetchProfileRow])
+  }
 
   useEffect(() => {
     let mounted = true
@@ -263,7 +291,12 @@ export function AuthProvider({ children }) {
     const {
       data: sub,
     } = supabase.auth.onAuthStateChange(
-      async (event, sess) => {
+      // 2026-10-06: no longer async, and nothing here awaits a Supabase
+      // call — supabase-js runs this callback while holding its auth
+      // lock, so awaiting another Supabase request inside it can
+      // deadlock (documented in the supabase-js docs). The profile
+      // fetch below is deferred with setTimeout(…, 0) instead.
+      (event, sess) => {
         if (!mounted) return
 
         /*
@@ -341,9 +374,13 @@ export function AuthProvider({ children }) {
         }
 
         if (sess?.user?.id) {
-          await loadProfile(
-            sess.user.id
-          )
+          const userId = sess.user.id
+          // Flag it now so Gate() doesn't flash "waiting for approval"
+          // during the one-tick gap before the fetch starts.
+          setProfileLoading(true)
+          setTimeout(() => {
+            if (mounted) loadProfile(userId)
+          }, 0)
         } else {
           setProfile(null)
         }

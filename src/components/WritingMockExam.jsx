@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { MIN_WORDS, countWords, formatClock } from '../lib/writingMock'
 import { readSession, writeSession } from '../lib/sessionState'
+import { fetchServerClockOffset } from './MockExams'
 
 const AUTOSAVE_MS = 5000
 
@@ -81,8 +82,46 @@ export default function WritingMockExam({ selfId }) {
   // convention as WritingMockTest.jsx's "Resume Mock Test".
   const inProgress = pastAttempts.find((a) => !a.submitted_at)
 
+  // Look for an unsubmitted attempt at this exam, retrying a failed read
+  // with backoff (2026-10-06 review). Returns { existing } or { error }.
+  const findInProgress = async (examId) => {
+    let lastError = null
+    for (let i = 0; i < 4; i += 1) {
+      if (i > 0) await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (i - 1)))
+      const { data, error: lookupError } = await supabase
+        .from('writing_mock_attempts')
+        .select('*')
+        .eq('exam_id', examId)
+        .eq('student_id', selfId)
+        .is('submitted_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!lookupError) return { existing: data || null }
+      lastError = lookupError
+      console.error('Could not check for an in-progress writing attempt:', lookupError)
+    }
+    return { error: lastError }
+  }
+
+  // 2026-10-06 review: if loading past attempts had failed, `inProgress`
+  // was empty and Start inserted a second attempt (fresh clock, empty
+  // essay). Now Start checks again first and resumes anything unsubmitted;
+  // if that check keeps failing it shows an error instead of inserting.
+  // Only one unsubmitted attempt per student+exam is allowed in the
+  // database now, so a lost race (23505) resumes the winner.
   const startExam = async (exam) => {
     setError('')
+
+    const found = await findInProgress(exam.id)
+    if (found.error) {
+      setError("Couldn't check for a writing test already in progress. Please check your connection and try again.")
+      return
+    }
+    if (found.existing) {
+      setActiveAttempt({ exam, attempt: found.existing })
+      return
+    }
 
     const { data, error: startError } = await supabase
       .from('writing_mock_attempts')
@@ -91,6 +130,13 @@ export default function WritingMockExam({ selfId }) {
       .single()
 
     if (startError) {
+      if (startError.code === '23505') {
+        const again = await findInProgress(exam.id)
+        if (again.existing) {
+          setActiveAttempt({ exam, attempt: again.existing })
+          return
+        }
+      }
       setError(startError.message || 'Could not start this writing mock.')
       return
     }
@@ -221,6 +267,24 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   )
   const [endedExternally, setEndedExternally] = useState(null) // 'submitted' | 'deleted' | null
 
+  // Server clock (2026-10-06): serverNow - Date.now(), measured once on
+  // mount via server_now() (0 if that fails), so a wrong clock on the
+  // student's computer can't change their time left or auto-submit early.
+  const clockOffsetRef = useRef(0)
+  const [clockReady, setClockReady] = useState(false)
+  const serverNow = () => Date.now() + clockOffsetRef.current
+  useEffect(() => {
+    let cancelled = false
+    fetchServerClockOffset().then((offset) => {
+      if (cancelled) return
+      clockOffsetRef.current = offset
+      setClockReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const [remaining, setRemaining] = useState(() =>
     Math.max(0, Math.round((deadlineMs - (pausedAt ?? Date.now())) / 1000))
   )
@@ -250,7 +314,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
           task1_text: textsRef.current.task1,
           task2_text: textsRef.current.task2,
           tab_switch_count: tabSwitchCountRef.current,
-          submitted_at: new Date().toISOString(),
+          submitted_at: new Date(serverNow()).toISOString(), // server re-stamps it (2026-10-06)
           auto_submitted: auto,
         })
         .eq('id', attempt.id)
@@ -277,10 +341,12 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     }
 
     const tick = () => {
-      const left = Math.max(0, Math.round((deadlineMs - Date.now()) / 1000))
+      const left = Math.max(0, Math.round((deadlineMs - serverNow()) / 1000))
       setRemaining(left)
 
-      if (left <= 0 && !submittedRef.current && !submittingRef.current) {
+      // Don't auto-submit off the local clock before the server offset is
+      // known (2026-10-06) — a fast laptop clock could end the test early.
+      if (left <= 0 && clockReady && !submittedRef.current && !submittingRef.current) {
         finishTest({ auto: true })
       }
     }
@@ -289,7 +355,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deadlineMs, pausedAt, endedExternally])
+  }, [deadlineMs, pausedAt, endedExternally, clockReady])
 
   // Poll this attempt's own row for teacher actions — pause/resume, extra
   // time, "end section now", or the sitting being cancelled.
@@ -301,7 +367,9 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
       if (submittedRef.current) return
       const { data: row, error: pollError } = await supabase
         .from('writing_mock_attempts')
-        .select('*')
+        // Only the status columns (2026-10-06) — select('*') re-downloaded
+        // both essays every 5 s.
+        .select('id, submitted_at, deadline_at, paused_at')
         .eq('id', attempt.id)
         .maybeSingle()
 

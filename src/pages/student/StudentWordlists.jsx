@@ -154,11 +154,15 @@ export default function StudentWordlists({
   const [reviewing, setReviewing] = useState(false)
   const [reviewRefresh, setReviewRefresh] = useState(0)
   const [loading, setLoading] = useState(true)
+  // 2026-10-06: a failed load used to show "no word lists" — now it
+  // says it couldn't load and offers Retry.
+  const [loadError, setLoadError] = useState('')
 
   const load = async () => {
     if (!studentId) return
 
     setLoading(true)
+    setLoadError('')
 
     try {
       /*
@@ -349,8 +353,9 @@ setLists(wordlists || [])
         error
       )
 
-      setLists([])
-      setMyAttempts({})
+      setLoadError(
+        error?.message || 'Could not load your word lists.'
+      )
     } finally {
       setLoading(false)
     }
@@ -409,6 +414,28 @@ setLists(wordlists || [])
           <p className="text-mist text-sm">
             Loading your vocabulary practice…
           </p>
+        </div>
+
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col gap-5">
+
+        <div className="border border-coral/40 bg-coral/10 rounded-lg px-5 py-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-coral text-sm">
+            Couldn't load your word lists. Check your connection and try again.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => load()}
+            className="focus-ring px-3 py-1.5 rounded-md border border-coral/50 text-coral text-sm font-medium hover:bg-coral hover:text-paper"
+          >
+            Retry
+          </button>
         </div>
 
       </div>

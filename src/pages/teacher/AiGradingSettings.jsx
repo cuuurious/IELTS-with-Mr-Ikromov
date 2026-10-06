@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { safeFileName } from '../../lib/storageKey'
+import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 
 /*
  * Where the teacher uploads the grading rubric the AI evaluates
@@ -101,8 +103,13 @@ function CriteriaCard({ skill, row, teacherId, onSaved }) {
   const handleFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
+    await uploadPdf(file)
+  }
 
-    if (!file) return
+  // Shared by the file input and desktop drag-and-drop (2026-10-06), so
+  // a dropped file goes through exactly the same PDF check.
+  const uploadPdf = async (file) => {
+    if (!file || uploading) return
 
     if (file.type !== 'application/pdf') {
       setError('Please upload a PDF file. (In Word or Google Docs, use "Save as / Export as PDF".)')
@@ -113,7 +120,9 @@ function CriteriaCard({ skill, row, teacherId, onSaved }) {
     setError('')
 
     try {
-      const path = `${skill.key}/${teacherId}/${Date.now()}-${file.name}`
+      // ASCII-safe storage key (2026-10-06) — Cyrillic/Uzbek names were
+      // rejected by Storage; the original name is still saved as file_name.
+      const path = `${skill.key}/${teacherId}/${safeFileName(file.name)}`
 
       const { error: uploadError } = await supabase.storage
         .from('grading-criteria')
@@ -157,8 +166,15 @@ function CriteriaCard({ skill, row, teacherId, onSaved }) {
     }
   }
 
+  const drop = useFileDrop({
+    multiple: false,
+    disabled: uploading,
+    onFiles: (files) => uploadPdf(files[0]),
+  })
+
   return (
-    <div className="ticket rounded-lg p-4 flex flex-col gap-3">
+    <div {...drop.dropProps} className="ticket relative rounded-lg p-4 flex flex-col gap-3">
+      <DropOverlay show={drop.isDragging} label="Drop the PDF here" />
       <div>
         <div className="font-display text-lg">{skill.label}</div>
         <p className="text-xs text-mist mt-1">{skill.hint}</p>

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
+import { safeFileName } from '../../lib/storageKey'
+import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
@@ -109,6 +111,19 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [mockTask1ImageUrl, setMockTask1ImageUrl] = useState(homework.mock_task1_image_url || null)
   const mockTask1ImageInputRef = useRef(null)
 
+  // Drag-and-drop from the desktop (2026-10-06) — feeds the same state
+  // the file inputs set; the chart image keeps its image/* rule.
+  const attachmentDrop = useFileDrop({
+    multiple: false,
+    onFiles: (files) => setAttachmentFile(files[0] || null),
+  })
+  const mockImageDrop = useFileDrop({
+    accept: 'image/*',
+    multiple: false,
+    onFiles: (files) => setMockTask1Image(files[0] || null),
+    onReject: () => setError('The Task 1 chart has to be an image file.'),
+  })
+
   const clearMockTask1Image = () => {
     setMockTask1Image(null)
     if (mockTask1ImageInputRef.current) mockTask1ImageInputRef.current.value = ''
@@ -150,7 +165,9 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       let nextMockTask1ImageUrl = mockTask1ImageUrl
 
       if (isMock && mockTask1Image) {
-        const path = `${homework.created_by}/${homework.group_id}/mock-task1-${Date.now()}-${mockTask1Image.name}`
+        // ASCII-safe storage keys (2026-10-06) — Cyrillic/Uzbek file names
+        // were rejected by Storage; the original name stays in attachment_name.
+        const path = `${homework.created_by}/${homework.group_id}/mock-task1-${safeFileName(mockTask1Image.name)}`
         const { error: upErr } = await supabase.storage
           .from('homework-files')
           .upload(path, mockTask1Image, { contentType: guessMimeType(mockTask1Image.name, mockTask1Image.type) })
@@ -163,7 +180,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       let nextAttachmentName = attachmentName
 
       if (!isMock && attachmentFile) {
-        const path = `${homework.created_by}/${homework.group_id}/${Date.now()}-${attachmentFile.name}`
+        const path = `${homework.created_by}/${homework.group_id}/${safeFileName(attachmentFile.name)}`
         const { error: attUpErr } = await supabase.storage
           .from('homework-files')
           .upload(path, attachmentFile, { contentType: guessMimeType(attachmentFile.name, attachmentFile.type) })
@@ -360,7 +377,8 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                 tabIndex={0}
                 onPaste={handleAttachmentPaste}
                 onClick={() => attachmentInputRef.current?.click()}
-                className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+                {...attachmentDrop.dropProps}
+                className="focus-ring relative flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
               >
                 <input
                   ref={attachmentInputRef}
@@ -369,7 +387,8 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                   onClick={(e) => e.stopPropagation()}
                   className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
                 />
-                <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+                <p className="text-xs text-mist">or click here and paste an image (Ctrl+V), or drag a file here</p>
+                <DropOverlay show={attachmentDrop.isDragging} label="Drop the file here" />
               </div>
             )}
           </div>
@@ -431,7 +450,8 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                     tabIndex={0}
                     onPaste={handleMockTask1ImagePaste}
                     onClick={() => mockTask1ImageInputRef.current?.click()}
-                    className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+                    {...mockImageDrop.dropProps}
+                    className="focus-ring relative flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
                   >
                     <input
                       ref={mockTask1ImageInputRef}
@@ -441,7 +461,8 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
                       onClick={(e) => e.stopPropagation()}
                       className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
                     />
-                    <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+                    <p className="text-xs text-mist">or click here and paste an image (Ctrl+V), or drag it here</p>
+                    <DropOverlay show={mockImageDrop.isDragging} label="Drop the image here" />
                   </div>
                 )}
               </div>

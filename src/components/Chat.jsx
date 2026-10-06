@@ -9,6 +9,23 @@ import VideoNoteBubble from './VideoNoteBubble'
 import ConfirmModal from './ConfirmModal'
 import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, DOCUMENT_ACCEPT } from './chatFiles'
+import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
+import { fetchAll } from '../lib/fetchAll'
+
+// 2026-10-06: a chat now opens with only its latest 100 messages
+// ("Load older messages" fetches the next 100), and reactions/pins are
+// fetched for the loaded messages only, 100 ids per request — asking
+// for every id at once made the request URL too long on long chats.
+const PAGE_SIZE = 100
+
+const chunkIds = (ids, size = 100) => {
+  const clean = ids.filter((id) => id && !String(id).startsWith('temp-'))
+  const out = []
+  for (let i = 0; i < clean.length; i += size) out.push(clean.slice(i, i + size))
+  return out
+}
+
+const CHAT_ACCEPT = `image/*,video/*,audio/*,${DOCUMENT_ACCEPT}`
 
 // Same upload limit as the group chat.
 const MAX_FILE_MB = 25
@@ -128,6 +145,14 @@ export default function Chat({
   // for the per-message "⋯" menu instead.
   const [chatMenuOpen, setChatMenuOpen] = useState(false)
 
+  // Paging (2026-10-06) — see PAGE_SIZE above.
+  const [hasOlder, setHasOlder] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const scrollBoxRef = useRef(null)
+  const keepScrollRef = useRef(null)
+  const pinsRef = useRef([])
+  pinsRef.current = pins
+
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
   const fileRef = useRef(null)
@@ -214,40 +239,73 @@ export default function Chat({
    * ============================================================
    */
 
-  const loadReactions = async (messageRows) => {
+  // Reactions for the given messages only, 100 ids per request.
+  // merge=true adds to what's already loaded (older page); otherwise
+  // replaces it (first load).
+  const loadReactions = async (messageRows, { merge = false } = {}) => {
     const ids = (messageRows || [])
       .map((m) => m.id)
       .filter(Boolean)
 
     if (!ids.length) {
-      setReactions({})
-      return
-    }
-
-    const { data, error: reactionsError } = await supabase
-      .from('message_reactions')
-      .select('*')
-      .in('message_id', ids)
-
-    if (reactionsError) {
-      console.error(
-        'Reaction loading error:',
-        reactionsError
-      )
+      if (!merge) setReactions({})
       return
     }
 
     const grouped = {}
 
-    ;(data || []).forEach((reaction) => {
-      if (!grouped[reaction.message_id]) {
-        grouped[reaction.message_id] = []
+    for (const part of chunkIds(ids)) {
+      const { data, error: reactionsError } = await supabase
+        .from('message_reactions')
+        .select('*')
+        .in('message_id', part)
+
+      if (reactionsError) {
+        console.error(
+          'Reaction loading error:',
+          reactionsError
+        )
+        return
       }
 
-      grouped[reaction.message_id].push(reaction)
-    })
+      ;(data || []).forEach((reaction) => {
+        if (!grouped[reaction.message_id]) {
+          grouped[reaction.message_id] = []
+        }
 
-    setReactions(grouped)
+        grouped[reaction.message_id].push(reaction)
+      })
+    }
+
+    setReactions((prev) => (merge ? { ...prev, ...grouped } : grouped))
+  }
+
+  // "Delete for me" markers, for the loaded messages only (the old
+  // query read every marker this account ever made, which stops at
+  // the 1000-row API cap) — 2026-10-06.
+  const loadHidden = async (ids, { merge = false } = {}) => {
+    const found = []
+
+    for (const part of chunkIds(ids)) {
+      const { data, error: deletionsError } = await supabase
+        .from('message_deletions')
+        .select('message_id')
+        .eq('user_id', selfId)
+        .in('message_id', part)
+
+      if (deletionsError) {
+        console.error('Deletion markers loading error:', deletionsError)
+        return
+      }
+
+      ;(data || []).forEach((row) => found.push(row.message_id))
+    }
+
+    setHiddenIds((prev) => {
+      const next = merge ? new Set(prev) : new Set()
+      found.forEach((id) => next.add(id))
+      return next
+    })
   }
 
   // Private chat had no equivalent of group chat's "last read" marker
@@ -297,29 +355,97 @@ export default function Chat({
     setPeerReadAt(data?.last_read_at || null)
   }
 
+  // Pins among the loaded messages, 100 ids per request (2026-10-06).
   const loadPins = async (messageIds) => {
     const ids =
       messageIds && messageIds.length
         ? messageIds
         : messagesRef.current.map((m) => m.id)
 
-    if (!ids.length) {
+    const parts = chunkIds(ids)
+
+    if (!parts.length) {
       setPins([])
       return
     }
 
-    const { data, error: pinsError } = await supabase
-      .from('message_pins')
-      .select('*')
-      .in('message_id', ids)
-      .order('pinned_at', { ascending: false })
+    const all = []
 
-    if (pinsError) {
-      console.error('Pin loading error:', pinsError)
-      return
+    for (const part of parts) {
+      const { data, error: pinsError } = await supabase
+        .from('message_pins')
+        .select('*')
+        .in('message_id', part)
+
+      if (pinsError) {
+        console.error('Pin loading error:', pinsError)
+        return
+      }
+
+      all.push(...(data || []))
     }
 
-    setPins(data || [])
+    all.sort((a, b) => new Date(b.pinned_at) - new Date(a.pinned_at))
+    setPins(all)
+  }
+
+  const pairFilter = `and(sender_id.eq.${selfId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${selfId})`
+
+  // "Load older messages" — the next 100 before the oldest loaded one,
+  // keeping the reader's scroll position (2026-10-06).
+  const loadOlder = async () => {
+    if (loadingOlder) return
+
+    const oldest = messagesRef.current.find((m) => !m._optimistic)
+    if (!oldest) return
+
+    setLoadingOlder(true)
+
+    try {
+      const { data, error: olderError } = await supabase
+        .from('messages')
+        .select('*')
+        .or(pairFilter)
+        .lt('created_at', oldest.created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE)
+
+      if (olderError) throw olderError
+
+      const older = (data || []).slice().reverse()
+      setHasOlder((data || []).length === PAGE_SIZE)
+
+      if (!older.length) return
+
+      const box = scrollBoxRef.current
+      if (box) {
+        keepScrollRef.current = {
+          height: box.scrollHeight,
+          top: box.scrollTop,
+        }
+      }
+
+      const known = new Set(messagesRef.current.map((m) => m.id))
+      const fresh = older.filter((m) => !known.has(m.id))
+      const allIds = [
+        ...fresh.map((m) => m.id),
+        ...messagesRef.current.map((m) => m.id),
+      ]
+
+      setMessages((prev) => {
+        const ids = new Set(prev.map((m) => m.id))
+        return [...older.filter((m) => !ids.has(m.id)), ...prev]
+      })
+
+      await loadReactions(fresh, { merge: true })
+      await loadHidden(fresh.map((m) => m.id), { merge: true })
+      await loadPins(allIds)
+    } catch (err) {
+      console.error('Failed to load older messages:', err)
+      setError(err?.message || 'Could not load older messages.')
+    } finally {
+      setLoadingOlder(false)
+    }
   }
 
   useEffect(() => {
@@ -366,73 +492,136 @@ export default function Chat({
     let active = true
 
     const load = async () => {
+      // Latest PAGE_SIZE messages only (2026-10-06) — newest first from
+      // the server, flipped to oldest-first for display.
       const { data, error: loadError } = await supabase
         .from('messages')
         .select('*')
-        .or(
-          `and(sender_id.eq.${selfId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${selfId})`
-        )
-        .order('created_at', { ascending: true })
+        .or(pairFilter)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE)
 
-      if (!loadError && active) {
-        const rows = data || []
-        setMessages(rows)
-        await loadReactions(rows)
-        await loadPins(rows.map((row) => row.id))
-        await markRead()
-        await loadPeerReadState()
+      if (loadError) {
+        console.error('Failed to load messages:', loadError)
+        return
       }
 
-      const { data: deletions, error: deletionsError } =
-        await supabase
-          .from('message_deletions')
-          .select('message_id')
-          .eq('user_id', selfId)
+      if (!active) return
 
-      if (!deletionsError && active) {
-        setHiddenIds(
-          new Set(
-            (deletions || []).map((row) => row.message_id)
-          )
-        )
+      let rows = (data || []).slice().reverse()
+      const more = (data || []).length === PAGE_SIZE
+
+      // A notification can point at a message older than the latest
+      // page — load from that message up to the page so it can be
+      // scrolled to and highlighted.
+      if (
+        targetMessageId &&
+        more &&
+        rows.length &&
+        !rows.some((r) => String(r.id) === String(targetMessageId))
+      ) {
+        const { data: target } = await supabase
+          .from('messages')
+          .select('created_at')
+          .eq('id', targetMessageId)
+          .maybeSingle()
+
+        if (target?.created_at) {
+          const { data: between } = await supabase
+            .from('messages')
+            .select('*')
+            .or(pairFilter)
+            .gte('created_at', target.created_at)
+            .lt('created_at', rows[0].created_at)
+            .order('created_at', { ascending: true })
+            .limit(500)
+
+          if (between?.length) rows = [...between, ...rows]
+        }
       }
+
+      if (!active) return
+
+      messagesRef.current = rows
+      setMessages(rows)
+      setHasOlder(more)
+
+      const ids = rows.map((row) => row.id)
+
+      await loadReactions(rows)
+      await loadPins(ids)
+      await loadHidden(ids)
+      await markRead()
+      await loadPeerReadState()
+    }
+
+    const belongsToPair = (m) =>
+      Boolean(m) &&
+      ((m.sender_id === selfId && m.receiver_id === peerId) ||
+        (m.sender_id === peerId && m.receiver_id === selfId))
+
+    const isLoaded = (messageId) =>
+      messagesRef.current.some((m) => m.id === messageId)
+
+    const handleInsert = (payload) => {
+      const m = payload.new
+
+      if (!belongsToPair(m)) return
+
+      setMessages((prev) => {
+        if (prev.some((item) => item.id === m.id)) {
+          return prev
+        }
+
+        return [...prev, m]
+      })
+
+      // The chat is open right now, so a message that just
+      // arrived FROM the other person should never sit there
+      // showing as unread back in the conversation list.
+      if (m.sender_id === peerId) {
+        markRead()
+      }
+    }
+
+    const handleUpdate = (payload) => {
+      const m = payload.new
+
+      if (!belongsToPair(m)) return
+
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === m.id ? m : item
+        )
+      )
     }
 
     load()
 
     const channel = supabase
       .channel(`chat-${[selfId, peerId].sort().join('-')}`)
+      // 2026-10-06: filtered on the server to messages this account
+      // sent or received (it used to receive every private message in
+      // the school); handleInsert/handleUpdate then keep only this pair.
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
+          filter: `sender_id=eq.${selfId}`,
         },
-        (payload) => {
-          const m = payload.new
-
-          const belongs =
-            (m.sender_id === selfId && m.receiver_id === peerId) ||
-            (m.sender_id === peerId && m.receiver_id === selfId)
-
-          if (belongs) {
-            setMessages((prev) => {
-              if (prev.some((item) => item.id === m.id)) {
-                return prev
-              }
-
-              return [...prev, m]
-            })
-
-            // The chat is open right now, so a message that just
-            // arrived FROM the other person should never sit there
-            // showing as unread back in the conversation list.
-            if (m.sender_id === peerId) {
-              markRead()
-            }
-          }
-        }
+        handleInsert
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${selfId}`,
+        },
+        handleInsert
       )
       .on(
         'postgres_changes',
@@ -440,22 +629,19 @@ export default function Chat({
           event: 'UPDATE',
           schema: 'public',
           table: 'messages',
+          filter: `sender_id=eq.${selfId}`,
         },
-        (payload) => {
-          const m = payload.new
-
-          const belongs =
-            (m.sender_id === selfId && m.receiver_id === peerId) ||
-            (m.sender_id === peerId && m.receiver_id === selfId)
-
-          if (belongs) {
-            setMessages((prev) =>
-              prev.map((item) =>
-                item.id === m.id ? m : item
-              )
-            )
-          }
-        }
+        handleUpdate
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${selfId}`,
+        },
+        handleUpdate
       )
       .on(
         'postgres_changes',
@@ -492,13 +678,30 @@ export default function Chat({
         (payload) => {
           const reaction = payload.new
 
-          setReactions((prev) => ({
-            ...prev,
-            [reaction.message_id]: [
-              ...(prev[reaction.message_id] || []),
-              reaction,
-            ],
-          }))
+          // Only reactions on messages loaded here (2026-10-06).
+          if (!reaction || !isLoaded(reaction.message_id)) return
+
+          setReactions((prev) => {
+            const list = prev[reaction.message_id] || []
+
+            if (list.some((item) => item.id === reaction.id)) return prev
+
+            return {
+              ...prev,
+              // Replaces this person's optimistic placeholder, if any.
+              [reaction.message_id]: [
+                ...list.filter(
+                  (item) =>
+                    !(
+                      String(item.id).startsWith('temp-') &&
+                      item.user_id === reaction.user_id &&
+                      item.reaction === reaction.reaction
+                    )
+                ),
+                reaction,
+              ],
+            }
+          })
         }
       )
       .on(
@@ -509,14 +712,24 @@ export default function Chat({
           table: 'message_reactions',
         },
         (payload) => {
-          setReactions((prev) => ({
-            ...prev,
-            [payload.old.message_id]: (
-              prev[payload.old.message_id] || []
-            ).filter(
-              (reaction) => reaction.id !== payload.old.id
-            ),
-          }))
+          // 2026-10-06: realtime sends only the primary key of a
+          // deleted row (no message_id), so remove it by id wherever
+          // it is.
+          const deletedId = payload.old?.id
+          if (!deletedId) return
+
+          setReactions((prev) => {
+            let changed = false
+            const next = {}
+
+            Object.entries(prev).forEach(([messageId, list]) => {
+              const kept = list.filter((reaction) => reaction.id !== deletedId)
+              if (kept.length !== list.length) changed = true
+              next[messageId] = kept
+            })
+
+            return changed ? next : prev
+          })
         }
       )
       .on(
@@ -548,7 +761,10 @@ export default function Chat({
           schema: 'public',
           table: 'message_pins',
         },
-        () => loadPins()
+        (payload) => {
+          // Only when it's a pin on a message loaded here (2026-10-06).
+          if (isLoaded(payload.new?.message_id)) loadPins()
+        }
       )
       .on(
         // The peer just read (or un-read) this conversation — live
@@ -584,7 +800,16 @@ export default function Chat({
           schema: 'public',
           table: 'message_pins',
         },
-        () => loadPins()
+        (payload) => {
+          // message_id is this table's primary key, so it IS sent.
+          const messageId = payload.old?.message_id
+          if (
+            !messageId ||
+            pinsRef.current.some((pin) => pin.message_id === messageId)
+          ) {
+            loadPins()
+          }
+        }
       )
       .subscribe()
 
@@ -595,6 +820,16 @@ export default function Chat({
   }, [selfId, peerId])
 
   useEffect(() => {
+    // After "Load older messages", stay where the reader was instead
+    // of jumping to the bottom (2026-10-06).
+    const keep = keepScrollRef.current
+    if (keep && scrollBoxRef.current) {
+      keepScrollRef.current = null
+      const box = scrollBoxRef.current
+      box.scrollTop = box.scrollHeight - keep.height + keep.top
+      return
+    }
+
     bottomRef.current?.scrollIntoView({
       behavior: 'smooth',
     })
@@ -745,8 +980,11 @@ export default function Chat({
     setSending(false)
   }
 
+  // Returns true once the message is sent, false on any failure, so a
+  // recorded voice/video note is only thrown away after it was really
+  // sent (2026-10-06 — a failed upload used to discard the recording).
   const uploadChatFile = async (incomingFile, options = {}) => {
-    if (!incomingFile || !peerId) return
+    if (!incomingFile || !peerId) return false
 
     // Phone photos are 3-10MB; shrink them in the browser first (same
     // helper as homework uploads) — faster sending, faster loading for
@@ -759,7 +997,7 @@ export default function Chat({
 
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       setError(`Maximum file size is ${MAX_FILE_MB}MB.`)
-      return
+      return false
     }
 
     setUploading(true)
@@ -874,9 +1112,11 @@ export default function Chat({
       })
 
       setReplyingTo(null)
+      return true
     } catch (err) {
       console.error(err)
       setError(err.message || 'Could not send the file.')
+      return false
     } finally {
       setUploading(false)
     }
@@ -1011,7 +1251,11 @@ export default function Chat({
       }
     )
 
-    await uploadChatFile(file, { asVideoNote: isVideo })
+    const sent = await uploadChatFile(file, { asVideoNote: isVideo })
+
+    // Keep the recording on failure so it can be sent again
+    // (the error is already shown above the composer).
+    if (!sent) return
 
     setRecordedBlob(null)
     setRecordSeconds(0)
@@ -1085,28 +1329,40 @@ export default function Chat({
     })
   }
 
+  // 2026-10-06: only the latest page is loaded now, so the whole
+  // conversation is addressed on the server instead of by loaded ids.
   const doDeleteConversation = async (mode) => {
-    const ids = messagesRef.current.map((m) => m.id)
-
     try {
       if (mode === 'everyone') {
-        if (ids.length) {
-          const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabase
+          .from('messages')
+          .delete()
+          .or(pairFilter)
+
+        if (deleteError) throw deleteError
+      } else {
+        const { data: rows, error: idsError } = await fetchAll(() =>
+          supabase
             .from('messages')
-            .delete()
-            .in('id', ids)
+            .select('id')
+            .or(pairFilter)
+            .order('id')
+        )
 
-          if (deleteError) throw deleteError
+        if (idsError) throw idsError
+
+        const ids = (rows || []).map((r) => r.id)
+
+        for (let i = 0; i < ids.length; i += 500) {
+          const { error: hideError } = await supabase
+            .from('message_deletions')
+            .upsert(
+              ids.slice(i, i + 500).map((id) => ({ message_id: id, user_id: selfId })),
+              { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+            )
+
+          if (hideError) throw hideError
         }
-      } else if (ids.length) {
-        const { error: hideError } = await supabase
-          .from('message_deletions')
-          .upsert(
-            ids.map((id) => ({ message_id: id, user_id: selfId })),
-            { onConflict: 'message_id,user_id', ignoreDuplicates: true }
-          )
-
-        if (hideError) throw hideError
       }
 
       onDeleted?.(peerId, mode)
@@ -1646,6 +1902,8 @@ export default function Chat({
   // covers every reaction this user has on this message, not just a
   // same-emoji match, so a leftover second reaction from before this
   // rule existed also gets cleaned up the next time they react here.
+  // 2026-10-06: the change shows immediately (optimistic) and is
+  // rolled back if the server refuses it.
   const toggleReaction = async (message, reaction) => {
     const mine = (reactions[message.id] || []).filter(
       (item) => item.user_id === selfId
@@ -1655,38 +1913,87 @@ export default function Chat({
       (item) => item.reaction === reaction
     )
 
-    if (mine.length) {
+    const mineIds = mine.map((item) => item.id)
+
+    const placeholder = existingSame
+      ? null
+      : {
+          id: `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          message_id: message.id,
+          user_id: selfId,
+          reaction,
+          created_at: new Date().toISOString(),
+        }
+
+    setReactions((prev) => ({
+      ...prev,
+      [message.id]: [
+        ...(prev[message.id] || []).filter((item) => !mineIds.includes(item.id)),
+        ...(placeholder ? [placeholder] : []),
+      ],
+    }))
+
+    const restoreMine = () =>
+      setReactions((prev) => {
+        const list = (prev[message.id] || []).filter(
+          (item) => item.id !== placeholder?.id
+        )
+        const missing = mine.filter((item) => !list.some((r) => r.id === item.id))
+        return { ...prev, [message.id]: [...list, ...missing] }
+      })
+
+    const serverIds = mineIds.filter((id) => !String(id).startsWith('temp-'))
+
+    if (serverIds.length) {
       const { error: reactionError } = await supabase
         .from('message_reactions')
         .delete()
-        .in(
-          'id',
-          mine.map((item) => item.id)
-        )
+        .in('id', serverIds)
 
       if (reactionError) {
         setError(reactionError.message)
+        restoreMine()
+        return
       }
     }
 
     // Clicking the reaction you already had just removes it (that's
     // the "take it back" case) — anything else replaces it with the
     // new one.
-    if (existingSame) {
+    if (!placeholder) {
       return
     }
 
-    const { error: reactionError } = await supabase
+    const { data: inserted, error: reactionError } = await supabase
       .from('message_reactions')
       .insert({
         message_id: message.id,
         user_id: selfId,
         reaction,
       })
+      .select()
+      .single()
 
     if (reactionError) {
       setError(reactionError.message)
+      setReactions((prev) => ({
+        ...prev,
+        [message.id]: (prev[message.id] || []).filter(
+          (item) => item.id !== placeholder.id
+        ),
+      }))
+      return
     }
+
+    setReactions((prev) => {
+      const list = (prev[message.id] || []).filter(
+        (item) => item.id !== placeholder.id
+      )
+      if (!inserted || list.some((item) => item.id === inserted.id)) {
+        return { ...prev, [message.id]: list }
+      }
+      return { ...prev, [message.id]: [...list, inserted] }
+    })
   }
 
   const reactionCount = (messageId, reaction) =>
@@ -1793,6 +2100,19 @@ export default function Chat({
     await uploadChatFile(file)
   }
 
+  // Drag a file from the computer onto the conversation to send it —
+  // same path as the attach button (2026-10-06).
+  const { isDragging, dropProps } = useFileDrop({
+    accept: CHAT_ACCEPT,
+    multiple: false,
+    disabled: !peerId || uploading || recording || Boolean(recordedBlob) || selectMode,
+    onFiles: (files) => {
+      setError('')
+      uploadChatFile(files[0])
+    },
+    onReject: () => setError("This type of file can't be sent in the chat."),
+  })
+
   if (!peerId) {
     return (
       <p className="text-mist">
@@ -1812,7 +2132,12 @@ export default function Chat({
   return (
     // Same look as the group chat (GroupChat.jsx) — Jasur, 2026-09-30:
     // "apply to every chat in the website be it private or group".
-    <div className="flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]">
+    <div
+      {...dropProps}
+      className="relative flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]"
+    >
+
+      <DropOverlay show={isDragging} label="Drop to send" />
 
       {/* HEADER — tap the name/photo to view their profile, or use
           Select to pick several messages at once */}
@@ -2077,7 +2402,20 @@ export default function Chat({
 
       {/* MESSAGES */}
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+      <div ref={scrollBoxRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+
+        {hasOlder && (
+          <div className="mb-3 flex justify-center">
+            <button
+              type="button"
+              onClick={loadOlder}
+              disabled={loadingOlder}
+              className="focus-ring rounded-full border border-line px-3 py-1 text-xs text-mist transition hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              {loadingOlder ? 'Loading…' : 'Load older messages'}
+            </button>
+          </div>
+        )}
 
         {messages.length === 0 && (
           <div className="h-full flex items-center justify-center text-mist text-sm">
@@ -2600,7 +2938,7 @@ export default function Chat({
         <input
           ref={fileRef}
           type="file"
-          accept={`image/*,video/*,audio/*,${DOCUMENT_ACCEPT}`}
+          accept={CHAT_ACCEPT}
           onChange={handleFile}
           className="hidden"
         />

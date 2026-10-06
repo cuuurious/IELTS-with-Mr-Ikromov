@@ -60,21 +60,43 @@ export function WordOfTheDay({ onNavigate, className = '' }) {
   const [word, setWord] = useState(undefined)
   const [flipped, setFlipped] = useState(false)
 
+  // 2026-10-06: used to download up to 2000 words to show one. Now it
+  // counts the words, then fetches just the one for today (same
+  // id order, so the pick is stable for the day).
   useEffect(() => {
     let cancelled = false
-    supabase
-      .from('wordlist_items')
-      .select('id, word, definition, uzbek_translation, example_sentence')
-      .order('id')
-      .limit(2000)
-      .then(({ data }) => {
-        if (cancelled) return
-        const list = (data || []).filter((w) => w.word)
-        setWord(list.length ? list[dayNumber() % list.length] : null)
-      })
-      .catch(() => {
+
+    const withWord = (query) => query.not('word', 'is', null).neq('word', '')
+
+    const load = async () => {
+      try {
+        const { count, error: countError } = await withWord(
+          supabase.from('wordlist_items').select('id', { count: 'exact', head: true })
+        )
+        if (countError) throw countError
+        if (!count) {
+          if (!cancelled) setWord(null)
+          return
+        }
+
+        const n = dayNumber() % count
+        const { data, error } = await withWord(
+          supabase
+            .from('wordlist_items')
+            .select('id, word, definition, uzbek_translation, example_sentence')
+        )
+          .order('id')
+          .range(n, n)
+        if (error) throw error
+
+        if (!cancelled) setWord(data?.[0] || null)
+      } catch {
         if (!cancelled) setWord(null)
-      })
+      }
+    }
+
+    load()
+
     return () => {
       cancelled = true
     }

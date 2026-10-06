@@ -50,6 +50,57 @@ function previewText(content) {
   return content
 }
 
+// Same one-line preview, built from what get_private_chat_list()
+// (migration_72) returns — the RPC only sends the kind + a short
+// text/file name, never the whole message (2026-10-06).
+function previewFromKind(kind, preview) {
+  if (kind === 'image') return '📷 Photo'
+  if (kind === 'video') return '🎥 Video'
+  if (kind === 'video_note') return '📹 Video message'
+  if (kind === 'audio') return '🎤 Voice message'
+  if (kind === 'file') return `📎 ${preview || 'File'}`
+  return preview || ''
+}
+
+// The RPC isn't there until migration_72 is applied — PostgREST
+// answers PGRST202 (404). Until then the list keeps using the old
+// queries instead of breaking (2026-10-06).
+function isMissingRpc(err) {
+  if (!err) return false
+  return (
+    err.code === 'PGRST202' ||
+    err.code === '42883' ||
+    err.status === 404 ||
+    /could not find the function|does not exist/i.test(err.message || '')
+  )
+}
+
+// Every id of one private conversation, paged (PostgREST returns at
+// most 1000 rows per request) — for "Delete for me" on a whole chat.
+async function fetchConversationIds(selfId, peerId) {
+  const ids = []
+  const PAGE = 1000
+
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id')
+      .or(
+        `and(sender_id.eq.${selfId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${selfId})`
+      )
+      .order('created_at', { ascending: true })
+      .range(from, from + PAGE - 1)
+
+    if (error) throw error
+
+    ;(data || []).forEach((row) => ids.push(row.id))
+
+    if (!data || data.length < PAGE) break
+  }
+
+  return ids
+}
+
 // Short relative-ish timestamp for the conversation list: just the
 // time for today, the weekday for the last week, otherwise a short
 // date — the same convention Telegram uses so the list stays scannable.
@@ -124,13 +175,20 @@ export default function PrivateChats({
   const rowGestureRef = useRef({ timer: null, startX: 0, startY: 0, fired: false })
   const hasAutoSelectedRef = useRef(false)
 
-  const loadConversations = async () => {
-    if (!selfId) return
+  // 2026-10-06: the list used to set loading=true (blanking it) and
+  // re-download every message ever on each new message / read receipt.
+  // Now: one cheap RPC (migration_72), profiles cached, the "Loading…"
+  // state only on the very first load, and realtime refreshes debounced.
+  const rpcMissingRef = useRef(false)
+  const loadedOnceRef = useRef(false)
+  const profilesCacheRef = useRef({})
+  const loadSeqRef = useRef(0)
+  const refreshTimerRef = useRef(null)
+  const loadRef = useRef(null)
 
-    setLoading(true)
-    setError('')
-
-    try {
+  // Old path (before migration_72): every message + markers, summarised
+  // in the browser. Kept only as a fallback until the RPC exists.
+  const loadSummariesLegacy = async () => {
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
         .select('id, sender_id, receiver_id, content, created_at')
@@ -162,7 +220,8 @@ export default function PrivateChats({
 
         if (!lastByPeer.has(peerId)) {
           lastByPeer.set(peerId, {
-            content: m.content,
+            id: m.id,
+            label: previewText(m.content),
             created_at: m.created_at,
             sender_id: m.sender_id,
           })
@@ -209,6 +268,54 @@ export default function PrivateChats({
         }
       })
 
+      return { lastByPeer, unreadByPeer, peerReadMap }
+  }
+
+  const loadConversations = async () => {
+    if (!selfId) return
+
+    const seq = ++loadSeqRef.current
+
+    if (!loadedOnceRef.current) setLoading(true)
+
+    try {
+      let summary = null
+
+      if (!rpcMissingRef.current) {
+        const { data: rows, error: rpcError } = await supabase.rpc('get_private_chat_list')
+
+        if (rpcError) {
+          if (!isMissingRpc(rpcError)) throw rpcError
+          rpcMissingRef.current = true
+        } else {
+          const lastByPeer = new Map()
+          const unreadByPeer = new Map()
+          const peerReadMap = {}
+
+          ;(rows || []).forEach((r) => {
+            if (!r.peer_id) return
+
+            if (r.last_message_id) {
+              lastByPeer.set(r.peer_id, {
+                id: r.last_message_id,
+                label: previewFromKind(r.last_kind, r.last_preview),
+                created_at: r.last_created_at,
+                sender_id: r.last_sender_id,
+              })
+            }
+
+            if (r.unread_count) unreadByPeer.set(r.peer_id, r.unread_count)
+            if (r.peer_read_at) peerReadMap[r.peer_id] = r.peer_read_at
+          })
+
+          summary = { lastByPeer, unreadByPeer, peerReadMap }
+        }
+      }
+
+      if (!summary) summary = await loadSummariesLegacy()
+
+      const { lastByPeer, unreadByPeer, peerReadMap } = summary
+
       const peerIds = [...lastByPeer.keys()]
 
       // A student always has their teacher available to message, even
@@ -220,21 +327,42 @@ export default function PrivateChats({
       }
 
       if (peerIds.length === 0) {
-        setConversations([])
+        if (seq === loadSeqRef.current) {
+          setConversations([])
+          setError('')
+        }
         return
       }
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, avatar_url, role')
-        .in('id', peerIds)
+      // Profiles rarely change — only fetch people not seen yet.
+      const missing = peerIds.filter((id) => !profilesCacheRef.current[id])
 
-      if (profilesError) throw profilesError
+      if (missing.length) {
+        const { data: fetched, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, username, avatar_url, role')
+          .in('id', missing)
 
-      const merged = (profiles || []).map((p) => ({
+        if (profilesError) throw profilesError
+
+        ;(fetched || []).forEach((p) => {
+          profilesCacheRef.current[p.id] = p
+        })
+      }
+
+      const profiles = peerIds
+        .map((id) => profilesCacheRef.current[id])
+        .filter(Boolean)
+
+      // A slower, older refresh must not overwrite a newer one.
+      if (seq !== loadSeqRef.current) return
+
+      const merged = profiles.map((p) => ({
         ...p,
         lastMessage: lastByPeer.get(p.id) || null,
-        unreadCount: unreadByPeer.get(p.id) || 0,
+        // The open chat marks itself read; a refresh racing that
+        // mark must not flash a badge on it (2026-10-06).
+        unreadCount: p.id === selectedId ? 0 : unreadByPeer.get(p.id) || 0,
         peerReadAt: peerReadMap[p.id] || null,
       }))
 
@@ -253,13 +381,30 @@ export default function PrivateChats({
       })
 
       setConversations(merged)
+      setError('')
     } catch (err) {
       console.error('Failed to load conversations:', err)
-      setError(err?.message || 'Could not load your chats.')
+      if (seq === loadSeqRef.current) {
+        setError(err?.message || 'Could not load your chats.')
+      }
     } finally {
-      setLoading(false)
+      if (seq === loadSeqRef.current) {
+        loadedOnceRef.current = true
+        setLoading(false)
+      }
     }
   }
+
+  loadRef.current = loadConversations
+
+  // Realtime bursts (a message + its read receipt + …) collapse into one
+  // quiet refresh ~500 ms later, without blanking the list.
+  const scheduleRefresh = () => {
+    clearTimeout(refreshTimerRef.current)
+    refreshTimerRef.current = setTimeout(() => loadRef.current?.(), 500)
+  }
+
+  useEffect(() => () => clearTimeout(refreshTimerRef.current), [])
 
   useEffect(() => {
     loadConversations()
@@ -272,18 +417,29 @@ export default function PrivateChats({
   useEffect(() => {
     if (!selfId) return
 
+    // Filtered server-side to this account's own messages (2026-10-06)
+    // — used to receive every message sent by anyone in the school.
     const channel = supabase
       .channel(`private-chats-${selfId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
-          const m = payload.new
-
-          if (m.sender_id === selfId || m.receiver_id === selfId) {
-            loadConversations()
-          }
-        }
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${selfId}`,
+        },
+        () => scheduleRefresh()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `sender_id=eq.${selfId}`,
+        },
+        () => scheduleRefresh()
       )
       .on(
         // Someone just read (or un-read) a conversation with this
@@ -296,7 +452,7 @@ export default function PrivateChats({
           table: 'private_chat_reads',
           filter: `peer_id=eq.${selfId}`,
         },
-        () => loadConversations()
+        () => scheduleRefresh()
       )
       .subscribe()
 
@@ -405,35 +561,30 @@ export default function PrivateChats({
 
   const runDeleteConversation = async (peerId, mode) => {
     try {
-      const { data: rows, error: fetchError } = await supabase
-        .from('messages')
-        .select('id')
-        .or(
-          `and(sender_id.eq.${selfId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${selfId})`
-        )
-
-      if (fetchError) throw fetchError
-
-      const ids = (rows || []).map((r) => r.id)
-
       if (mode === 'everyone') {
-        if (ids.length) {
-          const { error: deleteError } = await supabase
-            .from('messages')
-            .delete()
-            .in('id', ids)
-
-          if (deleteError) throw deleteError
-        }
-      } else if (ids.length) {
-        const { error: hideError } = await supabase
-          .from('message_deletions')
-          .upsert(
-            ids.map((id) => ({ message_id: id, user_id: selfId })),
-            { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+        // One filtered delete instead of `.in('id', <every id>)` — that
+        // list made the request URL too long on long chats (2026-10-06).
+        const { error: deleteError } = await supabase
+          .from('messages')
+          .delete()
+          .or(
+            `and(sender_id.eq.${selfId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${selfId})`
           )
 
-        if (hideError) throw hideError
+        if (deleteError) throw deleteError
+      } else {
+        const ids = await fetchConversationIds(selfId, peerId)
+
+        for (let i = 0; i < ids.length; i += 500) {
+          const { error: hideError } = await supabase
+            .from('message_deletions')
+            .upsert(
+              ids.slice(i, i + 500).map((id) => ({ message_id: id, user_id: selfId })),
+              { onConflict: 'message_id,user_id', ignoreDuplicates: true }
+            )
+
+          if (hideError) throw hideError
+        }
       }
 
       if (selectedId === peerId) {
@@ -778,7 +929,11 @@ export default function PrivateChats({
       <section className="flex-1 min-w-0">
 
         {selectedPerson ? (
+          // key (2026-10-06): switching person remounts the chat so a
+          // half-typed draft, voice note, reply or edit can never be
+          // sent to the newly selected person.
           <Chat
+            key={selectedPerson.id}
             selfId={selfId}
             peerId={selectedPerson.id}
             peerName={selectedPerson.full_name || selectedPerson.username || 'User'}

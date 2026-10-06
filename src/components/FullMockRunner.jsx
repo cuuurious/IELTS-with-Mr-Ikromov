@@ -443,23 +443,32 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     }
 
     let cancelled = false
+    // 2026-10-06 review: a failed lookup used to set writingResume=null,
+    // which made the start effect INSERT a fresh writing attempt (new
+    // clock, empty essay). Now the lookup is retried with backoff and, if
+    // it keeps failing, an error is shown and nothing is inserted.
     const check = async () => {
-      const { data, error: checkError } = await supabase
-        .from('writing_mock_attempts')
-        .select('*')
-        .eq('exam_id', activeAttempt.set.writing_exam_id)
-        .eq('student_id', selfId)
-        .is('submitted_at', null)
-        .order('started_at', { ascending: false })
-        .limit(1)
-
-      if (cancelled) return
-      if (checkError) {
+      let checkError = null
+      for (let i = 0; i < 4; i += 1) {
+        if (i > 0) await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (i - 1)))
+        if (cancelled) return
+        const res = await supabase
+          .from('writing_mock_attempts')
+          .select('*')
+          .eq('exam_id', activeAttempt.set.writing_exam_id)
+          .eq('student_id', selfId)
+          .is('submitted_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+        if (cancelled) return
+        if (!res.error) {
+          setWritingResume((res.data || [])[0] || null)
+          return
+        }
+        checkError = res.error
         console.error('Failed to check for an in-progress writing attempt:', checkError)
-        setWritingResume(null)
-        return
       }
-      setWritingResume((data || [])[0] || null)
+      setError("Couldn't check for a writing task already in progress. Please check your connection and reload the page.")
     }
 
     check()
@@ -505,9 +514,11 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
 
     let cancelled = false
     const timer = setInterval(async () => {
+      // Only what this poll compares (2026-10-06) — was select('*') every
+      // 5 s; the rest of the row is kept from what's already loaded.
       const { data: row, error: pollError } = await supabase
         .from('full_mock_attempts')
-        .select('*')
+        .select('id, stage, paused_at, sections')
         .eq('id', attemptRowId)
         .maybeSingle()
 
@@ -527,7 +538,7 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
         ) {
           return prev
         }
-        return { ...prev, attempt: row }
+        return { ...prev, attempt: { ...a, ...row } }
       })
     }, 5000)
 
@@ -657,6 +668,24 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       .single()
 
     if (startError) {
+      // Only one unsubmitted writing attempt per student+exam is allowed
+      // now (2026-10-06 unique index) — if one already exists (another tab
+      // started it), resume that one instead of failing.
+      if (startError.code === '23505') {
+        const { data: existing } = await supabase
+          .from('writing_mock_attempts')
+          .select('*')
+          .eq('exam_id', activeAttempt.set.writing_exam_id)
+          .eq('student_id', selfId)
+          .is('submitted_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (existing) {
+          setWritingResume(existing)
+          return
+        }
+      }
       setError(startError.message || 'Could not start the writing task.')
       return
     }
@@ -855,20 +884,36 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
     const nextStage = nextStageAfter(stage, sittingSections)
     const nextLabel = nextStage === 'done' ? null : STAGE_META[nextStage].label
 
+    // 2026-10-06 review: ExamTaker's error screen used to offer this same
+    // "Continue to Reading →" button even when the attempt never started
+    // or never got submitted — pressing it skipped Listening for good.
+    // Now the error screen only offers "Try again" here
+    // (allowExitOnError={false}); onExit is reached only from the
+    // "Test submitted" screen. If the server refuses the move, its error
+    // is shown above the exam instead of disappearing.
     return (
-      <ExamTaker
-        selfId={selfId}
-        exam={moduleExamData.exam}
-        sections={moduleExamData.sections}
-        ctaLabel={nextLabel ? `Continue to ${nextLabel} →` : 'Finish →'}
-        onAttemptStarted={setCurrentStageAttemptId}
-        onExit={() =>
-          requestAdvance(nextStage, {
-            [stage === 'listening' ? 'listening_attempt_id' : 'reading_attempt_id']:
-              currentStageAttemptId,
-          })
-        }
-      />
+      <>
+        {error && (
+          <div className="mb-3 rounded-xl border border-coral/40 bg-coral/10 px-4 py-3 text-center text-sm text-coral">
+            {error}
+          </div>
+        )}
+        <ExamTaker
+          selfId={selfId}
+          exam={moduleExamData.exam}
+          sections={moduleExamData.sections}
+          ctaLabel={nextLabel ? `Continue to ${nextLabel} →` : 'Finish →'}
+          allowExitOnError={false}
+          onAttemptStarted={setCurrentStageAttemptId}
+          onExit={() => {
+            setError('')
+            requestAdvance(nextStage, {
+              [stage === 'listening' ? 'listening_attempt_id' : 'reading_attempt_id']:
+                currentStageAttemptId,
+            })
+          }}
+        />
+      </>
     )
   }
 

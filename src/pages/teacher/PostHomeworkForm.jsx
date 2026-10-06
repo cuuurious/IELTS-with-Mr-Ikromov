@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
+import { safeFileName } from '../../lib/storageKey'
+import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES, DEFAULT_TIME_LIMITS } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
@@ -104,6 +106,19 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
     }
   }
 
+  // Drag-and-drop from the desktop (2026-10-06) — feeds the same state
+  // the file inputs set; the chart image keeps its image/* rule.
+  const attachmentDrop = useFileDrop({
+    multiple: false,
+    onFiles: (files) => setFile(files[0] || null),
+  })
+  const mockImageDrop = useFileDrop({
+    accept: 'image/*',
+    multiple: false,
+    onFiles: (files) => setMockTask1Image(files[0] || null),
+    onReject: () => setError('The Task 1 chart has to be an image file.'),
+  })
+
   const chooseHomeworkType = (type) => {
     setHomeworkType(type)
 
@@ -168,7 +183,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       let attachment_url = null
       let attachment_name = null
       if (file) {
-        const path = `${teacherId}/${groupId}/${Date.now()}-${file.name}`
+        // ASCII-safe storage key (2026-10-06) — Cyrillic/Uzbek names were
+        // rejected by Storage; the original name is kept in attachment_name.
+        const path = `${teacherId}/${groupId}/${safeFileName(file.name)}`
         const { error: upErr } = await supabase.storage
           .from('homework-files')
           .upload(path, file, { contentType: guessMimeType(file.name, file.type) })
@@ -179,7 +196,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
 
       let mock_task1_image_url = null
       if (isMock && mockTask1Image) {
-        const path = `${teacherId}/${groupId}/mock-task1-${Date.now()}-${mockTask1Image.name}`
+        const path = `${teacherId}/${groupId}/mock-task1-${safeFileName(mockTask1Image.name)}`
         const { error: mockUpErr } = await supabase.storage
           .from('homework-files')
           .upload(path, mockTask1Image, { contentType: guessMimeType(mockTask1Image.name, mockTask1Image.type) })
@@ -491,7 +508,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
                   tabIndex={0}
                   onPaste={handleMockTask1ImagePaste}
                   onClick={() => mockTask1ImageInputRef.current?.click()}
-                  className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+                  {...mockImageDrop.dropProps}
+                  className="focus-ring relative flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
                 >
                   <input
                     ref={mockTask1ImageInputRef}
@@ -501,7 +519,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
                     onClick={(e) => e.stopPropagation()}
                     className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
                   />
-                  <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+                  <p className="text-xs text-mist">or click here and paste an image (Ctrl+V), or drag it here</p>
+                  <DropOverlay show={mockImageDrop.isDragging} label="Drop the image here" />
                 </div>
               )}
 
@@ -601,7 +620,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
               tabIndex={0}
               onPaste={handleAttachmentPaste}
               onClick={() => fileInputRef.current?.click()}
-              className="focus-ring flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel-2 px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
+              {...attachmentDrop.dropProps}
+              className="focus-ring relative flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-panel-2 px-3 py-4 text-center cursor-pointer transition hover:border-brass/50"
             >
               <input
                 ref={fileInputRef}
@@ -610,7 +630,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
                 onClick={(e) => e.stopPropagation()}
                 className="focus-ring text-sm text-mist file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-brass file:text-onbrass file:font-medium file:cursor-pointer"
               />
-              <p className="text-xs text-mist">or click here and paste an image (Ctrl+V)</p>
+              <p className="text-xs text-mist">or click here and paste an image (Ctrl+V), or drag a file here</p>
+              <DropOverlay show={attachmentDrop.isDragging} label="Drop the file here" />
             </div>
           )}
         </div>
