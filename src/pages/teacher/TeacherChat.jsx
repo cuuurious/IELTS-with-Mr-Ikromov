@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { fetchAll } from '../../lib/fetchAll'
-import Chat from '../../components/Chat'
+import Chat, { ChatAvatar, ChatGlyph } from '../../components/Chat'
+import Icon from '../../components/Icon'
 
 /*
  * Turns a message's raw `content` (plain text, or a JSON blob for
@@ -332,55 +333,62 @@ export default function TeacherChat({
   }, [conversations, search])
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 min-h-[28rem]">
+    // Study room look (2026-10-07) — same card as PrivateChats.jsx.
+    <div
+      className={`flex overflow-hidden rounded-[22px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
+        selected ? 'h-[calc(100dvh-196px)] min-h-[440px]' : 'min-h-[320px]'
+      }`}
+    >
 
       {/* ============================================================
           CONVERSATION LIST
           ============================================================ */}
 
-      <aside className="w-full md:w-72 shrink-0 bg-panel border border-line rounded-lg overflow-hidden flex flex-col">
+      <aside
+        className={`${
+          selected ? 'hidden md:flex' : 'flex'
+        } w-full shrink-0 flex-col border-line md:w-[300px] md:border-r lg:w-[340px]`}
+      >
 
-        <div className="px-4 py-3 border-b border-line">
-          <div className="font-display text-lg text-paper">
-            Chats
+        <div className="shrink-0 px-4 pb-3 pt-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold text-paper">Chats</h2>
+            <span className="text-xs text-mist">
+              {search.trim()
+                ? `${filteredConversations.length} of ${conversations.length}`
+                : `${conversations.length} conversation${
+                    conversations.length === 1 ? '' : 's'
+                  }`}
+            </span>
           </div>
 
-          <div className="text-xs text-mist mt-1">
-            Your conversations with students
+          <div className="relative mt-3">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist">
+              <ChatGlyph name="search" className="h-4 w-4" />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search chats"
+              aria-label="Search chats"
+              className="focus-ring w-full rounded-full border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-mist hover:bg-panel hover:text-paper"
+                aria-label="Clear search"
+                title="Clear"
+              >
+                <Icon name="close" className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="px-3 pt-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search your chats..."
-            className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="px-3 py-2 flex items-center justify-between">
-          <span className="text-mist text-xs font-mono">
-            {search.trim()
-              ? `${filteredConversations.length} of ${conversations.length}`
-              : `${conversations.length} conversation${
-                  conversations.length === 1 ? '' : 's'
-                }`}
-          </span>
-
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="focus-ring text-xs text-brass hover:underline"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto max-h-[28rem]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 [scrollbar-width:thin]">
 
           {loading && (
             <div className="px-4 py-5 text-sm text-mist">
@@ -389,7 +397,7 @@ export default function TeacherChat({
           )}
 
           {!loading && error && (
-            <div className="px-4 py-4 text-sm text-coral">
+            <div className="m-2 rounded-2xl bg-urgent-tint px-4 py-3 text-sm text-urgent">
               {error}
             </div>
           )}
@@ -397,11 +405,13 @@ export default function TeacherChat({
           {!loading &&
             !error &&
             conversations.length === 0 && (
-              <div className="px-4 py-6 text-sm text-mist text-center">
-                No conversations yet.
-                <div className="mt-1 text-xs">
-                  Start one from a student's profile in the
-                  Leaderboard.
+              <div className="flex flex-col items-center px-6 py-10 text-center">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-listening-tint text-listening">
+                  <ChatGlyph name="chat" className="h-7 w-7" />
+                </span>
+                <div className="mt-3 text-sm font-medium text-paper">No conversations yet</div>
+                <div className="mt-1 text-xs leading-5 text-mist">
+                  Start one from a student's profile in the Leaderboard.
                 </div>
               </div>
             )}
@@ -410,76 +420,57 @@ export default function TeacherChat({
             !error &&
             conversations.length > 0 &&
             filteredConversations.length === 0 && (
-              <div className="px-4 py-5 text-sm text-mist">
-                No chats match your search.
+              <div className="px-4 py-8 text-center text-sm text-mist">
+                No chats match “{search.trim()}”.
               </div>
             )}
 
           {!loading &&
             filteredConversations.map((student) => {
               const active = selected?.id === student.id
+              const label = student.full_name || student.username || 'Unknown user'
 
               return (
                 <button
                   type="button"
                   key={student.id}
                   onClick={() => setSelected(student)}
-                  className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
-                    active ? 'bg-panel-2' : 'hover:bg-panel-2'
+                  aria-current={active ? 'true' : undefined}
+                  className={`focus-ring flex w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left transition-colors ${
+                    active ? 'bg-brass text-onbrass' : 'hover:bg-panel-2'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <ChatAvatar
+                    name={label}
+                    url={student.avatar_url}
+                    seed={student.id}
+                    size="h-11 w-11"
+                  />
 
-                    {student.avatar_url ? (
-                      <img
-                        src={student.avatar_url}
-                        alt={
-                          student.full_name ||
-                          student.username ||
-                          'Student'
-                        }
-                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
-                        {String(
-                          student.full_name ||
-                            student.username ||
-                            '?'
-                        )
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-                    )}
+                  <div className="min-w-0 flex-1">
 
-                    <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`truncate text-sm font-medium ${active ? 'text-onbrass' : 'text-paper'}`}>
+                        {label}
+                      </span>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-paper truncate">
-                          {student.full_name ||
-                            student.username ||
-                            'Unknown user'}
+                      {student.lastMessage?.created_at && (
+                        <span className={`shrink-0 text-[11px] ${active ? 'text-onbrass/75' : 'text-mist'}`}>
+                          {formatListTime(
+                            student.lastMessage.created_at
+                          )}
                         </span>
+                      )}
+                    </div>
 
-                        {student.lastMessage?.created_at && (
-                          <span className="text-[10px] text-mist font-mono shrink-0">
-                            {formatListTime(
-                              student.lastMessage.created_at
-                            )}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-xs text-mist truncate mt-0.5">
-                        {student.lastMessage
-                          ? previewText(
-                              student.lastMessage.content
-                            )
-                          : student.username
-                          ? `@${student.username}`
-                          : ''}
-                      </div>
-
+                    <div className={`mt-0.5 truncate text-[13px] ${active ? 'text-onbrass/75' : 'text-mist'}`}>
+                      {student.lastMessage
+                        ? previewText(
+                            student.lastMessage.content
+                          )
+                        : student.username
+                        ? `@${student.username}`
+                        : ''}
                     </div>
 
                   </div>
@@ -494,7 +485,11 @@ export default function TeacherChat({
           ACTIVE CHAT
           ============================================================ */}
 
-      <section className="flex-1 min-w-0">
+      <section
+        className={`${
+          selected ? 'flex' : 'hidden md:flex'
+        } min-w-0 flex-1 flex-col`}
+      >
 
         {selected ? (
           <Chat
@@ -502,11 +497,18 @@ export default function TeacherChat({
             peerId={selected.id}
             peerName={selected.full_name}
             targetMessageId={initialMessageId}
+            embedded
+            onBack={() => setSelected(null)}
           />
         ) : (
-          <div className="h-[28rem] bg-panel border border-line rounded-lg flex items-center justify-center text-mist text-center px-6">
-            Select a conversation, or open a student's
-            profile from the Leaderboard to start a new one.
+          <div className="flex flex-1 flex-col items-center justify-center bg-panel-2 px-6 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-listening-tint text-listening">
+              <ChatGlyph name="chat" className="h-8 w-8" />
+            </span>
+            <div className="mt-4 text-base font-semibold text-paper">Pick a conversation</div>
+            <p className="mt-1 max-w-xs text-sm leading-6 text-mist">
+              Choose a chat on the left, or open a student's profile in the Leaderboard to start a new one.
+            </p>
           </div>
         )}
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Leaderboard from '../../components/Leaderboard'
 import { useSessionState } from '../../lib/sessionState'
+import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
 
 export default function TeacherLeaderboards() {
   const [groups, setGroups] = useState([])
@@ -53,88 +54,52 @@ export default function TeacherLeaderboards() {
     )
   }
 
-  /*
-   * Same rotation used on Groups & homework, Students, and Word
-   * lists — keyed by a group's position in the same
-   * created_at-ordered list every one of those pages fetches, so a
-   * given group carries the same color everywhere in the app.
-   */
-  const groupAccentPalette = [
-    { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
-    { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
-    { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
-    { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
-    { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
-  ]
-
   return (
-    <div className="flex flex-col gap-6">
-
-      <div className="ticket rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
-
-        <div>
-          <p className="text-sm text-mist max-w-md">
-            Ranked by homework completed, then by completion rate — see who's leading, by class or across everyone.
-          </p>
+    <div className="flex flex-col gap-5">
+      {/* Group switcher (2026-10-07): one row of chips in each group's
+          own colour (src/lib/groupLook.js), scrolls sideways on phones. */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-mist">
+          Ranked by homework handed in, then by completion rate. Pick a class or see everyone.
+        </p>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Group">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeGroup === 'all'}
+            onClick={() => setActiveGroup('all')}
+            className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+              activeGroup === 'all' ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" />
+              <path d="M7 5H4a2 2 0 0 0 0 4h1M17 5h3a2 2 0 0 1 0 4h-1" />
+            </svg>
+            Everyone
+          </button>
+          {groups.map((g, index) => {
+            const active = activeGroup === g.id
+            const c = groupColour(index)
+            return (
+              <button
+                key={g.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveGroup(g.id)}
+                className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
+                  active ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
+                }`}
+              >
+                <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                  {groupBadge(g.name)}
+                </span>
+                {groupDisplayName(g.name)}
+              </button>
+            )
+          })}
         </div>
-
-        <div className="border-t border-line pt-4">
-
-          <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2.5">
-            Group
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-
-            {/* ALL STUDENTS */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setActiveGroup('all')
-              }
-              className={`focus-ring inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                activeGroup === 'all'
-                  ? 'border-brass bg-brass text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.3)]'
-                  : 'border-line bg-panel-2 text-mist hover:text-paper'
-              }`}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z" />
-                <path d="M7 5H4a2 2 0 0 0 0 4h1M17 5h3a2 2 0 0 1 0 4h-1" />
-              </svg>
-              All Students
-            </button>
-
-            {/* GROUPS */}
-
-            {groups.map((g, index) => {
-              const active = activeGroup === g.id
-              const accent = groupAccentPalette[index % groupAccentPalette.length]
-
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() =>
-                    setActiveGroup(g.id)
-                  }
-                  className={`focus-ring inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                    active
-                      ? `${accent.border} ${accent.bg} ${accent.text} shadow-[0_6px_16px_-8px_rgba(0,0,0,0.3)]`
-                      : 'border-line bg-panel-2 text-mist hover:text-paper'
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${accent.dot}`} />
-                  {g.name}
-                </button>
-              )
-            })}
-
-          </div>
-
-        </div>
-
       </div>
 
       <Leaderboard

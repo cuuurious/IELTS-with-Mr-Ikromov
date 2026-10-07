@@ -22,6 +22,9 @@ export function groupBadge(name) {
   const trimmed = (name || '').trim()
   if (!trimmed) return '?'
   if (/^\d+$/.test(trimmed)) return trimmed
+  // "Group 71" → "71"
+  const tail = /(\d+)\s*$/.exec(trimmed)
+  if (tail) return tail[1]
   return trimmed.charAt(0).toUpperCase()
 }
 

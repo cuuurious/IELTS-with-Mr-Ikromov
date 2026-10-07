@@ -12,6 +12,17 @@ import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, isDocumentFile, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
 import Icon from './Icon'
+import {
+  ChatAvatar,
+  ChatGlyph,
+  chatTint,
+  CHAT_ACTIONS_FLOAT,
+  CHAT_ACTIONS_TOUCH,
+  CHAT_ACTION_BUTTON,
+  CHAT_ACTION_CHIP,
+  CHAT_ICON_BUTTON,
+} from './Chat'
+import { groupBadge, groupColour, groupDisplayName } from '../lib/groupLook'
 
 // 2026-10-06: a group chat now opens with only its latest 100 messages
 // ("Load older messages" fetches the next 100), and reactions / "delete
@@ -63,32 +74,19 @@ function formatDateDivider(value) {
   })
 }
 
-// Distinct, deterministic name/avatar color per sender — same idea as
-// Telegram's per-member colors in a group, so members are easy to
-// tell apart at a glance. The teacher gets their own fixed brass
-// color (handled separately) rather than picking one from here.
-const MEMBER_ACCENTS = [
-  { name: 'text-sage', avatarBg: 'bg-sage' },
-  { name: 'text-cyan', avatarBg: 'bg-cyan' },
-  { name: 'text-lavender', avatarBg: 'bg-lavender' },
-  { name: 'text-amber', avatarBg: 'bg-amber' },
-  { name: 'text-coral', avatarBg: 'bg-coral' },
-]
-
+// Distinct, deterministic name colour per sender — same idea as
+// Telegram's per-member colours in a group, so members are easy to
+// tell apart at a glance. Study room (2026-10-07): picked from the five
+// soft skill colours (the same tint the sender's avatar uses); the
+// teacher's name stays in the main ink colour with a "Teacher" chip.
 const accentForSender = (sender) => {
   if (sender?.role === 'teacher') {
-    return { name: 'text-brass', avatarBg: 'bg-brass' }
+    return { name: 'text-paper', avatarBg: 'bg-brass' }
   }
 
-  const id = sender?.id || ''
+  const tint = chatTint(sender?.id || '')
 
-  let hash = 0
-
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) % MEMBER_ACCENTS.length
-  }
-
-  return MEMBER_ACCENTS[Math.abs(hash) % MEMBER_ACCENTS.length]
+  return { name: tint.text, avatarBg: tint.tint }
 }
 
 export default function GroupChat({
@@ -96,6 +94,13 @@ export default function GroupChat({
   selfId,
   groupName,
   initialMessageId = null,
+  // Optional (2026-10-07): `embedded` drops the chat's own card so it can
+  // sit inside the list + conversation card; `onBack` shows a back arrow
+  // on phones; `lookIndex` is the group's position (created_at order)
+  // for its badge colour — see lib/groupLook.js.
+  embedded = false,
+  onBack = null,
+  lookIndex = null,
 }) {
   const [messages, setMessages] = useState([])
   const [profiles, setProfiles] = useState({})
@@ -160,6 +165,10 @@ export default function GroupChat({
   const [highlightedMessageId, setHighlightedMessageId] = useState(null)
 
   const [confirmDialog, setConfirmDialog] = useState(null)
+
+  // Which message's reply / react / options buttons are showing on a
+  // touch screen (tap a bubble to reveal them; hover does it on desktop).
+  const [actionsFor, setActionsFor] = useState(null)
 
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
@@ -1825,19 +1834,111 @@ export default function GroupChat({
   // instead of letting the chat area error out trying to keep loading.
   if (leftGroup) {
     return (
-      <div className="flex h-[36rem] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-panel p-6 text-center shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)]">
-        <div className="font-display text-lg text-paper">You've left this group</div>
-        <p className="max-w-xs text-sm text-mist">
-          Switch to another group above, or ask a teacher to add you back to this one.
+      <div
+        className={`flex flex-col items-center justify-center gap-3 bg-panel p-6 text-center ${
+          embedded ? 'h-full' : 'h-[36rem] rounded-[22px] border border-line'
+        }`}
+      >
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-panel-2 text-paper-dim">
+          <ChatGlyph name="people" className="h-7 w-7" />
+        </span>
+        <div className="text-base font-semibold text-paper">You've left this group</div>
+        <p className="max-w-xs text-sm leading-6 text-mist">
+          Switch to another group, or ask a teacher to add you back to this one.
         </p>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="focus-ring mt-1 rounded-full bg-brass px-4 py-2 text-sm font-medium text-onbrass hover:bg-brass-dim md:hidden"
+          >
+            Back to groups
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  const look = lookIndex == null ? null : groupColour(lookIndex)
+
+  const timeOf = (value) =>
+    new Date(value).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+  const startReplyTo = (message) => {
+    setReplyingTo(message)
+
+    setTimeout(
+      () => inputRef.current?.focus(),
+      50
+    )
+  }
+
+  const renderActions = (message, mine, variant) => {
+    const float = variant === 'float'
+    const btn = float ? CHAT_ACTION_BUTTON : CHAT_ACTION_CHIP
+
+    return (
+      <div
+        className={
+          float
+            ? `${CHAT_ACTIONS_FLOAT} ${mine ? 'right-full pr-1' : 'left-full pl-1'}`
+            : CHAT_ACTIONS_TOUCH
+        }
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            startReplyTo(message)
+          }}
+          className={btn}
+          aria-label="Reply"
+          title="Reply"
+        >
+          <ChatGlyph name="reply" className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            openReactionPicker(e, message)
+          }}
+          className={btn}
+          aria-label="Add reaction"
+          title="React"
+        >
+          <ChatGlyph name="smile" className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            openMessageMenu(e, message)
+          }}
+          className={btn}
+          aria-label="Message options"
+          title="More"
+        >
+          <ChatGlyph name="more" className="h-4 w-4" />
+        </button>
       </div>
     )
   }
 
   return (
+    // Study room look (2026-10-07) — same pane as the private chat.
     <div
       {...dropProps}
-      className="group-chat-shell relative flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]"
+      className={`group-chat-shell relative flex min-h-0 flex-col overflow-hidden bg-panel ${
+        embedded
+          ? 'h-full'
+          : 'h-[36rem] rounded-[22px] border border-line'
+      }`}
     >
 
       <DropOverlay show={isDragging} label="Drop to send" />
@@ -1948,76 +2049,94 @@ export default function GroupChat({
         />
       )}
 
-      <div className="relative flex items-center justify-between gap-3 overflow-hidden border-b border-line bg-panel-2/70 px-4 py-3">
+      {/* HEADER — tapping the photo/name opens group info (members,
+          roles, description, staff controls), same as Telegram */}
 
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 hidden"
-        />
+      <div className="relative z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-panel px-2 sm:px-4">
 
-        {/*
-          * Tapping the photo/name opens group info — member list, role
-          * badges, description, and (for staff) the edit/promote
-          * controls — same as tapping a chat's title bar in Telegram.
-          */}
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className={`${CHAT_ICON_BUTTON} md:hidden`}
+            aria-label="Back to groups"
+            title="Back to groups"
+          >
+            <ChatGlyph name="back" className="h-5 w-5" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
-          className="focus-ring relative flex min-w-0 items-center gap-3 text-left"
+          className={`focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1 text-left ${onBack ? 'pl-0 md:pl-1' : 'pl-1'}`}
           title="Group info"
         >
 
           {groupInfo?.photo_url ? (
             <img
               src={groupInfo.photo_url}
-              alt={groupName || 'Group photo'}
-              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brass/30 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]"
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-[14px] object-cover"
             />
           ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
-              {groupInitial}
-            </div>
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-sm font-semibold ${
+                look ? `${look.tint} ${look.text}` : 'bg-panel-2 text-paper'
+              }`}
+              aria-hidden="true"
+            >
+              {groupBadge(groupName) === '?' ? groupInitial : groupBadge(groupName)}
+            </span>
           )}
 
           <div className="min-w-0">
-            <div className="font-display text-lg truncate">
-              {groupName || 'Group chat'}
+            <div className="truncate text-[15px] font-semibold text-paper">
+              {groupName ? groupDisplayName(groupName) : 'Group chat'}
             </div>
 
-            <div className="text-xs text-mist truncate">
-              {groupInfo?.description || 'Tap for group info and members'}
+            <div className="truncate text-xs text-mist">
+              {groupInfo?.description || 'Group chat · tap for info and members'}
             </div>
           </div>
 
         </button>
 
-        <div className="relative flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            setError('')
 
-          <button
-            type="button"
-            onClick={() => {
-              setError('')
+            if (selectMode) {
+              cancelSelecting()
+            } else {
+              setSelectMode(true)
+            }
+          }}
+          className={
+            selectMode
+              ? 'focus-ring shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
+              : CHAT_ICON_BUTTON
+          }
+          aria-label={selectMode ? 'Cancel selecting' : 'Select messages'}
+          title={selectMode ? 'Cancel' : 'Select messages'}
+        >
+          {selectMode ? 'Cancel' : <Icon name="checkCircle" className="h-[18px] w-[18px]" />}
+        </button>
 
-              if (selectMode) {
-                cancelSelecting()
-              } else {
-                setSelectMode(true)
-              }
-            }}
-            className={`focus-ring rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
-              selectMode
-                ? 'border-coral/50 bg-coral/10 text-coral'
-                : 'border-line text-mist hover:border-brass hover:text-brass'
-            }`}
-          >
-            {selectMode ? 'Cancel' : 'Select'}
-          </button>
-
-        </div>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className={CHAT_ICON_BUTTON}
+          aria-label="Group info and members"
+          title="Group info"
+        >
+          <ChatGlyph name="people" className="h-[18px] w-[18px]" />
+        </button>
 
       </div>
 
-      {/* PINNED MESSAGE */}
+      {/* PINNED MESSAGE — a slim bar under the header */}
 
       {pins.length > 0 && (() => {
         const activePin = pins[pinIndex] || pins[0]
@@ -2030,27 +2149,30 @@ export default function GroupChat({
         const pinnedSender = profiles[pinnedMessage.sender_id]
 
         return (
-          <div className="flex items-center gap-2 border-b border-l-2 border-line border-l-brass bg-brass/5 px-4 py-2">
+          <div className="flex shrink-0 items-center gap-2 border-b border-line bg-panel px-3 py-1.5 sm:px-4">
 
             <button
               type="button"
               onClick={() => jumpToMessage(pinnedMessage.id)}
-              className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
+              className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-0.5 text-left"
             >
-              <span className="text-brass shrink-0"><Icon name="pin" className="h-4 w-4" /></span>
+              <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
 
               <div className="min-w-0">
-                <div className="text-[10px] text-mist">
+                <div className="flex items-center gap-1 truncate text-[11px] font-medium text-paper">
+                  <Icon name="pin" className="h-3 w-3 text-mist" />
                   {pins.length > 1
                     ? `Pinned message ${pinIndex + 1} of ${pins.length}`
                     : 'Pinned message'}
-                  {' · '}
-                  {pinnedSender?.full_name ||
-                    pinnedSender?.username ||
-                    'Member'}
+                  <span className="font-normal text-mist">
+                    {' · '}
+                    {pinnedSender?.full_name ||
+                      pinnedSender?.username ||
+                      'Member'}
+                  </span>
                 </div>
 
-                <div className="text-xs text-paper truncate">
+                <div className="truncate text-xs text-paper-dim">
                   {pinnedMessage.content ||
                     (pinnedMessage.media_type
                       ? 'Media message'
@@ -2067,7 +2189,7 @@ export default function GroupChat({
                     (index) => (index + 1) % pins.length
                   )
                 }
-                className="focus-ring text-mist hover:text-brass text-xs px-2 shrink-0"
+                className="focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
               >
                 Next
               </button>
@@ -2078,9 +2200,10 @@ export default function GroupChat({
                 type="button"
                 onClick={() => unpinMessage(pinnedMessage.id)}
                 title="Unpin"
-                className="focus-ring text-mist hover:text-coral text-sm px-1 shrink-0"
+                aria-label="Unpin message"
+                className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
               >
-                ×
+                <Icon name="close" className="h-3.5 w-3.5" />
               </button>
             )}
 
@@ -2088,9 +2211,9 @@ export default function GroupChat({
         )
       })()}
 
-      <div className="flex-1 min-h-0 flex">
+      <div className="flex min-h-0 flex-1">
 
-        <div ref={scrollBoxRef} className="flex-1 min-w-0 overflow-y-auto px-4 py-4">
+        <div ref={scrollBoxRef} className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-panel-2 px-3 py-4 [scrollbar-width:thin] sm:px-5">
 
           {hasOlder && (
             <div className="mb-3 flex justify-center">
@@ -2098,7 +2221,7 @@ export default function GroupChat({
                 type="button"
                 onClick={loadOlder}
                 disabled={loadingOlder}
-                className="focus-ring rounded-full border border-line px-3 py-1 text-xs text-mist transition hover:border-brass hover:text-brass disabled:opacity-40"
+                className="focus-ring rounded-full border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
               >
                 {loadingOlder ? 'Loading…' : 'Load older messages'}
               </button>
@@ -2106,8 +2229,14 @@ export default function GroupChat({
           )}
 
           {messages.length === 0 && (
-            <div className="h-full flex items-center justify-center text-mist text-sm">
-              No messages yet — say hello to the group.
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-reading-tint text-reading">
+                <ChatGlyph name="people" className="h-7 w-7" />
+              </span>
+              <div>
+                <div className="text-sm font-medium text-paper">No messages yet</div>
+                <div className="mt-0.5 text-xs text-mist">Say hello to the group.</div>
+              </div>
             </div>
           )}
 
@@ -2125,28 +2254,14 @@ export default function GroupChat({
             const reply =
               getReply(message)
 
-            // Deleting for everyone is sender-or-teacher
-            // (moderation); editing is sender-only — a teacher
-            // should never be able to rewrite a student's words,
-            // only remove them. Deleting for me (hiding it from
-            // just this member's own view) is available on every
-            // message, for everyone.
-            const messageCanDeleteEveryone =
-              canDeleteEveryone(message)
-
-            const canEdit =
-              mine && Boolean(message.content)
-
             const messagePinned = isPinned(message.id)
-
-            const messageReactions =
-              reactions[message.id] || []
 
             const isHighlighted =
               String(highlightedMessageId) ===
               String(message.id)
 
             const prev = visible[index - 1]
+            const next = visible[index + 1]
 
             const dateChanged =
               index === 0 ||
@@ -2163,22 +2278,56 @@ export default function GroupChat({
                   5 * 60 * 1000
             )
 
-            const initial = String(
-              sender?.full_name ||
-                sender?.username ||
-                '?'
+            // Looking forward too — only for the bubble's corner shape.
+            const groupedWithNext = Boolean(
+              next &&
+                next.sender_id === message.sender_id &&
+                new Date(next.created_at).toDateString() ===
+                  new Date(message.created_at).toDateString() &&
+                new Date(next.created_at) - new Date(message.created_at) <
+                  5 * 60 * 1000
             )
-              .charAt(0)
-              .toUpperCase()
+
+            const senderName =
+              sender?.full_name ||
+              sender?.username ||
+              'Member'
 
             const selected = selectedIds.has(message.id)
+
+            const isEditing = editingId === message.id
+            const mediaType = message.media_type
+            const hasCaption = !isEditing && Boolean(message.content)
+            const isVisual = !isEditing && (mediaType === 'image' || mediaType === 'video')
+            const isRound = !isEditing && mediaType === 'video_note' && !message.content
+            const showName = !mine && !groupedWithPrev
+
+            const messageReactions = REACTIONS.filter((reaction) =>
+              reactionCount(message.id, reaction)
+            )
+
+            const metaContent = (
+              <>
+                {messagePinned && (
+                  <span title="Pinned"><Icon name="pin" className="h-3 w-3" /></span>
+                )}
+                {message.edited_at && <span className="italic">edited</span>}
+                <span>{timeOf(message.created_at)}</span>
+              </>
+            )
+
+            const metaTone = mine ? 'text-onbrass/70' : 'text-mist'
+
+            const corners = mine
+              ? `${groupedWithPrev ? 'rounded-tr-md' : ''} ${groupedWithNext ? 'rounded-br-md' : ''}`
+              : `${groupedWithPrev ? 'rounded-tl-md' : ''} ${groupedWithNext ? 'rounded-bl-md' : ''}`
 
             return (
               <Fragment key={message.id}>
 
                 {dateChanged && (
-                  <div className="flex justify-center my-3">
-                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-panel-2 text-mist border border-line">
+                  <div className={`flex justify-center ${index === 0 ? 'mb-3' : 'my-4'}`}>
+                    <span className="rounded-full border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
                       {formatDateDivider(message.created_at)}
                     </span>
                   </div>
@@ -2189,9 +2338,10 @@ export default function GroupChat({
                   onClick={
                     selectMode
                       ? () => toggleSelected(message.id)
-                      : undefined
+                      : () => setActionsFor(message.id)
                   }
-                  className={`flex items-end gap-2 ${
+                  data-actions={!selectMode && actionsFor === message.id ? 'on' : undefined}
+                  className={`group/row flex items-start gap-2 ${
                     selectMode ? 'cursor-pointer' : ''
                   } ${
                     !selectMode && mine
@@ -2201,13 +2351,13 @@ export default function GroupChat({
                     index === 0 || dateChanged
                       ? ''
                       : groupedWithPrev
-                      ? 'mt-1'
+                      ? 'mt-0.5'
                       : 'mt-3'
                   } ${
                     isHighlighted
-                      ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
+                      ? 'bg-brass/10 rounded-2xl ring-2 ring-brass/40 p-2 -m-2'
                       : ''
-                  } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
+                  } ${selected ? 'bg-brass/5 rounded-2xl' : ''}`}
                 >
 
                 {selectMode && (
@@ -2218,13 +2368,14 @@ export default function GroupChat({
                     onChange={() =>
                       toggleSelected(message.id)
                     }
-                    className="w-4 h-4 mb-1 shrink-0 accent-brass"
+                    className="mt-2 h-[18px] w-[18px] shrink-0 accent-brass"
+                    aria-label="Select message"
                   />
                 )}
 
                 {!mine && (
                   <div
-                    className={`w-7 shrink-0 ${
+                    className={`w-8 shrink-0 ${
                       selectMode
                         ? 'pointer-events-none'
                         : ''
@@ -2233,113 +2384,36 @@ export default function GroupChat({
                     {!groupedWithPrev && (
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation()
                           setViewingProfileId(
                             message.sender_id
                           )
-                        }
-                        className="focus-ring block"
+                        }}
+                        className="focus-ring block rounded-full"
+                        aria-label={`View ${senderName}'s profile`}
                       >
-                        {sender?.avatar_url ? (
-                          <img
-                            src={sender.avatar_url}
-                            alt={
-                              sender?.full_name ||
-                              sender?.username ||
-                              'Member'
-                            }
-                            className="w-7 h-7 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-onbrass shadow-[0_3px_8px_-2px_rgba(0,0,0,0.4)] ${accent.avatarBg}`}
-                          >
-                            {initial}
-                          </div>
-                        )}
+                        <ChatAvatar
+                          name={senderName}
+                          url={sender?.avatar_url}
+                          seed={message.sender_id}
+                          size="h-8 w-8"
+                          text="text-[11px]"
+                        />
                       </button>
                     )}
                   </div>
                 )}
 
                 <div
-                  className={`group max-w-[82%] ${
+                  className={`relative flex min-w-0 max-w-[min(82%,560px)] flex-col ${
                     mine
                       ? 'items-end'
                       : 'items-start'
-                  } flex flex-col ${
+                  } ${
                     selectMode ? 'pointer-events-none' : ''
                   }`}
                 >
-
-                  {!groupedWithPrev && (
-                    <div className="px-1 mb-0.5 flex items-center gap-2 text-[11px]">
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setViewingProfileId(
-                            message.sender_id
-                          )
-                        }
-                        className={`focus-ring font-semibold hover:underline ${accent.name}`}
-                      >
-                        {sender?.full_name ||
-                          sender?.username ||
-                          'Member'}
-                      </button>
-
-                      {sender?.role ===
-                        'teacher' && (
-                        <span className="rounded-full border border-brass/40 px-1.5 text-brass">
-                          TEACHER
-                        </span>
-                      )}
-
-                    </div>
-                  )}
-
-                  <div className="px-1 mb-1 flex items-center gap-2 text-[11px]">
-
-                    {messagePinned && (
-                      <span
-                        className="text-brass"
-                        title="Pinned"
-                      >
-                        <Icon name="pin" className="h-3.5 w-3.5" />
-                      </span>
-                    )}
-
-                    <span className="text-mist">
-                      {new Date(
-                        message.created_at
-                      ).toLocaleTimeString(
-                        [],
-                        {
-                          hour:
-                            '2-digit',
-                          minute:
-                            '2-digit',
-                        }
-                      )}
-                    </span>
-
-                    {message.edited_at && (
-                      <span className="italic text-mist">
-                        edited
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) => openMessageMenu(e, message)}
-                      className="ml-auto px-1 leading-none text-mist hover:text-brass"
-                      aria-label="Message options"
-                    >
-                      ⋯
-                    </button>
-
-                  </div>
 
                   <div
                     onPointerDown={
@@ -2393,21 +2467,25 @@ export default function GroupChat({
                           ? 'none'
                           : 'transform 160ms ease',
                     }}
-                    className={`relative rounded-2xl px-3 py-2.5 select-none ${
-                      mine
-                        ? 'rounded-tr-md bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
-                        : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
+                    className={`relative max-w-full select-none text-[14.5px] leading-[1.45] ${
+                      isRound
+                        ? ''
+                        : `rounded-[18px] ${corners} ${
+                            mine
+                              ? 'bg-brass text-onbrass'
+                              : 'border border-line bg-panel text-paper'
+                          } ${isVisual ? 'p-1' : 'px-3 py-2'}`
                     }`}
                   >
 
                     {swipeVisual.id === message.id &&
                       swipeVisual.dx !== 0 && (
                         <span
-                          className="absolute top-1/2 text-brass text-base pointer-events-none"
+                          className="pointer-events-none absolute top-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-panel text-paper shadow-sm"
                           style={{
                             [swipeVisual.dx > 0
                               ? 'left'
-                              : 'right']: -26,
+                              : 'right']: -34,
                             opacity: Math.min(
                               1,
                               Math.abs(swipeVisual.dx) /
@@ -2424,60 +2502,82 @@ export default function GroupChat({
                             })`,
                           }}
                         >
-                          ↩
+                          <ChatGlyph name="reply" className="h-4 w-4" />
                         </span>
                       )}
 
+                    {showName && (
+                      <div className={`mb-0.5 flex items-center gap-1.5 ${isVisual ? 'px-2 pt-1' : isRound ? 'px-1' : ''}`}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setViewingProfileId(
+                              message.sender_id
+                            )
+                          }}
+                          className={`focus-ring truncate rounded text-[13px] font-semibold hover:underline ${accent.name}`}
+                        >
+                          {senderName}
+                        </button>
+
+                        {sender?.role === 'teacher' && (
+                          <span className="shrink-0 rounded-full bg-speaking-tint px-1.5 py-px text-[10px] font-medium text-speaking">
+                            Teacher
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {reply && (
                       <div
-                        className={`mb-2 border-l-2 rounded px-2 py-1 text-xs ${
+                        className={`mb-1.5 rounded-lg border-l-[3px] px-2.5 py-1 text-xs ${
+                          isVisual ? 'mx-1 mt-1' : ''
+                        } ${
                           mine
-                            ? 'border-onbrass/60 bg-black/10'
-                            : 'border-brass bg-panel'
+                            ? 'border-onbrass/60 bg-onbrass/10'
+                            : 'border-brass bg-panel-2'
                         }`}
                       >
-                        <div className="font-medium">
-                          Reply to{' '}
-                          {profiles[
-  reply.sender_id
-]?.full_name ||
-  profiles[
-    reply.sender_id
-  ]?.username ||
-  'Member'}
+                        <div className="font-semibold">
+                          {reply.sender_id === selfId
+                            ? 'You'
+                            : profiles[reply.sender_id]?.full_name ||
+                              profiles[reply.sender_id]?.username ||
+                              'Member'}
                         </div>
 
-                        <div className="truncate opacity-70">
+                        <div className="truncate opacity-75">
                           {reply.content ||
                             'Media message'}
                         </div>
                       </div>
                     )}
 
-                    {message.media_type ===
+                    {mediaType ===
                       'image' && (
                       <img
                         src={message.media_url}
                         alt="Shared photo"
-                        className="rounded-xl max-h-72 max-w-full object-contain"
+                        className={`block max-h-72 max-w-full rounded-[14px] object-cover ${hasCaption ? 'w-full' : ''}`}
                       />
                     )}
 
-                    {message.media_type ===
+                    {mediaType ===
                       'video' && (
                       <video
                         src={message.media_url}
                         controls
-                        className="rounded-xl max-h-72 max-w-full"
+                        className="block max-h-72 max-w-full rounded-[14px]"
                       />
                     )}
 
-                    {message.media_type ===
+                    {mediaType ===
                       'video_note' && (
                       <VideoNoteBubble src={message.media_url} />
                     )}
 
-                    {message.media_type ===
+                    {mediaType ===
                       'audio' && (
                       <VoiceBubble
                         src={message.media_url}
@@ -2485,7 +2585,7 @@ export default function GroupChat({
                       />
                     )}
 
-                    {message.media_type ===
+                    {mediaType ===
                       'file' && (
                       <FileBubble
                         url={message.media_url}
@@ -2494,9 +2594,8 @@ export default function GroupChat({
                       />
                     )}
 
-                    {editingId ===
-                    message.id ? (
-                      <div className="flex gap-2 mt-1">
+                    {isEditing ? (
+                      <div className="mt-1 flex items-center gap-2">
 
                         <input
                           autoFocus
@@ -2523,7 +2622,7 @@ export default function GroupChat({
                               )
                             }
                           }}
-                          className="focus-ring flex-1 rounded-lg px-2 py-1 bg-panel text-paper border border-line"
+                          className="focus-ring min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 py-1 text-paper"
                         />
 
                         <button
@@ -2531,7 +2630,7 @@ export default function GroupChat({
                           onClick={() =>
                             saveEdit(message)
                           }
-                          className="text-xs font-medium"
+                          className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
                         >
                           Save
                         </button>
@@ -2540,100 +2639,89 @@ export default function GroupChat({
                     ) : (
                       message.content && (
                         <div
-                          className={
-                            message.media_type
-                              ? 'mt-2 whitespace-pre-wrap'
-                              : 'whitespace-pre-wrap'
-                          }
+                          className={`whitespace-pre-wrap break-words ${
+                            isVisual
+                              ? 'px-2 pb-1 pt-1.5'
+                              : mediaType
+                              ? 'mt-2'
+                              : ''
+                          }`}
                         >
                           {message.content}
+                          <span className="invisible ml-2.5 inline-flex items-center gap-1 align-baseline text-[11px] leading-none" aria-hidden="true">
+                            {metaContent}
+                          </span>
                         </div>
                       )
                     )}
 
+                    {hasCaption && (
+                      <span className={`absolute bottom-1.5 right-3 inline-flex items-center gap-1 text-[11px] leading-none ${metaTone}`}>
+                        {metaContent}
+                      </span>
+                    )}
+
+                    {!hasCaption && isVisual && (
+                      <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
+                        {metaContent}
+                      </span>
+                    )}
+
+                    {!hasCaption && !isVisual && (
+                      <div
+                        className={`mt-1 flex items-center justify-end gap-1 text-[11px] leading-none ${
+                          isRound ? 'ml-auto w-fit rounded-full bg-panel px-2 py-1 text-mist' : metaTone
+                        }`}
+                      >
+                        {metaContent}
+                      </div>
+                    )}
+
                   </div>
 
-                  <div className="flex items-center gap-1 mt-1">
-
-                    {REACTIONS.map(
-                      (reaction) => {
-                        const count =
-                          reactionCount(
+                  {/* REACTIONS — small chips under the bubble */}
+                  {messageReactions.length > 0 && (
+                    <div className={`mt-1 flex flex-wrap gap-1 ${mine ? 'justify-end' : ''}`}>
+                      {messageReactions.map((reaction) => (
+                        <button
+                          key={reaction}
+                          type="button"
+                          title={reactedByLabel(
                             message.id,
                             reaction
-                          )
-
-                        if (!count) {
-                          return null
-                        }
-
-                        return (
-                          <button
-                            key={reaction}
-                            type="button"
-                            title={reactedByLabel(
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleReaction(
+                              message,
+                              reaction
+                            )
+                          }}
+                          className={`focus-ring inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                            hasReaction(
+                              message.id,
+                              reaction
+                            )
+                              ? 'border-brass/40 bg-brass/10 text-paper'
+                              : 'border-line bg-panel text-paper-dim hover:text-paper'
+                          }`}
+                        >
+                          <span>{reaction}</span>
+                          <span className="font-medium">
+                            {reactionCount(
                               message.id,
                               reaction
                             )}
-                            onClick={() =>
-                              toggleReaction(
-                                message,
-                                reaction
-                              )
-                            }
-                            className={`focus-ring text-xs border rounded-full px-2 py-0.5 ${
-                              hasReaction(
-                                message.id,
-                                reaction
-                              )
-                                ? 'border-brass text-brass bg-brass/10'
-                                : 'border-line text-mist'
-                            }`}
-                          >
-                            {reaction}{' '}
-                            {count}
-                          </button>
-                        )
-                      }
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) =>
-                        openReactionPicker(e, message)
-                      }
-                      className="focus-ring text-xs text-mist hover:text-brass px-1"
-                      aria-label="Add reaction"
-                    >
-                      +
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyingTo(
-                          message
-                        )
-
-                        setTimeout(
-                          () =>
-                            inputRef.current?.focus(),
-                          50
-                        )
-                      }}
-                      className="text-[11px] text-mist hover:text-brass px-1"
-                    >
-                      Reply
-                    </button>
-
-                  </div>
-
-                  {messageReactions.length >
-                    0 && (
-                    <span className="hidden">
-                      {messageReactions.length}
-                    </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   )}
+
+                  {/* ACTIONS — reply, react, more. Hover shows them beside
+                      the bubble on a computer; on a phone, tap the bubble. */}
+                  {!selectMode && renderActions(message, mine, 'float')}
+                  {!selectMode && renderActions(message, mine, 'touch')}
 
                 </div>
 
@@ -2649,26 +2737,30 @@ export default function GroupChat({
       </div>
 
       {error && (
-        <div className="px-4 py-2 text-xs text-coral border-t border-line">
+        <div className="shrink-0 border-t border-line bg-urgent-tint px-4 py-2 text-xs text-urgent">
           {error}
         </div>
       )}
 
+      {/* REPLY PREVIEW — slim bar above the composer */}
+
       {replyingTo && (
-        <div className="px-3 py-2 border-t border-line bg-panel-2 flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3 border-t border-line bg-panel px-4 py-2">
 
-          <div className="w-1 h-8 rounded-full bg-brass" />
+          <span className="text-mist"><ChatGlyph name="reply" className="h-4 w-4" /></span>
 
-          <div className="flex-1 min-w-0">
+          <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
 
-          <div className="text-xs text-brass font-medium">
-  Replying to{' '}
-  {profiles[replyingTo.sender_id]?.full_name ||
-    profiles[replyingTo.sender_id]?.username ||
-    'Member'}
-</div>
+          <div className="min-w-0 flex-1">
 
-            <div className="text-xs text-mist truncate">
+            <div className="text-xs font-semibold text-paper">
+              Replying to{' '}
+              {profiles[replyingTo.sender_id]?.full_name ||
+                profiles[replyingTo.sender_id]?.username ||
+                'Member'}
+            </div>
+
+            <div className="truncate text-xs text-mist">
               {replyingTo.content ||
                 'Media message'}
             </div>
@@ -2680,16 +2772,17 @@ export default function GroupChat({
             onClick={() =>
               setReplyingTo(null)
             }
-            className="text-mist hover:text-paper text-lg"
+            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+            aria-label="Cancel reply"
           >
-            ×
+            <Icon name="close" className="h-4 w-4" />
           </button>
 
         </div>
       )}
 
       {recordedBlob && (
-        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 px-3 py-2.5">
+        <div className="flex shrink-0 items-center gap-2 border-t border-line bg-panel px-3 py-2.5">
 
           <RecordedClipPreview
             blob={recordedBlob}
@@ -2701,7 +2794,7 @@ export default function GroupChat({
             onClick={
               discardRecording
             }
-            className="focus-ring shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-coral hover:text-coral"
+            className="focus-ring ml-auto shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent"
           >
             Discard
           </button>
@@ -2712,8 +2805,9 @@ export default function GroupChat({
               sendRecording
             }
             disabled={uploading}
-            className="focus-ring shrink-0 rounded-full bg-brass hover:bg-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
           >
+            <Icon name="send" className="h-3.5 w-3.5" />
             {uploading
               ? 'Sending...'
               : 'Send'}
@@ -2723,30 +2817,18 @@ export default function GroupChat({
       )}
 
       {recording && (
-        <div className="flex items-center gap-3 border-t border-line bg-coral/5 px-4 py-2.5 text-sm text-coral">
+        <div className="flex shrink-0 items-center gap-3 border-t border-line bg-urgent-tint px-4 py-2.5 text-sm font-medium text-urgent">
 
           {recordingKind === 'video' && (
             <RoundCameraPreview stream={streamRef.current} />
           )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-coral" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-urgent opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-urgent" />
           </span>
 
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
-            {recordingKind === 'video' ? (
-              <>
-                <rect x="2" y="6" width="14" height="12" rx="2" />
-                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
-              </>
-            ) : (
-              <>
-                <rect x="9" y="2" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0" />
-              </>
-            )}
-          </svg>
+          <Icon name={recordingKind === 'video' ? 'video' : 'mic'} className="h-4 w-4" />
 
           Recording{' '}
           {formatSeconds(
@@ -2758,7 +2840,7 @@ export default function GroupChat({
             onClick={
               stopRecording
             }
-            className="focus-ring ml-auto shrink-0 rounded-full border border-coral/50 px-3 py-1.5 text-xs transition hover:bg-coral hover:text-paper"
+            className="focus-ring ml-auto shrink-0 rounded-full bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
           >
             Stop
           </button>
@@ -2767,17 +2849,17 @@ export default function GroupChat({
       )}
 
       {selectMode && (
-        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-line bg-panel px-3 py-2.5 sm:px-4">
 
-          <span className="text-sm text-mist">
+          <span className="text-sm font-medium text-paper">
             {selectedIds.size} selected
           </span>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:text-paper"
+              className="focus-ring rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
             >
               Cancel
             </button>
@@ -2786,7 +2868,7 @@ export default function GroupChat({
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring rounded-full border border-coral/50 px-3 py-1.5 text-xs text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40"
+              className="focus-ring rounded-full bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -2796,7 +2878,7 @@ export default function GroupChat({
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring rounded-full bg-coral px-3 py-1.5 text-xs text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+                className="focus-ring rounded-full bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -2806,13 +2888,15 @@ export default function GroupChat({
         </div>
       )}
 
+      {/* COMPOSER — one rounded bar */}
+
       {!selectMode &&
         !recording &&
         !recordedBlob && (
         <form
           onSubmit={send}
           onPaste={handlePaste}
-          className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3"
+          className="shrink-0 border-t border-line bg-panel px-2.5 py-2.5 sm:px-4"
         >
 
           {canSendMedia && (
@@ -2825,79 +2909,74 @@ export default function GroupChat({
             />
           )}
 
-          {canSendMedia && (
-            <button
-              type="button"
-              onClick={() =>
-                fileInputRef.current?.click()
+          <div className={`flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40 ${canSendMedia ? '' : 'pl-3'}`}>
+
+            {canSendMedia && (
+              <button
+                type="button"
+                onClick={() =>
+                  fileInputRef.current?.click()
+                }
+                disabled={uploading}
+                title="Send photo, video, audio or file"
+                aria-label="Send photo, video, audio or file"
+                className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+              >
+                <Icon name="paperclip" className="h-[18px] w-[18px]" />
+              </button>
+            )}
+
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={(e) =>
+                setText(e.target.value)
               }
-              disabled={uploading}
-              title="Send photo, video, audio or file"
-              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-                <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
-            </button>
-          )}
+              placeholder="Write a message…"
+              className="min-w-0 flex-1 !border-0 !bg-transparent px-1.5 py-2 text-[14.5px] !text-paper outline-none placeholder:text-mist"
+            />
 
-          {canSendVoiceVideo && (
+            {canSendVoiceVideo && (
+              <button
+                type="button"
+                onClick={() => startRecording('audio')}
+                disabled={uploading}
+                title="Record voice message"
+                aria-label="Record voice message"
+                className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+              >
+                <Icon name="mic" className="h-[18px] w-[18px]" />
+              </button>
+            )}
+
+            {canSendVoiceVideo && (
+              <button
+                type="button"
+                onClick={() => startRecording('video')}
+                disabled={uploading}
+                title="Record video message"
+                aria-label="Record video message"
+                className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+              >
+                <Icon name="video" className="h-[18px] w-[18px]" />
+              </button>
+            )}
+
             <button
-              type="button"
-              onClick={() => startRecording('audio')}
-              disabled={uploading}
-              title="Record voice message"
-              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
+              type="submit"
+              disabled={
+                sending ||
+                uploading ||
+                !text.trim()
+              }
+              className="focus-ring ml-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-onbrass transition-colors hover:bg-brass-dim disabled:opacity-35"
+              aria-label="Send message"
+              title="Send"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-                <rect x="9" y="2" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0" />
-                <path d="M12 17v4" />
-                <path d="M9 21h6" />
-              </svg>
+              <Icon name="send" className="h-4 w-4" />
             </button>
-          )}
 
-          {canSendVoiceVideo && (
-            <button
-              type="button"
-              onClick={() => startRecording('video')}
-              disabled={uploading}
-              title="Record video message"
-              className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-                <rect x="2" y="6" width="14" height="12" rx="2" />
-                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
-              </svg>
-            </button>
-          )}
-
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={(e) =>
-              setText(e.target.value)
-            }
-            placeholder="Write a message..."
-            className="focus-ring flex-1 min-w-0 rounded-full border border-line bg-panel px-4 py-2.5 text-sm text-paper shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)] placeholder:text-mist"
-          />
-
-          <button
-            type="submit"
-            disabled={
-              sending ||
-              uploading ||
-              !text.trim()
-            }
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
-            aria-label="Send message"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-              <path d="M22 2L11 13" />
-              <path d="M22 2l-7 20-4-9-9-4 20-7z" />
-            </svg>
-          </button>
+          </div>
 
         </form>
       )}

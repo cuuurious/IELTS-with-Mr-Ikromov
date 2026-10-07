@@ -803,7 +803,7 @@ const messageId = linkParts[2] || null
             (which the top bar doesn't have room for) plus the
             homework tab's group/task-count readout.
            ====================================================== */}
-        {PAGE_SUBTITLES[tab] && tab !== 'homework' && (
+        {PAGE_SUBTITLES[tab] && !['homework', 'leaderboard', 'groupchat', 'chats', 'chat', 'group-chat'].includes(tab) && (
           <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
 
             <div className="relative px-5 py-4 sm:px-7 sm:py-5">
@@ -976,27 +976,11 @@ const messageId = linkParts[2] || null
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <GroupPicker />
 
-              {activeGroup && (
-                <div className="text-xs text-mist font-mono">
-                  {myGroups.find((group) => group.id === activeGroup)?.name || 'Current group'}
-                </div>
-              )}
             </div>
 
             {activeGroup ? (
-              <section className="rounded-3xl border border-line bg-panel shadow-sm overflow-hidden">
-                <div className="px-5 sm:px-7 py-3.5 border-b border-line flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brass" />
-                    Your group
-                  </div>
-
-                  <div className="hidden sm:block text-xs text-mist font-mono">
-                    Tap a student to view progress
-                  </div>
-                </div>
-
-                <div className="p-3 sm:p-5">
+              <section>
+                <div>
                   <Leaderboard
                     groupId={activeGroup}
                     highlightStudentId={profile.id}

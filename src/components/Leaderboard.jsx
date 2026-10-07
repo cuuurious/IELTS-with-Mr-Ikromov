@@ -1211,163 +1211,238 @@ export default function Leaderboard({
 
   if (rows === null) {
     return (
-      <p className="text-mist text-sm">
-        Loading...
-      </p>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)]" aria-busy="true">
+        <div className="h-64 animate-pulse rounded-[22px] bg-panel-2" />
+        <div className="h-96 animate-pulse rounded-[22px] bg-panel-2" />
+      </div>
     )
   }
 
   if (rows.length === 0) {
     return (
-      <p className="text-mist text-sm">
-        No students here yet.
-      </p>
+      <div className="flex flex-col items-center gap-2 rounded-[22px] border border-dashed border-line bg-panel px-6 py-12 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vocab-tint text-vocab">
+          <Icon name="target" className="h-6 w-6" />
+        </span>
+        <p className="text-sm font-semibold text-paper">No students here yet</p>
+        <p className="text-xs text-mist">The ranking appears once students join this group.</p>
+      </div>
     )
   }
 
-  // Fixed, theme-independent medal colors for the top 3 — a
-  // universal convention (like the status badges elsewhere in the
-  // app), so these hold their own regardless of light/dark theme.
-  const rankStyle = (rank) => {
-    if (rank === 1) {
-      return 'bg-[linear-gradient(145deg,#f5d68a,#c8963e)] text-[#4a3510] border-[#c8963e] shadow-[0_6px_16px_-4px_rgba(200,150,62,0.6)]'
-    }
-
-    if (rank === 2) {
-      return 'bg-[linear-gradient(145deg,#eef0f4,#aab0bd)] text-[#33363d] border-[#aab0bd] shadow-[0_6px_14px_-4px_rgba(140,145,155,0.5)]'
-    }
-
-    if (rank === 3) {
-      return 'bg-[linear-gradient(145deg,#e7b688,#a86a3d)] text-[#3d2410] border-[#a86a3d] shadow-[0_6px_14px_-4px_rgba(168,106,61,0.5)]'
-    }
-
-    return 'bg-panel-2 text-mist border-line'
+  // Study-room leaderboard (2026-10-06): a podium for the top three,
+  // "you" pinned for a student, then a compact ranked list.
+  const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : []
+  const rest = rows.length >= 3 ? rows.slice(3) : rows
+  const me = highlightStudentId ? rows.find((r) => r.student_id === highlightStudentId) : null
+  const above = me && me.rank > 1 ? rows.find((r) => r.rank === me.rank - 1) : null
+  const pct = (v) => Math.min(100, Math.max(0, Number(v) || 0))
+  const MEDAL = {
+    1: { ring: 'ring-[#E8B64C]', chip: 'bg-[#E8B64C] text-[#3d2a05]', plinth: 'h-24 bg-vocab-tint', label: '1st' },
+    2: { ring: 'ring-[#AEB4C2]', chip: 'bg-[#AEB4C2] text-[#22252c]', plinth: 'h-16 bg-panel-2', label: '2nd' },
+    3: { ring: 'ring-[#C98D5B]', chip: 'bg-[#C98D5B] text-[#2e1806]', plinth: 'h-12 bg-writing-tint', label: '3rd' },
   }
 
-  // Small pill treatment for the meta row, matching the badge
-  // conventions used elsewhere in the app instead of plain text.
-  const metaPillStyle = (tone) => {
-    if (tone === 'streak') {
-      return 'bg-coral/15 text-coral border-coral/30'
-    }
+  const Avatar = ({ student, size = 'h-11 w-11', ring = '' }) =>
+    student.avatar_url ? (
+      <img src={student.avatar_url} alt="" className={`${size} shrink-0 rounded-full object-cover ${ring}`} />
+    ) : (
+      <span className={`${size} flex shrink-0 items-center justify-center rounded-full bg-speaking-tint text-sm font-semibold text-speaking ${ring}`}>
+        {(student.full_name || '?')
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((w) => w[0]?.toUpperCase())
+          .join('')}
+      </span>
+    )
 
-    if (tone === 'target') {
-      return 'bg-brass/15 text-brass border-brass/30'
-    }
-
-    return 'bg-panel-2 text-mist border-line'
-  }
+  const avgPct = rows.length ? Math.round(rows.reduce((sum, r) => sum + pct(r.percentage), 0) / rows.length) : 0
+  const allDone = rows.filter((r) => r.total > 0 && r.completed >= r.total).length
+  const bestStreak = rows.reduce((best, r) => ((r.streak || 0) > (best?.streak || 0) ? r : best), null)
+  const firstName = (r) => (r?.full_name || '').trim().split(/\s+/)[0] || 'them'
+  const meLine = (() => {
+    if (!me) return ''
+    if (me.rank === 1) return 'You are at the top — keep handing work in on time to stay there.'
+    if (!above) return ''
+    const gap = (above.completed || 0) - (me.completed || 0)
+    if (gap > 0) return `${gap} task${gap === 1 ? '' : 's'} behind ${firstName(above)} in #${above.rank}. One more hand-in and you move up.`
+    return `Level with ${firstName(above)} on tasks — they handed in earlier. Hand the next one in early to pass.`
+  })()
 
   return (
-    <div className="flex flex-col gap-3">
-      {refreshing && (
-        <div className="text-mist text-xs font-mono -mb-1">
-          Refreshing…
+    <div className="flex flex-col gap-4">
+      {refreshing && <div className="-mb-2 text-xs text-mist">Refreshing…</div>}
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-24">
+          {/* YOUR PLACE (students) */}
+          {me && !isTeacher && (
+            <div className="wp-pop flex items-center gap-4 rounded-[22px] border border-[#F3D27A] bg-vocab-tint px-5 py-4">
+              <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-white/70">
+                <span className="text-[10px] font-semibold text-vocab">Place</span>
+                <span className="text-xl font-semibold leading-none tabular-nums text-paper">{me.rank}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-paper">
+                  {me.completed}/{me.total} tasks · {me.percentage}%
+                  {me.streak > 0 && (
+                    <span className="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-writing">
+                      <Icon name="flame" className="h-3.5 w-3.5" />
+                      {me.streak}-day streak
+                    </span>
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-paper-dim">{meLine}</p>
+              </div>
+            </div>
+          )}
+
+          {/* PODIUM */}
+          {podium.length === 3 && (
+            <div className="rounded-[22px] border border-line bg-panel px-5 pb-0 pt-5">
+              <div className="mb-4 flex items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold text-paper">Top of the {groupId === 'all' ? 'school' : 'group'}</p>
+                <p className="text-xs text-mist">Most homework handed in</p>
+              </div>
+              <div className="mx-auto grid max-w-sm grid-cols-3 items-end gap-2">
+                {podium.map((student) => {
+                  const m = MEDAL[student.rank] || MEDAL[3]
+                  const mine = student.student_id === highlightStudentId
+                  return (
+                    <button
+                      key={student.student_id}
+                      type="button"
+                      onClick={() => selectStudent(student)}
+                      className="wp-pop focus-ring group flex min-w-0 flex-col items-center rounded-t-2xl text-center"
+                      style={{ animationDelay: `${student.rank * 70}ms` }}
+                    >
+                      <div className="relative">
+                        <Avatar
+                          student={student}
+                          size={student.rank === 1 ? 'h-16 w-16' : 'h-12 w-12'}
+                          ring={`ring-4 ${m.ring} transition-transform group-hover:scale-105`}
+                        />
+                        <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-px text-[10px] font-bold ${m.chip}`}>
+                          {m.label}
+                        </span>
+                      </div>
+                      <p className={`mt-3 w-full truncate px-1 text-[13px] font-semibold ${mine ? 'text-vocab' : 'text-paper'}`}>
+                        {student.full_name?.split(' ')[0]}
+                      </p>
+                      <p className="text-[11px] tabular-nums text-mist">
+                        {student.completed}/{student.total} · {student.percentage}%
+                      </p>
+                      <div className={`mt-2 flex w-full items-start justify-center rounded-t-xl pt-1.5 ${m.plinth}`}>
+                        {student.streak > 0 ? (
+                          <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-writing">
+                            <Icon name="flame" className="h-3 w-3" />
+                            {student.streak}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-bold tabular-nums text-paper/30">{student.rank}</span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* GROUP AT A GLANCE */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-line bg-panel px-3 py-3">
+              <p className="text-[11px] text-mist">Average</p>
+              <p className="text-lg font-semibold tabular-nums text-paper">{avgPct}%</p>
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-panel-2">
+                <div className="h-full rounded-full bg-reading" style={{ width: `${avgPct}%` }} />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-line bg-panel px-3 py-3">
+              <p className="text-[11px] text-mist">Everything done</p>
+              <p className="text-lg font-semibold tabular-nums text-paper">
+                {allDone}
+                <span className="text-xs font-normal text-mist"> / {rows.length}</span>
+              </p>
+            </div>
+            <div className="rounded-2xl border border-line bg-panel px-3 py-3">
+              <p className="text-[11px] text-mist">Longest streak</p>
+              <p className="flex items-center gap-1 text-lg font-semibold tabular-nums text-paper">
+                <Icon name="flame" className="h-4 w-4 text-writing" />
+                {bestStreak?.streak || 0}
+              </p>
+              {bestStreak?.streak > 0 && <p className="truncate text-[11px] text-mist">{firstName(bestStreak)}</p>}
+            </div>
+          </div>
         </div>
-      )}
-      {rows.map((student) => {
-        const isTopRank = student.rank === 1
-        const isHighlighted =
-          student.student_id === highlightStudentId
 
-        return (
-          <button
-            key={student.student_id}
-            type="button"
-            onClick={() => selectStudent(student)}
-            className={`ticket group relative w-full overflow-hidden rounded-xl p-3.5 flex items-center gap-3.5 text-left transition hover:-translate-y-0.5 hover:border-brass ${
-              isHighlighted ? 'border-brass' : ''
-            } ${
-              isTopRank
-                ? 'border-[#c8963e]/50 bg-vocab-tint shadow-[0_10px_24px_-16px_rgba(200,150,62,0.5)]'
-                : 'shadow-[0_10px_22px_-18px_rgba(0,0,0,0.5)]'
-            }`}
-          >
-            {isTopRank && (
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#c8963e]/20 hidden"
-              />
-            )}
-
-            <div
-              className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center font-display font-bold text-sm ${rankStyle(
-                student.rank
-              )}`}
-            >
-              {student.avatar_url ? (
-                <>
-                  <img
-                    src={student.avatar_url}
-                    alt=""
-                    className="absolute inset-0 h-full w-full rounded-full object-cover"
-                  />
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-panel bg-brass text-[9px] font-bold leading-none text-onbrass">
-                    {student.rank}
-                  </span>
-                </>
-              ) : (
-                student.rank
-              )}
+        {/* LIST */}
+        {rest.length > 0 && (
+          <div className="min-w-0 overflow-hidden rounded-[22px] border border-line bg-panel">
+            <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+              <p className="text-sm font-semibold text-paper">{podium.length ? 'Everyone else' : 'Everyone'}</p>
+              <p className="text-xs text-mist">
+                {rows.length} student{rows.length === 1 ? '' : 's'} · tap one for details
+              </p>
             </div>
-
-            <div className="relative z-10 flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-paper truncate">
-                  {student.full_name}
-                </span>
-
-                <span className="font-mono text-sm text-brass">
-                  {student.percentage}%
-                </span>
-              </div>
-
-              <div className="text-xs text-mist font-mono mt-0.5">
-                @{student.username || 'student'}
-              </div>
-
-              <div className="h-1.5 bg-panel-2 rounded-full overflow-hidden mt-1.5">
-                <div
-                  className="h-full bg-brass rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      Math.max(
-                        0,
-                        Number(student.percentage) || 0
-                      )
-                    )}%`,
-                  }}
-                />
-              </div>
-
-              <div className="mt-1.5 flex gap-1.5 flex-wrap">
-                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('default')}`}>
-                  {student.completed}/{student.total} tasks
-                </span>
-
-                {student.streak > 0 && (
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('streak')}`}>
-                    <Icon name="flame" className="h-3 w-3 mr-1" />{student.streak}{' '}
-                    {student.streak === 1 ? 'day' : 'days'}
-                  </span>
-                )}
-
-                {isTeacher && student.target_band != null && (
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-mono ${metaPillStyle('target')}`}>
-                    <TargetBandIcon value={student.target_band} className="h-3 w-3" />
-                    Target {formatTargetBand(student.target_band)}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="relative z-10 text-mist text-lg flex-shrink-0">
-              ›
-            </div>
-          </button>
-        )
-      })}
+            <ol>
+              {rest.map((student, i) => {
+                const mine = student.student_id === highlightStudentId
+                const p = pct(student.percentage)
+                return (
+                  <li key={student.student_id} className="border-b border-line last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => selectStudent(student)}
+                      className={`wp-pop focus-ring group flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors sm:px-5 ${
+                        mine ? 'bg-vocab-tint' : 'hover:bg-panel-2'
+                      }`}
+                      style={{ animationDelay: `${Math.min(i, 10) * 25}ms` }}
+                    >
+                      <span className="w-6 shrink-0 text-center text-sm font-semibold tabular-nums text-mist">{student.rank}</span>
+                      <Avatar student={student} size="h-9 w-9" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-paper">{student.full_name}</span>
+                          {mine && <span className="shrink-0 rounded-full bg-vocab px-1.5 text-[10px] font-bold text-white">You</span>}
+                          {student.streak > 0 && (
+                            <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-writing">
+                              <Icon name="flame" className="h-3 w-3" />
+                              {student.streak}
+                            </span>
+                          )}
+                          {isTeacher && student.target_band != null && (
+                            <span className="hidden shrink-0 items-center gap-1 text-[11px] text-mist sm:inline-flex">
+                              <TargetBandIcon value={student.target_band} className="h-3 w-3" />
+                              {formatTargetBand(student.target_band)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="h-1.5 max-w-[22rem] flex-1 overflow-hidden rounded-full bg-panel-2">
+                            <div
+                              className={`h-full rounded-full transition-[width] duration-700 ${p >= 80 ? 'bg-reading' : p >= 50 ? 'bg-[#E8B64C]' : p > 0 ? 'bg-writing' : 'bg-transparent'}`}
+                              style={{ width: `${p}%` }}
+                            />
+                          </div>
+                          <span className="shrink-0 text-[11px] tabular-nums text-mist">
+                            {student.total ? `${student.completed}/${student.total} tasks` : 'no tasks yet'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="w-11 shrink-0 text-right text-sm font-semibold tabular-nums text-paper">{student.percentage}%</span>
+                      <span className="text-mist transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        )}
+      </div>
 
       {selectedStudent &&
         createPortal(
@@ -1393,192 +1468,114 @@ export default function Leaderboard({
                 />
               )}
               <div className="flex-shrink-0 border-b border-line bg-panel px-5 py-4 sm:px-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 font-display font-bold ${rankStyle(
-                          selectedStudent.rank
-                        )}`}
-                      >
-                        {selectedStudent.avatar_url ? (
-                          <>
-                            <img
-                              src={selectedStudent.avatar_url}
-                              alt=""
-                              className="absolute inset-0 h-full w-full rounded-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setViewingPhoto(true)}
-                              aria-label="Open photo"
-                              title="Open photo"
-                              className="focus-ring absolute inset-0 z-[1] rounded-full cursor-zoom-in"
-                            />
-                            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-panel bg-brass text-[10px] font-bold leading-none text-onbrass">
-                              {selectedStudent.rank}
-                            </span>
-                          </>
-                        ) : (
-                          selectedStudent.rank
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <h2 className="truncate font-display text-xl font-semibold text-paper sm:text-2xl">
-                          {selectedStudent.full_name}
-                        </h2>
-
-                        <p className="mt-0.5 truncate text-sm font-mono text-mist">
-                          @{selectedStudent.username || 'student'}
-                        </p>
-                      </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative shrink-0">
+                      {selectedStudent.avatar_url ? (
+                        <button
+                          type="button"
+                          onClick={() => setViewingPhoto(true)}
+                          aria-label="Open photo"
+                          title="Open photo"
+                          className="focus-ring block cursor-zoom-in rounded-full"
+                        >
+                          <Avatar student={selectedStudent} size="h-14 w-14" />
+                        </button>
+                      ) : (
+                        <Avatar student={selectedStudent} size="h-14 w-14" />
+                      )}
+                      <span className="absolute -bottom-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-panel bg-brass px-1 text-[11px] font-bold text-onbrass">
+                        {selectedStudent.rank}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-xl font-semibold text-paper">{selectedStudent.full_name}</h2>
+                      <p className="truncate text-sm text-mist">
+                        @{selectedStudent.username || 'student'}
+                        {isTeacher && selectedStudent.contact_email ? ` · ${selectedStudent.contact_email}` : ''}
+                      </p>
                     </div>
                   </div>
-
                   <button
                     type="button"
                     onClick={closeStudentProfile}
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+                    className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
                     aria-label="Close student profile"
                   >
-                    ×
+                    <Icon name="close" className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="rounded-xl border border-line bg-panel-2 p-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
-                      Rank
-                    </div>
-                    <div className="mt-1 text-xl font-display text-brass">
-                      #{selectedStudent.rank}
-                    </div>
+                  <div className="rounded-2xl bg-panel-2 p-3">
+                    <p className="text-xs text-mist">Place</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums text-paper">#{selectedStudent.rank}</p>
                   </div>
-
-                  <div className="rounded-xl border border-line bg-panel-2 p-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
-                      Progress
-                    </div>
-                    <div className="mt-1 text-xl font-display text-brass">
-                      {selectedStudent.percentage}%
-                    </div>
+                  <div className="rounded-2xl bg-reading-tint p-3">
+                    <p className="text-xs text-reading">Completion</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums text-paper">{selectedStudent.percentage}%</p>
                   </div>
-
-                  <div className="rounded-xl border border-line bg-panel-2 p-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
-                      Completed
-                    </div>
-                    <div className="mt-1 text-xl font-display text-paper">
+                  <div className="rounded-2xl bg-listening-tint p-3">
+                    <p className="text-xs text-listening">Handed in</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums text-paper">
                       {selectedStudent.completed}
-                    </div>
+                      <span className="text-sm font-normal text-mist">/{selectedStudent.total}</span>
+                    </p>
                   </div>
-
-                  <div className="rounded-xl border border-line bg-panel-2 p-3">
-                    <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-mist">
-                      Streak
-                    </div>
-                    <div className="mt-1 text-xl font-display text-brass">
-                      <Icon name="flame" className="h-5 w-5" /> {selectedStudent.streak ?? 0}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-mono">
-                    <span className="text-mist">
-                      Overall progress
-                    </span>
-                    <span className="text-brass">
-                      {selectedStudent.percentage}%
-                    </span>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-panel-2">
-                    <div
-                      className="h-full rounded-full bg-brass transition-all"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(
-                            0,
-                            Number(
-                              selectedStudent.percentage
-                            ) || 0
-                          )
-                        )}%`,
-                      }}
-                    />
+                  <div className="rounded-2xl bg-writing-tint p-3">
+                    <p className="text-xs text-writing">Streak</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-2xl font-semibold tabular-nums text-paper">
+                      <Icon name="flame" className="h-5 w-5 text-writing" />
+                      {selectedStudent.streak ?? 0}
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {isTeacher && selectedStudent.contact_email && (
-                    <div className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper">
-                      <span className="text-mist">
-                        Email:{' '}
-                      </span>
-                      {selectedStudent.contact_email}
-                    </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-panel-2">
+                  <div className="h-full rounded-full bg-reading transition-[width] duration-700" style={{ width: `${pct(selectedStudent.percentage)}%` }} />
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  {isTeacher && selectedStudent.target_band != null && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-speaking-tint px-3 py-1.5 text-sm font-medium text-speaking">
+                      <TargetBandIcon value={selectedStudent.target_band} className="h-4 w-4" />
+                      Target {formatTargetBand(selectedStudent.target_band)}
+                    </span>
                   )}
-
-                  <div className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper">
-                    <span className="text-mist">
-                      Status:{' '}
-                    </span>
-                    {selectedStudent.status || 'approved'}
-                  </div>
-
-                  {isTeacher &&
-                    selectedStudent.target_band != null && (
-                      <div className="flex items-center gap-1.5 rounded-lg border border-brass/40 bg-brass/10 px-3 py-2 text-sm text-brass">
-                        <TargetBandIcon value={selectedStudent.target_band} className="h-4 w-4" />
-                        <span>
-                          Target{' '}
-                          {formatTargetBand(
-                            selectedStudent.target_band
-                          )}
-                        </span>
-                      </div>
-                    )}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
+                  {isTeacher && selectedStudent.status && selectedStudent.status !== 'approved' && (
+                    <span className="rounded-full bg-urgent-tint px-3 py-1.5 text-sm font-medium text-urgent">{selectedStudent.status}</span>
+                  )}
+                  <span className="flex-1" />
                   {typeof onOpenChat === 'function' && (
                     <button
                       type="button"
-                      onClick={() =>
-                        handleChat(selectedStudent)
-                      }
-                      className="rounded-xl border border-brass bg-brass/10 px-4 py-2 text-sm font-semibold text-brass transition hover:bg-brass/20"
+                      onClick={() => handleChat(selectedStudent)}
+                      className="focus-ring rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
                     >
                       Chat with student
                     </button>
                   )}
-
                   {isTeacher && (
                     <button
                       type="button"
-                      onClick={() =>
-                        openManageGroups(selectedStudent)
-                      }
-                      className="rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm font-medium text-paper transition hover:border-brass hover:text-brass"
+                      onClick={() => openManageGroups(selectedStudent)}
+                      className="focus-ring rounded-full border border-line px-4 py-2 text-sm font-medium text-paper transition hover:bg-panel-2"
                     >
                       Manage groups
                     </button>
                   )}
                 </div>
 
-                <div className="mt-8 border-t border-line pt-6">
+                <div className="mt-6 border-t border-line pt-5">
                   <div className="flex items-end justify-between gap-3">
                     <div>
-                      <h3 className="font-display text-xl font-semibold text-paper">
+                      <h3 className="text-lg font-semibold text-paper">
                         Homework history
                       </h3>
-                      <p className="mt-1 text-sm text-mist">
-                        Daily completion and submission history
+                      <p className="mt-0.5 text-sm text-mist">
+                        Day by day, newest first
                       </p>
                     </div>
 
@@ -1615,7 +1612,7 @@ export default function Leaderboard({
                         {dailyProgress.map((day) => (
                           <div
                             key={day.date}
-                            className="rounded-xl border border-line bg-panel-2 p-4"
+                            className="rounded-2xl border border-line bg-panel p-4"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div>
@@ -1623,25 +1620,22 @@ export default function Leaderboard({
                                   {formatDate(day.date)}
                                 </div>
 
-                                <div className="mt-1 text-xs font-mono text-mist">
+                                <div className="mt-0.5 text-xs text-mist">
                                   {day.completed}/{day.total}{' '}
                                   completed
                                 </div>
                               </div>
 
                               <div className="text-right">
-                                <div className="text-sm font-mono text-brass">
+                                <div className={`text-sm font-semibold tabular-nums ${day.percentage >= 100 ? 'text-reading' : day.percentage > 0 ? 'text-vocab' : 'text-urgent'}`}>
                                   {day.percentage}%
-                                </div>
-                                <div className="text-xs text-mist">
-                                  daily progress
                                 </div>
                               </div>
                             </div>
 
-                            <div className="mb-3 mt-3 h-1.5 overflow-hidden rounded-full bg-panel">
+                            <div className="mb-1 mt-3 h-1.5 overflow-hidden rounded-full bg-panel-2">
                               <div
-                                className="h-full rounded-full bg-brass"
+                                className={`h-full rounded-full ${day.percentage >= 100 ? 'bg-reading' : 'bg-[#E8B64C]'}`}
                                 style={{
                                   width: `${day.percentage}%`,
                                 }}
@@ -1660,7 +1654,7 @@ export default function Leaderboard({
                                     </div>
 
                                     {task.submittedAt ? (
-                                      <div className="mt-1 text-xs font-mono text-mist">
+                                      <div className="mt-1 text-xs text-mist">
                                         {task.historicallyCompleted &&
                                         !task.currentlySubmitted
                                           ? 'Historically completed '
@@ -1675,13 +1669,13 @@ export default function Leaderboard({
                                         })}
                                       </div>
                                     ) : (
-                                      <div className="mt-1 text-xs font-mono text-mist">
+                                      <div className="mt-1 text-xs text-mist">
                                         No submission
                                       </div>
                                     )}
 
                                     {task.dueDate && (
-                                      <div className="mt-1 text-xs font-mono text-mist">
+                                      <div className="mt-0.5 text-xs text-mist">
                                         Deadline:{' '}
                                         {new Date(
                                           task.dueDate
@@ -1696,19 +1690,19 @@ export default function Leaderboard({
                                   </div>
 
                                   <span
-                                    className={`flex-shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-mono font-semibold ${
+                                    className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                                       !task.completed
-                                        ? 'border-coral/50 bg-coral/10 text-coral'
+                                        ? 'bg-urgent-tint text-urgent'
                                         : task.late
-                                        ? 'border-amber/50 bg-amber/10 text-amber'
-                                        : 'border-sage/50 bg-sage/10 text-sage'
+                                        ? 'bg-vocab-tint text-vocab'
+                                        : 'bg-reading-tint text-reading'
                                     }`}
                                   >
                                     {!task.completed
-                                      ? 'NOT DONE'
+                                      ? 'Not done'
                                       : task.late
-                                      ? 'LATE'
-                                      : 'DONE'}
+                                      ? 'Late'
+                                      : 'Done'}
                                   </span>
                                 </div>
                               ))}
@@ -1725,7 +1719,7 @@ export default function Leaderboard({
                   <button
                     type="button"
                     onClick={closeStudentProfile}
-                    className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-onaccent transition hover:brightness-105"
+                    className="focus-ring rounded-full border border-line px-5 py-2 text-sm font-semibold text-paper transition hover:bg-panel-2"
                   >
                     Close
                   </button>

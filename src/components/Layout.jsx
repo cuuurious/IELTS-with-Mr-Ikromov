@@ -253,7 +253,7 @@ export default function Layout({
   const navRef = useRef(null)
 
   const isTeacher = profile?.role === 'teacher'
-  const isExaminer = profile?.role === 'examiner'
+  const isExaminer = profile?.role === 'examiner' || profile?.role === 'writing_examiner' || profile?.role === 'speaking_examiner'
 
   // Close the drawer if the window grows to desktop width.
   useEffect(() => {
@@ -325,7 +325,15 @@ export default function Layout({
       active ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper hover:bg-panel-2'
     }`
 
-  const subtitle = isTeacher ? 'Teacher' : isExaminer ? 'Examiner' : 'Student'
+  const subtitle = isTeacher
+    ? 'Teacher'
+    : profile?.role === 'writing_examiner'
+      ? 'Writing examiner'
+      : profile?.role === 'speaking_examiner'
+        ? 'Speaking examiner'
+        : isExaminer
+          ? 'Examiner'
+          : 'Student'
 
   // Phone tab bar: first four items with an icon from the first sections.
   const bottomTabs = allItems.filter((item) => item.key !== 'howto' && item.icon).slice(0, 4)

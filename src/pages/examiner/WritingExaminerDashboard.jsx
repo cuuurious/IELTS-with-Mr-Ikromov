@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
-import Layout, { IconHomework, IconChat } from '../../components/Layout'
+import Layout, { IconHome, IconHomework, IconChat } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { countWords } from '../../lib/writingMock'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import { fetchAll } from '../../lib/fetchAll'
+import Icon from '../../components/Icon'
+import { SkillIcon } from '../../components/SkillArt'
+import WritingExaminerHome from './WritingExaminerHome'
+import { Card, Avatar, timeAgo, ageLabel, DAY } from './ExaminerHomeParts'
 
 /*
  * ================================================================
@@ -62,7 +66,7 @@ function computeOverallBand(criteriaValues) {
 export default function WritingExaminerDashboard() {
   const { profile } = useAuth()
 
-  const [tab, setTab] = useState('task1')
+  const [tab, setTab] = useState('home')
   const [loading, setLoading] = useState(true)
   const [exams, setExams] = useState([])
   const [attempts, setAttempts] = useState([])
@@ -248,6 +252,10 @@ export default function WritingExaminerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
 
+  // "Now" for the Home tab's ages and charts; refreshed whenever the
+  // attempt list changes (realtime patches included).
+  const now = useMemo(() => new Date(), [attempts])
+
   const examById = useMemo(() => {
     const map = {}
     exams.forEach((e) => { map[e.id] = e })
@@ -321,6 +329,7 @@ export default function WritingExaminerDashboard() {
     () => [
       {
         items: [
+          { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'task1', label: 'Task 1s', icon: IconHomework },
           { key: 'task2', label: 'Task 2s', icon: IconHomework },
           { key: 'chats', label: 'Chats', icon: IconChat },
@@ -338,22 +347,36 @@ export default function WritingExaminerDashboard() {
     <Layout sections={sections} activeTab={tab} onTabChange={setTab}>
       <div className="space-y-5">
 
+        {tab === 'home' && (
+          <WritingExaminerHome
+            profile={profile}
+            attempts={attempts}
+            examById={examById}
+            studentsById={studentsById}
+            now={now}
+            onOpen={(entry) => setReviewTarget(entry)}
+            onNavigate={setTab}
+          />
+        )}
+
         {tab === 'task1' && (
           <QueueSection
-            blurb="Every Task 1 writing mock waiting to be marked, sorted by student name."
+            blurb="Every writing mock with a Task 1, sorted by student name."
             entries={task1Queue}
             taskKey="task1_text"
-            onOpen={setReviewTarget}
+            now={now}
+            onOpen={(entry) => setReviewTarget({ ...entry, initialTask: 'task1' })}
             onMessage={handleMessageStudent}
           />
         )}
 
         {tab === 'task2' && (
           <QueueSection
-            blurb="Every Task 2 writing mock waiting to be marked, sorted by student name."
+            blurb="Every writing mock with a Task 2, sorted by student name."
             entries={task2Queue}
             taskKey="task2_text"
-            onOpen={setReviewTarget}
+            now={now}
+            onOpen={(entry) => setReviewTarget({ ...entry, initialTask: 'task2' })}
             onMessage={handleMessageStudent}
           />
         )}
@@ -383,52 +406,116 @@ export default function WritingExaminerDashboard() {
 // "Task 1s" / "Task 2s", so this only carries the one line of context
 // that isn't shown anywhere else (per Jasur: "repetitions should be
 // removed from each dashboard be it teacher/examiner or student").
-function QueueSection({ blurb, entries, taskKey, onOpen, onMessage }) {
+//
+// 2026-10-07 "Study room" pass: same entries, same buttons, same order
+// (by student name) — just split into "To mark" and "Marked" cards so
+// the work left is obvious at a glance.
+const QUEUE_MIN_WORDS = { task1_text: 150, task2_text: 250 }
+
+function QueueSection({ blurb, entries, taskKey, now, onOpen, onMessage }) {
+  const toMark = entries.filter((e) => !e.attempt.examiner_reviewed_at)
+  const marked = entries.filter((e) => e.attempt.examiner_reviewed_at)
+
   return (
-    <section className="space-y-3">
-      <p className="text-sm text-mist max-w-2xl">{blurb}</p>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-auto text-sm text-mist max-w-2xl">{blurb}</p>
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-writing-tint px-3 text-[13px] font-medium text-writing">
+          <span className="font-semibold tabular-nums">{toMark.length}</span> to mark
+        </span>
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-panel-2 px-3 text-[13px] font-medium text-paper-dim">
+          <span className="font-semibold tabular-nums">{marked.length}</span> marked
+        </span>
+      </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
-          Nothing to review here right now.
+        <Card className="flex items-center gap-4 px-6 py-8">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-writing-tint text-writing">
+            <SkillIcon skill="writing" className="h-6 w-6" />
+          </span>
+          <p className="text-[15px] text-paper-dim">Nothing to review here right now.</p>
+        </Card>
+      ) : (
+        <>
+          <QueueCard
+            title="To mark"
+            entries={toMark}
+            taskKey={taskKey}
+            now={now}
+            onOpen={onOpen}
+            onMessage={onMessage}
+            empty="All caught up — every mock here is marked."
+          />
+          {marked.length > 0 && (
+            <QueueCard title="Marked" entries={marked} taskKey={taskKey} now={now} onOpen={onOpen} onMessage={onMessage} />
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+function QueueCard({ title, entries, taskKey, now, onOpen, onMessage, empty }) {
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="mb-1 flex items-baseline justify-between px-1.5">
+        <h2 className="text-[17px] font-semibold">{title}</h2>
+        <span className="text-[13px] text-mist tabular-nums">{entries.length}</span>
+      </div>
+      {entries.length === 0 ? (
+        <div className="mt-2 flex items-center gap-3 rounded-2xl bg-reading-tint px-4 py-4">
+          <Icon name="checkCircle" className="h-6 w-6 shrink-0 text-reading" />
+          <p className="text-sm font-medium text-reading">{empty}</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <ul className="flex flex-col">
           {entries.map((entry) => {
             const reviewed = Boolean(entry.attempt.examiner_reviewed_at)
             const words = countWords(entry.attempt[taskKey])
+            const short = words < QUEUE_MIN_WORDS[taskKey]
+            const waitedLong = !reviewed && entry.attempt.submitted_at && now - new Date(entry.attempt.submitted_at) >= 3 * DAY
 
             return (
-              <div
+              <li
                 key={entry.attempt.id + taskKey}
-                className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-wrap items-center justify-between gap-3"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2.5 border-t border-line px-1.5 py-3 first:border-0"
               >
-                <div className="min-w-0">
-                  <p className="font-medium text-paper truncate">
-                    {studentLabel(entry.student)}
-                  </p>
-                  <p className="text-xs text-mist font-mono mt-0.5">
-                    {entry.exam.title} · {words} words
-                    {entry.attempt.submitted_at &&
-                      ` · submitted ${new Date(entry.attempt.submitted_at).toLocaleDateString()}`}
+                <Avatar
+                  person={entry.student}
+                  tone={reviewed ? 'bg-panel-2 text-paper-dim' : 'bg-writing-tint text-writing'}
+                />
+                <div className="min-w-0 flex-1 basis-48">
+                  <p className="truncate text-[15px] font-medium text-paper">{studentLabel(entry.student)}</p>
+                  <p className="truncate text-[13px] text-mist">
+                    {entry.exam.title}
+                    {' · '}
+                    <span className={short ? 'font-medium text-urgent' : ''} title={short ? `Under the ${QUEUE_MIN_WORDS[taskKey]}-word minimum` : undefined}>
+                      {words} words
+                    </span>
+                    {entry.attempt.submitted_at && ` · submitted ${timeAgo(entry.attempt.submitted_at, now)}`}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="ml-auto flex shrink-0 items-center gap-2">
                   {reviewed ? (
-                    <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                      Band {entry.attempt.examiner_band ?? '—'}
+                    <span className="inline-flex h-7 items-center rounded-lg bg-reading-tint px-2.5 text-[13px] font-semibold tabular-nums text-reading">
+                      Band {formatBand(entry.attempt.examiner_band)}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1">
-                      Not marked
+                    <span
+                      className={`inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[13px] font-medium ${
+                        waitedLong ? 'bg-urgent-tint text-urgent' : 'bg-writing-tint text-writing'
+                      }`}
+                    >
+                      <Icon name="clock" className="h-3.5 w-3.5" />
+                      {entry.attempt.submitted_at ? `Waiting ${ageLabel(entry.attempt.submitted_at, now)}` : 'Not marked'}
                     </span>
                   )}
 
                   <button
                     type="button"
                     onClick={() => onMessage(entry.student)}
-                    className="focus-ring rounded-full border border-line text-xs font-medium text-mist hover:text-paper hover:border-brass/40 px-3 py-1.5 transition-colors"
+                    className="focus-ring rounded-full border border-line px-3 py-1.5 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper"
                   >
                     Message
                   </button>
@@ -436,19 +523,26 @@ function QueueSection({ blurb, entries, taskKey, onOpen, onMessage }) {
                   <button
                     type="button"
                     onClick={() => onOpen(entry)}
-                    className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-brass-dim transition-colors"
+                    className={`focus-ring rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                      reviewed
+                        ? 'bg-panel-2 text-paper hover:bg-line/60'
+                        : 'bg-brass text-onbrass hover:bg-brass-dim'
+                    }`}
                   >
                     {reviewed ? 'View / edit' : 'Mark'}
                   </button>
                 </div>
-              </div>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
-    </section>
+    </Card>
   )
 }
+
+const LABEL = 'text-[13px] font-medium text-mist'
+const INPUT = 'focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper'
 
 function ReviewModal({ entry, onClose, onSave }) {
   const { attempt, exam, student } = entry
@@ -462,7 +556,10 @@ function ReviewModal({ entry, onClose, onSave }) {
   const [feedback, setFeedback] = useState(attempt.examiner_feedback || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [activeTask, setActiveTask] = useState(attempt.task1_text ? 'task1' : 'task2')
+  // Opened from the Task 2s list → start on Task 2 (2026-10-07).
+  const [activeTask, setActiveTask] = useState(
+    entry.initialTask && attempt[`${entry.initialTask}_text`] ? entry.initialTask : attempt.task1_text ? 'task1' : 'task2'
+  )
 
   const tasksAvailable = [
     attempt.task1_text ? 'task1' : null,
@@ -471,6 +568,9 @@ function ReviewModal({ entry, onClose, onSave }) {
 
   const computedOverall = computeOverallBand([criteria.ta, criteria.cc, criteria.lr, criteria.gra])
   const displayOverall = computedOverall != null ? computedOverall : attempt.examiner_band ?? null
+
+  const activeWords = countWords(attempt[`${activeTask}_text`])
+  const minWords = activeTask === 'task1' ? 150 : 250
 
   const handleSave = async () => {
     setSaving(true)
@@ -486,30 +586,37 @@ function ReviewModal({ entry, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-lg text-paper">{studentLabel(student)}</h3>
-            <p className="text-xs text-mist font-mono mt-0.5">{exam.title}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar person={student} size="h-10 w-10" tone="bg-writing-tint text-writing" />
+            <div className="min-w-0">
+              <h3 className="truncate text-lg font-semibold text-paper">{studentLabel(student)}</h3>
+              <p className="truncate text-[13px] text-mist">
+                {exam.title}
+                {attempt.submitted_at && ` · submitted ${new Date(attempt.submitted_at).toLocaleDateString()}`}
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring text-mist hover:text-paper text-sm"
+            aria-label="Close"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
           >
-            Close
+            <Icon name="close" className="h-4 w-4" />
           </button>
         </div>
 
         {tasksAvailable.length > 1 && (
-          <div className="flex gap-2 mt-4 border-b border-line pb-3">
+          <div className="mt-4 inline-flex gap-1 rounded-full bg-panel-2 p-1">
             {tasksAvailable.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setActiveTask(t)}
-                className={`focus-ring px-3 py-1.5 rounded-md text-sm font-medium ${
-                  activeTask === t ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
+                className={`focus-ring rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTask === t ? 'bg-panel text-writing shadow-sm' : 'text-mist hover:text-paper'
                 }`}
               >
                 {t === 'task1' ? 'Task 1' : 'Task 2'}
@@ -518,14 +625,16 @@ function ReviewModal({ entry, onClose, onSave }) {
           </div>
         )}
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {activeTask === 'task1' && exam.task1_prompt && (
-            <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm text-paper-dim whitespace-pre-wrap">
+            <div className="rounded-2xl bg-writing-tint/60 p-3.5 text-sm text-paper-dim whitespace-pre-wrap">
+              <p className="mb-1 text-[13px] font-medium text-writing">Task 1 prompt</p>
               {exam.task1_prompt}
             </div>
           )}
           {activeTask === 'task2' && exam.task2_prompt && (
-            <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm text-paper-dim whitespace-pre-wrap">
+            <div className="rounded-2xl bg-writing-tint/60 p-3.5 text-sm text-paper-dim whitespace-pre-wrap">
+              <p className="mb-1 text-[13px] font-medium text-writing">Task 2 prompt</p>
               {exam.task2_prompt}
             </div>
           )}
@@ -534,26 +643,25 @@ function ReviewModal({ entry, onClose, onSave }) {
             <img
               src={exam.task1_image_url}
               alt="Task 1 chart"
-              className="max-h-64 rounded-lg border border-line object-contain"
+              className="max-h-64 rounded-xl border border-line object-contain"
             />
           )}
 
-          <div className="rounded-lg border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap max-h-96 overflow-y-auto">
+          <div className="rounded-2xl border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap max-h-96 overflow-y-auto">
             {attempt[`${activeTask}_text`] || 'No answer written.'}
           </div>
 
-          <p className="text-xs text-mist font-mono">
-            {countWords(attempt[`${activeTask}_text`])} words
+          <p className={`text-[13px] ${activeWords < minWords ? 'font-medium text-urgent' : 'text-mist'}`}>
+            {activeWords} words
+            {activeWords < minWords ? ` · under the ${minWords}-word minimum` : ` · minimum ${minWords}`}
           </p>
         </div>
 
         <div className="mt-5 border-t border-line pt-4">
-          <p className="text-xs text-mist font-mono uppercase tracking-wide mb-2">
-            Criteria marks
-          </p>
+          <p className="mb-2 text-sm font-semibold text-paper">Criteria marks</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {WRITING_CRITERIA.map((c) => (
-              <label key={c.key} className="text-[11px] text-mist">
+              <label key={c.key} className="text-[12px] text-mist">
                 {c.label}
                 <input
                   type="number"
@@ -562,34 +670,32 @@ function ReviewModal({ entry, onClose, onSave }) {
                   step="0.5"
                   value={criteria[c.key]}
                   onChange={(e) => setCriteria((prev) => ({ ...prev, [c.key]: e.target.value }))}
-                  className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-2.5 py-2 text-sm text-paper"
+                  className={INPUT}
                 />
               </label>
             ))}
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-[11px] text-mist font-mono uppercase tracking-wide">
-              Overall band
-            </span>
-            <span className="text-sm font-semibold text-paper">
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-panel-2/70 px-3.5 py-2.5">
+            <span className={LABEL}>Overall band</span>
+            <span className="inline-flex h-7 items-center rounded-lg bg-writing-tint px-2.5 text-sm font-semibold tabular-nums text-writing">
               {formatBand(displayOverall)}
             </span>
-            <span className="text-[11px] text-mist">
+            <span className="text-[12px] text-mist">
               {computedOverall != null
-                ? '— calculated from the four criteria'
+                ? 'calculated from the four criteria'
                 : 'fill in all four to calculate'}
             </span>
           </div>
 
-          <label className="mt-4 block text-xs text-mist font-mono uppercase tracking-wide">
+          <label className={`mt-4 block ${LABEL}`}>
             Feedback
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               rows={4}
               placeholder="What went well, what to improve…"
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+              className={`${INPUT} resize-none`}
             />
           </label>
         </div>
@@ -609,7 +715,7 @@ function ReviewModal({ entry, onClose, onSave }) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold hover:bg-brass-dim disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save review'}
           </button>

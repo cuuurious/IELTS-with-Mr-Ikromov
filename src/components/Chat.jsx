@@ -12,6 +12,7 @@ import { FileBubble, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
 import { fetchAll } from '../lib/fetchAll'
 import Icon from './Icon'
+import { groupColour } from '../lib/groupLook'
 
 // 2026-10-06: a chat now opens with only its latest 100 messages
 // ("Load older messages" fetches the next 100), and reactions/pins are
@@ -64,12 +65,123 @@ function formatDateDivider(value) {
   })
 }
 
+
+/*
+ * Study room chat look (2026-10-07) — small presentational helpers shared
+ * by the private chat, the chat lists and (via import) TeacherChat.
+ * Glyphs the shared Icon set doesn't have yet (search, back, reply,
+ * smile, more, ticks, chat bubble, people).
+ */
+const GLYPHS = {
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.2-4.2" />
+    </>
+  ),
+  back: <path d="M15 18 9 12l6-6" />,
+  reply: <path d="M9 15 4 10l5-5M4 10h10a6 6 0 0 1 6 6v3" />,
+  smile: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8M9.3 9.8h.01M14.7 9.8h.01" />
+    </>
+  ),
+  more: <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" />,
+  tick: <path d="m4.5 12.5 4.5 4.5L19.5 6.5" />,
+  ticks: <path d="m1.8 12.8 4.3 4.3 9.6-10.1M11.6 15.9l1.2 1.2 9.5-10.1" />,
+  chat: <path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.3a8 8 0 1 1 15.2-4.2Z" />,
+  people: (
+    <>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 5.6a3.2 3.2 0 0 1 0 6.1M17.5 14.2a5.5 5.5 0 0 1 3 4.8" />
+    </>
+  ),
+}
+
+export function ChatGlyph({ name, className = 'h-4 w-4', strokeWidth = 1.9 }) {
+  const body = GLYPHS[name]
+  if (!body) return null
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`inline-block shrink-0 ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={name === 'more' ? 3 : strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {body}
+    </svg>
+  )
+}
+
+// One soft tint per person, picked from their id — the same five skill
+// tints groups use, so a face keeps its colour everywhere.
+export function chatTint(seed) {
+  const str = String(seed || '')
+  let hash = 0
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0
+  return groupColour(hash % 5)
+}
+
+export function chatInitials(name) {
+  return (
+    String(name || '?')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?'
+  )
+}
+
+export function ChatAvatar({ name, url, seed, size = 'h-10 w-10', text = 'text-sm', className = '' }) {
+  if (url) {
+    return <img src={url} alt="" className={`${size} shrink-0 rounded-full object-cover ${className}`} />
+  }
+  const tint = chatTint(seed || name)
+  return (
+    <span
+      className={`${size} ${text} ${tint.tint} ${tint.text} flex shrink-0 items-center justify-center rounded-full font-semibold ${className}`}
+      aria-hidden="true"
+    >
+      {chatInitials(name)}
+    </span>
+  )
+}
+
+// Reply / react / more beside a bubble. Two copies are rendered: on a
+// computer (hover) they float next to the bubble when the row is hovered
+// or focused; on a touch screen they sit under the bubble once the
+// bubble has been tapped (the row gets data-actions="on").
+export const CHAT_ACTIONS_FLOAT =
+  'absolute top-1/2 hidden -translate-y-1/2 items-center opacity-0 pointer-events-none transition-opacity [@media(hover:hover)]:flex group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto'
+export const CHAT_ACTIONS_TOUCH =
+  'mt-1 hidden items-center gap-1 group-data-[actions=on]/row:flex [@media(hover:hover)]:!hidden'
+export const CHAT_ACTION_BUTTON =
+  'focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-mist transition-colors hover:bg-panel hover:text-paper'
+export const CHAT_ACTION_CHIP =
+  'focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-paper-dim'
+
+// Round icon button used in chat headers and the composer.
+export const CHAT_ICON_BUTTON =
+  'focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-paper-dim transition-colors hover:bg-panel-2 hover:text-paper disabled:opacity-40'
+
 export default function Chat({
   selfId,
   peerId,
   peerName,
   targetMessageId = null,
   onDeleted = null,
+  // Optional (2026-10-07): `embedded` drops the chat's own card so it can
+  // sit inside a list + conversation card; `onBack` shows a back arrow in
+  // the header on phones (list OR conversation there).
+  embedded = false,
+  onBack = null,
 }) {
   const [messages, setMessages] = useState([])
   const [reactions, setReactions] = useState({})
@@ -145,6 +257,10 @@ export default function Chat({
   // header — separate from menuMessage/menuPosition above, which is
   // for the per-message "⋯" menu instead.
   const [chatMenuOpen, setChatMenuOpen] = useState(false)
+
+  // Which message's reply / react / options buttons are showing on a
+  // touch screen (tap a bubble to reveal them; hover does it on desktop).
+  const [actionsFor, setActionsFor] = useState(null)
 
   // Paging (2026-10-06) — see PAGE_SIZE above.
   const [hasOlder, setHasOlder] = useState(false)
@@ -2032,7 +2148,7 @@ export default function Chat({
    * ============================================================
    */
 
-  const renderMessage = (message, mine) => {
+  const renderMessage = (message, mine, metaSpacer = null) => {
     const parsed = parseMessage(message.content)
 
     if (parsed.type === 'video_note') {
@@ -2050,7 +2166,7 @@ export default function Chat({
           <img
             src={parsed.url}
             alt={parsed.name || 'Photo'}
-            className="max-w-full max-h-72 rounded-xl object-contain"
+            className="block max-w-full max-h-72 rounded-[14px] object-cover"
           />
         </a>
       )
@@ -2062,7 +2178,7 @@ export default function Chat({
           controls
           preload="metadata"
           src={parsed.url}
-          className="max-w-full max-h-72 rounded-xl"
+          className="block max-w-full max-h-72 rounded-[14px]"
         />
       )
     }
@@ -2083,6 +2199,7 @@ export default function Chat({
     return (
       <div className="whitespace-pre-wrap break-words">
         {parsed.text}
+        {metaSpacer}
       </div>
     )
   }
@@ -2116,7 +2233,7 @@ export default function Chat({
 
   if (!peerId) {
     return (
-      <p className="text-mist">
+      <p className="text-sm text-mist">
         Select a conversation to start chatting.
       </p>
     )
@@ -2130,50 +2247,110 @@ export default function Chat({
     selectedMessages.length > 0 &&
     selectedMessages.every((m) => canDeleteEveryone(m))
 
+  const timeOf = (value) =>
+    new Date(value).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+  const renderActions = (m, mine, variant) => {
+    const float = variant === 'float'
+    const btn = float ? CHAT_ACTION_BUTTON : CHAT_ACTION_CHIP
+
+    return (
+      <div
+        className={
+          float
+            ? `${CHAT_ACTIONS_FLOAT} ${mine ? 'right-full pr-1' : 'left-full pl-1'}`
+            : CHAT_ACTIONS_TOUCH
+        }
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            startReply(m)
+          }}
+          className={btn}
+          aria-label="Reply"
+          title="Reply"
+        >
+          <ChatGlyph name="reply" className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            openReactionPicker(e, m)
+          }}
+          className={btn}
+          aria-label="Add reaction"
+          title="React"
+        >
+          <ChatGlyph name="smile" className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            openMessageMenu(e, m)
+          }}
+          className={btn}
+          aria-label="Message options"
+          title="More"
+        >
+          <ChatGlyph name="more" className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    // Same look as the group chat (GroupChat.jsx) — Jasur, 2026-09-30:
-    // "apply to every chat in the website be it private or group".
+    // Study room look (2026-10-07): one calm messenger pane — header,
+    // a soft message area, bubbles grouped by sender, one composer bar.
     <div
       {...dropProps}
-      className="relative flex flex-col h-[36rem] overflow-hidden rounded-2xl border border-line bg-panel shadow-[0_20px_44px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03]"
+      className={`chat-pane relative flex min-h-0 flex-col overflow-hidden bg-panel ${
+        embedded
+          ? 'h-full'
+          : 'h-[36rem] rounded-[22px] border border-line'
+      }`}
     >
 
       <DropOverlay show={isDragging} label="Drop to send" />
 
-      {/* HEADER — tap the name/photo to view their profile, or use
-          Select to pick several messages at once */}
+      {/* HEADER — tap the name/photo to view their profile; Select
+          picks several messages at once; the bin deletes the chat */}
 
-      <div className="relative z-20 flex items-center gap-2 border-b border-line bg-panel-2/70 px-4 py-3">
+      <div className="relative z-20 flex h-16 shrink-0 items-center gap-2 border-b border-line bg-panel px-2 sm:px-4">
 
-        {/* Soft glow, clipped to the header on its own so the "Delete
-            chat" dropdown below can still open outside the header. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -left-8 -top-16 h-36 w-36 rounded-full bg-brass/10 hidden" />
-        </div>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className={`${CHAT_ICON_BUTTON} md:hidden`}
+            aria-label="Back to chats"
+            title="Back to chats"
+          >
+            <ChatGlyph name="back" className="h-5 w-5" />
+          </button>
+        )}
 
         <button
           type="button"
           onClick={() => setViewingProfileId(peerId)}
-          className="focus-ring relative flex-1 min-w-0 flex items-center gap-3 text-left"
+          className={`focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1 text-left ${onBack ? 'pl-0 md:pl-1' : 'pl-1'}`}
           title="View profile"
         >
-          {peerAvatarUrl ? (
-            <img
-              src={peerAvatarUrl}
-              alt={peerName}
-              className="h-10 w-10 shrink-0 rounded-full object-cover border border-brass/30 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]"
-            />
-          ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/15 font-display text-base font-semibold text-brass shadow-[0_4px_12px_-4px_rgba(0,0,0,0.35)]">
-              {String(peerName || '?').charAt(0).toUpperCase()}
-            </div>
-          )}
+          <ChatAvatar name={peerName} url={peerAvatarUrl} seed={peerId} />
 
           <div className="min-w-0">
-            <div className="font-display text-lg truncate">
+            <div className="truncate text-[15px] font-semibold text-paper">
               {peerName}
             </div>
-            <div className="text-xs text-mist truncate">
+            <div className="truncate text-xs text-mist">
               Tap to view profile
             </div>
           </div>
@@ -2190,13 +2367,15 @@ export default function Chat({
               setSelectMode(true)
             }
           }}
-          className={`focus-ring relative shrink-0 rounded-full border px-3 py-1.5 text-xs shadow-[0_4px_10px_-6px_rgba(0,0,0,0.4)] transition ${
+          className={
             selectMode
-              ? 'border-coral/50 bg-coral/10 text-coral'
-              : 'border-line text-mist hover:border-brass hover:text-brass'
-          }`}
+              ? 'focus-ring shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
+              : CHAT_ICON_BUTTON
+          }
+          aria-label={selectMode ? 'Cancel selecting' : 'Select messages'}
+          title={selectMode ? 'Cancel' : 'Select messages'}
         >
-          {selectMode ? 'Cancel' : 'Select'}
+          {selectMode ? 'Cancel' : <Icon name="checkCircle" className="h-[18px] w-[18px]" />}
         </button>
 
         {/* "Delete chat" — Telegram's delete-for-me/delete-for-everyone
@@ -2214,13 +2393,9 @@ export default function Chat({
             onClick={() => setChatMenuOpen((v) => !v)}
             title="Delete chat"
             aria-label="Delete chat"
-            className={`focus-ring flex h-8 w-8 items-center justify-center rounded-full border text-sm transition ${
-              chatMenuOpen
-                ? 'border-coral/50 bg-coral/10 text-coral'
-                : 'border-line text-mist hover:border-coral hover:text-coral'
-            }`}
+            className={`${CHAT_ICON_BUTTON} ${chatMenuOpen ? 'bg-urgent-tint text-urgent' : 'hover:text-urgent'}`}
           >
-            <Icon name="trash" className="h-4 w-4" />
+            <Icon name="trash" className="h-[18px] w-[18px]" />
           </button>
 
           {chatMenuOpen && (
@@ -2230,12 +2405,13 @@ export default function Chat({
                 onClick={() => setChatMenuOpen(false)}
               />
 
-              <div className="absolute right-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-lg border border-line bg-panel-2 py-1 shadow-xl">
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-panel p-1.5 shadow-[0_16px_40px_-16px_rgba(31,35,64,0.35)]">
                 <button
                   type="button"
                   onClick={() => requestDeleteConversation('me')}
-                  className="block w-full px-3 py-2 text-left text-sm text-paper hover:bg-panel"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-paper hover:bg-panel-2"
                 >
+                  <Icon name="trash" className="h-4 w-4 text-mist" />
                   Delete for me
                 </button>
 
@@ -2243,8 +2419,9 @@ export default function Chat({
                   <button
                     type="button"
                     onClick={() => requestDeleteConversation('everyone')}
-                    className="block w-full px-3 py-2 text-left text-sm text-coral hover:bg-panel"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-urgent hover:bg-urgent-tint"
                   >
+                    <Icon name="trash" className="h-4 w-4" />
                     Delete for everyone
                   </button>
                 )}
@@ -2341,7 +2518,7 @@ export default function Chat({
         />
       )}
 
-      {/* PINNED MESSAGE */}
+      {/* PINNED MESSAGE — a slim bar under the header */}
 
       {pins.length > 0 && (() => {
         const activePin = pins[pinIndex] || pins[0]
@@ -2352,23 +2529,24 @@ export default function Chat({
         if (!pinnedMessage) return null
 
         return (
-          <div className="flex items-center gap-2 border-b border-l-2 border-line border-l-brass bg-brass/5 px-4 py-2">
+          <div className="flex shrink-0 items-center gap-2 border-b border-line bg-panel px-3 py-1.5 sm:px-4">
 
             <button
               type="button"
               onClick={() => jumpToMessage(pinnedMessage.id)}
-              className="focus-ring flex-1 min-w-0 flex items-center gap-2 text-left"
+              className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-0.5 text-left"
             >
-              <span className="text-brass shrink-0"><Icon name="pin" className="h-4 w-4" /></span>
+              <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
 
               <div className="min-w-0">
-                <div className="text-[10px] text-mist">
+                <div className="flex items-center gap-1 text-[11px] font-medium text-paper">
+                  <Icon name="pin" className="h-3 w-3 text-mist" />
                   {pins.length > 1
                     ? `Pinned message ${pinIndex + 1} of ${pins.length}`
                     : 'Pinned message'}
                 </div>
 
-                <div className="text-xs text-paper truncate">
+                <div className="truncate text-xs text-paper-dim">
                   {previewFor(pinnedMessage)}
                 </div>
               </div>
@@ -2382,7 +2560,7 @@ export default function Chat({
                     (index) => (index + 1) % pins.length
                   )
                 }
-                className="focus-ring text-mist hover:text-brass text-xs px-2 shrink-0"
+                className="focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
               >
                 Next
               </button>
@@ -2392,9 +2570,10 @@ export default function Chat({
               type="button"
               onClick={() => unpinMessage(pinnedMessage.id)}
               title="Unpin"
-              className="focus-ring text-mist hover:text-coral text-sm px-1 shrink-0"
+              aria-label="Unpin message"
+              className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
             >
-              ×
+              <Icon name="close" className="h-3.5 w-3.5" />
             </button>
 
           </div>
@@ -2403,7 +2582,7 @@ export default function Chat({
 
       {/* MESSAGES */}
 
-      <div ref={scrollBoxRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+      <div ref={scrollBoxRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-panel-2 px-3 py-4 [scrollbar-width:thin] sm:px-5">
 
         {hasOlder && (
           <div className="mb-3 flex justify-center">
@@ -2411,7 +2590,7 @@ export default function Chat({
               type="button"
               onClick={loadOlder}
               disabled={loadingOlder}
-              className="focus-ring rounded-full border border-line px-3 py-1 text-xs text-mist transition hover:border-brass hover:text-brass disabled:opacity-40"
+              className="focus-ring rounded-full border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
             >
               {loadingOlder ? 'Loading…' : 'Load older messages'}
             </button>
@@ -2419,8 +2598,14 @@ export default function Chat({
         )}
 
         {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center text-mist text-sm">
-            No messages yet — say hello.
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-listening-tint text-listening">
+              <ChatGlyph name="chat" className="h-7 w-7" />
+            </span>
+            <div>
+              <div className="text-sm font-medium text-paper">No messages yet</div>
+              <div className="mt-0.5 text-xs text-mist">Say hello to {peerName || 'them'}.</div>
+            </div>
           </div>
         )}
 
@@ -2429,8 +2614,6 @@ export default function Chat({
           .map((m, index, visible) => {
           const mine = m.sender_id === selfId
           const reply = getReply(m)
-          const messageCanEdit = canEdit(m)
-          const messageCanDeleteEveryone = canDeleteEveryone(m)
           const messagePinned = isPinned(m.id)
           const isHighlighted =
             String(highlightedMessageId) === String(m.id)
@@ -2449,6 +2632,7 @@ export default function Chat({
           const isLastVisible = index === visible.length - 1
 
           const prev = visible[index - 1]
+          const next = visible[index + 1]
 
           const dateChanged =
             index === 0 ||
@@ -2465,14 +2649,58 @@ export default function Chat({
                 5 * 60 * 1000
           )
 
+          // Same rule looking forward — only used for the bubble's
+          // corner shape (the last bubble of a run gets the tail corner).
+          const groupedWithNext = Boolean(
+            next &&
+              next.sender_id === m.sender_id &&
+              new Date(next.created_at).toDateString() ===
+                new Date(m.created_at).toDateString() &&
+              new Date(next.created_at) - new Date(m.created_at) <
+                5 * 60 * 1000
+          )
+
           const selected = selectedIds.has(m.id)
+          const kind = parseMessage(m.content).type
+          const isEditing = editingId === m.id
+          const isMedia = !isEditing && (kind === 'image' || kind === 'video')
+          const isRound = !isEditing && kind === 'video_note'
+          const isText = !isEditing && kind === 'text'
+          const messageReactions = REACTIONS.filter((reaction) =>
+            reactionCount(m.id, reaction)
+          )
+
+          const readTitle = isRead
+            ? `Read ${timeOf(peerReadAt)}`
+            : 'Sent'
+
+          const metaContent = (
+            <>
+              {messagePinned && (
+                <span title="Pinned"><Icon name="pin" className="h-3 w-3" /></span>
+              )}
+              {m.edited_at && <span className="italic">edited</span>}
+              <span>{timeOf(m.created_at)}</span>
+              {mine && (
+                <span title={readTitle} aria-label={readTitle}>
+                  <ChatGlyph name={isRead ? 'ticks' : 'tick'} className="h-3.5 w-3.5" strokeWidth={2.2} />
+                </span>
+              )}
+            </>
+          )
+
+          const metaTone = mine ? 'text-onbrass/70' : 'text-mist'
+
+          const corners = mine
+            ? `${groupedWithPrev ? 'rounded-tr-md' : ''} ${groupedWithNext ? 'rounded-br-md' : ''}`
+            : `${groupedWithPrev ? 'rounded-tl-md' : ''} ${groupedWithNext ? 'rounded-bl-md' : ''}`
 
           return (
             <Fragment key={m.id}>
 
               {dateChanged && (
-                <div className="flex justify-center my-3">
-                  <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-panel-2 text-mist border border-line">
+                <div className={`flex justify-center ${index === 0 ? 'mb-3' : 'my-4'}`}>
+                  <span className="rounded-full border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
                     {formatDateDivider(m.created_at)}
                   </span>
                 </div>
@@ -2483,9 +2711,10 @@ export default function Chat({
                 onClick={
                   selectMode
                     ? () => toggleSelected(m.id)
-                    : undefined
+                    : () => setActionsFor(m.id)
                 }
-                className={`flex items-end gap-2 ${
+                data-actions={!selectMode && actionsFor === m.id ? 'on' : undefined}
+                className={`group/row flex items-end gap-2 ${
                   selectMode ? 'cursor-pointer' : ''
                 } ${
                   !selectMode && mine
@@ -2495,13 +2724,13 @@ export default function Chat({
                   index === 0 || dateChanged
                     ? ''
                     : groupedWithPrev
-                    ? 'mt-1'
+                    ? 'mt-0.5'
                     : 'mt-3'
                 } ${
                   isHighlighted
-                    ? 'bg-brass/10 rounded-xl ring-2 ring-brass/60 p-2 -m-2'
+                    ? 'bg-brass/10 rounded-2xl ring-2 ring-brass/40 p-2 -m-2'
                     : ''
-                } ${selected ? 'bg-brass/5 rounded-xl' : ''}`}
+                } ${selected ? 'bg-brass/5 rounded-2xl' : ''}`}
               >
 
               {selectMode && (
@@ -2510,12 +2739,13 @@ export default function Chat({
                   checked={selected}
                   onClick={(e) => e.stopPropagation()}
                   onChange={() => toggleSelected(m.id)}
-                  className="w-4 h-4 mb-1 shrink-0 accent-brass"
+                  className="mb-2 h-[18px] w-[18px] shrink-0 accent-brass"
+                  aria-label="Select message"
                 />
               )}
 
               <div
-                className={`max-w-[82%] flex flex-col ${
+                className={`relative flex min-w-0 max-w-[min(84%,560px)] flex-col ${
                   mine ? 'items-end' : 'items-start'
                 } ${
                   selectMode ? 'pointer-events-none' : ''
@@ -2558,21 +2788,25 @@ export default function Chat({
                         ? 'none'
                         : 'transform 160ms ease',
                   }}
-                  className={`relative select-none rounded-2xl px-3 py-2.5 text-sm ${
-                    mine
-                      ? 'rounded-tr-md bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]'
-                      : 'rounded-tl-md border border-line bg-panel-2 text-paper shadow-[0_4px_12px_-6px_rgba(0,0,0,0.3)]'
+                  className={`relative max-w-full select-none text-[14.5px] leading-[1.45] ${
+                    isRound
+                      ? ''
+                      : `rounded-[18px] ${corners} ${
+                          mine
+                            ? 'bg-brass text-onbrass'
+                            : 'border border-line bg-panel text-paper'
+                        } ${isMedia ? 'p-1' : 'px-3 py-2'}`
                   }`}
                 >
 
                   {swipeVisual.id === m.id &&
                     swipeVisual.dx !== 0 && (
                       <span
-                        className="absolute top-1/2 text-brass text-base pointer-events-none"
+                        className="pointer-events-none absolute top-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-panel text-paper shadow-sm"
                         style={{
                           [swipeVisual.dx > 0
                             ? 'left'
-                            : 'right']: -26,
+                            : 'right']: -34,
                           opacity: Math.min(
                             1,
                             Math.abs(swipeVisual.dx) /
@@ -2589,33 +2823,34 @@ export default function Chat({
                           })`,
                         }}
                       >
-                        ↩
+                        <ChatGlyph name="reply" className="h-4 w-4" />
                       </span>
                     )}
 
                   {reply && (
                     <div
-                      className={`mb-2 border-l-2 rounded px-2 py-1 text-xs ${
+                      className={`mb-1.5 rounded-lg border-l-[3px] px-2.5 py-1 text-xs ${
+                        isMedia ? 'mx-1.5 mt-1' : ''
+                      } ${
                         mine
-                          ? 'border-onbrass/60 bg-black/10'
-                          : 'border-brass bg-panel'
+                          ? 'border-onbrass/60 bg-onbrass/10'
+                          : 'border-brass bg-panel-2'
                       }`}
                     >
-                      <div className="font-medium">
-                        Reply to{' '}
+                      <div className="font-semibold">
                         {reply.sender_id === selfId
-                          ? 'yourself'
-                          : peerName || 'them'}
+                          ? 'You'
+                          : peerName || 'Them'}
                       </div>
 
-                      <div className="truncate opacity-70">
+                      <div className="truncate opacity-75">
                         {previewFor(reply)}
                       </div>
                     </div>
                   )}
 
-                  {editingId === m.id ? (
-                    <div className="flex gap-2">
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
                       <input
                         autoFocus
                         value={editingText}
@@ -2631,136 +2866,92 @@ export default function Chat({
                             cancelEdit()
                           }
                         }}
-                        className="focus-ring flex-1 rounded-lg px-2 py-1 bg-panel text-paper border border-line"
+                        className="focus-ring min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 py-1 text-paper"
                       />
 
                       <button
                         type="button"
                         onClick={() => saveEdit(m)}
-                        className="text-xs font-medium shrink-0"
+                        className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
                       >
                         Save
                       </button>
                     </div>
                   ) : (
-                    renderMessage(m, mine)
+                    renderMessage(
+                      m,
+                      mine,
+                      isText ? (
+                        <span className="invisible ml-2.5 inline-flex items-center gap-1 align-baseline text-[11px] leading-none" aria-hidden="true">
+                          {metaContent}
+                        </span>
+                      ) : null
+                    )
                   )}
 
-                </div>
-
-                {/* META ROW — timestamp, edited tag, and the
-                    "⋯" actions menu, all in one inline row
-                    instead of floating over the bubble */}
-                <div className="flex items-center gap-2 mt-1 px-1 text-[11px] text-mist">
-
-                  <span className="opacity-70">
-                    {new Date(
-                      m.created_at
-                    ).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-
-                  {m.edited_at && (
-                    <span className="italic opacity-70">
-                      edited
+                  {isText && (
+                    <span className={`absolute bottom-1.5 right-3 inline-flex items-center gap-1 text-[11px] leading-none ${metaTone}`}>
+                      {metaContent}
                     </span>
                   )}
 
-                  {mine && (
-                    <span
-                      className={isRead ? 'text-brass' : 'opacity-70'}
-                      title={
-                        isRead
-                          ? `Read ${new Date(
-                              peerReadAt
-                            ).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}`
-                          : 'Sent'
-                      }
+                  {isMedia && (
+                    <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
+                      {metaContent}
+                    </span>
+                  )}
+
+                  {!isText && !isMedia && (
+                    <div
+                      className={`mt-1 flex items-center justify-end gap-1 text-[11px] leading-none ${
+                        isRound ? 'w-fit ml-auto rounded-full bg-panel px-2 py-1 text-mist' : metaTone
+                      }`}
                     >
-                      {isRead ? '✓✓' : '✓'}
-                    </span>
+                      {metaContent}
+                    </div>
                   )}
-
-                  {isLastVisible && isRead && (
-                    <span className="text-brass opacity-90">
-                      Read{' '}
-                      {new Date(peerReadAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  )}
-
-                  {messagePinned && (
-                    <span className="text-brass" title="Pinned">
-                      <Icon name="pin" className="h-3.5 w-3.5" />
-                    </span>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={(e) => openMessageMenu(e, m)}
-                    className="px-1 leading-none hover:text-brass"
-                    aria-label="Message options"
-                  >
-                    ⋯
-                  </button>
 
                 </div>
 
-                <div className="flex items-center gap-1 mt-0.5">
+                {/* REACTIONS — small chips under the bubble */}
+                {messageReactions.length > 0 && (
+                  <div className={`mt-1 flex flex-wrap gap-1 ${mine ? 'justify-end' : ''}`}>
+                    {messageReactions.map((reaction) => {
+                      const mineReaction = hasReaction(m.id, reaction)
 
-                  {REACTIONS.map((reaction) => {
-                    const count = reactionCount(
-                      m.id,
-                      reaction
-                    )
+                      return (
+                        <button
+                          key={reaction}
+                          type="button"
+                          title={reactedByLabel(m.id, reaction)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleReaction(m, reaction)
+                          }}
+                          className={`focus-ring inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                            mineReaction
+                              ? 'border-brass/40 bg-brass/10 text-paper'
+                              : 'border-line bg-panel text-paper-dim hover:text-paper'
+                          }`}
+                        >
+                          <span>{reaction}</span>
+                          <span className="font-medium">{reactionCount(m.id, reaction)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
 
-                    if (!count) return null
+                {isLastVisible && isRead && (
+                  <div className="mt-1 px-1 text-[11px] text-mist">
+                    Read {timeOf(peerReadAt)}
+                  </div>
+                )}
 
-                    return (
-                      <button
-                        key={reaction}
-                        type="button"
-                        title={reactedByLabel(m.id, reaction)}
-                        onClick={() =>
-                          toggleReaction(m, reaction)
-                        }
-                        className={`focus-ring text-xs border rounded-full px-2 py-0.5 ${
-                          hasReaction(m.id, reaction)
-                            ? 'border-brass text-brass bg-brass/10'
-                            : 'border-line text-mist'
-                        }`}
-                      >
-                        {reaction} {count}
-                      </button>
-                    )
-                  })}
-
-                  <button
-                    type="button"
-                    onClick={(e) => openReactionPicker(e, m)}
-                    className="focus-ring text-xs text-mist hover:text-brass px-1"
-                    aria-label="Add reaction"
-                  >
-                    +
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => startReply(m)}
-                    className="text-[11px] text-mist hover:text-brass px-1"
-                  >
-                    Reply
-                  </button>
-
-                </div>
-
+                {/* ACTIONS — reply, react, more. Hover shows them beside
+                    the bubble on a computer; on a phone, tap the bubble. */}
+                {!selectMode && renderActions(m, mine, 'float')}
+                {!selectMode && renderActions(m, mine, 'touch')}
               </div>
               </div>
             </Fragment>
@@ -2774,27 +2965,29 @@ export default function Chat({
       {/* ERROR */}
 
       {error && (
-        <div className="px-4 py-2 text-xs text-coral border-t border-line">
+        <div className="shrink-0 border-t border-line bg-urgent-tint px-4 py-2 text-xs text-urgent">
           {error}
         </div>
       )}
 
-      {/* REPLY PREVIEW */}
+      {/* REPLY PREVIEW — slim bar above the composer */}
 
       {replyingTo && (
-        <div className="px-3 py-2 border-t border-line bg-panel-2 flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3 border-t border-line bg-panel px-4 py-2">
 
-          <div className="w-1 h-8 rounded-full bg-brass" />
+          <span className="text-mist"><ChatGlyph name="reply" className="h-4 w-4" /></span>
 
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-brass font-medium">
+          <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
+
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold text-paper">
               Replying to{' '}
               {replyingTo.sender_id === selfId
                 ? 'yourself'
                 : peerName || 'them'}
             </div>
 
-            <div className="text-xs text-mist truncate">
+            <div className="truncate text-xs text-mist">
               {previewFor(replyingTo)}
             </div>
           </div>
@@ -2802,9 +2995,10 @@ export default function Chat({
           <button
             type="button"
             onClick={() => setReplyingTo(null)}
-            className="text-mist hover:text-paper text-lg"
+            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+            aria-label="Cancel reply"
           >
-            ×
+            <Icon name="close" className="h-4 w-4" />
           </button>
 
         </div>
@@ -2814,17 +3008,17 @@ export default function Chat({
           messages to bulk-delete */}
 
       {selectMode && (
-        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-line bg-panel px-3 py-2.5 sm:px-4">
 
-          <span className="text-sm text-mist">
+          <span className="text-sm font-medium text-paper">
             {selectedIds.size} selected
           </span>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:text-paper"
+              className="focus-ring rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
             >
               Cancel
             </button>
@@ -2833,7 +3027,7 @@ export default function Chat({
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring rounded-full border border-coral/50 px-3 py-1.5 text-xs text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40"
+              className="focus-ring rounded-full bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -2843,7 +3037,7 @@ export default function Chat({
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring rounded-full bg-coral px-3 py-1.5 text-xs text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+                className="focus-ring rounded-full bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -2858,7 +3052,7 @@ export default function Chat({
           out the moment you stop recording. */}
 
       {recordedBlob && (
-        <div className="flex items-center gap-2 border-t border-line bg-panel-2/40 px-3 py-2.5">
+        <div className="flex shrink-0 items-center gap-2 border-t border-line bg-panel px-3 py-2.5">
 
           <RecordedClipPreview
             blob={recordedBlob}
@@ -2869,7 +3063,7 @@ export default function Chat({
             type="button"
             onClick={discardRecording}
             disabled={uploading}
-            className="focus-ring ml-auto shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-mist transition hover:border-coral hover:text-coral disabled:opacity-40"
+            className="focus-ring ml-auto shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent disabled:opacity-40"
           >
             Discard
           </button>
@@ -2878,8 +3072,9 @@ export default function Chat({
             type="button"
             onClick={sendRecording}
             disabled={uploading}
-            className="focus-ring shrink-0 rounded-full bg-brass hover:bg-brass-dim px-4 py-1.5 text-xs font-medium text-onbrass shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] disabled:opacity-40"
+            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
           >
+            <Icon name="send" className="h-3.5 w-3.5" />
             {uploading ? 'Sending…' : 'Send'}
           </button>
 
@@ -2889,37 +3084,25 @@ export default function Chat({
       {/* RECORDING IN PROGRESS */}
 
       {recording && !recordedBlob && (
-        <div className="flex items-center gap-3 border-t border-line bg-coral/5 px-4 py-2.5 text-sm text-coral">
+        <div className="flex shrink-0 items-center gap-3 border-t border-line bg-urgent-tint px-4 py-2.5 text-sm font-medium text-urgent">
 
           {recordingKind === 'video' && (
             <RoundCameraPreview stream={recordStreamRef.current} />
           )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-coral opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-coral" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-urgent opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-urgent" />
           </span>
 
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0">
-            {recordingKind === 'video' ? (
-              <>
-                <rect x="2" y="6" width="14" height="12" rx="2" />
-                <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
-              </>
-            ) : (
-              <>
-                <rect x="9" y="2" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0" />
-              </>
-            )}
-          </svg>
+          <Icon name={recordingKind === 'video' ? 'video' : 'mic'} className="h-4 w-4" />
 
           Recording {formatRecordSeconds(recordSeconds)}
 
           <button
             type="button"
             onClick={stopRecording}
-            className="focus-ring ml-auto shrink-0 rounded-full border border-coral/50 px-3 py-1.5 text-xs transition hover:bg-coral hover:text-paper"
+            className="focus-ring ml-auto shrink-0 rounded-full bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
           >
             Stop
           </button>
@@ -2927,13 +3110,13 @@ export default function Chat({
         </div>
       )}
 
-      {/* COMPOSER */}
+      {/* COMPOSER — one rounded bar */}
 
       {!selectMode && !recording && !recordedBlob && (
       <form
         onSubmit={sendText}
         onPaste={handlePaste}
-        className="flex items-center gap-2 border-t border-line bg-panel-2/40 p-3"
+        className="shrink-0 border-t border-line bg-panel px-2.5 py-2.5 sm:px-4"
       >
 
         <input
@@ -2944,73 +3127,64 @@ export default function Chat({
           className="hidden"
         />
 
-        {/* PHOTO / VIDEO / FILE */}
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          title="Send photo, video, audio or file"
-          aria-label="Send photo, video, audio or file"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-            <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40">
 
-        {/* VOICE MESSAGE */}
-        <button
-          type="button"
-          onClick={() => startRecording('audio')}
-          disabled={uploading}
-          title="Record voice message"
-          aria-label="Record voice message"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-            <rect x="9" y="2" width="6" height="11" rx="3" />
-            <path d="M5 10a7 7 0 0 0 14 0" />
-            <path d="M12 17v4" />
-            <path d="M9 21h6" />
-          </svg>
-        </button>
+          {/* PHOTO / VIDEO / FILE */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title="Send photo, video, audio or file"
+            aria-label="Send photo, video, audio or file"
+            className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+          >
+            <Icon name="paperclip" className="h-[18px] w-[18px]" />
+          </button>
 
-        {/* ROUND VIDEO MESSAGE */}
-        <button
-          type="button"
-          onClick={() => startRecording('video')}
-          disabled={uploading}
-          title="Record video message"
-          aria-label="Record video message"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-mist shadow-[0_3px_8px_-4px_rgba(0,0,0,0.4)] transition hover:border-brass hover:text-brass disabled:opacity-40"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-            <rect x="2" y="6" width="14" height="12" rx="2" />
-            <path d="M16 10.5l5.5-3.5v10l-5.5-3.5" />
-          </svg>
-        </button>
+          <input
+            ref={inputRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Write a message…"
+            disabled={uploading}
+            className="min-w-0 flex-1 !border-0 !bg-transparent px-1.5 py-2 text-[14.5px] !text-paper outline-none placeholder:text-mist disabled:opacity-50"
+          />
 
-        <input
-          ref={inputRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write a message..."
-          disabled={uploading}
-          className="focus-ring flex-1 min-w-0 rounded-full border border-line bg-panel px-4 py-2.5 text-sm text-paper shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)] placeholder:text-mist disabled:opacity-50"
-        />
+          {/* VOICE MESSAGE */}
+          <button
+            type="button"
+            onClick={() => startRecording('audio')}
+            disabled={uploading}
+            title="Record voice message"
+            aria-label="Record voice message"
+            className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+          >
+            <Icon name="mic" className="h-[18px] w-[18px]" />
+          </button>
 
-        <button
-          type="submit"
-          disabled={sending || uploading || !text.trim()}
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brass hover:bg-brass-dim text-onbrass shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] transition hover:opacity-90 disabled:opacity-40"
-          aria-label={uploading ? 'Sending…' : 'Send message'}
-          title={uploading ? 'Sending…' : 'Send'}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-            <path d="M22 2L11 13" />
-            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
-          </svg>
-        </button>
+          {/* ROUND VIDEO MESSAGE */}
+          <button
+            type="button"
+            onClick={() => startRecording('video')}
+            disabled={uploading}
+            title="Record video message"
+            aria-label="Record video message"
+            className={`${CHAT_ICON_BUTTON} hover:bg-panel`}
+          >
+            <Icon name="video" className="h-[18px] w-[18px]" />
+          </button>
+
+          <button
+            type="submit"
+            disabled={sending || uploading || !text.trim()}
+            className="focus-ring ml-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-onbrass transition-colors hover:bg-brass-dim disabled:opacity-35"
+            aria-label={uploading ? 'Sending…' : 'Send message'}
+            title={uploading ? 'Sending…' : 'Send'}
+          >
+            <Icon name="send" className="h-4 w-4" />
+          </button>
+
+        </div>
 
       </form>
       )}

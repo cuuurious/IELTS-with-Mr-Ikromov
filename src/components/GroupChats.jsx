@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import GroupChat from './GroupChat'
+import { ChatGlyph } from './Chat'
+import Icon from './Icon'
+import { groupBadge, groupColour, groupDisplayName } from '../lib/groupLook'
 import { useSessionState } from '../lib/sessionState'
 
 /*
@@ -121,18 +124,6 @@ function formatListTime(value) {
     day: 'numeric',
   })
 }
-
-// Same rotation used on Groups & homework, Students, Word lists and
-// Leaderboards — keyed by a group's position in the same
-// created_at-ordered list every one of those pages fetches, so a
-// given group carries the same color everywhere in the app.
-const GROUP_ACCENT_PALETTE = [
-  { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
-  { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
-  { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
-  { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
-  { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
-]
 
 const PREVIEW_WIDTH = 300
 const PREVIEW_MAX_HEIGHT = 380
@@ -304,7 +295,9 @@ export default function GroupChats({
 
       const merged = rows.map((group, index) => ({
         ...group,
-        accent: GROUP_ACCENT_PALETTE[index % GROUP_ACCENT_PALETTE.length],
+        // Position in the created_at order — the same colour this
+        // group has on Home, Groups & homework and the Mock Center.
+        lookIndex: index,
         lastMessage: lastByGroup.get(group.id) || null,
         unreadCount: unreadByGroup.get(group.id) || 0,
       }))
@@ -523,48 +516,119 @@ export default function GroupChats({
     openPreviewAt(rect, group)
   }
 
+  const badgeFor = (group, size = 'h-11 w-11', text = 'text-sm') => {
+    if (group.photo_url) {
+      return (
+        <img
+          src={group.photo_url}
+          alt=""
+          className={`${size} shrink-0 rounded-[14px] object-cover`}
+        />
+      )
+    }
+
+    const look = groupColour(group.lookIndex ?? 0)
+
+    return (
+      <span
+        className={`${size} ${text} ${look.tint} ${look.text} flex shrink-0 items-center justify-center rounded-[14px] font-semibold`}
+        aria-hidden="true"
+      >
+        {groupBadge(group.name)}
+      </span>
+    )
+  }
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 min-h-[28rem]">
+    // Study room look (2026-10-07): list + conversation as ONE card that
+    // fills the screen; on a phone it shows the list OR the open chat.
+    <div
+      className={`chat-card flex overflow-hidden rounded-[22px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
+        activeGroupData ? 'h-[calc(100dvh-196px)] min-h-[440px]' : 'min-h-[320px]'
+      }`}
+    >
 
       {/* ============================================================
           GROUP LIST
           ============================================================ */}
 
-      <aside className="w-full md:w-72 shrink-0 bg-panel border border-line rounded-lg overflow-hidden flex flex-col">
+      <aside
+        className={`${
+          activeGroupData ? 'hidden md:flex' : 'flex'
+        } w-full shrink-0 flex-col border-line md:w-[300px] md:border-r lg:w-[340px]`}
+      >
 
-        <div className="px-4 py-3 border-b border-line">
-          <div className="text-xs text-mist">
-            Chat with each class as a group.
+        <div className="shrink-0 px-4 pb-3 pt-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold text-paper">Group chats</h2>
+            {!loading && groups.length > 0 && (
+              <span className="text-xs text-mist">
+                {groups.length} group{groups.length === 1 ? '' : 's'}
+              </span>
+            )}
           </div>
+
+          {groups.length > 3 ? (
+            <div className="relative mt-3">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist">
+                <ChatGlyph name="search" className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search groups"
+                aria-label="Search groups"
+                className="focus-ring w-full rounded-full border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-mist hover:bg-panel hover:text-paper"
+                  aria-label="Clear search"
+                  title="Clear"
+                >
+                  <Icon name="close" className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="mt-0.5 text-xs text-mist">Chat with each class as a group.</p>
+          )}
         </div>
 
-        {groups.length > 3 && (
-          <div className="px-3 pt-3">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search groups..."
-              className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
-            />
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto max-h-[28rem]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 [scrollbar-width:thin]">
 
           {loading && (
-            <div className="px-4 py-5 text-sm text-mist">Loading groups…</div>
+            <div className="space-y-1 px-1 pt-1" aria-label="Loading groups">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 rounded-2xl px-2 py-2.5">
+                  <span className="h-11 w-11 shrink-0 animate-pulse rounded-[14px] bg-panel-2" />
+                  <span className="flex-1 space-y-2">
+                    <span className="block h-3 w-1/2 animate-pulse rounded-full bg-panel-2" />
+                    <span className="block h-3 w-3/4 animate-pulse rounded-full bg-panel-2" />
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
 
           {!loading && error && (
-            <div className="px-4 py-4 text-sm text-coral">{error}</div>
+            <div className="m-2 rounded-2xl bg-urgent-tint px-4 py-3 text-sm text-urgent">{error}</div>
           )}
 
           {!loading && !error && groups.length === 0 && (
-            <div className="px-4 py-6 text-sm text-mist text-center">
-              {selfRole === 'teacher'
-                ? 'Create a group first.'
-                : "You're not in a group yet."}
+            <div className="flex flex-col items-center px-6 py-10 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-reading-tint text-reading">
+                <ChatGlyph name="people" className="h-7 w-7" />
+              </span>
+              <div className="mt-3 text-sm font-medium text-paper">No group chats yet</div>
+              <div className="mt-1 text-xs leading-5 text-mist">
+                {selfRole === 'teacher'
+                  ? 'Create a group first.'
+                  : "You're not in a group yet."}
+              </div>
             </div>
           )}
 
@@ -572,15 +636,18 @@ export default function GroupChats({
             !error &&
             groups.length > 0 &&
             filteredGroups.length === 0 && (
-              <div className="px-4 py-5 text-sm text-mist">
-                No groups match your search.
+              <div className="px-4 py-8 text-center text-sm text-mist">
+                No groups match “{search.trim()}”.
               </div>
             )}
 
           {!loading &&
             filteredGroups.map((group) => {
               const active = activeGroupId === group.id
-              const accent = group.accent
+              // No unread badge here on purpose (same as before): nothing
+              // marks a group as read yet, so a count would never clear.
+              const unread = false
+              const sentLast = group.lastMessage?.sender_id === selfId
 
               return (
                 <button
@@ -593,46 +660,51 @@ export default function GroupChats({
                   onPointerLeave={clearRowLongPress}
                   onContextMenu={(e) => handleRowContextMenu(e, group)}
                   onClick={() => handleRowClick(group)}
-                  className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
-                    active ? 'bg-panel-2' : 'hover:bg-panel-2'
+                  aria-current={active ? 'true' : undefined}
+                  className={`focus-ring flex w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left transition-colors ${
+                    active ? 'bg-brass text-onbrass' : 'hover:bg-panel-2'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  {badgeFor(group)}
 
-                    {group.photo_url ? (
-                      <img
-                        src={group.photo_url}
-                        alt={group.name}
-                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                      />
-                    ) : (
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${accent.bg} ${accent.text}`}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`truncate text-sm ${unread ? 'font-semibold' : 'font-medium'} ${
+                          active ? 'text-onbrass' : 'text-paper'
+                        }`}
                       >
-                        {String(group.name || '?').charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                        {groupDisplayName(group.name)}
+                      </span>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-display text-sm text-paper">
-                          {group.name}
+                      {group.lastMessage && (
+                        <span
+                          className={`shrink-0 text-[11px] ${
+                            active ? 'text-onbrass/75' : unread ? 'font-medium text-paper' : 'text-mist'
+                          }`}
+                        >
+                          {formatListTime(group.lastMessage.created_at)}
                         </span>
+                      )}
+                    </div>
 
-                        {group.lastMessage && (
-                          <span className="shrink-0 text-[11px] text-mist">
-                            {formatListTime(group.lastMessage.created_at)}
-                          </span>
+                    <div className="mt-0.5 flex items-center justify-between gap-2">
+                      <div
+                        className={`truncate text-[13px] ${
+                          active ? 'text-onbrass/75' : unread ? 'text-paper-dim' : 'text-mist'
+                        }`}
+                      >
+                        {group.lastMessage ? (
+                          <>
+                            {sentLast && <span className={active ? 'text-onbrass' : 'text-paper-dim'}>You: </span>}
+                            {groupMessagePreview(group.lastMessage) || 'Media message'}
+                          </>
+                        ) : (
+                          group.description || 'No messages yet'
                         )}
                       </div>
 
-                      <div className="truncate text-xs text-mist mt-0.5">
-                        {group.lastMessage
-                          ? groupMessagePreview(group.lastMessage) || 'Media message'
-                          : group.description || 'No messages yet'}
-                      </div>
                     </div>
-
                   </div>
                 </button>
               )
@@ -646,7 +718,11 @@ export default function GroupChats({
           ACTIVE GROUP CHAT
           ============================================================ */}
 
-      <section className="flex-1 min-w-0">
+      <section
+        className={`${
+          activeGroupData ? 'flex' : 'hidden md:flex'
+        } min-w-0 flex-1 flex-col`}
+      >
 
         {activeGroupData ? (
           <GroupChat
@@ -657,10 +733,22 @@ export default function GroupChats({
             initialMessageId={
               activeGroupData.id === initialGroupId ? initialMessageId : null
             }
+            embedded
+            lookIndex={activeGroupData.lookIndex ?? null}
+            onBack={() => {
+              setActiveGroupId(null)
+              setActiveGroupName(null)
+            }}
           />
         ) : (
-          <div className="h-[28rem] bg-panel border border-line rounded-lg flex items-center justify-center text-mist text-center px-6">
-            Select a group to start chatting.
+          <div className="flex flex-1 flex-col items-center justify-center bg-panel-2 px-6 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-reading-tint text-reading">
+              <ChatGlyph name="people" className="h-8 w-8" />
+            </span>
+            <div className="mt-4 text-base font-semibold text-paper">Pick a group</div>
+            <p className="mt-1 max-w-xs text-sm leading-6 text-mist">
+              Choose a class on the left to read and send messages.
+            </p>
           </div>
         )}
 
@@ -678,7 +766,7 @@ export default function GroupChats({
           />
 
           <div
-            className="fixed z-[100] flex flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
+            className="fixed z-[100] flex flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-[0_24px_60px_-20px_rgba(31,35,64,0.45)]"
             style={{
               top: previewPosition?.top,
               left: previewPosition?.left,
@@ -687,28 +775,18 @@ export default function GroupChats({
             }}
           >
 
-            <div className="flex items-center gap-3 border-b border-line bg-panel-2/60 px-4 py-3">
-              {previewGroup.photo_url ? (
-                <img
-                  src={previewGroup.photo_url}
-                  alt={previewGroup.name}
-                  className="h-9 w-9 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-sm font-semibold text-onbrass">
-                  {String(previewGroup.name || '?').charAt(0).toUpperCase()}
-                </div>
-              )}
+            <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+              {badgeFor(previewGroup, 'h-9 w-9', 'text-xs')}
 
               <div className="min-w-0">
-                <div className="truncate font-display text-sm text-paper">
-                  {previewGroup.name || 'Group'}
+                <div className="truncate text-sm font-semibold text-paper">
+                  {groupDisplayName(previewGroup.name)}
                 </div>
                 <div className="text-[11px] text-mist">Group chat</div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-[120px]">
+            <div className="min-h-[120px] flex-1 space-y-1.5 overflow-y-auto bg-panel-2 px-3 py-3 [scrollbar-width:thin]">
               {previewLoading && (
                 <p className="text-xs text-mist">Loading…</p>
               )}
@@ -727,10 +805,10 @@ export default function GroupChats({
                       className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-xs ${
+                        className={`max-w-[85%] rounded-2xl px-2.5 py-1.5 text-xs ${
                           mine
                             ? 'bg-brass text-onbrass'
-                            : 'border border-line bg-panel-2 text-paper'
+                            : 'border border-line bg-panel text-paper'
                         }`}
                       >
                         {groupMessagePreview(m) || 'Media message'}
@@ -747,8 +825,9 @@ export default function GroupChats({
                   openGroup(previewGroup)
                   setPreviewGroup(null)
                 }}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-paper hover:bg-panel-2"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-paper hover:bg-panel-2"
               >
+                <ChatGlyph name="chat" className="h-4 w-4 text-mist" />
                 Open chat
               </button>
             </div>

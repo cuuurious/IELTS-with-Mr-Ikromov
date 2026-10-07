@@ -4,14 +4,8 @@ import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useSessionState } from '../../lib/sessionState'
 import Icon from '../../components/Icon'
+import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
 
-// Same rotation used everywhere else in the app (Groups & homework,
-// Students, Leaderboards, Group chats) — keyed by a group's position
-// in the same created_at-ordered list every one of those pages
-// fetches, so a given group carries the same color everywhere.
-// Module-level (not just inside TeacherWordlists below) so
-// ResultsModal, further down this file, can use the exact same
-// colors when it separates one word list's results out by group.
 // Strips a leading list marker off one pasted line — "1.", "12)",
 // "3 -", or a bullet glyph like •/‣/◦/●/○/▪/▸ — before it's treated as
 // a word or collocation. Word lists are often pasted in from a
@@ -32,13 +26,6 @@ function stripListMarker(line) {
     .trim()
 }
 
-const groupAccentPalette = [
-  { bg: 'bg-sage/15', text: 'text-sage', border: 'border-sage/40', dot: 'bg-sage' },
-  { bg: 'bg-coral/15', text: 'text-coral', border: 'border-coral/40', dot: 'bg-coral' },
-  { bg: 'bg-cyan/15', text: 'text-cyan', border: 'border-cyan/40', dot: 'bg-cyan' },
-  { bg: 'bg-brass/15', text: 'text-brass', border: 'border-brass/40', dot: 'bg-brass' },
-  { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/40', dot: 'bg-lavender' },
-]
 
 export default function TeacherWordlists({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -1018,59 +1005,44 @@ const saveEditWordlist = async () => {
               a button floating alone out in empty page space.
           ================================================= */}
 
-          <div className="ticket rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
-
-            <div className="flex flex-wrap items-center justify-between gap-4">
-
-              <div>
-                <p className="text-sm text-mist max-w-md">
-                  Vocabulary sets your students review and get quizzed on, grouped by class.
-                </p>
-              </div>
-
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-mist">
+                Vocabulary sets your students review and get tested on, by class.
+              </p>
               {activeGroup && !creating && (
                 <button
                   type="button"
                   onClick={() => setCreating(true)}
-                  className="btn-primary shrink-0 shadow-[0_10px_24px_-10px_rgba(117,101,223,0.55)]"
+                  className="focus-ring shrink-0 rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
                 >
                   + New word list
                 </button>
               )}
-
             </div>
-
-            <div className="border-t border-line pt-4">
-
-              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2.5">
-                Group
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {groups.map((group, index) => {
-                  const active = activeGroup === group.id
-                  const accent = groupAccentPalette[index % groupAccentPalette.length]
-
-                  return (
-                    <button
-                      key={group.id}
-                      type="button"
-                      onClick={() => setActiveGroup(group.id)}
-                      className={`focus-ring inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                        active
-                          ? `${accent.border} ${accent.bg} ${accent.text} shadow-[0_6px_16px_-8px_rgba(0,0,0,0.3)]`
-                          : 'border-line bg-panel-2 text-mist hover:border-line hover:text-paper'
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${accent.dot}`} />
-                      {group.name}
-                    </button>
-                  )
-                })}
-              </div>
-
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Group">
+              {groups.map((group, index) => {
+                const active = activeGroup === group.id
+                const c = groupColour(index)
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveGroup(group.id)}
+                    className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
+                      active ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
+                    }`}
+                  >
+                    <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                      {groupBadge(group.name)}
+                    </span>
+                    {groupDisplayName(group.name)}
+                  </button>
+                )
+              })}
             </div>
-
           </div>
 
         </>
@@ -1095,14 +1067,14 @@ const saveEditWordlist = async () => {
             <section className="flex flex-col gap-4">
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-mono text-mist">
+                <span className="text-xs text-mist">
                   {lists.length} list{lists.length === 1 ? '' : 's'} for this group
                 </span>
               </div>
 
               {lists.length === 0 ? (
 
-                <div className="rounded-2xl border-2 border-dashed border-line p-8 text-center">
+                <div className="rounded-[22px] border border-dashed border-line bg-panel p-8 text-center">
                   <p className="text-mist text-sm">
                     No word lists for this group yet.
                   </p>
@@ -1120,87 +1092,54 @@ const saveEditWordlist = async () => {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
-                  {lists.map((list, index) => {
-                    const accent = groupAccentPalette[index % groupAccentPalette.length]
-
-                    return (
-                      <div
-                        key={list.id}
-                        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border ${accent.border} bg-panel p-5 shadow-[0_16px_36px_-22px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-0.5 hover:shadow-[0_22px_42px_-20px_rgba(0,0,0,0.4)]`}
-                      >
-
-                        <div className="relative flex items-start gap-3">
-
-                          <div
-                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-base font-semibold shadow-[0_6px_14px_-6px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/10 ${accent.bg} ${accent.text}`}
-                          >
+                  {lists.map((list) => (
+                    <div
+                      key={list.id}
+                      className="wp-pop group flex flex-col justify-between gap-4 rounded-[22px] border border-line bg-panel p-5 transition-shadow hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)]"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="relative h-11 w-11 shrink-0">
+                          <span className="absolute inset-0 rotate-[-8deg] rounded-xl border border-[#F3D27A] bg-white transition-transform group-hover:rotate-[-14deg]" />
+                          <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-vocab-tint text-sm font-semibold text-vocab">
                             {getWordlistBadge(list.title)}
-                          </div>
-
-                          <div className="min-w-0 flex-1 pt-0.5">
-                            <div className="font-display text-lg leading-snug text-paper">
-                              {list.title}
-                            </div>
-
-                            <div className="text-mist text-xs font-mono mt-1">
-                              {list.wordlist_items?.[0]?.count ?? 0} words · {new Date(list.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-
+                          </span>
                         </div>
-
-                        <div className="relative mt-4 flex items-center gap-2 border-t border-line pt-3.5">
-
-                          {/*
-                            * Was .btn-secondary — the same plain gray
-                            * outlined button as every other secondary
-                            * action in the app. Tinting it with this
-                            * card's own accent ties the primary action
-                            * back to the badge/border color instead of
-                            * every card's main button looking identical.
-                            */}
-                          <button
-                            type="button"
-                            onClick={() => setViewingResults(list)}
-                            className={`focus-ring flex-1 rounded-[10px] border ${accent.border} ${accent.bg} px-3 py-2 text-center text-sm font-semibold ${accent.text} transition hover:brightness-110`}
-                          >
-                            View results
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openEditWordlist(list)}
-                            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:border-brass/40 hover:bg-brass/10 hover:text-brass"
-                            title="Edit word list"
-                            aria-label="Edit word list"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => deleteWordlist(list)}
-                            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:border-coral/40 hover:bg-coral/10 hover:text-coral"
-                            title="Delete word list"
-                            aria-label="Delete word list"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18" />
-                              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                            </svg>
-                          </button>
-
+                        <div className="min-w-0 flex-1">
+                          <p className="text-base font-semibold leading-snug text-paper">{list.title}</p>
+                          <p className="mt-0.5 text-xs text-mist">
+                            {list.wordlist_items?.[0]?.count ?? 0} words · {new Date(list.created_at).toLocaleDateString()}
+                          </p>
                         </div>
-
                       </div>
-                    )
-                  })}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setViewingResults(list)}
+                          className="focus-ring flex-1 rounded-full bg-vocab-tint px-3 py-2 text-center text-sm font-semibold text-vocab transition hover:brightness-95"
+                        >
+                          View results
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditWordlist(list)}
+                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
+                          title="Edit word list"
+                          aria-label="Edit word list"
+                        >
+                          <Icon name="pencil" className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteWordlist(list)}
+                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-urgent-tint hover:text-urgent"
+                          title="Delete word list"
+                          aria-label="Delete word list"
+                        >
+                          <Icon name="trash" className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
 
                 </div>
 
@@ -1239,6 +1178,7 @@ const saveEditWordlist = async () => {
   <ResultsModal
     wordlist={viewingResults}
     allGroups={groups}
+    initialGroupId={activeGroup}
     onClose={() => setViewingResults(null)}
   />
 )}
@@ -2193,387 +2133,391 @@ if (
 
 
 /* ============================================================
-   RESULTS MODAL
+   RESULTS MODAL — rebuilt 2026-10-07
+   ============================================================
+   One group at a time (chips across the top, opening on the group
+   the teacher was looking at), one row per student instead of one
+   row per attempt, and who hasn't done it yet listed at the bottom.
+   Summary for the chosen group: done / members, average best score,
+   passed (best ≥ 70%), needs another go. Search + sort. Every attempt
+   is still there — click a student to see all of their tries.
    ============================================================ */
 
-// The actual score table for one set of attempts — pulled out so the
-// results modal below can render it once for a single-group list, or
-// once per group section for a list shared across several groups,
-// without duplicating this markup.
-function AttemptsTable({ attempts }) {
-  return (
-    <div className="overflow-x-auto rounded-xl border border-line">
-      <table className="w-full min-w-[720px] border-collapse">
-        <thead>
-          <tr className="bg-panel-2 border-b border-line">
-            <th className="px-5 py-3.5 text-left text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-              Student
-            </th>
+const PASS_MARK = 70
 
-            <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-              Score
-            </th>
-
-            <th className="px-5 py-3.5 text-center text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-              Correct
-            </th>
-
-            <th className="px-5 py-3.5 text-right text-[10px] uppercase tracking-[0.16em] text-mist font-mono font-medium">
-              Completed
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {attempts.map((attempt) => (
-            <tr
-              key={attempt.id}
-              className="border-b border-line last:border-b-0 hover:bg-panel-2/70 transition-colors"
-            >
-              <td className="px-5 py-4">
-                <div className="font-medium text-paper">
-                  {attempt.profiles?.full_name ||
-                    attempt.profiles?.username ||
-                    'Student'}
-                </div>
-
-                {attempt.profiles?.username && (
-                  <div className="text-xs text-mist font-mono mt-0.5">
-                    @{attempt.profiles.username}
-                  </div>
-                )}
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                <span
-                  className={`inline-flex min-w-[64px] justify-center rounded-full px-3 py-1 font-mono text-sm font-medium ${
-                    attempt.percentage >= 90
-                      ? 'bg-sage/10 text-sage'
-                      : attempt.percentage >= 70
-                        ? 'bg-brass/10 text-brass'
-                        : 'bg-coral/10 text-coral'
-                  }`}
-                >
-                  {attempt.percentage}%
-                </span>
-              </td>
-
-              <td className="px-5 py-4 text-center">
-                <span className="font-mono text-sm text-paper">
-                  {attempt.score}/{attempt.total}
-                </span>
-              </td>
-
-              <td className="px-5 py-4 text-right">
-                <span className="text-xs text-mist font-mono whitespace-nowrap">
-                  {new Date(attempt.created_at).toLocaleString([], {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+function scoreTone(p) {
+  if (p >= 90) return 'bg-reading-tint text-reading'
+  if (p >= PASS_MARK) return 'bg-vocab-tint text-vocab'
+  return 'bg-urgent-tint text-urgent'
 }
 
-function ResultsModal({
-  wordlist,
-  allGroups,
-  onClose,
-}) {
-  const [attempts, setAttempts] =
-    useState(null)
+function initialsOf(name) {
+  return (name || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
+}
 
-  // Which of this word list's assigned groups each attempt's student
-  // actually belongs to — see the big comment on `sections` below for
-  // why this exists at all.
-  const [groupIdByStudent, setGroupIdByStudent] = useState({})
+function shortDate(value) {
+  return new Date(value).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
+  const [attempts, setAttempts] = useState(null)
+  const [members, setMembers] = useState([]) // {student_id, group_id, profiles}
   const [assignedGroupIds, setAssignedGroupIds] = useState([])
+  const [tab, setTab] = useState(null)
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState('score-asc')
+  const [openStudent, setOpenStudent] = useState(null)
 
   useEffect(() => {
-    const loadAttempts = async () => {
-      /*
-       * A word list can be posted to more than one group at once
-       * (the "Assign to groups" checklist when creating/editing a
-       * list). Every one of those groups' students shares the same
-       * wordlist_attempts rows — there's no per-group split in the
-       * data itself — so without resolving each attempt back to a
-       * group, this modal used to show every group's students in one
-       * flat, unlabeled list. Two classes' worth of names all mixed
-       * together with no way to tell who was in which group is
-       * exactly the "mixed up" symptom reported — this resolves and
-       * displays that grouping instead of dropping it.
-       */
-
-      const [
-        { data, error },
-        { data: links, error: linksError },
-      ] = await Promise.all([
+    let cancelled = false
+    const load = async () => {
+      const [{ data, error }, { data: links, error: linksError }] = await Promise.all([
         supabase
           .from('wordlist_attempts')
-          .select('*, profiles(full_name, username)')
+          .select('*, profiles(full_name, username, avatar_url)')
           .eq('wordlist_id', wordlist.id)
           .order('created_at', { ascending: false }),
-
-        supabase
-          .from('wordlist_groups')
-          .select('group_id')
-          .eq('wordlist_id', wordlist.id),
+        supabase.from('wordlist_groups').select('group_id').eq('wordlist_id', wordlist.id),
       ])
+      if (error) console.error('Failed to load word list results:', error)
+      if (linksError) console.error('Failed to load word list group assignments:', linksError)
 
-      if (error) {
-        console.error(
-          'Failed to load word list results:',
-          error
-        )
-      }
+      // Older lists may only have wordlists.group_id.
+      const groupIds = [...new Set([wordlist.group_id, ...(links || []).map((l) => l.group_id)].filter(Boolean))]
 
-      if (linksError) {
-        console.error(
-          'Failed to load word list group assignments:',
-          linksError
-        )
-      }
-
-      // Some older lists may only have their original group in
-      // wordlists.group_id rather than also being duplicated into
-      // wordlist_groups — same fallback used when editing a list.
-      const groupIds = [
-        ...new Set(
-          [
-            wordlist.group_id,
-            ...(links || []).map((link) => link.group_id),
-          ].filter(Boolean)
-        ),
-      ]
-
-      setAssignedGroupIds(groupIds)
-
-      let membershipMap = {}
-
+      let memberRows = []
       if (groupIds.length) {
-        const {
-          data: members,
-          error: membersError,
-        } = await supabase
+        const { data: m, error: membersError } = await supabase
           .from('group_members')
-          .select('student_id, group_id')
+          .select('student_id, group_id, profiles(full_name, username, avatar_url, status)')
           .in('group_id', groupIds)
-
-        if (membersError) {
-          console.error(
-            'Failed to load group memberships for results:',
-            membersError
-          )
-        } else {
-          ;(members || []).forEach((member) => {
-            // If a student is somehow in more than one of this list's
-            // assigned groups, keep the first match — good enough to
-            // put them in a section rather than needing to be in
-            // every matching one.
-            if (!(member.student_id in membershipMap)) {
-              membershipMap[member.student_id] = member.group_id
-            }
-          })
-        }
+        if (membersError) console.error('Failed to load group memberships for results:', membersError)
+        memberRows = (m || []).filter((row) => !row.profiles || row.profiles.status !== 'rejected')
       }
-
-      setGroupIdByStudent(membershipMap)
+      if (cancelled) return
+      setAssignedGroupIds(groupIds)
+      setMembers(memberRows)
       setAttempts(data || [])
     }
-
-    loadAttempts()
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [wordlist.id, wordlist.group_id])
 
-  // Attempts bucketed by the group each student belongs to, in the
-  // same order groups appear everywhere else in the app — so two
-  // classes sharing one word list show up as two clearly separated,
-  // clearly labeled sections instead of one jumbled table. A student
-  // no longer in any of this list's assigned groups (removed since
-  // taking it) still shows up, under its own honest "No group on
-  // record" section, rather than silently disappearing.
-  const sections = useMemo(() => {
+  // Groups in the app-wide order, plus "No group" for attempts from
+  // students no longer in any assigned group.
+  const tabs = useMemo(() => {
     if (!attempts) return []
+    const ordered = (allGroups || [])
+      .map((g, index) => ({ ...g, index }))
+      .filter((g) => assignedGroupIds.includes(g.id))
+    const inAssigned = new Set(members.map((m) => m.student_id))
+    const orphan = attempts.some((a) => !inAssigned.has(a.student_id))
+    return [...ordered.map((g) => ({ id: g.id, name: g.name, index: g.index })), ...(orphan ? [{ id: '__none__', name: 'No group', index: -1 }] : [])]
+  }, [attempts, members, assignedGroupIds, allGroups])
 
-    const groupsInOrder = (allGroups || []).filter((group) =>
-      assignedGroupIds.includes(group.id)
-    )
+  useEffect(() => {
+    if (!tabs.length || (tab && tabs.some((t) => t.id === tab))) return
+    setTab(tabs.some((t) => t.id === initialGroupId) ? initialGroupId : tabs[0].id)
+  }, [tabs, tab, initialGroupId])
 
-    const byGroupId = new Map(
-      groupsInOrder.map((group) => [group.id, group])
-    )
+  // Per student: all attempts, best, latest.
+  const byStudent = useMemo(() => {
+    const map = new Map()
+    for (const a of attempts || []) {
+      if (!map.has(a.student_id)) map.set(a.student_id, [])
+      map.get(a.student_id).push(a)
+    }
+    return map
+  }, [attempts])
 
-    const buckets = new Map()
-
-    const ensureBucket = (groupId, groupName) => {
-      if (!buckets.has(groupId)) {
-        buckets.set(groupId, {
-          groupId,
-          groupName,
-          attempts: [],
-        })
+  const tabStats = useMemo(() => {
+    const out = {}
+    for (const t of tabs) {
+      let roster
+      if (t.id === '__none__') {
+        const inAssigned = new Set(members.map((m) => m.student_id))
+        const seen = new Set()
+        roster = []
+        for (const a of attempts || []) {
+          if (inAssigned.has(a.student_id) || seen.has(a.student_id)) continue
+          seen.add(a.student_id)
+          roster.push({ student_id: a.student_id, profiles: a.profiles })
+        }
+      } else {
+        roster = members.filter((m) => m.group_id === t.id)
       }
-
-      return buckets.get(groupId)
+      const rows = roster.map((m) => {
+        const list = byStudent.get(m.student_id) || []
+        const best = list.length ? Math.max(...list.map((a) => Number(a.percentage) || 0)) : null
+        return {
+          id: m.student_id,
+          name: m.profiles?.full_name || m.profiles?.username || 'Student',
+          username: m.profiles?.username,
+          avatar: m.profiles?.avatar_url,
+          attempts: list,
+          best,
+          latest: list[0] || null,
+        }
+      })
+      const done = rows.filter((r) => r.best != null)
+      out[t.id] = {
+        rows,
+        done: done.length,
+        total: rows.length,
+        avg: done.length ? Math.round(done.reduce((s2, r) => s2 + r.best, 0) / done.length) : null,
+        passed: done.filter((r) => r.best >= PASS_MARK).length,
+        below: done.filter((r) => r.best < PASS_MARK).length,
+      }
     }
+    return out
+  }, [tabs, members, attempts, byStudent])
 
-    attempts.forEach((attempt) => {
-      const resolvedGroupId =
-        groupIdByStudent[attempt.student_id]
-
-      const group = resolvedGroupId
-        ? byGroupId.get(resolvedGroupId)
-        : null
-
-      const bucket = group
-        ? ensureBucket(group.id, group.name)
-        : ensureBucket('__none__', 'No group on record')
-
-      bucket.attempts.push(attempt)
-    })
-
-    const ordered = groupsInOrder
-      .map((group) => buckets.get(group.id))
-      .filter(Boolean)
-
-    if (buckets.has('__none__')) {
-      ordered.push(buckets.get('__none__'))
+  const current = tab ? tabStats[tab] : null
+  const visible = useMemo(() => {
+    if (!current) return { done: [], notDone: [] }
+    const q = query.trim().toLowerCase()
+    const match = (r) => !q || r.name.toLowerCase().includes(q) || (r.username || '').toLowerCase().includes(q)
+    const done = current.rows.filter((r) => r.best != null && match(r))
+    const sorters = {
+      'score-asc': (x, y) => x.best - y.best || x.name.localeCompare(y.name),
+      'score-desc': (x, y) => y.best - x.best || x.name.localeCompare(y.name),
+      name: (x, y) => x.name.localeCompare(y.name),
+      recent: (x, y) => new Date(y.latest.created_at) - new Date(x.latest.created_at),
     }
+    done.sort(sorters[sort] || sorters.name)
+    const notDone = current.rows.filter((r) => r.best == null && match(r)).sort((x, y) => x.name.localeCompare(y.name))
+    return { done, notDone }
+  }, [current, query, sort])
 
-    return ordered
-  }, [attempts, groupIdByStudent, assignedGroupIds, allGroups])
-
-  // Only worth showing group sections at all when this list actually
-  // spans more than one of them — a single-group list's results stay
-  // a plain, unsectioned table exactly as before.
-  const showGroupSections = sections.length > 1
-
-  if (
-    typeof document === 'undefined'
-  ) {
-    return null
-  }
+  if (typeof document === 'undefined') return null
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={`${wordlist.title} results`}
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
+        if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
 
       <div
-        className="relative z-10 w-full max-w-5xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
-        onMouseDown={(e) =>
-          e.stopPropagation()
-        }
+        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-[22px] border border-line bg-panel shadow-2xl sm:rounded-[22px]"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-5 border-b border-line">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-line px-5 pb-3 pt-5 sm:px-6">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-              Student results
-            </div>
-
-            <h2 className="font-display text-2xl sm:text-3xl mt-1 truncate">
-              {wordlist.title}
-            </h2>
-
-            <p className="text-xs text-mist mt-1">
-              {attempts?.length || 0}{' '}
-              attempt
-              {attempts?.length === 1 ? '' : 's'}
+            <p className="text-xs font-medium text-vocab">Word list results</p>
+            <h2 className="mt-0.5 truncate text-xl font-semibold text-paper">{wordlist.title}</h2>
+            <p className="mt-0.5 text-xs text-mist">
+              {attempts ? `${attempts.length} attempt${attempts.length === 1 ? '' : 's'} · pass mark ${PASS_MARK}%` : 'Loading…'}
             </p>
           </div>
-
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring shrink-0 h-9 w-9 rounded-full border border-line text-mist hover:text-paper hover:border-brass transition-colors text-xl leading-none"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
             aria-label="Close results"
           >
-            ×
+            <Icon name="close" className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(100vh-10rem)] p-4 sm:p-6">
-          {attempts === null && (
-            <div className="surface rounded-xl p-10 text-center">
-              <p className="text-mist text-sm">
-                Loading results…
-              </p>
-            </div>
-          )}
+        {/* Group chips */}
+        {tabs.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto border-b border-line px-5 py-3 sm:px-6" role="tablist" aria-label="Group">
+            {tabs.map((t) => {
+              const active = t.id === tab
+              const c = t.index >= 0 ? groupColour(t.index) : { tint: 'bg-panel-2', text: 'text-mist' }
+              const st = tabStats[t.id]
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setTab(t.id)
+                    setOpenStudent(null)
+                  }}
+                  className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-sm font-medium transition-colors ${
+                    active ? 'border-brass bg-brass text-onbrass' : 'border-line text-paper-dim hover:bg-panel-2'
+                  }`}
+                >
+                  <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                    {t.id === '__none__' ? '–' : groupBadge(t.name)}
+                  </span>
+                  {t.id === '__none__' ? 'No group' : groupDisplayName(t.name)}
+                  {st && (
+                    <span className={`text-xs tabular-nums ${active ? 'text-onbrass/80' : 'text-mist'}`}>
+                      {st.done}/{st.total}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
-          {attempts?.length === 0 && (
-            <div className="surface rounded-xl p-10 text-center">
-              <p className="font-display text-lg text-paper">
-                No attempts yet
-              </p>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+          {attempts === null && <div className="h-40 animate-pulse rounded-2xl bg-panel-2" />}
 
-              <p className="text-sm text-mist mt-1">
-                Students have not completed this
-                word list yet.
-              </p>
-            </div>
-          )}
-
-          {attempts?.length > 0 && !showGroupSections && (
-            <AttemptsTable attempts={attempts} />
-          )}
-
-          {attempts?.length > 0 && showGroupSections && (
-            <div className="flex flex-col gap-6">
-              {sections.map((section) => {
-                const groupIndex = (allGroups || []).findIndex(
-                  (group) => group.id === section.groupId
-                )
-
-                const accent =
-                  groupIndex >= 0
-                    ? groupAccentPalette[
-                        groupIndex % groupAccentPalette.length
-                      ]
-                    : {
-                        dot: 'bg-mist',
-                        text: 'text-mist',
-                      }
-
-                return (
-                  <div key={section.groupId}>
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span
-                        className={`h-2 w-2 rounded-full ${accent.dot}`}
-                      />
-
-                      <span className="font-display text-base text-paper">
-                        {section.groupName}
-                      </span>
-
-                      <span className="text-xs font-mono text-mist">
-                        {section.attempts.length}{' '}
-                        {section.attempts.length === 1
-                          ? 'student'
-                          : 'students'}
-                      </span>
-                    </div>
-
-                    <AttemptsTable attempts={section.attempts} />
+          {current && (
+            <>
+              {/* Summary */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="rounded-2xl bg-panel-2 px-3 py-2.5">
+                  <p className="text-xs text-mist">Done</p>
+                  <p className="text-xl font-semibold tabular-nums text-paper">
+                    {current.done}
+                    <span className="text-sm font-normal text-mist">/{current.total}</span>
+                  </p>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-panel">
+                    <div className="h-full rounded-full bg-vocab" style={{ width: `${current.total ? (current.done / current.total) * 100 : 0}%` }} />
                   </div>
-                )
-              })}
+                </div>
+                <div className="rounded-2xl bg-vocab-tint px-3 py-2.5">
+                  <p className="text-xs text-vocab">Average best score</p>
+                  <p className="text-xl font-semibold tabular-nums text-paper">{current.avg == null ? '—' : `${current.avg}%`}</p>
+                </div>
+                <div className="rounded-2xl bg-reading-tint px-3 py-2.5">
+                  <p className="text-xs text-reading">Passed ({PASS_MARK}%+)</p>
+                  <p className="text-xl font-semibold tabular-nums text-paper">{current.passed}</p>
+                </div>
+                <div className="rounded-2xl bg-urgent-tint px-3 py-2.5">
+                  <p className="text-xs text-urgent">Need another go</p>
+                  <p className="text-xl font-semibold tabular-nums text-paper">{current.below}</p>
+                </div>
+              </div>
+
+              {/* Toolbar */}
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <label className="relative min-w-0 flex-1">
+                  <span className="sr-only">Search students</span>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search a student…"
+                    className="focus-ring w-full rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                  />
+                </label>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper"
+                  aria-label="Sort"
+                >
+                  <option value="score-asc">Lowest score first</option>
+                  <option value="score-desc">Highest score first</option>
+                  <option value="recent">Most recent</option>
+                  <option value="name">Name A–Z</option>
+                </select>
+              </div>
+
+              {/* Students who did it */}
+              {visible.done.length > 0 ? (
+                <ul className="mt-3 overflow-hidden rounded-2xl border border-line">
+                  {visible.done.map((r) => {
+                    const open = openStudent === r.id
+                    return (
+                      <li key={r.id} className="border-b border-line last:border-b-0">
+                        <button
+                          type="button"
+                          onClick={() => setOpenStudent(open ? null : r.id)}
+                          aria-expanded={open}
+                          className="focus-ring flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-panel-2 sm:px-4"
+                        >
+                          {r.avatar ? (
+                            <img src={r.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                          ) : (
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-speaking-tint text-xs font-semibold text-speaking">
+                              {initialsOf(r.name)}
+                            </span>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-paper">{r.name}</span>
+                            <span className="block truncate text-xs text-mist">
+                              {r.attempts.length} attempt{r.attempts.length === 1 ? '' : 's'} · last {shortDate(r.latest.created_at)}
+                            </span>
+                          </span>
+                          <span className="hidden w-28 sm:block">
+                            <span className="block h-1.5 overflow-hidden rounded-full bg-panel-2">
+                              <span
+                                className={`block h-full rounded-full ${r.best >= 90 ? 'bg-reading' : r.best >= PASS_MARK ? 'bg-vocab' : 'bg-urgent'}`}
+                                style={{ width: `${r.best}%` }}
+                              />
+                            </span>
+                          </span>
+                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums ${scoreTone(r.best)}`}>{r.best}%</span>
+                          <span className={`text-mist transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true">
+                            ›
+                          </span>
+                        </button>
+                        {open && (
+                          <div className="border-t border-line bg-panel-2 px-4 py-2">
+                            <p className="mb-1 text-xs font-medium text-mist">Every attempt, newest first</p>
+                            <ul className="flex flex-col">
+                              {r.attempts.map((a) => (
+                                <li key={a.id} className="flex items-center justify-between gap-3 py-1.5 text-sm">
+                                  <span className="text-paper-dim">{shortDate(a.created_at)}</span>
+                                  <span className="flex items-center gap-2">
+                                    <span className="tabular-nums text-mist">
+                                      {a.score}/{a.total}
+                                    </span>
+                                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${scoreTone(a.percentage)}`}>
+                                      {a.percentage}%
+                                    </span>
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <div className="mt-3 rounded-2xl border border-dashed border-line px-5 py-8 text-center text-sm text-mist">
+                  {query ? 'No student matches that search.' : 'Nobody in this group has done this list yet.'}
+                </div>
+              )}
+
+              {/* Not done yet */}
+              {visible.notDone.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-sm font-semibold text-paper">
+                    Not done yet <span className="font-normal text-mist">· {visible.notDone.length}</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {visible.notDone.map((r) => (
+                      <span key={r.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel py-1 pl-1 pr-3 text-sm text-paper-dim">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-panel-2 text-[10px] font-semibold text-mist">
+                          {initialsOf(r.name)}
+                        </span>
+                        {r.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {attempts && !current && (
+            <div className="rounded-2xl border border-dashed border-line px-5 py-10 text-center">
+              <p className="text-sm font-semibold text-paper">No attempts yet</p>
+              <p className="mt-1 text-sm text-mist">Students have not completed this word list yet.</p>
             </div>
           )}
         </div>
@@ -2582,4 +2526,3 @@ function ResultsModal({
     document.body
   )
 }
-

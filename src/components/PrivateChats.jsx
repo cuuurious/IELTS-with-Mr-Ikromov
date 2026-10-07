@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import Chat from './Chat'
+import Chat, { ChatAvatar, ChatGlyph } from './Chat'
+import Icon from './Icon'
 import ConfirmModal from './ConfirmModal'
 import { useSessionState } from '../lib/sessionState'
 
@@ -726,8 +727,21 @@ export default function PrivateChats({
     await loadConversations()
   }
 
+  const roleLabel = (person) => {
+    if (person.id === teacher?.id || person.role === 'teacher') return 'Teacher'
+    if (person.role === 'writing_examiner') return 'Writing examiner'
+    if (person.role === 'speaking_examiner') return 'Speaking examiner'
+    return 'Student'
+  }
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 min-h-[28rem]">
+    // Study room look (2026-10-07): list + conversation as ONE card that
+    // fills the screen; on a phone it shows the list OR the open chat.
+    <div
+      className={`chat-card flex overflow-hidden rounded-[22px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
+        selectedPerson ? 'h-[calc(100dvh-196px)] min-h-[440px]' : 'min-h-[320px]'
+      }`}
+    >
 
       <ConfirmModal
         open={Boolean(confirmDialog)}
@@ -744,64 +758,81 @@ export default function PrivateChats({
           CONVERSATION LIST
           ============================================================ */}
 
-      <aside className="w-full md:w-72 shrink-0 bg-panel border border-line rounded-lg overflow-hidden flex flex-col">
+      <aside
+        className={`${
+          selectedPerson ? 'hidden md:flex' : 'flex'
+        } w-full shrink-0 flex-col border-line md:w-[300px] md:border-r lg:w-[340px]`}
+      >
 
-        <div className="px-4 py-3 border-b border-line">
-          <div className="text-xs text-mist">
-            {selfRole === 'teacher'
-              ? 'Your conversations with students'
-              : 'Your teacher and private conversations'}
+        <div className="shrink-0 px-4 pb-3 pt-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold text-paper">Chats</h2>
+            <span className="text-xs text-mist">
+              {search.trim()
+                ? `${filteredConversations.length} of ${conversations.length}`
+                : `${conversations.length} conversation${
+                    conversations.length === 1 ? '' : 's'
+                  }`}
+            </span>
+          </div>
+
+          <div className="relative mt-3">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mist">
+              <ChatGlyph name="search" className="h-4 w-4" />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search chats"
+              aria-label="Search chats"
+              className="focus-ring w-full rounded-full border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-mist hover:bg-panel hover:text-paper"
+                aria-label="Clear search"
+                title="Clear"
+              >
+                <Icon name="close" className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="px-3 pt-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search your chats..."
-            className="focus-ring w-full bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="px-3 py-2 flex items-center justify-between">
-          <span className="text-mist text-xs font-mono">
-            {search.trim()
-              ? `${filteredConversations.length} of ${conversations.length}`
-              : `${conversations.length} conversation${
-                  conversations.length === 1 ? '' : 's'
-                }`}
-          </span>
-
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="focus-ring text-xs text-brass hover:underline"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto max-h-[28rem]">
+        <div className="[scrollbar-width:thin] min-h-0 flex-1 overflow-y-auto px-2 pb-2">
 
           {loading && (
-            <div className="px-4 py-5 text-sm text-mist">Loading chats…</div>
+            <div className="space-y-1 px-1 pt-1" aria-label="Loading chats">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 rounded-2xl px-2 py-2.5">
+                  <span className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-panel-2" />
+                  <span className="flex-1 space-y-2">
+                    <span className="block h-3 w-1/2 animate-pulse rounded-full bg-panel-2" />
+                    <span className="block h-3 w-3/4 animate-pulse rounded-full bg-panel-2" />
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
 
           {!loading && error && (
-            <div className="px-4 py-4 text-sm text-coral">{error}</div>
+            <div className="m-2 rounded-2xl bg-urgent-tint px-4 py-3 text-sm text-urgent">{error}</div>
           )}
 
           {!loading && !error && conversations.length === 0 && (
-            <div className="px-4 py-6 text-sm text-mist text-center">
-              No conversations yet.
-              {selfRole === 'teacher' && (
-                <div className="mt-1 text-xs">
-                  Start one from a student's profile in the Leaderboard.
-                </div>
-              )}
+            <div className="flex flex-col items-center px-6 py-10 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-listening-tint text-listening">
+                <ChatGlyph name="chat" className="h-7 w-7" />
+              </span>
+              <div className="mt-3 text-sm font-medium text-paper">No conversations yet</div>
+              <div className="mt-1 text-xs leading-5 text-mist">
+                {selfRole === 'teacher'
+                  ? "Start one from a student's profile in the Leaderboard."
+                  : 'Your private chats will appear here.'}
+              </div>
             </div>
           )}
 
@@ -809,8 +840,8 @@ export default function PrivateChats({
             !error &&
             conversations.length > 0 &&
             filteredConversations.length === 0 && (
-              <div className="px-4 py-5 text-sm text-mist">
-                No chats match your search.
+              <div className="px-4 py-8 text-center text-sm text-mist">
+                No chats match “{search.trim()}”.
               </div>
             )}
 
@@ -831,6 +862,12 @@ export default function PrivateChats({
                     new Date(person.peerReadAt)
               )
 
+              // The RPC path hands over a ready-made `label`; the old
+              // path also sets it (and `content` where it exists).
+              const lastText = person.lastMessage
+                ? person.lastMessage.label ?? previewText(person.lastMessage.content)
+                : ''
+
               return (
                 <button
                   type="button"
@@ -842,76 +879,81 @@ export default function PrivateChats({
                   onPointerLeave={clearRowLongPress}
                   onContextMenu={(e) => handleRowContextMenu(e, person)}
                   onClick={() => handleRowClick(person)}
-                  className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
-                    active ? 'bg-panel-2' : 'hover:bg-panel-2'
+                  aria-current={active ? 'true' : undefined}
+                  className={`focus-ring flex w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left transition-colors ${
+                    active ? 'bg-brass text-onbrass' : 'hover:bg-panel-2'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <ChatAvatar
+                    name={label}
+                    url={person.avatar_url}
+                    seed={person.id}
+                    size="h-11 w-11"
+                    className={active ? 'ring-2 ring-onbrass/30' : ''}
+                  />
 
-                    {person.avatar_url ? (
-                      <img
-                        src={person.avatar_url}
-                        alt={label}
-                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full border border-line bg-ink flex items-center justify-center text-sm font-medium text-brass shrink-0">
-                        {label.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                  <div className="min-w-0 flex-1">
 
-                    <div className="min-w-0 flex-1">
-
-                      <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-1.5">
                         <span
-                          className={`text-sm truncate ${
-                            unread ? 'font-semibold text-paper' : 'font-medium text-paper'
-                          }`}
+                          className={`truncate text-sm ${
+                            unread ? 'font-semibold' : 'font-medium'
+                          } ${active ? 'text-onbrass' : 'text-paper'}`}
                         >
                           {label}
                         </span>
-
-                        {person.lastMessage?.created_at && (
+                        {isTeacher && selfRole !== 'teacher' && (
                           <span
-                            className={`flex items-center gap-1 text-[10px] font-mono shrink-0 ${
-                              unread ? 'text-brass' : 'text-mist'
+                            className={`shrink-0 rounded-full px-1.5 py-px text-[10px] font-medium ${
+                              active ? 'bg-onbrass/15 text-onbrass' : 'bg-speaking-tint text-speaking'
                             }`}
                           >
-                            {sentLast && (
-                              <span
-                                className={seenLast ? 'text-brass' : 'opacity-70'}
-                                title={seenLast ? 'Seen' : 'Sent'}
-                              >
-                                {seenLast ? '✓✓' : '✓'}
-                              </span>
-                            )}
-                            {formatListTime(person.lastMessage.created_at)}
+                            Teacher
                           </span>
                         )}
-                      </div>
+                      </span>
 
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <div
-                          className={`text-xs truncate ${
-                            unread ? 'text-paper-dim' : 'text-mist'
+                      {person.lastMessage?.created_at && (
+                        <span
+                          className={`flex shrink-0 items-center gap-0.5 text-[11px] ${
+                            active ? 'text-onbrass/75' : unread ? 'font-medium text-paper' : 'text-mist'
                           }`}
                         >
-                          {person.lastMessage
-                            ? previewText(person.lastMessage.content)
-                            : isTeacher
-                            ? 'Teacher'
-                            : person.username
-                            ? `@${person.username}`
-                            : ''}
-                        </div>
+                          {sentLast && (
+                            <span title={seenLast ? 'Seen' : 'Sent'} aria-label={seenLast ? 'Seen' : 'Sent'}>
+                              <ChatGlyph name={seenLast ? 'ticks' : 'tick'} className="h-3.5 w-3.5" strokeWidth={2.2} />
+                            </span>
+                          )}
+                          {formatListTime(person.lastMessage.created_at)}
+                        </span>
+                      )}
+                    </div>
 
-                        {unread && (
-                          <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-brass px-1.5 text-[10px] font-semibold text-onbrass">
-                            {person.unreadCount > 99 ? '99+' : person.unreadCount}
-                          </span>
-                        )}
+                    <div className="mt-0.5 flex items-center justify-between gap-2">
+                      <div
+                        className={`truncate text-[13px] ${
+                          active ? 'text-onbrass/75' : unread ? 'text-paper-dim' : 'text-mist'
+                        }`}
+                      >
+                        {person.lastMessage
+                          ? <>{sentLast && <span className={active ? 'text-onbrass' : 'text-paper-dim'}>You: </span>}{lastText}</>
+                          : isTeacher
+                          ? 'Teacher'
+                          : person.username
+                          ? `@${person.username}`
+                          : ''}
                       </div>
 
+                      {unread && (
+                        <span
+                          className={`flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
+                            active ? 'bg-onbrass text-brass' : 'bg-brass text-onbrass'
+                          }`}
+                        >
+                          {person.unreadCount > 99 ? '99+' : person.unreadCount}
+                        </span>
+                      )}
                     </div>
 
                   </div>
@@ -926,7 +968,11 @@ export default function PrivateChats({
           ACTIVE CHAT
           ============================================================ */}
 
-      <section className="flex-1 min-w-0">
+      <section
+        className={`${
+          selectedPerson ? 'flex' : 'hidden md:flex'
+        } min-w-0 flex-1 flex-col`}
+      >
 
         {selectedPerson ? (
           // key (2026-10-06): switching person remounts the chat so a
@@ -939,12 +985,23 @@ export default function PrivateChats({
             peerName={selectedPerson.full_name || selectedPerson.username || 'User'}
             targetMessageId={initialMessageId}
             onDeleted={handleChatDeleted}
+            embedded
+            onBack={() => {
+              setSelectedId(null)
+              setSelectedName(null)
+            }}
           />
         ) : (
-          <div className="h-[28rem] bg-panel border border-line rounded-lg flex items-center justify-center text-mist text-center px-6">
-            {selfRole === 'teacher'
-              ? "Select a conversation, or open a student's profile from the Leaderboard to start a new one."
-              : 'Select a conversation to start chatting.'}
+          <div className="flex flex-1 flex-col items-center justify-center bg-panel-2 px-6 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-listening-tint text-listening">
+              <ChatGlyph name="chat" className="h-8 w-8" />
+            </span>
+            <div className="mt-4 text-base font-semibold text-paper">Pick a conversation</div>
+            <p className="mt-1 max-w-xs text-sm leading-6 text-mist">
+              {selfRole === 'teacher'
+                ? "Choose a chat on the left, or open a student's profile in the Leaderboard to start a new one."
+                : 'Choose a chat on the left to start messaging.'}
+            </p>
           </div>
         )}
 
@@ -962,7 +1019,7 @@ export default function PrivateChats({
           />
 
           <div
-            className="fixed z-[100] flex flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
+            className="fixed z-[100] flex flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-[0_24px_60px_-20px_rgba(31,35,64,0.45)]"
             style={{
               top: previewPosition?.top,
               left: previewPosition?.left,
@@ -972,30 +1029,26 @@ export default function PrivateChats({
             onClick={(e) => e.stopPropagation()}
           >
 
-            <div className="flex items-center gap-3 border-b border-line bg-panel-2/60 px-4 py-3">
-              {previewPeer.avatar_url ? (
-                <img
-                  src={previewPeer.avatar_url}
-                  alt={previewPeer.full_name}
-                  className="h-9 w-9 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-sm font-semibold text-onbrass">
-                  {String(previewPeer.full_name || '?').charAt(0).toUpperCase()}
-                </div>
-              )}
+            <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+              <ChatAvatar
+                name={previewPeer.full_name || previewPeer.username}
+                url={previewPeer.avatar_url}
+                seed={previewPeer.id}
+                size="h-9 w-9"
+                text="text-xs"
+              />
 
               <div className="min-w-0">
-                <div className="truncate font-display text-sm text-paper">
+                <div className="truncate text-sm font-semibold text-paper">
                   {previewPeer.full_name || previewPeer.username || 'Member'}
                 </div>
                 <div className="text-[11px] text-mist">
-                  {previewPeer.id === teacher?.id ? 'Teacher' : 'Student'}
+                  {roleLabel(previewPeer)}
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-[120px]">
+            <div className="[scrollbar-width:thin] min-h-[120px] flex-1 space-y-1.5 overflow-y-auto bg-panel-2 px-3 py-3">
               {previewLoading && (
                 <p className="text-xs text-mist">Loading…</p>
               )}
@@ -1014,10 +1067,10 @@ export default function PrivateChats({
                       className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-xl px-2.5 py-1.5 text-xs ${
+                        className={`max-w-[85%] rounded-2xl px-2.5 py-1.5 text-xs ${
                           mine
                             ? 'bg-brass text-onbrass'
-                            : 'border border-line bg-panel-2 text-paper'
+                            : 'border border-line bg-panel text-paper'
                         }`}
                       >
                         {previewText(m.content) || 'Media message'}
@@ -1031,16 +1084,18 @@ export default function PrivateChats({
               <button
                 type="button"
                 onClick={() => markPreviewRead(previewPeer.unreadCount === 0)}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-paper hover:bg-panel-2"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-paper hover:bg-panel-2"
               >
+                <Icon name="check" className="h-4 w-4 text-mist" />
                 {previewPeer.unreadCount > 0 ? 'Mark as read' : 'Mark as unread'}
               </button>
 
               <button
                 type="button"
                 onClick={() => requestDeleteFromPreview(previewPeer, 'me')}
-                className="block w-full rounded-md px-3 py-2 text-left text-sm text-coral hover:bg-panel-2"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-urgent hover:bg-urgent-tint"
               >
+                <Icon name="trash" className="h-4 w-4" />
                 Delete for me
               </button>
 
@@ -1048,8 +1103,9 @@ export default function PrivateChats({
                 <button
                   type="button"
                   onClick={() => requestDeleteFromPreview(previewPeer, 'everyone')}
-                  className="block w-full rounded-md px-3 py-2 text-left text-sm text-coral hover:bg-panel-2"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-urgent hover:bg-urgent-tint"
                 >
+                  <Icon name="trash" className="h-4 w-4" />
                   Delete for everyone
                 </button>
               )}

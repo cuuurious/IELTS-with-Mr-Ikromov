@@ -71,12 +71,12 @@ export default function MessageActionMenu({
         left: position.left,
         width: 212,
       }}
-      className="z-[200] rounded-2xl border border-line bg-panel shadow-2xl py-1.5 text-[13px] overflow-hidden"
+      className="z-[200] overflow-hidden rounded-2xl border border-line bg-panel p-1.5 text-[13.5px] shadow-[0_18px_44px_-18px_rgba(31,35,64,0.4)] wp-pop"
     >
       {items.map((item, index) => (
         <div key={item.key || index}>
           {item.divider && (
-            <div className="my-1 border-t border-line" />
+            <div className="mx-2 my-1 border-t border-line" />
           )}
 
           <button
@@ -85,11 +85,17 @@ export default function MessageActionMenu({
               onClose()
               item.onClick?.()
             }}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-panel-2 ${
-              item.danger ? 'text-coral' : 'text-paper'
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+              item.danger
+                ? 'text-urgent hover:bg-urgent-tint'
+                : 'text-paper hover:bg-panel-2'
             }`}
           >
-            <span className="w-4 shrink-0 text-center text-[15px] leading-none">
+            <span
+              className={`flex w-4 shrink-0 items-center justify-center leading-none ${
+                item.danger ? '' : 'text-mist'
+              }`}
+            >
               {item.icon}
             </span>
 

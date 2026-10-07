@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
-import Layout, { IconStudents, IconMockExam, IconChat } from '../../components/Layout'
+import Layout, { IconHome, IconStudents, IconMockExam, IconChat } from '../../components/Layout'
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -9,6 +9,9 @@ import { formatTargetBand } from '../../lib/targetBands'
 import { downloadSpeakingSlotIcs } from '../../lib/calendarEvent'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import Icon from '../../components/Icon'
+import { SkillIcon } from '../../components/SkillArt'
+import SpeakingExaminerHome from './SpeakingExaminerHome'
+import { Card, Avatar } from './ExaminerHomeParts'
 
 /*
  * ================================================================
@@ -71,16 +74,16 @@ function computeOverallBand(criteriaValues) {
 }
 
 const STATUS_META = {
-  scheduled: { label: 'Scheduled', className: 'text-brass border-brass-dim/30 bg-brass/10' },
-  completed: { label: 'Completed', className: 'text-sage border-sage/30 bg-sage/10' },
-  cancelled: { label: 'Cancelled', className: 'text-mist border-line bg-panel-2' },
-  no_show: { label: 'No-show', className: 'text-coral border-coral/30 bg-coral/10' },
+  scheduled: { label: 'Scheduled', className: 'bg-speaking-tint text-speaking' },
+  completed: { label: 'Completed', className: 'bg-reading-tint text-reading' },
+  cancelled: { label: 'Cancelled', className: 'bg-panel-2 text-mist' },
+  no_show: { label: 'No-show', className: 'bg-urgent-tint text-urgent' },
 }
 
 export default function SpeakingExaminerDashboard() {
   const { profile } = useAuth()
 
-  const [tab, setTab] = useState('students')
+  const [tab, setTab] = useState('home')
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
   const [slots, setSlots] = useState([])
@@ -250,6 +253,9 @@ export default function SpeakingExaminerDashboard() {
     )
   }, [students, studentSearch])
 
+  // "Now" for the Home tab; refreshed whenever the slot list reloads.
+  const now = useMemo(() => new Date(), [slots])
+
   const upcomingSlots = slots.filter((s) => s.status === 'scheduled')
   const pastSlots = slots.filter((s) => s.status !== 'scheduled')
 
@@ -363,6 +369,7 @@ export default function SpeakingExaminerDashboard() {
     () => [
       {
         items: [
+          { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'students', label: 'Students', icon: IconStudents },
           { key: 'timetable', label: 'Timetable', icon: IconMockExam },
           { key: 'chats', label: 'Chats', icon: IconChat },
@@ -380,100 +387,138 @@ export default function SpeakingExaminerDashboard() {
     <Layout sections={sections} activeTab={tab} onTabChange={setTab}>
       <div className="space-y-5">
 
+        {tab === 'home' && (
+          <SpeakingExaminerHome
+            profile={profile}
+            slots={slots}
+            studentById={studentById}
+            now={now}
+            myWeekCount={myWorkload != null ? Number(myWorkload.this_week_count) : null}
+            teamAverage={teamAverageThisWeek}
+            onStatus={updateStatus}
+            onScore={openScoreModal}
+            onNavigate={setTab}
+          />
+        )}
+
         {tab === 'students' && (
           <section className="space-y-4">
-            <p className="text-sm text-mist max-w-2xl">
-              Every candidate on the platform. Book a speaking exam slot or message a
-              student directly.
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="mr-auto text-sm text-mist max-w-2xl">
+                Every candidate on the platform. Book a speaking exam slot or message a
+                student directly.
+              </p>
+              {students.length > 0 && (
+                <label className="relative w-full sm:w-72">
+                  <span className="sr-only">Search students</span>
+                  <svg className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mist" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                  </svg>
+                  <input
+                    type="search"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Search students by name…"
+                    className="focus-ring w-full rounded-full border border-line bg-panel py-2 pl-10 pr-4 text-sm text-paper placeholder:text-mist"
+                  />
+                </label>
+              )}
+            </div>
 
             {myWorkload != null && teamAverageThisWeek != null && (
               <div
-                className={`rounded-xl border px-4 py-2.5 text-xs font-medium ${
-                  isOverloaded
-                    ? 'border-amber/40 bg-amber/10 text-amber'
-                    : 'border-line bg-panel-2 text-mist'
+                className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl px-4 py-3 text-[13px] ${
+                  isOverloaded ? 'bg-urgent-tint text-urgent' : 'bg-panel-2 text-paper-dim'
                 }`}
               >
-                {isOverloaded ? <><Icon name="scale" className="h-3.5 w-3.5" /> </> : ''}
-                Your workload this week: <strong className="text-paper">{myWorkload.this_week_count}</strong>{' '}
-                · Team average: <strong className="text-paper">{teamAverageThisWeek.toFixed(1)}</strong>
-                {isOverloaded && ' — you\'re carrying noticeably more than others right now.'}
+                <Icon name="scale" className="h-4 w-4 shrink-0" />
+                <span>
+                  Your workload this week: <strong className="font-semibold">{myWorkload.this_week_count}</strong>
+                  {' · '}Team average: <strong className="font-semibold">{teamAverageThisWeek.toFixed(1)}</strong>
+                  {isOverloaded && ' — you\'re carrying noticeably more than others right now.'}
+                </span>
               </div>
-            )}
-
-            {students.length > 0 && (
-              <input
-                type="search"
-                value={studentSearch}
-                onChange={(e) => setStudentSearch(e.target.value)}
-                placeholder="Search students by name…"
-                className="focus-ring w-full sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
-              />
             )}
 
             {students.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
-                <h2 className="font-display text-xl">No students yet</h2>
-              </div>
+              <EmptyCard icon={<Icon name="clipboard" className="h-6 w-6" />} title="No students yet" />
             ) : filteredStudents.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
-                <h2 className="font-display text-xl">No students match</h2>
-                <p className="text-sm text-mist mt-1">Try a different name or username.</p>
-              </div>
+              <EmptyCard icon={<Icon name="clipboard" className="h-6 w-6" />} title="No students match" line="Try a different name or username." />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredStudents.map((student) => (
-                  <div
-                    key={student.id}
-                    className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-col gap-3"
-                  >
-                    <div>
-                      <p className="font-display text-base text-paper truncate">
-                        {student.full_name || student.username}
-                      </p>
-                      <p className="text-xs text-mist font-mono">@{student.username}</p>
-                      {student.target_band != null && (
-                        <p className="text-xs text-brass mt-1">
-                          Target {formatTargetBand(student.target_band)}
-                        </p>
-                      )}
-                    </div>
+                {filteredStudents.map((student) => {
+                  const booked = upcomingSlots.find((sl) => sl.student_id === student.id)
+                  return (
+                    <div
+                      key={student.id}
+                      className="rounded-[22px] border border-line bg-panel p-4 flex flex-col gap-3.5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar person={student} size="h-11 w-11" tone="bg-speaking-tint text-speaking" />
+                        <div className="min-w-0">
+                          <p className="truncate text-[15px] font-semibold text-paper">
+                            {student.full_name || student.username}
+                          </p>
+                          <p className="truncate text-[13px] text-mist">@{student.username}</p>
+                        </div>
+                      </div>
 
-                    <div className="flex gap-2 mt-auto">
-                      <button
-                        type="button"
-                        onClick={() => openBookModal(student)}
-                        className="focus-ring flex-1 rounded-full bg-brass text-onbrass text-xs font-semibold px-3 py-2 hover:scale-[1.02] transition-transform"
-                      >
-                        Book exam
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMessageStudent(student)}
-                        className="focus-ring flex-1 rounded-full border border-line text-xs font-medium px-3 py-2 text-mist hover:text-paper hover:border-brass/40"
-                      >
-                        Message
-                      </button>
+                      <div className="flex flex-wrap gap-1.5">
+                        {student.target_band != null && (
+                          <span className="inline-flex h-7 items-center rounded-lg bg-panel-2 px-2.5 text-[13px] text-paper-dim">
+                            Target <span className="ml-1 font-semibold text-paper">{formatTargetBand(student.target_band)}</span>
+                          </span>
+                        )}
+                        {booked && (
+                          <span className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-speaking-tint px-2.5 text-[13px] font-medium text-speaking">
+                            <Icon name="calendar" className="h-3.5 w-3.5" />
+                            {formatSlotTime(booked.scheduled_at)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 mt-auto">
+                        <button
+                          type="button"
+                          onClick={() => openBookModal(student)}
+                          className="focus-ring flex-1 rounded-full bg-brass text-onbrass text-[13px] font-medium px-3 py-2 hover:bg-brass-dim transition-colors"
+                        >
+                          Book exam
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMessageStudent(student)}
+                          className="focus-ring flex-1 rounded-full border border-line text-[13px] font-medium px-3 py-2 text-paper-dim hover:text-paper hover:border-paper/30"
+                        >
+                          Message
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </section>
         )}
 
         {tab === 'timetable' && (
-          <section className="space-y-6">
-            <div>
-              <h3 className="font-display text-lg text-paper mb-2.5">Upcoming</h3>
+          <section className="space-y-5">
+            <Card className="p-4 sm:p-5">
+              <div className="mb-2 flex items-baseline justify-between px-1">
+                <h2 className="text-[17px] font-semibold">Upcoming</h2>
+                <span className="text-[13px] text-mist tabular-nums">{upcomingSlots.length}</span>
+              </div>
 
               {upcomingSlots.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-line bg-panel/80 px-5 py-8 text-center text-sm text-mist">
-                  No upcoming speaking exams booked.
+                <div className="flex items-center gap-3 rounded-2xl bg-panel-2/60 px-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-speaking-tint text-speaking">
+                    <Icon name="calendar" className="h-5 w-5" />
+                  </span>
+                  <p className="text-sm text-paper-dim">No upcoming speaking exams booked.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="flex flex-col">
                   {upcomingSlots.map((slot) => (
                     <SlotRow
                       key={slot.id}
@@ -487,12 +532,15 @@ export default function SpeakingExaminerDashboard() {
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
 
             {pastSlots.length > 0 && (
-              <div>
-                <h3 className="font-display text-lg text-paper mb-2.5">Past / other</h3>
-                <div className="space-y-2.5">
+              <Card className="p-4 sm:p-5">
+                <div className="mb-2 flex items-baseline justify-between px-1">
+                  <h2 className="text-[17px] font-semibold">Past and other</h2>
+                  <span className="text-[13px] text-mist tabular-nums">{pastSlots.length}</span>
+                </div>
+                <div className="flex flex-col">
                   {pastSlots.map((slot) => (
                     <SlotRow
                       key={slot.id}
@@ -505,7 +553,7 @@ export default function SpeakingExaminerDashboard() {
                     />
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
           </section>
         )}
@@ -581,6 +629,25 @@ export default function SpeakingExaminerDashboard() {
   )
 }
 
+function EmptyCard({ icon, title, line }) {
+  return (
+    <Card className="flex items-center gap-4 px-6 py-8">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-speaking-tint text-speaking">
+        {icon || <SkillIcon skill="speaking" className="h-6 w-6" />}
+      </span>
+      <div>
+        <p className="text-[15px] font-semibold">{title}</p>
+        {line && <p className="text-sm text-mist">{line}</p>}
+      </div>
+    </Card>
+  )
+}
+
+// Small neutral action pill used in SlotRow (2026-10-07: one calm style
+// instead of five competing accent colours; behaviour unchanged).
+const PILL =
+  'focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-line px-3 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper'
+
 function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
   const meta = STATUS_META[slot.status] || STATUS_META.scheduled
   const scored = slot.examiner_band != null || slot.examiner_feedback
@@ -589,36 +656,60 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
   // actually passed — Jasur, 2026-09-27: it shouldn't be possible to mark
   // a student a no-show before the session was even due to start.
   const slotTimeHasPassed = new Date(slot.scheduled_at).getTime() <= Date.now()
+  const d = new Date(slot.scheduled_at)
 
   return (
-    <div className="rounded-2xl border border-line bg-panel shadow-sm p-4 flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div className="min-w-0">
-          <p className="font-medium text-paper truncate">
-            {student?.full_name || student?.username || 'Student'}
-          </p>
-          <p className="text-xs text-mist font-mono mt-0.5">
-            {formatSlotTime(slot.scheduled_at)} · {slot.duration_minutes} min
-          </p>
-          {slot.meeting_link && (
-            <a
-              href={slot.meeting_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brass hover:text-brass-dim mt-0.5 inline-block truncate max-w-xs"
-            >
-              {slot.meeting_link}
-            </a>
-          )}
-        </div>
+    <div className="flex gap-3 border-t border-line px-1 py-3.5 first:border-0">
+      <div
+        className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl ${
+          slot.status === 'scheduled' ? 'bg-speaking-tint text-speaking' : 'bg-panel-2 text-mist'
+        }`}
+      >
+        <span className="text-[11px] font-medium leading-none">{d.toLocaleDateString('en-GB', { month: 'short' })}</span>
+        <span className="text-[20px] font-semibold leading-tight tabular-nums">{d.getDate()}</span>
+      </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${meta.className}`}>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-2 justify-between">
+          <div className="min-w-0">
+            <p className="truncate text-[15px] font-medium text-paper">
+              {student?.full_name || student?.username || 'Student'}
+            </p>
+            <p className="text-[13px] text-mist mt-0.5">
+              {formatSlotTime(slot.scheduled_at)} · {slot.duration_minutes} min
+            </p>
+            {slot.meeting_link && (
+              <a
+                href={slot.meeting_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-0.5 inline-flex max-w-[16rem] items-center gap-1 truncate text-[13px] font-medium text-speaking hover:underline sm:max-w-xs"
+              >
+                <Icon name="video" className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{slot.meeting_link}</span>
+              </a>
+            )}
+          </div>
+
+          <span className={`inline-flex h-7 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-medium ${meta.className}`}>
             {meta.label}
           </span>
+        </div>
 
+        <div className="flex flex-wrap items-center gap-1.5">
           {slot.status === 'scheduled' && (
             <>
+              <button
+                type="button"
+                onClick={() => onStatus('completed')}
+                className={
+                  slotTimeHasPassed
+                    ? 'focus-ring inline-flex h-8 items-center rounded-full bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim'
+                    : PILL
+                }
+              >
+                Mark done
+              </button>
               <button
                 type="button"
                 onClick={() =>
@@ -627,30 +718,19 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
                     description: slot.notes || undefined,
                   })
                 }
-                className="focus-ring text-[11px] font-semibold rounded-full border border-cyan/30 bg-cyan/10 text-cyan px-2.5 py-1 hover:bg-cyan/20 transition-colors"
+                className={PILL}
                 title="Download a calendar file for this slot"
               >
-                <Icon name="calendar" className="h-3 w-3" /> Calendar
+                <Icon name="calendar" className="h-3.5 w-3.5" /> Calendar
               </button>
-              <button
-                type="button"
-                onClick={onEdit}
-                className="focus-ring text-[11px] font-semibold rounded-full border border-lavender/30 bg-lavender/10 text-lavender px-2.5 py-1 hover:bg-lavender/20 transition-colors"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onStatus('completed')}
-                className="focus-ring text-[11px] font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors"
-              >
-                Mark done
+              <button type="button" onClick={onEdit} className={PILL}>
+                <Icon name="pencil" className="h-3.5 w-3.5" /> Edit
               </button>
               <button
                 type="button"
                 onClick={() => onStatus('no_show')}
                 disabled={!slotTimeHasPassed}
-                className="focus-ring text-[11px] font-semibold rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1 hover:bg-amber/20 transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-amber/10"
+                className={`${PILL} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-paper-dim`}
                 title={
                   slotTimeHasPassed
                     ? "Student didn't attend — notifies the teacher"
@@ -662,7 +742,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
               <button
                 type="button"
                 onClick={() => onStatus('cancelled')}
-                className="focus-ring text-[11px] font-semibold rounded-full border border-coral/30 bg-coral/10 text-coral px-2.5 py-1 hover:bg-coral/20 transition-colors"
+                className={`${PILL} hover:border-urgent/40 hover:text-urgent`}
               >
                 Cancel
               </button>
@@ -672,18 +752,18 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
           {slot.status === 'completed' && (
             <>
               {slot.examiner_band != null ? (
-                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                  Band {slot.examiner_band}
+                <span className="inline-flex h-8 items-center rounded-lg bg-reading-tint px-2.5 text-[13px] font-semibold tabular-nums text-reading">
+                  Band {formatBand(slot.examiner_band)}
                 </span>
               ) : (
-                <span className="text-[11px] font-semibold uppercase tracking-wide rounded-full border border-amber/30 bg-amber/10 text-amber px-2.5 py-1">
+                <span className="inline-flex h-8 items-center rounded-lg bg-speaking-tint px-2.5 text-[13px] font-medium text-speaking">
                   Not marked
                 </span>
               )}
               <button
                 type="button"
                 onClick={onScore}
-                className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-3.5 py-1.5 shadow-sm hover:bg-brass-dim transition-colors"
+                className="focus-ring inline-flex h-8 items-center rounded-full bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim"
               >
                 {scored ? 'View / edit' : 'Mark'}
               </button>
@@ -694,29 +774,29 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
             <button
               type="button"
               onClick={onDelete}
-              className="focus-ring text-[11px] font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-coral/50 hover:text-coral transition-colors"
+              className={`${PILL} hover:border-urgent/40 hover:text-urgent`}
               title="Remove this slot from your timetable"
             >
-              Delete
+              <Icon name="trash" className="h-3.5 w-3.5" /> Delete
             </button>
           )}
         </div>
+
+        {slot.examiner_feedback && (
+          <p className="rounded-xl bg-panel-2/70 px-3 py-2 text-[13px] text-paper-dim whitespace-pre-wrap">{slot.examiner_feedback}</p>
+        )}
+
+        {slot.recording_url && (
+          <a
+            href={slot.recording_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex max-w-xs items-center gap-1 truncate text-[13px] font-medium text-speaking hover:underline"
+          >
+            <Icon name="mic" className="h-3.5 w-3.5" /> Session recording
+          </a>
+        )}
       </div>
-
-      {slot.examiner_feedback && (
-        <p className="text-xs text-mist whitespace-pre-wrap">{slot.examiner_feedback}</p>
-      )}
-
-      {slot.recording_url && (
-        <a
-          href={slot.recording_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-brass hover:text-brass-dim inline-block truncate max-w-xs"
-        >
-          <Icon name="mic" className="h-3.5 w-3.5" /> Session recording
-        </a>
-      )}
     </div>
   )
 }
@@ -736,19 +816,19 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">Score speaking exam</h3>
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="text-lg font-semibold text-paper">Score speaking exam</h3>
         <p className="text-sm text-mist mt-0.5">{studentName}</p>
-        <p className="text-xs text-mist font-mono mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
+        <p className="text-[13px] text-mist mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
 
         <div className="mt-4 flex flex-col gap-3">
           <div>
-            <p className="text-xs text-mist font-mono uppercase tracking-wide mb-2">
+            <p className="mb-2 text-sm font-semibold text-paper">
               Criteria marks
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               {SPEAKING_CRITERIA.map((c) => (
-                <label key={c.key} className="text-[11px] text-mist">
+                <label key={c.key} className="text-[12px] text-mist">
                   {c.label}
                   <input
                     type="number"
@@ -757,46 +837,46 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
                     step="0.5"
                     value={criteria[c.key]}
                     onChange={(e) => setCriteria((prev) => ({ ...prev, [c.key]: e.target.value }))}
-                    className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-2.5 py-2 text-sm text-paper"
+                    className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-2.5 py-2 text-sm text-paper"
                   />
                 </label>
               ))}
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-[11px] text-mist font-mono uppercase tracking-wide">
+              <span className="text-[13px] font-medium text-mist">
                 Overall band
               </span>
-              <span className="text-sm font-semibold text-paper">
+              <span className="inline-flex h-7 items-center rounded-lg bg-speaking-tint px-2.5 text-sm font-semibold tabular-nums text-speaking">
                 {formatBand(displayOverall)}
               </span>
               <span className="text-[11px] text-mist">
                 {computedOverall != null
-                  ? '— calculated from the four criteria'
+                  ? 'calculated from the four criteria'
                   : 'fill in all four to calculate'}
               </span>
             </div>
           </div>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Feedback
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               rows={4}
               placeholder="Fluency, pronunciation, grammar, what to improve…"
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Recording link (optional)
             <input
               type="url"
               placeholder="https://drive.google.com/..."
               value={recordingUrl}
               onChange={(e) => setRecordingUrl(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
           <p className="text-xs text-mist -mt-2">
@@ -846,30 +926,30 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <h3 className="font-display text-lg text-paper">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
+        <h3 className="text-lg font-semibold text-paper">
           {mode === 'create' ? 'Book speaking exam' : 'Edit speaking exam'}
         </h3>
         <p className="text-sm text-mist mt-0.5">{studentName}</p>
 
         {workloadNote && (
-          <div className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-amber">
+          <div className="mt-3 flex gap-2 rounded-xl bg-urgent-tint px-3 py-2.5 text-[13px] text-urgent">
             <Icon name="scale" className="h-3.5 w-3.5" /> {workloadNote}
           </div>
         )}
 
         <div className="mt-4 flex flex-col gap-3">
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Date &amp; time
             <input
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Duration (minutes)
             <input
               type="number"
@@ -877,28 +957,28 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
               max="60"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Meeting link
             <input
               type="url"
               placeholder="https://meet.google.com/..."
               value={meetingLink}
               onChange={(e) => setMeetingLink(e.target.value)}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
             />
           </label>
 
-          <label className="text-xs text-mist font-mono uppercase tracking-wide">
+          <label className="text-[13px] font-medium text-mist">
             Notes (optional)
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="focus-ring mt-1 w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
+              className="focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper resize-none"
             />
           </label>
         </div>
