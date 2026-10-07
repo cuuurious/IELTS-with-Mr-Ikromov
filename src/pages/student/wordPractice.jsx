@@ -69,13 +69,24 @@ export function canSpeak() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function'
 }
 
+// Teachers often number their lists ("4. budget", "12) take off",
+// "3 - rely on"). Only the word itself is read out — the number just
+// wasted the student's time (2026-10-07).
+export function speechText(text) {
+  const clean = decodeHtml(String(text || ''))
+    .replace(/^\s*[#№]?\s*\d+\s*[.)\]:\-–—]+(?!\d)\s*/, '')
+    .replace(/^\s*\(?\d+\)\s*/, '')
+    .trim()
+  return clean || decodeHtml(String(text || ''))
+}
+
 let cachedVoice
 export function speak(text) {
   if (!canSpeak() || !text) return
   try {
     const synth = window.speechSynthesis
     synth.cancel()
-    const u = new window.SpeechSynthesisUtterance(decodeHtml(text))
+    const u = new window.SpeechSynthesisUtterance(speechText(text))
     if (cachedVoice === undefined) {
       const voices = synth.getVoices() || []
       cachedVoice =

@@ -12,6 +12,7 @@ import { RoundCameraPreview, RecordedClipPreview } from './RoundCameraPreview'
 import { FileBubble, isDocumentFile, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
 import Icon from './Icon'
+import PendingAttachment from './PendingAttachment'
 import {
   ChatAvatar,
   ChatGlyph,
@@ -138,6 +139,11 @@ export default function GroupChat({
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Pasted / dropped file waiting for Send (2026-10-07).
+  const [pendingFile, setPendingFile] = useState(null)
+  useEffect(() => {
+    setPendingFile(null)
+  }, [groupId])
   const [error, setError] = useState('')
 
   const [selfRole, setSelfRole] = useState('student')
@@ -818,6 +824,13 @@ export default function GroupChat({
 
   const send = async (e) => {
     e.preventDefault()
+
+    // A pasted / dropped file goes first, then the typed text (if any).
+    if (pendingFile && !uploading) {
+      const file = pendingFile
+      setPendingFile(null)
+      await sendPickedFile(file)
+    }
 
     const content = text.trim()
 
@@ -1743,7 +1756,7 @@ export default function GroupChat({
       seconds % 60
     ).padStart(2, '0')}`
 
-  const handlePaste = async (event) => {
+  const handlePaste = (event) => {
     const items = Array.from(
       event.clipboardData?.items || []
     )
@@ -1764,7 +1777,11 @@ export default function GroupChat({
 
     event.preventDefault()
 
-    await uploadFile(file, 'image')
+    // Waits above the message box until Send is pressed (2026-10-07 —
+    // it used to be sent the moment it was pasted).
+    setError('')
+    setPendingFile(file)
+    inputRef.current?.focus()
   }
 
   // Drag a file from the computer onto the chat to send it — same path
@@ -1783,7 +1800,8 @@ export default function GroupChat({
       !(selfRole === 'teacher' || groupInfo?.allow_media !== false),
     onFiles: (files) => {
       setError('')
-      sendPickedFile(files[0])
+      setPendingFile(files[0])
+      inputRef.current?.focus()
     },
     onReject: () =>
       setError(
@@ -2909,6 +2927,8 @@ export default function GroupChat({
             />
           )}
 
+          <PendingAttachment file={pendingFile} onRemove={() => setPendingFile(null)} disabled={uploading} />
+
           <div className={`flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40 ${canSendMedia ? '' : 'pl-3'}`}>
 
             {canSendMedia && (
@@ -2967,7 +2987,7 @@ export default function GroupChat({
               disabled={
                 sending ||
                 uploading ||
-                !text.trim()
+                (!text.trim() && !pendingFile)
               }
               className="focus-ring ml-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-onbrass transition-colors hover:bg-brass-dim disabled:opacity-35"
               aria-label="Send message"

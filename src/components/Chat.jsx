@@ -12,6 +12,7 @@ import { FileBubble, DOCUMENT_ACCEPT } from './chatFiles'
 import { useFileDrop, DropOverlay } from '../lib/useFileDrop'
 import { fetchAll } from '../lib/fetchAll'
 import Icon from './Icon'
+import PendingAttachment from './PendingAttachment'
 import { groupColour } from '../lib/groupLook'
 
 // 2026-10-06: a chat now opens with only its latest 100 messages
@@ -233,6 +234,11 @@ export default function Chat({
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Pasted / dropped file waiting for Send (2026-10-07).
+  const [pendingFile, setPendingFile] = useState(null)
+  useEffect(() => {
+    setPendingFile(null)
+  }, [peerId])
   const [recording, setRecording] = useState(false)
   const [recordingKind, setRecordingKind] = useState(null)
   const [recordSeconds, setRecordSeconds] = useState(0)
@@ -1023,6 +1029,14 @@ export default function Chat({
 
   const sendText = async (e) => {
     e.preventDefault()
+
+    // A pasted / dropped file goes first, then the typed text (if any).
+    if (pendingFile && !uploading) {
+      const file = pendingFile
+      setPendingFile(null)
+      const ok = await uploadChatFile(file)
+      if (ok === false) setPendingFile(file)
+    }
 
     const content = text.trim()
 
@@ -2204,9 +2218,10 @@ export default function Chat({
     )
   }
 
-  // Paste a screenshot/photo straight into the message box to send it
-  // — same as the group chat.
-  const handlePaste = async (event) => {
+  // Paste a screenshot/photo into the message box: it waits above the
+  // box with a preview and is only sent when Send is pressed
+  // (2026-10-07 — it used to go out the moment it was pasted).
+  const handlePaste = (event) => {
     const items = Array.from(event.clipboardData?.items || [])
     const imageItem = items.find(
       (item) => item.kind === 'file' && item.type.startsWith('image/')
@@ -2215,7 +2230,9 @@ export default function Chat({
     const file = imageItem.getAsFile()
     if (!file) return
     event.preventDefault()
-    await uploadChatFile(file)
+    setError('')
+    setPendingFile(file)
+    inputRef.current?.focus()
   }
 
   // Drag a file from the computer onto the conversation to send it —
@@ -2226,7 +2243,8 @@ export default function Chat({
     disabled: !peerId || uploading || recording || Boolean(recordedBlob) || selectMode,
     onFiles: (files) => {
       setError('')
-      uploadChatFile(files[0])
+      setPendingFile(files[0])
+      inputRef.current?.focus()
     },
     onReject: () => setError("This type of file can't be sent in the chat."),
   })
@@ -3127,6 +3145,8 @@ export default function Chat({
           className="hidden"
         />
 
+        <PendingAttachment file={pendingFile} onRemove={() => setPendingFile(null)} disabled={uploading} />
+
         <div className="flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40">
 
           {/* PHOTO / VIDEO / FILE */}
@@ -3176,7 +3196,7 @@ export default function Chat({
 
           <button
             type="submit"
-            disabled={sending || uploading || !text.trim()}
+            disabled={sending || uploading || (!text.trim() && !pendingFile)}
             className="focus-ring ml-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-onbrass transition-colors hover:bg-brass-dim disabled:opacity-35"
             aria-label={uploading ? 'Sending…' : 'Send message'}
             title={uploading ? 'Sending…' : 'Send'}

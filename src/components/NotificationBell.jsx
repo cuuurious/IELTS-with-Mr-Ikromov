@@ -110,6 +110,38 @@ export default function NotificationBell({ profile }) {
           })
         }
       )
+      // A notification removed in the database (its chat message was
+      // deleted) or changed (the message was edited) disappears /
+      // updates here straight away (2026-10-07). Realtime can't filter
+      // DELETE events by user, and they only carry the id, so the id is
+      // matched against this list.
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'notifications' },
+        (payload) => {
+          const id = payload?.old?.id
+          if (!id) return
+          setItems((previous) => previous.filter((item) => item.id !== id))
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`,
+        },
+        (payload) => {
+          const row = payload?.new
+          if (!row?.id) return
+          setItems((previous) =>
+            row.read
+              ? previous.filter((item) => item.id !== row.id)
+              : previous.map((item) => (item.id === row.id ? { ...item, ...row } : item))
+          )
+        }
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log(
