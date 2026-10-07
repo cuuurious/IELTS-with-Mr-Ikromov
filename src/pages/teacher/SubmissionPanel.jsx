@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import AiFeedbackCard from '../../components/AiFeedbackCard'
 import { countWords } from '../../lib/writingMock'
 import Icon from '../../components/Icon'
+import SubmissionImage from '../../components/SubmissionImage'
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 4
@@ -206,10 +207,11 @@ export default function SubmissionPanel({
                       onClick={() => openPreview(i)}
                       className="focus-ring group overflow-hidden rounded-2xl border border-line bg-panel-2 text-left transition hover:border-accent/40"
                     >
-                      <img
+                      <SubmissionImage
                         src={url}
                         alt={`Screenshot ${i + 1}`}
                         className="aspect-square h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                        removedClassName="aspect-square h-full w-full"
                       />
                     </button>
                   ))}
@@ -465,7 +467,8 @@ export default function SubmissionPanel({
             className="relative flex flex-1 items-center justify-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <SubmissionImage
+              removedClassName="rounded-2xl bg-panel/80 px-8 py-10"
               src={screenshotUrls[previewIndex]}
               alt={`Screenshot ${previewIndex + 1}`}
               draggable={false}
