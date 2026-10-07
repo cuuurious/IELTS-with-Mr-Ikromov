@@ -43,6 +43,7 @@ export function fileKind(nameOrMime) {
   if (/^audio\/|\.(mp3|wav|m4a|aac|ogg|oga|opus|flac|wma|amr)$/.test(s)) return 'audio'
   if (/^video\/|\.(mp4|mov|webm|mkv|avi)$/.test(s)) return 'video'
   if (/pdf$/.test(s)) return 'pdf'
+  if (/(text\/html|\.html?$)/.test(s)) return 'html'
   if (/(msword|wordprocessingml|\.docx?$)/.test(s)) return 'doc'
   if (/(ms-excel|spreadsheetml|\.xlsx?$|\.csv$)/.test(s)) return 'sheet'
   if (/(ms-powerpoint|presentationml|\.pptx?$)/.test(s)) return 'slides'
@@ -54,6 +55,7 @@ export const KIND_LABEL = {
   audio: 'AUDIO',
   video: 'VIDEO',
   pdf: 'PDF',
+  html: 'PAGE',
   doc: 'DOC',
   sheet: 'XLS',
   slides: 'PPT',

@@ -2,6 +2,7 @@ import { Component, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoadingScreen from './components/LoadingScreen'
+import HtmlFileViewerHost from './components/HtmlFileViewer'
 import Login from './pages/Login'
 import PendingApproval from './pages/PendingApproval'
 import { lazyWithReload } from './lib/lazyWithReload'
@@ -153,6 +154,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        {/* Opens .html files from storage as pages, not source code. */}
+        <HtmlFileViewerHost />
         <Suspense fallback={<LoadingScreen />}>
         <Routes>
 
