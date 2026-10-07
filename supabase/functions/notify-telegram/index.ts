@@ -66,6 +66,10 @@ Deno.serve(async (req) => {
 
   let sent = 0
   let failed = 0
+  // Chats that blocked the bot / were deleted. Their link is removed so
+  // the website asks that person to connect again (or use phone
+  // notifications) instead of silently sending into nowhere (2026-10-07).
+  const deadChats = new Set<number>()
 
   // Telegram allows ~30 messages/second to different chats; send in
   // small parallel batches to stay well under that.
@@ -98,6 +102,9 @@ Deno.serve(async (req) => {
           else {
             failed++
             console.error('notify-telegram: send failed', json?.description)
+            if (json?.error_code === 403 || /chat not found|user is deactivated|bot was blocked/i.test(String(json?.description || ''))) {
+              deadChats.add(Number(chatId))
+            }
           }
         } catch (err) {
           failed++
@@ -108,7 +115,12 @@ Deno.serve(async (req) => {
     if (i + 20 < jobs.length) await new Promise((r) => setTimeout(r, 1100))
   }
 
-  return new Response(JSON.stringify({ ok: true, sent, failed }), {
+  if (deadChats.size) {
+    const { error: unlinkError } = await supabase.from('telegram_links').delete().in('telegram_chat_id', [...deadChats])
+    if (unlinkError) console.error('notify-telegram: could not unlink blocked chats', unlinkError)
+  }
+
+  return new Response(JSON.stringify({ ok: true, sent, failed, unlinked: deadChats.size }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })

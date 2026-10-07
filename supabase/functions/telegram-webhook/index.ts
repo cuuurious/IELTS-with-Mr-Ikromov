@@ -452,6 +452,19 @@ async function handleLinking(supabase: any, botToken: string, message: any, site
       return true
     }
 
+    // One Telegram account can be connected to one website account. If
+    // this Telegram was connected to a DIFFERENT website account before
+    // (e.g. a student who got a new account), move it to the account
+    // that's connecting now — the old "already exists" error made the
+    // link fail silently, the website waited forever and the "Share my
+    // contact" button never went away (2026-10-07).
+    const { error: freeError } = await supabase
+      .from('telegram_links')
+      .delete()
+      .eq('telegram_chat_id', chatId)
+      .neq('user_id', tokenRow.user_id)
+    if (freeError) console.error('telegram-webhook: could not free chat id', freeError)
+
     const { error: upsertError } = await supabase.from('telegram_links').upsert(
       {
         user_id: tokenRow.user_id,
@@ -547,7 +560,20 @@ export async function handleUpdate(update: any, env: {
   // Only private chats with the bot — never act on group messages.
   if (message.chat.type && message.chat.type !== 'private') return 'ignored'
 
-  if (await handleLinking(supabase, botToken, message, env.siteUrl)) return 'linking'
+  try {
+    if (await handleLinking(supabase, botToken, message, env.siteUrl)) return 'linking'
+  } catch (err) {
+    // Never leave the user staring at a silent bot with the "Share my
+    // contact" button still on screen.
+    console.error('telegram-webhook: linking failed', err)
+    await sendTelegramMessage(
+      botToken,
+      chatId,
+      "Sorry — connecting didn't work this time. Go back to the website and tap \"Connect Telegram\" again. If it keeps failing, tell your teacher.",
+      REMOVE_KEYBOARD
+    )
+    return 'linking-failed'
+  }
 
   const teacher = await teacherForChat(supabase, chatId)
   if (!teacher) {
