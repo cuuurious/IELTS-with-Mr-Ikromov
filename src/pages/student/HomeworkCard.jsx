@@ -24,6 +24,7 @@ import HomeworkFiles from '../../components/HomeworkFiles'
 import FileActions from '../../components/FileActions'
 import Icon from '../../components/Icon'
 import { SkillIcon } from '../../components/SkillArt'
+import SubmissionImage from '../../components/SubmissionImage'
 import { SKILLS, skillOfHomework, homeworkState, formatDue, STATE_PILL } from '../../lib/skills'
 import {
   DEFAULT_TIME_LIMITS,
@@ -1778,15 +1779,11 @@ export default function HomeworkCard({
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <img
-                          src={
-                            url
-                          }
-                          alt={`submission ${
-                            i +
-                            1
-                          }`}
+                        <SubmissionImage
+                          src={url}
+                          alt={`submission ${i + 1}`}
                           className="w-20 h-20 object-cover rounded-md border border-line"
+                          removedClassName="w-20 h-20 rounded-md border border-line !p-1 [&>span:last-child]:hidden"
                         />
                       </a>
 
