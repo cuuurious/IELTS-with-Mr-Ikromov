@@ -142,7 +142,11 @@ export async function buildParentReportPdf(report, { jsPDF: injected } = {}) {
   const late = homework.late || 0
   const rate = assigned ? Math.round((done / assigned) * 100) : null
   y += 16
-  section('Homework - last 60 days')
+  section(
+    homework.since
+      ? `Homework since ${new Date(homework.since).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
+      : 'Homework'
+  )
   statRow([
     { label: 'Completed', value: rate === null ? '-' : `${rate}%`, hint: `${done} of ${assigned} homework` },
     { label: 'On time', value: Math.max(done - late, 0) },
@@ -151,6 +155,45 @@ export async function buildParentReportPdf(report, { jsPDF: injected } = {}) {
   ])
 
   const recent = homework.recent || []
+
+  // Month by month (migration_76) — one line per month.
+  const months = (homework.months || []).slice(-12)
+  if (months.length > 1) {
+    ensureSpace(30 + months.length * 16)
+    text('MONTH', M, y + 4, { size: 7, bold: true, color: MUTED })
+    text('DONE', M + 150, y + 4, { size: 7, bold: true, color: MUTED })
+    text('ON TIME', M + 220, y + 4, { size: 7, bold: true, color: MUTED })
+    text('LATE', M + 290, y + 4, { size: 7, bold: true, color: MUTED })
+    text('NOT DONE', M + 350, y + 4, { size: 7, bold: true, color: MUTED })
+    y += 10
+    months.forEach((m) => {
+      const [yy, mm] = String(m.month).split('-').map(Number)
+      const label = new Date(yy, mm - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      const handed = (m.done || 0) + (m.late || 0)
+      const pctDone = m.assigned ? Math.round((handed / m.assigned) * 100) : 0
+      doc.setDrawColor(...LINE)
+      doc.line(M, y, W - M, y)
+      y += 12
+      text(label, M, y, { size: 9.5 })
+      text(`${handed}/${m.assigned} (${pctDone}%)`, M + 150, y, { size: 9 })
+      text(String(m.done || 0), M + 220, y, { size: 9, color: STATE.done.color })
+      text(String(m.late || 0), M + 290, y, { size: 9, color: m.late ? STATE.late.color : MUTED })
+      text(String(m.missed || 0), M + 350, y, { size: 9, color: m.missed ? STATE.missed.color : MUTED })
+      // little bar
+      const bx = W - M - 120
+      doc.setFillColor(238, 238, 242)
+      doc.roundedRect(bx, y - 7, 120, 6, 3, 3, 'F')
+      if (pctDone) {
+        doc.setFillColor(...STATE.done.color)
+        doc.roundedRect(bx, y - 7, Math.max(6, 120 * (pctDone / 100)), 6, 3, 3, 'F')
+      }
+      y += 4
+    })
+    doc.setDrawColor(...LINE)
+    doc.line(M, y, W - M, y)
+    y += 18
+  }
+
   if (recent.length) {
     ensureSpace(30)
     const colTitle = M
@@ -162,7 +205,17 @@ export async function buildParentReportPdf(report, { jsPDF: injected } = {}) {
     text('DUE', colDue, y + 4, { size: 7, bold: true, color: MUTED })
     text('STATUS', colState, y + 4, { size: 7, bold: true, color: MUTED, align: 'right' })
     y += 12
+    let lastMonth = ''
     recent.forEach((hw) => {
+      const d = new Date(hw.due_date || hw.created_at)
+      const monthName = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      if (monthName !== lastMonth) {
+        ensureSpace(36)
+        lastMonth = monthName
+        y += 8
+        text(monthName, colTitle, y, { size: 8.5, bold: true, color: ACCENT })
+        y += 6
+      }
       ensureSpace(20)
       const state = STATE[hw.state] || STATE.open
       doc.setDrawColor(...LINE)
