@@ -21,6 +21,7 @@ import AiFeedbackCard from '../../components/AiFeedbackCard'
 import ConfirmModal from '../../components/ConfirmModal'
 import WritingMockTest from './WritingMockTest'
 import HomeworkFiles from '../../components/HomeworkFiles'
+import FileActions from '../../components/FileActions'
 import Icon from '../../components/Icon'
 import { SkillIcon } from '../../components/SkillArt'
 import { SKILLS, skillOfHomework, homeworkState, formatDue, STATE_PILL } from '../../lib/skills'
@@ -1515,8 +1516,13 @@ export default function HomeworkCard({
               >
                 <Icon name="paperclip" className="mr-1 h-4 w-4" />
                 {homework.attachment_name ||
-                  'Download attachment'}
+                  'Open attachment'}
               </a>
+              <FileActions
+                url={homework.attachment_url}
+                name={homework.attachment_name || 'attachment'}
+                isImage={isImageExtension(homework.attachment_name)}
+              />
             </div>
           )}
 

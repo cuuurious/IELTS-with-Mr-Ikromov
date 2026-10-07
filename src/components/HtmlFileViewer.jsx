@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { downloadHref } from './FileActions'
 
 /*
  * HTML FILE VIEWER (2026-10-07)
@@ -112,7 +113,7 @@ function Viewer({ url, name, onClose }) {
         </button>
         <p className="min-w-0 flex-1 truncate text-sm font-semibold text-paper">{name}</p>
         <a
-          href={url}
+          href={downloadHref(url, /\.html?$/i.test(name) ? name : `${name}.html`)}
           download
           className="focus-ring hidden shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-paper hover:bg-panel-2 sm:inline-flex"
         >

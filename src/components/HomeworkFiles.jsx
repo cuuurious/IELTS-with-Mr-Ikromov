@@ -1,4 +1,5 @@
 import { KIND_LABEL, fileKind, formatBytes } from '../lib/materials'
+import FileActions from './FileActions'
 
 /*
  * The files a teacher attached to a homework from the Materials Library
@@ -25,6 +26,7 @@ export default function HomeworkFiles({ files }) {
                 <a href={f.url} target="_blank" rel="noreferrer" className="block w-fit">
                   <img src={f.url} alt={f.name} loading="lazy" className="max-h-64 rounded-md border border-line object-contain" />
                 </a>
+                <FileActions url={f.url} name={f.name} isImage className="mt-2" />
               </li>
             )
           }
@@ -37,11 +39,12 @@ export default function HomeworkFiles({ files }) {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-paper">{f.name}</span>
                   <span className="block text-[11px] text-mist">
-                    {[formatBytes(f.size_bytes), kind === 'audio' || kind === 'video' ? 'Play below or tap to open' : 'Tap to open'].filter(Boolean).join(' · ')}
+                    {[formatBytes(f.size_bytes), kind === 'audio' || kind === 'video' ? 'Play below or tap to open' : kind === 'html' ? 'Tap to open the page' : 'Tap to open'].filter(Boolean).join(' · ')}
                   </span>
                 </span>
               </a>
               {kind === 'audio' && <audio controls preload="none" src={f.url} className="w-full" />}
+              <FileActions url={f.url} name={f.name} />
               {kind === 'video' && <video controls preload="metadata" src={f.url} className="max-h-72 w-full rounded-lg" />}
             </li>
           )
