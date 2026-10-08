@@ -7,6 +7,8 @@ import { SUBMISSION_TYPE_OPTIONS, isImageExtension } from '../../lib/submissionT
 import { MOCK_TASK_MODES } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
 import Icon from '../../components/Icon'
+import HomeworkLessonFields from '../../components/HomeworkLessonFields'
+import { loadTelegramLink, postHomeworkToTelegram } from '../../lib/telegramGroupPost'
 
 function toLocalInputValue(iso) {
   if (!iso) return ''
@@ -30,6 +32,22 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   // group — ~14,000 "Homework updated" notifications so far, mostly for
   // small fixes, which teaches students to ignore notifications.
   const [notifyStudents, setNotifyStudents] = useState(false)
+
+  // Lesson number/date + the group's Telegram post (2026-10-08). Only
+  // once migration_79 added the columns (they then come back in the row).
+  const lessonsSupported = Object.prototype.hasOwnProperty.call(homework, 'lesson_number')
+  const [lessonNumber, setLessonNumber] = useState(homework.lesson_number ?? '')
+  const [lessonDate, setLessonDate] = useState(homework.lesson_date || '')
+  const [telegram, setTelegram] = useState({ supported: false, linked: false, title: null })
+  const [updateTelegram, setUpdateTelegram] = useState(true)
+  useEffect(() => {
+    if (!lessonsSupported) return undefined
+    let cancelled = false
+    loadTelegramLink(homework.group_id).then((t) => !cancelled && setTelegram(t))
+    return () => {
+      cancelled = true
+    }
+  }, [homework.group_id, lessonsSupported])
   const [error, setError] = useState('')
 
   // Library files on this homework (migration_66). `existing` are rows
@@ -204,6 +222,10 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
         attachment_url: isMock ? homework.attachment_url || null : nextAttachmentUrl,
         attachment_name: isMock ? homework.attachment_name || null : nextAttachmentName,
       }
+      if (lessonsSupported) {
+        patch.lesson_number = lessonNumber === '' ? null : Number(lessonNumber)
+        patch.lesson_date = lessonDate || null
+      }
 
       if (isMock) {
         patch.mock_task_mode = mockTaskMode
@@ -235,6 +257,9 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           await attachMaterialsToHomework(homework.id, addedFiles, nextOrder)
         }
       }
+
+      // Edit (or, if it was never posted there, post) the Telegram message.
+      if (telegram.linked && updateTelegram) postHomeworkToTelegram(homework.id, 'update')
 
       onSaved(data, { notify: notifyStudents })
       onClose()
@@ -486,6 +511,18 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
               {SUBMISSION_TYPE_OPTIONS.map((option) => <label key={option.value} className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm cursor-pointer ${allowedTypes.includes(option.value) ? 'border-brass bg-brass/10' : 'border-line text-mist'}`}><input type="checkbox" checked={allowedTypes.includes(option.value)} onChange={() => toggleType(option.value)} />{option.label}</label>)}
             </div>
           </div>
+        )}
+        {lessonsSupported && (
+          <HomeworkLessonFields
+            lessonNumber={lessonNumber}
+            lessonDate={lessonDate}
+            onLessonNumber={setLessonNumber}
+            onLessonDate={setLessonDate}
+            telegram={telegram}
+            postToTelegram={updateTelegram}
+            onPostToTelegram={setUpdateTelegram}
+            telegramLabel="Update it in the Telegram group too"
+          />
         )}
         {error && <p className="text-coral text-sm">{error}</p>}
         <label className="flex items-center gap-2 text-sm text-mist cursor-pointer select-none">

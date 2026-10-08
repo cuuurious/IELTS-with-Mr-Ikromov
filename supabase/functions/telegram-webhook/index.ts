@@ -105,6 +105,7 @@ type TgFile = {
   fileName: string
   mimeType: string
   size: number | null
+  kind?: string
 }
 
 // Pull the one file out of a message (a photo comes in several sizes —
@@ -123,23 +124,24 @@ export function extractFile(message: any): TgFile | null {
         }
       : null
 
+  const withKind = (f: TgFile | null, kind: string) => (f ? { ...f, kind } : null)
   if (message.document) {
     const d = message.document
     const ext = String(d.file_name || '').split('.').pop()?.toLowerCase() || ''
-    return pick(d, `file-${stamp}.${EXT_BY_MIME[d.mime_type] || 'bin'}`, d.mime_type || MIME_BY_EXT[ext] || 'application/octet-stream')
+    return withKind(pick(d, `file-${stamp}.${EXT_BY_MIME[d.mime_type] || 'bin'}`, d.mime_type || MIME_BY_EXT[ext] || 'application/octet-stream'), 'document')
   }
   if (message.audio) {
     const a = message.audio
     const name = a.file_name || [a.performer, a.title].filter(Boolean).join(' - ') || `audio-${stamp}`
-    return pick({ ...a, file_name: /\.[a-z0-9]{2,4}$/i.test(name) ? name : `${name}.${EXT_BY_MIME[a.mime_type] || 'mp3'}` }, name, a.mime_type || 'audio/mpeg')
+    return withKind(pick({ ...a, file_name: /\.[a-z0-9]{2,4}$/i.test(name) ? name : `${name}.${EXT_BY_MIME[a.mime_type] || 'mp3'}` }, name, a.mime_type || 'audio/mpeg'), 'audio')
   }
-  if (message.video) return pick(message.video, `video-${stamp}.mp4`, 'video/mp4')
-  if (message.voice) return pick(message.voice, `voice-${stamp}.ogg`, 'audio/ogg')
-  if (message.video_note) return pick(message.video_note, `video-note-${stamp}.mp4`, 'video/mp4')
-  if (message.animation) return pick(message.animation, `animation-${stamp}.mp4`, 'video/mp4')
+  if (message.video) return withKind(pick(message.video, `video-${stamp}.mp4`, 'video/mp4'), 'video')
+  if (message.voice) return withKind(pick(message.voice, `voice-${stamp}.ogg`, 'audio/ogg'), 'voice')
+  if (message.video_note) return withKind(pick(message.video_note, `video-note-${stamp}.mp4`, 'video/mp4'), 'video_note')
+  if (message.animation) return withKind(pick(message.animation, `animation-${stamp}.mp4`, 'video/mp4'), 'animation')
   if (Array.isArray(message.photo) && message.photo.length) {
     const biggest = [...message.photo].sort((a, b) => (b.file_size || b.width * b.height) - (a.file_size || a.width * a.height))[0]
-    return pick(biggest, `photo-${stamp}.jpg`, 'image/jpeg')
+    return withKind(pick(biggest, `photo-${stamp}.jpg`, 'image/jpeg'), 'photo')
   }
   return null
 }
@@ -333,7 +335,7 @@ export async function saveFileMessage(opts: {
   }
   const url = supabase.storage.from(MATERIALS_BUCKET).getPublicUrl(storagePath).data.publicUrl
 
-  const { error: insErr } = await supabase.from('materials').insert({
+  const materialRow: Record<string, unknown> = {
     folder_id: folderId,
     title,
     file_name: file.fileName,
@@ -345,7 +347,16 @@ export async function saveFileMessage(opts: {
     telegram_file_unique_id: file.uniqueId,
     caption,
     created_by: teacher.id,
-  })
+    // migration_79: lets the bot re-send this file to a group instantly.
+    telegram_file_id: file.fileId,
+    telegram_file_kind: file.kind || 'document',
+  }
+  let { error: insErr } = await supabase.from('materials').insert(materialRow)
+  if (insErr && /telegram_file_(id|kind)/.test(insErr.message || '')) {
+    delete materialRow.telegram_file_id
+    delete materialRow.telegram_file_kind
+    ;({ error: insErr } = await supabase.from('materials').insert(materialRow))
+  }
   if (insErr) {
     await supabase.storage.from(MATERIALS_BUCKET).remove([storagePath])
     if (/duplicate|unique/i.test(insErr.message)) {
@@ -418,6 +429,128 @@ async function handleCallback(supabase: any, botToken: string, callback: any) {
     message_id: callback.message.message_id,
     text: `New files without a #tag will be saved into: ${label}`,
   })
+}
+
+
+// ------------------------------------------------------------------
+// Telegram groups ↔ website groups (2026-10-08, migration_79)
+// The teacher adds the bot to a group's Telegram chat and sends
+// /connect there, then taps which website group it is. From then on
+// homework posted on the website for that group is posted in this chat
+// by the telegram-group-post function. /disconnect undoes it.
+// ------------------------------------------------------------------
+async function groupsKeyboard(supabase: any, chatId: number) {
+  const { data } = await supabase.from('groups').select('id, name, telegram_chat_id')
+  const list = (data || []).sort((a: any, b: any) =>
+    String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true })
+  )
+  const rows = list.slice(0, 90).map((g: any) => [{
+    text: `${Number(g.telegram_chat_id) === chatId ? '✅ ' : ''}${String(g.name || 'Group').slice(0, 50)}`,
+    callback_data: `g:${g.id}`,
+  }])
+  return { inline_keyboard: rows }
+}
+
+export async function handleGroupMessage(supabase: any, botToken: string, message: any) {
+  const chatId = message.chat.id
+
+  // A group that turns into a supergroup gets a new chat id.
+  if (message.migrate_to_chat_id) {
+    await supabase.from('groups').update({ telegram_chat_id: message.migrate_to_chat_id }).eq('telegram_chat_id', chatId)
+    return 'group-migrated'
+  }
+
+  const text = String(message.text || '').trim()
+  const cmd = text.match(/^\/(connect|disconnect)(@[\w_]+)?(\s|$)/i)?.[1]?.toLowerCase()
+  if (!cmd) return 'ignored' // never react to ordinary group chat
+
+  const teacher = message.from?.id ? await teacherForChat(supabase, message.from.id) : null
+  if (!teacher) {
+    await sendTelegramMessage(
+      botToken,
+      chatId,
+      'Only the teacher can do this. (Teacher: connect your Telegram on the website first, then send /connect here again.)',
+      undefined,
+      { reply_to_message_id: message.message_id }
+    )
+    return 'group-not-teacher'
+  }
+
+  if (cmd === 'disconnect') {
+    const { data, error } = await supabase
+      .from('groups')
+      .update({ telegram_chat_id: null, telegram_chat_title: null, telegram_linked_at: null })
+      .eq('telegram_chat_id', chatId)
+      .select('name')
+    if (error) {
+      await sendTelegramMessage(botToken, chatId, 'This is not ready yet on the website (database update missing).')
+      return 'group-error'
+    }
+    await sendTelegramMessage(
+      botToken,
+      chatId,
+      data?.length
+        ? `Disconnected from “${data.map((g: any) => g.name).join(', ')}”. Homework will no longer be posted here.`
+        : 'This chat was not connected to any group.'
+    )
+    return 'group-disconnected'
+  }
+
+  await sendTelegramMessage(
+    botToken,
+    chatId,
+    'Which group on the website is this chat?\nHomework you post on the website for that group will be posted here automatically.',
+    await groupsKeyboard(supabase, chatId)
+  )
+  return 'group-connect-menu'
+}
+
+async function handleGroupCallback(supabase: any, botToken: string, callback: any) {
+  const chat = callback.message?.chat
+  const chatId = chat?.id
+  const groupId = String(callback.data || '').slice(2)
+  const teacher = callback.from?.id ? await teacherForChat(supabase, callback.from.id) : null
+  if (!teacher) {
+    await tg(botToken, 'answerCallbackQuery', { callback_query_id: callback.id, text: 'Only the teacher can choose the group.', show_alert: true })
+    return
+  }
+  const { data: group } = await supabase.from('groups').select('id, name').eq('id', groupId).maybeSingle()
+  if (!group) {
+    await tg(botToken, 'answerCallbackQuery', { callback_query_id: callback.id, text: 'That group no longer exists.' })
+    return
+  }
+  // One Telegram chat ↔ one website group.
+  await supabase.from('groups').update({ telegram_chat_id: null, telegram_chat_title: null, telegram_linked_at: null }).eq('telegram_chat_id', chatId).neq('id', group.id)
+  const { error } = await supabase
+    .from('groups')
+    .update({ telegram_chat_id: chatId, telegram_chat_title: chat?.title || null, telegram_linked_at: new Date().toISOString() })
+    .eq('id', group.id)
+  if (error) {
+    await tg(botToken, 'answerCallbackQuery', { callback_query_id: callback.id, text: 'Not ready yet — the website database needs an update.', show_alert: true })
+    return
+  }
+  await tg(botToken, 'answerCallbackQuery', { callback_query_id: callback.id, text: 'Connected ✅' })
+  await tg(botToken, 'editMessageText', {
+    chat_id: chatId,
+    message_id: callback.message.message_id,
+    text: `✅ This chat is connected to group “${group.name}”.\nHomework you post on the website for ${group.name} will appear here. Send /disconnect to stop.`,
+  })
+}
+
+async function handleMembership(supabase: any, botToken: string, update: any) {
+  const chat = update.chat
+  if (!chat || (chat.type !== 'group' && chat.type !== 'supergroup')) return
+  const now = update.new_chat_member?.status
+  const before = update.old_chat_member?.status
+  if ((now === 'member' || now === 'administrator') && (before === 'left' || before === 'kicked' || !before)) {
+    await sendTelegramMessage(
+      botToken,
+      chat.id,
+      'Hello! 👋 Teacher: send /connect in this chat to link it with your group on the website. After that, homework you post on the website appears here automatically.'
+    )
+  } else if (now === 'left' || now === 'kicked') {
+    await supabase.from('groups').update({ telegram_chat_id: null, telegram_chat_title: null, telegram_linked_at: null }).eq('telegram_chat_id', chat.id)
+  }
 }
 
 // ------------------------------------------------------------------
@@ -548,7 +681,16 @@ export async function handleUpdate(update: any, env: {
 }) {
   const { supabase, botToken } = env
 
+  if (update?.my_chat_member) {
+    await handleMembership(supabase, botToken, update.my_chat_member)
+    return 'membership'
+  }
+
   if (update?.callback_query) {
+    if (String(update.callback_query.data || '').startsWith('g:')) {
+      await handleGroupCallback(supabase, botToken, update.callback_query)
+      return 'group-callback'
+    }
     await handleCallback(supabase, botToken, update.callback_query)
     return 'callback'
   }
@@ -557,7 +699,11 @@ export async function handleUpdate(update: any, env: {
   const chatId = message?.chat?.id
   if (!message || !chatId) return 'ignored'
 
-  // Only private chats with the bot — never act on group messages.
+  // Group chats: only /connect and /disconnect (migration_79) — the bot
+  // never reacts to ordinary group conversation.
+  if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
+    return await handleGroupMessage(supabase, botToken, message)
+  }
   if (message.chat.type && message.chat.type !== 'private') return 'ignored'
 
   try {

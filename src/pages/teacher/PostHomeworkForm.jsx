@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
 import { safeFileName } from '../../lib/storageKey'
@@ -7,6 +7,8 @@ import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES, DEFAULT_TIME_LIMITS } from '../../lib/writingMock'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
 import Icon from '../../components/Icon'
+import HomeworkLessonFields from '../../components/HomeworkLessonFields'
+import { loadLessonDefaults, loadTelegramLink, postHomeworkToTelegram } from '../../lib/telegramGroupPost'
 
 const DEFAULT_TYPES = ['image']
 const DEFAULT_MOCK_MODE = 'task2'
@@ -27,6 +29,32 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Lesson number/date + post to the group's Telegram chat (2026-10-08).
+  const [lessonsSupported, setLessonsSupported] = useState(false)
+  const [lessonNumber, setLessonNumber] = useState('')
+  const [lessonDate, setLessonDate] = useState('')
+  const [telegram, setTelegram] = useState({ supported: false, linked: false, title: null })
+  const [postToTelegram, setPostToTelegram] = useState(true)
+
+  useEffect(() => {
+    if (!open || !groupId) return undefined
+    let cancelled = false
+    loadLessonDefaults(groupId).then((d) => {
+      if (cancelled) return
+      setLessonsSupported(d.supported)
+      setLessonNumber(d.lessonNumber)
+      setLessonDate(d.lessonDate)
+    })
+    loadTelegramLink(groupId).then((t) => {
+      if (cancelled) return
+      setTelegram(t)
+      setPostToTelegram(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open, groupId])
 
   // Writing Mock Test — an alternative to the file-upload homework
   // above. Students type a timed essay directly in the app instead of
@@ -226,6 +254,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           mock_task1_prompt: isMock ? mockTask1Prompt : null,
           mock_task1_image_url: isMock ? mock_task1_image_url : null,
           mock_task2_prompt: isMock ? mockTask2Prompt : null,
+          ...(lessonsSupported
+            ? { lesson_number: lessonNumber === '' ? null : Number(lessonNumber), lesson_date: lessonDate || null }
+            : {}),
         })
         .select()
         .maybeSingle()
@@ -268,6 +299,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           )
         }
       }
+
+      // Into the group's Telegram chat (after the files are attached).
+      if (telegram.linked && postToTelegram) postHomeworkToTelegram(posted.id, 'post')
 
       onPosted(posted)
       setLibraryFiles([])
@@ -636,6 +670,17 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
             </div>
           )}
         </div>
+      )}
+      {lessonsSupported && (
+        <HomeworkLessonFields
+          lessonNumber={lessonNumber}
+          lessonDate={lessonDate}
+          onLessonNumber={setLessonNumber}
+          onLessonDate={setLessonDate}
+          telegram={telegram}
+          postToTelegram={postToTelegram}
+          onPostToTelegram={setPostToTelegram}
+        />
       )}
       {error && <p className="text-coral text-sm">{error}</p>}
       <div className="flex gap-2">
