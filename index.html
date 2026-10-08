@@ -18,6 +18,39 @@
       name="description"
       content="IELTS preparation with Mr Jasur Ikromov — homework, writing mock tests, and personal feedback to help you reach your target band score."
     />
+
+    <!-- Self-heal (2026-10-08): if the app's own JS/CSS fails to load
+         (e.g. opened in the middle of a deploy and an old service worker
+         kept a broken copy), clear the cached files and reload once
+         instead of leaving a white page. -->
+    <script>
+      (function () {
+        var KEY = 'ielts:assetReload'
+        function heal() {
+          try {
+            if (sessionStorage.getItem(KEY)) return
+            sessionStorage.setItem(KEY, '1')
+          } catch (e) { return }
+          var jobs = []
+          if (window.caches && caches.keys) {
+            jobs.push(caches.keys().then(function (names) { return Promise.all(names.map(function (n) { return caches.delete(n) })) }))
+          }
+          Promise.all(jobs).catch(function () {}).then(function () {
+            setTimeout(function () { location.reload() }, 300)
+          })
+        }
+        window.addEventListener('error', function (e) {
+          var t = e && e.target
+          var src = t && (t.src || t.href)
+          if (src && /\/assets\//.test(src)) heal()
+        }, true)
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            try { if (document.getElementById('root') && document.getElementById('root').childElementCount) sessionStorage.removeItem(KEY) } catch (e) {}
+          }, 4000)
+        })
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

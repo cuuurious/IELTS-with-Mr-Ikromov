@@ -11,7 +11,14 @@
 //     for when the phone is offline / the network fails.
 //   • Everything else (Supabase API, storage, other sites) — untouched.
 
-const VERSION = 'v1'
+// v2 (2026-10-08): v1 could cache an HTML page under a /assets/ name.
+// While Cloudflare is still rolling out a deploy, a brand-new
+// /assets/index-xxxx.js briefly answers with the site's index.html
+// (status 200). v1 stored that as the "JS file" forever — the app then
+// stayed white on that browser even after the deploy finished. Bumping
+// the version wipes every v1 cache; cacheFirst below now refuses to
+// store or serve anything that isn't really JS/CSS/etc.
+const VERSION = 'v2'
 const ASSET_CACHE = `assets-${VERSION}`
 const STATIC_CACHE = `static-${VERSION}`
 const SHELL_CACHE = `shell-${VERSION}`
@@ -39,12 +46,17 @@ async function trimCache(name, max) {
   await Promise.all(keys.slice(0, keys.length - max).map((k) => cache.delete(k)))
 }
 
+// An /assets/ file must never be an HTML page (that's the SPA fallback
+// answering for a file that isn't there yet).
+const isHtml = (res) => (res.headers.get('content-type') || '').includes('text/html')
+
 async function cacheFirst(request) {
   const cache = await caches.open(ASSET_CACHE)
   const hit = await cache.match(request)
-  if (hit) return hit
-  const res = await fetch(request)
-  if (res.ok && res.type === 'basic') {
+  if (hit && !isHtml(hit)) return hit
+  if (hit) cache.delete(request).catch(() => {})
+  const res = await fetch(request, { cache: 'no-store' })
+  if (res.ok && res.type === 'basic' && !isHtml(res)) {
     cache.put(request, res.clone()).then(() => trimCache(ASSET_CACHE, MAX_ASSETS)).catch(() => {})
   }
   return res
