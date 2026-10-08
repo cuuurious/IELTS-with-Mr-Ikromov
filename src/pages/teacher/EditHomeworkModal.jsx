@@ -283,7 +283,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           itself, which plenty of other non-scrolling modals still rely
           on for that clipping. */}
       <div className="ticket rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-      <form onSubmit={save} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4">
+      <form onSubmit={save} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4 [&>*]:shrink-0">
         <div className="flex items-start justify-between">
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
           <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>

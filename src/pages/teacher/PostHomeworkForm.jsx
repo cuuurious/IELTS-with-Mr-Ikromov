@@ -339,7 +339,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setOpen(false)}>
       <div className="ticket rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-      <form onSubmit={submit} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4">
+      <form onSubmit={submit} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4 [&>*]:shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="font-display text-xl">Post homework</h2>
@@ -356,7 +356,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         </div>
 
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (e.g. Reading Passage 3)" className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" required />
-      <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instructions for students (optional)" rows={3} className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2" />
+      <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Instructions for students (optional)" rows={4} className="focus-ring min-h-[110px] resize-y bg-panel-2 border border-line rounded-md px-3 py-2" />
 
       <div className="bg-panel-2 border border-line rounded-lg p-3">
         <div className="text-sm font-medium mb-1">Homework type</div>
