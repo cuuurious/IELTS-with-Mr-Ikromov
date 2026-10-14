@@ -360,6 +360,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
 
   // Poll this attempt's own row for teacher actions — pause/resume, extra
   // time, "end section now", or the sitting being cancelled.
+  const lastBeatRef = useRef(0)
   useEffect(() => {
     if (endedExternally) return
     let cancelled = false
@@ -375,6 +376,21 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
         .maybeSingle()
 
       if (cancelled || pollError) return
+
+      // Presence heartbeat (2026-10-14, same as Listening/Reading): the
+      // autosave only writes when the essay changed, so a student thinking
+      // or planning looked "offline" in Live Mocks. A tiny write at most
+      // every 30 s lets the server trigger move last_seen_at.
+      if (row && !row.submitted_at && Date.now() - lastBeatRef.current >= 30_000) {
+        lastBeatRef.current = Date.now()
+        supabase
+          .from('writing_mock_attempts')
+          .update({ tab_switch_count: tabSwitchCountRef.current })
+          .eq('id', attempt.id)
+          .then(({ error: beatError }) => {
+            if (beatError) console.error('Presence heartbeat failed:', beatError)
+          })
+      }
 
       if (!row) {
         submittedRef.current = true

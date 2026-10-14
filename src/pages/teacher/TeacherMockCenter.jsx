@@ -3892,6 +3892,8 @@ export default function TeacherMockCenter({ onExit }) {
             <LiveMocksPanel
               students={students}
               fullMockSets={fullMockSets}
+              groups={groups}
+              groupMembers={groupMembers}
               onReissueCode={reissueAccessCode}
               onDataChanged={() => setDataVersion((v) => v + 1)}
             />
