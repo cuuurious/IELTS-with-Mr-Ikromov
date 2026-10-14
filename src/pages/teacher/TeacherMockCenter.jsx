@@ -256,6 +256,22 @@ function isDraftQuestionValid(q) {
   return true
 }
 
+// "Incomplete": 0 correct, or handed in within 10 minutes — a section
+// that was ended early, skipped or left (see summarize in rows). A real
+// Listening takes ~30-40 minutes and Reading up to 60.
+const INCOMPLETE_MINUTES = 10
+function isEmptyAttempt(a) {
+  if (!a || a.submitted_at == null) return false
+  if (Number(a.score) <= 0) return true
+  const m = minutesTaken(a)
+  return m != null && m < INCOMPLETE_MINUTES
+}
+
+function minutesTaken(a) {
+  if (!a?.started_at || !a?.submitted_at) return null
+  return Math.max(0, Math.round((new Date(a.submitted_at) - new Date(a.started_at)) / 60000))
+}
+
 function pct(score, max) {
   if (!max) return 0
   return Math.round((score / max) * 100)
@@ -572,6 +588,14 @@ export default function TeacherMockCenter({ onExit }) {
 
   const [search, setSearch] = useState('')
   const [studentsView, setStudentsView] = useState('grouped') // 'grouped' | 'mixed'
+  // 2026-10-14 Mock Center upgrade: Results / Student Progress filters.
+  const [resultsFilter, setResultsFilter] = useState('scored') // 'scored' | 'empty' | 'all'
+  const [resultsSkill, setResultsSkill] = useState('')
+  const [resultsSearch, setResultsSearch] = useState('')
+  const [progressSearch, setProgressSearch] = useState('')
+  const [progressGroup, setProgressGroup] = useState('')
+  const [showNeverSat, setShowNeverSat] = useState(false)
+  const [liveCount, setLiveCount] = useState(null)
   // Jasur 2026-09-26, right after asking for every group as its own
   // section: "i dont want to scroll for hours to see groups
   // separately" — groups here run 30-40+ students each, so all of them
@@ -1745,13 +1769,22 @@ export default function TeacherMockCenter({ onExit }) {
         }
       })
 
+      // An attempt with 0 correct answers is almost always one that was
+      // ended early, skipped or abandoned (2026-10-14: a class whose
+      // Listening/Reading were ended after 2-5 minutes made the whole
+      // Mock Center show "overall 1.0" and "56 below target"). Those stay
+      // visible in the profile and Results, but don't count in averages.
       const summarize = (arr) => {
-        if (arr.length === 0) return null
-        const pcts = arr.map((a) => pct(a.score, a.max_score))
+        const counted = arr.filter((a) => !isEmptyAttempt(a))
+        if (counted.length === 0) return null
+        const pcts = counted.map((a) => pct(a.score, a.max_score))
+        const latest = counted.reduce((m, a) => (new Date(a.submitted_at) > new Date(m.submitted_at) ? a : m), counted[0])
         return {
           average: Math.round(pcts.reduce((s, v) => s + v, 0) / pcts.length),
           highest: Math.max(...pcts),
-          count: arr.length,
+          latest: pct(latest.score, latest.max_score),
+          count: counted.length,
+          empty: arr.length - counted.length,
         }
       }
 
@@ -1826,6 +1859,10 @@ export default function TeacherMockCenter({ onExit }) {
             title: a.examTitle || 'Reading',
             date: a.submitted_at,
             scoreLabel: `${a.score}/${a.max_score}`,
+            score: a.score,
+            maxScore: a.max_score,
+            minutes: minutesTaken(a),
+            empty: isEmptyAttempt(a),
             suggestedBand: estimateBandFromPercent(pct(a.score, a.max_score)),
             editableBand: true,
           })
@@ -1841,6 +1878,10 @@ export default function TeacherMockCenter({ onExit }) {
             title: a.examTitle || 'Listening',
             date: a.submitted_at,
             scoreLabel: `${a.score}/${a.max_score}`,
+            score: a.score,
+            maxScore: a.max_score,
+            minutes: minutesTaken(a),
+            empty: isEmptyAttempt(a),
             suggestedBand: estimateBandFromPercent(pct(a.score, a.max_score)),
             editableBand: true,
           })
@@ -1855,6 +1896,7 @@ export default function TeacherMockCenter({ onExit }) {
             skill: 'Writing',
             title: r.examTitle || 'Writing mock',
             date: r.examiner_reviewed_at,
+            minutes: minutesTaken(r),
             scoreLabel: null,
             suggestedBand: r.examiner_band,
             editableBand: false,
@@ -1886,6 +1928,31 @@ export default function TeacherMockCenter({ onExit }) {
   }, [rows])
 
   const allPendingItems = useMemo(() => pendingRelease.flatMap((g) => g.items), [pendingRelease])
+
+  // Tab badges (2026-10-14): how many sittings are live right now and how
+  // many results with a score are waiting — visible from any tab.
+  useEffect(() => {
+    let cancelled = false
+    const countLive = async () => {
+      const since = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+      const { count } = await supabase
+        .from('full_mock_attempts')
+        .select('id', { count: 'exact', head: true })
+        .neq('stage', 'done')
+        .gte('updated_at', since)
+      if (!cancelled && typeof count === 'number') setLiveCount(count)
+    }
+    countLive()
+    const id = setInterval(() => {
+      if (!document.hidden) countLive()
+    }, 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [])
+  const badgeFor = (key) =>
+    key === 'live' ? liveCount || 0 : key === 'results' ? allPendingItems.filter((it) => !it.empty).length : 0
 
   // Delete unreleased results straight from the Results list (2026-09-29,
   // Jasur: "HOW DO I DELETE THEM" about a pile of 0/40 test-run attempts).
@@ -2132,7 +2199,6 @@ export default function TeacherMockCenter({ onExit }) {
   const needsAttention = useMemo(() => {
     return studentBandSummary
       .filter((s) => {
-        if (!s.hasAnyActivity) return true
         if (s.overallBand != null && s.row.student.target_band != null) {
           return s.overallBand <= s.row.student.target_band - BAND_GAP_ATTENTION
         }
@@ -2195,6 +2261,23 @@ export default function TeacherMockCenter({ onExit }) {
     })
     return map
   }, [groupMembers])
+
+  const groupNameById = useMemo(() => Object.fromEntries(groups.map((g) => [g.id, g.name])), [groups])
+
+  // Student Progress list with its own search / group / "never sat" filters.
+  const progressRows = useMemo(() => {
+    const q = progressSearch.trim().toLowerCase()
+    return rankedProgressRows.filter((row) => {
+      const sum = bandSummaryByStudentId[row.student.id]
+      if (!showNeverSat && !sum?.hasAnyActivity) return false
+      if (progressGroup && !(groupIdsByStudent[row.student.id] || []).includes(progressGroup)) return false
+      if (q) {
+        const name = studentLabel(row.student).toLowerCase()
+        if (!name.includes(q) && !(row.student.username || '').toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+  }, [rankedProgressRows, bandSummaryByStudentId, showNeverSat, progressGroup, groupIdsByStudent, progressSearch])
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -3767,6 +3850,15 @@ export default function TeacherMockCenter({ onExit }) {
               }`}
             >
               {s.label}
+              {badgeFor(s.key) > 0 && (
+                <span
+                  className={`ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                    section === s.key ? 'bg-onbrass/20 text-onbrass' : s.key === 'live' ? 'bg-sage/20 text-sage' : 'bg-coral/15 text-coral'
+                  }`}
+                >
+                  {badgeFor(s.key)}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -3810,10 +3902,13 @@ export default function TeacherMockCenter({ onExit }) {
                  ================================================== */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
                 <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Students</p>
-                  <p className="font-display text-2xl text-paper mt-1">{progressSummary.total}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Sat a mock</p>
+                  <p className="font-display text-2xl text-paper mt-1">
+                    {progressSummary.total - progressSummary.notStarted}
+                    <span className="text-sm text-mist"> / {progressSummary.total}</span>
+                  </p>
                   <p className="text-xs text-paper-dim mt-0.5">
-                    {progressSummary.notStarted} not started yet
+                    {progressSummary.notStarted} haven't yet
                   </p>
                 </div>
                 {/* The class's overall estimated band — each student's own
@@ -3853,10 +3948,10 @@ export default function TeacherMockCenter({ onExit }) {
               {needsAttention.length > 0 && (
                 <div className="rounded-2xl border border-coral/30 bg-coral/5 p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-coral font-mono mb-2">
-                    Needs attention · {needsAttention.length}
+                    A band or more below target · {needsAttention.length}
                   </p>
-                  <div className="flex flex-col divide-y divide-line/60">
-                    {needsAttention.slice(0, 8).map(({ student, reason }) => (
+                  <div className="grid gap-x-6 sm:grid-cols-2">
+                    {needsAttention.slice(0, 10).map(({ student, reason }) => (
                       <button
                         key={student.id}
                         type="button"
@@ -3868,16 +3963,46 @@ export default function TeacherMockCenter({ onExit }) {
                       </button>
                     ))}
                   </div>
-                  {needsAttention.length > 8 && (
-                    <p className="text-xs text-mist mt-2">+{needsAttention.length - 8} more</p>
+                  {needsAttention.length > 10 && (
+                    <p className="text-xs text-mist mt-2">+{needsAttention.length - 10} more — sort the list below by band to see them all</p>
                   )}
                 </div>
               )}
 
+              {/* Search / filters (2026-10-14) */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="search"
+                  value={progressSearch}
+                  onChange={(e) => setProgressSearch(e.target.value)}
+                  placeholder="Search a student…"
+                  className="focus-ring min-w-[12rem] flex-1 sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                />
+                <select
+                  value={progressGroup}
+                  onChange={(e) => setProgressGroup(e.target.value)}
+                  className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper"
+                >
+                  <option value="">All groups</option>
+                  {sortedGroups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {/^\d+$/.test(g.name.trim()) ? `Group ${g.name}` : g.name}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper-dim">
+                  <input type="checkbox" checked={showNeverSat} onChange={(e) => setShowNeverSat(e.target.checked)} className="h-4 w-4 accent-brass" />
+                  Show students who never sat a mock ({progressSummary.notStarted})
+                </label>
+                <span className="ml-auto text-xs text-mist">{progressRows.length} shown</span>
+              </div>
+
               <StudentRowList
-                rows={rankedProgressRows}
+                rows={progressRows}
                 onOpenProfile={setProfileStudentId}
-                emptyLabel="No students yet."
+                summaryById={bandSummaryByStudentId}
+                groupNamesFor={(id) => (groupIdsByStudent[id] || []).map((g) => groupNameById[g]).filter(Boolean)}
+                emptyLabel={progressSummary.notStarted === progressSummary.total ? 'Nobody has sat a mock yet.' : 'No students match these filters.'}
               />
             </div>
           )}
@@ -3899,130 +4024,252 @@ export default function TeacherMockCenter({ onExit }) {
             />
           )}
 
-          {!loading && section === 'results' && (
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-mist max-w-lg">
-                  Reading/Listening score instantly and Writing/Speaking are marked by an
-                  examiner, but nothing reaches a student until you release it here — one
-                  result at a time, or select several/all at once.
+          {!loading && section === 'results' && (() => {
+            // 2026-10-14 upgrade: one table instead of a card per student,
+            // empty results (0 correct — ended early / skipped) kept apart
+            // so "Release all" no longer sends students a 0/40, filters,
+            // time taken, and a one-click clean-up of the empty ones.
+            const emptyItems = allPendingItems.filter((it) => it.empty)
+            const scoredItems = allPendingItems.filter((it) => !it.empty)
+            const q = resultsSearch.trim().toLowerCase()
+            const shownGroups = pendingRelease
+              .map(({ student, items }) => ({
+                student,
+                items: items.filter(
+                  (it) =>
+                    (resultsFilter === 'all' || (resultsFilter === 'empty' ? it.empty : !it.empty)) &&
+                    (!resultsSkill || it.skill === resultsSkill)
+                ),
+              }))
+              .filter((g) => g.items.length > 0)
+              .filter((g) => !q || studentLabel(g.student).toLowerCase().includes(q) || (g.student.username || '').toLowerCase().includes(q))
+            const shownItems = shownGroups.flatMap((g) => g.items.map((it) => ({ ...it, student: g.student })))
+              .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+            const allShownSelected = shownItems.length > 0 && shownItems.every((it) => selectedReleaseKeys.has(it.key))
+            const selectedItems = allPendingItems.filter((it) => selectedReleaseKeys.has(it.key))
+            const confirmRelease = (items) => {
+              const empties = items.filter((it) => it.empty).length
+              setConfirmDialog({
+                title: `Release ${items.length} result${items.length === 1 ? '' : 's'}?`,
+                message: `Each student will see their score and band straight away.${
+                  empties ? ` ${empties} of these ${empties === 1 ? 'is' : 'are'} incomplete (ended early or 0 correct), so those students will see a very low score.` : ''
+                }`,
+                confirmLabel: `Release ${items.length}`,
+                onConfirm: () => releaseItems(items),
+              })
+            }
+            const pill = (active) =>
+              `focus-ring rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'}`
+            return (
+              <div className="flex flex-col gap-4">
+                <p className="text-sm text-mist max-w-2xl">
+                  Nothing reaches a student until you release it here. Reading/Listening are scored automatically
+                  (you can change the band first); Writing/Speaking appear once an examiner has marked them.
                 </p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    disabled={releasing || selectedReleaseKeys.size === 0}
-                    onClick={() => deleteResultItems(allPendingItems.filter((it) => selectedReleaseKeys.has(it.key)))}
-                    className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40"
-                  >
-                    Delete selected ({selectedReleaseKeys.size})
-                  </button>
-                  <button
-                    type="button"
-                    disabled={releasing || selectedReleaseKeys.size === 0}
-                    onClick={() => releaseItems(allPendingItems.filter((it) => selectedReleaseKeys.has(it.key)))}
-                    className="focus-ring rounded-full border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40"
-                  >
-                    Release selected ({selectedReleaseKeys.size})
-                  </button>
-                  <button
-                    type="button"
-                    disabled={releasing || allPendingItems.length === 0}
-                    onClick={() => releaseItems(allPendingItems)}
-                    className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40"
-                  >
-                    Release all ({allPendingItems.length})
-                  </button>
-                </div>
-              </div>
 
-              {releaseError && <p className="text-sm text-coral">{releaseError}</p>}
-
-              {pendingRelease.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
-                  Nothing waiting — every scored or marked result is already visible to its
-                  student.
+                {/* summary */}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    ['Waiting', allPendingItems.length, 'text-paper'],
+                    ['With a score', scoredItems.length, 'text-sage'],
+                    ['Incomplete', emptyItems.length, emptyItems.length ? 'text-coral' : 'text-paper'],
+                    ['Students', pendingRelease.length, 'text-paper'],
+                  ].map(([label, n, cls]) => (
+                    <div key={label} className="rounded-xl border border-line bg-panel px-3 py-2.5">
+                      <span className={`block font-display text-2xl leading-none ${cls}`}>{n}</span>
+                      <span className="mt-1 block text-[11px] font-medium text-mist">{label}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                pendingRelease.map(({ student, items }) => (
-                  <div key={student.id} className="rounded-2xl border border-line bg-panel p-4">
+
+                {emptyItems.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-coral/30 bg-coral/5 px-4 py-3 text-sm text-paper-dim">
+                    <span className="flex-1 min-w-[14rem]">
+                      <b className="text-paper">{emptyItems.length} incomplete result{emptyItems.length === 1 ? '' : 's'}</b> — 0 correct or
+                      handed in within {INCOMPLETE_MINUTES} minutes, usually a section that was ended early, skipped or left. They don't
+                      count in Student Progress.
+                    </span>
+                    <button type="button" onClick={() => setResultsFilter('empty')} className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass">
+                      Review them
+                    </button>
                     <button
                       type="button"
-                      onClick={() => setProfileStudentId(student.id)}
-                      className="focus-ring text-sm font-semibold text-paper hover:text-brass transition-colors mb-2"
+                      disabled={releasing}
+                      onClick={() => deleteResultItems(emptyItems)}
+                      className="focus-ring rounded-full border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
                     >
-                      {studentLabel(student)}
+                      Delete all incomplete ({emptyItems.length})
                     </button>
-                    <div className="flex flex-col divide-y divide-line/60">
-                      {items.map((it) => (
-                        <div key={it.key} className="flex items-center gap-3 py-2.5">
+                  </div>
+                )}
+
+                {/* filters + actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex rounded-full border border-line bg-panel-2 p-1">
+                    <button type="button" onClick={() => setResultsFilter('scored')} className={pill(resultsFilter === 'scored')}>With a score ({scoredItems.length})</button>
+                    <button type="button" onClick={() => setResultsFilter('empty')} className={pill(resultsFilter === 'empty')}>Incomplete ({emptyItems.length})</button>
+                    <button type="button" onClick={() => setResultsFilter('all')} className={pill(resultsFilter === 'all')}>All</button>
+                  </div>
+                  <select value={resultsSkill} onChange={(e) => setResultsSkill(e.target.value)} className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper">
+                    <option value="">All skills</option>
+                    {['Listening', 'Reading', 'Writing', 'Speaking'].map((k) => (
+                      <option key={k} value={k}>{k}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="search"
+                    value={resultsSearch}
+                    onChange={(e) => setResultsSearch(e.target.value)}
+                    placeholder="Search a student…"
+                    className="focus-ring min-w-[10rem] flex-1 sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                  />
+                  <div className="ml-auto flex flex-wrap gap-2">
+                    {selectedItems.length > 0 && (
+                      <>
+                        <button type="button" disabled={releasing} onClick={() => deleteResultItems(selectedItems)} className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 disabled:opacity-40">
+                          Delete ({selectedItems.length})
+                        </button>
+                        <button type="button" disabled={releasing} onClick={() => confirmRelease(selectedItems)} className="focus-ring rounded-full border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40">
+                          Release selected ({selectedItems.length})
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      disabled={releasing || scoredItems.length === 0}
+                      onClick={() => confirmRelease(scoredItems)}
+                      className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim disabled:opacity-40"
+                    >
+                      Release all with a score ({scoredItems.length})
+                    </button>
+                  </div>
+                </div>
+
+                {releaseError && <p className="text-sm text-coral">{releaseError}</p>}
+
+                {allPendingItems.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
+                    Nothing waiting — every scored or marked result is already visible to its student.
+                  </div>
+                ) : shownItems.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
+                    Nothing matches these filters.
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+                    <div className="hidden grid-cols-[2rem_minmax(0,1.4fr)_6rem_minmax(0,1.2fr)_minmax(0,1fr)_5rem_5.5rem_auto] items-center gap-3 border-b border-line bg-panel-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-mist md:grid">
+                      <input
+                        type="checkbox"
+                        checked={allShownSelected}
+                        onChange={() =>
+                          setSelectedReleaseKeys((prev) => {
+                            const next = new Set(prev)
+                            shownItems.forEach((it) => (allShownSelected ? next.delete(it.key) : next.add(it.key)))
+                            return next
+                          })
+                        }
+                        className="h-4 w-4 accent-brass"
+                        aria-label="Select all shown"
+                      />
+                      <span>Student</span>
+                      <span>Skill</span>
+                      <span>Test</span>
+                      <span>Score</span>
+                      <span>Time</span>
+                      <span>Band</span>
+                      <span className="text-right">Actions</span>
+                    </div>
+                    {shownItems.map((it) => {
+                      const p = it.maxScore ? Math.round((it.score / it.maxScore) * 100) : null
+                      return (
+                        <div
+                          key={it.key}
+                          className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 border-b border-line px-4 py-2.5 last:border-b-0 md:grid-cols-[2rem_minmax(0,1.4fr)_6rem_minmax(0,1.2fr)_minmax(0,1fr)_5rem_5.5rem_auto] ${it.empty ? 'bg-coral/[0.03]' : ''}`}
+                        >
                           <input
                             type="checkbox"
                             checked={selectedReleaseKeys.has(it.key)}
-                            onChange={(e) => {
+                            onChange={(e) =>
                               setSelectedReleaseKeys((prev) => {
                                 const next = new Set(prev)
                                 if (e.target.checked) next.add(it.key)
                                 else next.delete(it.key)
                                 return next
                               })
-                            }}
-                            className="h-4 w-4 shrink-0 rounded border-line"
-                            aria-label={`Select ${it.skill} result for ${studentLabel(student)}`}
+                            }
+                            className="h-4 w-4 accent-brass"
+                            aria-label={`Select ${it.skill} result for ${studentLabel(it.student)}`}
                           />
-                          <span className="text-xs font-semibold uppercase tracking-wide text-mist w-20 shrink-0">
-                            {it.skill}
-                          </span>
-                          <span className="text-sm text-paper-dim flex-1 truncate">
-                            {it.title}
-                            {it.scoreLabel ? ` — ${it.scoreLabel}` : ''}
-                          </span>
-                          {it.editableBand ? (
-                            <input
-                              type="number"
-                              step="0.5"
-                              min="1"
-                              max="9"
-                              value={bandOverride(it.key, it.suggestedBand) ?? ''}
-                              onChange={(e) =>
-                                setBandDrafts((prev) => ({
-                                  ...prev,
-                                  [it.key]: e.target.value === '' ? null : Number(e.target.value),
-                                }))
-                              }
-                              className="focus-ring w-16 shrink-0 rounded-lg border border-line bg-panel-2 px-2 py-1 text-sm text-paper text-center"
-                              aria-label={`Suggested band for ${it.skill}, editable before release`}
-                            />
-                          ) : (
-                            <span className="text-sm font-semibold text-paper w-16 shrink-0 text-center">
-                              {formatBand(it.suggestedBand)}
+                          <button type="button" onClick={() => setProfileStudentId(it.student.id)} className="focus-ring min-w-0 text-left">
+                            <span className="block truncate text-sm font-semibold text-paper hover:text-brass">{studentLabel(it.student)}</span>
+                            <span className="block text-[11px] text-mist">
+                              {it.date ? new Date(it.date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                             </span>
-                          )}
-                          <button
-                            type="button"
-                            disabled={releasing}
-                            onClick={() => releaseItems([it])}
-                            className="focus-ring shrink-0 rounded-full border border-line text-xs font-semibold px-3 py-1.5 text-mist hover:text-brass hover:border-brass/40 transition-colors disabled:opacity-40"
-                          >
-                            Release
                           </button>
-                          {it.table !== 'mock_speaking_slots' && (
+                          <span className="text-xs font-semibold text-paper-dim md:order-none">{it.skill}</span>
+                          <span className="col-span-2 col-start-2 truncate text-sm text-paper-dim md:col-span-1 md:col-start-auto">{it.title}</span>
+                          <span className="col-span-2 col-start-2 md:col-span-1 md:col-start-auto">
+                            {it.scoreLabel ? (
+                              <span className="flex items-center gap-2">
+                                <span className={`text-sm font-semibold ${it.empty ? 'text-coral' : 'text-paper'}`}>{it.scoreLabel}</span>
+                                {p != null && (
+                                  <span className="h-1.5 w-16 overflow-hidden rounded-full bg-panel-2">
+                                    <span className={`block h-full rounded-full ${it.empty ? 'bg-coral' : 'bg-brass'}`} style={{ width: `${Math.max(2, p)}%` }} />
+                                  </span>
+                                )}
+                                {it.empty && <span className="text-[10px] font-semibold uppercase text-coral">{it.score > 0 ? 'ended early' : 'empty'}</span>}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-mist">examiner marked</span>
+                            )}
+                          </span>
+                          <span className="hidden text-xs text-mist md:block">{it.minutes != null ? `${it.minutes} min` : '—'}</span>
+                          <span className="col-start-2 md:col-start-auto">
+                            {it.editableBand ? (
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="1"
+                                max="9"
+                                value={bandOverride(it.key, it.suggestedBand) ?? ''}
+                                onChange={(e) =>
+                                  setBandDrafts((prev) => ({ ...prev, [it.key]: e.target.value === '' ? null : Number(e.target.value) }))
+                                }
+                                className="focus-ring w-16 rounded-lg border border-line bg-panel-2 px-2 py-1 text-center text-sm text-paper"
+                                aria-label={`Band for ${it.skill}, editable before release`}
+                              />
+                            ) : (
+                              <span className="text-sm font-semibold text-paper">{formatBand(it.suggestedBand)}</span>
+                            )}
+                          </span>
+                          <span className="col-span-2 col-start-2 flex justify-start gap-1.5 md:col-span-1 md:col-start-auto md:justify-end">
                             <button
                               type="button"
                               disabled={releasing}
-                              onClick={() => deleteResultItems([it])}
-                              className="focus-ring shrink-0 rounded-full border border-coral/30 text-xs font-semibold px-3 py-1.5 text-coral hover:bg-coral/10 transition-colors disabled:opacity-40"
+                              onClick={() => (it.empty ? confirmRelease([it]) : releaseItems([it]))}
+                              className="focus-ring rounded-full border border-line px-3 py-1 text-xs font-semibold text-mist hover:border-brass/40 hover:text-brass disabled:opacity-40"
                             >
-                              Delete
+                              Release
                             </button>
-                          )}
+                            {it.table !== 'mock_speaking_slots' && (
+                              <button
+                                type="button"
+                                disabled={releasing}
+                                onClick={() => deleteResultItems([it])}
+                                className="focus-ring rounded-full border border-coral/30 px-3 py-1 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
-                ))
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )
+          })()}
 
           {/* ======================================================
               ANALYTICS — question-type mistake analytics (migration_53).
@@ -4172,6 +4419,7 @@ export default function TeacherMockCenter({ onExit }) {
               {studentsView === 'mixed' ? (
                 <StudentRowList
                   rows={filteredRows}
+                  summaryById={bandSummaryByStudentId}
                   onOpenProfile={setProfileStudentId}
                   emptyLabel="No students match that search."
                 />
@@ -4180,7 +4428,7 @@ export default function TeacherMockCenter({ onExit }) {
                   No groups yet.
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col gap-2.5">
                   {groupSections
                     .filter((s) => s.rows.length > 0 || !search.trim())
                     .map(({ group, rows: groupRows }) => {
@@ -4199,10 +4447,7 @@ export default function TeacherMockCenter({ onExit }) {
                       const isOpen = expandedGroupIds.has(group.id) || (Boolean(search.trim()) && groupRows.length > 0)
                       const groupAvg = getGroupAvgBand(groupRows)
                       return (
-                        <div
-                          key={group.id}
-                          className={`flex flex-col gap-3 ${isOpen ? 'w-full' : 'w-full sm:w-auto'}`}
-                        >
+                        <div key={group.id} className="flex w-full flex-col gap-3">
                           <button
                             type="button"
                             onClick={() => toggleGroupExpanded(group.id)}
@@ -4221,15 +4466,21 @@ export default function TeacherMockCenter({ onExit }) {
                             <span className="text-sm text-paper-dim">
                               {groupRows.length} student{groupRows.length === 1 ? '' : 's'}
                             </span>
-                            {groupAvg != null && (
-                              <span className="text-xs font-mono text-mist">avg {formatBand(groupAvg)}</span>
-                            )}
-                            <span className="ml-auto text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
+                            <span className="text-xs text-mist">
+                              · {groupRows.filter((r) => bandSummaryByStudentId[r.student.id]?.overallBand != null).length} with a mock band
+                            </span>
+                            <span className="ml-auto flex items-center gap-3">
+                              {groupAvg != null && (
+                                <span className="rounded-full bg-brass/10 px-2.5 py-0.5 text-sm font-bold text-paper">avg {formatBand(groupAvg)}</span>
+                              )}
+                              <span className="text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
+                            </span>
                           </button>
 
                           {isOpen && (
                             <StudentRowList
                               rows={groupRows}
+                              summaryById={bandSummaryByStudentId}
                               onOpenProfile={setProfileStudentId}
                               emptyLabel="No students in this group match that search."
                             />
@@ -4243,7 +4494,7 @@ export default function TeacherMockCenter({ onExit }) {
                       expandedGroupIds.has('__none__') || (Boolean(search.trim()) && ungroupedRows.length > 0)
                     const groupAvg = getGroupAvgBand(ungroupedRows)
                     return (
-                      <div className="flex flex-col gap-3">
+                      <div className="flex w-full flex-col gap-3">
                         <button
                           type="button"
                           onClick={() => toggleGroupExpanded('__none__')}
@@ -4265,6 +4516,7 @@ export default function TeacherMockCenter({ onExit }) {
                         {isOpen && (
                           <StudentRowList
                             rows={ungroupedRows}
+                            summaryById={bandSummaryByStudentId}
                             onOpenProfile={setProfileStudentId}
                             emptyLabel="No ungrouped students match that search."
                           />
@@ -5631,25 +5883,35 @@ function MetricCell({ stats }) {
   if (!stats) {
     return <span className="text-xs text-mist self-center">—</span>
   }
-
+  // Estimated band first (2026-10-14), the raw % underneath.
   return (
-    <div className="text-sm self-center">
-      <span className="text-paper font-medium">{stats.average}%</span>
-      <span className="text-mist text-xs"> avg</span>
-      <span className="text-mist text-xs mx-1">·</span>
-      <span className="text-brass font-medium">{stats.highest}%</span>
-      <span className="text-mist text-xs"> high</span>
+    <div className="self-center leading-tight">
+      <span className="text-sm font-semibold text-paper">{formatBand(estimateBandFromPercent(stats.average))}</span>
+      <span className="ml-1 text-[11px] text-mist">
+        {stats.average}%{stats.count > 1 ? ` avg · best ${stats.highest}%` : ''}
+      </span>
+      {stats.empty > 0 && <span className="block text-[10px] text-mist">+{stats.empty} incomplete</span>}
     </div>
+  )
+}
+
+function BandBadge({ band, target }) {
+  if (band == null) return <span className="text-xs text-mist self-center">—</span>
+  const diff = target != null ? band - target : null
+  const tone = diff == null ? 'bg-panel-2 text-paper' : diff >= 0 ? 'bg-sage/15 text-sage' : diff > -1 ? 'bg-amber/15 text-amber' : 'bg-coral/15 text-coral'
+  return (
+    <span className={`self-center inline-flex w-fit items-baseline gap-1 rounded-full px-2.5 py-0.5 text-sm font-bold ${tone}`}>
+      {formatBand(band)}
+      {diff != null && <span className="text-[10px] font-semibold">{diff >= 0 ? `+${formatBand(diff)}` : `−${formatBand(-diff)}`}</span>}
+    </span>
   )
 }
 
 // Shared between "Student Progress" and "Students" — same row shape,
 // just fed a different (filtered/grouped or not) slice of `rows`.
-// Used to expand a row in place to show mock history; Jasur 2026-09-26
-// asked for "a separate window of this profile... like in leaderboard"
-// instead, so a row click now opens StudentProfileModal (rendered once,
-// at the top level) rather than an inline panel here.
-function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
+// A row click opens StudentProfileModal. 2026-10-14: an Overall column
+// (estimated band vs target), the group, and bands instead of bare %.
+function StudentRowList({ rows, onOpenProfile, emptyLabel, summaryById = {}, groupNamesFor }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
@@ -5658,69 +5920,76 @@ function StudentRowList({ rows, onOpenProfile, emptyLabel }) {
     )
   }
 
+  const cols = 'sm:grid-cols-[1.5fr_0.75fr_0.9fr_0.9fr_0.8fr_0.8fr]'
   return (
     <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3 border-b border-line text-xs font-semibold text-paper-dim">
+      <div className={`hidden sm:grid ${cols} gap-3 px-5 py-3 border-b border-line text-xs font-semibold text-paper-dim`}>
         <span>Student</span>
+        <span>Overall</span>
         <span>Reading</span>
         <span>Listening</span>
         <span>Writing</span>
         <span>Speaking</span>
-        <span />
       </div>
 
-      {rows.map((row) => (
-        <button
-          key={row.student.id}
-          type="button"
-          onClick={() => onOpenProfile(row.student.id)}
-          className="w-full text-left grid grid-cols-2 sm:grid-cols-[1.3fr_0.85fr_0.85fr_0.85fr_0.85fr_auto] gap-3 px-5 py-3.5 border-b border-line last:border-b-0 hover:bg-panel-2 transition-colors"
-        >
-          <div className="col-span-2 sm:col-span-1 min-w-0">
-            <p className="font-medium text-paper truncate">{studentLabel(row.student)}</p>
-            {row.student.target_band != null && (
-              <p className="text-xs text-brass mt-0.5">
-                Target {formatTargetBand(row.student.target_band)}
+      {rows.map((row) => {
+        const sum = summaryById[row.student.id]
+        const groupNames = groupNamesFor ? groupNamesFor(row.student.id) : []
+        return (
+          <button
+            key={row.student.id}
+            type="button"
+            onClick={() => onOpenProfile(row.student.id)}
+            className={`w-full text-left grid grid-cols-2 ${cols} gap-3 px-5 py-3 border-b border-line last:border-b-0 hover:bg-panel-2 transition-colors`}
+          >
+            <div className="col-span-2 sm:col-span-1 min-w-0">
+              <p className="font-medium text-paper truncate">{studentLabel(row.student)}</p>
+              <p className="text-xs text-mist mt-0.5 truncate">
+                {groupNames.length > 0 && <span>{groupNames.map((n) => (/^\d+$/.test(n.trim()) ? `Group ${n}` : n)).join(', ')} · </span>}
+                {row.student.target_band != null ? (
+                  <span className="text-brass">Target {formatTargetBand(row.student.target_band)}</span>
+                ) : (
+                  <span>No target</span>
+                )}
               </p>
-            )}
-          </div>
+            </div>
 
-          <MetricCell stats={row.reading} />
-          <MetricCell stats={row.listening} />
-
-          <div className="text-sm text-paper">
-            {row.avgBand != null ? (
-              <>
-                <span className="font-semibold text-sage">Band {row.avgBand}</span>
-                <span className="text-paper-dim text-xs ml-1">
-                  ({row.reviewedWritingCount})
-                </span>
-              </>
-            ) : row.writingReviews.length > 0 ? (
-              <span className="text-amber text-xs">Not marked</span>
+            {sum?.overallBand == null && sum?.hasAnyActivity ? (
+              <span className="self-center text-[11px] text-mist" title="Every attempt so far was ended early or had 0 correct">only incomplete</span>
             ) : (
-              <span className="text-mist text-xs">—</span>
+              <BandBadge band={sum?.overallBand ?? null} target={row.student.target_band ?? null} />
             )}
-          </div>
+            <MetricCell stats={row.reading} />
+            <MetricCell stats={row.listening} />
 
-          <div className="text-sm text-paper">
-            {row.avgSpeakingBand != null ? (
-              <>
-                <span className="font-semibold text-sage">Band {row.avgSpeakingBand}</span>
-                <span className="text-paper-dim text-xs ml-1">
-                  ({row.reviewedSpeakingCount})
-                </span>
-              </>
-            ) : row.hasCompletedSpeaking ? (
-              <span className="text-amber text-xs">Not marked</span>
-            ) : (
-              <span className="text-mist text-xs">—</span>
-            )}
-          </div>
+            <div className="text-sm text-paper self-center">
+              {row.avgBand != null ? (
+                <>
+                  <span className="font-semibold text-paper">{formatBand(row.avgBand)}</span>
+                  <span className="text-paper-dim text-xs ml-1">({row.reviewedWritingCount})</span>
+                </>
+              ) : row.writingReviews.length > 0 ? (
+                <span className="text-amber text-xs">Not marked</span>
+              ) : (
+                <span className="text-mist text-xs">—</span>
+              )}
+            </div>
 
-          <span />
-        </button>
-      ))}
+            <div className="text-sm text-paper self-center">
+              {row.avgSpeakingBand != null ? (
+                <>
+                  <span className="font-semibold text-paper">{formatBand(row.avgSpeakingBand)}</span>
+                  <span className="text-paper-dim text-xs ml-1">({row.reviewedSpeakingCount})</span>
+                </>
+              ) : row.hasCompletedSpeaking ? (
+                <span className="text-amber text-xs">Not marked</span>
+              ) : (
+                <span className="text-mist text-xs">—</span>
+              )}
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
