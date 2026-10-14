@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { estimateBandFromPercent } from '../../lib/ieltsBands'
+import { safeFileName } from '../../lib/storageKey'
+import { guessMimeType } from '../../lib/mime'
 import {
   GROUP_KINDS,
   WORD_LIMITS,
@@ -28,6 +30,79 @@ import {
 const MISSING_TABLE = /mock_question_groups|PGRST205|42P01|does not exist|schema cache/i
 const GAP_KINDS = new Set(GROUP_KINDS.filter((k) => k.family === 'gap' || k.value === 'other').map((k) => k.value))
 const MATCH_KINDS = new Set(GROUP_KINDS.filter((k) => k.family === 'match').map((k) => k.value))
+// migration_80: a picture with gaps on it, or the notes/table text.
+const IMAGE_KINDS = new Set(['map_labelling', 'diagram_labelling'])
+const BODY_KINDS = new Set(['note_completion', 'form_completion', 'table_completion', 'summary_completion', 'sentence_completion', 'flow_chart', 'matching_features', 'other'])
+const MISSING_LAYOUT_COLS = /body|image_url|gap_positions|PGRST204|42703/i
+const countGaps = (body) => (String(body || '').match(/\[\[[^\]]*\]\]|_{3,}/g) || []).length
+
+/**
+ * Click on the picture to put the selected question's gap there; the
+ * next unplaced question is selected after each click.
+ */
+function GapPlacer({ imageUrl, questions, posById, positions, onChange }) {
+  const [active, setActive] = useState(() => questions.find((q) => !positions[q.id])?.id || questions[0]?.id)
+  const boxRef = useRef(null)
+  const place = (e) => {
+    if (!active || !boxRef.current) return
+    const r = boxRef.current.getBoundingClientRect()
+    const x = Math.max(0, Math.min(95, ((e.clientX - r.left) / r.width) * 100))
+    const y = Math.max(0, Math.min(95, ((e.clientY - r.top) / r.height) * 100))
+    const next = { ...positions, [active]: { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 } }
+    onChange(next)
+    const following = questions.find((q) => !next[q.id])
+    if (following) setActive(following.id)
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-mist">Place gap:</span>
+        {questions.map((q) => (
+          <button
+            key={q.id}
+            type="button"
+            onClick={() => setActive(q.id)}
+            className={`focus-ring rounded-md border px-2 py-0.5 text-xs font-bold ${
+              active === q.id ? 'border-brass bg-brass text-onbrass' : positions[q.id] ? 'border-sage/50 text-sage' : 'border-line text-mist'
+            }`}
+          >
+            {posById[q.id]}
+          </button>
+        ))}
+        {active && positions[active] && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = { ...positions }
+              delete next[active]
+              onChange(next)
+            }}
+            className="focus-ring ml-1 text-xs text-coral underline"
+          >
+            Remove this gap
+          </button>
+        )}
+      </div>
+      <div ref={boxRef} onClick={place} className="relative inline-block max-w-full cursor-crosshair self-start">
+        <img src={imageUrl} alt="" className="block w-[640px] max-w-full select-none" draggable={false} />
+        {questions
+          .filter((q) => positions[q.id])
+          .map((q) => (
+            <span
+              key={q.id}
+              className={`pointer-events-none absolute flex h-[27px] w-[110px] items-center justify-center rounded-[5px] border border-dashed bg-white text-sm font-bold text-black ${
+                active === q.id ? 'border-[#418ec8] ring-2 ring-[#418ec8]/40' : 'border-[#333]'
+              }`}
+              style={{ left: `${positions[q.id].x}%`, top: `${positions[q.id].y}%` }}
+            >
+              {posById[q.id]}
+            </span>
+          ))}
+      </div>
+      <p className="text-xs text-mist">Click the picture where the gap's top-left corner should be.</p>
+    </div>
+  )
+}
 
 function guessWordLimit(text) {
   const t = (text || '').toUpperCase()
@@ -125,6 +200,9 @@ const emptyDraft = (from, to) => ({
   title: '',
   instruction: '',
   options_reusable: false,
+  body: '',
+  image_url: '',
+  gap_positions: {},
   from,
   to,
 })
@@ -138,6 +216,26 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
   const [error, setError] = useState('')
   const [draft, setDraft] = useState(null)
   const [open, setOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const uploadImage = async (file) => {
+    if (!file) return
+    setUploading(true)
+    setError('')
+    try {
+      const path = `mock-groups/${section.id}/${Date.now()}-${safeFileName(file.name)}`
+      const { error: upErr } = await supabase.storage
+        .from('homework-files')
+        .upload(path, file, { contentType: guessMimeType(file.name, file.type) })
+      if (upErr) throw upErr
+      const url = supabase.storage.from('homework-files').getPublicUrl(path).data.publicUrl
+      setDraft((d) => (d ? { ...d, image_url: url } : d))
+    } catch (err) {
+      setError(err?.message || 'Could not upload the picture.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const sorted = useMemo(() => [...questions].sort((a, b) => a.order_index - b.order_index), [questions])
   const posById = useMemo(() => Object.fromEntries(sorted.map((q, i) => [q.id, i + 1])), [sorted])
@@ -206,6 +304,14 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
         options_reusable: MATCH_KINDS.has(draft.kind) ? Boolean(draft.options_reusable) : false,
         order_index: from,
       }
+      // Only send the migration_80 columns when something is in them, so
+      // saving still works before that migration is run.
+      const hasLayout = (draft.body || '').trim() || draft.image_url || Object.keys(draft.gap_positions || {}).length
+      if (hasLayout || draft.hadLayout) {
+        row.body = (draft.body || '').trim() || null
+        row.image_url = IMAGE_KINDS.has(draft.kind) ? draft.image_url || null : null
+        row.gap_positions = IMAGE_KINDS.has(draft.kind) ? draft.gap_positions || {} : {}
+      }
       let id = draft.id
       if (id) {
         const { error: err } = await supabase.from('mock_question_groups').update(row).eq('id', id)
@@ -221,7 +327,11 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
       await load()
       await onChanged?.()
     } catch (err) {
-      setError(err?.message || 'Could not save the group.')
+      setError(
+        MISSING_LAYOUT_COLS.test(`${err?.code} ${err?.message}`)
+          ? 'The layout text and picture need migration_80_group_layouts.sql to be run in the Supabase SQL Editor first.'
+          : err?.message || 'Could not save the group.'
+      )
     } finally {
       setBusy(false)
     }
@@ -298,6 +408,10 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
       title: g.title || '',
       instruction: g.instruction || '',
       options_reusable: g.options_reusable,
+      body: g.body || '',
+      image_url: g.image_url || '',
+      gap_positions: g.gap_positions || {},
+      hadLayout: Boolean(g.body || g.image_url || Object.keys(g.gap_positions || {}).length),
       from: r.from,
       to: r.to,
     })
@@ -480,6 +594,71 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                         className={`${field} resize-none`}
                       />
                     </label>
+                    {IMAGE_KINDS.has(draft.kind) && (
+                      <div className="sm:col-span-2">
+                        <p className={label}>Picture (map, plan or diagram)</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <label className="focus-ring cursor-pointer rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass/50">
+                            {uploading ? 'Uploading…' : draft.image_url ? 'Change picture' : 'Upload picture'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploading}
+                              onChange={(e) => {
+                                uploadImage(e.target.files?.[0])
+                                e.target.value = ''
+                              }}
+                            />
+                          </label>
+                          {draft.image_url && (
+                            <button
+                              type="button"
+                              onClick={() => setDraft({ ...draft, image_url: '', gap_positions: {} })}
+                              className="focus-ring text-xs text-coral underline"
+                            >
+                              Remove picture
+                            </button>
+                          )}
+                        </div>
+                        {draft.image_url && previewQuestions.length > 0 && (
+                          <div className="mt-2">
+                            <GapPlacer
+                              key={draft.image_url}
+                              imageUrl={draft.image_url}
+                              questions={previewQuestions}
+                              posById={posById}
+                              positions={draft.gap_positions || {}}
+                              onChange={(gap_positions) => setDraft((d) => ({ ...d, gap_positions }))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {(BODY_KINDS.has(draft.kind) || GAP_KINDS.has(draft.kind)) && !IMAGE_KINDS.has(draft.kind) && (
+                      <label className={`${label} sm:col-span-2`}>
+                        Layout text (optional — the notes, form or table exactly as printed; put [[ ]] where each gap goes)
+                        <textarea
+                          value={draft.body || ''}
+                          onChange={(e) => setDraft({ ...draft, body: e.target.value })}
+                          rows={7}
+                          placeholder={'# Phone call about second-hand furniture\n## Items:\n- Dining table: [[ ]] shape\n- medium size\n- price: £25.00\n\n| | Social factors | Other factors |\n|---|---|---|\n| First level | Effective support | Enjoyment of a [[ ]] |'}
+                          className={`${field} resize-y font-mono text-xs leading-5`}
+                        />
+                        <span className="mt-1 block text-[11px] text-mist">
+                          # title · ## heading · - bullet · | table | row | (a |---| line under a row makes it the header) · **bold**.
+                          {(draft.body || '').trim() && (
+                            <>
+                              {' '}
+                              <b className={countGaps(draft.body) === previewQuestions.length ? 'text-sage' : 'text-coral'}>
+                                {countGaps(draft.body)} gap{countGaps(draft.body) === 1 ? '' : 's'} for {previewQuestions.length} question
+                                {previewQuestions.length === 1 ? '' : 's'}
+                              </b>
+                            </>
+                          )}
+                        </span>
+                      </label>
+                    )}
                   </div>
                   <p className="mt-3 text-xs text-mist">Students will see:</p>
                   <p className="mt-1 rounded-lg border border-line bg-white px-3 py-2 text-sm text-[#1a1a1a]">

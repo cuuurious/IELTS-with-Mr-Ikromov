@@ -76,6 +76,22 @@ function tidyMatching(texts, questions) {
       reusable: true,
     }
   }
+  // "What information is given about the Chamber Museum?" ×5 → the real
+  // test's "What information is given about each of the following?"
+  // once, then just "The Chamber Museum", "Harris Park"… beside the gaps.
+  if (texts.length > 1 && !texts.some((t) => /_{2,}/.test(t))) {
+    const words = texts.map((t) => t.split(/\s+/))
+    let n = 0
+    while (words.every((w) => w[n] !== undefined && w[n].toLowerCase() === words[0][n].toLowerCase())) n++
+    const rests = words.map((w) => w.slice(n).join(' ').replace(/[?:.]\s*$/, '').trim())
+    if (n >= 3 && rests.every((r) => r && r.split(/\s+/).length <= 8)) {
+      const stem = words[0].slice(0, n).join(' ')
+      return {
+        texts: rests.map(cap),
+        lead: `${stem} each of the following? Choose the correct answer and move it into the gap.`,
+      }
+    }
+  }
   const match = texts.map((t) => /^match\s+(.+?)\s+with\s+the\s+correct\s+([a-z ]+?)\.?$/i.exec(t))
   if (match.every(Boolean) && match.every((m) => m[2].toLowerCase() === match[0][2].toLowerCase())) {
     const noun = match[0][2].toLowerCase()
@@ -89,6 +105,44 @@ function tidyMatching(texts, questions) {
     }
   }
   return null
+}
+
+// How a group of gaps is laid out (2026-10-14, from the official demos):
+//   notes     — bold title, bulleted lines, gaps inside the lines
+//   sentences — one sentence per line, gaps inside
+//   summary   — one paragraph, gaps inside
+//   table     — bordered table (label | text)
+//   flow      — boxes joined by ↓ arrows
+const LAYOUT_BY_KIND = {
+  note_completion: 'notes',
+  form_completion: 'notes',
+  table_completion: 'table',
+  sentence_completion: 'sentences',
+  summary_completion: 'summary',
+  flow_chart: 'flow',
+  diagram_labelling: 'sentences',
+  map_labelling: 'sentences',
+  short_answer: 'questions',
+}
+function layoutFor({ kind, text, questions, module, hasTitle }) {
+  if (kind && LAYOUT_BY_KIND[kind]) return LAYOUT_BY_KIND[kind]
+  const t = text || ''
+  if (/flow-?\s?chart/i.test(t)) return 'flow'
+  if (/\btable\b/i.test(t)) return 'table'
+  if (/\bsummary\b/i.test(t)) return 'summary'
+  if (/\b(notes|form)\b/i.test(t)) return 'notes'
+  if (/\bsentences?\b/i.test(t)) return 'sentences'
+  const blanks = questions.every((q) => /_{2,}/.test(q.prompt || ''))
+  if (!blanks) return questions[0].type === 'short_answer' ? 'questions' : null
+  if (hasTitle || module === 'listening') return 'notes'
+  return 'sentences'
+}
+const LAYOUT_LEAD = {
+  notes: 'Complete the notes.',
+  sentences: 'Complete the sentences.',
+  summary: 'Complete the summary.',
+  table: 'Complete the table.',
+  flow: 'Complete the flow-chart.',
 }
 
 function familyOf(q) {
@@ -106,8 +160,10 @@ function defaultInstruction(family, questions) {
       return 'Do the following statements agree with the claims of the writer? Choose YES if the statement agrees with the claims of the writer, NO if the statement contradicts the claims of the writer, NOT GIVEN if it is impossible to say what the writer thinks about this.'
     case 'multiple_choice':
       return 'Choose the correct answer.'
-    case 'multi_select':
-      return 'Choose the correct answers.'
+    case 'multi_select': {
+      const m = /\b(TWO|THREE|FOUR)\b/.exec(questions.map((q) => q.prompt || '').join(' '))
+      return m ? `Choose ${m[1]} correct answers.` : 'Choose the correct answers.'
+    }
     case 'matching': {
       const word = NUMBER_WORDS[n] || String(n)
       return `Choose ${word} answer${n === 1 ? '' : 's'} from the box and move ${n === 1 ? 'it' : 'them'} into the gap${n === 1 ? '' : 's'}.`
@@ -179,6 +235,12 @@ export function generateInstruction(group, { module, questions = [] } = {}) {
     return parts.join(' ')
   }
   if (kind?.text) parts.push(kind.text)
+  // A gap task answered by dragging (map with a list of places, flow-chart
+  // with a word bank) — the official wording, no word limit.
+  if (kind?.family === 'gap' && questions[0]?.type === 'matching') {
+    parts.push('Choose the correct answer and move it into the gap.')
+    return parts.join(' ')
+  }
   const limit = LIMIT_BY_VALUE[group.word_limit]
   if (limit) {
     parts.push(
@@ -270,7 +332,22 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
     const stem = sharedStem(texts)
     if (stem) texts = texts.map((t, i) => stripBakedNumber(t.slice(stem.length).trim(), questionIndexById[qs[i].id]))
 
-    const tidy = stem ? null : tidyMatching(texts, qs)
+    // A shared "Which paragraph contains the following information?" stem
+    // still gets the official wording, the A–H range and reusable letters.
+    const paraStem = stem && qs[0]?.type === 'matching' && /which (paragraph|section)/i.test(stem)
+    const tidy = paraStem
+      ? (() => {
+          const range = letterRange(qs[0].options?.choices || [])
+          const unit = /section/i.test(stem) ? 'section' : 'paragraph'
+          return {
+            texts,
+            lead: `Which ${unit} contains the following information?${range ? ` Choose the correct letter, ${range}.` : ''}`,
+            reusable: true,
+          }
+        })()
+      : stem
+        ? null
+        : tidyMatching(texts, qs)
     if (tidy) texts = tidy.texts
 
     const prompts = {}
@@ -301,6 +378,12 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
         reusable: Boolean(g.options_reusable) || Boolean(tidy?.reusable),
         bankTitle: tidy?.bankTitle || '',
         kind: g.kind,
+        layout: layoutFor({ kind: g.kind, text: g.instruction || '', questions: qs, module, hasTitle: Boolean(g.title || run.title) }),
+        // migration_80: the notes/table text around the gaps, and a
+        // map/diagram picture with each gap's position on it.
+        body: g.body || '',
+        imageUrl: g.image_url || '',
+        gapPositions: g.gap_positions || {},
         wordLimit: g.word_limit || null,
       }
     }
@@ -310,6 +393,15 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
       : [stem, run.instruction || defaultInstruction(run.family, qs)]
     let allText = instructionParts.filter(Boolean).join(' ')
     if (tidy?.reusable && !/more than once/i.test(allText)) allText += ' NB You may use any letter more than once.'
+    const hasSubheadings = run.rows.some((r) => r.subheading)
+    const layout = layoutFor({ kind: null, text: allText, questions: qs, module, hasTitle: Boolean(run.title) || hasSubheadings })
+    // The real header always says what to do first: "Complete the notes.
+    // Write ONE WORD ONLY…" — add that first sentence when it's missing.
+    if (LAYOUT_LEAD[layout] && !/^\s*(complete|label|choose the correct|look at)/i.test(allText)) {
+      allText = /move (it|them) into the gaps?/i.test(allText)
+        ? `${LAYOUT_LEAD[layout].replace(/\.$/, '')}. Choose the correct answer and move it into the gap.`
+        : `${LAYOUT_LEAD[layout]} ${allText}`.trim()
+    }
     return {
       key: qs[0].id,
       questions: qs,
@@ -322,6 +414,7 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
       subheadings,
       reusable: /any letter more than once|any (?:option|answer) more than once/i.test(allText),
       bankTitle: tidy?.bankTitle || '',
+      layout,
     }
   })
 }

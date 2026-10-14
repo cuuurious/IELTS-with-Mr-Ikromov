@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { ExamTaker, buildAttemptQuestions } from './MockExams'
 import { WritingTaker } from './WritingMockExam'
-import { isSpeechSupported, speak, stopSpeaking } from '../lib/speech'
+import { stopSpeaking } from '../lib/speech'
+import TestInfoVideo from './exam/TestInfoVideo'
 import { isTestToneSupported, playTestTone } from '../lib/testTone'
 import { readSession, writeSession } from '../lib/sessionState'
 import Icon from './Icon'
@@ -170,10 +171,6 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
   // above. narratedStagesRef tracks which stage keys have already
   // auto-played once this mount, so returning to a gate already heard
   // doesn't narrate itself again unprompted.
-  const [narrating, setNarrating] = useState(false)
-  const narratedStagesRef = useRef(new Set())
-
-  const narrationKey = activeAttempt ? `${activeAttempt.attempt.id}:${activeAttempt.attempt.stage}` : null
   // True only while the instructions + "I confirm" screen itself is on
   // screen — that's the only place the instructions are read aloud.
   // BUG FIX 2026-09-29 (Jasur: "the instructions are playing when i press
@@ -192,19 +189,9 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
       !cancelledByTeacher
   )
 
-  const speakInstructions = () => {
-    const meta = activeAttempt ? STAGE_META[activeAttempt.attempt.stage] : null
-    if (!meta) return
-    speak(meta.instructions, { onStart: () => setNarrating(true), onEnd: () => setNarrating(false) })
-  }
-
-  useEffect(() => {
-    if (!gateIsShowing || !narrationKey) return
-    if (narratedStagesRef.current.has(narrationKey)) return
-    narratedStagesRef.current.add(narrationKey)
-    speakInstructions()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gateIsShowing, narrationKey])
+  // 2026-10-14: the instructions are now the "Test information" player
+  // (TestInfoVideo) the student starts with Play, like the official
+  // test — no more reading them out automatically.
 
   // Stop narrating the moment the student moves on (confirms, exits, or
   // the whole runner unmounts) — a real invigilator doesn't keep talking
@@ -979,23 +966,18 @@ export default function FullMockRunner({ selfId, restrictedSet, onExitRestricted
 
       <h2 className="text-2xl font-bold mt-1.5 text-slate-900">{examTitleForGate}</h2>
 
-      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
-        {meta.instructions}
+      {/* The official dashboard: "Test information" with a short
+          animated introduction the student plays (2026-10-14). */}
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-semibold text-slate-900">Test information</p>
+        <div className="max-w-2xl">
+          <TestInfoVideo key={stage} module={stage} />
+        </div>
+        <details className="mt-2 max-w-2xl text-sm text-slate-600">
+          <summary className="cursor-pointer select-none text-xs font-semibold text-slate-500 hover:text-slate-800">Read the instructions as text</summary>
+          <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 leading-relaxed">{meta.instructions}</p>
+        </details>
       </div>
-
-      {isSpeechSupported() && (
-        <button
-          type="button"
-          onClick={() => (narrating ? stopSpeaking() : speakInstructions())}
-          className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-colors"
-        >
-          {narrating ? (
-            <><Icon name="pause" className="h-3.5 w-3.5" /> Stop reading</>
-          ) : (
-            <><Icon name="speaker" className="h-3.5 w-3.5" /> Hear these instructions again</>
-          )}
-        </button>
-      )}
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 

@@ -1982,10 +1982,27 @@ export function ExamTaker({
         // Questions are shown in their IELTS groups ("Questions 1–7" +
         // the instruction once) — see exam/questionGroups.js. Each
         // matching group gets one option bank beside its gaps.
-        const questionGroups = buildQuestionGroups(visibleQuestions, questionIndexById, {
-          groups: section.groups,
-          module: exam.module,
-        })
+        // Headings whose gaps sit in the passage keep their group on the
+        // right — header, instruction and the "List of Headings" — like
+        // the official test (2026-10-14); only the gaps move left.
+        const questionGroups = buildQuestionGroups(
+          inlineQuestionIds ? section.questions : visibleQuestions,
+          questionIndexById,
+          { groups: section.groups, module: exam.module }
+        ).map((g) =>
+          inlineQuestionIds && g.questions.every((q) => inlineQuestionIds.has(q.id))
+            ? {
+                ...g,
+                inPassage: true,
+                bankTitle: g.bankTitle || 'List of Headings',
+                instruction: g.kind
+                  ? g.instruction
+                  : `The text has ${g.questions.length} paragraphs. Choose the correct heading for each paragraph and move it into the gap.`,
+              }
+            : inlineQuestionIds && g.questions.some((q) => inlineQuestionIds.has(q.id))
+              ? { ...g, questions: g.questions.filter((q) => !inlineQuestionIds.has(q.id)) }
+              : g
+        ).filter((g) => g.questions.length)
 
         const questionsList = (
           <QuestionHighlighter>
@@ -2114,7 +2131,7 @@ export function ExamTaker({
             onFocusCapture={trackCurrentQuestion}
             onMouseDownCapture={trackCurrentQuestion}
           >
-            {!/^(part|section)\s*\d+$/i.test(String(sectionTitle).trim()) && (
+            {!/^(part|section)\s*\d+\b/i.test(String(sectionTitle).trim()) && (
               <p
                 className="mb-3 font-bold"
                 style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
@@ -2805,6 +2822,22 @@ function splitLetteredParagraphs(text) {
 
     markers.push({ letter: match[1], labelStart: lineStarts[i], bodyStart: lineStarts[bodyLine] })
   }
+  // Also "A In the north of…" — the letter starting the paragraph's own
+  // first line (2026-10-14). Only when the paragraphs run A, B, C… in
+  // order, so an ordinary paragraph starting with the word "A" is never
+  // mistaken for a label.
+  if (markers.length < 2) {
+    const inline = []
+    for (let i = 0; i < lines.length; i++) {
+      if (i !== 0 && !isBlank(i - 1)) continue
+      const m = /^([ \t]*)([A-Z])[ \t]+(?=\S)/.exec(lines[i])
+      if (!m) continue
+      const expected = String.fromCharCode(65 + inline.length)
+      if (m[2] !== expected) continue
+      inline.push({ letter: m[2], labelStart: lineStarts[i], bodyStart: lineStarts[i] + m[0].length })
+    }
+    if (inline.length >= 2) markers.splice(0, markers.length, ...inline)
+  }
   if (markers.length < 2) return null
 
   const paragraphs = []
@@ -2842,29 +2875,8 @@ function LetteredMatchingPassage({
   fontScale = 1,
   theme,
 }) {
-  const questions = Object.values(matchingByParagraph)
-  const usedValues = questions.map((q) => answers[q.id] ?? '').filter(Boolean)
-
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className="sticky top-0 z-10 pb-2"
-        style={{ backgroundColor: theme?.bg || 'var(--color-panel)' }}
-      >
-        <MatchingBank
-          choices={bankChoices}
-          usedValues={usedValues}
-          hint="Drag a heading onto the gap above the paragraph it belongs to."
-          onPick={(choice) => {
-            const target = questions.find((q) => !(answers[q.id] ?? '').trim())
-            if (target) setAnswer(target.id, choice)
-          }}
-          fontScale={fontScale}
-          theme={theme}
-          layout="wrap"
-        />
-      </div>
-
       {paragraphs.map((p) => {
         const q = p.letter ? matchingByParagraph[p.letter] : null
         const localHighlights = highlights
@@ -2875,17 +2887,19 @@ function LetteredMatchingPassage({
           <div key={`${p.letter || 'lead'}-${p.start}`} className="mb-4">
             {p.letter && <p className="mb-2 font-bold text-paper">{p.letter}</p>}
             {q && (
-              <div id={`q-${q.id}`} className="mb-2 flex items-center gap-2 scroll-mt-24">
-                <DropGap
-                  questionId={q.id}
-                  index={questionIndexById[q.id]}
-                  value={answers[q.id] ?? ''}
-                  onClear={() => setAnswer(q.id, '')}
-                  fontScale={fontScale}
-                  theme={theme}
-                  wide
-                />
-                <FlagButton flagged={flags.has(q.id)} onToggle={() => toggleFlag(q.id)} />
+              <div id={`q-${q.id}`} className="mb-3 flex items-center gap-2 scroll-mt-24">
+                <span className="flex min-h-[3.5rem] w-full max-w-[22rem]">
+                  <DropGap
+                    questionId={q.id}
+                    index={questionIndexById[q.id]}
+                    value={answers[q.id] ?? ''}
+                    onClear={() => setAnswer(q.id, '')}
+                    fontScale={fontScale}
+                    theme={theme}
+                    wide
+                  />
+                </span>
+                <TinyFlag flagged={flags.has(q.id)} onToggle={() => toggleFlag(q.id)} />
               </div>
             )}
             <HighlightablePassage
@@ -3156,7 +3170,7 @@ function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }
 // The drag itself lives in exam/choiceDrag.jsx.
 // ------------------------------------------------------------------
 
-function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inline = false, wide = false }) {
+function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inline = false, wide = false, compact = false }) {
   const source = useChoiceDragSource()
   const active = useActiveChoiceDrag()
   const textStyle = { fontSize: `${fontScale}rem` }
@@ -3165,8 +3179,8 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
   return (
     <span
       data-drop={`q:${questionId}`}
-      style={textStyle}
-      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.1rem] items-stretch rounded-[5px] bg-panel transition-colors data-[drag-over]:border-[1.6px] data-[drag-over]:border-solid data-[drag-over]:border-[#418ec8] ${
+      style={compact ? { ...textStyle, fontSize: `${0.875 * fontScale}rem` } : textStyle}
+      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : compact ? 'w-[110px]' : 'min-w-[10rem] max-w-full'} ${compact ? 'min-h-[27px]' : 'min-h-[2.1rem]'} items-stretch rounded-[5px] bg-panel transition-colors data-[drag-over]:border-[1.6px] data-[drag-over]:border-solid data-[drag-over]:border-[#418ec8] ${
         value ? 'border border-[#919191]' : active ? 'border-[1.6px] border-dashed border-[#418ec8]' : 'border border-dashed border-[#333]'
       }`}
     >
@@ -3229,10 +3243,14 @@ function splitLetter(choice) {
 // "A" in bold, no instructions inside the box).
 function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, title, layout = 'stack', reusable = false }) {
   const source = useChoiceDragSource()
-  const optionTextStyle = { fontSize: `${1.05 * fontScale}rem` }
   // "You may use any letter more than once" — options never leave the box.
   const remaining = reusable ? choices : choices.filter((choice) => !usedValues.includes(choice))
   const short = choices.every((c) => (c || '').trim().length <= 3)
+  const lettered = choices.length > 1 && choices.every((c) => splitLetter(c))
+  // Word options ("Finance", "Kitchen") are small chips the size of their
+  // text, as in the official Listening; sentence options fill the column.
+  const long = choices.some((c) => (c || '').length > 40)
+  const optionTextStyle = { fontSize: `${(long ? 1 : 0.875) * fontScale}rem` }
   return (
     <div
       data-drop="bank"
@@ -3247,12 +3265,12 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
       )}
       <div
         className={
-          layout === 'wrap' || short ? 'flex flex-wrap gap-2' : 'flex flex-col gap-2'
+          layout === 'wrap' ? 'flex flex-wrap gap-2' : `flex flex-col ${long ? 'gap-2' : 'items-start gap-1.5'}`
         }
       >
         {remaining.length > 0 ? (
           remaining.map((choice) => {
-            const parts = splitLetter(choice)
+            const parts = lettered ? splitLetter(choice) : null
             return (
               <button
                 key={choice}
@@ -3262,7 +3280,7 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
                 onKeyDown={moveFocusAmongSiblings}
                 style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
                 className={`focus-ring cursor-grab touch-none select-none rounded-[4px] border border-[#919191] bg-panel py-1.5 leading-snug text-paper transition-colors hover:border-[#418ec8] data-[dragging]:opacity-40 ${
-                  short ? 'min-w-[2.75rem] px-3 text-center' : 'flex gap-2.5 px-[9px] text-left'
+                  short ? 'min-w-[2.75rem] px-3 text-center' : long ? 'flex gap-2.5 px-[9px] text-left' : 'px-[7px] py-0.5 text-left'
                 }`}
               >
                 {parts && !short ? (
@@ -3298,6 +3316,314 @@ function isReusableMatching(group, choices) {
 }
 
 // A whole matching group: gaps on the left, bank on the right.
+// A typed gap (short-answer / completion questions): the official box —
+// thin #535353 border, 3px corners, the question number in bold as the
+// placeholder, growing as the answer gets longer.
+function TextGap({ question, index, value, onChange, fontScale = 1, compact = false }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={String(index)}
+      aria-label={`Question ${index}`}
+      spellCheck={false}
+      autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="off"
+      size={compact ? 9 : Math.max(14, Math.min(32, (value || '').length + 2))}
+      style={{ fontSize: `${(compact ? 0.875 : 1) * fontScale}rem` }}
+      className="cd-gap focus-ring mx-1 inline-block h-[24px] rounded-[3px] border border-[var(--cd-option-border,#535353)] bg-panel px-2 text-center align-middle text-paper"
+      data-qid={question.id}
+    />
+  )
+}
+
+function TinyFlag({ flagged, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={flagged ? 'Remove flag' : 'Flag for review'}
+      aria-pressed={flagged}
+      className={`focus-ring ml-1 inline-flex h-5 w-5 items-center justify-center rounded align-middle ${flagged ? 'text-coral' : 'text-mist/40 hover:text-coral'}`}
+    >
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill={flagged ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 21V4h11l-2 4 2 4H5" />
+      </svg>
+    </button>
+  )
+}
+
+// ------------------------------------------------------------------
+// Teacher-written layout (migration_80, 2026-10-14): the notes, form or
+// table exactly as the official test prints it, with [[ ]] (or ___)
+// where each gap goes — the group's questions fill them in order.
+//   # Title            → bold title
+//   ## Items:          → bold heading line
+//   - medium size      → bullet
+//   | a | b | c |      → table row ("|---|" under a row makes it a header)
+//   **word**           → bold
+// ------------------------------------------------------------------
+const GAP_TOKEN_RE = /(\[\[[^\]]*\]\]|_{3,})/
+
+function parseBody(body) {
+  const blocks = []
+  for (const raw of String(body || '').replace(/\r/g, '').split('\n')) {
+    const line = raw.replace(/\s+$/, '')
+    const last = blocks[blocks.length - 1]
+    if (/^\s*\|/.test(line)) {
+      const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim())
+      const isRule = cells.every((c) => /^:?-{2,}:?$/.test(c))
+      const table = last?.type === 'table' ? last : null
+      if (isRule) {
+        if (table?.rows.length) table.rows[table.rows.length - 1].header = true
+        continue
+      }
+      if (table) table.rows.push({ cells })
+      else blocks.push({ type: 'table', rows: [{ cells }] })
+      continue
+    }
+    if (/^\s*[-•*]\s+/.test(line)) {
+      const text = line.replace(/^\s*[-•*]\s+/, '')
+      if (last?.type === 'list') last.items.push(text)
+      else blocks.push({ type: 'list', items: [text] })
+      continue
+    }
+    if (/^\s*#\s+/.test(line)) blocks.push({ type: 'title', text: line.replace(/^\s*#\s+/, '') })
+    else if (/^\s*##\s+/.test(line)) blocks.push({ type: 'heading', text: line.replace(/^\s*##\s+/, '') })
+    else if (!line.trim()) blocks.push({ type: 'space' })
+    else blocks.push({ type: 'para', text: line })
+  }
+  return blocks
+}
+
+/** How many gaps a layout text has — used by the teacher editor too. */
+export function countBodyGaps(body) {
+  return (String(body || '').match(new RegExp(GAP_TOKEN_RE.source, 'g')) || []).length
+}
+
+function BodyLayout({ group, questionIndexById, renderGap, flags, onToggleFlag, fontScale = 1, theme }) {
+  const textStyle = { fontSize: `${fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
+  const blocks = parseBody(group.body)
+  let next = 0
+  const inline = (text, key) =>
+    String(text)
+      .split(GAP_TOKEN_RE)
+      .map((part, i) => {
+        if (GAP_TOKEN_RE.test(part) && /^(\[\[[^\]]*\]\]|_{3,})$/.test(part)) {
+          const q = group.questions[next++]
+          if (!q) return <span key={`${key}-${i}`} className="mx-1 inline-block w-24 border-b border-paper" />
+          return (
+            <span key={`${key}-${i}`} id={`q-${q.id}`} className="scroll-mt-40">
+              {renderGap(q, questionIndexById[q.id])}
+              <TinyFlag flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
+            </span>
+          )
+        }
+        return part.split(/(\*\*[^*]+\*\*)/).map((bit, j) =>
+          /^\*\*[^*]+\*\*$/.test(bit) ? <strong key={`${key}-${i}-${j}`}>{bit.slice(2, -2)}</strong> : bit
+        )
+      })
+
+  const out = blocks.map((b, bi) => {
+    if (b.type === 'title') return <p key={bi} className="mb-3 mt-2 font-bold" style={{ fontSize: `${1.1 * fontScale}rem` }}>{inline(b.text, bi)}</p>
+    if (b.type === 'heading') return <p key={bi} className="mt-3 font-bold">{inline(b.text, bi)}</p>
+    if (b.type === 'space') return <div key={bi} className="h-3" />
+    if (b.type === 'list')
+      return (
+        <ul key={bi} className="my-2 list-disc pl-10">
+          {b.items.map((it, ii) => (
+            <li key={ii} className="mb-1.5 leading-[30px]">{inline(it, `${bi}-${ii}`)}</li>
+          ))}
+        </ul>
+      )
+    if (b.type === 'table')
+      return (
+        <table key={bi} className="my-3 w-full border-collapse">
+          <tbody>
+            {b.rows.map((r, ri) => (
+              <tr key={ri}>
+                {r.cells.map((c, ci) =>
+                  r.header ? (
+                    <th key={ci} className="border border-paper px-2 py-1.5 text-center align-top font-bold">{inline(c, `${bi}-${ri}-${ci}`)}</th>
+                  ) : (
+                    <td key={ci} className={`border border-paper px-2 py-1.5 align-top leading-[30px] ${ci === 0 && b.rows.some((x) => x.header) ? 'font-bold' : ''}`}>
+                      {inline(c, `${bi}-${ri}-${ci}`)}
+                    </td>
+                  )
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    return <p key={bi} className="leading-[30px]">{inline(b.text, bi)}</p>
+  })
+
+  // Questions the text has no [[ ]] for still need somewhere to be answered.
+  const leftover = group.questions.slice(next)
+  return (
+    <div className="text-paper" style={textStyle}>
+      {out}
+      {leftover.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2">
+          {leftover.map((q) => (
+            <p key={q.id} id={`q-${q.id}`} className="scroll-mt-40 leading-[30px]">
+              {(group.prompts[q.id] ?? q.prompt ?? '').replace(/_{2,}/, '')} {renderGap(q, questionIndexById[q.id])}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Map / plan / diagram labelling (migration_80): the picture, with each
+// gap sitting where the teacher put it (x/y in % of the picture), like
+// the official test's 98×27 boxes over the map.
+function ImageGapLayout({ group, questionIndexById, renderGap, flags, onToggleFlag }) {
+  const pos = group.gapPositions || {}
+  const placed = group.questions.filter((q) => pos[q.id])
+  const loose = group.questions.filter((q) => !pos[q.id])
+  return (
+    <div>
+      <div className="relative inline-block max-w-full">
+        <img src={group.imageUrl} alt="" className="block w-[640px] max-w-full select-none" draggable={false} />
+        {placed.map((q) => (
+          <span
+            key={q.id}
+            id={`q-${q.id}`}
+            className="absolute scroll-mt-40"
+            style={{ left: `${pos[q.id].x}%`, top: `${pos[q.id].y}%` }}
+          >
+            {renderGap(q, questionIndexById[q.id])}
+          </span>
+        ))}
+      </div>
+      {loose.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2">
+          {loose.map((q) => (
+            <p key={q.id} id={`q-${q.id}`} className="scroll-mt-40 leading-[30px] text-paper">
+              {group.prompts[q.id] ?? q.prompt} {renderGap(q, questionIndexById[q.id])}
+              <TinyFlag flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Completion layouts, as on the official test (2026-10-14):
+//   notes     — bulleted lines under bold headings, gaps inside the lines
+//   sentences — one sentence per line
+//   summary   — one running paragraph
+//   table     — a bordered table, first column = the row's label
+//   flow      — bordered boxes joined by ↓ arrows
+// `renderGap(q, index)` gives the gap (a text box or a drop box).
+function GapLayout({ group, layout, questionIndexById, renderGap, flags, onToggleFlag, fontScale = 1, theme }) {
+  const textStyle = { fontSize: `${fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
+  const items = group.questions.map((q) => {
+    const index = questionIndexById[q.id]
+    const text = group.prompts[q.id] ?? q.prompt ?? ''
+    const blank = /_{2,}/.test(text)
+    const parts = blank ? splitPromptBlank(text, index) : { before: text ? `${text} ` : '', after: '' }
+    return { q, index, parts, subheading: group.subheadings?.[q.id] || '' }
+  })
+  const line = (it) => (
+    <>
+      {it.parts.before}
+      {renderGap(it.q, it.index)}
+      {it.parts.after}
+      <TinyFlag flagged={flags.has(it.q.id)} onToggle={() => onToggleFlag(it.q.id)} />
+    </>
+  )
+
+  // Split into runs under each subheading ("Items:", "Address:")
+  const sections = []
+  items.forEach((it) => {
+    if (it.subheading || sections.length === 0) sections.push({ heading: it.subheading, items: [] })
+    sections[sections.length - 1].items.push(it)
+  })
+
+  if (layout === 'summary') {
+    return (
+      <p className="leading-[30px] text-paper" style={textStyle}>
+        {items.map((it) => (
+          <span key={it.q.id} id={`q-${it.q.id}`} className="scroll-mt-40">
+            {line(it)}{' '}
+          </span>
+        ))}
+      </p>
+    )
+  }
+
+  if (layout === 'table') {
+    return (
+      <table className="w-full border-collapse text-paper" style={textStyle}>
+        <tbody>
+          {items.map((it) => (
+            <tr key={it.q.id} id={`q-${it.q.id}`} className="scroll-mt-40">
+              {sections.some((sec) => sec.heading) && (
+                <td className="w-[28%] border border-paper px-2 py-1.5 align-top font-bold">{it.subheading}</td>
+              )}
+              <td className="border border-paper px-2 py-1.5 leading-[30px]">{line(it)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+
+  if (layout === 'flow') {
+    return (
+      <div className="flex flex-col items-start text-paper" style={textStyle}>
+        {items.map((it, i) => (
+          <div key={it.q.id} className="flex w-full max-w-[460px] flex-col items-center">
+            <div id={`q-${it.q.id}`} className="w-full scroll-mt-40 border border-paper px-2 py-1 leading-[30px]">
+              {line(it)}
+            </div>
+            {i < items.length - 1 && <Icon name="arrow-down" className="my-0.5 h-7 w-7" strokeWidth={3} />}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (layout === 'sentences') {
+    return (
+      <div className="flex flex-col gap-3 text-paper" style={textStyle}>
+        {sections.map((sec, si) => (
+          <div key={si} className="flex flex-col gap-3">
+            {sec.heading && <p className="mt-2 font-bold">{sec.heading}</p>}
+            {sec.items.map((it) => (
+              <p key={it.q.id} id={`q-${it.q.id}`} className="scroll-mt-40 leading-[30px]">{line(it)}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // notes (default)
+  return (
+    <div className="text-paper" style={textStyle}>
+      {sections.map((sec, si) => (
+        <div key={si}>
+          {sec.heading && <p className="mt-4 font-bold">{sec.heading}</p>}
+          <ul className="my-3 list-disc pl-10">
+            {sec.items.map((it) => (
+              <li key={it.q.id} id={`q-${it.q.id}`} className="mb-2 scroll-mt-40 leading-[30px]">{line(it)}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// A whole matching group: the items with their gaps, the options right
+// beside them (official layout, 2026-10-14) — not pushed to the far edge.
 function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
   const { questions } = group
   const choices = questions[0].options?.choices || []
@@ -3310,59 +3636,77 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
   // can hold two answers). Matching headings stays one-use.
   const reusable = isReusableMatching(group, choices)
   const promptStyle = { fontSize: `${fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
+  const anyBlank = questions.some((q) => /_{2,}/.test(group.prompts[q.id] ?? q.prompt ?? ''))
+  const longOptions = choices.some((c) => (c || '').length > 40)
+  
+  const gapFor = (q, index) => (
+    <DropGap
+      questionId={q.id}
+      index={index}
+      value={answers[q.id] ?? ''}
+      onClear={() => onChange(q.id, '')}
+      fontScale={fontScale}
+      theme={theme}
+      inline
+    />
+  )
+
+  const items = group.imageUrl ? (
+    <ImageGapLayout
+      group={group}
+      questionIndexById={questionIndexById}
+      renderGap={(q, index) => (
+        <DropGap questionId={q.id} index={index} value={answers[q.id] ?? ''} onClear={() => onChange(q.id, '')} fontScale={fontScale} theme={theme} inline compact />
+      )}
+      flags={flags}
+      onToggleFlag={onToggleFlag}
+    />
+  ) : group.body ? (
+    <BodyLayout
+      group={group}
+      questionIndexById={questionIndexById}
+      renderGap={gapFor}
+      flags={flags}
+      onToggleFlag={onToggleFlag}
+      fontScale={fontScale}
+      theme={theme}
+    />
+  ) : anyBlank ? (
+    <GapLayout
+      group={group}
+      layout={group.layout || 'sentences'}
+      questionIndexById={questionIndexById}
+      renderGap={gapFor}
+      flags={flags}
+      onToggleFlag={onToggleFlag}
+      fontScale={fontScale}
+      theme={theme}
+    />
+  ) : (
+    <div className="flex flex-col gap-3">
+      {questions.map((q) => {
+        const index = questionIndexById[q.id]
+        const text = group.prompts[q.id] ?? q.prompt
+        return (
+          <div key={q.id} id={`q-${q.id}`} className="scroll-mt-40">
+            {group.subheadings[q.id] && <p className="mb-1.5 mt-1 font-bold text-paper" style={promptStyle}>{group.subheadings[q.id]}</p>}
+            <p className="leading-[30px] text-paper" style={promptStyle}>
+              {text}{' '}
+              {gapFor(q, index)}
+              <TinyFlag flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
 
   return (
     <div className="@container">
-      <div className="grid items-start gap-4 @[560px]:grid-cols-[minmax(0,1fr)_minmax(170px,38%)]">
-        <div className="order-2 flex flex-col gap-3 @[560px]:order-1">
-          {questions.map((q) => {
-            const index = questionIndexById[q.id]
-            const text = group.prompts[q.id] ?? q.prompt
-            const blank = /_{2,}/.test(text)
-            const gap = (
-              <DropGap
-                questionId={q.id}
-                index={index}
-                value={answers[q.id] ?? ''}
-                onClear={() => onChange(q.id, '')}
-                fontScale={fontScale}
-                theme={theme}
-                inline={blank}
-              />
-            )
-            const parts = blank ? splitPromptBlank(text, index) : null
-            return (
-              <div key={q.id} id={`q-${q.id}`} className="scroll-mt-40">
-                {group.subheadings[q.id] && <p className="mb-1.5 mt-1 font-semibold text-paper" style={promptStyle}>{group.subheadings[q.id]}</p>}
-                <div className="flex items-start justify-between gap-2">
-                  {blank ? (
-                    <p className="leading-[2.4] text-paper" style={promptStyle}>
-                      {parts.before}
-                      {gap}
-                      {parts.after}
-                    </p>
-                  ) : (
-                    <p className="flex-1 leading-[2.4] text-paper" style={promptStyle}>
-                      <QNum n={index} /> {text}{' '}
-                      <DropGap
-                        questionId={q.id}
-                        index={index}
-                        value={answers[q.id] ?? ''}
-                        onClear={() => onChange(q.id, '')}
-                        fontScale={fontScale}
-                        theme={theme}
-                        inline
-                      />
-                    </p>
-                  )}
-                  <FlagButton flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+      <div className="flex flex-col gap-4 @[560px]:flex-row @[560px]:items-start @[560px]:gap-8">
+        <div className={`order-2 min-w-0 @[560px]:order-1 ${group.body ? '@[560px]:flex-1' : '@[560px]:flex-initial'}`}>{items}</div>
         <div
-          className="sticky top-0 z-10 order-1 @[560px]:order-2"
+          className={`sticky top-0 z-10 order-1 @[560px]:order-2 ${longOptions ? '@[560px]:w-[40%] @[560px]:shrink-0' : '@[560px]:w-auto @[560px]:shrink-0'}`}
           style={{ backgroundColor: theme?.bg || 'var(--color-panel)' }}
         >
           <div className="max-h-[42vh] overflow-y-auto @[560px]:max-h-none @[560px]:overflow-visible">
@@ -3400,9 +3744,8 @@ function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, ques
   return (
     <section className="flex flex-col gap-3" aria-label={`Questions ${group.from}–${group.to}`}>
       <div style={headStyle}>
-        <p className="font-semibold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
-          Questions {group.from}
-          {group.to !== group.from ? `–${group.to}` : ''}
+        <p className="font-bold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
+          {group.to !== group.from ? `Questions ${group.from}–${group.to}` : `Question ${group.from}`}
         </p>
         {group.instruction && (
           <p className="mt-1 text-paper-dim" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
@@ -3410,13 +3753,68 @@ function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, ques
           </p>
         )}
         {group.title && (
-          <p className="mt-3 font-semibold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
+          <p
+            className={`mt-4 font-bold text-paper ${group.layout === 'flow' ? 'max-w-[460px] text-center' : ''}`}
+            style={{ fontSize: `${1.1 * fontScale}rem`, ...(headStyle || {}) }}
+          >
             {group.title}
           </p>
         )}
       </div>
 
-      {isMatching ? (
+      {group.inPassage ? (
+        <div className="max-w-[24rem]">
+          <MatchingBank
+            choices={group.questions[0].options?.choices || []}
+            usedValues={group.questions.map((q) => answers[q.id] ?? '').filter(Boolean)}
+            title={group.bankTitle}
+            hint="Drag a heading onto the gap in the text."
+            onPick={(choice) => {
+              const target = group.questions.find((q) => !(answers[q.id] ?? '').trim())
+              if (target) onChange(target.id, choice)
+            }}
+            fontScale={fontScale}
+            theme={theme}
+          />
+        </div>
+      ) : !isMatching && group.questions[0].type === 'short_answer' && (group.imageUrl || group.body) ? (
+        group.imageUrl ? (
+          <ImageGapLayout
+            group={group}
+            questionIndexById={questionIndexById}
+            renderGap={(q, index) => (
+              <TextGap question={q} index={index} value={answers[q.id] ?? ''} onChange={(v) => onChange(q.id, v)} fontScale={fontScale} compact />
+            )}
+            flags={flags}
+            onToggleFlag={onToggleFlag}
+          />
+        ) : (
+          <BodyLayout
+            group={group}
+            questionIndexById={questionIndexById}
+            renderGap={(q, index) => (
+              <TextGap question={q} index={index} value={answers[q.id] ?? ''} onChange={(v) => onChange(q.id, v)} fontScale={fontScale} />
+            )}
+            flags={flags}
+            onToggleFlag={onToggleFlag}
+            fontScale={fontScale}
+            theme={theme}
+          />
+        )
+      ) : !isMatching && group.questions[0].type === 'short_answer' && group.layout && group.layout !== 'questions' ? (
+        <GapLayout
+          group={group}
+          layout={group.layout}
+          questionIndexById={questionIndexById}
+          renderGap={(q, index) => (
+            <TextGap question={q} index={index} value={answers[q.id] ?? ''} onChange={(v) => onChange(q.id, v)} fontScale={fontScale} />
+          )}
+          flags={flags}
+          onToggleFlag={onToggleFlag}
+          fontScale={fontScale}
+          theme={theme}
+        />
+      ) : isMatching ? (
         <MatchingQuestionGroup
           group={group}
           answers={answers}
