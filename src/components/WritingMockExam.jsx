@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { MIN_WORDS, countWords, formatClock } from '../lib/writingMock'
 import { readSession, writeSession } from '../lib/sessionState'
 import { fetchServerClockOffset } from './MockExams'
+import Icon from './Icon'
 
 const AUTOSAVE_MS = 5000
 
@@ -535,32 +536,34 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-ink text-paper">
-      <div
-        className="relative z-20 flex shrink-0 flex-wrap items-center justify-between gap-3 px-5 py-2.5 shadow-md"
-        style={{ background: '#e3a7ae', color: '#1c1b29' }}
-      >
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60">Writing</p>
-          <p className="truncate font-display text-sm font-bold leading-tight">{exam.title}</p>
+    // Same look as the official computer test (2026-10-14) — see .cd-exam.
+    <div className="cd-exam fixed inset-0 z-[9999] flex flex-col overflow-hidden">
+      <div className="relative z-20 flex min-h-14 shrink-0 items-center justify-between gap-3 bg-panel pl-4 pr-4">
+        <div className="flex min-w-0 items-center gap-6">
+          <span className="shrink-0 select-none text-[20px] font-bold leading-none tracking-tight">Mr Ikromov</span>
+          <div className="min-w-0 leading-tight">
+            <p className="truncate font-semibold">{exam.title}</p>
+            <p
+              className={`flex items-center gap-1.5 text-[15px] tabular-nums ${remaining <= 60 ? 'animate-pulse' : ''}`}
+              style={{ color: remaining <= 300 ? '#b3261e' : undefined }}
+              title={formatClock(remaining)}
+            >
+              <Icon name="timer" className="h-4 w-4" />
+              {remaining >= 60
+                ? `${Math.ceil(remaining / 60)} minute${Math.ceil(remaining / 60) === 1 ? '' : 's'} left`
+                : `${Math.max(0, Math.ceil(remaining))} seconds left`}
+            </p>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-4">
-          {lastSavedAt && (
-            <span className="hidden text-xs opacity-70 sm:inline">saved {lastSavedAt.toLocaleTimeString()}</span>
-          )}
-          <span
-            className={`font-display text-lg font-bold tabular-nums ${remaining <= 60 ? 'animate-pulse' : ''}`}
-            style={{ color: remaining <= 300 ? '#b3261e' : undefined }}
-          >
-            {formatClock(remaining)}
-          </span>
-        </div>
+        {lastSavedAt && (
+          <span className="hidden shrink-0 text-sm text-mist sm:inline">Saved {lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 pt-4 sm:px-6">
-        <div className="shrink-0 rounded-md border border-line bg-panel px-5 py-3">
-          <p className="font-display text-2xl leading-tight text-paper">Part {partNo(activeTask)}</p>
-          <p className="mt-1 text-sm text-paper/85">{partGuide(activeTask)}</p>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 pt-4">
+        <div className="mx-4 shrink-0 rounded-[4px] border border-line bg-[#f1f2ec] px-4 py-3">
+          <p className="font-bold">Part {partNo(activeTask)}</p>
+          <p>{partGuide(activeTask)}</p>
         </div>
 
         <div className="relative min-h-0 flex-1">
@@ -574,12 +577,12 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
             return (
               <div
                 key={t}
-                className="grid h-full grid-cols-1 gap-5 overflow-y-auto overscroll-contain pb-20 lg:grid-cols-2 lg:gap-0 lg:overflow-hidden lg:pb-0"
+                className="grid h-full grid-cols-1 gap-5 overflow-y-auto overscroll-contain px-4 pb-20 lg:grid-cols-2 lg:gap-0 lg:overflow-hidden lg:pb-0"
               >
                 {/* LEFT — the task itself (and Task 1's chart/graph/table). */}
-                <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:border-r lg:border-line lg:pr-6">
+                <div className="pt-2 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:border-r-2 lg:border-black/50 lg:pr-6">
                   {prompt && (
-                    <p className="whitespace-pre-wrap text-[0.95rem] font-semibold leading-relaxed text-paper">
+                    <p className="whitespace-pre-wrap leading-6 text-paper">
                       {prompt}
                     </p>
                   )}
@@ -600,7 +603,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
                 </div>
 
                 {/* RIGHT — the answer box, "Word count: N" underneath. */}
-                <div className="flex min-h-[320px] flex-col lg:h-full lg:pl-6 lg:pb-16">
+                <div className="flex min-h-[320px] flex-col pt-2 lg:h-full lg:pl-6 lg:pb-20">
                   <textarea
                     value={texts[t]}
                     onChange={(e) => setTexts((prev) => ({ ...prev, [t]: e.target.value }))}
@@ -608,13 +611,13 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
                     onDrop={blockPaste}
                     onContextMenu={(e) => e.preventDefault()}
                     disabled={submitting || timeUp || Boolean(pausedAt)}
-                    className="focus-ring min-h-0 w-full flex-1 resize-none rounded-sm border border-line bg-panel-2 px-4 py-3 text-[0.95rem] leading-7 text-paper"
+                    className="focus-ring min-h-0 w-full flex-1 resize-none rounded-[3px] border border-[#535353] bg-white px-3 py-2 leading-6 text-black"
                     spellCheck={false}
                     autoCorrect="off"
                     autoCapitalize="off"
                     aria-label={`Part ${partNo(t)} answer`}
                   />
-                  <p className="mt-2 shrink-0 text-sm text-paper/85">Word count: {words}</p>
+                  <p className="mt-2 shrink-0 text-paper">Words: {words}</p>
                   {error && <p className="mt-1 text-sm text-coral">{error}</p>}
                   {timeUp && (
                     <p className="mt-1 text-sm text-mist">
@@ -648,28 +651,30 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
           })}
 
           {tasks.length > 1 && (
-            <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex gap-1.5">
+            <div className="pointer-events-none absolute bottom-2 right-4 z-10 flex gap-[3px]">
               <button
                 type="button"
                 onClick={() => activeIdx > 0 && goTask(tasks[activeIdx - 1])}
                 disabled={activeIdx <= 0}
                 title="Previous part"
-                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
-                  activeIdx > 0 ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                aria-label="Previous part"
+                className={`pointer-events-auto focus-ring flex h-14 w-[55px] items-center justify-center rounded-[3px] text-white ${
+                  activeIdx > 0 ? 'bg-[#535353] hover:bg-[#333]' : 'cursor-default bg-[#dddddd]'
                 }`}
               >
-                ←
+                <Icon name="arrow-left" className="h-[26px] w-[26px]" strokeWidth={3} />
               </button>
               <button
                 type="button"
                 onClick={() => activeIdx < tasks.length - 1 && goTask(tasks[activeIdx + 1])}
                 disabled={activeIdx >= tasks.length - 1}
                 title="Next part"
-                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
-                  activeIdx < tasks.length - 1 ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                aria-label="Next part"
+                className={`pointer-events-auto focus-ring flex h-14 w-[55px] items-center justify-center rounded-[3px] text-white ${
+                  activeIdx < tasks.length - 1 ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#dddddd]'
                 }`}
               >
-                →
+                <Icon name="arrow-right" className="h-[26px] w-[26px]" strokeWidth={3} />
               </button>
             </div>
           )}
@@ -679,16 +684,17 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
       {/* Footer part navigator — "Part 1  0 of 1" for the part you're not
           on (1 of 1 once anything is written), "Part 2  [2]" for the one
           you're on. */}
-      <div className="flex shrink-0 items-stretch gap-6 border-t border-line bg-panel px-3 pb-2 sm:px-4">
+      <div className="flex shrink-0 items-stretch bg-panel text-[#535353]">
         {tasks.map((t) =>
           t === activeTask ? (
-            <div key={t} className="flex flex-1 items-center gap-2 pt-1.5">
-              <span className="px-2 pt-1 text-sm font-bold text-paper">Part {partNo(t)}</span>
-              <span
-                className={`flex h-8 min-w-[2.1rem] items-center justify-center rounded-sm border-t-2 px-1 text-sm font-bold text-paper outline outline-2 outline-brass ${
-                  texts[t].trim() ? 'border-t-paper' : 'border-t-line'
-                }`}
-              >
+            <div key={t} className="flex flex-1 items-center">
+              <span className="px-5 py-4 font-semibold text-black">Part {partNo(t)}</span>
+              <span className="relative flex h-[26px] min-w-[22px] items-center justify-center rounded-[3px] border-[1.6px] border-[#418ec8] px-1 font-bold text-black">
+                <span
+                  className="absolute -top-[9px] left-0 right-0 h-[3px]"
+                  style={{ backgroundColor: texts[t].trim() ? '#358e14' : '#d7d7d7' }}
+                  aria-hidden
+                />
                 {partNo(t)}
               </span>
             </div>
@@ -697,10 +703,10 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
               key={t}
               type="button"
               onClick={() => goTask(t)}
-              className="focus-ring flex shrink-0 items-center gap-4 border-t-2 border-line px-2 pt-2.5 text-sm text-paper/80 hover:text-paper"
+              className="focus-ring flex shrink-0 items-center gap-4 px-5 py-4 hover:bg-black/5"
             >
-              <span>Part {partNo(t)}</span>
-              <span className="text-mist">{texts[t].trim() ? 1 : 0} of 1</span>
+              <span className="font-semibold text-black">Part {partNo(t)}</span>
+              <span className="text-[#757575]">{texts[t].trim() ? 1 : 0} of 1</span>
             </button>
           )
         )}

@@ -107,9 +107,9 @@ export const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
 // only for the sitting, same convention as the highlight/notes tool
 // above — nothing here is saved server-side.
 const FONT_SCALE_STEPS = [
-  { key: 'normal', label: 'A', scale: 1 },
-  { key: 'large', label: 'A+', scale: 1.15 },
-  { key: 'xlarge', label: 'A++', scale: 1.3 },
+  { key: 'normal', label: 'Regular', scale: 1 },
+  { key: 'large', label: 'Large', scale: 1.15 },
+  { key: 'xlarge', label: 'Extra large', scale: 1.3 },
 ]
 
 // surface/surfaceBorder/mutedText let the answer controls (option chips,
@@ -118,10 +118,11 @@ const FONT_SCALE_STEPS = [
 // oddly on top of a white/cream/black override — see the components
 // below that consume `theme` for exactly this.
 const EXAM_THEMES = [
-  { key: 'default', label: 'Site colours', bg: null, text: null, surface: null, surfaceBorder: null, mutedText: null },
-  { key: 'light', label: 'White background, black text', bg: '#ffffff', text: '#1a1a1a', surface: '#f2f2f0', surfaceBorder: '#d8d6d0', mutedText: '#57534e' },
-  { key: 'cream', label: 'Cream background, black text', bg: '#fdf6e3', text: '#2b2313', surface: '#f5ecd0', surfaceBorder: '#ddcf9e', mutedText: '#6b5d33' },
-  { key: 'contrast', label: 'Black background, yellow text', bg: '#0a0a0a', text: '#ffe066', surface: '#1a1a1a', surfaceBorder: '#4a4420', mutedText: '#c9b94d' },
+  // The real test's three "Contrast" options (2026-10-14). bg/text/etc
+  // also become the .cd-exam CSS variables, so the whole screen follows.
+  { key: 'light', label: 'Black on white', bg: '#ffffff', text: '#000000', surface: '#ffffff', surfaceBorder: '#919191', mutedText: '#535353', rule: '#d5d5d5', rubric: '#f1f2ec' },
+  { key: 'dark', label: 'White on black', bg: '#000000', text: '#ffffff', surface: '#000000', surfaceBorder: '#9a9a9a', mutedText: '#d0d0d0', rule: '#5a5a5a', rubric: '#1c1c1c' },
+  { key: 'contrast', label: 'Yellow on black', bg: '#000000', text: '#ffff00', surface: '#000000', surfaceBorder: '#9a9a00', mutedText: '#e6e600', rule: '#5a5a00', rubric: '#1c1c00' },
 ]
 
 // New question types — added 2026-09-26 alongside the teacher-side editor
@@ -635,7 +636,7 @@ export function ExamTaker({
   // Settings panel state — see FONT_SCALE_STEPS/EXAM_THEMES comment above.
   const [fontScaleIdx, setFontScaleIdx] = useState(0)
   // White page, black text by default — like the real computer test.
-  const [themeIdx, setThemeIdx] = useState(1)
+  const [themeIdx, setThemeIdx] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Reading: width of the passage pane in % (the real test's ↔ handle).
   const [splitPct, setSplitPct] = useState(50)
@@ -1559,7 +1560,7 @@ export function ExamTaker({
       : 'normal'
   const timerClass = timerLevel === 'critical' ? 'animate-pulse' : ''
   const timerColor =
-    timerLevel === 'critical' ? '#c81e3a' : timerLevel === 'warning' ? '#9a5b00' : '#1c1b29'
+    timerLevel === 'critical' ? '#c81e3a' : timerLevel === 'warning' ? '#b23a22' : 'inherit'
 
   // Fixed light pink/candidate-ID chrome bar, deliberately NOT using the
   // app's own dark brass theme tokens — same reasoning as the restyled
@@ -1587,8 +1588,22 @@ export function ExamTaker({
       })
   )
 
-  const examChromeBg = '#e3a7ae'
-  const examChromeText = '#1c1b29'
+  // The official test's look (2026-10-14, measured from the Inspera
+  // demos): white header, Arial, black text — see .cd-exam in index.css.
+  const cdVars = {
+    '--cd-bg': activeTheme.bg,
+    '--cd-text': activeTheme.text,
+    '--cd-muted': activeTheme.mutedText,
+    '--cd-rule': activeTheme.rule,
+    '--cd-rubric': activeTheme.rubric,
+    '--cd-option-border': activeTheme.surfaceBorder,
+  }
+  // "34 minutes left", like the real header; seconds only in the last minute.
+  const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000))
+  const timeLeftText =
+    remainingSec >= 60
+      ? `${Math.ceil(remainingSec / 60)} minute${Math.ceil(remainingSec / 60) === 1 ? '' : 's'} left`
+      : `${remainingSec} second${remainingSec === 1 ? '' : 's'} left`
 
   return (
     // Whole exam = exactly one screen (Jasur, 2026-09-29: "scrolling the
@@ -1596,7 +1611,7 @@ export function ExamTaker({
     // scrolls itself; only the passage pane and the questions pane
     // (whichever one the mouse is over) scroll, each on its own.
     <ChoiceDragProvider onDrop={handleChoiceDrop}>
-    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-ink text-paper">
+    <div className="cd-exam fixed inset-0 z-[9999] flex flex-col overflow-hidden" style={cdVars}>
       {submissionOpen && (
         <SubmissionPage
           sections={sections}
@@ -1634,19 +1649,15 @@ export function ExamTaker({
         </div>
       )}
       {flashMessage && (
-        <div className="fixed top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-ink/95 px-4 py-2 text-sm font-semibold text-paper shadow-lg animate-pulse">
+        <div className="fixed top-16 left-1/2 z-30 -translate-x-1/2 rounded-[4px] border border-line bg-panel px-4 py-2 font-bold text-paper shadow-lg">
           <Icon name="timer" className="h-4 w-4" /> {flashMessage}
         </div>
       )}
 
-      <div
-        className="relative z-20 flex shrink-0 flex-col gap-2.5 px-5 py-2.5 shadow-md"
-        style={{ background: examChromeBg, color: examChromeText }}
-      >
+      <div className="relative z-20 flex shrink-0 flex-col bg-panel text-paper">
         {(!isOnline || saveFailing || submitRetry) && (
           <div
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold"
-            style={{ background: 'rgba(0,0,0,0.1)' }}
+            className="mx-4 mt-2 flex items-center gap-2 rounded-[4px] border border-[#e8b4aa] bg-[#fde7e3] px-3 py-2 text-sm font-semibold text-[#7a2414]"
           >
             <span aria-hidden><Icon name="warning" className="h-3.5 w-3.5" /></span>
             {submitRetry ? (
@@ -1667,23 +1678,22 @@ export function ExamTaker({
             )}
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest opacity-60">
-              {reviewPhase ? 'Review time' : exam.module}
-            </p>
-            <p className="font-display text-sm font-bold leading-tight">{exam.title}</p>
+        <div className="flex min-h-14 items-center justify-between gap-3 pl-4 pr-2">
+          <div className="flex min-w-0 items-center gap-6">
+            <span className="shrink-0 select-none text-[20px] font-bold leading-none tracking-tight">Mr Ikromov</span>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate font-semibold">{exam.title}</p>
+              <p
+                className={`flex items-center gap-1.5 text-[15px] tabular-nums ${timerClass}`}
+                style={{ color: timerColor }}
+                title={`${formatClock(remainingMs)} · ${answeredCount} of ${totalQuestions} answered`}
+              >
+                <Icon name="timer" className="h-4 w-4" />
+                {reviewPhase ? `Review time · ${timeLeftText}` : timeLeftText}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs opacity-70">
-              {answeredCount}/{totalQuestions} answered
-            </span>
-            <span
-              className={`font-display text-lg font-bold tabular-nums ${timerClass}`}
-              style={{ color: timerColor }}
-            >
-              {formatClock(remainingMs)}
-            </span>
+          <div className="flex items-center">
             <div className="flex items-center gap-1" ref={chromePanelRef}>
               <div className="relative">
                 <button
@@ -1691,13 +1701,13 @@ export function ExamTaker({
                   onClick={() => setChromePanel((p) => (p === 'signal' ? null : 'signal'))}
                   title="Connection"
                   aria-expanded={chromePanel === 'signal'}
-                  className={`focus-ring relative rounded-md px-2 py-1.5 hover:bg-black/10 ${chromePanel === 'signal' ? 'bg-black/10' : ''}`}
+                  className={`focus-ring relative flex h-14 w-14 items-center justify-center hover:bg-black/5 ${chromePanel === 'signal' ? 'bg-black/5' : ''}`}
                 >
-                  <Icon name="signal" className="h-4 w-4" />
-                  {(!isOnline || saveFailing) && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#b23a22]" aria-hidden />}
+                  <Icon name="wifi" className="h-6 w-6" />
+                  {(!isOnline || saveFailing) && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
                 </button>
                 {chromePanel === 'signal' && (
-                  <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left text-paper shadow-lg">
+                  <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-[4px] border border-[#737373] bg-panel p-4 text-left text-paper shadow-[0_2px_10px_rgba(0,0,0,0.25)]">
                     <p className="flex items-center gap-2 text-sm font-semibold">
                       <span className={`h-2.5 w-2.5 rounded-full ${isOnline && !saveFailing ? 'bg-[#2f9e5b]' : 'bg-[#b23a22]'}`} aria-hidden />
                       {!isOnline ? 'Offline' : saveFailing ? 'Connection is unstable' : 'Connected'}
@@ -1718,13 +1728,13 @@ export function ExamTaker({
                   onClick={() => setChromePanel((p) => (p === 'bell' ? null : 'bell'))}
                   title="Notifications"
                   aria-expanded={chromePanel === 'bell'}
-                  className={`focus-ring relative rounded-md px-2 py-1.5 hover:bg-black/10 ${chromePanel === 'bell' ? 'bg-black/10' : ''}`}
+                  className={`focus-ring relative flex h-14 w-14 items-center justify-center hover:bg-black/5 ${chromePanel === 'bell' ? 'bg-black/5' : ''}`}
                 >
-                  <Icon name="bell" className="h-4 w-4" />
-                  {notices.length > noticesSeen && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#b23a22]" aria-hidden />}
+                  <Icon name="bell" className="h-6 w-6" />
+                  {notices.length > noticesSeen && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
                 </button>
                 {chromePanel === 'bell' && (
-                  <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left text-paper shadow-lg">
+                  <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-[4px] border border-[#737373] bg-panel p-4 text-left text-paper shadow-[0_2px_10px_rgba(0,0,0,0.25)]">
                     <p className="mb-2 text-sm font-semibold">Notifications</p>
                     {notices.length === 0 ? (
                       <p className="text-xs leading-5 text-mist">No notifications yet. Time reminders will appear here.</p>
@@ -1750,12 +1760,12 @@ export function ExamTaker({
                 onClick={() => setSettingsOpen((o) => !o)}
                 title="Settings"
                 aria-expanded={settingsOpen}
-                className={`focus-ring rounded-md px-2 py-1.5 text-sm hover:bg-black/10 ${settingsOpen ? 'bg-black/10' : ''}`}
+                className={`focus-ring flex h-14 w-14 items-center justify-center hover:bg-black/5 ${settingsOpen ? 'bg-black/5' : ''}`}
               >
-                <Icon name="menu" className="h-4 w-4" />
+                <Icon name="menu" className="h-6 w-6" />
               </button>
               {settingsOpen && (
-                <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left shadow-lg text-paper">
+                <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-[4px] border border-[#737373] bg-panel p-4 text-left text-paper shadow-[0_2px_10px_rgba(0,0,0,0.25)]">
                   <button
                     type="button"
                     onClick={() => {
@@ -1767,7 +1777,7 @@ export function ExamTaker({
                     Go to submission page
                     <span aria-hidden>→</span>
                   </button>
-                  <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Text size</p>
+                  <p className="mb-2 font-bold">Text size</p>
                   <div className="mb-4 flex gap-2">
                     {FONT_SCALE_STEPS.map((step, i) => (
                       <button
@@ -1785,7 +1795,7 @@ export function ExamTaker({
                     ))}
                   </div>
 
-                  <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-mist">Background</p>
+                  <p className="mb-2 font-bold">Contrast</p>
                   <div className="flex flex-col gap-1.5">
                     {EXAM_THEMES.map((theme, i) => (
                       <button
@@ -1810,7 +1820,7 @@ export function ExamTaker({
 
                   {exam.module === 'listening' && (
                     <>
-                      <p className="mb-2 mt-4 font-mono text-[11px] uppercase tracking-wide text-mist">Volume</p>
+                      <p className="mb-2 mt-4 font-bold">Volume</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm" aria-hidden><Icon name="speaker" className="h-4 w-4" /></span>
                         <input
@@ -1834,11 +1844,9 @@ export function ExamTaker({
               onClick={() => setNotesOpen((o) => !o)}
               title="Notes"
               aria-pressed={notesOpen}
-              className={`focus-ring rounded-md px-2 py-1.5 text-sm transition-colors ${
-                notesOpen ? 'bg-black/10' : 'hover:bg-black/10'
-              }`}
+              className={`focus-ring flex h-14 w-14 items-center justify-center ${notesOpen ? 'bg-black/5' : 'hover:bg-black/5'}`}
             >
-              <Icon name="pencil" className="h-4 w-4" />
+              <Icon name="notes" className="h-6 w-6" />
             </button>
             {/* No "Finish" button in this bar (Jasur, 2026-09-28). Since
                 2026-10-06 a student can still finish early the way the
@@ -1848,7 +1856,7 @@ export function ExamTaker({
         </div>
 
         {reviewPhase && (
-          <p className="text-[11px] font-medium opacity-85">
+          <p className="px-4 pb-2 text-sm font-semibold">
             All audio has finished — no more will play. You have 2 minutes to review your
             answers before this submits automatically.
           </p>
@@ -1908,14 +1916,17 @@ export function ExamTaker({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 pt-4 sm:px-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 pt-4">
         {activeSection && (
-          <div className="shrink-0 rounded-md border border-line bg-panel px-5 py-3">
-            <p className="font-display text-2xl leading-tight text-paper">Part {activeSectionIdx + 1}</p>
-            <p className="mt-1 text-sm text-paper/85">
-              {exam.module === 'listening' ? 'Listen and answer' : 'Read the text below and answer'} questions{' '}
+          <div
+            className="mx-4 shrink-0 rounded-[4px] border border-line px-4 py-3"
+            style={{ backgroundColor: 'var(--cd-rubric, #f1f2ec)' }}
+          >
+            <p className="font-bold">Part {activeSectionIdx + 1}</p>
+            <p>
+              {exam.module === 'listening' ? 'Listen and answer' : 'Read the text and answer'} questions{' '}
               {activeRange.from}
-              {activeRange.to !== activeRange.from ? ` - ${activeRange.to}` : ''}.
+              {activeRange.to !== activeRange.from ? `–${activeRange.to}` : ''}.
             </p>
           </div>
         )}
@@ -2007,7 +2018,7 @@ export function ExamTaker({
           return (
             <div
               key={section.id}
-              className={`${isActivePart ? '' : 'hidden'} ticket h-full overflow-y-auto overscroll-contain rounded-2xl p-5 sm:p-6 lg:overflow-hidden`}
+              className={`${isActivePart ? '' : 'hidden'} h-full overflow-y-auto overscroll-contain lg:overflow-hidden`}
               style={sectionThemeStyle}
               onFocusCapture={trackCurrentQuestion}
               onMouseDownCapture={trackCurrentQuestion}
@@ -2020,10 +2031,10 @@ export function ExamTaker({
                     below the exam bar and scrolling on its own (real exam
                     layout), title in bold at the top of it. Its width is
                     set by the ↔ handle between the panes. */}
-                <div className="lg:h-full lg:w-[var(--split)] lg:shrink-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-5">
+                <div className="px-4 pb-8 pt-4 lg:h-full lg:w-[var(--split)] lg:shrink-0 lg:overflow-y-auto lg:overscroll-contain">
                   <p
-                    className="mb-4 font-bold"
-                    style={{ fontSize: `${activeFontScale}rem`, ...(sectionThemeStyle ? { color: activeTheme.text } : {}) }}
+                    className="mb-4 font-bold leading-tight"
+                    style={{ fontSize: `${1.1 * activeFontScale}rem`, ...(sectionThemeStyle ? { color: activeTheme.text } : {}) }}
                   >
                     {sectionTitle}
                   </p>
@@ -2076,18 +2087,18 @@ export function ExamTaker({
                     if (e.key === 'ArrowRight') setSplitPct((v) => Math.min(75, v + 5))
                   }}
                   title="Drag to resize (double-click to reset)"
-                  className="group relative hidden w-3 shrink-0 cursor-col-resize touch-none items-center justify-center lg:flex"
+                  className="group relative hidden w-0.5 shrink-0 cursor-col-resize touch-none items-center justify-center bg-black/50 lg:flex"
+                  style={activeTheme.key !== 'light' ? { backgroundColor: activeTheme.mutedText } : undefined}
                 >
-                  <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line group-hover:bg-brass/60" />
+                  <span className="absolute inset-y-0 -left-2 -right-2" />
                   <span
-                    className="relative z-[1] flex h-9 w-5 items-center justify-center rounded border border-line bg-panel text-[11px] text-mist group-hover:border-brass/60"
-                    style={sectionThemeStyle ? { backgroundColor: activeTheme.surface, borderColor: activeTheme.surfaceBorder, color: activeTheme.mutedText } : undefined}
+                    className="relative z-[1] flex h-[35px] w-[35px] shrink-0 items-center justify-center border-[1.6px] border-[#535353] bg-[#f9f9f9] text-[#535353]"
                     aria-hidden
                   >
-                    ↔
+                    <Icon name="arrows-h" className="h-4 w-4" />
                   </span>
                 </div>
-                <div className="min-w-0 flex-1 pb-16 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pl-5">
+                <div className="min-w-0 flex-1 px-4 pb-24 pt-4 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pl-[17px] lg:pr-2">
                   {questionsList}
                 </div>
               </div>
@@ -2098,17 +2109,19 @@ export function ExamTaker({
         return (
           <div
             key={section.id}
-            className={`${isActivePart ? '' : 'hidden'} ticket h-full overflow-y-auto overscroll-contain rounded-2xl p-5 pb-20 sm:p-6 sm:pb-20`}
+            className={`${isActivePart ? '' : 'hidden'} h-full overflow-y-auto overscroll-contain px-4 pb-24 pt-2`}
             style={sectionThemeStyle}
             onFocusCapture={trackCurrentQuestion}
             onMouseDownCapture={trackCurrentQuestion}
           >
-            <p
-              className="mb-3 font-display text-base"
-              style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
-            >
-              {sectionTitle}
-            </p>
+            {!/^(part|section)\s*\d+$/i.test(String(sectionTitle).trim()) && (
+              <p
+                className="mb-3 font-bold"
+                style={sectionThemeStyle ? { color: activeTheme.text } : undefined}
+              >
+                {sectionTitle}
+              </p>
+            )}
 
             {exam.module === 'listening' && section.audio_url && (
               <div className="mb-4">
@@ -2138,28 +2151,31 @@ export function ExamTaker({
           {/* ← / → : previous / next question, across parts — the real
               exam's two square arrow buttons, bottom-right. */}
           {flatQuestions.length > 0 && (
-            <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex gap-1.5">
+            <div className="pointer-events-none absolute bottom-2 right-4 z-10 flex gap-[3px]">
               <button
                 type="button"
                 onClick={() => stepQuestion(-1)}
                 disabled={!canStepBack}
                 title="Previous question"
-                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
-                  canStepBack ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                aria-label="Previous question"
+                className={`pointer-events-auto focus-ring flex h-14 w-[55px] items-center justify-center rounded-[3px] text-white ${
+                  canStepBack ? 'bg-[#535353] hover:bg-[#333]' : 'cursor-default bg-[#dddddd]'
                 }`}
               >
-                ←
+                <Icon name="arrow-left" className="h-[26px] w-[26px]" strokeWidth={3} />
               </button>
               <button
                 type="button"
                 onClick={() => stepQuestion(1)}
                 disabled={!canStepForward}
                 title="Next question"
-                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
-                  canStepForward ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                aria-label="Next question"
+                className={`pointer-events-auto focus-ring flex h-14 w-[55px] items-center justify-center rounded-[3px] text-white ${
+                  canStepForward ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#dddddd]'
                 }`}
+                style={canStepForward && activeTheme.key !== 'light' ? { backgroundColor: activeTheme.text, color: activeTheme.bg } : undefined}
               >
-                →
+                <Icon name="arrow-right" className="h-[26px] w-[26px]" strokeWidth={3} />
               </button>
             </div>
           )}
@@ -2179,6 +2195,7 @@ export function ExamTaker({
             setCurrentQuestionId(null)
           }}
           onJump={jumpToQuestion}
+          onDeliver={() => setSubmissionOpen(true)}
         />
       )}
     </div>
@@ -2268,57 +2285,80 @@ function SubmissionPage({ sections, answers, flags, questionIndexById, module, o
 // "Part 1   0 of 14" — how many of its questions are answered — and
 // clicking it switches to that part. The thin line above each number
 // turns solid once that question is answered; a flagged one gets a dot.
-function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId, questionIndexById, onSelectPart, onJump }) {
+function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId, questionIndexById, onSelectPart, onJump, onDeliver }) {
   const isAnswered = (q) => Boolean(String(answers[q.id] ?? '').trim())
+  // Restyled 2026-10-14 to the official footer: "Part 2   0 of 13" for
+  // the other parts; for this part every number with a 3px bar above it
+  // (grey, green once answered) and a blue box round the current one; a
+  // grey ✓ button at the far right opens the submission page.
   return (
-    <div className="flex shrink-0 items-stretch gap-4 overflow-x-auto border-t border-line bg-panel px-3 pb-2 sm:px-4">
-      {sections.map((section, i) => {
-        const qs = section.questions
-        const answered = qs.filter(isAnswered).length
-        if (i !== activeIdx) {
+    <div className="flex shrink-0 items-stretch bg-panel text-[#535353]" style={{ color: 'var(--cd-muted, #535353)' }}>
+      <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+        {sections.map((section, i) => {
+          const qs = section.questions
+          const answered = qs.filter(isAnswered).length
+          if (i !== activeIdx) {
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => onSelectPart(i)}
+                aria-label={`Part ${i + 1}. ${answered} of ${qs.length} questions attempted.`}
+                className="focus-ring flex shrink-0 items-center gap-4 px-5 py-4 hover:bg-black/5"
+              >
+                <span className="font-semibold text-paper">Part {i + 1}</span>
+                <span style={{ color: 'var(--cd-muted, #757575)' }}>
+                  {answered} of {qs.length}
+                </span>
+              </button>
+            )
+          }
           return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => onSelectPart(i)}
-              className="focus-ring flex shrink-0 items-center gap-4 border-t-2 border-line px-2 pt-2.5 text-sm text-paper/80 hover:text-paper"
-            >
-              <span>Part {i + 1}</span>
-              <span className="text-mist">
-                {answered} of {qs.length}
-              </span>
-            </button>
-          )
-        }
-        return (
-          <div key={section.id} className="order-first flex min-w-[17rem] flex-1 items-center gap-2 pt-1.5 sm:order-none">
-            <span className="shrink-0 px-2 pt-1 text-sm font-bold text-paper">Part {i + 1}</span>
-            <div className="flex min-w-0 flex-wrap items-center gap-1">
-              {qs.map((q) => {
-                const num = questionIndexById[q.id]
-                const current = q.id === currentQuestionId
-                const done = isAnswered(q)
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => onJump(q.id)}
-                    title={flags.has(q.id) ? `Question ${num} — flagged for review` : `Question ${num}`}
-                    className={`focus-ring relative flex h-8 min-w-[2.1rem] items-center justify-center border-t-2 px-1 text-sm font-bold transition-colors ${
-                      done ? 'border-t-paper' : 'border-t-line'
-                    } ${current ? 'rounded-sm outline outline-2 outline-brass text-paper' : 'text-paper/85 hover:text-paper'}`}
-                  >
-                    {num}
-                    {flags.has(q.id) && (
-                      <span className="absolute -right-0.5 top-0.5 h-2 w-2 rounded-full bg-coral" />
-                    )}
-                  </button>
-                )
-              })}
+            <div key={section.id} className="order-first flex min-w-[17rem] flex-1 items-center sm:order-none">
+              <span className="shrink-0 px-5 py-4 font-semibold text-paper">Part {i + 1}</span>
+              <div className="flex min-w-0 flex-wrap items-center gap-x-[3px] gap-y-3 py-3">
+                {qs.map((q) => {
+                  const num = questionIndexById[q.id]
+                  const current = q.id === currentQuestionId
+                  const done = isAnswered(q)
+                  return (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => onJump(q.id)}
+                      title={flags.has(q.id) ? `Question ${num} — flagged for review` : `Question ${num}`}
+                      className={`focus-ring relative flex h-[26px] min-w-[22px] items-center justify-center rounded-[3px] border-[1.6px] px-1 text-paper ${
+                        current ? 'border-[#418ec8] font-bold' : 'border-transparent hover:border-line'
+                      }`}
+                    >
+                      <span
+                        className="absolute -top-[9px] left-0 right-0 h-[3px]"
+                        style={{ backgroundColor: done ? '#358e14' : '#d7d7d7' }}
+                        aria-hidden
+                      />
+                      {num}
+                      {flags.has(q.id) && (
+                        <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-coral" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+      {onDeliver && (
+        <button
+          type="button"
+          onClick={onDeliver}
+          title="Go to submission page"
+          aria-label="Go to submission page"
+          className="focus-ring flex w-[51px] shrink-0 items-center justify-center bg-[#efefef] text-[#535353] hover:bg-[#e2e2e2]"
+        >
+          <Icon name="check" className="h-5 w-5" strokeWidth={2.6} />
+        </button>
+      )}
     </div>
   )
 }
@@ -2611,7 +2651,7 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
             ? 'leading-relaxed text-paper whitespace-pre-wrap'
             : 'max-h-72 overflow-y-auto rounded-xl border border-line bg-panel-2 p-4 leading-relaxed text-paper whitespace-pre-wrap'
         }
-        style={{ fontSize: `${0.875 * fontScale}rem`, ...(themeStyle || {}) }}
+        style={{ fontSize: `${fontScale}rem`, ...(themeStyle || {}) }}
       >
         {segments.map((seg) =>
           seg.highlight ? (
@@ -2652,20 +2692,23 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
           ref={toolbarRef}
           onMouseDown={(e) => e.preventDefault()}
           style={{ position: 'fixed', left: Math.max(8, toolbar.rect.left), top: Math.max(8, toolbar.rect.top - 46) }}
-          className="z-30 flex items-center gap-1.5 rounded-full border border-line bg-panel px-2 py-1.5 shadow-lg"
+          className="z-30 flex items-stretch rounded-[4px] border border-[#737373] bg-white text-[#333] shadow-[0_2px_10px_rgba(0,0,0,0.25)]"
         >
           <button
             type="button"
             onClick={handleHighlight}
-            className="focus-ring rounded-full bg-amber/20 px-3 py-1 text-xs font-semibold text-amber hover:bg-amber/30"
+            className="focus-ring flex items-center gap-1.5 px-3 py-2 text-sm font-semibold hover:bg-black/5"
           >
+            <span className="h-3.5 w-3.5 rounded-sm bg-[#ffe14d] ring-1 ring-black/20" aria-hidden />
             Highlight
           </button>
+          <span className="my-1.5 w-px bg-[#d5d5d5]" aria-hidden />
           <button
             type="button"
             onClick={handleAddNote}
-            className="focus-ring rounded-full bg-panel-2 px-3 py-1 text-xs font-semibold text-paper-dim hover:text-paper"
+            className="focus-ring flex items-center gap-1.5 px-3 py-2 text-sm font-semibold hover:bg-black/5"
           >
+            <Icon name="notes" className="h-4 w-4" />
             Note
           </button>
         </div>
@@ -2675,16 +2718,16 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
         <div
           ref={noteEditorRef}
           style={{ position: 'fixed', left: notePos?.left ?? 16, top: notePos?.top ?? 80, width: 272 }}
-          className="z-50 rounded-xl border border-line bg-panel p-3 shadow-2xl"
+          className="z-50 rounded-[4px] border border-[#737373] bg-white p-3 text-[#000] shadow-[0_2px_10px_rgba(0,0,0,0.25)]"
         >
-          <p className="mb-1.5 text-[11px] uppercase tracking-wide text-mist font-mono">Note</p>
+          <p className="mb-1.5 text-sm font-bold">Note</p>
           <textarea
             autoFocus
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             rows={3}
             placeholder="Jot a note about this…"
-            className="focus-ring w-full resize-none rounded-lg border border-line bg-panel-2 px-2.5 py-2 text-xs text-paper"
+            className="focus-ring w-full resize-none rounded-[3px] border border-[#919191] bg-white px-2.5 py-2 text-sm text-black"
           />
           <div className="mt-2 flex items-center justify-between gap-2">
             <button
@@ -2693,7 +2736,7 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
                 onRemove(openNoteFor)
                 setOpenNoteFor(null)
               }}
-              className="focus-ring rounded-full border border-coral/30 px-3 py-1 text-[11px] font-semibold text-coral hover:bg-coral/10"
+              className="focus-ring rounded-[3px] border border-[#919191] px-3 py-1 text-sm text-[#b23a22] hover:bg-black/5"
             >
               Remove
             </button>
@@ -2703,7 +2746,7 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
                 onUpdateNote(openNoteFor, noteDraft)
                 setOpenNoteFor(null)
               }}
-              className="focus-ring rounded-full bg-brass px-3 py-1 text-[11px] font-bold text-onbrass"
+              className="focus-ring rounded-[3px] bg-black px-3 py-1 text-sm font-bold text-white"
             >
               Save
             </button>
@@ -2933,13 +2976,23 @@ function FlagButton({ flagged, onToggle }) {
 // instruction and typed-in number removed — exam/questionGroups.js);
 // falls back to the raw prompt. Matching questions never come through
 // here any more — MatchingQuestionGroup draws them with their bank.
+// The official test's question number: bold, in a small box that turns
+// blue for the question you're on (2026-10-14).
+function QNum({ n }) {
+  return (
+    <span className="cd-qnum mr-1 inline-block min-w-[28px] rounded-[3px] border-[1.6px] border-transparent px-0.5 pb-[3px] pt-1 text-center font-bold leading-4">
+      {n}
+    </span>
+  )
+}
+
 export function QuestionBlock({ index, question, prompt, value, onChange, flagged = false, onToggleFlag, fontScale = 1, theme }) {
   const text = prompt ?? question.prompt
   const promptStyle = {
-    fontSize: `${0.875 * fontScale}rem`,
+    fontSize: `${fontScale}rem`,
     ...(theme?.bg ? { color: theme.text } : {}),
   }
-  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const optionTextStyle = { fontSize: `${fontScale}rem` }
 
   // Short-answer: the gap sits INSIDE the sentence, exactly where the
   // blank is, with the question number as light text in the box (real
@@ -2956,9 +3009,9 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
       autoComplete="off"
       autoCorrect="off"
       autoCapitalize="off"
-      size={Math.max(10, Math.min(28, (value || '').length + 2))}
-      style={{ ...optionTextStyle, ...(theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : {}) }}
-      className="focus-ring mx-1 inline-block rounded-md border border-line bg-panel px-2 py-1 text-center align-baseline text-paper"
+      size={Math.max(16, Math.min(32, (value || '').length + 2))}
+      style={optionTextStyle}
+      className="cd-gap focus-ring mx-1 inline-block h-[26px] rounded-[3px] border border-[var(--cd-option-border,#535353)] bg-panel px-2 text-center align-middle text-paper"
     />
   )
 
@@ -2967,8 +3020,8 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
       id={`q-${question.id}`}
       className={isShortAnswer ? 'pt-2.5 first:pt-0 scroll-mt-40' : 'pt-1 scroll-mt-40'}
     >
-      <div className="mb-2.5 flex items-start justify-between gap-2">
-        <p className="leading-relaxed text-paper" style={promptStyle}>
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <p className="leading-6 text-paper" style={promptStyle}>
           {isShortAnswer ? (
             <>
               {shortAnswerParts.before}
@@ -2977,8 +3030,7 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
             </>
           ) : (
             <>
-              <span className="mr-2 font-semibold">{index}</span>
-              {text}
+              <QNum n={index} /> {text}
             </>
           )}
         </p>
@@ -2986,53 +3038,18 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
       </div>
 
       {question.type === 'multiple_choice' && (
-        <div className="flex flex-col gap-2">
-          {(question.options?.choices ?? []).map((choice) => (
-            <label
-              key={choice}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3.5 py-2 transition-colors ${
-                value === choice
-                  ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-paper-dim hover:border-brass/30'
-              }`}
-            >
-              <input
-                type="radio"
-                name={question.id}
-                checked={value === choice}
-                onChange={() => onChange(choice)}
-                className="accent-brass"
-              />
-              {choice}
-            </label>
-          ))}
-        </div>
+        <ChoiceRows name={question.id} choices={question.options?.choices ?? []} value={value} onChange={onChange} style={optionTextStyle} />
       )}
 
       {(question.type === 'true_false_ng' || question.type === 'yes_no_ng') && (
-        <div className="flex flex-wrap gap-2">
-          {(question.type === 'true_false_ng' ? TRUE_FALSE_NG_CHOICES : YES_NO_NG_CHOICES).map((choice) => (
-            <label
-              key={choice}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, value === choice) }}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-1.5 transition-colors ${
-                value === choice
-                  ? 'border-brass/40 bg-brass/10 text-paper'
-                  : 'border-line bg-panel text-paper-dim hover:border-brass/30'
-              }`}
-            >
-              <input
-                type="radio"
-                name={question.id}
-                checked={value === choice}
-                onChange={() => onChange(choice)}
-                className="accent-brass"
-              />
-              {choice.toUpperCase()}
-            </label>
-          ))}
-        </div>
+        <ChoiceRows
+          name={question.id}
+          choices={question.type === 'true_false_ng' ? TRUE_FALSE_NG_CHOICES : YES_NO_NG_CHOICES}
+          labelOf={(c) => c.toUpperCase()}
+          value={value}
+          onChange={onChange}
+          style={optionTextStyle}
+        />
       )}
 
       {question.type === 'multi_select' && (
@@ -3049,6 +3066,35 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
 }
 
 
+// Radio rows like the official test: no boxes, just the radio and the
+// text, a light-blue band behind the chosen one (2026-10-14).
+function ChoiceRows({ name, choices, value, onChange, style, labelOf = (c) => c }) {
+  return (
+    <ul className="mb-4 mt-1 flex flex-col gap-px">
+      {choices.map((choice) => {
+        const on = value === choice
+        return (
+          <li key={choice}>
+            <label
+              style={{ ...style, ...(on ? { backgroundColor: '#bbd8f0', color: '#000' } : {}) }}
+              className={`relative flex cursor-pointer items-center py-[9.6px] pl-8 pr-2 leading-6 ${on ? '' : 'hover:bg-black/5'}`}
+            >
+              <input
+                type="radio"
+                name={name}
+                checked={on}
+                onChange={() => onChange(choice)}
+                className="absolute left-1 top-1/2 m-0 h-[13px] w-[13px] -translate-y-1/2 accent-black"
+              />
+              {labelOf(choice)}
+            </label>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 // choose MORE THAN ONE from a list. `value` is the canonical
 // comma-joined string (see canonicalizeMultiSelect above) — this
 // component only ever writes that same canonical form back out, never
@@ -3056,7 +3102,7 @@ export function QuestionBlock({ index, question, prompt, value, onChange, flagge
 function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }) {
   const choices = question.options?.choices ?? []
   const selected = value ? value.split(MULTI_SELECT_SEPARATOR).map((s) => s.trim()) : []
-  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const optionTextStyle = { fontSize: `${fontScale}rem` }
 
   const toggle = (choice) => {
     const next = selected.includes(choice)
@@ -3066,31 +3112,27 @@ function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-[11px] text-mist -mt-1 mb-0.5">Choose every answer that applies.</p>
+    <ul className="mb-4 mt-1 flex flex-col gap-px">
       {choices.map((choice) => {
         const checked = selected.includes(choice)
         return (
-          <label
-            key={choice}
-            style={{ ...optionTextStyle, ...themedOptionStyle(theme, checked) }}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2 transition-colors ${
-              checked
-                ? 'border-brass/40 bg-brass/10 text-paper'
-                : 'border-line bg-panel text-mist hover:border-brass/30'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={() => toggle(choice)}
-              className="accent-brass"
-            />
-            {choice}
-          </label>
+          <li key={choice}>
+            <label
+              style={{ ...optionTextStyle, ...(checked ? { backgroundColor: '#bbd8f0', color: '#000' } : {}) }}
+              className={`relative flex cursor-pointer items-center py-[9.6px] pl-8 pr-2 leading-6 ${checked ? '' : 'hover:bg-black/5'}`}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => toggle(choice)}
+                className="absolute left-1 top-1/2 m-0 h-[13px] w-[13px] -translate-y-1/2 accent-black"
+              />
+              {choice}
+            </label>
+          </li>
         )
       })}
-    </div>
+    </ul>
   )
 }
 
@@ -3117,15 +3159,15 @@ function MultiSelectQuestion({ question, value, onChange, fontScale = 1, theme }
 function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inline = false, wide = false }) {
   const source = useChoiceDragSource()
   const active = useActiveChoiceDrag()
-  const textStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const textStyle = { fontSize: `${fontScale}rem` }
   const filledStyle = theme?.bg ? { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, color: theme.text } : undefined
 
   return (
     <span
       data-drop={`q:${questionId}`}
       style={textStyle}
-      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.1rem] items-stretch rounded-[3px] border transition-colors data-[drag-over]:border-2 data-[drag-over]:border-brass data-[drag-over]:bg-brass/10 ${
-        value ? 'border-paper-dim/60' : active ? 'border-dashed border-brass' : 'border-paper-dim/50'
+      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.1rem] items-stretch rounded-[5px] bg-panel transition-colors data-[drag-over]:border-[1.6px] data-[drag-over]:border-solid data-[drag-over]:border-[#418ec8] ${
+        value ? 'border border-[#919191]' : active ? 'border-[1.6px] border-dashed border-[#418ec8]' : 'border border-dashed border-[#333]'
       }`}
     >
       {value ? (
@@ -3156,7 +3198,7 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
           </button>
         </>
       ) : (
-        <span className="flex flex-1 items-center justify-center px-3 font-bold text-paper-dim">{index}</span>
+        <span className="flex flex-1 items-center justify-center px-3 font-bold text-paper">{index}</span>
       )}
     </span>
   )
@@ -3187,7 +3229,7 @@ function splitLetter(choice) {
 // "A" in bold, no instructions inside the box).
 function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, title, layout = 'stack', reusable = false }) {
   const source = useChoiceDragSource()
-  const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
+  const optionTextStyle = { fontSize: `${1.05 * fontScale}rem` }
   // "You may use any letter more than once" — options never leave the box.
   const remaining = reusable ? choices : choices.filter((choice) => !usedValues.includes(choice))
   const short = choices.every((c) => (c || '').trim().length <= 3)
@@ -3195,11 +3237,11 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
     <div
       data-drop="bank"
       title={hint || 'Drag an option into a gap, or click it to fill the next empty gap.'}
-      className="rounded-[3px] border border-paper-dim/40 bg-panel p-3 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/5"
-      style={theme?.bg ? { backgroundColor: theme.bg, borderColor: theme.surfaceBorder } : undefined}
+      className="rounded-[5px] border border-transparent bg-panel transition-colors data-[drag-over]:border-dashed data-[drag-over]:border-[#418ec8]"
+      style={theme?.bg ? { backgroundColor: theme.bg } : undefined}
     >
       {title && (
-        <p className="mb-2.5 font-bold text-paper" style={{ ...optionTextStyle, ...(theme?.bg ? { color: theme.text } : {}) }}>
+        <p className="mb-2 font-bold text-paper" style={{ ...optionTextStyle, ...(theme?.bg ? { color: theme.text } : {}) }}>
           {title}
         </p>
       )}
@@ -3219,8 +3261,8 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
                 data-bank-option=""
                 onKeyDown={moveFocusAmongSiblings}
                 style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
-                className={`focus-ring cursor-grab touch-none select-none rounded-[3px] border border-paper-dim/50 bg-panel py-1.5 leading-snug text-paper transition-colors hover:border-brass hover:bg-brass/5 data-[dragging]:opacity-40 ${
-                  short ? 'min-w-[2.75rem] px-3 text-center font-bold' : 'flex gap-2.5 px-3 text-left'
+                className={`focus-ring cursor-grab touch-none select-none rounded-[4px] border border-[#919191] bg-panel py-1.5 leading-snug text-paper transition-colors hover:border-[#418ec8] data-[dragging]:opacity-40 ${
+                  short ? 'min-w-[2.75rem] px-3 text-center' : 'flex gap-2.5 px-[9px] text-left'
                 }`}
               >
                 {parts && !short ? (
@@ -3267,7 +3309,7 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
   // questions, and in "Which paragraph contains…" tasks (one paragraph
   // can hold two answers). Matching headings stays one-use.
   const reusable = isReusableMatching(group, choices)
-  const promptStyle = { fontSize: `${0.875 * fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
+  const promptStyle = { fontSize: `${fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
 
   return (
     <div className="@container">
@@ -3301,8 +3343,7 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
                     </p>
                   ) : (
                     <p className="flex-1 leading-[2.4] text-paper" style={promptStyle}>
-                      <span className="mr-2 font-bold">{index}</span>
-                      {text}{' '}
+                      <QNum n={index} /> {text}{' '}
                       <DropGap
                         questionId={q.id}
                         index={index}
@@ -3344,6 +3385,13 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
   )
 }
 
+// The official instructions print the key words in bold: "Choose TRUE
+// if…", "Write ONE WORD ONLY…", "NB You may use…".
+function boldCaps(text) {
+  const parts = String(text || '').split(/(\b[A-Z][A-Z'’-]+(?:[\s/]+(?:[A-Z][A-Z'’-]+|A(?=\s+[A-Z]{2})))*\b)/)
+  return parts.map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part))
+}
+
 // One IELTS question group: "Questions 11–15", the instruction once,
 // then the questions.
 function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
@@ -3352,17 +3400,17 @@ function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, ques
   return (
     <section className="flex flex-col gap-3" aria-label={`Questions ${group.from}–${group.to}`}>
       <div style={headStyle}>
-        <p className="font-semibold text-paper" style={{ fontSize: `${0.95 * fontScale}rem`, ...(headStyle || {}) }}>
+        <p className="font-semibold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
           Questions {group.from}
           {group.to !== group.from ? `–${group.to}` : ''}
         </p>
         {group.instruction && (
-          <p className="mt-1 text-paper-dim" style={{ fontSize: `${0.875 * fontScale}rem`, ...(headStyle || {}) }}>
-            {group.instruction}
+          <p className="mt-1 text-paper-dim" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
+            {boldCaps(group.instruction)}
           </p>
         )}
         {group.title && (
-          <p className="mt-3 font-semibold text-paper" style={{ fontSize: `${0.95 * fontScale}rem`, ...(headStyle || {}) }}>
+          <p className="mt-3 font-semibold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
             {group.title}
           </p>
         )}
@@ -3384,7 +3432,7 @@ function QuestionGroupView({ group, answers, onChange, flags, onToggleFlag, ques
           {group.questions.map((q) => (
             <div key={q.id}>
               {group.subheadings[q.id] && (
-                <p className="mb-1 mt-1 font-semibold text-paper" style={{ fontSize: `${0.875 * fontScale}rem`, ...(headStyle || {}) }}>
+                <p className="mb-1 mt-1 font-semibold text-paper" style={{ fontSize: `${fontScale}rem`, ...(headStyle || {}) }}>
                   {group.subheadings[q.id]}
                 </p>
               )}

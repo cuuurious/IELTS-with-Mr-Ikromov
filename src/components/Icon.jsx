@@ -80,6 +80,16 @@ const PATHS = {
     </>
   ),
   signal: <path d="M4 20v-3M9 20v-7M14 20V9M19 20V4" />,
+  wifi: (
+    <>
+      <path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0" />
+      <circle cx="12" cy="19.5" r="1" fill="currentColor" />
+    </>
+  ),
+  'arrows-h': <path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4" />,
+  'arrow-left': <path d="M20 12H5M11 5l-7 7 7 7" />,
+  'arrow-right': <path d="M4 12h15M13 5l7 7-7 7" />,
+  notes: <path d="M20 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6M10 14h3l8-8-3-3-8 8v3Z" />,
   bell: <path d="M6 9a6 6 0 0 1 12 0c0 6 3 7 3 7H3s3-1 3-7M10 20a2 2 0 0 0 4 0" />,
   pencil: <path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" />,
   folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />,
