@@ -601,6 +601,23 @@ export function ExamTaker({
     jumpToQuestion(flatQuestions[next].id)
   }
 
+  // Whether ← / → can move at all (2026-10-14: "why does the left arrow
+  // look unclickable although I'm in part 2?" — ← was always grey; now
+  // grey only means "nothing before this", as in the real test).
+  const stepTarget = (dir) => {
+    if (!flatQuestions.length) return -1
+    const cur = currentQuestionId ? flatQuestions.findIndex((q) => q.id === currentQuestionId) : -1
+    let next
+    if (cur === -1) {
+      const first = sections[activeSectionIdx]?.questions?.[0]
+      const firstIdx = first ? flatQuestions.findIndex((q) => q.id === first.id) : 0
+      next = dir > 0 ? firstIdx : firstIdx - 1
+    } else next = cur + dir
+    return next >= 0 && next < flatQuestions.length ? next : -1
+  }
+  const canStepBack = stepTarget(-1) !== -1
+  const canStepForward = stepTarget(1) !== -1
+
   // Clicking or typing anywhere inside a question makes it "current".
   const trackCurrentQuestion = (e) => {
     const holder = e.target.closest?.('[id^="q-"]')
@@ -770,6 +787,27 @@ export function ExamTaker({
     const t = setTimeout(() => setFlashMessage(''), 4500)
     return () => clearTimeout(t)
   }, [flashMessage])
+
+  // Every flash is also kept for the 🔔 list in the top bar (2026-10-14,
+  // "buttons are not clickable" — the signal and bell used to be greyed-out
+  // decoration; now they open small panels like the real test's).
+  const [notices, setNotices] = useState([])
+  const [noticesSeen, setNoticesSeen] = useState(0)
+  useEffect(() => {
+    if (!flashMessage) return
+    setNotices((list) => [...list, { text: flashMessage, at: new Date() }])
+  }, [flashMessage])
+  const [chromePanel, setChromePanel] = useState(null) // 'signal' | 'bell' | null
+  const chromePanelRef = useRef(null)
+  useEffect(() => {
+    if (!chromePanel) return
+    if (chromePanel === 'bell') setNoticesSeen(notices.length)
+    const onDown = (e) => {
+      if (chromePanelRef.current && !chromePanelRef.current.contains(e.target)) setChromePanel(null)
+    }
+    window.addEventListener('mousedown', onDown)
+    return () => window.removeEventListener('mousedown', onDown)
+  }, [chromePanel, notices.length])
 
   // ------------------------------------------------------------------
   // Quiet tab-switch integrity log — same convention as
@@ -1646,21 +1684,73 @@ export function ExamTaker({
             >
               {formatClock(remainingMs)}
             </span>
-            {/* Network/notification icons — cosmetic only, matching the real
-                exam's own icons, which are shown but disabled throughout
-                the test. */}
-            <span className="opacity-40" title="Network connection" aria-hidden>
-              <Icon name="signal" className="h-4 w-4" />
-            </span>
-            <span className="opacity-40" title="Notifications" aria-hidden>
-              <Icon name="bell" className="h-4 w-4" />
-            </span>
+            <div className="flex items-center gap-1" ref={chromePanelRef}>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setChromePanel((p) => (p === 'signal' ? null : 'signal'))}
+                  title="Connection"
+                  aria-expanded={chromePanel === 'signal'}
+                  className={`focus-ring relative rounded-md px-2 py-1.5 hover:bg-black/10 ${chromePanel === 'signal' ? 'bg-black/10' : ''}`}
+                >
+                  <Icon name="signal" className="h-4 w-4" />
+                  {(!isOnline || saveFailing) && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#b23a22]" aria-hidden />}
+                </button>
+                {chromePanel === 'signal' && (
+                  <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left text-paper shadow-lg">
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <span className={`h-2.5 w-2.5 rounded-full ${isOnline && !saveFailing ? 'bg-[#2f9e5b]' : 'bg-[#b23a22]'}`} aria-hidden />
+                      {!isOnline ? 'Offline' : saveFailing ? 'Connection is unstable' : 'Connected'}
+                    </p>
+                    <p className="mt-1.5 text-xs leading-5 text-mist">
+                      {!isOnline
+                        ? 'Your answers are kept on this device and will be saved as soon as the internet is back. Do not close this tab.'
+                        : saveFailing
+                          ? 'Saving is being retried automatically. Your answers are safe on this device.'
+                          : 'Your answers are being saved automatically.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setChromePanel((p) => (p === 'bell' ? null : 'bell'))}
+                  title="Notifications"
+                  aria-expanded={chromePanel === 'bell'}
+                  className={`focus-ring relative rounded-md px-2 py-1.5 hover:bg-black/10 ${chromePanel === 'bell' ? 'bg-black/10' : ''}`}
+                >
+                  <Icon name="bell" className="h-4 w-4" />
+                  {notices.length > noticesSeen && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#b23a22]" aria-hidden />}
+                </button>
+                {chromePanel === 'bell' && (
+                  <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-4 text-left text-paper shadow-lg">
+                    <p className="mb-2 text-sm font-semibold">Notifications</p>
+                    {notices.length === 0 ? (
+                      <p className="text-xs leading-5 text-mist">No notifications yet. Time reminders will appear here.</p>
+                    ) : (
+                      <ul className="flex flex-col gap-1.5">
+                        {[...notices].reverse().map((n, i) => (
+                          <li key={i} className="flex items-baseline justify-between gap-3 text-xs">
+                            <span>{n.text}</span>
+                            <span className="shrink-0 tabular-nums text-mist">
+                              {n.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="relative" ref={settingsRef}>
               <button
                 type="button"
                 onClick={() => setSettingsOpen((o) => !o)}
                 title="Settings"
-                className="focus-ring rounded-md px-2 py-1.5 text-sm opacity-80 hover:opacity-100"
+                aria-expanded={settingsOpen}
+                className={`focus-ring rounded-md px-2 py-1.5 text-sm hover:bg-black/10 ${settingsOpen ? 'bg-black/10' : ''}`}
               >
                 <Icon name="menu" className="h-4 w-4" />
               </button>
@@ -1745,7 +1835,7 @@ export function ExamTaker({
               title="Notes"
               aria-pressed={notesOpen}
               className={`focus-ring rounded-md px-2 py-1.5 text-sm transition-colors ${
-                notesOpen ? 'bg-black/10 opacity-100' : 'opacity-80 hover:opacity-100'
+                notesOpen ? 'bg-black/10' : 'hover:bg-black/10'
               }`}
             >
               <Icon name="pencil" className="h-4 w-4" />
@@ -2052,16 +2142,22 @@ export function ExamTaker({
               <button
                 type="button"
                 onClick={() => stepQuestion(-1)}
+                disabled={!canStepBack}
                 title="Previous question"
-                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-[#8a8a8a] text-2xl font-bold text-white shadow hover:bg-[#777]"
+                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
+                  canStepBack ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                }`}
               >
                 ←
               </button>
               <button
                 type="button"
                 onClick={() => stepQuestion(1)}
+                disabled={!canStepForward}
                 title="Next question"
-                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-black text-2xl font-bold text-white shadow hover:bg-[#222]"
+                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
+                  canStepForward ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                }`}
               >
                 →
               </button>
@@ -2360,6 +2456,11 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
   const [toolbar, setToolbar] = useState(null) // { start, end, rect }
   const [openNoteFor, setOpenNoteFor] = useState(null)
   const [noteDraft, setNoteDraft] = useState('')
+  // Where the note editor sits on screen (2026-10-14, "note button is
+  // highlighting"): it used to be placed after the whole passage, so on a
+  // long passage it opened far below the screen and pressing Note looked
+  // like it only highlighted. It now opens right under the marked words.
+  const [notePos, setNotePos] = useState(null) // { left, top }
   const [rejectFlash, setRejectFlash] = useState(false) // true briefly after an overlapping selection is rejected
 
   useEffect(() => {
@@ -2427,6 +2528,32 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openNoteFor])
 
+  const placeNoteEditor = (id, fallbackRect) => {
+    const el = id ? containerRef.current?.querySelector(`[data-hl="${id}"]`) : null
+    const rects = el ? el.getClientRects() : null
+    const r = rects && rects.length ? rects[rects.length - 1] : (el ? el.getBoundingClientRect() : fallbackRect)
+    if (!r) return
+    const W = 272, H = 190
+    const vw = window.innerWidth, vh = window.innerHeight
+    let left = Math.min(Math.max(8, r.left), vw - W - 8)
+    let top = r.bottom + 8
+    if (top + H > vh - 8) top = Math.max(8, r.top - H - 8)
+    setNotePos({ left, top })
+  }
+
+  // Keep the editor stuck to its words while the passage pane scrolls.
+  useEffect(() => {
+    if (!openNoteFor) return
+    const onMove = () => placeNoteEditor(openNoteFor)
+    window.addEventListener('scroll', onMove, true)
+    window.addEventListener('resize', onMove)
+    return () => {
+      window.removeEventListener('scroll', onMove, true)
+      window.removeEventListener('resize', onMove)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNoteFor])
+
   const handleHighlight = () => {
     if (!toolbar) return
     const added = onAdd({ id: crypto.randomUUID(), start: toolbar.start, end: toolbar.end })
@@ -2448,8 +2575,12 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
       setRejectFlash(true)
       return
     }
+    const rect = toolbar.rect
     setNoteDraft('')
     setOpenNoteFor(id)
+    // The mark only exists after this render, so place it on the next frame.
+    setNotePos({ left: Math.max(8, rect.left), top: rect.bottom + 8 })
+    requestAnimationFrame(() => placeNoteEditor(id, rect))
   }
 
   const segments = useMemo(() => {
@@ -2486,13 +2617,19 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
           seg.highlight ? (
             <mark
               key={seg.key}
+              data-hl={seg.highlight.id}
               onClick={(e) => {
                 e.stopPropagation()
                 setNoteDraft(seg.highlight.note || '')
                 setOpenNoteFor(seg.highlight.id)
+                placeNoteEditor(seg.highlight.id, e.currentTarget.getBoundingClientRect())
               }}
               title={seg.highlight.note ? `Note: ${seg.highlight.note}` : 'Click to add a note or remove'}
-              className="cursor-pointer rounded-sm bg-[#ffe14d] px-0.5 text-[#1a1a1a]"
+              className={`cursor-pointer rounded-sm px-0.5 text-[#1a1a1a] ${
+                seg.highlight.note || openNoteFor === seg.highlight.id
+                  ? 'bg-[#bfe3ff] underline decoration-[#1d6fd6] decoration-dotted decoration-2 underline-offset-2'
+                  : 'bg-[#ffe14d]'
+              }`}
             >
               {seg.plain}
             </mark>
@@ -2535,9 +2672,14 @@ function HighlightablePassage({ text, highlights, onAdd, onUpdateNote, onRemove,
       )}
 
       {openNoteFor && (
-        <div ref={noteEditorRef} className="absolute z-30 mt-2 w-64 rounded-xl border border-line bg-panel p-3 shadow-lg">
+        <div
+          ref={noteEditorRef}
+          style={{ position: 'fixed', left: notePos?.left ?? 16, top: notePos?.top ?? 80, width: 272 }}
+          className="z-50 rounded-xl border border-line bg-panel p-3 shadow-2xl"
+        >
           <p className="mb-1.5 text-[11px] uppercase tracking-wide text-mist font-mono">Note</p>
           <textarea
+            autoFocus
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             rows={3}
@@ -2982,8 +3124,8 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
     <span
       data-drop={`q:${questionId}`}
       style={textStyle}
-      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.25rem] items-stretch rounded-md border-2 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/10 ${
-        value ? 'border-line' : active ? 'border-dashed border-brass/60' : 'border-dashed border-line'
+      className={`${inline ? 'mx-1 inline-flex align-middle' : 'flex'} ${wide ? 'w-full' : 'min-w-[10rem] max-w-full'} min-h-[2.1rem] items-stretch rounded-[3px] border transition-colors data-[drag-over]:border-2 data-[drag-over]:border-brass data-[drag-over]:bg-brass/10 ${
+        value ? 'border-paper-dim/60' : active ? 'border-dashed border-brass' : 'border-paper-dim/50'
       }`}
     >
       {value ? (
@@ -2999,7 +3141,7 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
             }}
             style={filledStyle}
             title="Drag to another gap, or back to the options to remove it (Delete clears it)"
-            className="flex flex-1 cursor-grab touch-none select-none items-center rounded-l-[4px] bg-panel-2 px-2.5 py-1 text-left leading-snug text-paper data-[dragging]:opacity-40"
+            className="flex flex-1 cursor-grab touch-none select-none items-center rounded-l-[2px] bg-panel px-2.5 py-1 text-left leading-snug text-paper data-[dragging]:opacity-40"
           >
             {value}
           </span>
@@ -3008,13 +3150,13 @@ function DropGap({ questionId, index, value, onClear, fontScale = 1, theme, inli
             onClick={onClear}
             aria-label={`Clear answer ${index}`}
             title="Clear this answer"
-            className="focus-ring flex w-7 shrink-0 items-center justify-center rounded-r-[4px] text-mist hover:bg-panel-2 hover:text-paper"
+            className="focus-ring flex w-6 shrink-0 items-center justify-center rounded-r-[2px] text-mist/70 hover:bg-panel-2 hover:text-paper"
           >
             ×
           </button>
         </>
       ) : (
-        <span className="flex flex-1 items-center justify-center px-3 font-semibold text-mist">{index}</span>
+        <span className="flex flex-1 items-center justify-center px-3 font-bold text-paper-dim">{index}</span>
       )}
     </span>
   )
@@ -3035,36 +3177,63 @@ function moveFocusAmongSiblings(e) {
   }
 }
 
-function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, layout = 'stack', reusable = false }) {
+function splitLetter(choice) {
+  const m = /^\s*([A-Z])(?:[.)]|\s)\s*(.+)$/.exec(choice || '')
+  return m ? { letter: m[1], text: m[2] } : null
+}
+
+// The options box (restyled 2026-10-14 to look like the computer-
+// delivered test: an optional "List of Ideas" title, thin square boxes,
+// "A" in bold, no instructions inside the box).
+function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint, title, layout = 'stack', reusable = false }) {
   const source = useChoiceDragSource()
   const optionTextStyle = { fontSize: `${0.875 * fontScale}rem` }
   // "You may use any letter more than once" — options never leave the box.
   const remaining = reusable ? choices : choices.filter((choice) => !usedValues.includes(choice))
+  const short = choices.every((c) => (c || '').trim().length <= 3)
   return (
     <div
       data-drop="bank"
-      className="rounded-lg border border-line bg-panel p-3 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/5"
+      title={hint || 'Drag an option into a gap, or click it to fill the next empty gap.'}
+      className="rounded-[3px] border border-paper-dim/40 bg-panel p-3 transition-colors data-[drag-over]:border-brass data-[drag-over]:bg-brass/5"
       style={theme?.bg ? { backgroundColor: theme.bg, borderColor: theme.surfaceBorder } : undefined}
     >
-      <p className="mb-2 text-xs text-mist" style={theme?.bg ? { color: theme.mutedText } : undefined}>
-        {hint || 'Drag an option into a gap, or click it to fill the next empty gap.'}
-        {reusable && ' Each option can be used more than once.'}
-      </p>
-      <div className={layout === 'wrap' ? 'flex flex-wrap gap-1.5' : 'flex flex-col gap-1.5'}>
+      {title && (
+        <p className="mb-2.5 font-bold text-paper" style={{ ...optionTextStyle, ...(theme?.bg ? { color: theme.text } : {}) }}>
+          {title}
+        </p>
+      )}
+      <div
+        className={
+          layout === 'wrap' || short ? 'flex flex-wrap gap-2' : 'flex flex-col gap-2'
+        }
+      >
         {remaining.length > 0 ? (
-          remaining.map((choice) => (
-            <button
-              key={choice}
-              type="button"
-              {...source({ choice, onClick: () => onPick(choice) })}
-              data-bank-option=""
-              onKeyDown={moveFocusAmongSiblings}
-              style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
-              className="focus-ring cursor-grab touch-none select-none rounded-md border border-line bg-panel px-3 py-1.5 text-left leading-snug text-paper transition-colors hover:border-brass/50 data-[dragging]:opacity-40"
-            >
-              {choice}
-            </button>
-          ))
+          remaining.map((choice) => {
+            const parts = splitLetter(choice)
+            return (
+              <button
+                key={choice}
+                type="button"
+                {...source({ choice, onClick: () => onPick(choice) })}
+                data-bank-option=""
+                onKeyDown={moveFocusAmongSiblings}
+                style={{ ...optionTextStyle, ...themedOptionStyle(theme, false) }}
+                className={`focus-ring cursor-grab touch-none select-none rounded-[3px] border border-paper-dim/50 bg-panel py-1.5 leading-snug text-paper transition-colors hover:border-brass hover:bg-brass/5 data-[dragging]:opacity-40 ${
+                  short ? 'min-w-[2.75rem] px-3 text-center font-bold' : 'flex gap-2.5 px-3 text-left'
+                }`}
+              >
+                {parts && !short ? (
+                  <>
+                    <span className="w-3.5 shrink-0 font-bold">{parts.letter}</span>
+                    <span>{parts.text}</span>
+                  </>
+                ) : (
+                  choice
+                )}
+              </button>
+            )
+          })
         ) : (
           <p className="text-xs text-mist">All options used. Drag one back here to change it.</p>
         )}
@@ -3073,11 +3242,31 @@ function MatchingBank({ choices, usedValues, onPick, fontScale = 1, theme, hint,
   )
 }
 
+function isReusableMatching(group, choices) {
+  if (group.reusable) return true
+  const q0 = group.questions[0]
+  if (q0?.options?.reusable) return true
+  const text = [group.instruction, group.title].filter(Boolean).join(' ')
+  if (group.kind === 'matching_headings' || /\bheadings?\b/i.test(text)) return false
+  if (choices.length > 0 && choices.length < group.questions.length) return true
+  if (group.kind === 'matching_info' || /which paragraph|which section|paragraph contains|section contains/i.test(text)) return true
+  const prompts = group.questions.map((q) => group.prompts?.[q.id] ?? q.prompt ?? '').join(' ')
+  if (/which paragraph|which section/i.test(prompts)) return true
+  return false
+}
+
 // A whole matching group: gaps on the left, bank on the right.
 function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, questionIndexById, fontScale = 1, theme }) {
   const { questions } = group
   const choices = questions[0].options?.choices || []
   const usedValues = questions.map((q) => answers[q.id] ?? '').filter(Boolean)
+  // Letters reusable (2026-10-14, "sometimes in this question type some
+  // letters may be used more than once"). Besides an explicit setting or
+  // "you may use any letter more than once" in the instruction, the real
+  // exam always lets you reuse a letter when there are fewer options than
+  // questions, and in "Which paragraph contains…" tasks (one paragraph
+  // can hold two answers). Matching headings stays one-use.
+  const reusable = isReusableMatching(group, choices)
   const promptStyle = { fontSize: `${0.875 * fontScale}rem`, ...(theme?.bg ? { color: theme.text } : {}) }
 
   return (
@@ -3111,13 +3300,19 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
                       {parts.after}
                     </p>
                   ) : (
-                    <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
-                      <p className="leading-relaxed text-paper" style={promptStyle}>
-                        <span className="mr-2 font-semibold">{index}</span>
-                        {text}
-                      </p>
-                      {gap}
-                    </div>
+                    <p className="flex-1 leading-[2.4] text-paper" style={promptStyle}>
+                      <span className="mr-2 font-bold">{index}</span>
+                      {text}{' '}
+                      <DropGap
+                        questionId={q.id}
+                        index={index}
+                        value={answers[q.id] ?? ''}
+                        onClear={() => onChange(q.id, '')}
+                        fontScale={fontScale}
+                        theme={theme}
+                        inline
+                      />
+                    </p>
                   )}
                   <FlagButton flagged={flags.has(q.id)} onToggle={() => onToggleFlag(q.id)} />
                 </div>
@@ -3133,7 +3328,8 @@ function MatchingQuestionGroup({ group, answers, onChange, flags, onToggleFlag, 
             <MatchingBank
               choices={choices}
               usedValues={usedValues}
-              reusable={group.reusable}
+              reusable={reusable}
+              title={group.bankTitle}
               onPick={(choice) => {
                 const target = questions.find((q) => !(answers[q.id] ?? '').trim())
                 if (target) onChange(target.id, choice)

@@ -652,16 +652,22 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
               <button
                 type="button"
                 onClick={() => activeIdx > 0 && goTask(tasks[activeIdx - 1])}
+                disabled={activeIdx <= 0}
                 title="Previous part"
-                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-[#8a8a8a] text-2xl font-bold text-white shadow hover:bg-[#777]"
+                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
+                  activeIdx > 0 ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                }`}
               >
                 ←
               </button>
               <button
                 type="button"
                 onClick={() => activeIdx < tasks.length - 1 && goTask(tasks[activeIdx + 1])}
+                disabled={activeIdx >= tasks.length - 1}
                 title="Next part"
-                className="pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm bg-black text-2xl font-bold text-white shadow hover:bg-[#222]"
+                className={`pointer-events-auto focus-ring flex h-12 w-12 items-center justify-center rounded-sm text-2xl font-bold text-white shadow ${
+                  activeIdx < tasks.length - 1 ? 'bg-black hover:bg-[#222]' : 'cursor-default bg-[#b5b5b5]'
+                }`}
               >
                 →
               </button>

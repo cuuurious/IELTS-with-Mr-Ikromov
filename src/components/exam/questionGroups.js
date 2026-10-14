@@ -53,6 +53,44 @@ function sharedStem(prompts) {
   return m[1]
 }
 
+// Matching prompts that repeat the task in every question (2026-10-14,
+// "doesnt look like real exam"): "Which paragraph contains a mention of
+// X" ×5 or "Match Ian Hunter with the correct idea." ×4. The real test
+// says the task once and lists only the varying part — "14 a mention of
+// X", "23 Ian Hunter" — with the options under a "List of Ideas" title.
+const letterRange = (choices) => {
+  const letters = choices.map((c) => /^\s*([A-Z])\b/.exec(c)?.[1]).filter(Boolean)
+  return letters.length === choices.length && letters.length > 1 ? `${letters[0]}–${letters[letters.length - 1]}` : ''
+}
+const cap = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t)
+function tidyMatching(texts, questions) {
+  if (questions[0]?.type !== 'matching' || texts.length === 0) return null
+  const choices = questions[0].options?.choices || []
+  const range = letterRange(choices)
+  const para = texts.map((t) => /^which (paragraph|section)\s+(?:contains|mentions)\s+(.+)$/i.exec(t))
+  if (para.every(Boolean)) {
+    const unit = para[0][1].toLowerCase()
+    return {
+      texts: para.map((m) => cap(m[2].replace(/\?\s*$/, ''))),
+      lead: `Which ${unit} contains the following information?${range ? ` Choose the correct letter, ${range}.` : ''}`,
+      reusable: true,
+    }
+  }
+  const match = texts.map((t) => /^match\s+(.+?)\s+with\s+the\s+correct\s+([a-z ]+?)\.?$/i.exec(t))
+  if (match.every(Boolean) && match.every((m) => m[2].toLowerCase() === match[0][2].toLowerCase())) {
+    const noun = match[0][2].toLowerCase()
+    const names = match.map((m) => m[1])
+    const people = names.every((n) => /^[A-Z][\w'’.-]*(\s+[A-Z][\w'’.-]*)+$/.test(n))
+    const item = people ? 'person' : 'statement'
+    return {
+      texts: names,
+      lead: `Look at the following ${people ? 'people' : 'statements'} and the list of ${noun}s below. Match each ${item} with the correct ${noun}${range ? `, ${range}` : ''}.`,
+      bankTitle: `List of ${cap(noun)}s`,
+    }
+  }
+  return null
+}
+
 function familyOf(q) {
   if (q.type === 'matching') return `matching:${JSON.stringify(q.options?.choices || [])}`
   return q.type
@@ -154,7 +192,7 @@ export function generateInstruction(group, { module, questions = [] } = {}) {
     if (group.kind !== 'matching_info' && n) {
       parts.push(`Choose ${NUMBER_WORDS[n] || n} answer${n === 1 ? '' : 's'} from the box.`)
     }
-    if (group.options_reusable) parts.push('You may use any letter more than once.')
+    if (group.options_reusable || group.kind === 'matching_info') parts.push('NB You may use any letter more than once.')
   }
   return parts.join(' ')
 }
@@ -232,6 +270,9 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
     const stem = sharedStem(texts)
     if (stem) texts = texts.map((t, i) => stripBakedNumber(t.slice(stem.length).trim(), questionIndexById[qs[i].id]))
 
+    const tidy = stem ? null : tidyMatching(texts, qs)
+    if (tidy) texts = tidy.texts
+
     const prompts = {}
     const subheadings = {}
     let lastSub = ''
@@ -257,14 +298,18 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
         instruction: [isInfo && !g.instruction ? '' : stem, generated].filter(Boolean).join(' '),
         prompts,
         subheadings,
-        reusable: Boolean(g.options_reusable),
+        reusable: Boolean(g.options_reusable) || Boolean(tidy?.reusable),
+        bankTitle: tidy?.bankTitle || '',
         kind: g.kind,
         wordLimit: g.word_limit || null,
       }
     }
 
-    const instructionParts = [stem, run.instruction || defaultInstruction(run.family, qs)].filter(Boolean)
-    const allText = instructionParts.join(' ')
+    const instructionParts = tidy
+      ? [tidy.lead, run.instruction && !/move (it|them) into the gap/i.test(run.instruction) ? run.instruction : '']
+      : [stem, run.instruction || defaultInstruction(run.family, qs)]
+    let allText = instructionParts.filter(Boolean).join(' ')
+    if (tidy?.reusable && !/more than once/i.test(allText)) allText += ' NB You may use any letter more than once.'
     return {
       key: qs[0].id,
       questions: qs,
@@ -276,6 +321,7 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
       prompts,
       subheadings,
       reusable: /any letter more than once|any (?:option|answer) more than once/i.test(allText),
+      bankTitle: tidy?.bankTitle || '',
     }
   })
 }
