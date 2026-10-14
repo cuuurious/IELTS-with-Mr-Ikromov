@@ -3,22 +3,25 @@ import { supabase } from '../../lib/supabaseClient'
 import { skillOfHomework, formatDue, isSameDay } from '../../lib/skills'
 import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
 import { fetchAll } from '../../lib/fetchAll'
-import SkillArt, { SkillIcon } from '../../components/SkillArt'
+import { notifyUsers } from '../../lib/notify'
+import { firstNameOf } from '../../lib/names'
+import { SkillIcon } from '../../components/SkillArt'
+import ConfirmModal from '../../components/ConfirmModal'
 
 /*
- * TEACHER HOME — "Study room" design (2026-10-06), the teacher's
- * version of the student Home. Mavluda: "we need window like overview
- * for teachers dashboard as well … as visually attractive as students'".
+ * TEACHER HOME — "Study room" design (2026-10-06), reworked 2026-10-14
+ * after Jasur's "don't you think we can improve teachers dashboard?":
  *
- * One screen answering "what needs me today?":
- *   - the next deadline: who has handed it in and who hasn't;
- *   - things waiting for the teacher (approvals, mock requests, mock
- *     results to release);
- *   - this week's homework across every group, with hand-in progress;
- *   - each group's hand-in rate for the last two weeks;
- *   - students who missed two or more recent deadlines;
- *   - the latest hand-ins and this week's word practice.
- * Everything links into the existing screens; nothing here edits data.
+ *   - the numbers agree with the Mock Center: "results to release" only
+ *     counts real results (an attempt with 0 correct or handed in within
+ *     10 minutes is an abandoned sitting, same rule as the Results tab);
+ *   - the top line names the next deadline instead of "No deadlines
+ *     today" next to a card showing tomorrow's deadline;
+ *   - one card per group (next deadline, who's handed in, a Remind
+ *     button, two-week hand-in rate, how many are behind) instead of one
+ *     group in a big hero card;
+ *   - "Missed 2+ deadlines" is split by group;
+ *   - every "Waiting for you" row opens the exact tab it is about.
  *
  * "Handed in" = a submissions row with status 'done'; for deadlines that
  * have passed, a homework_completions row also counts (kept after a reset).
@@ -26,8 +29,18 @@ import SkillArt, { SkillIcon } from '../../components/SkillArt'
 
 const DAY = 86400000
 const WINDOW_DAYS = 14
+const INCOMPLETE_MINUTES = 10 // same rule as TeacherMockCenter's isEmptyAttempt
 
-function useTeacherOverview() {
+function isRealResult(a) {
+  if (Number(a.score) <= 0) return false
+  if (a.started_at && a.submitted_at) {
+    const mins = (new Date(a.submitted_at) - new Date(a.started_at)) / 60000
+    if (mins < INCOMPLETE_MINUTES) return false
+  }
+  return true
+}
+
+function useTeacherOverview(reloadKey) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
 
@@ -36,10 +49,11 @@ function useTeacherOverview() {
     const now = Date.now()
     const since = new Date(now - WINDOW_DAYS * DAY).toISOString()
     const weekAgo = new Date(now - 7 * DAY).toISOString()
+    const threeHoursAgo = new Date(now - 3 * 3600 * 1000).toISOString()
 
     const load = async () => {
       try {
-        const [groupsRes, membersRes, hwRes, accessRes, mockRes, writingRes, wordRes, reviewRes, feedRes] = await Promise.all([
+        const [groupsRes, membersRes, hwRes, accessRes, mockRes, writingRes, liveRes, wordRes, reviewRes, feedRes] = await Promise.all([
           supabase.from('groups').select('id, name, created_at').order('created_at'),
           // fetchAll (2026-10-06) — same 1000-row cap.
           fetchAll(() =>
@@ -55,17 +69,24 @@ function useTeacherOverview() {
             .select('id, group_id, title, description, homework_type, enable_speaking, due_date, created_at')
             .or(`due_date.gte.${since},created_at.gte.${since}`)
             .order('due_date', { ascending: true }),
-          supabase.from('mock_access_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('mock_access_requests').select('id, requested_at').eq('status', 'pending').order('requested_at'),
           supabase
             .from('mock_attempts')
-            .select('id', { count: 'exact', head: true })
+            .select('id, score, started_at, submitted_at')
             .not('submitted_at', 'is', null)
-            .is('released_at', null),
+            .is('released_at', null)
+            .limit(1000),
           supabase
             .from('writing_mock_attempts')
             .select('id', { count: 'exact', head: true })
             .not('submitted_at', 'is', null)
             .is('released_at', null),
+          // Same "live" rule as the Mock Center's Live Mocks badge.
+          supabase
+            .from('full_mock_attempts')
+            .select('id', { count: 'exact', head: true })
+            .neq('stage', 'done')
+            .gte('updated_at', threeHoursAgo),
           supabase.from('wordlist_attempts').select('student_id, created_at').gte('created_at', weekAgo).limit(5000),
           supabase.from('word_review_sessions').select('student_id, created_at').gte('created_at', weekAgo).limit(5000),
           supabase
@@ -81,8 +102,6 @@ function useTeacherOverview() {
         let submissions = []
         let completions = []
         if (homeworks.length) {
-          // fetchAll (2026-10-06): the API caps a request at 1000 rows no
-          // matter what .limit() says, so completion stats came out short.
           const subsRes = await fetchAll(() =>
             supabase
               .from('submissions')
@@ -120,6 +139,7 @@ function useTeacherOverview() {
 
         if (cancelled) return
         if (groupsRes.error) throw groupsRes.error
+        const unreleasedRows = mockRes.data || []
         setData({
           groups: groupsRes.data || [],
           members: membersRes.data || [],
@@ -128,8 +148,9 @@ function useTeacherOverview() {
           submissions,
           completions,
           feed,
-          accessRequests: accessRes.count || 0,
-          unreleased: (mockRes.count || 0) + (writingRes.count || 0),
+          accessRequests: accessRes.data || [],
+          unreleased: unreleasedRows.filter(isRealResult).length + (writingRes.count || 0),
+          liveMocks: liveRes.count || 0,
           wordActivity: [...(wordRes.data || []), ...(reviewRes.data || [])],
         })
       } catch (err) {
@@ -141,13 +162,17 @@ function useTeacherOverview() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [reloadKey])
 
   return { data, error }
 }
 
-function Card({ className = '', children }) {
-  return <section className={`rounded-[22px] border border-line bg-panel ${className}`}>{children}</section>
+function Card({ className = '', children, ...rest }) {
+  return (
+    <section className={`rounded-[22px] border border-line bg-panel ${className}`} {...rest}>
+      {children}
+    </section>
+  )
 }
 
 function Arrow({ className = 'h-4 w-4' }) {
@@ -155,16 +180,6 @@ function Arrow({ className = 'h-4 w-4' }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
-  )
-}
-
-function GroupChip({ group, index, className = '' }) {
-  const c = groupColour(index)
-  const badge = groupBadge(group?.name)
-  return (
-    <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-[13px] font-semibold ${c.tint} ${c.text} ${className}`}>
-      {badge}
-    </span>
   )
 }
 
@@ -185,36 +200,6 @@ function Avatar({ person, size = 'h-8 w-8', className = '' }) {
   )
 }
 
-/* Progress ring: handed in / expected. */
-function Ring({ done, total, colour = 'text-reading', size = 92 }) {
-  const pct = total ? done / total : 0
-  const r = 40
-  const c = 2 * Math.PI * r
-  return (
-    <svg viewBox="0 0 100 100" width={size} height={size} className="shrink-0" aria-hidden="true">
-      <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" strokeWidth="10" className="text-panel-2" />
-      <circle
-        cx="50"
-        cy="50"
-        r={r}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeDasharray={`${c * pct} ${c}`}
-        transform="rotate(-90 50 50)"
-        className={colour}
-      />
-      <text x="50" y="49" textAnchor="middle" className="fill-paper" style={{ font: '600 22px var(--font-body)' }}>
-        {done}
-      </text>
-      <text x="50" y="66" textAnchor="middle" className="fill-mist" style={{ font: '400 12px var(--font-body)' }}>
-        of {total}
-      </text>
-    </svg>
-  )
-}
-
 function greeting(now) {
   const h = now.getHours()
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
@@ -230,10 +215,23 @@ function timeAgo(value, now) {
   return days === 1 ? 'yesterday' : `${days} days ago`
 }
 
+function plural(n, one, many = `${one}s`) {
+  return `${n} ${n === 1 ? one : many}`
+}
+
+function dueLabel(value, now) {
+  return formatDue(value, now).replace(/^Today/, 'today').replace(/^Tomorrow/, 'tomorrow')
+}
+
 export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onOpenGroup, onOpenMockCenter }) {
-  const { data, error } = useTeacherOverview()
+  const [reloadKey, setReloadKey] = useState(0)
+  const { data, error } = useTeacherOverview(reloadKey)
   const now = useMemo(() => new Date(), [])
-  const firstName = (profile?.full_name || '').trim().split(/\s+/)[0] || ''
+  const firstName = firstNameOf(profile?.full_name)
+  const [confirmDialog, setConfirmDialog] = useState(null)
+  const [reminding, setReminding] = useState('')
+  const [reminded, setReminded] = useState({}) // homework id → count sent
+  const [openBehind, setOpenBehind] = useState(null) // group id
 
   const model = useMemo(() => {
     if (!data) return null
@@ -263,8 +261,6 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
       return (membersByGroup[hw.group_id] || []).filter((m) => !due || !m.created_at || new Date(m.created_at) <= due)
     }
 
-    // Upcoming deadlines: the current hand-in (a reset means "do it again").
-    // Past deadlines: also count a completion recorded before the reset.
     const progress = (hw) => {
       const expected = expectedFor(hw)
       const past = hw.due_date && new Date(hw.due_date) < now
@@ -277,27 +273,34 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     const upcoming = hwWithGroup
       .filter((h) => h.due_date && new Date(h.due_date) >= now)
       .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
-    const past = hwWithGroup.filter((h) => h.due_date && new Date(h.due_date) < now && now - new Date(h.due_date) <= WINDOW_DAYS * DAY)
+    const past = hwWithGroup
+      .filter((h) => h.due_date && new Date(h.due_date) < now && now - new Date(h.due_date) <= WINDOW_DAYS * DAY)
+      .sort((a, b) => new Date(b.due_date) - new Date(a.due_date))
 
-    const next = upcoming[0] || null
-    const nextProgress = next ? progress(next) : null
-
-    const weekEnd = new Date(now.getTime() + 7 * DAY)
-    const thisWeek = upcoming.filter((h) => new Date(h.due_date) <= weekEnd && h !== next).slice(0, 4)
-    // Fill with the most recent past deadlines when the week is quiet.
-    if (thisWeek.length < 4) {
-      const recentPast = [...past].sort((a, b) => new Date(b.due_date) - new Date(a.due_date))
-      for (const h of recentPast) {
-        if (thisWeek.length >= 4) break
-        if (h !== next) thisWeek.push(h)
-      }
-    }
-
+    const tomorrow = new Date(now.getTime() + DAY)
     const dueToday = upcoming.filter((h) => isSameDay(new Date(h.due_date), now)).length
+    const dueTomorrow = upcoming.filter((h) => isSameDay(new Date(h.due_date), tomorrow)).length
     const handedInToday = data.submissions.filter((s) => s.submitted_at && isSameDay(new Date(s.submitted_at), now)).length
 
-    // Per group: hand-in rate over deadlines in the last two weeks.
-    const groupsRows = data.groups.map((g) => {
+    // Students who missed 2+ deadlines in the window, per group.
+    const missedByStudent = {}
+    for (const h of past) {
+      for (const m of progress(h).missing) {
+        const key = `${m.group_id}:${m.student_id}`
+        missedByStudent[key] ||= { person: personById[m.student_id], groupId: m.group_id, count: 0, titles: [] }
+        missedByStudent[key].count += 1
+        missedByStudent[key].titles.push(h.title)
+      }
+    }
+    const behind = Object.values(missedByStudent)
+      .filter((r) => r.count >= 2 && r.person)
+      .sort((a, b) => b.count - a.count || (a.person.full_name || '').localeCompare(b.person.full_name || ''))
+    const behindByGroup = {}
+    for (const r of behind) (behindByGroup[r.groupId] ||= []).push(r)
+    const behindStudents = new Set(behind.map((r) => r.person.id)).size
+
+    // One card per group.
+    const groupCards = data.groups.map((g) => {
       const gPast = past.filter((h) => h.group_id === g.id)
       let expected = 0
       let done = 0
@@ -306,32 +309,31 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         expected += p.total
         done += p.done
       }
-      const latest = hwWithGroup
-        .filter((h) => h.group_id === g.id)
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+      const next = upcoming.find((h) => h.group_id === g.id) || null
+      const lastClosed = gPast[0] || null
       return {
         group: g,
         index: groupIndex[g.id],
         students: (membersByGroup[g.id] || []).length,
         rate: expected ? Math.round((done / expected) * 100) : null,
-        deadlines: gPast.length,
-        latest,
+        next,
+        nextProgress: next ? progress(next) : null,
+        moreDue: upcoming.filter((h) => h.group_id === g.id).length - (next ? 1 : 0),
+        lastClosed,
+        lastClosedProgress: lastClosed ? progress(lastClosed) : null,
+        behind: (behindByGroup[g.id] || []).length,
       }
     })
+    // Groups with a deadline first (soonest first), then the rest.
+    groupCards.sort((a, b) => {
+      if (a.next && b.next) return new Date(a.next.due_date) - new Date(b.next.due_date)
+      if (a.next) return -1
+      if (b.next) return 1
+      return a.index - b.index
+    })
 
-    // Students who missed 2+ deadlines in the window.
-    const missedByStudent = {}
-    for (const h of past) {
-      for (const m of progress(h).missing) {
-        const key = m.student_id
-        missedByStudent[key] ||= { person: personById[key], groupId: m.group_id, count: 0, titles: [] }
-        missedByStudent[key].count += 1
-        missedByStudent[key].titles.push(h.title)
-      }
-    }
-    const behind = Object.values(missedByStudent)
-      .filter((r) => r.count >= 2 && r.person)
-      .sort((a, b) => b.count - a.count || (a.person.full_name || '').localeCompare(b.person.full_name || ''))
+    // Recently closed deadlines with their hand-in rate.
+    const closed = past.slice(0, 6).map((h) => ({ hw: h, p: progress(h) }))
 
     // Feed rows.
     const hwById = Object.fromEntries([...data.homeworks, ...data.extraHomeworks].map((h) => [h.id, h]))
@@ -363,13 +365,15 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     return {
       groupIndex,
       groupById,
-      next,
-      nextProgress,
-      thisWeek: thisWeek.map((h) => ({ hw: h, p: progress(h) })),
+      firstNext: upcoming[0] || null,
       dueToday,
+      dueTomorrow,
       handedInToday,
-      groupsRows,
+      groupCards,
       behind,
+      behindByGroup,
+      behindStudents,
+      closed,
       feed,
       perDay,
       activeLearners: Object.keys(practisers).length,
@@ -378,6 +382,49 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     }
   }, [data, now])
 
+  const remind = (hw, missing) => {
+    if (!missing.length) return
+    const overdue = hw.due_date && new Date(hw.due_date) < new Date()
+    setConfirmDialog({
+      title: `Remind ${plural(missing.length, 'student')}?`,
+      message:
+        `They haven't handed in "${hw.title}" yet:\n` +
+        missing
+          .slice(0, 12)
+          .map((m) => `• ${m.profiles?.full_name || m.profiles?.username || 'Student'}`)
+          .join('\n') +
+        (missing.length > 12 ? `\n…and ${missing.length - 12} more` : ''),
+      confirmLabel: 'Send reminder',
+      cancelLabel: 'Cancel',
+      tone: 'brass',
+      onConfirm: async () => {
+        setReminding(hw.id)
+        const result = await notifyUsers({
+          userIds: missing.map((m) => m.student_id),
+          type: 'homework_reminder',
+          title: overdue ? 'Homework overdue' : 'Homework reminder',
+          body: overdue
+            ? `"${hw.title}" was due — please complete it as soon as possible.`
+            : `Don't forget "${hw.title}"${hw.due_date ? ` — due ${new Date(hw.due_date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}.`,
+          link: `homework:${hw.id}`,
+        })
+        setReminding('')
+        if (!result.ok && result.reason === 'all') {
+          setConfirmDialog({
+            title: "Reminder wasn't sent",
+            message: result.detail || 'Unknown error',
+            tone: 'coral',
+            confirmLabel: 'OK',
+            hideCancel: true,
+            onConfirm: () => {},
+          })
+        } else {
+          setReminded((prev) => ({ ...prev, [hw.id]: missing.length }))
+        }
+      },
+    })
+  }
+
   if (error) {
     return (
       <Card className="p-8 text-center">
@@ -385,10 +432,10 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         <p className="mt-1 text-sm text-mist">{error}</p>
         <button
           type="button"
-          onClick={() => onNavigate('groups')}
+          onClick={() => setReloadKey((k) => k + 1)}
           className="focus-ring mt-4 inline-flex h-11 items-center rounded-xl bg-brass px-5 text-sm font-medium text-onbrass hover:bg-brass-dim"
         >
-          Open Groups & Homework
+          Try again
         </button>
       </Card>
     )
@@ -397,66 +444,91 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
   if (!model) {
     return (
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12" aria-busy="true">
-        {['lg:col-span-8 h-[300px]', 'lg:col-span-4 h-[300px]', 'lg:col-span-12 h-[220px]', 'lg:col-span-7 h-[280px]', 'lg:col-span-5 h-[280px]'].map((c) => (
+        {['lg:col-span-12 h-[96px]', 'lg:col-span-8 h-[420px]', 'lg:col-span-4 h-[420px]', 'lg:col-span-5 h-[280px]', 'lg:col-span-7 h-[280px]'].map((c) => (
           <div key={c} className={`${c} animate-pulse rounded-[22px] border border-line bg-panel`} />
         ))}
       </div>
     )
   }
 
-  const { next, nextProgress } = model
-  const nextSkill = next ? skillOfHomework(next) : null
-  const nextGroup = next ? model.groupById[next.group_id] : null
-
+  const oldestRequest = data.accessRequests[0]
   const waiting = [
     pendingCount > 0 && {
       key: 'approvals',
       count: pendingCount,
       label: pendingCount === 1 ? 'new student to approve' : 'new students to approve',
+      hint: 'Approvals',
       action: () => onNavigate('approvals'),
-      tone: 'bg-speaking-tint text-speaking',
     },
-    model.behind.length > 0 && {
-      key: 'behind',
-      count: model.behind.length,
-      label: model.behind.length === 1 ? 'student missed 2+ deadlines' : 'students missed 2+ deadlines',
-      action: () => document.getElementById('teacher-home-behind')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      tone: 'bg-urgent-tint text-urgent',
-    },
-    data.accessRequests > 0 && {
+    data.accessRequests.length > 0 && {
       key: 'access',
-      count: data.accessRequests,
-      label: data.accessRequests === 1 ? 'mock access request' : 'mock access requests',
-      action: onOpenMockCenter,
-      tone: 'bg-listening-tint text-listening',
+      count: data.accessRequests.length,
+      label: data.accessRequests.length === 1 ? 'mock request' : 'mock requests',
+      hint: oldestRequest ? `oldest ${timeAgo(oldestRequest.requested_at, now)}` : '',
+      action: () => onOpenMockCenter('access'),
     },
     data.unreleased > 0 && {
       key: 'release',
       count: data.unreleased,
       label: data.unreleased === 1 ? 'mock result to release' : 'mock results to release',
-      action: onOpenMockCenter,
-      tone: 'bg-writing-tint text-writing',
+      hint: 'Results',
+      action: () => onOpenMockCenter('results'),
+    },
+    model.behindStudents > 0 && {
+      key: 'behind',
+      count: model.behindStudents,
+      label: model.behindStudents === 1 ? 'student missed 2+ deadlines' : 'students missed 2+ deadlines',
+      hint: `last ${WINDOW_DAYS} days`,
+      action: () => document.getElementById('teacher-home-behind')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     },
   ].filter(Boolean)
 
+  const next = model.firstNext
+  const nextGroup = next ? model.groupById[next.group_id] : null
   const maxDay = Math.max(1, ...model.perDay.map((d) => d.count))
+  const behindGroups = model.groupCards.filter((c) => (model.behindByGroup[c.group.id] || []).length)
+
+  const stats = [
+    {
+      key: 'live',
+      value: data.liveMocks,
+      label: data.liveMocks === 1 ? 'mock running now' : 'mocks running now',
+      dot: data.liveMocks > 0,
+      action: () => onOpenMockCenter('live'),
+    },
+    {
+      key: 'due',
+      value: model.dueToday,
+      label: `due today${model.dueTomorrow ? ` · ${model.dueTomorrow} tomorrow` : ''}`,
+      action: () => onNavigate('groups'),
+    },
+    { key: 'handins', value: model.handedInToday, label: model.handedInToday === 1 ? 'hand-in today' : 'hand-ins today', action: () => document.getElementById('teacher-home-feed')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+    {
+      key: 'words',
+      value: model.perDay[6]?.count || 0,
+      label: 'word practice sessions today',
+      action: () => onNavigate('wordlists'),
+    },
+  ]
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
       {/* GREETING */}
       <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
             {greeting(now)}{firstName ? `, ${firstName}` : ''}
           </h1>
           <p className="mt-1 text-[15px] text-paper-dim">
-            {model.dueToday > 0
-              ? `${model.dueToday} ${model.dueToday === 1 ? 'deadline' : 'deadlines'} today`
-              : 'No deadlines today'}
+            {next ? (
+              <>
+                Next deadline <span className="font-medium text-paper">{dueLabel(next.due_date, now)}</span> · {groupDisplayName(nextGroup?.name)}
+              </>
+            ) : (
+              'No deadlines coming up'
+            )}
             {' · '}
-            {model.handedInToday} {model.handedInToday === 1 ? 'hand-in' : 'hand-ins'} so far today
-            {' · '}
-            {model.totalStudents} students in {data.groups.length} {data.groups.length === 1 ? 'group' : 'groups'}
+            {plural(model.totalStudents, 'student')} in {plural(data.groups.length, 'group')}
           </p>
         </div>
         <button
@@ -469,257 +541,246 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         </button>
       </div>
 
-      {/* NEXT DEADLINE */}
-      <Card className="lg:col-span-8 overflow-hidden grid grid-cols-1 md:grid-cols-[1.3fr_1fr]">
-        {next ? (
-          <>
-            <div className="flex flex-col gap-4 p-6 sm:p-7">
-              <div className="flex flex-wrap items-center gap-2">
-                <GroupChip group={nextGroup} index={model.groupIndex[next.group_id]} />
-                <span className={`inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium ${nextSkill.tint} ${nextSkill.text}`}>
-                  <SkillIcon skill={nextSkill.key} className="h-3.5 w-3.5" />
-                  {nextSkill.label}
+      {/* TODAY STRIP */}
+      <div className="lg:col-span-12 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {stats.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={s.action}
+            className="focus-ring flex flex-col items-start gap-0.5 rounded-[18px] border border-line bg-panel px-4 py-3.5 text-left transition-colors hover:border-paper/30"
+          >
+            <span className="flex items-center gap-2 text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em]">
+              {s.dot && (
+                <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-reading opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-reading" />
                 </span>
-                <span
-                  className={`inline-flex h-7 items-center rounded-lg px-2.5 text-[13px] font-medium ${
-                    isSameDay(new Date(next.due_date), now) ? 'bg-urgent-tint text-urgent' : 'bg-panel-2 text-paper'
-                  }`}
-                >
-                  Due {formatDue(next.due_date, now).replace(/^Today/, 'today').replace(/^Tomorrow/, 'tomorrow')}
-                </span>
-              </div>
-              <div>
-                <p className="text-[13px] font-medium text-mist">Next deadline · {groupDisplayName(nextGroup?.name)}</p>
-                <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.02em]">{next.title}</h2>
-              </div>
-              <div className="flex items-center gap-5">
-                <Ring done={nextProgress.done} total={nextProgress.total} colour={nextSkill.key === 'general' ? 'text-paper' : nextSkill.text} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-medium">
-                    {nextProgress.total === 0
-                      ? 'No students in this group yet'
-                      : nextProgress.missing.length === 0
-                        ? 'Everyone has handed it in'
-                        : `${nextProgress.missing.length} still to hand in`}
-                  </p>
-                  {nextProgress.missing.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      {nextProgress.missing.slice(0, 6).map((m) => (
-                        <span key={m.student_id} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-panel-2 pl-1 pr-2.5 text-[13px]">
-                          <Avatar person={m.profiles} size="h-6 w-6" />
-                          <span className="max-w-[9rem] truncate">{(m.profiles?.full_name || m.profiles?.username || '').split(' ')[0]}</span>
-                        </span>
-                      ))}
-                      {nextProgress.missing.length > 6 && (
-                        <span className="text-[13px] text-mist">+{nextProgress.missing.length - 6} more</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="mt-auto flex flex-wrap gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => onOpenGroup(next.group_id)}
-                  className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
-                >
-                  Open {groupDisplayName(nextGroup?.name)}
-                  <Arrow />
-                </button>
-              </div>
-            </div>
-            <div className={`order-first flex items-center justify-center p-4 md:order-none md:p-6 ${nextSkill.tint}`}>
-              <SkillArt skill={nextSkill.key} title={next.title} className="h-[150px] w-full max-w-[300px] md:h-auto" />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col justify-center gap-3 p-7">
-              <h2 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">No deadlines coming up</h2>
-              <p className="text-[15px] leading-relaxed text-paper-dim">
-                Every group is clear. Post the next homework when you’re ready.
-              </p>
-              <button
-                type="button"
-                onClick={() => onNavigate('groups')}
-                className="focus-ring mt-1 inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
-              >
-                Post homework <Arrow />
-              </button>
-            </div>
-            <div className="flex items-center justify-center bg-writing-tint p-6">
-              <SkillArt skill="writing" className="h-auto w-full max-w-[280px]" />
-            </div>
-          </>
-        )}
-      </Card>
+              )}
+              {s.value}
+            </span>
+            <span className="text-[13px] text-mist">{s.label}</span>
+          </button>
+        ))}
+      </div>
 
       {/* WAITING FOR YOU */}
-      <Card className="lg:col-span-4 flex flex-col gap-4 p-6">
-        <h2 className="text-[17px] font-semibold">Waiting for you</h2>
-        {waiting.length ? (
-          <ul className="flex flex-col gap-2">
-            {waiting.map((w) => (
-              <li key={w.key}>
-                <button
-                  type="button"
-                  onClick={w.action}
-                  className="focus-ring flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-panel-2"
+      <div className="lg:col-span-4 lg:col-start-9 lg:row-start-3 flex flex-col gap-3">
+        <h2 className="text-xl font-semibold">Waiting for you</h2>
+        <Card className="flex flex-col gap-1 p-3">
+          {waiting.length ? (
+            waiting.map((w) => (
+              <button
+                key={w.key}
+                type="button"
+                onClick={w.action}
+                className="focus-ring flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left hover:bg-panel-2"
+              >
+                <span
+                  className={`flex h-10 min-w-10 items-center justify-center rounded-[11px] px-2 text-[17px] font-semibold tabular-nums ${
+                    w.key === 'behind' ? 'bg-urgent-tint text-urgent' : 'bg-brass/10 text-brass'
+                  }`}
                 >
-                  <span className={`flex h-10 min-w-10 items-center justify-center rounded-[11px] px-2 text-[17px] font-semibold tabular-nums ${w.tone}`}>
-                    {w.count}
-                  </span>
-                  <span className="flex-1 text-[15px] leading-snug">{w.label}</span>
-                  <Arrow className="h-4 w-4 text-mist" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl bg-reading-tint px-4 py-6 text-center">
-            <svg viewBox="0 0 64 64" className="h-14 w-14 text-reading" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="32" cy="32" r="24" />
-              <path d="M21 33l7 7 15-16" />
-            </svg>
-            <p className="text-[15px] font-medium text-reading">All clear. Nothing is waiting for you.</p>
-          </div>
-        )}
-        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-line pt-4">
-          <button type="button" onClick={onOpenMockCenter} className="focus-ring flex items-center gap-2 rounded-xl bg-panel-2 px-3 py-2.5 text-left text-sm font-medium hover:bg-line/60">
-            <SkillIcon skill="listening" className="h-4 w-4 text-listening" />
-            Mock Center
-          </button>
-          <button type="button" onClick={() => onNavigate('students')} className="focus-ring flex items-center gap-2 rounded-xl bg-panel-2 px-3 py-2.5 text-left text-sm font-medium hover:bg-line/60">
-            <svg className="h-4 w-4 text-speaking" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 14.2A5 5 0 0 1 20.5 19" /></svg>
-            Students
-          </button>
-        </div>
-      </Card>
+                  {w.count}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-[15px] leading-snug">{w.label}</span>
+                  {w.hint && <span className="text-[12px] text-mist">{w.hint}</span>}
+                </span>
+                <Arrow className="h-4 w-4 shrink-0 text-mist" />
+              </button>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-reading-tint px-4 py-8 text-center">
+              <svg viewBox="0 0 64 64" className="h-12 w-12 text-reading" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="32" cy="32" r="24" />
+                <path d="M21 33l7 7 15-16" />
+              </svg>
+              <p className="text-[15px] font-medium text-reading">All clear. Nothing is waiting for you.</p>
+            </div>
+          )}
+        </Card>
 
-      {/* THIS WEEK */}
-      {model.thisWeek.length > 0 && (
-        <>
-          <div className="lg:col-span-12 mt-1 flex items-baseline justify-between">
-            <h2 className="text-xl font-semibold">This week’s homework</h2>
-            <button type="button" onClick={() => onNavigate('groups')} className="focus-ring text-sm font-medium text-paper-dim hover:text-paper">
-              All groups
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-12 lg:grid-cols-4">
-            {model.thisWeek.map(({ hw, p }) => {
-              const skill = skillOfHomework(hw)
-              const g = model.groupById[hw.group_id]
-              const pct = p.total ? Math.round((p.done / p.total) * 100) : 0
-              const passed = new Date(hw.due_date) < now
-              return (
-                <button
-                  key={hw.id}
-                  type="button"
-                  onClick={() => onOpenGroup(hw.group_id)}
-                  className="focus-ring flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel text-left transition-colors hover:border-paper/30"
-                >
-                  <div className={`relative flex h-[112px] items-center justify-center ${skill.tint}`}>
-                    <SkillArt skill={skill.key} title={hw.title} className="h-[92px] w-[210px]" />
-                    <GroupChip group={g} index={model.groupIndex[hw.group_id]} className="absolute left-3 top-3 bg-panel" />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-2 px-[18px] pb-[18px] pt-4">
-                    <span className={`text-xs font-semibold ${skill.text}`}>{skill.label}</span>
-                    <span className="line-clamp-2 text-base font-medium leading-snug">{hw.title}</span>
-                    <div className="mt-auto flex flex-col gap-1.5 pt-1.5">
-                      <div className="flex items-baseline justify-between text-[13px]">
-                        <span className={passed ? 'text-mist' : 'text-paper-dim'}>
-                          {passed ? 'Closed' : 'Due'} {formatDue(hw.due_date, now)}
-                        </span>
-                        <span className="font-semibold tabular-nums">
-                          {p.done}/{p.total}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded bg-panel-2">
-                        <div className={`h-full rounded ${skill.key === 'general' ? 'bg-paper' : skill.bg}`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </>
-      )}
+        {/* Recently closed deadlines */}
+        <Card className="flex flex-col gap-3 p-5">
+          <h3 className="text-[15px] font-semibold">Recently closed</h3>
+          {model.closed.length ? (
+            <ul className="flex flex-col gap-2.5">
+              {model.closed.map(({ hw, p }) => {
+                const g = model.groupById[hw.group_id]
+                const colour = groupColour(model.groupIndex[hw.group_id])
+                const pctDone = p.total ? Math.round((p.done / p.total) * 100) : 0
+                return (
+                  <li key={hw.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenGroup(hw.group_id)}
+                      className="focus-ring grid w-full grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg text-left hover:bg-panel-2"
+                    >
+                      <span className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg text-[12px] font-semibold ${colour.tint} ${colour.text}`}>
+                        {groupBadge(g?.name)}
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-[14px]">{hw.title}</span>
+                        <span className="text-[12px] text-mist">Closed {formatDue(hw.due_date, now)}</span>
+                      </span>
+                      <span className={`text-[14px] font-semibold tabular-nums ${pctDone < 60 ? 'text-urgent' : ''}`}>{pctDone}%</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-mist">No deadlines in the last {WINDOW_DAYS} days.</p>
+          )}
+        </Card>
+      </div>
 
       {/* GROUPS */}
-      <Card className="lg:col-span-7 flex flex-col gap-4 p-6">
+      <div className="lg:col-span-8 lg:col-start-1 lg:row-start-3 flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Your groups</h2>
-          <span className="text-[13px] text-mist">Handed in on time or late, last {WINDOW_DAYS} days</span>
+          <h2 className="text-xl font-semibold">Your groups</h2>
+          <span className="text-[13px] text-mist">Rate = handed in, last {WINDOW_DAYS} days</span>
         </div>
-        <ul className="flex flex-col">
-          {model.groupsRows.map((row) => {
-            const c = groupColour(row.index)
-            const latestSkill = row.latest ? skillOfHomework(row.latest) : null
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {model.groupCards.map((c) => {
+            const colour = groupColour(c.index)
+            const skill = c.next ? skillOfHomework(c.next) : null
+            const p = c.nextProgress
+            const pctDone = p && p.total ? Math.round((p.done / p.total) * 100) : 0
+            const urgent = c.next && isSameDay(new Date(c.next.due_date), now)
             return (
-              <li key={row.group.id} className="border-t border-line first:border-0">
+              <Card key={c.group.id} className="flex flex-col gap-3.5 p-5">
                 <button
                   type="button"
-                  onClick={() => onOpenGroup(row.group.id)}
-                  className="focus-ring grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-xl px-1.5 py-3 text-left hover:bg-panel-2 sm:grid-cols-[44px_minmax(0,1fr)_minmax(120px,32%)_auto]"
+                  onClick={() => onOpenGroup(c.group.id)}
+                  className="focus-ring -m-1 flex items-center gap-3 rounded-xl p-1 text-left hover:bg-panel-2"
                 >
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-[13px] text-[15px] font-semibold ${c.tint} ${c.text}`}>
-                    {groupBadge(row.group.name)}
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] text-[15px] font-semibold ${colour.tint} ${colour.text}`}>
+                    {groupBadge(c.group.name)}
                   </span>
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-[15px] font-medium">{groupDisplayName(row.group.name)}</span>
-                    <span className="flex min-w-0 items-center gap-1.5 text-[13px] text-mist">
-                      {row.students} students
-                      {row.latest && (
-                        <>
-                          <span aria-hidden>·</span>
-                          <SkillIcon skill={latestSkill.key} className={`h-3.5 w-3.5 shrink-0 ${latestSkill.key === 'general' ? '' : latestSkill.text}`} />
-                          <span className="truncate">{row.latest.title}</span>
-                        </>
-                      )}
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[16px] font-semibold">{groupDisplayName(c.group.name)}</span>
+                    <span className="text-[13px] text-mist">
+                      {plural(c.students, 'student')}
+                      {c.behind > 0 && <span className="text-urgent"> · {c.behind} behind</span>}
                     </span>
                   </span>
-                  <span className="hidden flex-col gap-1 sm:flex">
-                    <span className="h-2 rounded bg-panel-2">
-                      {row.rate != null && <span className={`block h-full rounded ${c.bar}`} style={{ width: `${Math.max(3, row.rate)}%` }} />}
-                    </span>
+                  <span className="flex flex-col items-end">
+                    <span className="text-[17px] font-semibold tabular-nums">{c.rate != null ? `${c.rate}%` : '–'}</span>
+                    <span className="text-[11px] text-mist">hand-in rate</span>
                   </span>
-                  <span className="w-12 text-right text-[15px] font-semibold tabular-nums">{row.rate != null ? `${row.rate}%` : '–'}</span>
                 </button>
-              </li>
+
+                {c.next ? (
+                  <div className="flex flex-1 flex-col gap-2.5 rounded-2xl bg-panel-2 p-3.5">
+                    <div className="flex items-center gap-2 text-[13px]">
+                      <SkillIcon skill={skill.key} className={`h-4 w-4 shrink-0 ${skill.key === 'general' ? '' : skill.text}`} />
+                      <span className={urgent ? 'font-medium text-urgent' : 'text-paper-dim'}>Due {dueLabel(c.next.due_date, now)}</span>
+                      {c.moreDue > 0 && <span className="ml-auto text-mist">+{c.moreDue} more</span>}
+                    </div>
+                    <p className="line-clamp-2 text-[15px] font-medium leading-snug">{c.next.title}</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-2 flex-1 rounded bg-line/70">
+                        <div className={`h-full rounded ${colour.bar}`} style={{ width: `${Math.max(p.done ? 3 : 0, pctDone)}%` }} />
+                      </div>
+                      <span className="text-[13px] font-semibold tabular-nums">
+                        {p.done}/{p.total}
+                      </span>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-0.5">
+                      <span className="text-[13px] text-mist">
+                        {p.total === 0 ? 'No students yet' : p.missing.length === 0 ? 'Everyone has handed in' : `${p.missing.length} still to hand in`}
+                      </span>
+                      {p.missing.length > 0 &&
+                        (reminded[c.next.id] ? (
+                          <span className="text-[13px] font-medium text-reading">Reminded {reminded[c.next.id]}</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => remind(c.next, p.missing)}
+                            disabled={reminding === c.next.id}
+                            className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-panel px-3 text-[13px] font-medium hover:border-paper/30 disabled:opacity-50"
+                          >
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                            {reminding === c.next.id ? 'Sending…' : 'Remind'}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-1 flex-col justify-between gap-2 rounded-2xl border border-dashed border-line p-3.5">
+                    <p className="text-[14px] text-paper-dim">
+                      No deadline coming up.
+                      {c.lastClosed && (
+                        <span className="text-mist">
+                          {' '}Last: {c.lastClosed.title} ({c.lastClosedProgress.done}/{c.lastClosedProgress.total})
+                        </span>
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onOpenGroup(c.group.id)}
+                      className="focus-ring inline-flex h-8 w-fit items-center gap-1.5 rounded-lg bg-brass px-3 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
+                    >
+                      Post homework <Arrow className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </Card>
             )
           })}
-        </ul>
-      </Card>
+        </div>
+      </div>
 
-      {/* FALLING BEHIND */}
-      <Card className="lg:col-span-5 flex flex-col gap-4 p-6">
-        <div id="teacher-home-behind" className="flex scroll-mt-24 items-baseline justify-between">
+      {/* FALLING BEHIND — by group */}
+      <Card id="teacher-home-behind" className="lg:col-span-5 lg:self-start flex scroll-mt-24 flex-col gap-3 p-6">
+        <div className="flex items-baseline justify-between">
           <h2 className="text-[17px] font-semibold">Missed 2+ deadlines</h2>
           <span className="text-[13px] text-mist">Last {WINDOW_DAYS} days</span>
         </div>
-        {model.behind.length ? (
-          <ul className="flex max-h-[360px] flex-col gap-1 overflow-y-auto pr-1">
-            {model.behind.slice(0, 20).map((r) => (
-              <li key={r.person.id}>
-                <button
-                  type="button"
-                  onClick={() => onOpenGroup(r.groupId)}
-                  title={r.titles.join('\n')}
-                  className="focus-ring flex w-full items-center gap-3 rounded-xl px-1.5 py-2 text-left hover:bg-panel-2"
-                >
-                  <Avatar person={r.person} size="h-9 w-9" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[15px]">{r.person.full_name || r.person.username}</span>
-                    <span className="truncate text-[13px] text-mist">{groupDisplayName(model.groupById[r.groupId]?.name)}</span>
-                  </span>
-                  <span className="rounded-lg bg-urgent-tint px-2.5 py-1 text-[13px] font-semibold text-urgent tabular-nums">
-                    {r.count} missed
-                  </span>
-                </button>
-              </li>
-            ))}
-            {model.behind.length > 20 && <li className="px-1.5 pt-1 text-[13px] text-mist">+{model.behind.length - 20} more</li>}
+        {behindGroups.length ? (
+          <ul className="flex flex-col">
+            {behindGroups.map((c) => {
+              const rows = model.behindByGroup[c.group.id]
+              const colour = groupColour(c.index)
+              const open = openBehind === c.group.id
+              return (
+                <li key={c.group.id} className="border-t border-line first:border-0">
+                  <button
+                    type="button"
+                    onClick={() => setOpenBehind(open ? null : c.group.id)}
+                    aria-expanded={open}
+                    className="focus-ring flex w-full items-center gap-3 rounded-xl px-1.5 py-2.5 text-left hover:bg-panel-2"
+                  >
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-[11px] text-[13px] font-semibold ${colour.tint} ${colour.text}`}>
+                      {groupBadge(c.group.name)}
+                    </span>
+                    <span className="flex-1 text-[15px]">{groupDisplayName(c.group.name)}</span>
+                    <span className="rounded-lg bg-urgent-tint px-2.5 py-1 text-[13px] font-semibold text-urgent tabular-nums">
+                      {rows.length} of {c.students}
+                    </span>
+                    <svg className={`h-4 w-4 text-mist transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                  {open && (
+                    <ul className="mb-2 ml-12 flex flex-col gap-0.5">
+                      {rows.map((r) => (
+                        <li key={r.person.id} className="flex items-center gap-2.5 py-1" title={r.titles.join('\n')}>
+                          <Avatar person={r.person} size="h-7 w-7" />
+                          <span className="min-w-0 flex-1 truncate text-[14px]">{r.person.full_name || r.person.username}</span>
+                          <span className="text-[13px] font-medium text-urgent tabular-nums">{r.count} missed</span>
+                        </li>
+                      ))}
+                      <li className="pt-1">
+                        <button type="button" onClick={() => onOpenGroup(c.group.id)} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
+                          Open {groupDisplayName(c.group.name)} →
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <p className="rounded-2xl bg-reading-tint px-4 py-6 text-center text-[15px] font-medium text-reading">
@@ -729,7 +790,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
       </Card>
 
       {/* LATEST HAND-INS */}
-      <Card className="lg:col-span-7 flex flex-col gap-4 p-6">
+      <Card id="teacher-home-feed" className="lg:col-span-7 flex scroll-mt-24 flex-col gap-4 p-6">
         <h2 className="text-[17px] font-semibold">Latest hand-ins</h2>
         {model.feed.length ? (
           <ul className="flex flex-col">
@@ -766,15 +827,29 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
       </Card>
 
       {/* WORD PRACTICE */}
-      <Card className="lg:col-span-5 flex flex-col gap-4 p-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Word practice this week</h2>
-          <button type="button" onClick={() => onNavigate('wordlists')} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
-            Word lists
-          </button>
+      <Card className="lg:col-span-12 flex flex-col gap-4 p-6 md:flex-row md:items-stretch md:gap-8">
+        <div className="flex flex-col justify-between gap-3 md:w-[260px]">
+          <div>
+            <h2 className="text-[17px] font-semibold">Word practice this week</h2>
+            <p className="mt-1 text-sm text-paper-dim">
+              <strong className="font-semibold text-paper">{model.activeLearners}</strong> of {model.totalStudents} students practised
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            {model.topPractisers.length > 0 && (
+              <span className="flex -space-x-2" title={`Most active: ${model.topPractisers.map((t) => t.person.full_name).join(', ')}`}>
+                {model.topPractisers.map((t) => (
+                  <Avatar key={t.person.id} person={t.person} size="h-8 w-8" className="ring-2 ring-panel" />
+                ))}
+              </span>
+            )}
+            <button type="button" onClick={() => onNavigate('wordlists')} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
+              Word lists →
+            </button>
+          </div>
         </div>
         <div
-          className="flex h-[200px] items-stretch gap-2"
+          className="flex h-[140px] flex-1 items-stretch gap-2"
           role="img"
           aria-label={`Word practice sessions per day: ${model.perDay.map((d) => d.count).join(', ')}`}
         >
@@ -791,19 +866,18 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
             </div>
           ))}
         </div>
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
-          <span className="text-sm text-paper-dim">
-            <strong className="font-semibold text-paper">{model.activeLearners}</strong> of {model.totalStudents} students practised
-          </span>
-          {model.topPractisers.length > 0 && (
-            <span className="flex -space-x-2" title={`Most active: ${model.topPractisers.map((t) => t.person.full_name).join(', ')}`}>
-              {model.topPractisers.map((t) => (
-                <Avatar key={t.person.id} person={t.person} size="h-8 w-8" className="ring-2 ring-panel" />
-              ))}
-            </span>
-          )}
-        </div>
       </Card>
+
+      <ConfirmModal
+        open={Boolean(confirmDialog)}
+        {...confirmDialog}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={() => {
+          const run = confirmDialog?.onConfirm
+          setConfirmDialog(null)
+          run?.()
+        }}
+      />
     </div>
   )
 }

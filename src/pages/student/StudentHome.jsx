@@ -11,6 +11,7 @@ import {
 import SkillArt, { SkillIcon, VocabArt } from '../../components/SkillArt'
 import TargetBandModal from '../../components/TargetBandModal'
 import { LearningCurve, PracticeTime, WordOfTheDay, useStudyActivity } from './HomeExtras'
+import { firstNameOf } from '../../lib/names'
 
 /*
  * STUDENT HOME — "Study room" design (approved 2026-10-05).
@@ -21,6 +22,12 @@ import { LearningCurve, PracticeTime, WordOfTheDay, useStudyActivity } from './H
  * into the leaderboard. Everything here is a shortcut — the full
  * Homework, Word Lists, Mock Center and Leaderboard screens are all
  * still where they were.
+ *
+ * 2026-10-14 (Jasur: "we have to do the same with students dashboard"):
+ * a greeting with a one-line summary, an overdue strip so missed work
+ * isn't hidden, the student's own mock status (code ready / request
+ * waiting / unfinished sitting) and a real hand-in record in place of
+ * the decorative leaderboard card.
  *
  * Homework + submissions come from StudentDashboard (same data the
  * Homework tab already loads for the selected group). Bands, words
@@ -165,6 +172,53 @@ function useLatestFeedback(studentId) {
   return item
 }
 
+function useMockStatus(studentId) {
+  const [status, setStatus] = useState(null)
+
+  useEffect(() => {
+    if (!studentId) return
+    let cancelled = false
+    Promise.all([
+      supabase.from('full_mock_attempts').select('id, stage, updated_at').eq('student_id', studentId).neq('stage', 'done').limit(1),
+      supabase.from('mock_access_codes').select('id').eq('student_id', studentId).is('used_at', null).eq('revoked', false).limit(1),
+      supabase
+        .from('mock_access_requests')
+        .select('id, requested_at')
+        .eq('student_id', studentId)
+        .eq('status', 'pending')
+        .order('requested_at', { ascending: false })
+        .limit(1),
+    ])
+      .then(([open, codes, requests]) => {
+        if (cancelled) return
+        if (codes.data?.length) setStatus({ kind: 'code' })
+        else if (open.data?.length) setStatus({ kind: 'unfinished' })
+        else if (requests.data?.length) setStatus({ kind: 'pending', at: requests.data[0].requested_at })
+        else setStatus({ kind: 'none' })
+      })
+      .catch(() => {
+        if (!cancelled) setStatus({ kind: 'none' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [studentId])
+
+  return status
+}
+
+const MOCK_STATUS = {
+  code: { title: 'Your mock code is ready', body: 'Start whenever you have three quiet hours.', action: 'Start mock', tone: 'bg-reading-tint text-reading' },
+  unfinished: { title: 'You have an unfinished mock', body: 'Pick it up where you left off.', action: 'Continue', tone: 'bg-listening-tint text-listening' },
+  pending: { title: 'Mock requested', body: 'Waiting for Mr Ikromov to send your code.', action: 'View', tone: 'bg-panel-2 text-paper' },
+  none: { title: 'Ready for a full mock?', body: 'Ask for one from the Mock Test Center.', action: 'Ask for a mock', tone: 'bg-panel-2 text-paper' },
+}
+
+function greetingFor(now) {
+  const h = now.getHours()
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
+}
+
 function Pill({ state, className = '' }) {
   return (
     <span className={`inline-flex items-center whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium ${STATE_PILL[state.key] || STATE_PILL.todo} ${className}`}>
@@ -197,6 +251,7 @@ export default function StudentHome({
   const words = useWordsDue(profile?.id)
   const feedback = useLatestFeedback(profile?.id)
   const activity = useStudyActivity(profile?.id)
+  const mock = useMockStatus(profile?.id)
 
   const now = useMemo(() => new Date(), [])
   const group = groups.find((g) => g.id === activeGroup)
@@ -215,11 +270,12 @@ export default function StudentHome({
   const upcoming = open
     .filter((i) => i.state.key !== 'overdue')
     .sort((a, b) => new Date(a.hw.due_date || 8.64e15) - new Date(b.hw.due_date || 8.64e15))
-  const hero = upcoming[0] || open[0] || null
+  // Missed work has its own strip now (2026-10-14), so the big card
+  // is always the next thing still to come.
+  const hero = upcoming[0] || null
 
   const rest = [
     ...upcoming.filter((i) => i !== hero),
-    ...open.filter((i) => i.state.key === 'overdue' && i !== hero),
     ...items.filter((i) => ['sent', 'late', 'marked'].includes(i.state.key)),
   ].slice(0, 4)
 
@@ -228,17 +284,57 @@ export default function StudentHome({
     band: bands ? bands[key] : null,
   }))
 
+  const overdue = open
+    .filter((i) => i.state.key === 'overdue')
+    .sort((a, b) => new Date(b.hw.due_date) - new Date(a.hw.due_date))
+  const weekEnd = new Date(now.getTime() + 7 * 86400000)
+  const dueThisWeek = upcoming.filter((i) => !i.hw.due_date || new Date(i.hw.due_date) <= weekEnd).length
+  const firstName = firstNameOf(profile?.full_name)
+
+  // Hand-in record: deadlines that closed in the last 30 days.
+  const record = items
+    .filter((i) => i.hw.due_date && new Date(i.hw.due_date) < now && now - new Date(i.hw.due_date) <= 30 * 86400000)
+    .reduce(
+      (acc, i) => {
+        if (i.state.key === 'overdue') acc.missed += 1
+        else if (i.state.key === 'late') acc.late += 1
+        else acc.onTime += 1
+        return acc
+      },
+      { onTime: 0, late: 0, missed: 0 }
+    )
+  const recordTotal = record.onTime + record.late + record.missed
+  const recordPct = recordTotal ? Math.round(((record.onTime + record.late) / recordTotal) * 100) : null
+  const mockMeta = mock ? MOCK_STATUS[mock.kind] : null
+
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-      {groups.length > 1 && (
-        <div className="lg:col-span-12 flex flex-wrap items-center gap-3">
-          <div role="group" aria-label="Group" className="flex rounded-xl border border-line bg-panel p-1">
+      {/* GREETING + SUMMARY */}
+      <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">
+            {greetingFor(now)}{firstName ? `, ${firstName}` : ''}
+          </h1>
+          <p className="mt-1 text-[15px] text-paper-dim">
+            {group
+              ? [
+                  dueThisWeek ? `${dueThisWeek} to do this week` : 'Nothing due this week',
+                  overdue.length ? `${overdue.length} missed` : null,
+                  words.streak > 1 ? `${words.streak}-day word streak` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : 'You’re not in a group yet'}
+          </p>
+        </div>
+        {groups.length > 1 && (
+          <div role="group" aria-label="Group" className="flex max-w-full overflow-x-auto rounded-xl border border-line bg-panel p-1">
             {groups.map((g) => (
               <button
                 key={g.id}
                 type="button"
                 onClick={() => onSelectGroup(g.id)}
-                className={`focus-ring h-9 rounded-[9px] px-3.5 text-sm transition-colors ${
+                className={`focus-ring h-9 shrink-0 rounded-[9px] px-3.5 text-sm transition-colors ${
                   g.id === activeGroup ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper'
                 }`}
               >
@@ -246,6 +342,32 @@ export default function StudentHome({
               </button>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* MISSED WORK — can still be handed in late */}
+      {overdue.length > 0 && (
+        <div className="lg:col-span-12 flex flex-col gap-3 rounded-[22px] border border-urgent/30 bg-urgent-tint px-5 py-4 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-panel text-urgent">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+            </span>
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold text-urgent">
+                {overdue.length === 1 ? '1 homework missed its deadline' : `${overdue.length} homeworks missed their deadline`}
+              </p>
+              <p className="truncate text-sm text-paper-dim">
+                You can still hand {overdue.length === 1 ? 'it' : 'them'} in late: {overdue.map((i) => i.hw.title).join(', ')}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenHomework(overdue[0].hw.id)}
+            className="focus-ring inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-panel px-4 text-sm font-semibold text-paper hover:bg-panel-2"
+          >
+            {overdue.length === 1 ? 'Do it now' : 'Start with the latest'}
+          </button>
         </div>
       )}
 
@@ -263,7 +385,7 @@ export default function StudentHome({
                   {hero.state.key === 'overdue' ? 'Deadline passed' : `Due ${formatDue(hero.hw.due_date, now).replace(/^Today/, 'today').replace(/^Tomorrow/, 'tomorrow')}`}
                 </span>
               </div>
-              <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">{hero.hw.title}</h1>
+              <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">{hero.hw.title}</h2>
               {hero.hw.description && (
                 <p className="line-clamp-3 text-[15px] leading-relaxed text-paper-dim">{hero.hw.description}</p>
               )}
@@ -300,21 +422,23 @@ export default function StudentHome({
         ) : (
           <>
             <div className="flex flex-col justify-center gap-3 p-7">
-              <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
-                {group ? 'You’re up to date' : 'You’re not in a group yet'}
-              </h1>
+              <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
+                {!group ? 'You’re not in a group yet' : open.some((i) => i.state.key === 'overdue') ? 'No new homework right now' : 'You’re up to date'}
+              </h2>
               <p className="text-[15px] leading-relaxed text-paper-dim">
                 {group
-                  ? 'Nothing is waiting for you right now. Revise some words or look back at your marked work.'
+                  ? open.some((i) => i.state.key === 'overdue')
+                    ? 'A good moment to catch up on the missed work above.'
+                    : 'Nothing is waiting for you right now. Revise some words or look back at your marked work.'
                   : 'Ask Mr Ikromov to add you to a group, and your homework will appear here.'}
               </p>
               {group && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('wordlists')}
+                  onClick={() => (overdue.length ? onOpenHomework(overdue[0].hw.id) : onNavigate('wordlists'))}
                   className="focus-ring mt-1 inline-flex h-12 w-fit items-center rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
                 >
-                  Revise words
+                  {overdue.length ? 'Catch up now' : 'Revise words'}
                 </button>
               )}
             </div>
@@ -363,6 +487,19 @@ export default function StudentHome({
             </li>
           ))}
         </ul>
+        {mockMeta && (
+          <button
+            type="button"
+            onClick={onOpenMockCenter}
+            className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-left ${mockMeta.tone}`}
+          >
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-sm font-semibold">{mockMeta.title}</span>
+              <span className="text-[12px] opacity-80">{mockMeta.body}</span>
+            </span>
+            <span className="shrink-0 text-[13px] font-semibold underline-offset-2 hover:underline">{mockMeta.action} →</span>
+          </button>
+        )}
         <div className="mt-auto flex items-center justify-between border-t border-line pt-3.5">
           <button type="button" onClick={onOpenMockCenter} className="focus-ring text-[13px] text-mist hover:text-paper">
             {bands?.overall != null
@@ -377,7 +514,7 @@ export default function StudentHome({
       {rest.length > 0 && (
         <>
           <div className="lg:col-span-12 mt-1 flex items-baseline justify-between">
-            <h2 className="text-xl font-semibold">Next up</h2>
+            <h2 className="text-xl font-semibold">{rest.some((i) => ['today', 'todo'].includes(i.state.key)) ? 'Next up' : 'Recently handed in'}</h2>
             <button type="button" onClick={() => onNavigate('homework')} className="focus-ring text-sm font-medium text-paper-dim hover:text-paper">
               All homework
             </button>
@@ -467,21 +604,34 @@ export default function StudentHome({
         )}
       </Card>
 
-      {/* LEADERBOARD */}
+      {/* HAND-IN RECORD + LEADERBOARD (2026-10-14: real numbers instead of
+          the decorative bars) */}
       <Card className="lg:col-span-3 flex flex-col gap-3 p-6">
-        <div className="flex h-[70px] items-end gap-1.5" aria-hidden="true">
-          <span className="w-1/3 rounded-t-lg bg-listening-tint" style={{ height: '62%' }} />
-          <span className="w-1/3 rounded-t-lg bg-reading-tint" style={{ height: '100%' }} />
-          <span className="w-1/3 rounded-t-lg bg-writing-tint" style={{ height: '44%' }} />
-        </div>
-        <h2 className="text-[15px] font-semibold">{group ? `${group.name} leaderboard` : 'Leaderboard'}</h2>
-        <p className="text-[13px] text-mist">See where you stand this week and who is close behind.</p>
+        <h2 className="text-[15px] font-semibold">Your hand-in record</h2>
+        {recordTotal ? (
+          <>
+            <p className="text-[32px] font-semibold leading-none tracking-[-0.02em]">
+              {recordPct}%
+              <span className="ml-1.5 text-[13px] font-normal tracking-normal text-mist">handed in</span>
+            </p>
+            <div className="flex h-2 overflow-hidden rounded bg-panel-2" aria-hidden="true">
+              <span className="bg-reading" style={{ width: `${(record.onTime / recordTotal) * 100}%` }} />
+              <span className="bg-writing" style={{ width: `${(record.late / recordTotal) * 100}%` }} />
+              <span className="bg-urgent" style={{ width: `${(record.missed / recordTotal) * 100}%` }} />
+            </div>
+            <p className="text-[13px] text-mist">
+              Last 30 days: {record.onTime} on time · {record.late} late · {record.missed} missed
+            </p>
+          </>
+        ) : (
+          <p className="text-[13px] text-mist">Your record starts after your first deadline.</p>
+        )}
         <button
           type="button"
           onClick={() => onNavigate('leaderboard')}
           className="focus-ring mt-auto inline-flex h-10 w-fit items-center rounded-[11px] border border-line px-4 text-sm font-medium hover:bg-panel-2"
         >
-          See your place
+          {group ? `${group.name} leaderboard` : 'Leaderboard'}
         </button>
       </Card>
       {/* LEARNING CURVE · WHEN YOU STUDY · WORD OF THE DAY (2026-10-06) */}

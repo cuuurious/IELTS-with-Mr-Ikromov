@@ -231,10 +231,20 @@ export default function TeacherDashboard() {
         { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
         { key: 'groups', label: 'Groups & Homework', icon: IconGroups },
         { key: 'students', label: 'Students', icon: IconStudents },
+      ],
+    },
+    // Top bar trimmed 2026-10-14 (Jasur: "improve ... design overall"):
+    // Word lists, Materials and Leaderboards share one "Classroom" menu,
+    // so the bar reads Home · Groups · Students · Mock Center ·
+    // Classroom · Messages · Admin.
+    {
+      title: 'Classroom',
+      items: [
         { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
         // All teaching files in one place — uploaded here or forwarded
         // from Telegram to the bot (2026-09-30).
         { key: 'materials', label: 'Materials Library', icon: IconFolder },
+        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
       ],
     },
     {
@@ -245,18 +255,13 @@ export default function TeacherDashboard() {
       ],
     },
     {
-      title: 'Insights',
-      items: [
-        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
-      ],
-    },
-    {
       title: 'Admin',
       items: [
         { key: 'ai-grading', label: 'AI Grading', icon: IconAI },
         {
           key: 'approvals',
-          label: `Approvals${pendingCount ? ` (${pendingCount})` : ''}`,
+          label: 'Approvals',
+          badge: pendingCount,
           icon: IconApprovals,
         },
         // Only Jasur Ikromov's account (profile.is_admin) can see this —
@@ -318,7 +323,10 @@ export default function TeacherDashboard() {
   if (mockCenterOpen) {
     return (
       <Suspense fallback={<LoadingScreen label="Opening Mock Center…" />}>
-        <TeacherMockCenter onExit={() => setMockCenterOpen(false)} />
+        <TeacherMockCenter
+          onExit={() => setMockCenterOpen(false)}
+          initialSection={typeof mockCenterOpen === 'string' ? mockCenterOpen : undefined}
+        />
       </Suspense>
     )
   }
@@ -344,7 +352,7 @@ export default function TeacherDashboard() {
           pendingCount={pendingCount}
           onNavigate={handleTabChange}
           onOpenGroup={openGroup}
-          onOpenMockCenter={() => setMockCenterOpen(true)}
+          onOpenMockCenter={(section) => setMockCenterOpen(typeof section === 'string' ? section : true)}
         />
       )}
 

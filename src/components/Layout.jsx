@@ -397,6 +397,11 @@ export default function Layout({
                     aria-haspopup="menu"
                   >
                     {entry.label}
+                    {entry.items.some((item) => item.badge > 0) && (
+                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-urgent px-1 text-[11px] font-semibold leading-[18px] text-panel">
+                        {entry.items.reduce((sum, item) => sum + (item.badge || 0), 0)}
+                      </span>
+                    )}
                     <IconChevron className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
                   </button>
                   {open && (
@@ -416,6 +421,11 @@ export default function Layout({
                           >
                             {Icon && <Icon className="h-[18px] w-[18px] shrink-0" />}
                             {item.label}
+                            {item.badge > 0 && (
+                              <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
+                                {item.badge}
+                              </span>
+                            )}
                           </button>
                         )
                       })}
@@ -579,6 +589,11 @@ export default function Layout({
                       >
                         {Icon && <Icon className="h-5 w-5 shrink-0" />}
                         {item.label}
+                        {item.badge > 0 && (
+                          <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
+                            {item.badge}
+                          </span>
+                        )}
                       </button>
                     )
                   })}

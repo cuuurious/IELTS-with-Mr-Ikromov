@@ -59,11 +59,19 @@ const SECTIONS = [
   // Live Mocks (2026-09-29, migration_62) — pause/resume, extra time,
   // end/skip a section, void & retake, delete sittings. See LiveMocksPanel.jsx.
   { key: 'live', label: 'Live Mocks' },
+  { key: 'access', label: 'Requests & codes' },
   { key: 'results', label: 'Results' },
   { key: 'analytics', label: 'Analytics' },
   { key: 'students', label: 'Students' },
   { key: 'speaking', label: 'Speaking' },
   { key: 'content', label: 'Content' },
+]
+
+const CODE_FILTERS = [
+  { key: 'unused', label: 'Unused' },
+  { key: 'used', label: 'Used' },
+  { key: 'revoked', label: 'Revoked' },
+  { key: 'all', label: 'All' },
 ]
 
 const SPEAKING_STATUS_META = {
@@ -545,10 +553,15 @@ function printAccessCodeSlips(slips) {
   win.document.close()
 }
 
-export default function TeacherMockCenter({ onExit }) {
+export default function TeacherMockCenter({ onExit, initialSection }) {
   const { profile } = useAuth()
   // Which tab you're on is remembered across a refresh (lib/sessionState.js).
   const [section, setSection] = useSessionState(`ielts:${profile?.id}:teacherMock:section`, 'progress')
+  // Home's "Waiting for you" links open straight onto the right tab.
+  useEffect(() => {
+    if (initialSection) setSection(initialSection)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSection])
 
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
@@ -859,9 +872,53 @@ export default function TeacherMockCenter({ onExit }) {
   const [requestSections, setRequestSections] = useState(['listening', 'reading', 'writing'])
 
   const pendingMockRequests = useMemo(
-    () => mockAccessRequests.filter((r) => r.status === 'pending'),
+    () =>
+      mockAccessRequests
+        .filter((r) => r.status === 'pending')
+        .sort((a, b) => new Date(a.requested_at) - new Date(b.requested_at)),
     [mockAccessRequests]
   )
+
+  // Requests & codes tab (2026-10-14).
+  const [codeFilter, setCodeFilter] = useState('unused')
+  const [codeQuery, setCodeQuery] = useState('')
+  const [codeLimit, setCodeLimit] = useState(50)
+  const codeStatusOf = (row) => (row.revoked ? 'revoked' : row.used_at ? 'used' : 'unused')
+  const codeCounts = useMemo(() => {
+    const c = { unused: 0, used: 0, revoked: 0, all: accessCodes.length }
+    for (const row of accessCodes) c[codeStatusOf(row)] += 1
+    return c
+  }, [accessCodes])
+  const visibleCodes = useMemo(() => {
+    const q = codeQuery.trim().toLowerCase()
+    return accessCodes.filter((row) => {
+      if (codeFilter !== 'all' && codeStatusOf(row) !== codeFilter) return false
+      if (!q) return true
+      const st = students.find((x) => x.id === row.student_id)
+      return `${row.code} ${st?.full_name || ''} ${st?.username || ''}`.toLowerCase().includes(q)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessCodes, codeFilter, codeQuery, students])
+  const upcomingSessions = scheduledSessions.filter((x) => !x.cancelled_at && !x.codes_sent_at).length
+  const groupNamesOf = (studentId) =>
+    groupMembers
+      .filter((m) => m.student_id === studentId)
+      .map((m) => groups.find((g) => g.id === m.group_id)?.name)
+      .filter(Boolean)
+      .join(', ')
+  const hasUnusedCode = (studentId, setId) =>
+    accessCodes.some((c) => c.student_id === studentId && c.full_mock_set_id === setId && !c.revoked && !c.used_at)
+  const coveredRequestIds = pendingMockRequests
+    .filter((r) => hasUnusedCode(r.student_id, r.full_mock_set_id))
+    .map((r) => r.id)
+  const requestAge = (iso) => {
+    const mins = Math.round((Date.now() - new Date(iso)) / 60000)
+    if (mins < 60) return `${Math.max(1, mins)} min ago`
+    const h = Math.round(mins / 60)
+    if (h < 24) return `${h} h ago`
+    const d = Math.round(h / 24)
+    return d === 1 ? 'yesterday' : `${d} days ago`
+  }
 
   // Styled stand-in for window.confirm()/window.alert() on every delete
   // in this Content tab — Jasur, on seeing the browser's own native
@@ -1952,7 +2009,13 @@ export default function TeacherMockCenter({ onExit }) {
     }
   }, [])
   const badgeFor = (key) =>
-    key === 'live' ? liveCount || 0 : key === 'results' ? allPendingItems.filter((it) => !it.empty).length : 0
+    key === 'live'
+      ? liveCount || 0
+      : key === 'results'
+      ? allPendingItems.filter((it) => !it.empty).length
+      : key === 'access'
+      ? pendingMockRequests.length
+      : 0
 
   // Delete unreleased results straight from the Results list (2026-09-29,
   // Jasur: "HOW DO I DELETE THEM" about a pile of 0/40 test-run attempts).
@@ -4618,6 +4681,440 @@ export default function TeacherMockCenter({ onExit }) {
           )}
 
           {/* ======================================================
+              REQUESTS & CODES (2026-10-14) — Jasur: "too complicated to
+              find requests, I have to go to two sections". Student
+              requests, access codes and scheduled sessions used to sit
+              under Content → Full Mocks; now one tab with a badge.
+             ====================================================== */}
+          {!loading && section === 'access' && (
+            <div className="flex flex-col gap-5">
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { n: pendingMockRequests.length, label: pendingMockRequests.length === 1 ? 'request waiting' : 'requests waiting', tone: pendingMockRequests.length ? 'text-coral' : 'text-paper' },
+                  { n: codeCounts.unused, label: 'unused codes', tone: 'text-paper' },
+                  { n: upcomingSessions, label: upcomingSessions === 1 ? 'session scheduled' : 'sessions scheduled', tone: 'text-paper' },
+                ].map((c) => (
+                  <div key={c.label} className="rounded-2xl border border-line bg-panel px-4 py-3">
+                    <p className={`text-2xl font-semibold ${c.tone}`}>{c.n}</p>
+                    <p className="text-xs text-mist">{c.label}</p>
+                  </div>
+                ))}
+              </div>
+              {/* ================================================
+                  MOCK REQUESTS — migration_61. A student requests a
+                  published Full Mock themselves, from their own
+                  Take a Test tab (MockCheckIn.jsx). Approving one
+                  here reuses the exact same generateAccessCodeBatch/
+                  sendAccessCodesViaTelegram path Issue Codes below
+                  uses — one click both decides the request and gets
+                  the student their code.
+                 ================================================ */}
+              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-paper">Mock requests</p>
+                    <p className="text-sm text-mist max-w-lg mt-0.5">
+                      Students ask for a Full Mock from their Take a Test tab. Approving issues
+                      their code and sends it on Telegram.
+                    </p>
+                  </div>
+                  {pendingMockRequests.length > 0 && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => rejectMockAccessRequests(Array.from(selectedRequestIds))}
+                        disabled={selectedRequestIds.size === 0 || decidingRequests}
+                        className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Reject selected
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => approveMockAccessRequests(Array.from(selectedRequestIds))}
+                        disabled={selectedRequestIds.size === 0 || decidingRequests}
+                        className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Approve selected
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => approveMockAccessRequests(pendingMockRequests.map((r) => r.id))}
+                        disabled={decidingRequests}
+                        className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {decidingRequests ? 'Working…' : 'Approve all'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {pendingMockRequests.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs text-mist font-mono uppercase tracking-wide">
+                      Approved codes cover
+                    </span>
+                    <SectionPicker value={requestSections} onChange={setRequestSections} disabled={decidingRequests} />
+                  </div>
+                )}
+
+                {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
+
+                {pendingMockRequests.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                    No pending requests.
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                    <label className="flex items-center gap-3 px-5 py-2.5 border-b border-line bg-panel-2 text-xs text-mist cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedRequestIds.size > 0 && selectedRequestIds.size === pendingMockRequests.length}
+                        onChange={() =>
+                          setSelectedRequestIds(
+                            selectedRequestIds.size === pendingMockRequests.length
+                              ? new Set()
+                              : new Set(pendingMockRequests.map((r) => r.id))
+                          )
+                        }
+                        className="focus-ring h-4 w-4 shrink-0 rounded border-line accent-brass"
+                      />
+                      {selectedRequestIds.size > 0 ? `${selectedRequestIds.size} selected` : 'Select all'} · oldest first
+                      {coveredRequestIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setSelectedRequestIds(new Set(coveredRequestIds))
+                          }}
+                          className="focus-ring ml-auto rounded-full border border-brass/40 px-2.5 py-1 font-semibold text-brass hover:bg-brass/10"
+                          title="These students already hold an unused code for the same mock — select them, then Reject selected"
+                        >
+                          Select {coveredRequestIds.length} who already have a code
+                        </button>
+                      )}
+                    </label>
+                    {pendingMockRequests.map((req) => {
+                      const student = students.find((s) => s.id === req.student_id)
+                      const set = fullMockSets.find((s) => s.id === req.full_mock_set_id)
+                      return (
+                        <div
+                          key={req.id}
+                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                        >
+                          <label className="flex items-center gap-3 min-w-0 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedRequestIds.has(req.id)}
+                              onChange={() => toggleRequestSelected(req.id)}
+                              className="focus-ring h-4 w-4 shrink-0 rounded border-line accent-brass"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-medium text-paper truncate">
+                                {student?.full_name || student?.username || 'Unknown student'}
+                              </p>
+                              <p className="text-xs text-mist mt-0.5 truncate">
+                                {groupNamesOf(req.student_id) || 'No group'} · {set?.title || 'Unknown set'} · asked{' '}
+                                {requestAge(req.requested_at)}
+                              </p>
+                              {hasUnusedCode(req.student_id, req.full_mock_set_id) && (
+                                <p className="text-[11px] text-brass mt-0.5">Already has an unused code for this mock</p>
+                              )}
+                            </div>
+                          </label>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => rejectMockAccessRequests([req.id])}
+                              disabled={decidingRequests}
+                              className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => approveMockAccessRequests([req.id])}
+                              disabled={decidingRequests}
+                              className="focus-ring text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* ================================================
+                  ACCESS CODES — real-IELTS-style candidate check-in
+                  (migration_45). One code per student per attempt;
+                  students can't reach any Full Mock without one.
+                 ================================================ */}
+              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-paper">Access codes</p>
+                    <p className="text-sm text-mist max-w-lg mt-0.5">
+                      Real IELTS style: a student can't start any Full Mock without a code
+                      issued to them here first, tied to one specific set. Every attempt
+                      needs its own code — tick everyone sitting a mock and issue the whole
+                      batch at once, then send them out over Telegram.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        printAccessCodeSlips(
+                          accessCodes
+                            .filter((row) => !row.revoked && !row.used_at)
+                            .map((row) => {
+                              const s = students.find((st) => st.id === row.student_id)
+                              const set = fullMockSets.find((fm) => fm.id === row.full_mock_set_id)
+                              return {
+                                code: row.code,
+                                studentName: s?.full_name || s?.username || 'Student',
+                                setTitle: set?.title || 'Full Mock',
+                              }
+                            })
+                        )
+                      }
+                      disabled={accessCodes.filter((row) => !row.revoked && !row.used_at).length === 0}
+                      className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Opens a printable page with one slip per unused code — handy for anyone not on Telegram"
+                    >
+                      <Icon name="printer" className="h-4 w-4" /> Print unused
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openIssueAccessCode}
+                      disabled={fullMockSets.length === 0}
+                      className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
+                    >
+                      + Issue codes
+                    </button>
+                  </div>
+                </div>
+
+                {accessCodes.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {CODE_FILTERS.map((f) => (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => setCodeFilter(f.key)}
+                        className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          codeFilter === f.key ? 'border-brass bg-brass/15 text-brass' : 'border-line text-mist hover:text-paper'
+                        }`}
+                      >
+                        {f.label} <span className="opacity-70">{codeCounts[f.key]}</span>
+                      </button>
+                    ))}
+                    <input
+                      type="search"
+                      value={codeQuery}
+                      onChange={(e) => setCodeQuery(e.target.value)}
+                      placeholder="Search name or code"
+                      className="focus-ring ml-auto h-9 w-full sm:w-56 rounded-full border border-line bg-panel px-3.5 text-sm text-paper placeholder:text-mist"
+                    />
+                  </div>
+                )}
+
+                {accessCodes.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                    No codes issued yet.
+                  </div>
+                ) : visibleCodes.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-8 text-center text-sm text-mist">
+                    No codes match.
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                    {visibleCodes.slice(0, codeLimit).map((row) => {
+                      const student = students.find((s) => s.id === row.student_id)
+                      const set = fullMockSets.find((s) => s.id === row.full_mock_set_id)
+                      const status = row.revoked
+                        ? { label: 'Revoked', cls: 'text-mist border-line bg-panel-2' }
+                        : row.used_at
+                        ? { label: 'Used', cls: 'text-mist border-line bg-panel-2' }
+                        : { label: 'Unused', cls: 'text-sage border-sage/30 bg-sage/10' }
+
+                      return (
+                        <div
+                          key={row.id}
+                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-sm font-semibold text-brass tracking-wide">
+                                {row.code}
+                              </span>
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                              >
+                                {status.label}
+                              </span>
+                              {row.telegram_sent_at && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full border border-line text-mist px-2 py-0.5">
+                                  Sent via Telegram
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-mist mt-0.5 truncate">
+                              {student?.full_name || student?.username || 'Unknown student'} ·{' '}
+                              {set?.title || 'Unknown set'}
+                              {row.used_at &&
+                                row.entered_full_name &&
+                                row.entered_full_name !== (student?.full_name || '') && (
+                                  <> · checked in as "{row.entered_full_name}"</>
+                                )}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!row.revoked && !row.used_at && !row.telegram_sent_at && (
+                              <button
+                                type="button"
+                                onClick={() => sendSingleCodeViaTelegram(row)}
+                                disabled={sendingCodeIds.has(row.id)}
+                                className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass hover:text-brass transition-colors disabled:opacity-50"
+                              >
+                                {sendingCodeIds.has(row.id) ? 'Sending…' : 'Send via Telegram'}
+                              </button>
+                            )}
+                            {!row.revoked && (
+                              <button
+                                type="button"
+                                onClick={() => revokeAccessCode(row)}
+                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                              >
+                                Revoke
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                {visibleCodes.length > codeLimit && (
+                  <button
+                    type="button"
+                    onClick={() => setCodeLimit((n) => n + 50)}
+                    className="focus-ring self-center rounded-full border border-line px-4 py-2 text-sm font-semibold text-mist hover:text-paper"
+                  >
+                    Show {Math.min(50, visibleCodes.length - codeLimit)} more of {visibleCodes.length - codeLimit}
+                  </button>
+                )}
+              </div>
+
+              {/* ================================================
+                  SCHEDULED SESSIONS — group-scheduled mock sessions
+                  (migration_52). Schedule a group + a Full Mock +
+                  a date/time once; run-scheduled-mock-sessions (a
+                  server-side cron function) issues+sends the codes
+                  automatically once that time arrives, reading the
+                  group's live membership at fire time.
+                 ================================================ */}
+              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-paper">Scheduled sessions</p>
+                    <p className="text-sm text-mist max-w-lg mt-0.5">
+                      Schedule a group into a Full Mock for a future date/time — access codes
+                      for everyone in the group at that moment get generated and sent over
+                      Telegram automatically, no need to come back and issue them by hand.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openScheduleSession}
+                    disabled={fullMockSets.length === 0 || groups.length === 0}
+                    className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={
+                      fullMockSets.length === 0
+                        ? 'Add a full mock set first'
+                        : groups.length === 0
+                        ? 'No groups yet'
+                        : undefined
+                    }
+                  >
+                    + Schedule session
+                  </button>
+                </div>
+
+                {scheduledSessions.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                    No sessions scheduled yet.
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                    {scheduledSessions.map((session) => {
+                      const group = groups.find((g) => g.id === session.group_id)
+                      const set = fullMockSets.find((s) => s.id === session.full_mock_set_id)
+                      const scheduledDate = new Date(session.scheduled_at)
+                      const status = session.cancelled_at
+                        ? { label: 'Cancelled', cls: 'text-mist border-line bg-panel-2' }
+                        : session.codes_sent_at
+                        ? { label: 'Codes sent', cls: 'text-sage border-sage/30 bg-sage/10' }
+                        : scheduledDate.getTime() <= Date.now()
+                        ? { label: 'Due any moment', cls: 'text-brass border-brass/30 bg-brass/10' }
+                        : { label: 'Scheduled', cls: 'text-mist border-line bg-panel-2' }
+
+                      return (
+                        <div
+                          key={session.id}
+                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-paper truncate">
+                                {group?.name || 'Unknown group'}
+                              </span>
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                              >
+                                {status.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-mist mt-0.5 truncate">
+                              {set?.title || 'Unknown set'} ·{' '}
+                              {scheduledDate.toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                              {session.codes_sent_at &&
+                                typeof session.codes_issued_count === 'number' && (
+                                  <> · {session.codes_issued_count} code
+                                    {session.codes_issued_count === 1 ? '' : 's'} issued</>
+                                )}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!session.cancelled_at && !session.codes_sent_at && (
+                              <button
+                                type="button"
+                                onClick={() => cancelScheduledSession(session)}
+                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================
               CONTENT — Jasur's "next level" ask 2026-09-25: no more
               inserting mock exams by hand in the Supabase Table
               Editor. Writing mocks first (a single flat row); Reading/
@@ -5358,350 +5855,16 @@ export default function TeacherMockCenter({ onExit }) {
                     </div>
                   )}
 
-                  {/* ================================================
-                      MOCK REQUESTS — migration_61. A student requests a
-                      published Full Mock themselves, from their own
-                      Take a Test tab (MockCheckIn.jsx). Approving one
-                      here reuses the exact same generateAccessCodeBatch/
-                      sendAccessCodesViaTelegram path Issue Codes below
-                      uses — one click both decides the request and gets
-                      the student their code.
-                     ================================================ */}
-                  <div className="border-t border-line pt-5 flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-paper">Mock requests</p>
-                        <p className="text-sm text-mist max-w-lg mt-0.5">
-                          Students can request to sit a published Full Mock themselves from their
-                          own Take a Test tab. Approving issues and sends their code automatically
-                          — same as Issue Codes below, just student-initiated.
-                        </p>
-                      </div>
-                      {pendingMockRequests.length > 0 && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => rejectMockAccessRequests(Array.from(selectedRequestIds))}
-                            disabled={selectedRequestIds.size === 0 || decidingRequests}
-                            className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Reject selected
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => approveMockAccessRequests(Array.from(selectedRequestIds))}
-                            disabled={selectedRequestIds.size === 0 || decidingRequests}
-                            className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Approve selected
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => approveMockAccessRequests(pendingMockRequests.map((r) => r.id))}
-                            disabled={decidingRequests}
-                            className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {decidingRequests ? 'Working…' : 'Approve all'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {pendingMockRequests.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-xs text-mist font-mono uppercase tracking-wide">
-                          Approved codes cover
-                        </span>
-                        <SectionPicker value={requestSections} onChange={setRequestSections} disabled={decidingRequests} />
-                      </div>
-                    )}
-
-                    {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
-
-                    {pendingMockRequests.length === 0 ? (
-                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
-                        No pending requests.
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                        {pendingMockRequests.map((req) => {
-                          const student = students.find((s) => s.id === req.student_id)
-                          const set = fullMockSets.find((s) => s.id === req.full_mock_set_id)
-                          return (
-                            <div
-                              key={req.id}
-                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
-                            >
-                              <label className="flex items-center gap-3 min-w-0 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedRequestIds.has(req.id)}
-                                  onChange={() => toggleRequestSelected(req.id)}
-                                  className="focus-ring h-4 w-4 shrink-0 rounded border-line accent-brass"
-                                />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-paper truncate">
-                                    {student?.full_name || student?.username || 'Unknown student'}
-                                  </p>
-                                  <p className="text-xs text-mist mt-0.5 truncate">
-                                    {set?.title || 'Unknown set'} · requested{' '}
-                                    {new Date(req.requested_at).toLocaleString()}
-                                  </p>
-                                </div>
-                              </label>
-
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => rejectMockAccessRequests([req.id])}
-                                  disabled={decidingRequests}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
-                                >
-                                  Reject
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => approveMockAccessRequests([req.id])}
-                                  disabled={decidingRequests}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
-                                >
-                                  Approve
-                                </button>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ================================================
-                      ACCESS CODES — real-IELTS-style candidate check-in
-                      (migration_45). One code per student per attempt;
-                      students can't reach any Full Mock without one.
-                     ================================================ */}
-                  <div className="border-t border-line pt-5 flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-paper">Access codes</p>
-                        <p className="text-sm text-mist max-w-lg mt-0.5">
-                          Real IELTS style: a student can't start any Full Mock without a code
-                          issued to them here first, tied to one specific set. Every attempt
-                          needs its own code — tick everyone sitting a mock and issue the whole
-                          batch at once, then send them out over Telegram.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            printAccessCodeSlips(
-                              accessCodes
-                                .filter((row) => !row.revoked && !row.used_at)
-                                .map((row) => {
-                                  const s = students.find((st) => st.id === row.student_id)
-                                  const set = fullMockSets.find((fm) => fm.id === row.full_mock_set_id)
-                                  return {
-                                    code: row.code,
-                                    studentName: s?.full_name || s?.username || 'Student',
-                                    setTitle: set?.title || 'Full Mock',
-                                  }
-                                })
-                            )
-                          }
-                          disabled={accessCodes.filter((row) => !row.revoked && !row.used_at).length === 0}
-                          className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          title="Opens a printable page with one slip per unused code — handy for anyone not on Telegram"
-                        >
-                          <Icon name="printer" className="h-4 w-4" /> Print unused
-                        </button>
-                        <button
-                          type="button"
-                          onClick={openIssueAccessCode}
-                          disabled={fullMockSets.length === 0}
-                          className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
-                        >
-                          + Issue codes
-                        </button>
-                      </div>
-                    </div>
-
-                    {accessCodes.length === 0 ? (
-                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
-                        No codes issued yet.
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                        {accessCodes.map((row) => {
-                          const student = students.find((s) => s.id === row.student_id)
-                          const set = fullMockSets.find((s) => s.id === row.full_mock_set_id)
-                          const status = row.revoked
-                            ? { label: 'Revoked', cls: 'text-mist border-line bg-panel-2' }
-                            : row.used_at
-                            ? { label: 'Used', cls: 'text-mist border-line bg-panel-2' }
-                            : { label: 'Unused', cls: 'text-sage border-sage/30 bg-sage/10' }
-
-                          return (
-                            <div
-                              key={row.id}
-                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
-                            >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono text-sm font-semibold text-brass tracking-wide">
-                                    {row.code}
-                                  </span>
-                                  <span
-                                    className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
-                                  >
-                                    {status.label}
-                                  </span>
-                                  {row.telegram_sent_at && (
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full border border-line text-mist px-2 py-0.5">
-                                      Sent via Telegram
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-mist mt-0.5 truncate">
-                                  {student?.full_name || student?.username || 'Unknown student'} ·{' '}
-                                  {set?.title || 'Unknown set'}
-                                  {row.used_at &&
-                                    row.entered_full_name &&
-                                    row.entered_full_name !== (student?.full_name || '') && (
-                                      <> · checked in as "{row.entered_full_name}"</>
-                                    )}
-                                </p>
-                              </div>
-
-                              <div className="flex items-center gap-2 shrink-0">
-                                {!row.revoked && !row.used_at && !row.telegram_sent_at && (
-                                  <button
-                                    type="button"
-                                    onClick={() => sendSingleCodeViaTelegram(row)}
-                                    disabled={sendingCodeIds.has(row.id)}
-                                    className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass hover:text-brass transition-colors disabled:opacity-50"
-                                  >
-                                    {sendingCodeIds.has(row.id) ? 'Sending…' : 'Send via Telegram'}
-                                  </button>
-                                )}
-                                {!row.revoked && (
-                                  <button
-                                    type="button"
-                                    onClick={() => revokeAccessCode(row)}
-                                    className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
-                                  >
-                                    Revoke
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ================================================
-                      SCHEDULED SESSIONS — group-scheduled mock sessions
-                      (migration_52). Schedule a group + a Full Mock +
-                      a date/time once; run-scheduled-mock-sessions (a
-                      server-side cron function) issues+sends the codes
-                      automatically once that time arrives, reading the
-                      group's live membership at fire time.
-                     ================================================ */}
-                  <div className="border-t border-line pt-5 flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-paper">Scheduled sessions</p>
-                        <p className="text-sm text-mist max-w-lg mt-0.5">
-                          Schedule a group into a Full Mock for a future date/time — access codes
-                          for everyone in the group at that moment get generated and sent over
-                          Telegram automatically, no need to come back and issue them by hand.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={openScheduleSession}
-                        disabled={fullMockSets.length === 0 || groups.length === 0}
-                        className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={
-                          fullMockSets.length === 0
-                            ? 'Add a full mock set first'
-                            : groups.length === 0
-                            ? 'No groups yet'
-                            : undefined
-                        }
-                      >
-                        + Schedule session
-                      </button>
-                    </div>
-
-                    {scheduledSessions.length === 0 ? (
-                      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
-                        No sessions scheduled yet.
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                        {scheduledSessions.map((session) => {
-                          const group = groups.find((g) => g.id === session.group_id)
-                          const set = fullMockSets.find((s) => s.id === session.full_mock_set_id)
-                          const scheduledDate = new Date(session.scheduled_at)
-                          const status = session.cancelled_at
-                            ? { label: 'Cancelled', cls: 'text-mist border-line bg-panel-2' }
-                            : session.codes_sent_at
-                            ? { label: 'Codes sent', cls: 'text-sage border-sage/30 bg-sage/10' }
-                            : scheduledDate.getTime() <= Date.now()
-                            ? { label: 'Due any moment', cls: 'text-brass border-brass/30 bg-brass/10' }
-                            : { label: 'Scheduled', cls: 'text-mist border-line bg-panel-2' }
-
-                          return (
-                            <div
-                              key={session.id}
-                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
-                            >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium text-paper truncate">
-                                    {group?.name || 'Unknown group'}
-                                  </span>
-                                  <span
-                                    className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
-                                  >
-                                    {status.label}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-mist mt-0.5 truncate">
-                                  {set?.title || 'Unknown set'} ·{' '}
-                                  {scheduledDate.toLocaleString(undefined, {
-                                    dateStyle: 'medium',
-                                    timeStyle: 'short',
-                                  })}
-                                  {session.codes_sent_at &&
-                                    typeof session.codes_issued_count === 'number' && (
-                                      <> · {session.codes_issued_count} code
-                                        {session.codes_issued_count === 1 ? '' : 's'} issued</>
-                                    )}
-                                </p>
-                              </div>
-
-                              <div className="flex items-center gap-2 shrink-0">
-                                {!session.cancelled_at && !session.codes_sent_at && (
-                                  <button
-                                    type="button"
-                                    onClick={() => cancelScheduledSession(session)}
-                                    className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
-                                  >
-                                    Cancel
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSection('access')}
+                    className="focus-ring flex items-center justify-between gap-3 rounded-2xl border border-line bg-panel-2 px-5 py-3.5 text-left hover:border-brass/50"
+                  >
+                    <span className="text-sm text-paper-dim">
+                      Requests, access codes and scheduled sessions now live in their own tab.
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold text-brass">Open Requests &amp; codes →</span>
+                  </button>
                 </div>
               )}
             </div>
