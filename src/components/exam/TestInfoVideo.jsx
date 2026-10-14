@@ -228,7 +228,41 @@ const CSS = `
 @media (prefers-reduced-motion: reduce) { .tiv-text, .tiv-pop, .tiv-step, .tiv-hand { animation: none } }
 `
 
-export default function TestInfoVideo({ module = 'listening', autoPlay = false, onFinished }) {
+// The official "Test information" videos (2026-10-14, Jasur: "i want
+// videos to be exactly the same"). Played straight from the British
+// Council familiarisation test's own server — not copied to ours — so
+// students see exactly what they'll see on test day. If that server
+// can't be reached, our own slide version below plays instead.
+export const OFFICIAL_VIDEO = {
+  listening: 'https://static.gelnet.org/cdielts/listening.mp4',
+  reading: 'https://static.gelnet.org/cdielts/reading.mp4',
+  writing: 'https://static.gelnet.org/cdielts/writing.mp4',
+}
+
+export default function TestInfoVideo({ module = 'listening', ...rest }) {
+  const [failed, setFailed] = useState(false)
+  const src = OFFICIAL_VIDEO[module]
+  if (!src || failed) return <SlideVideo module={module} {...rest} />
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-[#fff]">
+      <video
+        key={src}
+        src={src}
+        controls
+        playsInline
+        preload="metadata"
+        controlsList="nodownload noplaybackrate"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
+        onError={() => setFailed(true)}
+        onEnded={() => rest.onFinished?.()}
+        className="block aspect-video w-full bg-[#fff]"
+      />
+    </div>
+  )
+}
+
+function SlideVideo({ module = 'listening', autoPlay = false, onFinished }) {
   const info = TEST_INFO[module] || TEST_INFO.listening
   const frames = [{ title: true }, ...info.slides.map(([text, pic]) => ({ text, pic }))]
   const [idx, setIdx] = useState(0)
