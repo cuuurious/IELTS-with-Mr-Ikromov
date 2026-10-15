@@ -113,7 +113,20 @@ export default function TeacherAccounts({ currentTeacherId }) {
         }
       )
 
-      if (fnError) throw fnError
+      if (fnError) {
+        // The function's own reason ("That username is already taken",
+        // "An account with this email address already exists") lives in
+        // the response body, not in fnError.message, which is only
+        // "Edge Function returned a non-2xx status code" (2026-10-15).
+        let reason = ''
+        try {
+          const body = await fnError.context?.json?.()
+          reason = body?.error || ''
+        } catch {
+          // body wasn't JSON — fall back to the generic message
+        }
+        throw new Error(reason || fnError.message)
+      }
       if (data?.error) throw new Error(data.error)
 
       setCreatedAccount({

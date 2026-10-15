@@ -67,9 +67,11 @@ export default function ConfirmModal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-3xl border border-line bg-panel p-6 shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-md flex-col gap-4 rounded-3xl border border-line bg-panel p-6 shadow-2xl"
       >
-        <div>
+        {/* Long messages scroll inside the box; the buttons always stay
+            on screen (2026-10-14: a 56-name list pushed them off). */}
+        <div className="min-h-0 overflow-y-auto">
           <div className="font-display text-lg text-paper">{title}</div>
 
           {message && (
@@ -111,7 +113,7 @@ export default function ConfirmModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex shrink-0 justify-end gap-2">
           {!hideCancel && (
             <button
               type="button"

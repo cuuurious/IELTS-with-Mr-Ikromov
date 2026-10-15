@@ -33,6 +33,23 @@ const STAGES = ['listening', 'reading', 'writing']
 const STAGE_LABEL = { listening: 'Listening', reading: 'Reading', writing: 'Writing', done: 'Finished' }
 const STAGE_COLOR = { listening: 'text-listening bg-listening-tint', reading: 'text-reading bg-reading-tint', writing: 'text-writing bg-writing-tint' }
 
+// "Ali, Vali, Sardor and 23 more" — a confirm box must never list
+// 50 names (2026-10-14: the box grew taller than the screen and its
+// buttons disappeared).
+function namesSummary(rows, max = 6) {
+  const names = rows.map((r) => r.name)
+  if (names.length <= max) return names.join(', ')
+  return `${names.slice(0, max).join(', ')} and ${names.length - max} more`
+}
+
+// Sections of a sitting that were already handed in (the ones before
+// the one it is on now). Deleting the sitting deletes those scores too.
+function handedInSections(sitting) {
+  const order = STAGES.filter((st) => !sitting.sections || sitting.sections.includes(st))
+  const at = order.indexOf(sitting.stage)
+  return at > 0 ? order.slice(0, at) : []
+}
+
 const MIN = 60_000
 const OFFLINE_AFTER = 2 * MIN
 const ABANDONED_AFTER = 3 * 60 * MIN
@@ -383,14 +400,20 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
     setNotice({ tone: 'brass', text: `${verb} ${rows.length} student${rows.length === 1 ? '' : 's'}…` })
     let ok = 0
     const failed = []
-    for (const r of rows) {
-      try {
-        await fn(r.sitting)
-        ok++
-      } catch (err) {
-        console.error('Bulk action failed for', r.sitting.id, err)
-        failed.push(r.name)
-      }
+    // Five at a time: one by one took minutes for 50+ sittings.
+    for (let i = 0; i < rows.length; i += 5) {
+      await Promise.all(
+        rows.slice(i, i + 5).map(async (r) => {
+          try {
+            await fn(r.sitting)
+            ok++
+          } catch (err) {
+            console.error('Bulk action failed for', r.sitting.id, err)
+            failed.push(r.name)
+          }
+        })
+      )
+      setNotice({ tone: 'brass', text: `${verb} ${Math.min(i + 5, rows.length)} of ${rows.length}…` })
     }
     markBusy(ids, false)
     setSelected(new Set())
@@ -512,7 +535,7 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
       const rows = selectedRows.filter((r) => !r.done)
       setConfirmDialog({
         title: `Void ${rows.length} sitting${rows.length === 1 ? '' : 's'} and give retakes?`,
-        message: `These sittings are deleted (they won't count anywhere) and each student gets a fresh code for the same mock over Telegram: ${rows.map((r) => r.name).join(', ')}.`,
+        message: `These sittings are deleted (they won't count anywhere) and each student gets a fresh code for the same mock over Telegram: ${namesSummary(rows)}.`,
         confirmLabel: 'Void & send new codes',
         tone: 'coral',
         onConfirm: () =>
@@ -528,9 +551,14 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
     },
     remove: () => {
       const rows = selectedRows
+      const withScores = rows.filter((r) => handedInSections(r.sitting).length > 0)
       setConfirmDialog({
         title: `Delete ${rows.length} sitting${rows.length === 1 ? '' : 's'}?`,
-        message: `Every answer, score and essay from these sittings is removed and they stop counting anywhere: ${rows.map((r) => r.name).join(', ')}. This can't be undone.`,
+        message:
+          `${namesSummary(rows)}.\n\nEvery answer, score and essay from these sittings is removed and they stop counting anywhere. This can't be undone.` +
+          (withScores.length
+            ? `\n\nCareful: ${withScores.length} of them already handed in a section (${namesSummary(withScores, 4)}). Those scores are deleted too. Untick them to keep their results.`
+            : ''),
         confirmLabel: `Delete ${rows.length}`,
         tone: 'coral',
         requireTypedText: rows.length > 5 ? 'DELETE' : undefined,
