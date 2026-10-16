@@ -13,6 +13,8 @@ import { estimateBandFromPercent, roundOverallBand, formatBand } from '../lib/ie
 import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
 import FrozenAttemptReview from './FrozenAttemptReview'
+import WritingReviewModal from './writing/WritingReviewModal'
+import SpeakingComments from './SpeakingComments'
 import { readSession, useSessionState, writeSession } from '../lib/sessionState'
 import { cleanPrompt } from './exam/questionGroups'
 
@@ -80,6 +82,8 @@ export default function MockTestCenter({ onExit }) {
   const [attempts, setAttempts] = useState([])
   const [examsById, setExamsById] = useState({})
   const [writingReviews, setWritingReviews] = useState([])
+  // Released essay opened with the examiner's comments (2026-10-16).
+  const [essayReviewId, setEssayReviewId] = useState(null)
   const [slots, setSlots] = useState([])
   const [examiners, setExaminers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -806,11 +810,20 @@ export default function MockTestCenter({ onExit }) {
                           )}
                         </div>
                         {review.released_at != null ? (
-                          review.examiner_feedback && (
-                            <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
-                              {review.examiner_feedback}
-                            </p>
-                          )
+                          <>
+                            {review.examiner_feedback && (
+                              <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
+                                {review.examiner_feedback}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setEssayReviewId(review.id)}
+                              className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-full bg-writing-tint px-3.5 py-1.5 text-sm font-semibold text-writing hover:brightness-95"
+                            >
+                              See your essay with comments
+                            </button>
+                          </>
                         ) : (
                           <p className="text-sm text-mist mt-2">
                             Marked — your teacher will release your result soon.
@@ -905,6 +918,14 @@ export default function MockTestCenter({ onExit }) {
                             {slot.examiner_feedback}
                           </p>
                         )}
+                        {slot.released_at != null && (
+                          <details className="mt-3">
+                            <summary className="cursor-pointer text-sm font-semibold text-paper">Examiner’s comments</summary>
+                            <div className="mt-2">
+                              <SpeakingComments slot={slot} showAuthors={false} />
+                            </div>
+                          </details>
+                        )}
                         {slot.recording_url && (
                           <a
                             href={slot.recording_url}
@@ -939,6 +960,10 @@ export default function MockTestCenter({ onExit }) {
           examTitle={reviewingAttempt.examTitle}
           onClose={() => setReviewingAttempt(null)}
         />
+      )}
+
+      {essayReviewId && (
+        <WritingReviewModal attemptId={essayReviewId} role="student" onClose={() => setEssayReviewId(null)} />
       )}
     </div>
   )

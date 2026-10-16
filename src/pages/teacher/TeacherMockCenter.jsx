@@ -15,6 +15,8 @@ import QuestionGroupsPanel, { autoGroupSection } from './QuestionGroupsPanel'
 import { useSessionState } from '../../lib/sessionState'
 import { cleanPrompt } from '../../components/exam/questionGroups'
 import Icon from '../../components/Icon'
+import WritingReviewModal from '../../components/writing/WritingReviewModal'
+import SpeakingMarkModal from '../../components/SpeakingMarkModal'
 
 /*
  * ================================================================
@@ -569,6 +571,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
   const [examsById, setExamsById] = useState({})
   const [writingReviews, setWritingReviews] = useState([])
   const [speakingSlots, setSpeakingSlots] = useState([])
+  // Comments & marks screens (2026-10-16): { kind: 'writing' | 'speaking', id, initialTask? } | null
+  const [markTarget, setMarkTarget] = useState(null)
+  const openMarking = (kind, id, initialTask) => setMarkTarget({ kind, id, initialTask })
+  const onWritingSaved = (row) =>
+    setWritingReviews((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...row, task1_text: undefined, task2_text: undefined } : r)))
+  const onSpeakingSaved = (row) => setSpeakingSlots((prev) => prev.map((s) => (s.id === row.id ? { ...s, ...row } : s)))
   const [examinersById, setExaminersById] = useState({})
   const [groups, setGroups] = useState([])
   const [groupMembers, setGroupMembers] = useState([])
@@ -4302,7 +4310,15 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 aria-label={`Band for ${it.skill}, editable before release`}
                               />
                             ) : (
-                              <span className="text-sm font-semibold text-paper">{formatBand(it.suggestedBand)}</span>
+                              <button
+                                type="button"
+                                onClick={() => openMarking(it.table === 'mock_speaking_slots' ? 'speaking' : 'writing', it.id)}
+                                className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-sm font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                title={it.table === 'mock_speaking_slots' ? 'See or change the speaking marks' : 'See the essay with comments, or change the marks'}
+                              >
+                                {formatBand(it.suggestedBand)}
+                                <Icon name="pencil" className="h-3 w-3 opacity-70" />
+                              </button>
                             )}
                           </span>
                           <span className="col-span-2 col-start-2 flex justify-start gap-1.5 md:col-span-1 md:col-start-auto md:justify-end">
@@ -4657,7 +4673,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 ) : (
                   <div className="space-y-2.5">
                     {upcomingSpeaking.map((slot) => (
-                      <SpeakingSlotRow key={slot.id} slot={slot} onMessage={openChat} />
+                      <SpeakingSlotRow key={slot.id} slot={slot} onMessage={openChat} onMarks={() => openMarking('speaking', slot.id)} />
                     ))}
                   </div>
                 )}
@@ -4672,7 +4688,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 ) : (
                   <div className="space-y-2.5">
                     {pastSpeaking.map((slot) => (
-                      <SpeakingSlotRow key={slot.id} slot={slot} onMessage={openChat} />
+                      <SpeakingSlotRow key={slot.id} slot={slot} onMessage={openChat} onMarks={() => openMarking('speaking', slot.id)} />
                     ))}
                   </div>
                 )}
@@ -5993,7 +6009,21 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           expandedEssays={expandedEssays}
           onToggleEssay={toggleEssay}
           onDeleteAttempt={deleteStudentAttempt}
+          onOpenMarking={openMarking}
         />
+      )}
+
+      {markTarget?.kind === 'writing' && (
+        <WritingReviewModal
+          attemptId={markTarget.id}
+          role="teacher"
+          initialTask={markTarget.initialTask}
+          onClose={() => setMarkTarget(null)}
+          onSaved={onWritingSaved}
+        />
+      )}
+      {markTarget?.kind === 'speaking' && (
+        <SpeakingMarkModal slotId={markTarget.id} onClose={() => setMarkTarget(null)} onSaved={onSpeakingSaved} />
       )}
     </div>
   )
@@ -6337,7 +6367,7 @@ function AttemptMistakeRow({ a, isOpen, bd, onToggle, onReview, onDelete }) {
   )
 }
 
-function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay: toggleEssayOpen, onDeleteAttempt }) {
+function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggleEssay: toggleEssayOpen, onDeleteAttempt, onOpenMarking }) {
   // Essays are loaded on demand (2026-10-06): the results list no longer
   // downloads every essay up front. id -> { loading } | { task1_text,
   // task2_text } | { error }.
@@ -6748,9 +6778,19 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                               {r.examiner_band != null ? (
                                 <span className="text-sage font-semibold text-xs">
                                   Band {r.examiner_band}
+                                  {r.teacher_edited_at && <span className="ml-1 font-normal text-mist">· changed by you</span>}
                                 </span>
                               ) : (
                                 <span className="text-amber text-xs">Awaiting review</span>
+                              )}
+                              {onOpenMarking && (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenMarking('writing', r.id)}
+                                  className="focus-ring rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                >
+                                  Comments &amp; marks
+                                </button>
                               )}
                               {onDeleteAttempt && (
                                 <button
@@ -6859,7 +6899,17 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                                 {slot.examiner_band != null && (
                                   <span className="text-sage font-semibold text-xs">
                                     Band {slot.examiner_band}
+                                    {slot.teacher_edited_at && <span className="ml-1 font-normal text-mist">· changed by you</span>}
                                   </span>
+                                )}
+                                {onOpenMarking && slot.status === 'completed' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenMarking('speaking', slot.id)}
+                                    className="focus-ring rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                  >
+                                    {slot.examiner_band != null ? 'Change marks' : 'Mark'}
+                                  </button>
                                 )}
                               </div>
                             </div>
@@ -6911,7 +6961,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
   )
 }
 
-function SpeakingSlotRow({ slot, onMessage }) {
+function SpeakingSlotRow({ slot, onMessage, onMarks }) {
   const meta = SPEAKING_STATUS_META[slot.status] || SPEAKING_STATUS_META.scheduled
 
   return (
@@ -6943,6 +6993,15 @@ function SpeakingSlotRow({ slot, onMessage }) {
               className="focus-ring text-xs text-brass hover:text-brass-dim"
             >
               Message
+            </button>
+          )}
+          {onMarks && slot.status === 'completed' && (
+            <button
+              type="button"
+              onClick={onMarks}
+              className="focus-ring rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+            >
+              {slot.examiner_band != null ? 'Change marks' : 'Mark'}
             </button>
           )}
         </div>

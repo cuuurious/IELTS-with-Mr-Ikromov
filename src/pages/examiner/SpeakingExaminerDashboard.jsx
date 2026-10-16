@@ -12,6 +12,7 @@ import Icon from '../../components/Icon'
 import { SkillIcon } from '../../components/SkillArt'
 import SpeakingExaminerHome from './SpeakingExaminerHome'
 import { Card, Avatar } from './ExaminerHomeParts'
+import SpeakingComments from '../../components/SpeakingComments'
 
 /*
  * ================================================================
@@ -816,7 +817,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
+      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
         <h3 className="text-lg font-semibold text-paper">Score speaking exam</h3>
         <p className="text-sm text-mist mt-0.5">{studentName}</p>
         <p className="text-[13px] text-mist mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
@@ -882,6 +883,12 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
           <p className="text-xs text-mist -mt-2">
             Paste the cloud-recording link once it's uploaded — the student and teacher will see it here too.
           </p>
+        </div>
+
+        {/* Comments tied to moments in the recording (2026-10-16). They
+            save on their own, separately from the score below. */}
+        <div className="mt-5 border-t border-line pt-4">
+          <SpeakingComments slot={slot} editable />
         </div>
 
         {error && <p className="text-coral text-sm mt-3">{error}</p>}

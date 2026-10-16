@@ -5,7 +5,8 @@ import Layout, { IconHome, IconHomework, IconChat } from '../../components/Layou
 import LoadingScreen from '../../components/LoadingScreen'
 import PrivateChats from '../../components/PrivateChats'
 import { countWords } from '../../lib/writingMock'
-import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
+import { formatBand } from '../../lib/ieltsBands'
+import WritingReviewModal from '../../components/writing/WritingReviewModal'
 import { fetchAll } from '../../lib/fetchAll'
 import Icon from '../../components/Icon'
 import { SkillIcon } from '../../components/SkillArt'
@@ -41,26 +42,6 @@ import { Card, Avatar, timeAgo, ageLabel, DAY } from './ExaminerHomeParts'
 
 function studentLabel(student) {
   return student?.full_name || student?.username || 'Student'
-}
-
-// The four IELTS Writing criteria, added 2026-09-26 (migration_49) so an
-// examiner's report is a real breakdown, not just one number. Locked with
-// Jasur via AskUserQuestion the same day: the overall band is calculated
-// from these four, never typed in separately — only once all four are
-// filled in, so editing feedback alone on an older, already-marked
-// attempt (which has no breakdown) never overwrites its existing
-// examiner_band with a bogus average of blanks.
-const WRITING_CRITERIA = [
-  { key: 'ta', label: 'Task Achievement / Response' },
-  { key: 'cc', label: 'Coherence & Cohesion' },
-  { key: 'lr', label: 'Lexical Resource' },
-  { key: 'gra', label: 'Grammatical Range & Accuracy' },
-]
-
-function computeOverallBand(criteriaValues) {
-  const nums = criteriaValues.map((v) => (v === '' || v == null ? null : Number(v)))
-  if (nums.some((n) => n == null || Number.isNaN(n))) return null
-  return roundOverallBand(nums.reduce((sum, n) => sum + n, 0) / nums.length)
 }
 
 export default function WritingExaminerDashboard() {
@@ -292,37 +273,11 @@ export default function WritingExaminerDashboard() {
     setTab('chats')
   }
 
-  const saveReview = async ({ ta, cc, lr, gra, feedback }) => {
-    const { attempt } = reviewTarget
-    const computedOverall = computeOverallBand([ta, cc, lr, gra])
-
-    const { error: updateError } = await supabase
-      .from('writing_mock_attempts')
-      .update({
-        ta_band: ta === '' ? null : Number(ta),
-        cc_band: cc === '' ? null : Number(cc),
-        lr_band: lr === '' ? null : Number(lr),
-        gra_band: gra === '' ? null : Number(gra),
-        // Only overwrite the overall band once all four criteria are
-        // filled — otherwise leave whatever was already there (e.g. an
-        // older attempt marked before the breakdown existed, or a
-        // feedback-only edit) untouched.
-        examiner_band: computedOverall != null ? computedOverall : attempt.examiner_band ?? null,
-        examiner_feedback: feedback || null,
-        examiner_reviewed_by: profile.id,
-        examiner_reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', attempt.id)
-
-    if (updateError) {
-      console.error('Could not save review:', updateError)
-      throw updateError
-    }
-
-    setReviewTarget(null)
-    // Re-read just this attempt (2026-10-06) instead of reloading everything.
-    pendingIdsRef.current.add(attempt.id)
-    await flushPending()
+  // Marks/comments saved inside WritingReviewModal → re-read that one
+  // attempt so the queue shows its new band straight away.
+  const refreshAttempt = (id) => {
+    pendingIdsRef.current.add(id)
+    flushPending()
   }
 
   const sections = useMemo(
@@ -392,10 +347,12 @@ export default function WritingExaminerDashboard() {
       </div>
 
       {reviewTarget && (
-        <ReviewModal
-          entry={reviewTarget}
+        <WritingReviewModal
+          attemptId={reviewTarget.attempt.id}
+          role="examiner"
+          initialTask={reviewTarget.initialTask}
           onClose={() => setReviewTarget(null)}
-          onSave={saveReview}
+          onSaved={(row) => refreshAttempt(row.id)}
         />
       )}
     </Layout>
@@ -538,189 +495,5 @@ function QueueCard({ title, entries, taskKey, now, onOpen, onMessage, empty }) {
         </ul>
       )}
     </Card>
-  )
-}
-
-const LABEL = 'text-[13px] font-medium text-mist'
-const INPUT = 'focus-ring mt-1 w-full rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper'
-
-function ReviewModal({ entry, onClose, onSave }) {
-  const { attempt, exam, student } = entry
-
-  const [criteria, setCriteria] = useState({
-    ta: attempt.ta_band ?? '',
-    cc: attempt.cc_band ?? '',
-    lr: attempt.lr_band ?? '',
-    gra: attempt.gra_band ?? '',
-  })
-  const [feedback, setFeedback] = useState(attempt.examiner_feedback || '')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  // Opened from the Task 2s list → start on Task 2 (2026-10-07).
-  const [activeTask, setActiveTask] = useState(
-    entry.initialTask && attempt[`${entry.initialTask}_text`] ? entry.initialTask : attempt.task1_text ? 'task1' : 'task2'
-  )
-
-  const tasksAvailable = [
-    attempt.task1_text ? 'task1' : null,
-    attempt.task2_text ? 'task2' : null,
-  ].filter(Boolean)
-
-  const computedOverall = computeOverallBand([criteria.ta, criteria.cc, criteria.lr, criteria.gra])
-  const displayOverall = computedOverall != null ? computedOverall : attempt.examiner_band ?? null
-
-  const activeWords = countWords(attempt[`${activeTask}_text`])
-  const minWords = activeTask === 'task1' ? 150 : 250
-
-  const handleSave = async () => {
-    setSaving(true)
-    setError('')
-    try {
-      await onSave({ ta: criteria.ta, cc: criteria.cc, lr: criteria.lr, gra: criteria.gra, feedback })
-    } catch (err) {
-      setError(err?.message || 'Could not save this review.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar person={student} size="h-10 w-10" tone="bg-writing-tint text-writing" />
-            <div className="min-w-0">
-              <h3 className="truncate text-lg font-semibold text-paper">{studentLabel(student)}</h3>
-              <p className="truncate text-[13px] text-mist">
-                {exam.title}
-                {attempt.submitted_at && ` · submitted ${new Date(attempt.submitted_at).toLocaleDateString()}`}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
-          >
-            <Icon name="close" className="h-4 w-4" />
-          </button>
-        </div>
-
-        {tasksAvailable.length > 1 && (
-          <div className="mt-4 inline-flex gap-1 rounded-full bg-panel-2 p-1">
-            {tasksAvailable.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setActiveTask(t)}
-                className={`focus-ring rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTask === t ? 'bg-panel text-writing shadow-sm' : 'text-mist hover:text-paper'
-                }`}
-              >
-                {t === 'task1' ? 'Task 1' : 'Task 2'}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 space-y-3">
-          {activeTask === 'task1' && exam.task1_prompt && (
-            <div className="rounded-2xl bg-writing-tint/60 p-3.5 text-sm text-paper-dim whitespace-pre-wrap">
-              <p className="mb-1 text-[13px] font-medium text-writing">Task 1 prompt</p>
-              {exam.task1_prompt}
-            </div>
-          )}
-          {activeTask === 'task2' && exam.task2_prompt && (
-            <div className="rounded-2xl bg-writing-tint/60 p-3.5 text-sm text-paper-dim whitespace-pre-wrap">
-              <p className="mb-1 text-[13px] font-medium text-writing">Task 2 prompt</p>
-              {exam.task2_prompt}
-            </div>
-          )}
-
-          {activeTask === 'task1' && exam.task1_image_url && (
-            <img
-              src={exam.task1_image_url}
-              alt="Task 1 chart"
-              className="max-h-64 rounded-xl border border-line object-contain"
-            />
-          )}
-
-          <div className="rounded-2xl border border-line bg-panel-2 p-4 text-sm leading-relaxed text-paper whitespace-pre-wrap max-h-96 overflow-y-auto">
-            {attempt[`${activeTask}_text`] || 'No answer written.'}
-          </div>
-
-          <p className={`text-[13px] ${activeWords < minWords ? 'font-medium text-urgent' : 'text-mist'}`}>
-            {activeWords} words
-            {activeWords < minWords ? ` · under the ${minWords}-word minimum` : ` · minimum ${minWords}`}
-          </p>
-        </div>
-
-        <div className="mt-5 border-t border-line pt-4">
-          <p className="mb-2 text-sm font-semibold text-paper">Criteria marks</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {WRITING_CRITERIA.map((c) => (
-              <label key={c.key} className="text-[12px] text-mist">
-                {c.label}
-                <input
-                  type="number"
-                  min="0"
-                  max="9"
-                  step="0.5"
-                  value={criteria[c.key]}
-                  onChange={(e) => setCriteria((prev) => ({ ...prev, [c.key]: e.target.value }))}
-                  className={INPUT}
-                />
-              </label>
-            ))}
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-panel-2/70 px-3.5 py-2.5">
-            <span className={LABEL}>Overall band</span>
-            <span className="inline-flex h-7 items-center rounded-lg bg-writing-tint px-2.5 text-sm font-semibold tabular-nums text-writing">
-              {formatBand(displayOverall)}
-            </span>
-            <span className="text-[12px] text-mist">
-              {computedOverall != null
-                ? 'calculated from the four criteria'
-                : 'fill in all four to calculate'}
-            </span>
-          </div>
-
-          <label className={`mt-4 block ${LABEL}`}>
-            Feedback
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              rows={4}
-              placeholder="What went well, what to improve…"
-              className={`${INPUT} resize-none`}
-            />
-          </label>
-        </div>
-
-        {error && <p className="text-coral text-sm mt-3">{error}</p>}
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="focus-ring rounded-full px-4 py-2 text-sm text-mist hover:text-paper disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold hover:bg-brass-dim disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : 'Save review'}
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
