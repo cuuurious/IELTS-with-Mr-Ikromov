@@ -2068,3 +2068,11 @@ html.split-dragging * {
 }
 .tile-cut-lg { --cut: 18px; }
 .tile-cut-sm { --cut: 10px; }
+
+/* Registan look everywhere (2026-10-19): headings that used the old
+   display face now use the brand face, like the Homes. The exam
+   screens keep Arial (.cd-exam .font-display wins over this). */
+h1.font-display,
+h2.font-display {
+  font-family: var(--font-brand);
+}

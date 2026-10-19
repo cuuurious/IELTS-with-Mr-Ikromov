@@ -221,14 +221,14 @@ export default function SpeakingExaminerHome({
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
       {/* GREETING */}
-      <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
+      <div className="registan-band lg:col-span-12 flex flex-wrap items-end justify-between gap-4 rounded-[28px] px-5 py-7 sm:px-9 sm:py-8">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-mist">{todayLabel(now)}</p>
-          <h1 className="mt-0.5 text-[28px] font-semibold leading-tight tracking-[-0.02em]">
+          <p className="text-[13px] font-medium text-onband-dim">{todayLabel(now)}</p>
+          <h1 className="mt-1 font-brand text-[28px] font-semibold leading-tight tracking-[-0.02em] text-onband sm:text-[36px]">
             {greeting(now)}
             {firstName ? `, ${firstName}` : ''}
           </h1>
-          <p className="mt-1 text-[15px] text-paper-dim">
+          <p className="mt-2 text-[15px] text-onband-dim">
             {todayLive.length === 0
               ? 'No more sessions today'
               : new Date(todayLive[0].scheduled_at) <= now
@@ -241,7 +241,7 @@ export default function SpeakingExaminerHome({
         <button
           type="button"
           onClick={() => onNavigate('students')}
-          className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
+          className="focus-ring inline-flex h-12 items-center gap-2 rounded-[14px] bg-[#e6a33a] px-5 text-[15px] font-bold text-[#17213a] hover:brightness-105"
         >
           Book a session
           <Arrow />
@@ -251,7 +251,7 @@ export default function SpeakingExaminerHome({
       {/* TODAY */}
       <Card className="lg:col-span-8 flex flex-col gap-4 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[17px] font-semibold">Today</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Today</h2>
           <span className="text-[13px] text-mist">
             {m.today.length} {m.today.length === 1 ? 'session' : 'sessions'}
           </span>
@@ -322,7 +322,7 @@ export default function SpeakingExaminerHome({
 
       {/* WAITING FOR YOU */}
       <Card className="lg:col-span-4 flex flex-col gap-4 p-6">
-        <h2 className="text-[17px] font-semibold">Waiting for you</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">Waiting for you</h2>
         {waitingRows.length ? (
           <ul className="flex flex-col gap-1.5">
             {waitingRows.map((w) => (
@@ -385,7 +385,7 @@ export default function SpeakingExaminerHome({
       {/* COMING UP */}
       <Card className="lg:col-span-7 flex flex-col gap-3 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[17px] font-semibold">Coming up</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Coming up</h2>
           <button type="button" onClick={() => onNavigate('timetable')} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
             Full timetable
           </button>
@@ -441,7 +441,7 @@ export default function SpeakingExaminerHome({
       {/* WEEK AHEAD */}
       <Card className="lg:col-span-5 flex flex-col gap-4 p-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Your week ahead</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Your week ahead</h2>
           <span className="text-[13px] text-mist">Sessions per day</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -467,7 +467,7 @@ export default function SpeakingExaminerHome({
       {/* BANDS GIVEN */}
       <Card className="lg:col-span-7 flex flex-col gap-5 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[17px] font-semibold">Bands you’ve given</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Bands you’ve given</h2>
           <span className="text-[13px] text-mist">{m.bands.length} marked sessions</span>
         </div>
         {m.bands.length ? (
@@ -494,7 +494,7 @@ export default function SpeakingExaminerHome({
 
       {/* RECENTLY MARKED */}
       <Card className="lg:col-span-5 flex flex-col gap-3 p-6">
-        <h2 className="text-[17px] font-semibold">Recently marked</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">Recently marked</h2>
         {m.marked.length ? (
           <ul className="flex flex-col">
             {m.marked.slice(0, 5).map((slot) => {

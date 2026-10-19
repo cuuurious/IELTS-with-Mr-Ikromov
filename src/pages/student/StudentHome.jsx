@@ -556,7 +556,7 @@ export default function StudentHome({
           <VocabArt front="sustainable" back="barqaror" className="absolute inset-0 h-full w-full" />
         </div>
         <div className="flex flex-col gap-2">
-          <h2 className="text-[17px] font-semibold">
+          <h2 className="font-brand text-[17px] font-semibold text-brass">
             {words.due == null ? 'Word review' : words.due === 0 ? 'No words due today' : `${words.due} ${words.due === 1 ? 'word' : 'words'} to revise`}
           </h2>
           <p className="text-sm text-mist">

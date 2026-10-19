@@ -416,7 +416,7 @@ function QueueCard({ title, entries, taskKey, now, onOpen, onMessage, empty }) {
   return (
     <Card className="p-4 sm:p-5">
       <div className="mb-1 flex items-baseline justify-between px-1.5">
-        <h2 className="text-[17px] font-semibold">{title}</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">{title}</h2>
         <span className="text-[13px] text-mist tabular-nums">{entries.length}</span>
       </div>
       {entries.length === 0 ? (

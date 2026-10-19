@@ -95,7 +95,7 @@ function useTeacherOverview(reloadKey) {
             .eq('status', 'done')
             .not('submitted_at', 'is', null)
             .order('submitted_at', { ascending: false })
-            .limit(8),
+            .limit(16),
         ])
 
         const homeworks = hwRes.data || []
@@ -696,8 +696,11 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         </div>
       </section>
 
+      {/* Left column: short cards stacked so they sit next to the long
+          hand-ins list instead of leaving empty space under it. */}
+      <div className="flex flex-col gap-6 lg:col-span-5">
       {/* FALLING BEHIND — by group */}
-      <Card id="teacher-home-behind" className="lg:col-span-5 lg:self-start flex scroll-mt-24 flex-col gap-3 p-6">
+      <Card id="teacher-home-behind" className="flex scroll-mt-24 flex-col gap-3 p-6">
         <div className="flex items-baseline justify-between">
           <h2 className="font-brand text-[18px] font-semibold text-brass">Missed 2+ deadlines</h2>
           <span className="text-[13px] text-mist">Last {WINDOW_DAYS} days</span>
@@ -752,45 +755,8 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         )}
       </Card>
 
-      {/* LATEST HAND-INS */}
-      <Card id="teacher-home-feed" className="lg:col-span-7 flex scroll-mt-24 flex-col gap-4 p-6">
-        <h2 className="font-brand text-[18px] font-semibold text-brass">Latest hand-ins</h2>
-        {model.feed.length ? (
-          <ul className="flex flex-col">
-            {model.feed.map((s) => {
-              const skill = s.hw ? skillOfHomework(s.hw) : null
-              return (
-                <li key={s.id} className="border-t border-line first:border-0">
-                  <button
-                    type="button"
-                    onClick={() => s.group && onOpenGroup(s.group.id)}
-                    className="focus-ring flex w-full items-center gap-3 rounded-xl px-1.5 py-2.5 text-left hover:bg-panel-2"
-                  >
-                    <Avatar person={s.person} size="h-9 w-9" />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-[15px]">
-                        <span className="font-medium">{s.person?.full_name || 'A student'}</span>
-                        <span className="text-mist"> handed in </span>
-                        {s.hw?.title || 'homework'}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-[13px] text-mist">
-                        {skill && <SkillIcon skill={skill.key} className={`h-3.5 w-3.5 ${skill.key === 'general' ? '' : skill.text}`} />}
-                        {groupDisplayName(s.group?.name)} · {timeAgo(s.submitted_at, now)}
-                        {s.ai_status === 'done' && <span className="ml-1 rounded-md bg-listening-tint px-1.5 text-[12px] font-medium text-listening">AI checked</span>}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        ) : (
-          <p className="text-sm text-mist">Hand-ins will appear here as students send their work.</p>
-        )}
-      </Card>
-
       {/* RECENTLY CLOSED */}
-      <Card className="lg:col-span-5 lg:self-start flex flex-col gap-3 p-6">
+      <Card className="flex flex-col gap-3 p-6">
         <h2 className="font-brand text-[18px] font-semibold text-brass">Recently closed</h2>
         {model.closed.length ? (
           <ul className="flex flex-col gap-2.5">
@@ -827,8 +793,8 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
       </Card>
 
       {/* WORD PRACTICE */}
-      <Card className="lg:col-span-7 lg:self-start flex flex-col gap-4 p-6 md:flex-row md:items-stretch md:gap-8">
-        <div className="flex flex-col justify-between gap-3 md:w-[220px]">
+      <Card className="flex flex-col gap-4 p-6 md:flex-row md:items-stretch md:gap-8 lg:flex-col lg:gap-4">
+        <div className="flex flex-col justify-between gap-3 md:w-[220px] lg:w-auto">
           <div>
             <h2 className="font-brand text-[18px] font-semibold text-brass">Word practice</h2>
             <p className="mt-1 text-sm text-paper-dim">
@@ -849,7 +815,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
           </div>
         </div>
         <div
-          className="flex h-[140px] flex-1 items-stretch gap-2"
+          className="flex h-[140px] flex-1 items-stretch gap-2 lg:flex-none"
           role="img"
           aria-label={`Word practice sessions per day: ${model.perDay.map((d) => d.count).join(', ')}`}
         >
@@ -867,6 +833,48 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
           ))}
         </div>
       </Card>
+      </div>
+
+      {/* LATEST HAND-INS */}
+      {/* On wide screens this card is exactly as tall as the left column and
+          its list scrolls, so neither side leaves an empty gap. */}
+      <div className="lg:col-span-7 lg:h-0 lg:min-h-full">
+      <Card id="teacher-home-feed" className="flex scroll-mt-24 flex-col gap-4 p-6 lg:h-full">
+        <h2 className="font-brand text-[18px] font-semibold text-brass">Latest hand-ins</h2>
+        {model.feed.length ? (
+          <ul className="-mr-2 flex flex-col pr-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            {model.feed.map((s) => {
+              const skill = s.hw ? skillOfHomework(s.hw) : null
+              return (
+                <li key={s.id} className="border-t border-line first:border-0">
+                  <button
+                    type="button"
+                    onClick={() => s.group && onOpenGroup(s.group.id)}
+                    className="focus-ring flex w-full items-center gap-3 rounded-xl px-1.5 py-2.5 text-left hover:bg-panel-2"
+                  >
+                    <Avatar person={s.person} size="h-9 w-9" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-[15px]">
+                        <span className="font-medium">{s.person?.full_name || 'A student'}</span>
+                        <span className="text-mist"> handed in </span>
+                        {s.hw?.title || 'homework'}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-[13px] text-mist">
+                        {skill && <SkillIcon skill={skill.key} className={`h-3.5 w-3.5 ${skill.key === 'general' ? '' : skill.text}`} />}
+                        {groupDisplayName(s.group?.name)} · {timeAgo(s.submitted_at, now)}
+                        {s.ai_status === 'done' && <span className="ml-1 rounded-md bg-listening-tint px-1.5 text-[12px] font-medium text-listening">AI checked</span>}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm text-mist">Hand-ins will appear here as students send their work.</p>
+        )}
+      </Card>
+      </div>
 
       <ConfirmModal
         open={Boolean(confirmDialog)}

@@ -151,14 +151,14 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
       {/* GREETING */}
-      <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
+      <div className="registan-band lg:col-span-12 flex flex-wrap items-end justify-between gap-4 rounded-[28px] px-5 py-7 sm:px-9 sm:py-8">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-mist">{todayLabel(now)}</p>
-          <h1 className="mt-0.5 text-[28px] font-semibold leading-tight tracking-[-0.02em]">
+          <p className="text-[13px] font-medium text-onband-dim">{todayLabel(now)}</p>
+          <h1 className="mt-1 font-brand text-[28px] font-semibold leading-tight tracking-[-0.02em] text-onband sm:text-[36px]">
             {greeting(now)}
             {firstName ? `, ${firstName}` : ''}
           </h1>
-          <p className="mt-1 text-[15px] text-paper-dim">
+          <p className="mt-2 text-[15px] text-onband-dim">
             {m.waiting.length === 0
               ? 'Your queue is empty'
               : `${m.waiting.length} ${m.waiting.length === 1 ? 'mock' : 'mocks'} waiting to be marked`}
@@ -170,7 +170,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
           <button
             type="button"
             onClick={() => onOpen(next)}
-            className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
+            className="focus-ring inline-flex h-12 items-center gap-2 rounded-[14px] bg-[#e6a33a] px-5 text-[15px] font-bold text-[#17213a] hover:brightness-105"
           >
             Mark the oldest
             <Arrow />
@@ -256,7 +256,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
 
       {/* WAITING FOR YOU */}
       <Card className="lg:col-span-4 flex flex-col gap-4 p-6">
-        <h2 className="text-[17px] font-semibold">Waiting for you</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">Waiting for you</h2>
         {m.waiting.length ? (
           <ul className="flex flex-col gap-1.5">
             {waitingRows.map((w) => (
@@ -298,7 +298,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
       {/* UP NEXT */}
       <Card className="lg:col-span-7 flex flex-col gap-3 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[17px] font-semibold">Up next in the queue</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Up next in the queue</h2>
           <span className="text-[13px] text-mist">Oldest first</span>
         </div>
         {upNext.length ? (
@@ -361,7 +361,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
       {/* YOUR MARKING */}
       <Card className="lg:col-span-5 flex flex-col gap-4 p-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Your marking</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Your marking</h2>
           <span className="text-[13px] text-mist">Last 7 days</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -389,7 +389,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
       {/* BANDS GIVEN */}
       <Card className="lg:col-span-7 flex flex-col gap-5 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-[17px] font-semibold">Bands you’ve given</h2>
+          <h2 className="font-brand text-[17px] font-semibold text-brass">Bands you’ve given</h2>
           <span className="text-[13px] text-mist">{m.bands.length} marked with a band</span>
         </div>
         {m.bands.length ? (
@@ -416,7 +416,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
 
       {/* RECENTLY MARKED */}
       <Card className="lg:col-span-5 flex flex-col gap-3 p-6">
-        <h2 className="text-[17px] font-semibold">Recently marked</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">Recently marked</h2>
         {m.mine.length ? (
           <ul className="flex flex-col">
             {m.mine.slice(0, 5).map((e) => (

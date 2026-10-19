@@ -544,14 +544,14 @@ export default function MockTestCenter({ onExit }) {
       {/* EXAM-CENTER CHROME — deliberately distinct from the regular
           app header (candidate-ID styling, a hard exit instead of a
           sidebar) so this reads as its own environment. */}
-      <header className="shrink-0 border-b border-line bg-panel px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <header className="registan-band shrink-0 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <img src="/mrikromov.jpg" alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brass font-mono">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#e6a33a] font-semibold">
               Mock Test Center
             </p>
-            <p className="font-display text-base text-paper truncate">
+            <p className="font-brand text-base font-semibold text-onband truncate">
               Candidate: {profile?.full_name || profile?.username}
             </p>
           </div>
@@ -562,7 +562,7 @@ export default function MockTestCenter({ onExit }) {
           <button
             type="button"
             onClick={onExit}
-            className="focus-ring shrink-0 rounded-full border-2 border-brass bg-brass text-onbrass px-4 py-2 text-sm font-bold shadow-sm hover:bg-brass-dim hover:border-brass-dim transition-colors"
+            className="focus-ring shrink-0 rounded-full bg-[#e6a33a] px-4 py-2 text-sm font-bold text-[#17213a] shadow-sm transition hover:brightness-105"
           >
             ← Exit to dashboard
           </button>

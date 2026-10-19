@@ -617,7 +617,11 @@ export default function Layout({
       <main className="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 xl:px-8 xl:py-7">
           {pageTitle && !activeItem?.hideTitle && (
-            <h1 className="mb-5 text-[26px] font-semibold tracking-[-0.02em]">{pageTitle}</h1>
+            // Registan look (2026-10-19): every page title sits on the same
+            // lapis tile band as the Homes, so the whole site matches.
+            <header className="registan-band mb-6 rounded-[22px] px-5 py-5 sm:px-7 sm:py-6">
+              <h1 className="font-brand text-[22px] font-semibold leading-tight tracking-[-0.02em] text-onband sm:text-[28px]">{pageTitle}</h1>
+            </header>
           )}
           <div className="animate-fade-up">{children}</div>
         </div>

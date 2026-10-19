@@ -212,7 +212,7 @@ export function LearningCurve({ activity, onNavigate, className = '' }) {
   return (
     <Card className={`flex flex-col gap-3 p-6 ${className}`}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-[17px] font-semibold">Your learning curve</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">Your learning curve</h2>
         <span className="text-[13px] text-mist">Word tests, last 8 weeks</span>
       </div>
       {!weeks ? (
@@ -295,7 +295,7 @@ export function PracticeTime({ activity, className = '' }) {
   return (
     <Card className={`flex flex-col gap-4 p-6 ${className}`}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-[17px] font-semibold">When you study</h2>
+        <h2 className="font-brand text-[17px] font-semibold text-brass">When you study</h2>
         <span className="text-[13px] text-mist">Last 60 days</span>
       </div>
       {!split ? (

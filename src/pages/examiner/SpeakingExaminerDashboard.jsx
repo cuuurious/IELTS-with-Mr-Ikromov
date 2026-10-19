@@ -507,7 +507,7 @@ export default function SpeakingExaminerDashboard() {
           <section className="space-y-5">
             <Card className="p-4 sm:p-5">
               <div className="mb-2 flex items-baseline justify-between px-1">
-                <h2 className="text-[17px] font-semibold">Upcoming</h2>
+                <h2 className="font-brand text-[17px] font-semibold text-brass">Upcoming</h2>
                 <span className="text-[13px] text-mist tabular-nums">{upcomingSlots.length}</span>
               </div>
 
@@ -538,7 +538,7 @@ export default function SpeakingExaminerDashboard() {
             {pastSlots.length > 0 && (
               <Card className="p-4 sm:p-5">
                 <div className="mb-2 flex items-baseline justify-between px-1">
-                  <h2 className="text-[17px] font-semibold">Past and other</h2>
+                  <h2 className="font-brand text-[17px] font-semibold text-brass">Past and other</h2>
                   <span className="text-[13px] text-mist tabular-nums">{pastSlots.length}</span>
                 </div>
                 <div className="flex flex-col">
