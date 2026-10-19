@@ -15,6 +15,7 @@ import ThemeToggle from './ThemeToggle'
 import FrozenAttemptReview from './FrozenAttemptReview'
 import WritingReviewModal from './writing/WritingReviewModal'
 import SpeakingComments from './SpeakingComments'
+import ResultCoach from './ResultCoach'
 import { readSession, useSessionState, writeSession } from '../lib/sessionState'
 import { cleanPrompt } from './exam/questionGroups'
 
@@ -630,6 +631,16 @@ export default function MockTestCenter({ onExit }) {
                   </p>
                 )}
               </div>
+
+              {/* What to work on next (2026-10-16) — from released results only. */}
+              <ResultCoach
+                bands={resultBands}
+                target={profile?.target_band}
+                listeningId={latestAttemptByModule.listening?.id}
+                readingId={latestAttemptByModule.reading?.id}
+                writingId={latestWritingReview?.id}
+                speakingId={latestSpeakingSlot?.id}
+              />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <ScoreCard

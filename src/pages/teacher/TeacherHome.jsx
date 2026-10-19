@@ -511,232 +511,195 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     },
   ]
 
+  // Waiting items as tiles on the lapis band (2026-10-16 Registan look).
+  // The band is always deep blue, so these colours don't change with
+  // the light/dark theme.
+  const TILE_TONE = {
+    access: 'bg-[#e6a33a] text-[#17213a]',
+    release: 'bg-[#1e9e9a] text-white',
+    behind: 'bg-[#b23a48] text-white',
+    approvals: 'bg-[#f6f5f1] text-[#17213a]',
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-      {/* GREETING */}
-      <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
-            {greeting(now)}{firstName ? `, ${firstName}` : ''}
-          </h1>
-          <p className="mt-1 text-[15px] text-paper-dim">
-            {next ? (
-              <>
-                Next deadline <span className="font-medium text-paper">{dueLabel(next.due_date, now)}</span> · {groupDisplayName(nextGroup?.name)}
-              </>
-            ) : (
-              'No deadlines coming up'
-            )}
-            {' · '}
-            {plural(model.totalStudents, 'student')} in {plural(data.groups.length, 'group')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate('groups')}
-          className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
-        >
-          Post homework
-          <Arrow />
-        </button>
-      </div>
-
-      {/* TODAY STRIP */}
-      <div className="lg:col-span-12 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {stats.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={s.action}
-            className="focus-ring flex flex-col items-start gap-0.5 rounded-[18px] border border-line bg-panel px-4 py-3.5 text-left transition-colors hover:border-paper/30"
-          >
-            <span className="flex items-center gap-2 text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em]">
-              {s.dot && (
-                <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-reading opacity-60" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-reading" />
-                </span>
-              )}
-              {s.value}
-            </span>
-            <span className="text-[13px] text-mist">{s.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* WAITING FOR YOU */}
-      <div className="lg:col-span-4 lg:col-start-9 lg:row-start-3 flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Waiting for you</h2>
-        <Card className="flex flex-col gap-1 p-3">
-          {waiting.length ? (
-            waiting.map((w) => (
-              <button
-                key={w.key}
-                type="button"
-                onClick={w.action}
-                className="focus-ring flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left hover:bg-panel-2"
-              >
-                <span
-                  className={`flex h-10 min-w-10 items-center justify-center rounded-[11px] px-2 text-[17px] font-semibold tabular-nums ${
-                    w.key === 'behind' ? 'bg-urgent-tint text-urgent' : 'bg-brass/10 text-brass'
-                  }`}
-                >
-                  {w.count}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[15px] leading-snug">{w.label}</span>
-                  {w.hint && <span className="text-[12px] text-mist">{w.hint}</span>}
-                </span>
-                <Arrow className="h-4 w-4 shrink-0 text-mist" />
-              </button>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-reading-tint px-4 py-8 text-center">
-              <svg viewBox="0 0 64 64" className="h-12 w-12 text-reading" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="32" cy="32" r="24" />
-                <path d="M21 33l7 7 15-16" />
-              </svg>
-              <p className="text-[15px] font-medium text-reading">All clear. Nothing is waiting for you.</p>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* TODAY — lapis band with the girih pattern */}
+      <section aria-label="Today" className="registan-band lg:col-span-12 rounded-[28px] px-5 py-7 sm:px-9 sm:py-9">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0 max-w-3xl">
+              <h1 className="font-brand text-[30px] font-semibold leading-[1.1] tracking-[-0.02em] text-onband sm:text-[42px]">
+                {greeting(now)}{firstName ? `, ${firstName}` : ''}
+              </h1>
+              <p className="mt-2.5 text-[16px] leading-relaxed text-onband-dim sm:text-[17px]">
+                {next ? (
+                  <>
+                    Next deadline <span className="font-semibold text-onband">{dueLabel(next.due_date, now)}</span> for {groupDisplayName(nextGroup?.name)}.
+                  </>
+                ) : (
+                  'No deadlines coming up.'
+                )}{' '}
+                {plural(model.totalStudents, 'student')} in {plural(data.groups.length, 'group')}.
+              </p>
             </div>
-          )}
-        </Card>
+            <button
+              type="button"
+              onClick={() => onNavigate('groups')}
+              className="focus-ring inline-flex h-12 items-center gap-2 rounded-[14px] bg-[#e6a33a] px-5 text-[15px] font-bold text-[#17213a] hover:brightness-105"
+            >
+              Post homework
+              <Arrow />
+            </button>
+          </div>
 
-        {/* Recently closed deadlines */}
-        <Card className="flex flex-col gap-3 p-5">
-          <h3 className="text-[15px] font-semibold">Recently closed</h3>
-          {model.closed.length ? (
-            <ul className="flex flex-col gap-2.5">
-              {model.closed.map(({ hw, p }) => {
-                const g = model.groupById[hw.group_id]
-                const colour = groupColour(model.groupIndex[hw.group_id])
-                const pctDone = p.total ? Math.round((p.done / p.total) * 100) : 0
-                return (
-                  <li key={hw.id}>
-                    <button
-                      type="button"
-                      onClick={() => onOpenGroup(hw.group_id)}
-                      className="focus-ring grid w-full grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg text-left hover:bg-panel-2"
-                    >
-                      <span className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg text-[12px] font-semibold ${colour.tint} ${colour.text}`}>
-                        {groupBadge(g?.name)}
-                      </span>
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-[14px]">{hw.title}</span>
-                        <span className="text-[12px] text-mist">Closed {formatDue(hw.due_date, now)}</span>
-                      </span>
-                      <span className={`text-[14px] font-semibold tabular-nums ${pctDone < 60 ? 'text-urgent' : ''}`}>{pctDone}%</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
+          <div className="flex flex-wrap gap-2">
+            {stats.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={s.action}
+                className="focus-ring inline-flex h-9 items-center gap-2 rounded-full bg-white/10 px-3.5 text-[14px] text-onband hover:bg-white/20"
+              >
+                {s.dot && (
+                  <span className="relative flex h-2 w-2" aria-hidden="true">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7fd6d2] opacity-70" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#7fd6d2]" />
+                  </span>
+                )}
+                <span className="font-bold tabular-nums">{s.value}</span>
+                <span className="text-onband-dim">{s.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {waiting.length ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {waiting.map((w) => (
+                <button
+                  key={w.key}
+                  type="button"
+                  onClick={w.action}
+                  className={`tile-cut focus-ring flex items-center gap-3.5 px-4 py-3.5 text-left transition hover:brightness-105 ${TILE_TONE[w.key]}`}
+                >
+                  <span className="font-brand text-[28px] font-semibold leading-none tabular-nums">{w.count}</span>
+                  <span className="flex min-w-0 flex-col leading-tight">
+                    <span className="text-[15px] font-bold">{w.label}</span>
+                    {w.hint && <span className="text-[12.5px] opacity-80">{w.hint}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
           ) : (
-            <p className="text-sm text-mist">No deadlines in the last {WINDOW_DAYS} days.</p>
+            <p className="tile-cut w-fit bg-[#1e9e9a] px-4 py-3 text-[15px] font-bold text-white">All clear. Nothing is waiting for you.</p>
           )}
-        </Card>
-      </div>
-
-      {/* GROUPS */}
-      <div className="lg:col-span-8 lg:col-start-1 lg:row-start-3 flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">Your groups</h2>
-          <span className="text-[13px] text-mist">Rate = handed in, last {WINDOW_DAYS} days</span>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      </section>
+
+      {/* GROUPS — one tile each */}
+      <section aria-labelledby="th-groups" className="lg:col-span-12 flex flex-col gap-3.5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="th-groups" className="font-brand text-[22px] font-semibold text-brass">Your groups</h2>
+          <span className="text-[13px] text-mist">Hand-in rate covers the last {WINDOW_DAYS} days</span>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {model.groupCards.map((c) => {
             const colour = groupColour(c.index)
             const skill = c.next ? skillOfHomework(c.next) : null
             const p = c.nextProgress
-            const pctDone = p && p.total ? Math.round((p.done / p.total) * 100) : 0
+            const deg = p && p.total ? Math.round((p.done / p.total) * 360) : 0
             const urgent = c.next && isSameDay(new Date(c.next.due_date), now)
+            const numeric = /^\d+$/.test((c.group.name || '').trim())
             return (
-              <Card key={c.group.id} className="flex flex-col gap-3.5 p-5">
-                <button
-                  type="button"
-                  onClick={() => onOpenGroup(c.group.id)}
-                  className="focus-ring -m-1 flex items-center gap-3 rounded-xl p-1 text-left hover:bg-panel-2"
-                >
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] text-[15px] font-semibold ${colour.tint} ${colour.text}`}>
-                    {groupBadge(c.group.name)}
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[16px] font-semibold">{groupDisplayName(c.group.name)}</span>
-                    <span className="text-[13px] text-mist">
-                      {plural(c.students, 'student')}
-                      {c.behind > 0 && <span className="text-urgent"> · {c.behind} behind</span>}
+              <div
+                key={c.group.id}
+                className={`tile-cut tile-cut-lg flex flex-col gap-3.5 p-5 ${c.next ? 'bg-panel' : 'bg-panel-2'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <button type="button" onClick={() => onOpenGroup(c.group.id)} className="focus-ring min-w-0 rounded-lg text-left">
+                    <span className={`block font-brand font-semibold leading-none ${numeric ? 'text-[40px]' : 'text-[24px]'} ${colour.text}`}>
+                      {numeric ? c.group.name.trim() : c.group.name}
                     </span>
-                  </span>
-                  <span className="flex flex-col items-end">
-                    <span className="text-[17px] font-semibold tabular-nums">{c.rate != null ? `${c.rate}%` : '–'}</span>
-                    <span className="text-[11px] text-mist">hand-in rate</span>
-                  </span>
-                </button>
-
-                {c.next ? (
-                  <div className="flex flex-1 flex-col gap-2.5 rounded-2xl bg-panel-2 p-3.5">
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <SkillIcon skill={skill.key} className={`h-4 w-4 shrink-0 ${skill.key === 'general' ? '' : skill.text}`} />
-                      <span className={urgent ? 'font-medium text-urgent' : 'text-paper-dim'}>Due {dueLabel(c.next.due_date, now)}</span>
-                      {c.moreDue > 0 && <span className="ml-auto text-mist">+{c.moreDue} more</span>}
-                    </div>
-                    <p className="line-clamp-2 text-[15px] font-medium leading-snug">{c.next.title}</p>
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-2 flex-1 rounded bg-line/70">
-                        <div className={`h-full rounded ${colour.bar}`} style={{ width: `${Math.max(p.done ? 3 : 0, pctDone)}%` }} />
-                      </div>
-                      <span className="text-[13px] font-semibold tabular-nums">
+                    <span className="mt-2 block text-[13px] text-mist">
+                      {plural(c.students, 'student')}
+                      {c.rate != null && <> · {c.rate}% handed in</>}
+                      {c.behind > 0 && <span className="font-semibold text-urgent"> · {c.behind} behind</span>}
+                    </span>
+                  </button>
+                  {c.next ? (
+                    <div
+                      role="img"
+                      aria-label={`${p.done} of ${p.total} handed in`}
+                      className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-full"
+                      style={{ background: `conic-gradient(var(--color-turquoise) ${Math.max(p.done ? 6 : 0, deg)}deg, var(--color-panel-2) 0)` }}
+                    >
+                      <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-panel text-[14px] font-extrabold tabular-nums">
                         {p.done}/{p.total}
                       </span>
                     </div>
-                    <div className="mt-auto flex items-center justify-between gap-2 pt-0.5">
+                  ) : (
+                    <span className="font-brand text-[22px] font-medium tabular-nums text-paper">{c.rate != null ? `${c.rate}%` : '–'}</span>
+                  )}
+                </div>
+
+                {c.next ? (
+                  <>
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 text-[16px] font-extrabold leading-snug">{c.next.title}</p>
+                      <p className={`mt-0.5 flex items-center gap-1.5 text-[14px] font-bold ${urgent ? 'text-urgent' : 'text-reading'}`}>
+                        <SkillIcon skill={skill.key} className="h-4 w-4 shrink-0" />
+                        {skill.key === 'general' ? 'Homework' : skill.label} · due {dueLabel(c.next.due_date, now)}
+                        {c.moreDue > 0 && <span className="ml-auto font-medium text-mist">+{c.moreDue} more</span>}
+                      </p>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-dashed border-line pt-3">
                       <span className="text-[13px] text-mist">
                         {p.total === 0 ? 'No students yet' : p.missing.length === 0 ? 'Everyone has handed in' : `${p.missing.length} still to hand in`}
                       </span>
                       {p.missing.length > 0 &&
                         (reminded[c.next.id] ? (
-                          <span className="text-[13px] font-medium text-reading">Reminded {reminded[c.next.id]}</span>
+                          <span className="text-[13px] font-semibold text-reading">Reminded {reminded[c.next.id]}</span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => remind(c.next, p.missing)}
                             disabled={reminding === c.next.id}
-                            className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-panel px-3 text-[13px] font-medium hover:border-paper/30 disabled:opacity-50"
+                            className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[10px] border-2 border-brass px-3 text-[13px] font-extrabold text-brass hover:bg-brass hover:text-onbrass disabled:opacity-50"
                           >
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
                             {reminding === c.next.id ? 'Sending…' : 'Remind'}
                           </button>
                         ))}
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex flex-1 flex-col justify-between gap-2 rounded-2xl border border-dashed border-line p-3.5">
+                  <>
                     <p className="text-[14px] text-paper-dim">
-                      No deadline coming up.
+                      No deadline set.
                       {c.lastClosed && (
                         <span className="text-mist">
-                          {' '}Last: {c.lastClosed.title} ({c.lastClosedProgress.done}/{c.lastClosedProgress.total})
+                          {' '}Last: {c.lastClosed.title}, {c.lastClosedProgress.done} of {c.lastClosedProgress.total}.
                         </span>
                       )}
                     </p>
                     <button
                       type="button"
                       onClick={() => onOpenGroup(c.group.id)}
-                      className="focus-ring inline-flex h-8 w-fit items-center gap-1.5 rounded-lg bg-brass px-3 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
+                      className="focus-ring mt-auto inline-flex h-9 w-fit items-center gap-1.5 rounded-[10px] bg-brass px-3.5 text-[13px] font-extrabold text-onbrass hover:bg-brass-dim"
                     >
                       Post homework <Arrow className="h-3.5 w-3.5" />
                     </button>
-                  </div>
+                  </>
                 )}
-              </Card>
+              </div>
             )
           })}
         </div>
-      </div>
+      </section>
 
       {/* FALLING BEHIND — by group */}
       <Card id="teacher-home-behind" className="lg:col-span-5 lg:self-start flex scroll-mt-24 flex-col gap-3 p-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Missed 2+ deadlines</h2>
+          <h2 className="font-brand text-[18px] font-semibold text-brass">Missed 2+ deadlines</h2>
           <span className="text-[13px] text-mist">Last {WINDOW_DAYS} days</span>
         </div>
         {behindGroups.length ? (
@@ -791,7 +754,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
 
       {/* LATEST HAND-INS */}
       <Card id="teacher-home-feed" className="lg:col-span-7 flex scroll-mt-24 flex-col gap-4 p-6">
-        <h2 className="text-[17px] font-semibold">Latest hand-ins</h2>
+        <h2 className="font-brand text-[18px] font-semibold text-brass">Latest hand-ins</h2>
         {model.feed.length ? (
           <ul className="flex flex-col">
             {model.feed.map((s) => {
@@ -826,13 +789,50 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
         )}
       </Card>
 
+      {/* RECENTLY CLOSED */}
+      <Card className="lg:col-span-5 lg:self-start flex flex-col gap-3 p-6">
+        <h2 className="font-brand text-[18px] font-semibold text-brass">Recently closed</h2>
+        {model.closed.length ? (
+          <ul className="flex flex-col gap-2.5">
+            {model.closed.map(({ hw, p }) => {
+              const g = model.groupById[hw.group_id]
+              const colour = groupColour(model.groupIndex[hw.group_id])
+              const pctDone = p.total ? Math.round((p.done / p.total) * 100) : 0
+              return (
+                <li key={hw.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenGroup(hw.group_id)}
+                    className="focus-ring grid w-full grid-cols-[32px_minmax(0,1fr)_96px_40px] items-center gap-3 rounded-lg text-left hover:bg-panel-2"
+                  >
+                    <span className={`tile-cut tile-cut-sm flex h-8 w-8 items-center justify-center text-[12px] font-bold ${colour.tint} ${colour.text}`}>
+                      {groupBadge(g?.name)}
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-[14px] font-semibold">{hw.title}</span>
+                      <span className="text-[12px] text-mist">Closed {formatDue(hw.due_date, now)}</span>
+                    </span>
+                    <span className="h-2 rounded-full bg-panel-2">
+                      <span className={`block h-2 rounded-full ${pctDone < 60 ? 'bg-urgent' : 'bg-turquoise'}`} style={{ width: `${pctDone}%` }} />
+                    </span>
+                    <span className={`text-right text-[14px] font-extrabold tabular-nums ${pctDone < 60 ? 'text-urgent' : 'text-reading'}`}>{pctDone}%</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm text-mist">No deadlines in the last {WINDOW_DAYS} days.</p>
+        )}
+      </Card>
+
       {/* WORD PRACTICE */}
-      <Card className="lg:col-span-12 flex flex-col gap-4 p-6 md:flex-row md:items-stretch md:gap-8">
-        <div className="flex flex-col justify-between gap-3 md:w-[260px]">
+      <Card className="lg:col-span-7 lg:self-start flex flex-col gap-4 p-6 md:flex-row md:items-stretch md:gap-8">
+        <div className="flex flex-col justify-between gap-3 md:w-[220px]">
           <div>
-            <h2 className="text-[17px] font-semibold">Word practice this week</h2>
+            <h2 className="font-brand text-[18px] font-semibold text-brass">Word practice</h2>
             <p className="mt-1 text-sm text-paper-dim">
-              <strong className="font-semibold text-paper">{model.activeLearners}</strong> of {model.totalStudents} students practised
+              <strong className="font-semibold text-paper">{model.activeLearners}</strong> of {model.totalStudents} students practised this week
             </p>
           </div>
           <div className="flex items-center justify-between gap-3">

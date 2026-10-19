@@ -214,6 +214,14 @@ const MOCK_STATUS = {
   none: { title: 'Ready for a full mock?', body: 'Ask for one from the Mock Test Center.', action: 'Ask for a mock', tone: 'bg-panel-2 text-paper' },
 }
 
+// Band tiles: deep tile colours that read the same in light and dark.
+const BAND_TILE = {
+  listening: 'bg-[#1b3b73] text-white',
+  reading: 'bg-[#1e9e9a] text-white',
+  writing: 'bg-[#b23a48] text-white',
+  speaking: 'bg-[#6a3f99] text-white',
+}
+
 function greetingFor(now) {
   const h = now.getHours()
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
@@ -309,45 +317,113 @@ export default function StudentHome({
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-      {/* GREETING + SUMMARY */}
-      <div className="lg:col-span-12 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">
-            {greetingFor(now)}{firstName ? `, ${firstName}` : ''}
-          </h1>
-          <p className="mt-1 text-[15px] text-paper-dim">
-            {group
-              ? [
-                  dueThisWeek ? `${dueThisWeek} to do this week` : 'Nothing due this week',
-                  overdue.length ? `${overdue.length} missed` : null,
-                  words.streak > 1 ? `${words.streak}-day word streak` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')
-              : 'You’re not in a group yet'}
-          </p>
-        </div>
-        {groups.length > 1 && (
-          <div role="group" aria-label="Group" className="flex max-w-full overflow-x-auto rounded-xl border border-line bg-panel p-1">
-            {groups.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => onSelectGroup(g.id)}
-                className={`focus-ring h-9 shrink-0 rounded-[9px] px-3.5 text-sm transition-colors ${
-                  g.id === activeGroup ? 'bg-brass text-onbrass font-medium' : 'text-paper-dim hover:text-paper'
-                }`}
-              >
-                {g.name}
-              </button>
-            ))}
+      {/* TODAY — lapis band with the girih pattern (Registan look, 2026-10-16) */}
+      <section aria-label="Today" className="registan-band lg:col-span-12 rounded-[28px] px-5 py-7 sm:px-9 sm:py-9">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="font-brand text-[28px] font-semibold leading-[1.12] tracking-[-0.02em] text-onband sm:text-[40px]">
+                {greetingFor(now)}{firstName ? `, ${firstName}` : ''}
+              </h1>
+              <p className="mt-2 text-[16px] text-onband-dim sm:text-[17px]">
+                {group
+                  ? [
+                      dueThisWeek ? `${dueThisWeek} to do this week` : 'Nothing due this week',
+                      overdue.length ? `${overdue.length} missed` : null,
+                      words.streak > 1 ? `${words.streak}-day word streak` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : 'You’re not in a group yet'}
+              </p>
+            </div>
+            {groups.length > 1 ? (
+              <div role="group" aria-label="Group" className="flex max-w-full overflow-x-auto rounded-[12px] bg-white/10 p-1">
+                {groups.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => onSelectGroup(g.id)}
+                    className={`focus-ring h-9 shrink-0 rounded-[9px] px-3.5 text-sm font-bold transition-colors ${
+                      g.id === activeGroup ? 'bg-[#e6a33a] text-[#17213a]' : 'text-onband-dim hover:text-onband'
+                    }`}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            ) : group ? (
+              <span className="rounded-[10px] bg-[#e6a33a] px-3 py-1.5 text-sm font-extrabold text-[#17213a]">
+                {/^\d+$/.test((group.name || '').trim()) ? `Group ${group.name.trim()}` : group.name}
+              </span>
+            ) : null}
           </div>
-        )}
-      </div>
+
+          {hero ? (
+            <div className="tile-cut flex flex-col gap-4 bg-[#f6f5f1] p-5 text-[#17213a] sm:flex-row sm:items-center sm:p-6">
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-2 text-[13px] font-bold">
+                  <span className="inline-flex items-center gap-1.5 text-[#1b3b73]">
+                    <SkillIcon skill={hero.skill.key} className="h-4 w-4" />
+                    {hero.skill.key === 'general' ? 'Homework' : hero.skill.label}
+                  </span>
+                  <span className={hero.state.key === 'today' ? 'text-[#b23a48]' : 'text-[#55607a]'}>
+                    · due {formatDue(hero.hw.due_date, now).replace(/^Today/, 'today').replace(/^Tomorrow/, 'tomorrow')}
+                  </span>
+                  {upcoming.length > 1 && <span className="font-medium text-[#55607a]">· {upcoming.length - 1} more after this</span>}
+                </p>
+                <h2 className="mt-1.5 text-[22px] font-extrabold leading-tight text-[#17213a] sm:text-[24px]">{hero.hw.title}</h2>
+                {hero.hw.description && <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-[#3a4560]">{hero.hw.description}</p>}
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => onOpenHomework(hero.hw.id)}
+                  className="focus-ring inline-flex h-12 items-center gap-2 rounded-[12px] bg-[#1b3b73] px-5 text-[15px] font-bold text-white hover:bg-[#24498a]"
+                >
+                  {hero.skill.key === 'writing' ? 'Start writing' : hero.skill.key === 'speaking' ? 'Start recording' : 'Open homework'}
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('homework')}
+                  className="focus-ring inline-flex h-12 items-center rounded-[12px] border-2 border-[#1b3b73] px-4 text-[15px] font-bold text-[#1b3b73] hover:bg-[#1b3b73] hover:text-white"
+                >
+                  All homework
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="tile-cut flex flex-col gap-3 bg-[#f6f5f1] p-5 text-[#17213a] sm:flex-row sm:items-center sm:p-6">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[22px] font-extrabold text-[#17213a]">
+                  {!group ? 'You’re not in a group yet' : overdue.length ? 'No new homework right now' : 'You’re up to date'}
+                </h2>
+                <p className="mt-1 text-[15px] text-[#3a4560]">
+                  {group
+                    ? overdue.length
+                      ? 'A good moment to catch up on the missed work below.'
+                      : 'Nothing is waiting for you right now. Revise some words or look back at your marked work.'
+                    : 'Ask Mr Ikromov to add you to a group, and your homework will appear here.'}
+                </p>
+              </div>
+              {group && (
+                <button
+                  type="button"
+                  onClick={() => (overdue.length ? onOpenHomework(overdue[0].hw.id) : onNavigate('wordlists'))}
+                  className="focus-ring inline-flex h-12 w-fit shrink-0 items-center rounded-[12px] bg-[#1b3b73] px-5 text-[15px] font-bold text-white hover:bg-[#24498a]"
+                >
+                  {overdue.length ? 'Catch up now' : 'Revise words'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* MISSED WORK — can still be handed in late */}
       {overdue.length > 0 && (
-        <div className="lg:col-span-12 flex flex-col gap-3 rounded-[22px] border border-urgent/30 bg-urgent-tint px-5 py-4 sm:flex-row sm:items-center">
+        <div className="tile-cut lg:col-span-12 flex flex-col gap-3 bg-urgent-tint px-5 py-4 sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-panel text-urgent">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
@@ -371,150 +447,74 @@ export default function StudentHome({
         </div>
       )}
 
-      {/* TODAY */}
-      <Card className="lg:col-span-8 overflow-hidden grid grid-cols-1 md:grid-cols-[1.25fr_1fr]">
-        {hero ? (
-          <>
-            <div className="flex flex-col gap-3.5 p-6 sm:p-7">
-              <div className="flex flex-wrap gap-2">
-                <span className={`inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium ${hero.skill.tint} ${hero.skill.text}`}>
-                  <SkillIcon skill={hero.skill.key} className="h-3.5 w-3.5" />
-                  {hero.skill.key === 'general' ? 'Homework' : hero.skill.label}
-                </span>
-                <span className={`inline-flex h-7 items-center rounded-lg px-2.5 text-[13px] font-medium ${STATE_PILL[hero.state.key]}`}>
-                  {hero.state.key === 'overdue' ? 'Deadline passed' : `Due ${formatDue(hero.hw.due_date, now).replace(/^Today/, 'today').replace(/^Tomorrow/, 'tomorrow')}`}
-                </span>
-              </div>
-              <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">{hero.hw.title}</h2>
-              {hero.hw.description && (
-                <p className="line-clamp-3 text-[15px] leading-relaxed text-paper-dim">{hero.hw.description}</p>
-              )}
-              <div className="flex items-center gap-2.5 rounded-xl bg-panel-2 px-3 py-2.5">
-                <img src={TEACHER_PHOTO} alt="" className="h-8 w-8 rounded-full object-cover" />
-                <span className="text-sm text-paper-dim">
-                  <span className="font-semibold text-paper">Mr Ikromov</span> posted this{' '}
-                  {new Date(hero.hw.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  {group ? ` for ${group.name}` : ''}.
-                </span>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => onOpenHomework(hero.hw.id)}
-                  className="focus-ring inline-flex h-12 items-center gap-2 rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
-                >
-                  {hero.skill.key === 'writing' ? 'Start writing' : hero.skill.key === 'speaking' ? 'Start recording' : 'Open homework'}
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('homework')}
-                  className="focus-ring inline-flex h-12 items-center rounded-xl border border-line px-4 text-[15px] font-medium hover:bg-panel-2"
-                >
-                  All homework
-                </button>
-              </div>
-            </div>
-            <div className={`order-first flex items-center justify-center p-4 md:order-none md:p-6 ${hero.skill.tint}`}>
-              <SkillArt skill={hero.skill.key} title={hero.hw.title} className="h-[150px] w-full max-w-[300px] md:h-auto" />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col justify-center gap-3 p-7">
-              <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
-                {!group ? 'You’re not in a group yet' : open.some((i) => i.state.key === 'overdue') ? 'No new homework right now' : 'You’re up to date'}
-              </h2>
-              <p className="text-[15px] leading-relaxed text-paper-dim">
-                {group
-                  ? open.some((i) => i.state.key === 'overdue')
-                    ? 'A good moment to catch up on the missed work above.'
-                    : 'Nothing is waiting for you right now. Revise some words or look back at your marked work.'
-                  : 'Ask Mr Ikromov to add you to a group, and your homework will appear here.'}
-              </p>
-              {group && (
-                <button
-                  type="button"
-                  onClick={() => (overdue.length ? onOpenHomework(overdue[0].hw.id) : onNavigate('wordlists'))}
-                  className="focus-ring mt-1 inline-flex h-12 w-fit items-center rounded-xl bg-brass px-5 text-[15px] font-medium text-onbrass hover:bg-brass-dim"
-                >
-                  {overdue.length ? 'Catch up now' : 'Revise words'}
-                </button>
-              )}
-            </div>
-            <div className="flex items-center justify-center bg-reading-tint p-6">
-              <SkillArt skill="reading" className="h-auto w-full max-w-[280px]" />
-            </div>
-          </>
-        )}
-      </Card>
-
-      {/* BANDS */}
-      <Card className="lg:col-span-4 flex flex-col gap-4 p-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">Your bands</h2>
+      {/* BANDS — one tile per skill */}
+      <section aria-labelledby="sh-bands" className="lg:col-span-12 flex flex-col gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="sh-bands" className="font-brand text-[22px] font-semibold text-brass">Your bands</h2>
           <button
             type="button"
             onClick={() => setTargetOpen(true)}
-            className="focus-ring rounded-lg px-1.5 py-0.5 text-[13px] text-mist hover:bg-panel-2 hover:text-paper"
+            className="focus-ring rounded-lg px-1.5 py-0.5 text-[14px] text-mist hover:bg-panel-2 hover:text-paper"
             title="Change your target band"
           >
             {target != null ? (
-              <>Target <strong className="font-semibold text-paper">{formatBand(target)}</strong></>
+              <>Target <strong className="font-extrabold text-paper">{formatBand(target)}</strong></>
             ) : (
               'Set your target'
             )}
           </button>
         </div>
-        <ul className="flex flex-col gap-3.5">
-          {skillRows.map(({ skill, band }) => (
-            <li key={skill.key} className="grid grid-cols-[34px_minmax(0,1fr)_40px] items-center gap-3">
-              <span className={`flex h-[34px] w-[34px] items-center justify-center rounded-[10px] ${skill.tint} ${skill.text}`}>
-                <SkillIcon skill={skill.key} className="h-[17px] w-[17px]" />
-              </span>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-sm">{skill.label}</span>
-                <div className="relative h-2 rounded bg-panel-2">
-                  {band != null && (
-                    <div className={`absolute inset-y-0 left-0 rounded ${skill.bg}`} style={{ width: `${Math.max(4, Math.min(100, ((band - 4) / 5) * 100))}%` }} />
-                  )}
-                  {target != null && (
-                    <div className="absolute -top-[3px] h-3.5 w-0.5 rounded bg-paper" style={{ left: `${Math.max(0, Math.min(100, ((target - 4) / 5) * 100))}%` }} />
-                  )}
-                </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          {skillRows.map(({ skill, band }) => {
+            const tone = BAND_TILE[skill.key]
+            const gap = band != null && target != null ? target - band : null
+            return (
+              <div key={skill.key} className={`tile-cut flex flex-col gap-1 px-4 py-4 ${band != null ? tone : 'bg-panel text-paper'}`}>
+                <span className="flex items-center gap-1.5 text-[13px] font-bold opacity-90">
+                  <SkillIcon skill={skill.key} className="h-4 w-4" />
+                  {skill.label}
+                </span>
+                <span className="font-brand text-[30px] font-semibold leading-tight tabular-nums">{band != null ? formatBand(band) : '–'}</span>
+                <span className="text-[12.5px] opacity-85">
+                  {band == null ? 'After your first mock' : gap == null ? 'Set a target to compare' : gap <= 0 ? 'Target reached' : `${formatBand(gap)} to target`}
+                </span>
               </div>
-              <span className="text-right text-lg font-semibold tabular-nums">{band != null ? formatBand(band) : '–'}</span>
-            </li>
-          ))}
-        </ul>
+            )
+          })}
+          <button
+            type="button"
+            onClick={onOpenMockCenter}
+            className="tile-cut col-span-2 flex flex-col justify-between gap-1 bg-[#e6a33a] px-4 py-4 text-left text-[#17213a] md:col-span-1"
+          >
+            <span className="text-[13px] font-bold">Overall</span>
+            <span className="font-brand text-[30px] font-semibold leading-tight tabular-nums">{bands?.overall != null ? formatBand(bands.overall) : '–'}</span>
+            <span className="text-[12.5px]">
+              {bands?.overall != null
+                ? `From your ${bands.releasedAt ? new Date(bands.releasedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'latest'} mock`
+                : 'Needs all four skills'}
+            </span>
+          </button>
+        </div>
         {mockMeta && (
           <button
             type="button"
             onClick={onOpenMockCenter}
-            className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-left ${mockMeta.tone}`}
+            className={`tile-cut tile-cut-sm focus-ring flex items-center gap-3 px-4 py-3 text-left ${mockMeta.tone}`}
           >
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-sm font-semibold">{mockMeta.title}</span>
-              <span className="text-[12px] opacity-80">{mockMeta.body}</span>
+              <span className="text-sm font-extrabold">{mockMeta.title}</span>
+              <span className="text-[12.5px] opacity-80">{mockMeta.body}</span>
             </span>
-            <span className="shrink-0 text-[13px] font-semibold underline-offset-2 hover:underline">{mockMeta.action} →</span>
+            <span className="shrink-0 text-[13px] font-extrabold underline-offset-2 hover:underline">{mockMeta.action} →</span>
           </button>
         )}
-        <div className="mt-auto flex items-center justify-between border-t border-line pt-3.5">
-          <button type="button" onClick={onOpenMockCenter} className="focus-ring text-[13px] text-mist hover:text-paper">
-            {bands?.overall != null
-              ? `Overall from your ${bands.releasedAt ? new Date(bands.releasedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'latest'} mock`
-              : 'Bands appear after your first mock'}
-          </button>
-          <span className="text-[26px] font-semibold tracking-[-0.02em]">{bands?.overall != null ? formatBand(bands.overall) : '–'}</span>
-        </div>
-      </Card>
+      </section>
 
       {/* THIS WEEK */}
       {rest.length > 0 && (
         <>
           <div className="lg:col-span-12 mt-1 flex items-baseline justify-between">
-            <h2 className="text-xl font-semibold">{rest.some((i) => ['today', 'todo'].includes(i.state.key)) ? 'Next up' : 'Recently handed in'}</h2>
+            <h2 className="font-brand text-[22px] font-semibold text-brass">{rest.some((i) => ['today', 'todo'].includes(i.state.key)) ? 'Next up' : 'Recently handed in'}</h2>
             <button type="button" onClick={() => onNavigate('homework')} className="focus-ring text-sm font-medium text-paper-dim hover:text-paper">
               All homework
             </button>
@@ -525,7 +525,7 @@ export default function StudentHome({
               key={hw.id}
               type="button"
               onClick={() => onOpenHomework(hw.id)}
-              className="focus-ring group flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel text-left transition-colors hover:border-paper/30"
+              className="tile-cut tile-cut-lg focus-ring group flex flex-col overflow-hidden bg-panel text-left transition hover:brightness-[1.02]"
             >
               <div className={`flex h-[118px] items-center justify-center ${skill.tint}`}>
                 <SkillArt skill={skill.key} title={hw.title} className="h-[96px] w-[220px]" />
