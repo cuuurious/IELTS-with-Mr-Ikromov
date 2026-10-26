@@ -32,6 +32,7 @@ const TeacherAccounts = lazyWithReload(() => import('./TeacherAccounts'))
 const TeacherMockCenter = lazyWithReload(() => import('./TeacherMockCenter'))
 const MaterialsLibrary = lazyWithReload(() => import('./MaterialsLibrary'))
 const ClientErrors = lazyWithReload(() => import('./ClientErrors'))
+const ParentSms = lazyWithReload(() => import('./ParentSms'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 
 export default function TeacherDashboard() {
@@ -252,6 +253,8 @@ export default function TeacherDashboard() {
       items: [
         { key: 'group-chat', label: 'Group Chats', icon: IconGroupChat },
         { key: 'chat', label: 'Chat', icon: IconChat },
+        // Texts parents when homework is missed (2026-10-19).
+        { key: 'parent-sms', label: 'Parent SMS', icon: IconChat },
       ],
     },
     {
@@ -427,6 +430,8 @@ export default function TeacherDashboard() {
       )}
 
       {tab === 'errors' && profile.is_admin && <ClientErrors />}
+
+      {tab === 'parent-sms' && <ParentSms />}
 
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>
