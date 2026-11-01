@@ -59,16 +59,13 @@ export default function TeacherLeaderboards() {
       {/* Group switcher (2026-10-07): one row of chips in each group's
           own colour (src/lib/groupLook.js), scrolls sideways on phones. */}
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-mist">
-          Ranked by homework handed in, then by completion rate. Pick a class or see everyone.
-        </p>
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Group">
           <button
             type="button"
             role="tab"
             aria-selected={activeGroup === 'all'}
             onClick={() => setActiveGroup('all')}
-            className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+            className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors ${
               activeGroup === 'all' ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
             }`}
           >
@@ -88,11 +85,11 @@ export default function TeacherLeaderboards() {
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveGroup(g.id)}
-                className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
+                className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-xl border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
                   active ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
                 }`}
               >
-                <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                <span className={`flex h-7 min-w-7 items-center justify-center rounded-xl px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
                   {groupBadge(g.name)}
                 </span>
                 {groupDisplayName(g.name)}

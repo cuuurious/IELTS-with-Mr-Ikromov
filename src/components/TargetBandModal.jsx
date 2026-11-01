@@ -59,7 +59,7 @@ export default function TargetBandModal({ onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="target-band-title"
-        className="w-full max-w-md rounded-[22px] border border-line bg-panel p-6 text-paper sm:p-7"
+        className="w-full max-w-md rounded-[20px] border border-line bg-panel p-6 text-paper sm:p-7"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">

@@ -1457,7 +1457,7 @@ export default function HomeworkCard({
             </div>
           )}
         </div>
-        <span className={`hidden shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold sm:inline-block ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
+        <span className={`hidden shrink-0 rounded-xl px-2.5 py-1 text-xs font-semibold sm:inline-block ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
           {hwState.label}
         </span>
         <span
@@ -1467,7 +1467,7 @@ export default function HomeworkCard({
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
         </span>
       </button>
-      <span className={`mx-4 -mt-2 mb-3 inline-block rounded-full px-2.5 py-1 text-xs font-semibold sm:hidden ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
+      <span className={`mx-4 -mt-2 mb-3 inline-block rounded-xl px-2.5 py-1 text-xs font-semibold sm:hidden ${STATE_PILL[hwState.key] || STATE_PILL.todo}`}>
         {hwState.label}
       </span>
 
@@ -1583,7 +1583,7 @@ export default function HomeworkCard({
                         <button
                           type="button"
                           onClick={() => setTask1ImageLightboxOpen(false)}
-                          className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-full bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
+                          className="focus-ring absolute top-5 right-5 w-10 h-10 rounded-xl bg-panel border border-line text-paper flex items-center justify-center hover:border-brass hover:text-brass transition"
                           title="Close"
                         >
                           ✕
@@ -1707,7 +1707,7 @@ export default function HomeworkCard({
                   {allowedTypes.map((t) => (
                     <span
                       key={t}
-                      className="text-[11px] font-medium rounded-full border border-brass/30 bg-brass/10 text-brass px-2 py-0.5"
+                      className="text-[11px] font-medium rounded-xl border border-brass/30 bg-brass/10 text-brass px-2 py-0.5"
                     >
                       {t}
                     </span>
@@ -1794,7 +1794,7 @@ export default function HomeworkCard({
                               url
                             )
                           }
-                          className="focus-ring absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-coral text-paper text-xs disabled:opacity-40"
+                          className="focus-ring absolute -top-1.5 -right-1.5 w-5 h-5 rounded-xl bg-coral text-paper text-xs disabled:opacity-40"
                         >
                           ×
                         </button>

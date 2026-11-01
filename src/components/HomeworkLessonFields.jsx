@@ -20,7 +20,7 @@ export default function HomeworkLessonFields({
   const header = lessonHeaderPreview(lessonNumber, lessonDate)
 
   return (
-    <div className="rounded-[18px] border border-line bg-panel-2 p-3">
+    <div className="rounded-[20px] border border-line bg-panel-2 p-3">
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-mist">Lesson №</span>

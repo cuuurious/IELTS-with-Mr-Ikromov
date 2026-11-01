@@ -1854,7 +1854,7 @@ export default function GroupChat({
     return (
       <div
         className={`flex flex-col items-center justify-center gap-3 bg-panel p-6 text-center ${
-          embedded ? 'h-full' : 'h-[36rem] rounded-[22px] border border-line'
+          embedded ? 'h-full' : 'h-[36rem] rounded-[20px] border border-line'
         }`}
       >
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-panel-2 text-paper-dim">
@@ -1868,7 +1868,7 @@ export default function GroupChat({
           <button
             type="button"
             onClick={onBack}
-            className="focus-ring mt-1 rounded-full bg-brass px-4 py-2 text-sm font-medium text-onbrass hover:bg-brass-dim md:hidden"
+            className="focus-ring mt-1 rounded-xl bg-brass px-4 py-2 text-sm font-medium text-onbrass hover:bg-brass-dim md:hidden"
           >
             Back to groups
           </button>
@@ -1955,7 +1955,7 @@ export default function GroupChat({
       className={`group-chat-shell relative flex min-h-0 flex-col overflow-hidden bg-panel ${
         embedded
           ? 'h-full'
-          : 'h-[36rem] rounded-[22px] border border-line'
+          : 'h-[36rem] rounded-[20px] border border-line'
       }`}
     >
 
@@ -2133,7 +2133,7 @@ export default function GroupChat({
           }}
           className={
             selectMode
-              ? 'focus-ring shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
+              ? 'focus-ring shrink-0 rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
               : CHAT_ICON_BUTTON
           }
           aria-label={selectMode ? 'Cancel selecting' : 'Select messages'}
@@ -2174,7 +2174,7 @@ export default function GroupChat({
               onClick={() => jumpToMessage(pinnedMessage.id)}
               className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-0.5 text-left"
             >
-              <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
+              <span className="h-8 w-[3px] shrink-0 rounded-xl bg-brass" aria-hidden="true" />
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1 truncate text-[11px] font-medium text-paper">
@@ -2207,7 +2207,7 @@ export default function GroupChat({
                     (index) => (index + 1) % pins.length
                   )
                 }
-                className="focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
+                className="focus-ring shrink-0 rounded-xl px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
               >
                 Next
               </button>
@@ -2219,7 +2219,7 @@ export default function GroupChat({
                 onClick={() => unpinMessage(pinnedMessage.id)}
                 title="Unpin"
                 aria-label="Unpin message"
-                className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+                className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-mist hover:bg-panel-2 hover:text-paper"
               >
                 <Icon name="close" className="h-3.5 w-3.5" />
               </button>
@@ -2239,7 +2239,7 @@ export default function GroupChat({
                 type="button"
                 onClick={loadOlder}
                 disabled={loadingOlder}
-                className="focus-ring rounded-full border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
+                className="focus-ring rounded-xl border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
               >
                 {loadingOlder ? 'Loading…' : 'Load older messages'}
               </button>
@@ -2345,7 +2345,7 @@ export default function GroupChat({
 
                 {dateChanged && (
                   <div className={`flex justify-center ${index === 0 ? 'mb-3' : 'my-4'}`}>
-                    <span className="rounded-full border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
+                    <span className="rounded-xl border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
                       {formatDateDivider(message.created_at)}
                     </span>
                   </div>
@@ -2488,7 +2488,7 @@ export default function GroupChat({
                     className={`relative max-w-full select-none text-[14.5px] leading-[1.45] ${
                       isRound
                         ? ''
-                        : `rounded-[18px] ${corners} ${
+                        : `rounded-[20px] ${corners} ${
                             mine
                               ? 'bg-brass text-onbrass'
                               : 'border border-line bg-panel text-paper'
@@ -2540,7 +2540,7 @@ export default function GroupChat({
                         </button>
 
                         {sender?.role === 'teacher' && (
-                          <span className="shrink-0 rounded-full bg-speaking-tint px-1.5 py-px text-[10px] font-medium text-speaking">
+                          <span className="shrink-0 rounded-xl bg-speaking-tint px-1.5 py-px text-[10px] font-medium text-speaking">
                             Teacher
                           </span>
                         )}
@@ -2648,7 +2648,7 @@ export default function GroupChat({
                           onClick={() =>
                             saveEdit(message)
                           }
-                          className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
+                          className="shrink-0 rounded-xl px-2 py-1 text-xs font-semibold"
                         >
                           Save
                         </button>
@@ -2680,7 +2680,7 @@ export default function GroupChat({
                     )}
 
                     {!hasCaption && isVisual && (
-                      <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
+                      <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-xl bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
                         {metaContent}
                       </span>
                     )}
@@ -2688,7 +2688,7 @@ export default function GroupChat({
                     {!hasCaption && !isVisual && (
                       <div
                         className={`mt-1 flex items-center justify-end gap-1 text-[11px] leading-none ${
-                          isRound ? 'ml-auto w-fit rounded-full bg-panel px-2 py-1 text-mist' : metaTone
+                          isRound ? 'ml-auto w-fit rounded-xl bg-panel px-2 py-1 text-mist' : metaTone
                         }`}
                       >
                         {metaContent}
@@ -2715,7 +2715,7 @@ export default function GroupChat({
                               reaction
                             )
                           }}
-                          className={`focus-ring inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                          className={`focus-ring inline-flex items-center gap-1 rounded-xl border px-2 py-0.5 text-xs transition-colors ${
                             hasReaction(
                               message.id,
                               reaction
@@ -2767,7 +2767,7 @@ export default function GroupChat({
 
           <span className="text-mist"><ChatGlyph name="reply" className="h-4 w-4" /></span>
 
-          <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
+          <span className="h-8 w-[3px] shrink-0 rounded-xl bg-brass" aria-hidden="true" />
 
           <div className="min-w-0 flex-1">
 
@@ -2790,7 +2790,7 @@ export default function GroupChat({
             onClick={() =>
               setReplyingTo(null)
             }
-            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-mist hover:bg-panel-2 hover:text-paper"
             aria-label="Cancel reply"
           >
             <Icon name="close" className="h-4 w-4" />
@@ -2812,7 +2812,7 @@ export default function GroupChat({
             onClick={
               discardRecording
             }
-            className="focus-ring ml-auto shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent"
+            className="focus-ring ml-auto shrink-0 rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent"
           >
             Discard
           </button>
@@ -2823,7 +2823,7 @@ export default function GroupChat({
               sendRecording
             }
             disabled={uploading}
-            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
+            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
           >
             <Icon name="send" className="h-3.5 w-3.5" />
             {uploading
@@ -2842,8 +2842,8 @@ export default function GroupChat({
           )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-urgent opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-urgent" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-xl bg-urgent opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-xl bg-urgent" />
           </span>
 
           <Icon name={recordingKind === 'video' ? 'video' : 'mic'} className="h-4 w-4" />
@@ -2858,7 +2858,7 @@ export default function GroupChat({
             onClick={
               stopRecording
             }
-            className="focus-ring ml-auto shrink-0 rounded-full bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
+            className="focus-ring ml-auto shrink-0 rounded-xl bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
           >
             Stop
           </button>
@@ -2877,7 +2877,7 @@ export default function GroupChat({
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
+              className="focus-ring rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
             >
               Cancel
             </button>
@@ -2886,7 +2886,7 @@ export default function GroupChat({
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring rounded-full bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
+              className="focus-ring rounded-xl bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -2896,7 +2896,7 @@ export default function GroupChat({
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring rounded-full bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
+                className="focus-ring rounded-xl bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -2929,7 +2929,7 @@ export default function GroupChat({
 
           <PendingAttachment file={pendingFile} onRemove={() => setPendingFile(null)} disabled={uploading} />
 
-          <div className={`flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40 ${canSendMedia ? '' : 'pl-3'}`}>
+          <div className={`flex items-center gap-1 rounded-[20px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40 ${canSendMedia ? '' : 'pl-3'}`}>
 
             {canSendMedia && (
               <button

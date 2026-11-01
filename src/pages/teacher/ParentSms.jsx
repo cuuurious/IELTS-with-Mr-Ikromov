@@ -79,7 +79,7 @@ async function fnErrorMessage(error, data) {
   return error?.message || 'Something went wrong.'
 }
 
-const card = 'rounded-[22px] border border-line bg-panel'
+const card = 'rounded-[20px] border border-line bg-panel'
 const sectionTitle = 'font-brand text-[17px] font-semibold text-brass'
 
 function Toggle({ on, onChange, label, disabled, size = 'md' }) {

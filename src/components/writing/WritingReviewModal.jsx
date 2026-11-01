@@ -214,11 +214,11 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
         role="dialog"
         aria-modal="true"
         aria-label="Writing review"
-        className="flex h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-xl"
+        className="flex h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-[20px] border border-line bg-panel shadow-xl"
       >
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 sm:px-6">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-writing-tint text-sm font-semibold text-writing">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-writing-tint text-sm font-semibold text-writing">
             {nameOf(student).split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('')}
           </span>
           <div className="min-w-0 flex-1">
@@ -231,18 +231,18 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
           {attempt && role !== 'student' && (
             <div className="order-last flex w-full flex-wrap items-center gap-1.5 text-[12px] md:order-none md:w-auto">
               {attempt.examiner_reviewed_at ? (
-                <span className="rounded-full bg-reading-tint px-2.5 py-1 font-medium text-reading">
+                <span className="rounded-xl bg-reading-tint px-2.5 py-1 font-medium text-reading">
                   Marked by {nameOf(people[attempt.examiner_reviewed_by])}
                 </span>
               ) : (
-                <span className="rounded-full bg-writing-tint px-2.5 py-1 font-medium text-writing">Not marked yet</span>
+                <span className="rounded-xl bg-writing-tint px-2.5 py-1 font-medium text-writing">Not marked yet</span>
               )}
               {attempt.teacher_edited_at && (
-                <span className="rounded-full bg-listening-tint px-2.5 py-1 font-medium text-listening" title={when(attempt.teacher_edited_at)}>
+                <span className="rounded-xl bg-listening-tint px-2.5 py-1 font-medium text-listening" title={when(attempt.teacher_edited_at)}>
                   Changed by {nameOf(people[attempt.teacher_edited_by])}
                 </span>
               )}
-              <span className={`rounded-full px-2.5 py-1 font-medium ${attempt.released_at ? 'bg-panel-2 text-paper' : 'bg-panel-2 text-mist'}`}>
+              <span className={`rounded-xl px-2.5 py-1 font-medium ${attempt.released_at ? 'bg-panel-2 text-paper' : 'bg-panel-2 text-mist'}`}>
                 {attempt.released_at ? 'Released to student' : 'Not released'}
               </span>
             </div>
@@ -251,7 +251,7 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
             type="button"
             onClick={requestClose}
             aria-label="Close"
-            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+            className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-mist hover:bg-panel-2 hover:text-paper"
           >
             <Icon name="close" className="h-4 w-4" />
           </button>
@@ -267,7 +267,7 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
             <div className="min-w-0 px-4 py-4 sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {tasks.length > 1 ? (
-                  <div className="inline-flex gap-1 rounded-full bg-panel-2 p-1" role="tablist">
+                  <div className="inline-flex gap-1 rounded-xl bg-panel-2 p-1" role="tablist">
                     {tasks.map((t) => (
                       <button
                         key={t}
@@ -278,7 +278,7 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
                           setTask(t)
                           setActiveId(null)
                         }}
-                        className={`focus-ring rounded-full px-4 py-1.5 text-sm font-medium ${task === t ? 'bg-panel text-writing shadow-sm' : 'text-mist hover:text-paper'}`}
+                        className={`focus-ring rounded-xl px-4 py-1.5 text-sm font-medium ${task === t ? 'bg-panel text-writing shadow-sm' : 'text-mist hover:text-paper'}`}
                       >
                         Task {t}
                         {countFor(t) > 0 && <span className="ml-1.5 text-[12px] opacity-70">{countFor(t)}</span>}
@@ -346,7 +346,7 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
                     }`}
                   >
                     {t.label}
-                    {t.key === 'marks' && dirty && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-urgent align-middle" aria-label="unsaved" />}
+                    {t.key === 'marks' && dirty && <span className="ml-1.5 inline-block h-2 w-2 rounded-xl bg-urgent align-middle" aria-label="unsaved" />}
                   </button>
                 ))}
               </div>
@@ -430,7 +430,7 @@ function CategoryKey({ comments }) {
   return (
     <div className="mt-3 flex flex-wrap gap-1.5">
       {COMMENT_CATEGORIES.filter((c) => counts[c.key]).map((c) => (
-        <span key={c.key} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium ${c.chip}`}>
+        <span key={c.key} className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[12px] font-medium ${c.chip}`}>
           {c.label} <span className="tabular-nums opacity-80">{counts[c.key]}</span>
         </span>
       ))}
@@ -466,8 +466,8 @@ function CommentCard({ comment, author, active, editable, showAuthor, onSelect, 
       className={`cursor-pointer rounded-2xl border p-3 transition-colors ${active ? 'border-paper/40 bg-panel-2' : 'border-line hover:border-paper/20'}`}
     >
       <div className="flex items-center gap-2">
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-paper px-1 text-[11px] font-semibold text-panel">{comment.n}</span>
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cat.chip}`}>{cat.label}</span>
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-xl bg-paper px-1 text-[11px] font-semibold text-panel">{comment.n}</span>
+        <span className={`rounded-xl px-2 py-0.5 text-[11px] font-semibold ${cat.chip}`}>{cat.label}</span>
         {showAuthor && author && <span className="ml-auto truncate text-[11px] text-mist">{author.full_name || author.username}</span>}
       </div>
       <p className="mt-1.5 line-clamp-2 text-[13px] italic text-paper-dim">“{comment.quote}”</p>
@@ -506,7 +506,7 @@ function CommentCard({ comment, author, active, editable, showAuthor, onSelect, 
                   setEditing(false)
                 })
               }
-              className="focus-ring rounded-full bg-brass px-3 py-1 text-[13px] font-semibold text-onbrass disabled:opacity-50"
+              className="focus-ring rounded-xl bg-brass px-3 py-1 text-[13px] font-semibold text-onbrass disabled:opacity-50"
             >
               Save
             </button>

@@ -192,6 +192,20 @@ export default function ResetPassword() {
             />
           </AuthField>
 
+          <ul className="flex flex-col gap-1.5 text-sm font-bold" aria-label="Password rules">
+            {[
+              { ok: password.length >= 6, text: 'At least 6 characters' },
+              { ok: password.length > 0 && password === confirm, text: 'Both passwords match' },
+            ].map((rule) => (
+              <li key={rule.text} className={`flex items-center gap-2 ${rule.ok ? 'text-reading' : 'text-mist'}`}>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  {rule.ok ? <path d="M4 12l5 5L20 6" /> : <circle cx="12" cy="12" r="8" />}
+                </svg>
+                {rule.text}
+              </li>
+            ))}
+          </ul>
+
           {message && <AuthNotice tone="success">{message}</AuthNotice>}
           {error && <AuthNotice>{error}</AuthNotice>}
 

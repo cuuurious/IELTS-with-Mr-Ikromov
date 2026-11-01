@@ -286,7 +286,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       <form onSubmit={save} className="min-h-0 overflow-y-auto p-6 flex flex-col gap-4 [&>*]:shrink-0">
         <div className="flex items-start justify-between">
           <div><h2 className="font-display text-xl">Edit homework</h2><p className="text-mist text-xs mt-1">Submission rules can be changed before students submit.</p></div>
-          <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>
+          <button type="button" onClick={onClose} aria-label="Close" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass">×</button>
         </div>
         <div className="text-xs text-mist bg-panel-2 border border-line rounded-md px-3 py-2">
           Type: <span className="text-paper font-medium">{isMock ? 'Writing Mock Test' : 'Standard (files / pictures)'}</span> — this can't be changed here. To turn this into a {isMock ? 'standard' : 'Writing Mock Test'} homework, delete it and post a new one.
@@ -332,7 +332,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="focus-ring rounded-full border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
+                className="focus-ring rounded-xl border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
               >
                 ＋ Add from Library
               </button>

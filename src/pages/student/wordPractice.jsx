@@ -438,7 +438,7 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
     const learningItems = deck.filter((it) => learning.has(it.id))
     const knownCount = deck.filter((it) => known.has(it.id)).length
     return (
-      <div className="wp-pop mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-[22px] border border-line bg-panel p-6 text-center">
+      <div className="wp-pop mx-auto flex w-full max-w-md flex-col items-center gap-4 rounded-[20px] border border-line bg-panel p-6 text-center">
         <p className="text-xs font-medium text-mist">Round {round} done</p>
         <div className="flex w-full justify-center gap-3">
           <div className="flex-1 rounded-2xl bg-reading-tint px-4 py-3">
@@ -470,7 +470,7 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
                 setRound((r) => r + 1)
                 setDone(false)
               }}
-              className="focus-ring rounded-full bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass hover:bg-brass-dim"
+              className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass hover:bg-brass-dim"
             >
               Study the {learningItems.length} again
             </button>
@@ -478,7 +478,7 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
           <button
             type="button"
             onClick={() => onStartTest?.()}
-            className={`focus-ring rounded-full px-5 py-2.5 text-sm font-semibold ${
+            className={`focus-ring rounded-xl px-5 py-2.5 text-sm font-semibold ${
               learningItems.length ? 'border border-line text-paper hover:border-brass/50' : 'bg-brass text-onbrass hover:bg-brass-dim'
             }`}
           >
@@ -525,25 +525,25 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
         </span>
       </div>
       <div className="flex w-full items-center justify-between text-xs">
-        <span className="rounded-full bg-writing-tint px-2.5 py-1 font-medium text-writing">Still learning {learning.size}</span>
+        <span className="rounded-xl bg-writing-tint px-2.5 py-1 font-medium text-writing">Still learning {learning.size}</span>
         <button
           type="button"
           onClick={() => {
             setReverse((r) => !r)
             setFlipped(false)
           }}
-          className="focus-ring rounded-full border border-line px-2.5 py-1 text-mist hover:text-paper"
+          className="focus-ring rounded-xl border border-line px-2.5 py-1 text-mist hover:text-paper"
           title="Choose what the front of the card shows"
         >
           Front: {reverse ? 'meaning' : 'word'}
         </button>
-        <span className="rounded-full bg-reading-tint px-2.5 py-1 font-medium text-reading">I know {known.size}</span>
+        <span className="rounded-xl bg-reading-tint px-2.5 py-1 font-medium text-reading">I know {known.size}</span>
       </div>
 
       <div className="relative h-[19rem] w-full select-none" style={{ perspective: '900px' }}>
         {/* the next card peeking from underneath */}
         {deck[index + 1] && (
-          <div className="absolute inset-x-4 top-3 bottom-[-6px] rounded-[26px] border border-line bg-panel-2" aria-hidden="true" />
+          <div className="absolute inset-x-4 top-3 bottom-[-6px] rounded-[20px] border border-line bg-panel-2" aria-hidden="true" />
         )}
         <div
           key={`${index}-${round}`}
@@ -562,7 +562,7 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
         >
           <div
             key={flipKey}
-            className={`${flipKey ? 'wp-flip' : ''} relative flex h-full w-full cursor-grab flex-col overflow-hidden rounded-[26px] border shadow-[0_10px_30px_-12px_rgba(31,35,64,0.25)] active:cursor-grabbing ${
+            className={`${flipKey ? 'wp-flip' : ''} relative flex h-full w-full cursor-grab flex-col overflow-hidden rounded-[20px] border shadow-[0_10px_30px_-12px_rgba(31,35,64,0.25)] active:cursor-grabbing ${
               front ? 'border-[#F3D27A] bg-vocab-tint' : 'border-line bg-panel'
             }`}
           >
@@ -622,14 +622,14 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
           disabled={index === 0}
           title="Previous card"
           aria-label="Previous card"
-          className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-line text-mist hover:text-paper disabled:opacity-30"
+          className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl border border-line text-mist hover:text-paper disabled:opacity-30"
         >
           ↶
         </button>
         <button
           type="button"
           onClick={() => advance('learn')}
-          className="focus-ring whitespace-nowrap rounded-full border border-writing/40 bg-writing-tint px-2 py-2.5 text-[13px] font-semibold text-writing transition-transform hover:scale-[1.02] active:scale-95 sm:px-3 sm:text-sm"
+          className="focus-ring whitespace-nowrap rounded-xl border border-writing/40 bg-writing-tint px-2 py-2.5 text-[13px] font-semibold text-writing transition-transform hover:scale-[1.02] active:scale-95 sm:px-3 sm:text-sm"
         >
           ← Learning
         </button>
@@ -638,14 +638,14 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
           onClick={flip}
           title="Flip (space)"
           aria-label="Flip the card"
-          className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-line text-paper hover:border-brass/50"
+          className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl border border-line text-paper hover:border-brass/50"
         >
           ⟲
         </button>
         <button
           type="button"
           onClick={() => advance('know')}
-          className="focus-ring whitespace-nowrap rounded-full border border-reading/40 bg-reading-tint px-2 py-2.5 text-[13px] font-semibold text-reading transition-transform hover:scale-[1.02] active:scale-95 sm:px-3 sm:text-sm"
+          className="focus-ring whitespace-nowrap rounded-xl border border-reading/40 bg-reading-tint px-2 py-2.5 text-[13px] font-semibold text-reading transition-transform hover:scale-[1.02] active:scale-95 sm:px-3 sm:text-sm"
         >
           I know it →
         </button>
@@ -784,15 +784,15 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4">
       <div className="flex items-center gap-3">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-panel-2">
-          <div className="h-full rounded-full bg-vocab transition-[width] duration-500" style={{ width: `${progress}%` }} />
+        <div className="h-2 flex-1 overflow-hidden rounded-xl bg-panel-2">
+          <div className="h-full rounded-xl bg-vocab transition-[width] duration-500" style={{ width: `${progress}%` }} />
         </div>
         <span className="text-xs tabular-nums text-mist">
           {Math.min(answeredFirst + (q.retry ? 0 : 1), firstTryTotal)}/{firstTryTotal}
         </span>
         <span
           key={state.streak}
-          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+          className={`flex items-center gap-1 rounded-xl px-2 py-0.5 text-xs font-semibold tabular-nums ${
             state.streak >= 3 ? 'wp-bump bg-writing-tint text-writing' : 'bg-panel-2 text-mist'
           }`}
           title="Correct answers in a row"
@@ -805,20 +805,20 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
       </div>
 
       {cheer && (
-        <div className="wp-cheer pointer-events-none self-center rounded-full bg-writing px-3 py-1 text-xs font-semibold text-white">
+        <div className="wp-cheer pointer-events-none self-center rounded-xl bg-writing px-3 py-1 text-xs font-semibold text-white">
           {cheer}
         </div>
       )}
 
       <div
         key={state.index}
-        className={`wp-pop flex flex-col gap-4 rounded-[22px] border bg-panel p-5 sm:p-6 ${
+        className={`wp-pop flex flex-col gap-4 rounded-[20px] border bg-panel p-5 sm:p-6 ${
           picked ? (picked.correct ? 'border-reading/50' : 'wp-shake border-writing/50') : 'border-line'
         }`}
       >
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-mist">{label ? `${label} · ` : ''}{KIND_LABEL[q.kind]}</span>
-          {q.retry && <span className="rounded-full bg-speaking-tint px-2 py-0.5 text-[11px] font-semibold text-speaking">Second chance</span>}
+          {q.retry && <span className="rounded-xl bg-speaking-tint px-2 py-0.5 text-[11px] font-semibold text-speaking">Second chance</span>}
         </div>
 
         {q.kind === 'meaning' && (
@@ -938,7 +938,7 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
               ref={continueRef}
               type="button"
               onClick={next}
-              className="focus-ring mt-1 self-end rounded-full bg-brass px-5 py-2 text-sm font-semibold text-onbrass hover:bg-brass-dim"
+              className="focus-ring mt-1 self-end rounded-xl bg-brass px-5 py-2 text-sm font-semibold text-onbrass hover:bg-brass-dim"
             >
               {state.index + 1 >= state.queue.length ? 'See my result' : 'Continue'} ↵
             </button>
@@ -972,16 +972,16 @@ export function ResultsPanel({ detail, best = 0, title = 'Your result', note, sa
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4">
       <Confetti run={percentage >= 90 ? 1 : 0} />
-      <div className="wp-pop flex flex-col items-center gap-2 rounded-[22px] border border-line bg-panel p-6 text-center">
+      <div className="wp-pop flex flex-col items-center gap-2 rounded-[20px] border border-line bg-panel p-6 text-center">
         <p className="text-xs font-medium text-mist">{title}</p>
         <ScoreRing percentage={percentage} />
         <p className="text-xl font-semibold text-paper">{verdict.label}</p>
         <p className="text-sm text-paper-dim">{note || verdict.text}</p>
         <div className="mt-1 flex flex-wrap justify-center gap-2 text-xs">
-          <span className="rounded-full bg-panel-2 px-2.5 py-1 text-paper">
+          <span className="rounded-xl bg-panel-2 px-2.5 py-1 text-paper">
             {score} of {detail.length} right first time
           </span>
-          {best >= 3 && <span className="rounded-full bg-writing-tint px-2.5 py-1 font-medium text-writing">Best streak {best}</span>}
+          {best >= 3 && <span className="rounded-xl bg-writing-tint px-2.5 py-1 font-medium text-writing">Best streak {best}</span>}
         </div>
         {byKind.length > 1 && (
           <div className="mt-2 grid w-full grid-cols-2 gap-2 text-left">
@@ -1012,7 +1012,7 @@ export function ResultsPanel({ detail, best = 0, title = 'Your result', note, sa
       </div>
 
       {wrong.length > 0 && (
-        <div className="rounded-[22px] border border-line bg-panel p-4">
+        <div className="rounded-[20px] border border-line bg-panel p-4">
           <p className="mb-2 text-sm font-semibold text-paper">Words to review ({wrong.length})</p>
           <ul className="flex flex-col gap-1.5">
             {wrong.map((d, i) => (
@@ -1030,12 +1030,12 @@ export function ResultsPanel({ detail, best = 0, title = 'Your result', note, sa
 
       <div className="flex flex-col gap-2">
         {wrong.length > 0 && onPractiseMistakes && (
-          <button type="button" onClick={onPractiseMistakes} className="focus-ring rounded-full bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass hover:bg-brass-dim">
+          <button type="button" onClick={onPractiseMistakes} className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass hover:bg-brass-dim">
             Practise these {wrong.length} on cards
           </button>
         )}
         {onAgain && (
-          <button type="button" onClick={onAgain} className="focus-ring rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-paper hover:border-brass/50">
+          <button type="button" onClick={onAgain} className="focus-ring rounded-xl border border-line px-5 py-2.5 text-sm font-semibold text-paper hover:border-brass/50">
             Take the test again
           </button>
         )}

@@ -122,7 +122,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
             <p className="font-display text-lg text-paper">Add from Materials Library</p>
             <p className="text-xs text-mist">Tick as many files as you need.</p>
           </div>
-          <button type="button" onClick={onClose} className="focus-ring rounded-full px-2 py-1 text-mist hover:text-paper" aria-label="Close">
+          <button type="button" onClick={onClose} className="focus-ring rounded-xl px-2 py-1 text-mist hover:text-paper" aria-label="Close">
             ✕
           </button>
         </div>
@@ -133,7 +133,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search all files…"
-            className="focus-ring min-w-[12rem] flex-1 rounded-full border border-line bg-panel-2 px-4 py-2 text-sm text-paper placeholder:text-mist"
+            className="focus-ring min-w-[12rem] flex-1 rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm text-paper placeholder:text-mist"
           />
           <select
             value={folder}
@@ -141,7 +141,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
               setSearch('')
               setFolder(e.target.value)
             }}
-            className="focus-ring rounded-full border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
+            className="focus-ring rounded-xl border border-line bg-panel-2 px-3 py-2 text-sm text-paper"
           >
             <option value="__all__">All files</option>
             <option value="__inbox__">Not in a folder</option>
@@ -156,7 +156,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="focus-ring rounded-full border border-line px-3 py-2 text-sm text-mist hover:border-brass hover:text-brass"
+            className="focus-ring rounded-xl border border-line px-3 py-2 text-sm text-mist hover:border-brass hover:text-brass"
           >
             {uploading ? `Uploading ${uploading}…` : 'Upload new'}
           </button>
@@ -210,14 +210,14 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
-          <button type="button" onClick={onClose} className="focus-ring rounded-full border border-line px-4 py-2 text-sm text-mist hover:text-paper">
+          <button type="button" onClick={onClose} className="focus-ring rounded-xl border border-line px-4 py-2 text-sm text-mist hover:text-paper">
             Cancel
           </button>
           <button
             type="button"
             disabled={!picked.size || uploading > 0}
             onClick={confirm}
-            className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-5 py-2 text-sm font-medium text-onbrass disabled:opacity-40"
+            className="focus-ring rounded-xl bg-brass hover:bg-brass-dim px-5 py-2 text-sm font-medium text-onbrass disabled:opacity-40"
           >
             Add {picked.size || ''} file{picked.size === 1 ? '' : 's'}
           </button>

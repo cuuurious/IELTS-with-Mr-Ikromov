@@ -342,7 +342,7 @@ export default function MockExams({ selfId }) {
                         className="focus-ring group flex flex-col justify-between rounded-xl border border-line bg-panel-2 p-4 text-left transition hover:border-brass/40 hover:bg-panel"
                       >
                         <div>
-                          <span className="inline-flex items-center rounded-full bg-brass/15 px-2.5 py-1 text-[11px] font-semibold capitalize text-brass">
+                          <span className="inline-flex items-center rounded-xl bg-brass/15 px-2.5 py-1 text-[11px] font-semibold capitalize text-brass">
                             {mod}
                           </span>
                           <p className="mt-2.5 font-display text-sm text-paper">
@@ -1477,7 +1477,7 @@ export function ExamTaker({
                 setPhase('starting')
                 setStartNonce((n) => n + 1)
               }}
-              className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+              className="focus-ring inline-block rounded-xl bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
             >
               Try again
             </button>
@@ -1485,7 +1485,7 @@ export function ExamTaker({
             <button
               type="button"
               onClick={() => handleSubmit(lastSubmitAutoRef.current)}
-              className="focus-ring inline-block rounded-full bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+              className="focus-ring inline-block rounded-xl bg-brass px-5 py-2 text-sm font-bold text-onbrass shadow-sm hover:bg-brass-dim"
             >
               Try submitting again
             </button>
@@ -1497,7 +1497,7 @@ export function ExamTaker({
             <button
               type="button"
               onClick={onExit}
-              className="focus-ring inline-block rounded-full bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
+              className="focus-ring inline-block rounded-xl bg-panel-2 px-5 py-2 text-sm font-medium text-mist hover:text-paper"
             >
               {ctaLabel}
             </button>
@@ -1531,7 +1531,7 @@ export function ExamTaker({
           <button
             type="button"
             onClick={onExit}
-            className="focus-ring mt-6 inline-block rounded-full bg-brass px-6 py-2.5 text-sm font-bold text-onbrass shadow-sm transition-transform hover:scale-105"
+            className="focus-ring mt-6 inline-block rounded-xl bg-brass px-6 py-2.5 text-sm font-bold text-onbrass shadow-sm transition-transform hover:scale-105"
           >
             {ctaLabel}
           </button>
@@ -2271,7 +2271,7 @@ function SubmissionPage({ sections, answers, flags, questionIndexById, module, o
                         }`}
                       >
                         {questionIndexById[q.id]}
-                        {flags.has(q.id) && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
+                        {flags.has(q.id) && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-xl bg-[#b23a22]" aria-hidden />}
                       </button>
                     )
                   })}
@@ -2282,7 +2282,7 @@ function SubmissionPage({ sections, answers, flags, questionIndexById, module, o
           <div className="flex items-center gap-4 text-xs text-[#555]">
             <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[#1f2340]" /> Answered</span>
             <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-[#9a9a9a]" /> Not answered</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#b23a22]" /> Flagged</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-xl bg-[#b23a22]" /> Flagged</span>
           </div>
         </div>
       </div>
@@ -2488,7 +2488,7 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
         <button
           type="button"
           onClick={handlePlay}
-          className="focus-ring shrink-0 rounded-full bg-brass px-4 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-brass-dim"
+          className="focus-ring shrink-0 rounded-xl bg-brass px-4 py-1.5 text-xs font-bold text-onbrass shadow-sm hover:bg-brass-dim"
         >
           {startAt > 0 ? '▶ Continue audio' : '▶ Play audio'}
         </button>

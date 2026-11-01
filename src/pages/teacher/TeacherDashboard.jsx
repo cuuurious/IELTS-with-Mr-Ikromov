@@ -230,8 +230,8 @@ export default function TeacherDashboard() {
       items: [
         // Overview of every group (2026-10-06) — the teacher's Home.
         { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
-        { key: 'groups', label: 'Groups & Homework', icon: IconGroups },
-        { key: 'students', label: 'Students', icon: IconStudents },
+        { key: 'groups', label: 'Groups & Homework', icon: IconGroups, subtitle: 'Open a group to post homework and see who has done it.' },
+        { key: 'students', label: 'Students', icon: IconStudents, subtitle: 'Student accounts, groups and targets.' },
       ],
     },
     // Top bar trimmed 2026-10-14 (Jasur: "improve ... design overall"):
@@ -241,20 +241,20 @@ export default function TeacherDashboard() {
     {
       title: 'Classroom',
       items: [
-        { key: 'wordlists', label: 'Word Lists', icon: IconWordlist },
+        { key: 'wordlists', label: 'Word Lists', icon: IconWordlist, subtitle: 'Vocabulary sets your students review and get tested on, by group.' },
         // All teaching files in one place — uploaded here or forwarded
         // from Telegram to the bot (2026-09-30).
-        { key: 'materials', label: 'Materials Library', icon: IconFolder },
-        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard },
+        { key: 'materials', label: 'Materials Library', icon: IconFolder, subtitle: 'Every teaching file in one place: upload here or forward from Telegram.' },
+        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard, subtitle: 'Ranked by homework handed in, then by completion rate.' },
       ],
     },
     {
       title: 'Communication',
       items: [
-        { key: 'group-chat', label: 'Group Chats', icon: IconGroupChat },
-        { key: 'chat', label: 'Chat', icon: IconChat },
+        { key: 'group-chat', label: 'Group Chats', icon: IconGroupChat, subtitle: 'Talk to each class.' },
+        { key: 'chat', label: 'Chat', icon: IconChat, subtitle: 'One-to-one messages with students.' },
         // Texts parents when homework is missed (2026-10-19).
-        { key: 'parent-sms', label: 'Parent SMS', icon: IconChat },
+        { key: 'parent-sms', label: 'Parent SMS', icon: IconChat, subtitle: 'Text parents when homework is missed, or any time you choose.' },
       ],
     },
     {

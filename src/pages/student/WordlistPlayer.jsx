@@ -67,7 +67,7 @@ function ModeTabs({ mode, onStudy, onTest }) {
           key={key}
           type="button"
           onClick={fn}
-          className={`focus-ring rounded-full px-4 py-1.5 font-medium transition-colors ${
+          className={`focus-ring rounded-xl px-4 py-1.5 font-medium transition-colors ${
             mode === key ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
           }`}
         >

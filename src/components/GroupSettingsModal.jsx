@@ -940,7 +940,7 @@ export default function GroupSettingsModal({
                       </button>
 
                       {badge && (
-                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${roleBadgeClass[member.role]}`}>
+                        <span className={`shrink-0 rounded-xl border px-2 py-0.5 text-[10px] font-semibold ${roleBadgeClass[member.role]}`}>
                           {badge}
                         </span>
                       )}

@@ -4,7 +4,7 @@ import { formatBand } from '../../lib/ieltsBands'
 /*
  * Shared presentational pieces for the two examiner Home tabs
  * (WritingExaminerHome.jsx / SpeakingExaminerHome.jsx), 2026-10-07.
- * Same "Study room" language as TeacherHome.jsx: rounded-[22px] panels,
+ * Same "Study room" language as TeacherHome.jsx: rounded-[20px] panels,
  * skill colours (writing = warm orange, speaking = lavender), sentence-
  * case labels, no uppercase mono eyebrows. Nothing here loads or edits
  * data — every number is worked out from rows the dashboard already has.
@@ -14,7 +14,7 @@ export const DAY = 86400000
 
 export function Card({ className = '', children, ...rest }) {
   return (
-    <section className={`rounded-[22px] border border-line bg-panel ${className}`} {...rest}>
+    <section className={`rounded-[20px] border border-line bg-panel ${className}`} {...rest}>
       {children}
     </section>
   )

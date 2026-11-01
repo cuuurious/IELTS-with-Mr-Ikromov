@@ -1007,14 +1007,12 @@ const saveEditWordlist = async () => {
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-mist">
-                Vocabulary sets your students review and get tested on, by class.
-              </p>
+              <span />
               {activeGroup && !creating && (
                 <button
                   type="button"
                   onClick={() => setCreating(true)}
-                  className="focus-ring shrink-0 rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
+                  className="focus-ring shrink-0 rounded-xl bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
                 >
                   + New word list
                 </button>
@@ -1031,11 +1029,11 @@ const saveEditWordlist = async () => {
                     role="tab"
                     aria-selected={active}
                     onClick={() => setActiveGroup(group.id)}
-                    className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
+                    className={`focus-ring inline-flex shrink-0 items-center gap-2 rounded-xl border py-1.5 pl-1.5 pr-3.5 text-sm font-medium transition-colors ${
                       active ? 'border-brass bg-brass text-onbrass' : 'border-line bg-panel text-paper-dim hover:bg-panel-2'
                     }`}
                   >
-                    <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                    <span className={`flex h-7 min-w-7 items-center justify-center rounded-xl px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
                       {groupBadge(group.name)}
                     </span>
                     {groupDisplayName(group.name)}
@@ -1074,7 +1072,7 @@ const saveEditWordlist = async () => {
 
               {lists.length === 0 ? (
 
-                <div className="rounded-[22px] border border-dashed border-line bg-panel p-8 text-center">
+                <div className="rounded-[20px] border border-dashed border-line bg-panel p-8 text-center">
                   <p className="text-mist text-sm">
                     No word lists for this group yet.
                   </p>
@@ -1095,7 +1093,7 @@ const saveEditWordlist = async () => {
                   {lists.map((list) => (
                     <div
                       key={list.id}
-                      className="wp-pop group flex flex-col justify-between gap-4 rounded-[22px] border border-line bg-panel p-5 transition-shadow hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)]"
+                      className="wp-pop group flex flex-col justify-between gap-4 rounded-[20px] border border-line bg-panel p-5 transition-shadow hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)]"
                     >
                       <div className="flex items-start gap-3">
                         <div className="relative h-11 w-11 shrink-0">
@@ -1115,14 +1113,14 @@ const saveEditWordlist = async () => {
                         <button
                           type="button"
                           onClick={() => setViewingResults(list)}
-                          className="focus-ring flex-1 rounded-full bg-vocab-tint px-3 py-2 text-center text-sm font-semibold text-vocab transition hover:brightness-95"
+                          className="focus-ring flex-1 rounded-xl bg-vocab-tint px-3 py-2 text-center text-sm font-semibold text-vocab transition hover:brightness-95"
                         >
                           View results
                         </button>
                         <button
                           type="button"
                           onClick={() => openEditWordlist(list)}
-                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
+                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
                           title="Edit word list"
                           aria-label="Edit word list"
                         >
@@ -1131,7 +1129,7 @@ const saveEditWordlist = async () => {
                         <button
                           type="button"
                           onClick={() => deleteWordlist(list)}
-                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-urgent-tint hover:text-urgent"
+                          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-mist transition hover:bg-urgent-tint hover:text-urgent"
                           title="Delete word list"
                           aria-label="Delete word list"
                         >
@@ -1397,7 +1395,7 @@ function EditWordlistModal({
                         </div>
 
                         {item.isNew && (
-                          <span className="rounded-full border border-sage/30 bg-sage/10 px-2 py-0.5 text-[10px] font-mono text-sage">
+                          <span className="rounded-xl border border-sage/30 bg-sage/10 px-2 py-0.5 text-[10px] font-mono text-sage">
                             NEW
                           </span>
                         )}
@@ -2311,7 +2309,7 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
       <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
 
       <div
-        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-[22px] border border-line bg-panel shadow-2xl sm:rounded-[22px]"
+        className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-[22px] border border-line bg-panel shadow-2xl sm:rounded-[20px]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -2326,7 +2324,7 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
             aria-label="Close results"
           >
             <Icon name="close" className="h-4 w-4" />
@@ -2354,7 +2352,7 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                     active ? 'border-brass bg-brass text-onbrass' : 'border-line text-paper-dim hover:bg-panel-2'
                   }`}
                 >
-                  <span className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
+                  <span className={`flex h-7 min-w-7 items-center justify-center rounded-xl px-1 text-xs font-semibold ${c.tint} ${c.text}`}>
                     {t.id === '__none__' ? '–' : groupBadge(t.name)}
                   </span>
                   {t.id === '__none__' ? 'No group' : groupDisplayName(t.name)}
@@ -2382,8 +2380,8 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                     {current.done}
                     <span className="text-sm font-normal text-mist">/{current.total}</span>
                   </p>
-                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-panel">
-                    <div className="h-full rounded-full bg-vocab" style={{ width: `${current.total ? (current.done / current.total) * 100 : 0}%` }} />
+                  <div className="mt-1 h-1 overflow-hidden rounded-xl bg-panel">
+                    <div className="h-full rounded-xl bg-vocab" style={{ width: `${current.total ? (current.done / current.total) * 100 : 0}%` }} />
                   </div>
                 </div>
                 <div className="rounded-2xl bg-vocab-tint px-3 py-2.5">
@@ -2408,13 +2406,13 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search a student…"
-                    className="focus-ring w-full rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                    className="focus-ring w-full rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
                   />
                 </label>
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
-                  className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper"
+                  className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper"
                   aria-label="Sort"
                 >
                   <option value="score-asc">Lowest score first</option>
@@ -2438,9 +2436,9 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                           className="focus-ring flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-panel-2 sm:px-4"
                         >
                           {r.avatar ? (
-                            <img src={r.avatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                            <img src={r.avatar} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
                           ) : (
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-speaking-tint text-xs font-semibold text-speaking">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-speaking-tint text-xs font-semibold text-speaking">
                               {initialsOf(r.name)}
                             </span>
                           )}
@@ -2451,14 +2449,14 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                             </span>
                           </span>
                           <span className="hidden w-28 sm:block">
-                            <span className="block h-1.5 overflow-hidden rounded-full bg-panel-2">
+                            <span className="block h-1.5 overflow-hidden rounded-xl bg-panel-2">
                               <span
                                 className={`block h-full rounded-full ${r.best >= 90 ? 'bg-reading' : r.best >= PASS_MARK ? 'bg-vocab' : 'bg-urgent'}`}
                                 style={{ width: `${r.best}%` }}
                               />
                             </span>
                           </span>
-                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums ${scoreTone(r.best)}`}>{r.best}%</span>
+                          <span className={`shrink-0 rounded-xl px-2.5 py-1 text-sm font-semibold tabular-nums ${scoreTone(r.best)}`}>{r.best}%</span>
                           <span className={`text-mist transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true">
                             ›
                           </span>
@@ -2474,7 +2472,7 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                                     <span className="tabular-nums text-mist">
                                       {a.score}/{a.total}
                                     </span>
-                                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${scoreTone(a.percentage)}`}>
+                                    <span className={`rounded-xl px-2 py-0.5 text-xs font-semibold tabular-nums ${scoreTone(a.percentage)}`}>
                                       {a.percentage}%
                                     </span>
                                   </span>
@@ -2501,7 +2499,7 @@ function ResultsModal({ wordlist, allGroups, initialGroupId, onClose }) {
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {visible.notDone.map((r) => (
-                      <span key={r.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel py-1 pl-1 pr-3 text-sm text-paper-dim">
+                      <span key={r.id} className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-panel py-1 pl-1 pr-3 text-sm text-paper-dim">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-panel-2 text-[10px] font-semibold text-mist">
                           {initialsOf(r.name)}
                         </span>

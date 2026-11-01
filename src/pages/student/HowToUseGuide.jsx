@@ -86,7 +86,7 @@ function MiniSidebar({ activeIndex }) {
 function Step({ n, children }) {
   return (
     <li className="flex gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brass/15 text-xs font-semibold text-brass">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-brass/15 text-xs font-semibold text-brass">
         {n}
       </span>
       <span className="pt-0.5 text-sm leading-6 text-mist">{children}</span>
@@ -154,7 +154,7 @@ function IllustrationLogin() {
               ••••••••••
             </div>
           </div>
-          <div className="rounded-full bg-brass px-3 py-2 text-center text-xs font-semibold text-onbrass">
+          <div className="rounded-xl bg-brass px-3 py-2 text-center text-xs font-semibold text-onbrass">
             Sign in
           </div>
         </div>
@@ -185,7 +185,7 @@ function IllustrationDashboard() {
               <span className="flex h-6 w-6 items-center justify-center rounded-md border border-line bg-panel-2 text-[10px] text-mist">
                 <Icon name="bell" className="h-3 w-3" />
               </span>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brass text-[10px] font-semibold text-onbrass">
+              <span className="flex h-6 w-6 items-center justify-center rounded-xl bg-brass text-[10px] font-semibold text-onbrass">
                 A
               </span>
             </div>
@@ -210,7 +210,7 @@ function IllustrationHomework() {
         <div className="rounded-lg border border-line bg-panel-2 p-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-paper">Writing Task 2 — Practice 4</p>
-            <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[9px] font-semibold text-coral">
+            <span className="rounded-xl bg-coral/15 px-2 py-0.5 text-[9px] font-semibold text-coral">
               Due tomorrow
             </span>
           </div>
@@ -223,12 +223,12 @@ function IllustrationHomework() {
         <div className="rounded-lg border border-line bg-panel-2 p-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-paper">Listening Practice 12</p>
-            <span className="rounded-full bg-sage/15 px-2 py-0.5 text-[9px] font-semibold text-sage">
+            <span className="rounded-xl bg-sage/15 px-2 py-0.5 text-[9px] font-semibold text-sage">
               ✓ Submitted
             </span>
           </div>
         </div>
-        <div className="rounded-full bg-brass px-3 py-1.5 text-center text-[11px] font-semibold text-onbrass">
+        <div className="rounded-xl bg-brass px-3 py-1.5 text-center text-[11px] font-semibold text-onbrass">
           Submit Task
         </div>
       </div>
@@ -244,8 +244,8 @@ function IllustrationWordlists() {
           (name) => (
             <div key={name} className="rounded-lg border border-line bg-panel-2 p-2.5">
               <p className="truncate text-[10px] font-semibold text-paper">{name}</p>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-line">
-                <div className="h-1.5 w-2/3 rounded-full bg-brass" />
+              <div className="mt-2 h-1.5 w-full rounded-xl bg-line">
+                <div className="h-1.5 w-2/3 rounded-xl bg-brass" />
               </div>
             </div>
           )
@@ -295,7 +295,7 @@ function IllustrationChat() {
         <div className="ml-auto max-w-[75%] rounded-xl rounded-tr-sm bg-brass px-3 py-2 text-[10px] text-onbrass">
           Got it, thank you 🙏
         </div>
-        <div className="mt-2 flex items-center gap-2 rounded-full border border-line bg-panel-2 px-3 py-1.5">
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-panel-2 px-3 py-1.5">
           <span className="flex-1 text-[10px] text-mist">Write a message…</span>
           <span className="text-[10px] text-brass"><Icon name="send" className="h-3 w-3" /></span>
         </div>
@@ -328,7 +328,7 @@ function IllustrationMockCheckIn() {
               7F3K92
             </div>
           </div>
-          <div className="rounded-full bg-brass px-3 py-2 text-center text-xs font-semibold text-onbrass">
+          <div className="rounded-xl bg-brass px-3 py-2 text-center text-xs font-semibold text-onbrass">
             Continue →
           </div>
         </div>
@@ -342,10 +342,10 @@ function IllustrationAccount() {
     <MockFrame label="Account settings">
       <div className="space-y-2.5">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brass text-xs font-semibold text-onbrass">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brass text-xs font-semibold text-onbrass">
             A
           </span>
-          <span className="rounded-full border border-line bg-panel-2 px-2.5 py-1 text-[10px] text-mist">
+          <span className="rounded-xl border border-line bg-panel-2 px-2.5 py-1 text-[10px] text-mist">
             Change photo
           </span>
         </div>
@@ -354,7 +354,7 @@ function IllustrationAccount() {
             <div className="flex-1 rounded-lg border border-line bg-panel-2 px-2.5 py-1.5 text-[10px] text-paper-dim">
               {f}
             </div>
-            <span className="rounded-full bg-brass px-2.5 py-1 text-[9px] font-semibold text-onbrass">
+            <span className="rounded-xl bg-brass px-2.5 py-1 text-[9px] font-semibold text-onbrass">
               Save
             </span>
           </div>
@@ -384,8 +384,8 @@ export default function HowToUseGuide() {
       {/* Header / intro card */}
       <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 hidden" />
-          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 hidden" />
+          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-xl bg-brass/10 hidden" />
+          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-xl bg-sage/10 hidden" />
         </div>
         <div className="relative px-5 py-5 sm:px-7 sm:py-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-mist">
@@ -402,7 +402,7 @@ export default function HowToUseGuide() {
           <a
             href="/how-to-use-ielts-portal.pdf"
             download
-            className="focus-ring mt-4 inline-flex items-center gap-2 rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
+            className="focus-ring mt-4 inline-flex items-center gap-2 rounded-xl bg-brass px-4 py-2 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
           >
             <Icon name="download" className="h-4 w-4" /> Download as PDF
           </a>
@@ -416,7 +416,7 @@ export default function HowToUseGuide() {
             key={s.key}
             type="button"
             onClick={() => scrollTo(s.key)}
-            className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`focus-ring rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
               active === s.key
                 ? 'border-brass/50 bg-brass/15 text-brass'
                 : 'border-line text-mist hover:text-paper'

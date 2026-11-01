@@ -331,7 +331,7 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
                   >
                     {timeAgo(e.attempt.submitted_at, now)}
                   </span>
-                  <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-line px-3 text-[13px] font-medium text-paper-dim group-hover:border-paper/30 group-hover:text-paper">
+                  <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-line px-3 text-[13px] font-medium text-paper-dim group-hover:border-paper/30 group-hover:text-paper">
                     Open
                   </span>
                 </button>
@@ -456,13 +456,13 @@ export default function WritingExaminerHome({ profile, attempts, examById, stude
           text="text-writing"
           footer={
             <div className="flex flex-wrap gap-2 border-t border-line pt-4 text-[13px]">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5">
                 <span className="font-semibold">Task 1</span> at least 150 words
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5">
                 <span className="font-semibold">Task 2</span> at least 250 words
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5 text-paper-dim">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5 text-paper-dim">
                 Overall = average of the four, rounded to the nearest half band (6.25 → 6.5, 6.75 → 7.0)
               </span>
             </div>

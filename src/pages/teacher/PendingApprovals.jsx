@@ -152,7 +152,7 @@ export default function PendingApprovals() {
         </div>
       )}
 
-      <div className="ticket rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
+      <div className="rounded-[20px] border border-line bg-panel p-5 sm:p-6 flex flex-col gap-5">
 
         <div className="flex items-center justify-between gap-4 flex-wrap">
 
@@ -163,7 +163,7 @@ export default function PendingApprovals() {
           </div>
 
           <div
-            className={`flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-mono shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)] ${
+            className={`flex h-9 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-semibold ${
               pending.length > 0
                 ? 'border-coral/40 bg-coral/10 text-coral'
                 : 'border-line bg-panel text-mist'
@@ -203,7 +203,7 @@ export default function PendingApprovals() {
                 setSearch(e.target.value)
               }
               placeholder="Search by name, username, or email..."
-              className="focus-ring w-full rounded-full border border-line bg-panel-2 py-2.5 pl-10 pr-4 text-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)]"
+              className="focus-ring w-full rounded-xl border border-line bg-panel-2 py-2.5 pl-10 pr-4 text-sm"
             />
           </div>
 
@@ -276,7 +276,7 @@ export default function PendingApprovals() {
           {filteredPending.map((student) => (
             <div
               key={student.id}
-              className="group relative overflow-hidden rounded-2xl border border-line bg-panel p-4 sm:p-5 shadow-[0_14px_32px_-22px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/[0.03] flex items-center justify-between gap-4 flex-wrap transition hover:-translate-y-0.5 hover:border-brass/40 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.65)]"
+              className="group relative overflow-hidden rounded-[20px] border border-line bg-panel p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap transition hover:-translate-y-0.5 hover:border-brass/40"
             >
 
               <div
@@ -286,7 +286,7 @@ export default function PendingApprovals() {
 
               <div className="relative flex items-center gap-3.5 min-w-0">
 
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-lg text-brass shadow-[0_6px_14px_-6px_rgba(0,0,0,0.5)]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-lg text-brass">
                   {student.avatar_url ? (
                     <img
                       src={student.avatar_url}
@@ -320,7 +320,7 @@ export default function PendingApprovals() {
                   )}
 
                   {student.created_at && (
-                    <div className="inline-flex items-center gap-1 text-mist text-xs mt-1.5 rounded-full border border-line bg-panel px-2 py-0.5">
+                    <div className="inline-flex items-center gap-1 text-mist text-xs mt-1.5 rounded-xl border border-line bg-panel px-2 py-0.5">
                       <svg
                         className="h-3 w-3"
                         viewBox="0 0 24 24"
@@ -357,7 +357,7 @@ export default function PendingApprovals() {
                       'approved'
                     )
                   }
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-full bg-sage px-4 py-2 text-sm font-medium text-onbrass shadow-[0_8px_18px_-8px_rgba(122,169,116,0.6)] transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-xl bg-sage px-4 py-2 text-sm font-medium text-onbrass transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg
                     className="h-4 w-4"
@@ -386,7 +386,7 @@ export default function PendingApprovals() {
                       'rejected'
                     )
                   }
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-coral/50 px-4 py-2 text-sm text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-coral/50 px-4 py-2 text-sm text-coral transition hover:bg-coral hover:text-paper disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg
                     className="h-4 w-4"

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // A small styled stand-in for window.confirm() / window.prompt() —
-// matches the app's own dark "ticket" look (rounded-3xl panel,
+// matches the app's own dark "ticket" look (rounded-[20px] panel,
 // brass/coral buttons) instead of the browser's plain native dialog.
 // Used throughout the app wherever we used to call window.confirm()
 // or window.prompt().
@@ -67,7 +67,7 @@ export default function ConfirmModal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90vh] w-full max-w-md flex-col gap-4 rounded-3xl border border-line bg-panel p-6 shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-md flex-col gap-4 rounded-[20px] border border-line bg-panel p-6 shadow-2xl"
       >
         {/* Long messages scroll inside the box; the buttons always stay
             on screen (2026-10-14: a 56-name list pushed them off). */}
@@ -84,7 +84,7 @@ export default function ConfirmModal({
             <ul className="mt-3 flex flex-col gap-1.5">
               {points.map((point, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-paper-dim">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-brass" />
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-xl bg-brass" />
                   <span>{point}</span>
                 </li>
               ))}

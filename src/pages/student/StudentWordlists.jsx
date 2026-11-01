@@ -72,7 +72,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
   })
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] border border-[#F3D27A] bg-vocab-tint px-5 py-5 sm:px-6">
+    <div className="relative overflow-hidden rounded-[20px] border border-[#F3D27A] bg-vocab-tint px-5 py-5 sm:px-6">
       <div className="flex flex-wrap items-center gap-5">
         <CardStackArt className="hidden h-24 w-28 shrink-0 sm:block" />
         <div className="min-w-0 flex-1">
@@ -112,7 +112,7 @@ function DailyReviewCard({ studentId, wordlistIds, onStart, refreshKey }) {
           <button
             type="button"
             onClick={onStart}
-            className="focus-ring rounded-full bg-brass px-6 py-2.5 text-sm font-semibold text-onbrass transition-transform hover:scale-[1.03] hover:bg-brass-dim active:scale-95"
+            className="focus-ring rounded-xl bg-brass px-6 py-2.5 text-sm font-semibold text-onbrass transition-transform hover:scale-[1.03] hover:bg-brass-dim active:scale-95"
           >
             Start review
           </button>
@@ -598,7 +598,7 @@ setLists(wordlists || [])
               key={list.id}
               type="button"
               onClick={() => setPlaying(list)}
-              className="wp-pop focus-ring group flex w-full min-w-0 flex-col gap-3 rounded-[22px] border border-line bg-panel p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[#F3D27A] hover:shadow-[0_10px_24px_-14px_rgba(31,35,64,0.35)] sm:p-5"
+              className="wp-pop focus-ring group flex w-full min-w-0 flex-col gap-3 rounded-[20px] border border-line bg-panel p-4 text-left transition-all hover:-translate-y-0.5 hover:border-[#F3D27A] hover:shadow-[0_10px_24px_-14px_rgba(31,35,64,0.35)] sm:p-5"
               style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}
             >
               <div className="flex items-start gap-3">
@@ -622,11 +622,11 @@ setLists(wordlists || [])
                   </p>
                 </div>
                 {attempt ? (
-                  <span className="shrink-0 rounded-full bg-panel-2 px-2.5 py-1 text-xs font-semibold tabular-nums text-paper" title="Latest test result">
+                  <span className="shrink-0 rounded-xl bg-panel-2 px-2.5 py-1 text-xs font-semibold tabular-nums text-paper" title="Latest test result">
                     {attempt.percentage}%
                   </span>
                 ) : (
-                  <span className="shrink-0 rounded-full bg-vocab-tint px-2.5 py-1 text-xs font-semibold text-vocab">New</span>
+                  <span className="shrink-0 rounded-xl bg-vocab-tint px-2.5 py-1 text-xs font-semibold text-vocab">New</span>
                 )}
               </div>
 

@@ -140,8 +140,8 @@ export default function HowToUseGuide() {
       {/* Header / intro card */}
       <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-brass/10 hidden" />
-          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-sage/10 hidden" />
+          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-xl bg-brass/10 hidden" />
+          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-xl bg-sage/10 hidden" />
         </div>
         <div className="relative px-6 py-6 sm:px-8 sm:py-7">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-brass">
@@ -158,7 +158,7 @@ export default function HowToUseGuide() {
           <a
             href="/how-to-use-ielts-portal.pdf"
             download
-            className="focus-ring mt-5 inline-flex items-center gap-2 rounded-full bg-brass px-4 py-2.5 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
+            className="focus-ring mt-5 inline-flex items-center gap-2 rounded-xl bg-brass px-4 py-2.5 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
           >
             <Icon name="download" className="h-4 w-4" /> Download as PDF
           </a>
@@ -172,7 +172,7 @@ export default function HowToUseGuide() {
             key={s.key}
             type="button"
             onClick={() => scrollTo(s.key)}
-            className={`focus-ring rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+            className={`focus-ring rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors ${
               active === s.key
                 ? 'border-brass/50 bg-brass/15 text-brass'
                 : 'border-line text-mist hover:text-paper'

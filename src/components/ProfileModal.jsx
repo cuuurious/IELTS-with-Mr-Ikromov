@@ -161,7 +161,7 @@ export default function ProfileModal({
               </div>
 
               {profile.role === 'teacher' && (
-                <span className="mt-2 inline-block rounded-full border border-brass/40 px-2 py-0.5 text-[11px] text-brass">
+                <span className="mt-2 inline-block rounded-xl border border-brass/40 px-2 py-0.5 text-[11px] text-brass">
                   TEACHER
                 </span>
               )}

@@ -499,7 +499,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                               type="button"
                               onClick={() => startEdit(g)}
                               disabled={busy}
-                              className="focus-ring rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-mist hover:border-brass/50 hover:text-brass"
+                              className="focus-ring rounded-xl border border-line px-2.5 py-1 text-xs font-semibold text-mist hover:border-brass/50 hover:text-brass"
                             >
                               Edit
                             </button>
@@ -507,7 +507,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                               type="button"
                               onClick={() => removeGroup(g)}
                               disabled={busy}
-                              className="focus-ring rounded-full border border-coral/30 px-2.5 py-1 text-xs font-semibold text-coral hover:bg-coral/10"
+                              className="focus-ring rounded-xl border border-coral/30 px-2.5 py-1 text-xs font-semibold text-coral hover:bg-coral/10"
                             >
                               Remove
                             </button>
@@ -598,7 +598,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                       <div className="sm:col-span-2">
                         <p className={label}>Picture (map, plan or diagram)</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <label className="focus-ring cursor-pointer rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass/50">
+                          <label className="focus-ring cursor-pointer rounded-xl border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass/50">
                             {uploading ? 'Uploading…' : draft.image_url ? 'Change picture' : 'Upload picture'}
                             <input
                               type="file"
@@ -688,7 +688,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                       type="button"
                       onClick={saveDraft}
                       disabled={busy}
-                      className="focus-ring rounded-full bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
+                      className="focus-ring rounded-xl bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
                     >
                       {busy ? 'Saving…' : 'Save group'}
                     </button>
@@ -701,7 +701,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                       type="button"
                       onClick={autoSetup}
                       disabled={busy}
-                      className="focus-ring rounded-full bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
+                      className="focus-ring rounded-xl bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
                     >
                       {busy ? 'Working…' : groups.length ? 'Group the rest automatically' : 'Set up groups automatically'}
                     </button>
@@ -714,7 +714,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
                         setDraft(emptyDraft(first, first))
                       }}
                       disabled={busy}
-                      className="focus-ring rounded-full border border-line px-4 py-1.5 text-sm font-semibold text-paper hover:border-brass/50"
+                      className="focus-ring rounded-xl border border-line px-4 py-1.5 text-sm font-semibold text-paper hover:border-brass/50"
                     >
                       + New group
                     </button>
@@ -732,7 +732,7 @@ export default function QuestionGroupsPanel({ exam, section, questions, onChange
               type="button"
               onClick={regrade}
               disabled={busy || !exam?.id}
-              className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass/50 disabled:opacity-50"
+              className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass/50 disabled:opacity-50"
             >
               Re-mark submitted tests
             </button>

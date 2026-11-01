@@ -377,10 +377,10 @@ function QueueSection({ blurb, entries, taskKey, now, onOpen, onMessage }) {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto text-sm text-mist max-w-2xl">{blurb}</p>
-        <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-writing-tint px-3 text-[13px] font-medium text-writing">
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-writing-tint px-3 text-[13px] font-medium text-writing">
           <span className="font-semibold tabular-nums">{toMark.length}</span> to mark
         </span>
-        <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-panel-2 px-3 text-[13px] font-medium text-paper-dim">
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-panel-2 px-3 text-[13px] font-medium text-paper-dim">
           <span className="font-semibold tabular-nums">{marked.length}</span> marked
         </span>
       </div>
@@ -472,7 +472,7 @@ function QueueCard({ title, entries, taskKey, now, onOpen, onMessage, empty }) {
                   <button
                     type="button"
                     onClick={() => onMessage(entry.student)}
-                    className="focus-ring rounded-full border border-line px-3 py-1.5 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper"
+                    className="focus-ring rounded-xl border border-line px-3 py-1.5 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper"
                   >
                     Message
                   </button>
@@ -480,7 +480,7 @@ function QueueCard({ title, entries, taskKey, now, onOpen, onMessage, empty }) {
                   <button
                     type="button"
                     onClick={() => onOpen(entry)}
-                    className={`focus-ring rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                    className={`focus-ring rounded-xl px-4 py-1.5 text-[13px] font-medium transition-colors ${
                       reviewed
                         ? 'bg-panel-2 text-paper hover:bg-line/60'
                         : 'bg-brass text-onbrass hover:bg-brass-dim'

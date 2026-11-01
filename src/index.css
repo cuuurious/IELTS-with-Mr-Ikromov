@@ -25,8 +25,8 @@
   --color-paper: #17213a;
   --color-paper-dim: #3a4560;
   --color-mist: #55607a;
-  --color-brass: #1b3b73;
-  --color-brass-dim: #24498a;
+  --color-brass: #2456b0;
+  --color-brass-dim: #2a63c6;
   --color-onbrass: #ffffff;
   --color-sage: #13807c;
   --color-coral: #b23a48;
@@ -49,13 +49,25 @@
   --color-vocab-tint: #fbefc9;
   --color-urgent: #b23a48;
   --color-urgent-tint: #f8e1e4;
-  --color-band: #1b3b73;
+  --color-band: #2456b0;
   --color-onband: #ffffff;
-  --color-onband-dim: #c8d4ec;
+  --color-onband-dim: #dbe7f7;
   --color-saffron: #e6a33a;
   --color-onsaffron: #17213a;
   --color-turquoise: #1e9e9a;
   --color-pattern: #7fd6d2;
+  --color-group1: #d24f45;
+  --color-group1-tint: #fbe5e2;
+  --color-group2: #1f8f5c;
+  --color-group2-tint: #dcf2e6;
+  --color-group3: #2f7fd8;
+  --color-group3-tint: #e0ecfb;
+  --color-group4: #b0468c;
+  --color-group4-tint: #f6e1ef;
+  --color-group5: #d48716;
+  --color-group5-tint: #fbedd5;
+  --color-group6: #5a55d6;
+  --color-group6-tint: #e6e5fb;
 
   --font-display: 'Nunito Sans', system-ui, sans-serif;
   --font-body: 'Nunito Sans', system-ui, sans-serif;
@@ -75,8 +87,8 @@ html[data-theme='light'] {
   --color-paper: #17213a;
   --color-paper-dim: #3a4560;
   --color-mist: #55607a;
-  --color-brass: #1b3b73;
-  --color-brass-dim: #24498a;
+  --color-brass: #2456b0;
+  --color-brass-dim: #2a63c6;
   --color-onbrass: #ffffff;
   --color-sage: #13807c;
   --color-coral: #b23a48;
@@ -99,13 +111,25 @@ html[data-theme='light'] {
   --color-vocab-tint: #fbefc9;
   --color-urgent: #b23a48;
   --color-urgent-tint: #f8e1e4;
-  --color-band: #1b3b73;
+  --color-band: #2456b0;
   --color-onband: #ffffff;
-  --color-onband-dim: #c8d4ec;
+  --color-onband-dim: #dbe7f7;
   --color-saffron: #e6a33a;
   --color-onsaffron: #17213a;
   --color-turquoise: #1e9e9a;
   --color-pattern: #7fd6d2;
+  --color-group1: #d24f45;
+  --color-group1-tint: #fbe5e2;
+  --color-group2: #1f8f5c;
+  --color-group2-tint: #dcf2e6;
+  --color-group3: #2f7fd8;
+  --color-group3-tint: #e0ecfb;
+  --color-group4: #b0468c;
+  --color-group4-tint: #f6e1ef;
+  --color-group5: #d48716;
+  --color-group5-tint: #fbedd5;
+  --color-group6: #5a55d6;
+  --color-group6-tint: #e6e5fb;
   color-scheme: light;
 }
 
@@ -146,13 +170,25 @@ html:not([data-theme='light']) {
   --color-vocab-tint: #39300f;
   --color-urgent: #f29aa6;
   --color-urgent-tint: #3e1c22;
-  --color-band: #1d3a6e;
+  --color-band: #1d4486;
   --color-onband: #ffffff;
   --color-onband-dim: #c8d4ec;
   --color-saffron: #f0b95a;
   --color-onsaffron: #17213a;
   --color-turquoise: #2bb3ae;
   --color-pattern: #7fd6d2;
+  --color-group1: #f07d73;
+  --color-group1-tint: #3a2226;
+  --color-group2: #4cc48d;
+  --color-group2-tint: #1b3329;
+  --color-group3: #6aa8f0;
+  --color-group3-tint: #1c2c45;
+  --color-group4: #e07bbf;
+  --color-group4-tint: #38213a;
+  --color-group5: #f0b14a;
+  --color-group5-tint: #3a2e1a;
+  --color-group6: #9a95f5;
+  --color-group6-tint: #26254a;
   color-scheme: dark;
 }
 
@@ -2046,10 +2082,14 @@ html.split-dragging * {
   position: relative;
   overflow: hidden;
   background-color: var(--color-band);
+  /* Lapis fading into turquoise (2026-10-29, option C). */
+  background-image: linear-gradient(115deg, var(--color-band) 0%, color-mix(in srgb, var(--color-band) 55%, #1a9bb5) 55%, color-mix(in srgb, var(--color-band) 15%, #1a9bb5) 100%);
   color: var(--color-onband);
   isolation: isolate;
 }
 .registan-band::before {
+  /* Star tile pattern switched off (2026-11-01): one shape only. */
+  display: none;
   content: '';
   position: absolute;
   inset: 0;
@@ -2061,13 +2101,17 @@ html.split-dragging * {
   mask-image: linear-gradient(90deg, transparent 20%, #000 80%);
 }
 
-/* Cut-corner tile, like a glazed tile with chamfered corners. */
+/* Cards (2026-10-29, designer feedback: "some squares have 8 angles,
+   others are rounded"). The chamfered corners are gone; every card is
+   a rounded rectangle from one radius scale:
+     12px small things (badges, chips) · 14px buttons and inputs ·
+     20px cards · 28px the big lapis band.
+   The class names stay so existing markup keeps working. */
 .tile-cut {
-  --cut: 14px;
-  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut));
+  border-radius: 20px;
 }
-.tile-cut-lg { --cut: 18px; }
-.tile-cut-sm { --cut: 10px; }
+.tile-cut-lg { border-radius: 20px; }
+.tile-cut-sm { border-radius: 12px; }
 
 /* Registan look everywhere (2026-10-19): headings that used the old
    display face now use the brand face, like the Homes. The exam
@@ -2075,4 +2119,17 @@ html.split-dragging * {
 h1.font-display,
 h2.font-display {
   font-family: var(--font-brand);
+}
+
+/* Sign-in pages (2026-11-01). */
+.auth-side { background-color: color-mix(in srgb, #2a63c6 14%, var(--color-ink)); }
+.auth-arch-a { background-color: color-mix(in srgb, #2a63c6 24%, var(--color-ink)); }
+.auth-arch-b { background-color: color-mix(in srgb, #1a9bb5 18%, var(--color-ink)); }
+html[data-theme='light'] .auth-side { background-color: #e8eff9; }
+html[data-theme='light'] .auth-arch-a { background-color: #d6e4f6; }
+html[data-theme='light'] .auth-arch-b { background-color: #d2ecef; }
+.auth-cta {
+  background-color: #2456b0;
+  background-image: linear-gradient(100deg, #2456b0, #1a9bb5);
+  box-shadow: 0 8px 18px rgba(36, 86, 176, 0.22);
 }

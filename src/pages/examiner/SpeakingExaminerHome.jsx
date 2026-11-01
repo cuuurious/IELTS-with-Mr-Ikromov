@@ -76,7 +76,7 @@ function SlotAction({ slot, now, onStatus, onScore }) {
         href={slot.meeting_link}
         target="_blank"
         rel="noopener noreferrer"
-        className={`focus-ring inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium ${
+        className={`focus-ring inline-flex h-9 items-center gap-1.5 rounded-xl px-4 text-[13px] font-medium ${
           started ? 'bg-brass text-onbrass hover:bg-brass-dim' : 'border border-line text-paper-dim hover:border-paper/30 hover:text-paper'
         }`}
       >
@@ -93,7 +93,7 @@ function SlotAction({ slot, now, onStatus, onScore }) {
         <button
           type="button"
           onClick={() => onStatus(slot, 'completed')}
-          className="focus-ring inline-flex h-9 items-center rounded-full bg-brass px-3.5 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
+          className="focus-ring inline-flex h-9 items-center rounded-xl bg-brass px-3.5 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
         >
           Mark done
         </button>
@@ -101,7 +101,7 @@ function SlotAction({ slot, now, onStatus, onScore }) {
           type="button"
           onClick={() => onStatus(slot, 'no_show')}
           disabled={!started}
-          className="focus-ring inline-flex h-9 items-center rounded-full border border-line px-3 text-[13px] font-medium text-paper-dim hover:border-paper/30 hover:text-paper disabled:opacity-40"
+          className="focus-ring inline-flex h-9 items-center rounded-xl border border-line px-3 text-[13px] font-medium text-paper-dim hover:border-paper/30 hover:text-paper disabled:opacity-40"
           title="Student didn't attend — notifies the teacher"
         >
           No-show
@@ -118,7 +118,7 @@ function SlotAction({ slot, now, onStatus, onScore }) {
       <button
         type="button"
         onClick={() => onScore(slot)}
-        className="focus-ring inline-flex h-9 items-center rounded-full bg-brass px-4 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
+        className="focus-ring inline-flex h-9 items-center rounded-xl bg-brass px-4 text-[13px] font-medium text-onbrass hover:bg-brass-dim"
       >
         Mark
       </button>
@@ -413,7 +413,7 @@ export default function SpeakingExaminerHome({
                             href={slot.meeting_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="focus-ring hidden h-8 shrink-0 items-center gap-1.5 rounded-full border border-line px-3 text-[13px] font-medium text-paper-dim hover:border-paper/30 hover:text-paper sm:inline-flex"
+                            className="focus-ring hidden h-8 shrink-0 items-center gap-1.5 rounded-xl border border-line px-3 text-[13px] font-medium text-paper-dim hover:border-paper/30 hover:text-paper sm:inline-flex"
                           >
                             <Icon name="video" className="h-3.5 w-3.5" />
                             Link
@@ -541,16 +541,16 @@ export default function SpeakingExaminerHome({
           text="text-speaking"
           footer={
             <div className="flex flex-wrap gap-2 border-t border-line pt-4 text-[13px]">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5">
                 <span className="font-semibold">Part 1</span> 4–5 min, familiar topics
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5">
                 <span className="font-semibold">Part 2</span> 1 min to prepare, up to 2 min talk
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5">
                 <span className="font-semibold">Part 3</span> 4–5 min discussion
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-3 py-1.5 text-paper-dim">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-panel-2 px-3 py-1.5 text-paper-dim">
                 Overall = average of the four, rounded to the nearest half band
               </span>
             </div>

@@ -159,7 +159,7 @@ export default function EssayAnnotator({
                     isActive ? 'outline outline-2 outline-offset-1 outline-paper/70' : ''
                   } ${
                     s.endingHere.length
-                      ? 'after:ml-0.5 after:inline-block after:rounded-full after:bg-paper after:px-1 after:align-super after:text-[10px] after:font-semibold after:leading-[1.35] after:text-panel after:content-[attr(data-n)] after:no-underline'
+                      ? 'after:ml-0.5 after:inline-block after:rounded-xl after:bg-paper after:px-1 after:align-super after:text-[10px] after:font-semibold after:leading-[1.35] after:text-panel after:content-[attr(data-n)] after:no-underline'
                       : ''
                   }`}
                   style={{ textDecorationColor: 'color-mix(in srgb, currentColor 35%, transparent)' }}
@@ -232,7 +232,7 @@ function CommentComposer({ draft, category, onCategory, note, onNote, saving, er
             role="radio"
             aria-checked={category === c.key}
             onClick={() => onCategory(c.key)}
-            className={`focus-ring rounded-full px-2.5 py-1 text-[12px] font-semibold transition ${c.chip} ${
+            className={`focus-ring rounded-xl px-2.5 py-1 text-[12px] font-semibold transition ${c.chip} ${
               category === c.key ? 'ring-2 ring-paper/70' : 'opacity-70 hover:opacity-100'
             }`}
           >
@@ -253,14 +253,14 @@ function CommentComposer({ draft, category, onCategory, note, onNote, saving, er
       />
       {error && <p className="text-[13px] text-urgent">{error}</p>}
       <div className="flex items-center justify-end gap-2">
-        <button type="button" onClick={onCancel} className="focus-ring rounded-full px-3 py-1.5 text-sm text-mist hover:text-paper">
+        <button type="button" onClick={onCancel} className="focus-ring rounded-xl px-3 py-1.5 text-sm text-mist hover:text-paper">
           Cancel
         </button>
         <button
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="focus-ring rounded-full bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
+          className="focus-ring rounded-xl bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Add comment'}
         </button>

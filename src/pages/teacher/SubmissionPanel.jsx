@@ -148,7 +148,7 @@ export default function SubmissionPanel({
         aria-modal="true"
         aria-label={`${studentName} submission`}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-line bg-panel shadow-2xl"
+        className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[20px] border border-line bg-panel shadow-2xl"
       >
         {/* HEADER */}
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-6 py-5 sm:px-7">
@@ -165,7 +165,7 @@ export default function SubmissionPanel({
           <button
             type="button"
             onClick={onClose}
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-lg leading-none text-mist transition hover:border-accent/40 hover:text-paper"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-lg leading-none text-mist transition hover:border-accent/40 hover:text-paper"
             aria-label="Close"
           >
             ×
@@ -192,7 +192,7 @@ export default function SubmissionPanel({
             {submission?.screenshot_urls?.length > 0 && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
 
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                     Screenshots
@@ -223,7 +223,7 @@ export default function SubmissionPanel({
             {submission?.submission_files?.length > 0 && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
 
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                     Uploaded files
@@ -256,7 +256,7 @@ export default function SubmissionPanel({
             {submission?.mock_essay && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
 
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                     Writing mock test
@@ -324,7 +324,7 @@ export default function SubmissionPanel({
               submission?.[key] ? (
                 <section key={key}>
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
 
                     <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                       Speaking — Part {i + 1}
@@ -355,7 +355,7 @@ export default function SubmissionPanel({
             {submission?.comment && (
               <section>
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
 
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                     Student's comment
@@ -411,7 +411,7 @@ export default function SubmissionPanel({
                 disabled={zoom <= ZOOM_MIN}
                 title="Zoom out"
                 aria-label="Zoom out"
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <circle cx="11" cy="11" r="7" />
@@ -424,7 +424,7 @@ export default function SubmissionPanel({
                 type="button"
                 onClick={resetZoom}
                 disabled={zoom === 1 && pan.x === 0 && pan.y === 0}
-                className="focus-ring rounded-full border border-line bg-panel-2 px-3 py-1.5 font-mono text-xs text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
+                className="focus-ring rounded-xl border border-line bg-panel-2 px-3 py-1.5 font-mono text-xs text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
                 {Math.round(zoom * 100)}% · Reset
               </button>
@@ -435,7 +435,7 @@ export default function SubmissionPanel({
                 disabled={zoom >= ZOOM_MAX}
                 title="Zoom in"
                 aria-label="Zoom in"
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <circle cx="11" cy="11" r="7" />
@@ -452,7 +452,7 @@ export default function SubmissionPanel({
                 onClick={closePreview}
                 title="Close"
                 aria-label="Close"
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-coral/50 hover:text-coral"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition hover:border-coral/50 hover:text-coral"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <path d="M18 6L6 18" />

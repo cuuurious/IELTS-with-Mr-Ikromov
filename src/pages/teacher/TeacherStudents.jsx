@@ -1,3 +1,6 @@
+import { groupColour, groupDisplayName } from '../../lib/groupLook'
+import { estimateBandFromPercent, formatBand } from '../../lib/ieltsBands'
+import { fetchAll } from '../../lib/fetchAll'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import PhotoViewer from '../../components/PhotoViewer'
 import { createPortal } from 'react-dom'
@@ -15,6 +18,19 @@ export default function TeacherStudents({ onStartChat }) {
   const [memberships, setMemberships] = useState([])
 
   const [loading, setLoading] = useState(true)
+  // Homework on time and last mock band per student (redesign 2026-11-02).
+  const [homeworks, setHomeworks] = useState([])
+  const [handIns, setHandIns] = useState([])
+  const [mockAttempts, setMockAttempts] = useState([])
+  const [showCount, setShowCount] = useState(60)
+  const [isWide, setIsWide] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1280px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(min-width: 1280px)')
+    if (!mq) return undefined
+    const on = () => setIsWide(mq.matches)
+    mq.addEventListener?.('change', on)
+    return () => mq.removeEventListener?.('change', on)
+  }, [])
   const [error, setError] = useState('')
 
   // Filters, and the student whose Details window is open, are
@@ -127,7 +143,7 @@ export default function TeacherStudents({ onStartChat }) {
 
         supabase
           .from('groups')
-          .select('id, name')
+          .select('id, name, created_at')
           .order('name', { ascending: true }),
 
         supabase
@@ -185,8 +201,30 @@ export default function TeacherStudents({ onStartChat }) {
     }
   }
 
+  const loadProgress = async () => {
+    try {
+      const [hw, subs, mocks] = await Promise.all([
+        supabase.from('homeworks').select('id, group_id, due_date, created_at').order('created_at'),
+        fetchAll(() => supabase.from('submissions').select('homework_id, student_id, submitted_at').order('id')),
+        fetchAll(() =>
+          supabase
+            .from('mock_attempts')
+            .select('id, user_id, score, max_score, band, submitted_at')
+            .not('submitted_at', 'is', null)
+            .order('id')
+        ),
+      ])
+      if (!hw.error) setHomeworks(hw.data || [])
+      if (!subs.error) setHandIns(subs.data || [])
+      if (!mocks.error) setMockAttempts(mocks.data || [])
+    } catch (err) {
+      console.error('Failed to load student progress:', err)
+    }
+  }
+
   useEffect(() => {
     loadData()
+    loadProgress()
 
     const channel = supabase
       .channel('teacher-students')
@@ -269,10 +307,12 @@ export default function TeacherStudents({ onStartChat }) {
     { border: 'border-lavender/40', bg: 'bg-lavender/10', text: 'text-lavender' },
   ]
 
+  // Each group's own colour (lib/groupLook.js), by creation order —
+  // the same colour it has on Home, Groups and the Mock Center.
   const getGroupChipStyle = (groupId) => {
-    const index = groups.findIndex((g) => g.id === groupId)
-    const safeIndex = index === -1 ? 0 : index
-    return groupChipPalette[safeIndex % groupChipPalette.length]
+    const byCreated = [...groups].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')))
+    const c = groupColour(Math.max(0, byCreated.findIndex((g) => g.id === groupId)))
+    return { border: 'border-transparent', bg: c.tint, text: c.text }
   }
 
   const studentsWithoutGroup = useMemo(() => {
@@ -396,9 +436,58 @@ export default function TeacherStudents({ onStartChat }) {
     groupById,
   ])
 
+  const progressByStudent = useMemo(() => {
+    const now = Date.now()
+    const handInAt = new Map()
+    handIns.forEach((h) => handInAt.set(`${h.homework_id}:${h.student_id}`, h.submitted_at))
+    const hwByGroup = {}
+    homeworks.forEach((h) => {
+      if (!h.due_date || new Date(h.due_date).getTime() > now) return
+      ;(hwByGroup[h.group_id] ||= []).push(h)
+    })
+    const lastMock = {}
+    mockAttempts.forEach((a) => {
+      const prev = lastMock[a.user_id]
+      if (!prev || String(a.submitted_at) > String(prev.submitted_at)) lastMock[a.user_id] = a
+    })
+    const out = {}
+    students.forEach((st) => {
+      const joined = st.created_at ? new Date(st.created_at).getTime() : 0
+      let due = 0
+      let onTime = 0
+      let missed = 0
+      ;(membershipsByStudent[st.id] || []).forEach((gid) => {
+        ;(hwByGroup[gid] || []).forEach((h) => {
+          if (new Date(h.created_at).getTime() < joined) return
+          due += 1
+          const at = handInAt.get(`${h.id}:${st.id}`)
+          if (!at) missed += 1
+          else if (new Date(at).getTime() <= new Date(h.due_date).getTime()) onTime += 1
+        })
+      })
+      const m = lastMock[st.id]
+      const lastBand = m ? m.band ?? (m.max_score ? estimateBandFromPercent((m.score / m.max_score) * 100) : null) : null
+      out[st.id] = { due, onTime, missed, pct: due ? Math.round((onTime / due) * 100) : null, lastBand }
+    })
+    return out
+  }, [students, homeworks, handIns, mockAttempts, membershipsByStudent])
+
+  const sortedStudents = useMemo(() => {
+    if (sortBy !== 'attention') return filteredStudents
+    const score = (st) => {
+      const p = progressByStudent[st.id] || {}
+      if (st.status === 'pending') return -1
+      return (p.missed || 0) * 1000 + (p.due ? 100 - p.pct : 0)
+    }
+    return [...filteredStudents].sort((a, b) => score(b) - score(a) || (a.full_name || '').localeCompare(b.full_name || ''))
+  }, [filteredStudents, sortBy, progressByStudent])
+
+  const visibleStudents = useMemo(() => sortedStudents.slice(0, showCount), [sortedStudents, showCount])
+
   useEffect(() => {
     setSelectedIds(new Set())
     setBulkGroupChoice('')
+    setShowCount(60)
   }, [search, groupFilter, statusFilter, sortBy, view])
 
   const toggleSelected = (studentId) => {
@@ -850,832 +939,591 @@ export default function TeacherStudents({ onStartChat }) {
     )
   }
 
+  const groupsByCreated = [...groups].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')))
+  const memberCount = (groupId) => memberships.filter((m) => m.group_id === groupId).length
+
+  // Which entry of the left rail is active.
+  const railKey =
+    view === 'without-group'
+      ? 'none'
+      : statusFilter === 'pending'
+        ? 'pending'
+        : groupFilter !== 'all'
+          ? groupFilter
+          : 'all'
+  const pickRail = (key) => {
+    if (key === 'none') {
+      setView('without-group')
+      setGroupFilter('all')
+      setStatusFilter('approved')
+    } else if (key === 'pending') {
+      setView('all')
+      setGroupFilter('all')
+      setStatusFilter('pending')
+    } else {
+      setView('all')
+      setStatusFilter('approved')
+      setGroupFilter(key)
+    }
+  }
+
+  const initials = (s) =>
+    String(s.full_name || s.username || '?')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('')
+
+  const avatarLook = (studentId) => {
+    const first = getStudentGroups(studentId)[0]
+    if (!first) return 'bg-panel-2 text-mist'
+    const c = groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === first.id)))
+    return `${c.tint} ${c.text}`
+  }
+
+  const renderDetails = (student) => {
+    const progress = progressByStudent[student.id] || {}
+    const studentGroups = getStudentGroups(student.id)
+    const firstGroup = studentGroups[0]
+    const stripe = firstGroup
+      ? groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === firstGroup.id))).bar
+      : 'bg-line'
+    return (
+      <>
+        {viewingPhoto && (
+          <PhotoViewer
+            src={student.avatar_url}
+            alt={student.full_name || 'Student photo'}
+            onClose={() => setViewingPhoto(false)}
+          />
+        )}
+        <div className={`h-2 ${stripe}`} aria-hidden="true" />
+        <div className="flex flex-col gap-5 p-5 text-sm">
+          <div className="flex items-start gap-3.5">
+            {student.avatar_url ? (
+              <button
+                type="button"
+                onClick={() => setViewingPhoto(true)}
+                className="focus-ring shrink-0 cursor-zoom-in rounded-full"
+                aria-label="Open photo"
+              >
+                <img src={student.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
+              </button>
+            ) : (
+              <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-full font-brand text-lg font-bold ${avatarLook(student.id)}`}>
+                {initials(student)}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <h3 className="break-words font-brand text-lg font-semibold leading-snug text-paper">{student.full_name}</h3>
+              <p className="truncate text-[13px] text-mist">
+                @{student.username || 'student'}
+                {student.target_band != null && <> · target {formatTargetBand(student.target_band)}</>}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedStudent(null)}
+              className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-xl text-mist transition hover:bg-panel-2 hover:text-paper"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[14px] bg-panel-2 px-2 py-2.5 text-center">
+              <div className="font-brand text-[17px] font-semibold text-brass">{formatBand(progress.lastBand)}</div>
+              <div className="text-[11px] font-extrabold text-mist">last mock</div>
+            </div>
+            <div className="rounded-[14px] bg-panel-2 px-2 py-2.5 text-center">
+              <div className={`font-brand text-[17px] font-semibold ${progress.pct != null && progress.pct < 60 ? 'text-coral' : 'text-reading'}`}>
+                {progress.pct == null ? '—' : `${progress.pct}%`}
+              </div>
+              <div className="text-[11px] font-extrabold text-mist">on time</div>
+            </div>
+            <div className="rounded-[14px] bg-panel-2 px-2 py-2.5 text-center">
+              <div className={`font-brand text-[17px] font-semibold ${progress.missed ? 'text-coral' : 'text-paper'}`}>{progress.missed ?? 0}</div>
+              <div className="text-[11px] font-extrabold text-mist">missed</div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Groups</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {studentGroups.length > 0 ? (
+                studentGroups.map((group) => {
+                  const chip = getGroupChipStyle(group.id)
+                  return (
+                    <span key={group.id} className={`rounded-xl px-2.5 py-1 text-xs font-extrabold ${chip.bg} ${chip.text}`}>
+                      {groupDisplayName(group.name)}
+                    </span>
+                  )
+                })
+              ) : (
+                <span className="text-mist">No group</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Account</div>
+            <div className="flex justify-between gap-3">
+              <span className="text-mist">Email</span>
+              <span className="min-w-0 break-all text-right font-bold text-paper">{student.contact_email || 'Not provided'}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-mist">Status</span>
+              <span className={`font-extrabold capitalize ${student.status === 'approved' ? 'text-reading' : student.status === 'pending' ? 'text-amber' : 'text-coral'}`}>
+                {student.status}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-mist">Joined</span>
+              <span className="font-bold text-paper">{student.created_at ? new Date(student.created_at).toLocaleDateString() : '—'}</span>
+            </div>
+            {student.target_band != null && (
+              <div className="flex justify-between gap-3">
+                <span className="text-mist">Target</span>
+                <span className="inline-flex items-center gap-1.5 font-bold text-brass">
+                  <TargetBandIcon value={student.target_band} className="h-4 w-4" />
+                  {formatTargetBand(student.target_band)} — {getTargetBandInfo(student.target_band).label}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {student.bio && (
+            <div>
+              <div className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Bio</div>
+              <p className="mt-1 whitespace-pre-wrap text-paper">{student.bio}</p>
+            </div>
+          )}
+
+          <ParentReportLink studentId={student.id} />
+
+          <div className="grid grid-cols-2 gap-2">
+            {onStartChat && (
+              <button
+                type="button"
+                onClick={() => {
+                  onStartChat(student)
+                  setSelectedStudent(null)
+                }}
+                className="focus-ring h-11 rounded-[14px] bg-brass text-sm font-extrabold text-onbrass transition hover:brightness-110"
+              >
+                Chat
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setResetPasswordStudent(student)}
+              className={`focus-ring h-11 rounded-[14px] border border-line bg-panel text-sm font-extrabold text-paper transition hover:bg-panel-2 ${onStartChat ? '' : 'col-span-2'}`}
+            >
+              Reset password
+            </button>
+            <button
+              type="button"
+              disabled={busyAction === `delete-${student.id}`}
+              onClick={() => deleteStudentAccount(student)}
+              className="focus-ring col-span-2 h-10 rounded-[14px] text-[13px] font-bold text-coral transition hover:bg-coral/10 disabled:opacity-50"
+            >
+              {busyAction === `delete-${student.id}` ? 'Deleting…' : 'Delete this account'}
+            </button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const railItem = (key, label, count, swatch, tone = '') => {
+    const on = railKey === key
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => pickRail(key)}
+        aria-pressed={on}
+        className={`focus-ring flex min-h-11 w-full items-center gap-2.5 rounded-[14px] px-3 text-left text-sm transition ${
+          on ? 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] font-extrabold text-paper' : `font-bold hover:bg-panel-2 ${tone || 'text-paper'}`
+        }`}
+      >
+        {swatch}
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className={`text-[13px] tabular-nums ${on ? 'text-brass' : 'text-mist'}`}>{count}</span>
+      </button>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-5">
 
       {error && (
-        <div className="rounded-lg border border-coral bg-panel-2 px-4 py-3 text-sm text-coral">
+        <div className="rounded-[14px] border border-coral bg-panel-2 px-4 py-3 text-sm text-coral">
           {error}
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <p className="text-mist text-sm mt-1">
-            Manage student accounts and group memberships.
-          </p>
+      {/* STAT CARDS */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+          <div className="font-brand text-[28px] font-semibold leading-none text-brass">{stats.total}</div>
+          <div className="mt-1.5 text-[13px] font-bold text-mist">Students in total</div>
         </div>
-
-        {loading && (
-          <span className="text-mist text-xs font-mono">
-            Updating…
-          </span>
-        )}
-      </div>
-
-      {/* =====================================================
-          STAT CARDS — the numbers a teacher used to have to
-          count by scanning the list, surfaced up front instead.
-          "Without a group" doubles as a shortcut into that filter.
-      ===================================================== */}
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-
-        <div className="rounded-xl border border-line bg-panel px-4 py-3">
-          <div className="font-display text-2xl font-semibold text-paper">
-            {stats.total}
-          </div>
-          <div className="mt-0.5 text-xs text-mist">
-            Total students
-          </div>
+        <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+          <div className="font-brand text-[28px] font-semibold leading-none text-reading">{stats.total - stats.withoutGroup}</div>
+          <div className="mt-1.5 text-[13px] font-bold text-mist">In a group</div>
         </div>
-
-        <div className="rounded-xl border border-sage/30 bg-sage/10 px-4 py-3">
-          <div className="font-display text-2xl font-semibold text-sage">
-            {stats.approved}
-          </div>
-          <div className="mt-0.5 text-xs text-mist">
-            Approved
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-3">
-          <div className="font-display text-2xl font-semibold text-amber">
-            {stats.pending}
-          </div>
-          <div className="mt-0.5 text-xs text-mist">
-            Pending approval
-          </div>
-        </div>
-
         <button
           type="button"
-          onClick={() =>
-            setView((prev) =>
-              prev === 'without-group' ? 'all' : 'without-group'
-            )
-          }
-          className={`focus-ring rounded-xl border px-4 py-3 text-left transition ${
-            view === 'without-group'
-              ? 'border-coral/60 bg-coral/15'
-              : 'border-coral/30 bg-coral/5 hover:border-coral/50'
-          }`}
+          onClick={() => pickRail('none')}
+          className={`focus-ring rounded-[20px] border bg-panel px-5 py-4 text-left transition ${railKey === 'none' ? 'border-coral ring-2 ring-coral/25' : 'border-line hover:border-coral/50'}`}
         >
-          <div className="font-display text-2xl font-semibold text-coral">
-            {stats.withoutGroup}
-          </div>
-          <div className="mt-0.5 text-xs text-mist">
-            Without a group
-          </div>
+          <div className="font-brand text-[28px] font-semibold leading-none text-coral">{stats.withoutGroup}</div>
+          <div className="mt-1.5 text-[13px] font-bold text-mist">No group yet</div>
         </button>
-
+        <button
+          type="button"
+          onClick={() => pickRail('pending')}
+          className={`focus-ring rounded-[20px] border bg-panel px-5 py-4 text-left transition ${railKey === 'pending' ? 'border-amber ring-2 ring-amber/25' : 'border-line hover:border-amber/50'}`}
+        >
+          <div className="font-brand text-[28px] font-semibold leading-none text-amber">{stats.pending}</div>
+          <div className="mt-1.5 text-[13px] font-bold text-mist">Waiting for approval</div>
+        </button>
       </div>
 
-      {/* =====================================================
-          FILTER BAR
-      ===================================================== */}
+      <div className="grid items-start gap-5 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_320px]">
 
-      <div className="rounded-xl border border-line bg-panel p-3 flex flex-col gap-3">
+        {/* GROUP RAIL */}
+        <nav aria-label="Groups" className="flex flex-col gap-1 rounded-[20px] border border-line bg-panel p-3 lg:sticky lg:top-4">
+          <div className="px-2.5 pb-1.5 pt-1 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Groups</div>
+          {railItem('all', 'All students', stats.approved, null)}
+          {groupsByCreated.map((group, i) =>
+            railItem(
+              group.id,
+              groupDisplayName(group.name),
+              memberCount(group.id),
+              <span className={`h-7 w-2.5 shrink-0 rounded-md ${groupColour(i).bar}`} aria-hidden="true" />
+            )
+          )}
+          <div className="mx-1.5 my-1.5 h-px bg-line" aria-hidden="true" />
+          {railItem('none', 'No group', stats.withoutGroup, <span className="h-7 w-2.5 shrink-0 rounded-md border-2 border-dashed border-coral" aria-hidden="true" />, 'text-coral')}
+          {railItem('pending', 'Waiting approval', stats.pending, <span className="h-7 w-2.5 shrink-0 rounded-md border-2 border-dashed border-amber" aria-hidden="true" />, 'text-amber')}
+        </nav>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-col gap-3.5">
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, username, email, or group…"
-            className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper placeholder:text-mist"
-          />
-
-          {view === 'all' ? (
-            <div className="flex flex-wrap gap-2">
-
-              <select
-                value={groupFilter}
-                onChange={(e) =>
-                  setGroupFilter(e.target.value)
-                }
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
-              >
-                <option value="all">
-                  All groups
-                </option>
-
-                <option value="none">
-                  No group
-                </option>
-
-                {groups.map((group) => (
-                  <option
-                    key={group.id}
-                    value={group.id}
-                  >
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-
+          {/* TOOLBAR */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <label className="flex h-[46px] min-w-[220px] flex-1 items-center gap-2.5 rounded-[14px] border border-line bg-panel px-3.5">
+              <svg className="h-[18px] w-[18px] shrink-0 text-mist" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+              <span className="sr-only">Search students</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, username, email or group"
+                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-paper outline-none placeholder:text-mist"
+              />
+            </label>
+            <div role="group" aria-label="Sort" className="flex gap-1 rounded-[14px] bg-panel-2 p-1">
+              {[
+                ['attention', 'Needs attention'],
+                ['name-asc', 'A–Z'],
+                ['newest', 'Newest'],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSortBy(key)}
+                  aria-pressed={sortBy === key}
+                  className={`focus-ring h-[38px] rounded-[11px] px-3.5 text-[13px] transition ${sortBy === key ? 'bg-panel font-extrabold text-paper shadow-sm' : 'font-bold text-mist hover:text-paper'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {view === 'all' && (
               <select
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value)
-                }
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+                onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Status"
+                className="focus-ring h-[46px] rounded-[14px] border border-line bg-panel px-3 text-sm font-bold text-paper"
               >
-                <option value="approved">
-                  Approved
-                </option>
-
-                <option value="pending">
-                  Pending
-                </option>
-
-                <option value="rejected">
-                  Rejected
-                </option>
-
-                <option value="all">
-                  All statuses
-                </option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All statuses</option>
               </select>
+            )}
+          </div>
 
-              <select
-                value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value)
-                }
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm text-paper"
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] font-bold text-mist">
+              <input
+                type="checkbox"
+                checked={filteredStudents.length > 0 && filteredStudents.every((s) => selectedIds.has(s.id))}
+                onChange={() => {
+                  const all = filteredStudents.length > 0 && filteredStudents.every((s) => selectedIds.has(s.id))
+                  setSelectedIds(all ? new Set() : new Set(filteredStudents.map((s) => s.id)))
+                }}
+                className="h-4 w-4 accent-brass"
+              />
+              Showing {filteredStudents.length} student{filteredStudents.length === 1 ? '' : 's'}
+              {loading && <span className="font-semibold">· updating…</span>}
+            </label>
+            {(search || groupFilter !== 'all' || statusFilter !== 'approved' || view !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearFilters()
+                  setView('all')
+                }}
+                className="focus-ring rounded-lg text-[13px] font-extrabold text-brass hover:underline"
               >
-                <option value="name-asc">
-                  Name A–Z
-                </option>
+                Clear filters
+              </button>
+            )}
+          </div>
 
-                <option value="name-desc">
-                  Name Z–A
-                </option>
-
-                <option value="newest">
-                  Newest first
-                </option>
-
-                <option value="oldest">
-                  Oldest first
-                </option>
-              </select>
-
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setView('all')}
-              className="focus-ring shrink-0 rounded-md border border-line px-3 py-2 text-sm text-mist transition hover:text-paper"
-            >
-              ← Back to all students
-            </button>
-          )}
-
-        </div>
-
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-
-          <label className="focus-ring flex items-center gap-2 text-mist text-xs font-mono cursor-pointer">
-            <input
-              type="checkbox"
-              checked={
-                filteredStudents.length > 0 &&
-                filteredStudents.every((student) =>
-                  selectedIds.has(student.id)
-                )
-              }
-              onChange={() => {
-                const allVisibleSelected =
-                  filteredStudents.length > 0 &&
-                  filteredStudents.every((student) =>
-                    selectedIds.has(student.id)
-                  )
-
-                setSelectedIds(
-                  allVisibleSelected
-                    ? new Set()
-                    : new Set(
-                        filteredStudents.map(
-                          (student) => student.id
-                        )
-                      )
-                )
-              }}
-              className="h-3.5 w-3.5 accent-brass"
-            />
-            Showing {filteredStudents.length}{' '}
-            student
-            {filteredStudents.length === 1
-              ? ''
-              : 's'}
-          </label>
-
-          {(search ||
-            groupFilter !== 'all' ||
-            statusFilter !== 'approved' ||
-            sortBy !== 'name-asc' ||
-            view !== 'all') && (
-            <button
-              type="button"
-              onClick={() => {
-                clearFilters()
-                setView('all')
-              }}
-              className="focus-ring text-xs text-brass hover:underline"
-            >
-              Clear filters
-            </button>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          BULK ACTION BAR — only appears once something's selected
-      ===================================================== */}
-
-      {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brass/30 bg-brass/10 px-4 py-3">
-
-          <span className="text-sm font-semibold text-paper">
-            {selectedIds.size} selected
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="focus-ring text-xs text-mist hover:text-paper hover:underline"
-          >
-            Clear
-          </button>
-
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-
-            <button
-              type="button"
-              onClick={bulkApprove}
-              disabled={bulkBusy || selectedNotApprovedCount === 0}
-              className="focus-ring rounded-full bg-sage px-4 py-1.5 text-sm font-semibold text-onbrass transition hover:brightness-105 disabled:opacity-40"
-            >
-              {selectedNotApprovedCount > 0
-                ? `Approve ${selectedNotApprovedCount}`
-                : 'Approve'}
-            </button>
-
-            <div className="flex overflow-hidden rounded-full border border-line bg-panel">
+          {/* BULK BAR */}
+          {selectedIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2.5 rounded-[14px] bg-[#17213a] px-4 py-2.5 text-sm font-bold text-white">
+              <span className="mr-auto">{selectedIds.size} selected</span>
+              {selectedNotApprovedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={bulkApprove}
+                  disabled={bulkBusy}
+                  className="focus-ring h-9 rounded-[11px] bg-[#1f8f5c] px-3.5 text-[13px] font-extrabold text-white disabled:opacity-40"
+                >
+                  Approve {selectedNotApprovedCount}
+                </button>
+              )}
               <select
                 value={bulkGroupChoice}
                 onChange={(e) => setBulkGroupChoice(e.target.value)}
-                className="focus-ring bg-transparent px-3 py-1.5 text-sm text-paper"
+                aria-label="Group to add to"
+                className="focus-ring h-9 rounded-[11px] border border-white/30 bg-transparent px-2.5 text-[13px] font-bold text-white [&>option]:text-[#17213a]"
               >
-                <option value="">Add to group…</option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
+                <option value="">Choose a group…</option>
+                {groupsByCreated.map((group) => (
+                  <option key={group.id} value={group.id}>{groupDisplayName(group.name)}</option>
                 ))}
               </select>
-
               <button
                 type="button"
                 onClick={bulkAddToGroup}
                 disabled={bulkBusy || !bulkGroupChoice}
-                className="focus-ring border-l border-line px-4 text-sm font-semibold text-brass transition hover:bg-brass/10 disabled:opacity-40"
+                className="focus-ring h-9 rounded-[11px] bg-saffron px-3.5 text-[13px] font-extrabold text-[#17213a] disabled:opacity-40"
               >
-                Add
+                Add to group
               </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={bulkDelete}
-              disabled={bulkBusy}
-              className="focus-ring rounded-full border border-coral px-4 py-1.5 text-sm font-semibold text-coral transition hover:bg-coral/10 disabled:opacity-40"
-            >
-              Delete {selectedIds.size}
-            </button>
-
-          </div>
-
-          {bulkDeleteProgress && (
-            <div className="w-full text-xs font-mono text-coral">
-              Deleting {bulkDeleteProgress.done}/
-              {bulkDeleteProgress.total}…
+              <button
+                type="button"
+                onClick={bulkDelete}
+                disabled={bulkBusy}
+                className="focus-ring h-9 rounded-[11px] border border-white/30 px-3.5 text-[13px] font-bold text-white hover:bg-white/10 disabled:opacity-40"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="focus-ring h-9 rounded-[11px] px-2.5 text-[13px] font-bold text-white/80 hover:text-white"
+              >
+                Clear
+              </button>
+              {bulkDeleteProgress && (
+                <div className="w-full text-xs text-[#f6c56b]">
+                  Deleting {bulkDeleteProgress.done}/{bulkDeleteProgress.total}…
+                </div>
+              )}
             </div>
           )}
 
-        </div>
-      )}
-
-      {filteredStudents.length === 0 ? (
-        <div className="ticket rounded-lg p-6 text-center">
-
-          <p className="text-mist">
-            No students match the current
-            search and filters.
-          </p>
-
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="focus-ring mt-3 text-sm text-brass hover:underline"
-          >
-            Clear filters
-          </button>
-
-        </div>
-      ) : (
-        /* =====================================================
-           STUDENT TABLE — a real data table (one row per student,
-           real columns) instead of a stack of card-rows, so this
-           reads like the rest of a professional admin product
-           instead of a scrolling list of tickets.
-        ===================================================== */
-        <div className="overflow-hidden rounded-xl border border-line">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-
-              <thead>
-                <tr className="border-b border-line bg-panel-2">
-                  <th className="w-10 px-3 py-2.5" />
-                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
-                    Student
-                  </th>
-                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
-                    Groups
-                  </th>
-                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
-                    Status
-                  </th>
-                  <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-mist">
-                    Joined
-                  </th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium uppercase tracking-wide text-mist">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredStudents.map((student) => {
-                  const studentGroups =
-                    getStudentGroups(student.id)
-
-                  const isSelected = selectedIds.has(student.id)
-
-                  return (
-                    <tr
-                      key={student.id}
-                      className={`border-b border-line bg-panel transition last:border-b-0 hover:bg-panel-2/60 ${
-                        isSelected ? 'bg-brass/5' : ''
-                      }`}
+          {/* STUDENT LIST */}
+          {filteredStudents.length === 0 ? (
+            <div className="rounded-[20px] border border-line bg-panel p-8 text-center">
+              <p className="text-mist">No students match the current search and filters.</p>
+              <button type="button" onClick={clearFilters} className="focus-ring mt-3 rounded-lg text-sm font-extrabold text-brass hover:underline">
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {visibleStudents.map((student) => {
+                const studentGroups = getStudentGroups(student.id)
+                const isSelected = selectedIds.has(student.id)
+                const isOpen = selectedStudent?.id === student.id
+                const progress = progressByStudent[student.id] || {}
+                const pending = student.status === 'pending'
+                const noGroup = studentGroups.length === 0 && student.status === 'approved'
+                return (
+                  <li
+                    key={student.id}
+                    className={`grid grid-cols-[22px_44px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 rounded-[20px] bg-panel px-4 py-3.5 sm:grid-cols-[22px_44px_minmax(0,1.3fr)_minmax(0,1fr)_78px_120px] ${
+                      isOpen ? 'border-2 border-brass' : pending ? 'border border-amber/40 bg-[color-mix(in_srgb,var(--color-saffron)_7%,var(--color-panel))]' : noGroup ? 'border border-dashed border-coral/60' : 'border border-line'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelected(student.id)}
+                      aria-label={`Select ${student.full_name}`}
+                      className="h-[18px] w-[18px] accent-brass"
+                    />
+                    {student.avatar_url ? (
+                      <img src={student.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+                    ) : (
+                      <div className={`grid h-11 w-11 place-items-center rounded-full font-brand text-sm font-bold ${avatarLook(student.id)}`}>
+                        {initials(student)}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStudent(isOpen ? null : student)}
+                      className="focus-ring min-w-0 rounded-lg text-left"
                     >
+                      <div className="truncate text-[15px] font-extrabold text-paper">{student.full_name || 'No name yet'}</div>
+                      <div className="truncate text-[13px] text-mist">
+                        @{student.username}
+                        {student.created_at && <> · joined {new Date(student.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</>}
+                      </div>
+                    </button>
 
-                      <td className="px-3 py-2.5 align-top">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() =>
-                            toggleSelected(student.id)
-                          }
-                          aria-label={`Select ${student.full_name}`}
-                          className="mt-1 h-4 w-4 shrink-0 accent-brass"
-                        />
-                      </td>
-
-                      <td className="px-3 py-2.5 align-top">
-                        <div className="flex items-center gap-2.5">
-
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel-2 font-display text-sm font-semibold text-paper">
-                            {student.avatar_url ? (
-                              <img
-                                src={student.avatar_url}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              String(
-                                student.full_name ||
-                                  student.username ||
-                                  '?'
-                              )
-                                .charAt(0)
-                                .toUpperCase()
-                            )}
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex flex-wrap items-baseline gap-x-1.5">
-                              <span className="truncate font-display text-[15px] text-paper">
-                                {student.full_name}
-                              </span>
-
-                              <span className="shrink-0 font-mono text-xs text-mist">
-                                @{student.username}
-                              </span>
-                            </div>
-
-                            {student.target_band != null && (
-                              <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-brass">
-                                <TargetBandIcon value={student.target_band} className="h-3 w-3" />
-                                Target {formatTargetBand(student.target_band)}
-                              </span>
-                            )}
-
-                          </div>
-
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-2.5 align-top">
-                        <div className="flex max-w-[220px] flex-wrap items-center gap-1.5">
-
-                          {studentGroups.length === 0 ? (
-                            <span className="text-xs text-mist">
-                              No group
-                            </span>
-                          ) : (
-                            studentGroups.map((group) => {
-                              const chip = getGroupChipStyle(group.id)
-
-                              return (
-                                <span
-                                  key={group.id}
-                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
-                                >
-                                  {group.name}
-
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      busyAction ===
-                                      `remove-${student.id}-${group.id}`
-                                    }
-                                    onClick={() =>
-                                      removeFromGroup(
-                                        student,
-                                        group
-                                      )
-                                    }
-                                    className="focus-ring opacity-60 hover:opacity-100 disabled:opacity-30"
-                                    title="Remove from group"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              )
-                            })
-                          )}
-
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-2.5 align-top">
-                        <span
-                          className={`inline-block rounded-full px-2 py-1 text-xs ${
-                            student.status === 'approved'
-                              ? 'bg-sage text-onbrass'
-                              : student.status === 'pending'
-                              ? 'border border-brass text-brass'
-                              : 'border border-coral text-coral'
-                          }`}
+                    {pending ? (
+                      <div className="col-span-3 flex flex-wrap justify-end gap-2 sm:col-span-3">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudent(student)}
+                          className="focus-ring h-10 rounded-xl border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2"
                         >
-                          {student.status}
-                        </span>
-                      </td>
-
-                      <td className="whitespace-nowrap px-3 py-2.5 align-top font-mono text-xs text-mist">
-                        {student.created_at
-                          ? new Date(student.created_at).toLocaleDateString()
-                          : '—'}
-                      </td>
-
-                      <td className="px-3 py-2.5 align-top">
-                        <div className="flex flex-wrap items-center justify-end gap-1.5">
-
-                          <select
-                            defaultValue=""
-                            onChange={(e) => {
-                              const groupId = e.target.value
-
-                              if (groupId) {
-                                addToGroup(
-                                  student,
-                                  groupId
-                                )
-                              }
-
-                              e.target.value = ''
-                            }}
-                            disabled={
-                              student.status !== 'approved'
-                            }
-                            title="Add to group"
-                            className="focus-ring bg-panel-2 border border-line rounded-full px-2.5 py-1.5 text-xs text-paper disabled:opacity-40"
-                          >
-                            <option value="">
-                              Add to group…
-                            </option>
-
-                            {groups
-                              .filter(
-                                (group) =>
-                                  !studentGroups.some(
-                                    (g) =>
-                                      g.id === group.id
-                                  )
-                              )
-                              .map((group) => (
-                                <option
-                                  key={group.id}
-                                  value={group.id}
+                          Details
+                        </button>
+                        <button
+                          type="button"
+                          disabled={bulkBusy}
+                          onClick={() => doBulkApprove([student.id])}
+                          className="focus-ring h-10 rounded-xl bg-brass px-4 text-[13px] font-extrabold text-onbrass disabled:opacity-50"
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="col-span-3 flex flex-wrap items-center gap-1.5 sm:col-span-1">
+                          {studentGroups.map((group) => {
+                            const chip = getGroupChipStyle(group.id)
+                            return (
+                              <span key={group.id} className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-extrabold ${chip.bg} ${chip.text}`}>
+                                {groupDisplayName(group.name)}
+                                <button
+                                  type="button"
+                                  disabled={busyAction === `remove-${student.id}-${group.id}`}
+                                  onClick={() => removeFromGroup(student, group)}
+                                  className="focus-ring -mr-1 rounded px-1 opacity-60 hover:opacity-100 disabled:opacity-30"
+                                  aria-label={`Remove from ${groupDisplayName(group.name)}`}
                                 >
-                                  {group.name}
-                                </option>
-                              ))}
-                          </select>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedStudent(student)
-                            }
-                            className="focus-ring px-2.5 py-1.5 rounded-full border border-line text-xs text-mist transition hover:border-brass/40 hover:text-brass"
-                          >
-                            Details
-                          </button>
-
+                                  ×
+                                </button>
+                              </span>
+                            )
+                          })}
+                          {student.status === 'approved' && (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                if (e.target.value) addToGroup(student, e.target.value)
+                              }}
+                              aria-label={`Add ${student.full_name} to a group`}
+                              className={`focus-ring h-8 max-w-[150px] rounded-xl border px-2 text-xs font-extrabold ${
+                                studentGroups.length === 0 ? 'border-dashed border-coral bg-panel text-coral' : 'border-line bg-panel text-mist'
+                              }`}
+                            >
+                              <option value="">{studentGroups.length === 0 ? '+ Put in a group' : '+ Group'}</option>
+                              {groupsByCreated
+                                .filter((group) => !studentGroups.some((g) => g.id === group.id))
+                                .map((group) => (
+                                  <option key={group.id} value={group.id}>{groupDisplayName(group.name)}</option>
+                                ))}
+                            </select>
+                          )}
                         </div>
-                      </td>
-
-                    </tr>
-                  )
-                })}
-              </tbody>
-
-            </table>
-          </div>
+                        <div className="hidden text-center sm:block">
+                          <div className={`font-brand text-[18px] font-semibold ${progress.lastBand == null ? 'text-mist' : 'text-brass'}`}>
+                            {formatBand(progress.lastBand)}
+                          </div>
+                          <div className="text-[11px] font-bold text-mist">{progress.lastBand == null ? 'no mock yet' : 'last mock'}</div>
+                        </div>
+                        <div className="col-span-3 sm:col-span-1">
+                          {progress.due ? (
+                            <>
+                              <div className="h-2 overflow-hidden rounded-md bg-panel-2">
+                                <div
+                                  className={`h-full rounded-md ${progress.pct >= 85 ? 'bg-[#1f8f5c]' : progress.pct >= 60 ? 'bg-saffron' : 'bg-coral'}`}
+                                  style={{ width: `${progress.pct}%` }}
+                                />
+                              </div>
+                              <div className={`mt-1 text-xs font-bold ${progress.pct < 60 ? 'text-coral' : 'text-mist'}`}>
+                                {progress.pct}% on time{progress.missed ? ` · ${progress.missed} missed` : ''}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs font-bold text-mist">No homework yet</div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {filteredStudents.length > visibleStudents.length && (
+            <button
+              type="button"
+              onClick={() => setShowCount((n) => n + 60)}
+              className="focus-ring mx-auto rounded-lg px-3 py-2 text-[13px] font-extrabold text-brass hover:underline"
+            >
+              Showing {visibleStudents.length} of {filteredStudents.length} · Show more
+            </button>
+          )}
         </div>
-      )}
 
-      {selectedStudent &&
+        {/* DETAILS PANEL (wide screens) */}
+        {isWide && (
+          <aside aria-label="Student details" className="sticky top-4 overflow-hidden rounded-[20px] border border-line bg-panel">
+            {selectedStudent ? (
+              renderDetails(selectedStudent)
+            ) : (
+              <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-panel-2 text-mist" aria-hidden="true">
+                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+                </div>
+                <p className="text-sm font-bold text-paper">Pick a student</p>
+                <p className="text-[13px] text-mist">Their bands, homework and account show here.</p>
+              </div>
+            )}
+          </aside>
+        )}
+      </div>
+
+      {/* DETAILS WINDOW (narrow screens) */}
+      {!isWide && selectedStudent &&
         createPortal(
           <div
             className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              width: '100vw',
-              height: '100vh',
-            }}
             onMouseDown={(e) => {
-              if (e.target === e.currentTarget) {
-                setSelectedStudent(null)
-              }
+              if (e.target === e.currentTarget) setSelectedStudent(null)
             }}
           >
-            <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px]" />
-
+            <div className="absolute inset-0 bg-black/35" />
             <div
-              className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-line bg-panel text-paper shadow-2xl"
+              className="relative z-10 max-h-[88vh] w-full max-w-md overflow-y-auto rounded-[20px] bg-panel text-paper shadow-2xl"
               onMouseDown={(e) => e.stopPropagation()}
             >
-
-              {viewingPhoto && (
-                <PhotoViewer
-                  src={selectedStudent.avatar_url}
-                  alt={selectedStudent.full_name || 'Student photo'}
-                  onClose={() => setViewingPhoto(false)}
-                />
-              )}
-
-              <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
-
-                <div className="flex items-start gap-3 min-w-0">
-
-                  {selectedStudent.avatar_url ? (
-                    <button
-                      type="button"
-                      onClick={() => setViewingPhoto(true)}
-                      className="focus-ring shrink-0 rounded-full cursor-zoom-in"
-                      aria-label="Open photo"
-                      title="Open photo"
-                    >
-                      <img
-                        src={selectedStudent.avatar_url}
-                        alt={selectedStudent.full_name || 'Student photo'}
-                        className="w-12 h-12 rounded-full object-cover border border-line"
-                      />
-                    </button>
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-brass flex items-center justify-center text-lg font-semibold text-onbrass shrink-0">
-                      {String(
-                        selectedStudent.full_name ||
-                          selectedStudent.username ||
-                          '?'
-                      )
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
-                  )}
-
-                  <div className="min-w-0">
-                    <h3 className="font-display text-xl font-semibold text-paper truncate">
-                      {selectedStudent.full_name}
-                    </h3>
-
-                    <p className="mt-1 text-sm font-mono text-mist truncate">
-                      @{selectedStudent.username || 'student'}
-                    </p>
-                  </div>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedStudent(null)
-                  }
-                  className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <div className="space-y-4 p-6 text-sm">
-
-                <div>
-                  <span className="text-mist">
-                    Bio
-                  </span>
-
-                  {selectedStudent.bio ? (
-                    <p className="mt-1 text-paper whitespace-pre-wrap">
-                      {selectedStudent.bio}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-mist italic">
-                      No bio yet.
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <span className="text-mist">
-                    Email
-                  </span>
-
-                  <div className="mt-1 text-paper break-all">
-                    {selectedStudent.contact_email ||
-                      'Not provided'}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-mist">
-                    Status
-                  </span>
-
-                  <div className="mt-1 text-paper">
-                    {selectedStudent.status}
-                  </div>
-                </div>
-
-                {selectedStudent.target_band != null && (
-                  <div>
-                    <span className="text-mist">
-                      Target band
-                    </span>
-
-                    <div className="mt-1 flex items-center gap-1.5 text-brass font-medium">
-                      <TargetBandIcon value={selectedStudent.target_band} className="h-4 w-4" />
-                      <span>
-                        {formatTargetBand(
-                          selectedStudent.target_band
-                        )}{' '}
-                        —{' '}
-                        {
-                          getTargetBandInfo(
-                            selectedStudent.target_band
-                          ).label
-                        }
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <span className="text-mist">
-                    Groups
-                  </span>
-
-                  <div className="mt-2 flex flex-wrap gap-2">
-
-                    {getStudentGroups(
-                      selectedStudent.id
-                    ).length > 0 ? (
-                      getStudentGroups(
-                        selectedStudent.id
-                      ).map((group) => {
-                        const chip = getGroupChipStyle(group.id)
-
-                        return (
-                          <span
-                            key={group.id}
-                            className={`rounded-full border px-3 py-1 text-xs font-medium ${chip.border} ${chip.bg} ${chip.text}`}
-                          >
-                            {group.name}
-                          </span>
-                        )
-                      })
-                    ) : (
-                      <span className="text-mist">
-                        No group
-                      </span>
-                    )}
-
-                  </div>
-                </div>
-
-                <ParentReportLink studentId={selectedStudent.id} />
-
-              </div>
-
-              <div className="flex items-center justify-between gap-3 border-t border-line px-6 py-4">
-
-                <button
-                  type="button"
-                  disabled={
-                    busyAction ===
-                    `delete-${selectedStudent.id}`
-                  }
-                  onClick={() =>
-                    deleteStudentAccount(
-                      selectedStudent
-                    )
-                  }
-                  className="focus-ring rounded-xl border border-coral/40 px-4 py-2.5 text-sm font-semibold text-coral transition hover:bg-coral/10 disabled:opacity-50"
-                >
-                  {busyAction ===
-                  `delete-${selectedStudent.id}`
-                    ? 'Deleting…'
-                    : 'Delete this account'}
-                </button>
-
-                <div className="flex items-center gap-2">
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setResetPasswordStudent(
-                        selectedStudent
-                      )
-                    }
-                    className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-mist transition hover:border-brass hover:text-brass"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="8" cy="15" r="4" />
-                      <path d="M10.5 12.5 19 4M17 6l2 2M14 9l2 2" />
-                    </svg>
-                    Reset password
-                  </button>
-
-                  {onStartChat && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onStartChat(selectedStudent)
-                        setSelectedStudent(null)
-                      }}
-                      className="focus-ring inline-flex items-center gap-1.5 rounded-xl border border-brass px-4 py-2.5 text-sm font-semibold text-brass transition hover:bg-brass/10"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                      </svg>
-                      Chat with student
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedStudent(null)
-                    }
-                    className="focus-ring rounded-xl bg-brass px-5 py-2.5 text-sm font-semibold text-onbrass transition hover:brightness-105"
-                  >
-                    Close
-                  </button>
-
-                </div>
-
-              </div>
-
+              {renderDetails(selectedStudent)}
             </div>
           </div>,
           document.body

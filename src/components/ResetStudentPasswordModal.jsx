@@ -120,7 +120,7 @@ export default function ResetStudentPasswordModal({
         aria-modal="true"
         aria-label="Reset student password"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-3xl border border-line bg-panel p-6 shadow-2xl"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-[20px] border border-line bg-panel p-6 shadow-2xl"
       >
         {!result ? (
           <form

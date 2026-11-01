@@ -301,7 +301,7 @@ export default function MockLibrary({
                     <button
                       type="button"
                       onClick={() => onContinue(set.id)}
-                      className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                      className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700"
                     >
                       Continue →
                     </button>
@@ -311,13 +311,13 @@ export default function MockLibrary({
                       <button
                         type="button"
                         onClick={() => onUseCode(status.code.code)}
-                        className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                        className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700"
                       >
                         Use this code
                       </button>
                     </>
                   ) : status.kind === 'pending' ? (
-                    <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                    <span className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
                       Requested — waiting on your teacher
                     </span>
                   ) : (
@@ -327,7 +327,7 @@ export default function MockLibrary({
                         type="button"
                         onClick={() => onRequest(set.id)}
                         disabled={requestingSetId === set.id}
-                        className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl border border-slate-900 px-4 py-2 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {requestingSetId === set.id
                           ? 'Requesting…'

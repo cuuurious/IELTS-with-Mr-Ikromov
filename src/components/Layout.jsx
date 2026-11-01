@@ -398,7 +398,7 @@ export default function Layout({
                   >
                     {entry.label}
                     {entry.items.some((item) => item.badge > 0) && (
-                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-urgent px-1 text-[11px] font-semibold leading-[18px] text-panel">
+                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-xl bg-urgent px-1 text-[11px] font-semibold leading-[18px] text-panel">
                         {entry.items.reduce((sum, item) => sum + (item.badge || 0), 0)}
                       </span>
                     )}
@@ -422,7 +422,7 @@ export default function Layout({
                             {Icon && <Icon className="h-[18px] w-[18px] shrink-0" />}
                             {item.label}
                             {item.badge > 0 && (
-                              <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
+                              <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-xl bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
                                 {item.badge}
                               </span>
                             )}
@@ -590,7 +590,7 @@ export default function Layout({
                         {Icon && <Icon className="h-5 w-5 shrink-0" />}
                         {item.label}
                         {item.badge > 0 && (
-                          <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
+                          <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-xl bg-urgent px-1.5 text-[11px] font-semibold leading-5 text-panel">
                             {item.badge}
                           </span>
                         )}
@@ -619,8 +619,10 @@ export default function Layout({
           {pageTitle && !activeItem?.hideTitle && (
             // Registan look (2026-10-19): every page title sits on the same
             // lapis tile band as the Homes, so the whole site matches.
-            <header className="registan-band mb-6 rounded-[22px] px-5 py-5 sm:px-7 sm:py-6">
+            <header className="registan-band mb-6 rounded-[20px] px-5 py-5 sm:px-7 sm:py-6">
               <h1 className="font-brand text-[22px] font-semibold leading-tight tracking-[-0.02em] text-onband sm:text-[28px]">{pageTitle}</h1>
+              {/* One line about the page (2026-11-01), set on the nav item. */}
+              {activeItem?.subtitle && <p className="mt-1.5 max-w-3xl text-[15px] leading-relaxed text-onband-dim">{activeItem.subtitle}</p>}
             </header>
           )}
           <div className="animate-fade-up">{children}</div>

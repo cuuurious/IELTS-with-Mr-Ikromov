@@ -562,7 +562,7 @@ export default function MockTestCenter({ onExit }) {
           <button
             type="button"
             onClick={onExit}
-            className="focus-ring shrink-0 rounded-full bg-[#e6a33a] px-4 py-2 text-sm font-bold text-[#17213a] shadow-sm transition hover:brightness-105"
+            className="focus-ring shrink-0 rounded-xl bg-[#e6a33a] px-4 py-2 text-sm font-bold text-[#17213a] shadow-sm transition hover:brightness-105"
           >
             ← Exit to dashboard
           </button>
@@ -594,7 +594,7 @@ export default function MockTestCenter({ onExit }) {
           {!loading && section === 'overview' && (
             <div className="space-y-6">
               {/* Results in skill colours with a band gauge each (2026-10-06). */}
-              <div className="rounded-[22px] border border-line bg-panel p-5">
+              <div className="rounded-[20px] border border-line bg-panel p-5">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
                   <div>
                     <p className="text-xs font-medium text-mist">Your results</p>
@@ -763,7 +763,7 @@ export default function MockTestCenter({ onExit }) {
                     type="button"
                     onClick={handleDownloadReport}
                     disabled={reportGenerating}
-                    className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50"
+                    className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50"
                   >
                     {reportGenerating ? 'Generating…' : 'Download score report'}
                   </button>
@@ -811,11 +811,11 @@ export default function MockTestCenter({ onExit }) {
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm font-medium text-paper">{review.examTitle}</p>
                           {review.released_at != null ? (
-                            <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
+                            <span className="text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
                               Band {review.examiner_band ?? '—'}
                             </span>
                           ) : (
-                            <span className="text-xs font-semibold rounded-full border border-line bg-panel text-mist px-2.5 py-1">
+                            <span className="text-xs font-semibold rounded-xl border border-line bg-panel text-mist px-2.5 py-1">
                               Awaiting release
                             </span>
                           )}
@@ -830,7 +830,7 @@ export default function MockTestCenter({ onExit }) {
                             <button
                               type="button"
                               onClick={() => setEssayReviewId(review.id)}
-                              className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-full bg-writing-tint px-3.5 py-1.5 text-sm font-semibold text-writing hover:brightness-95"
+                              className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-xl bg-writing-tint px-3.5 py-1.5 text-sm font-semibold text-writing hover:brightness-95"
                             >
                               See your essay with comments
                             </button>
@@ -859,7 +859,7 @@ export default function MockTestCenter({ onExit }) {
           {!loading && section === 'speaking' && (
             <div className="space-y-4">
               {slots.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
+                <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
                   <h2 className="font-display text-xl">No speaking exam booked yet</h2>
                   <p className="text-sm text-mist mt-2">
                     Message the speaking examiner to arrange a time.
@@ -873,7 +873,7 @@ export default function MockTestCenter({ onExit }) {
                         {formatSlotTime(slot.scheduled_at)}
                       </p>
                       <span
-                        className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${
+                        className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 ${
                           slot.status === 'scheduled'
                             ? 'text-brass border-brass-dim/30 bg-brass/10'
                             : slot.status === 'completed'
@@ -892,7 +892,7 @@ export default function MockTestCenter({ onExit }) {
                             href={slot.meeting_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="focus-ring inline-block rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2"
+                            className="focus-ring inline-block rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2"
                           >
                             Join exam link
                           </a>
@@ -904,7 +904,7 @@ export default function MockTestCenter({ onExit }) {
                               summary: 'IELTS Speaking Mock Exam',
                             })
                           }
-                          className="focus-ring inline-block rounded-full border border-line text-sm font-medium px-4 py-2 text-mist hover:text-paper hover:border-brass/40"
+                          className="focus-ring inline-block rounded-xl border border-line text-sm font-medium px-4 py-2 text-mist hover:text-paper hover:border-brass/40"
                         >
                           📅 Add to calendar
                         </button>
@@ -920,7 +920,7 @@ export default function MockTestCenter({ onExit }) {
                             Marked — your teacher will release your result soon.
                           </p>
                         ) : (
-                          <span className="text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
+                          <span className="text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
                             Band {slot.examiner_band}
                           </span>
                         )}
@@ -1150,7 +1150,7 @@ function ExaminerMessages({ selfId, speakingExaminer, writingExaminer }) {
 
   if (options.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+      <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
         No examiner accounts have been set up yet.
       </div>
     )

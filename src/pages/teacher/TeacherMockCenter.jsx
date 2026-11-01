@@ -1,3 +1,4 @@
+import { groupColour } from '../../lib/groupLook'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
@@ -1355,7 +1356,6 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
         answerByIndex[a.order_index - useOffset] = a.correct_answer
       })
 
-
       let filled = 0
       let leftAlone = 0
       let needsReview = 0
@@ -1778,7 +1778,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           .eq('role', 'speaking_examiner'),
         supabase
           .from('groups')
-          .select('id, name')
+          .select('id, name, created_at')
           .order('name', { ascending: true }),
         fetchAll(() =>
           supabase
@@ -2460,9 +2460,15 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
     [groups]
   )
 
+  // Same colour a group has everywhere else (position by creation
+  // date, see lib/groupLook.js).
+  const groupsByCreated = useMemo(
+    () => [...groups].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || ''))),
+    [groups]
+  )
   const getGroupAccent = (groupId) => {
-    const index = sortedGroups.findIndex((g) => g.id === groupId)
-    return groupAccentPalette[(index === -1 ? 0 : index) % groupAccentPalette.length]
+    const c = groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === groupId)))
+    return { bg: c.tint, text: c.text, border: c.border }
   }
 
   const getGroupBadge = (name) => {
@@ -3952,7 +3958,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
               alt="IELTS with Mr Ikromov"
               className="h-10 w-10 rounded-[0.85rem] object-cover object-center border border-line"
             />
-            <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-full bg-sage border-2 border-panel" />
+            <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-xl bg-sage border-2 border-panel" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.14em] text-[#e6a33a] font-semibold">
@@ -3969,7 +3975,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           <button
             type="button"
             onClick={onExit}
-            className="focus-ring shrink-0 rounded-full bg-[#e6a33a] px-4 py-2 text-sm font-bold text-[#17213a] shadow-sm transition hover:brightness-105"
+            className="focus-ring shrink-0 rounded-xl bg-[#e6a33a] px-4 py-2 text-sm font-bold text-[#17213a] shadow-sm transition hover:brightness-105"
           >
             ← Exit to dashboard
           </button>
@@ -3984,13 +3990,13 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           a pill track with a solid brass-filled pill for whichever
           section is active. */}
       <nav className="shrink-0 border-b border-line bg-panel-2 px-4 sm:px-6 py-3 overflow-x-auto">
-        <div className="inline-flex items-center gap-1 rounded-full border border-line bg-panel p-1">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-line bg-panel p-1">
           {SECTIONS.map((s) => (
             <button
               key={s.key}
               type="button"
               onClick={() => setSection(s.key)}
-              className={`focus-ring shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`focus-ring shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                 section === s.key
                   ? 'bg-brass text-onbrass shadow-sm'
                   : 'text-paper-dim hover:text-paper'
@@ -3999,7 +4005,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
               {s.label}
               {badgeFor(s.key) > 0 && (
                 <span
-                  className={`ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                  className={`ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-xl px-1.5 text-[10px] font-bold ${
                     section === s.key ? 'bg-onbrass/20 text-onbrass' : s.key === 'live' ? 'bg-sage/20 text-sage' : 'bg-coral/15 text-coral'
                   }`}
                 >
@@ -4012,7 +4018,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
       </nav>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 xl:px-8 space-y-6">
 
           {loading && <p className="text-sm text-mist">Loading mock progress…</p>}
 
@@ -4033,7 +4039,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   onClick={() => downloadStudentProgressCsv(studentBandSummary)}
                   disabled={studentBandSummary.length === 0}
                   title="Downloads every row below as a spreadsheet-ready CSV"
-                  className="focus-ring shrink-0 rounded-full border border-line bg-panel-2 text-paper text-sm font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-40"
+                  className="focus-ring shrink-0 rounded-xl border border-line bg-panel-2 text-paper text-sm font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-40"
                 >
                   <Icon name="download" className="h-4 w-4" /> Export CSV
                 </button>
@@ -4123,12 +4129,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   value={progressSearch}
                   onChange={(e) => setProgressSearch(e.target.value)}
                   placeholder="Search a student…"
-                  className="focus-ring min-w-[12rem] flex-1 sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                  className="focus-ring min-w-[12rem] flex-1 sm:max-w-xs rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
                 />
                 <select
                   value={progressGroup}
                   onChange={(e) => setProgressGroup(e.target.value)}
-                  className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper"
+                  className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper"
                 >
                   <option value="">All groups</option>
                   {sortedGroups.map((g) => (
@@ -4137,7 +4143,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     </option>
                   ))}
                 </select>
-                <label className="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper-dim">
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper-dim">
                   <input type="checkbox" checked={showNeverSat} onChange={(e) => setShowNeverSat(e.target.checked)} className="h-4 w-4 accent-brass" />
                   Show students who never sat a mock ({progressSummary.notStarted})
                 </label>
@@ -4206,7 +4212,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
               })
             }
             const pill = (active) =>
-              `focus-ring rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'}`
+              `focus-ring rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'}`
             return (
               <div className="flex flex-col gap-4">
                 <p className="text-sm text-mist max-w-2xl">
@@ -4236,14 +4242,14 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       handed in within {INCOMPLETE_MINUTES} minutes, usually a section that was ended early, skipped or left. They don't
                       count in Student Progress.
                     </span>
-                    <button type="button" onClick={() => setResultsFilter('empty')} className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass">
+                    <button type="button" onClick={() => setResultsFilter('empty')} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs font-semibold text-paper hover:border-brass">
                       Review them
                     </button>
                     <button
                       type="button"
                       disabled={releasing}
                       onClick={() => deleteResultItems(emptyItems)}
-                      className="focus-ring rounded-full border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
+                      className="focus-ring rounded-xl border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
                     >
                       Delete all incomplete ({emptyItems.length})
                     </button>
@@ -4252,12 +4258,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
 
                 {/* filters + actions */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex rounded-full border border-line bg-panel-2 p-1">
+                  <div className="flex rounded-xl border border-line bg-panel-2 p-1">
                     <button type="button" onClick={() => setResultsFilter('scored')} className={pill(resultsFilter === 'scored')}>With a score ({scoredItems.length})</button>
                     <button type="button" onClick={() => setResultsFilter('empty')} className={pill(resultsFilter === 'empty')}>Incomplete ({emptyItems.length})</button>
                     <button type="button" onClick={() => setResultsFilter('all')} className={pill(resultsFilter === 'all')}>All</button>
                   </div>
-                  <select value={resultsSkill} onChange={(e) => setResultsSkill(e.target.value)} className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper">
+                  <select value={resultsSkill} onChange={(e) => setResultsSkill(e.target.value)} className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper">
                     <option value="">All skills</option>
                     {['Listening', 'Reading', 'Writing', 'Speaking'].map((k) => (
                       <option key={k} value={k}>{k}</option>
@@ -4268,15 +4274,15 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     value={resultsSearch}
                     onChange={(e) => setResultsSearch(e.target.value)}
                     placeholder="Search a student…"
-                    className="focus-ring min-w-[10rem] flex-1 sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                    className="focus-ring min-w-[10rem] flex-1 sm:max-w-xs rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
                   />
                   <div className="ml-auto flex flex-wrap gap-2">
                     {selectedItems.length > 0 && (
                       <>
-                        <button type="button" disabled={releasing} onClick={() => deleteResultItems(selectedItems)} className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 disabled:opacity-40">
+                        <button type="button" disabled={releasing} onClick={() => deleteResultItems(selectedItems)} className="focus-ring rounded-xl border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 disabled:opacity-40">
                           Delete ({selectedItems.length})
                         </button>
-                        <button type="button" disabled={releasing} onClick={() => confirmRelease(selectedItems)} className="focus-ring rounded-full border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40">
+                        <button type="button" disabled={releasing} onClick={() => confirmRelease(selectedItems)} className="focus-ring rounded-xl border border-brass/40 text-brass text-sm font-semibold px-4 py-2 disabled:opacity-40">
                           Release selected ({selectedItems.length})
                         </button>
                       </>
@@ -4285,7 +4291,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       type="button"
                       disabled={releasing || scoredItems.length === 0}
                       onClick={() => confirmRelease(scoredItems)}
-                      className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim disabled:opacity-40"
+                      className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim disabled:opacity-40"
                     >
                       Release all with a score ({scoredItems.length})
                     </button>
@@ -4402,7 +4408,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               disabled={releasing}
                               onClick={() => (it.empty ? confirmRelease([it]) : releaseItems([it]))}
-                              className="focus-ring rounded-full border border-line px-3 py-1 text-xs font-semibold text-mist hover:border-brass/40 hover:text-brass disabled:opacity-40"
+                              className="focus-ring rounded-xl border border-line px-3 py-1 text-xs font-semibold text-mist hover:border-brass/40 hover:text-brass disabled:opacity-40"
                             >
                               Release
                             </button>
@@ -4411,7 +4417,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 type="button"
                                 disabled={releasing}
                                 onClick={() => deleteResultItems([it])}
-                                className="focus-ring rounded-full border border-coral/30 px-3 py-1 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
+                                className="focus-ring rounded-xl border border-coral/30 px-3 py-1 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
                               >
                                 Delete
                               </button>
@@ -4463,7 +4469,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <span className="w-40 shrink-0 text-sm text-paper truncate">
                               {QUESTION_TYPE_LABELS[t.type] || t.type}
                             </span>
-                            <div className="flex-1 h-2 rounded-full bg-panel-2 overflow-hidden">
+                            <div className="flex-1 h-2 rounded-xl bg-panel-2 overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${
                                   t.wrongRate >= 0.5 ? 'bg-coral' : t.wrongRate >= 0.25 ? 'bg-brass' : 'bg-sage'
@@ -4514,7 +4520,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               </p>
                             </div>
                             <span
-                              className={`shrink-0 text-xs font-mono font-semibold rounded-full border px-2.5 py-1 ${
+                              className={`shrink-0 text-xs font-mono font-semibold rounded-xl border px-2.5 py-1 ${
                                 q.wrongRate >= 0.5
                                   ? 'text-coral border-coral/30 bg-coral/10'
                                   : q.wrongRate >= 0.25
@@ -4546,14 +4552,14 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search students by name…"
-                  className="focus-ring w-full sm:max-w-xs rounded-full border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                  className="focus-ring w-full sm:max-w-xs rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
                 />
 
-                <div className="flex items-center gap-1 rounded-full border border-line bg-panel p-1 self-start">
+                <div className="flex items-center gap-1 rounded-xl border border-line bg-panel p-1 self-start">
                   <button
                     type="button"
                     onClick={() => setStudentsView('grouped')}
-                    className={`focus-ring rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`focus-ring rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       studentsView === 'grouped' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                     }`}
                   >
@@ -4562,7 +4568,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   <button
                     type="button"
                     onClick={() => setStudentsView('mixed')}
-                    className={`focus-ring rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`focus-ring rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                       studentsView === 'mixed' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                     }`}
                   >
@@ -4579,7 +4585,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   emptyLabel="No students match that search."
                 />
               ) : groupSections.length === 0 && !hasUngroupedStudents ? (
-                <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                   No groups yet.
                 </div>
               ) : (
@@ -4606,8 +4612,9 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                           <button
                             type="button"
                             onClick={() => toggleGroupExpanded(group.id)}
-                            className={`focus-ring flex items-center gap-3 rounded-2xl border ${accent.border} bg-panel-2 px-4 py-3 text-left shadow-sm transition-colors hover:bg-panel`}
+                            className={`focus-ring relative flex items-center gap-3 overflow-hidden rounded-[20px] border border-line bg-panel py-3 pl-5 pr-4 text-left transition-colors hover:bg-panel-2`}
                           >
+                            <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === group.id))).bar}`} />
                             <div
                               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display font-semibold ${
                                 badge.length > 1 ? 'text-sm' : 'text-base'
@@ -4626,7 +4633,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             </span>
                             <span className="ml-auto flex items-center gap-3">
                               {groupAvg != null && (
-                                <span className="rounded-full bg-brass/10 px-2.5 py-0.5 text-sm font-bold text-paper">avg {formatBand(groupAvg)}</span>
+                                <span className="rounded-xl bg-brass/10 px-2.5 py-0.5 text-sm font-bold text-paper">avg {formatBand(groupAvg)}</span>
                               )}
                               <span className="text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
                             </span>
@@ -4721,7 +4728,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             {studentLabel(entry.examiner)}
                             {isOverloaded && (
                               <span
-                                className="ml-2 rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-semibold text-amber align-middle"
+                                className="ml-2 rounded-xl bg-amber/15 px-2 py-0.5 text-[10px] font-semibold text-amber align-middle"
                                 title={`Noticeably more than the team average (${examinerWorkloadAvgThisWeek.toFixed(1)}) this week`}
                               >
                                 <Icon name="scale" className="h-3 w-3" /> above average
@@ -4801,7 +4808,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   uses — one click both decides the request and gets
                   the student their code.
                  ================================================ */}
-              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+              <div className="rounded-[20px] border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-paper">Mock requests</p>
@@ -4816,7 +4823,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         type="button"
                         onClick={() => rejectMockAccessRequests(Array.from(selectedRequestIds))}
                         disabled={selectedRequestIds.size === 0 || decidingRequests}
-                        className="focus-ring rounded-full border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="focus-ring rounded-xl border border-coral/30 text-coral text-sm font-semibold px-4 py-2 hover:bg-coral/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         Reject selected
                       </button>
@@ -4824,7 +4831,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         type="button"
                         onClick={() => approveMockAccessRequests(Array.from(selectedRequestIds))}
                         disabled={selectedRequestIds.size === 0 || decidingRequests}
-                        className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="focus-ring rounded-xl border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         Approve selected
                       </button>
@@ -4832,7 +4839,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         type="button"
                         onClick={() => approveMockAccessRequests(pendingMockRequests.map((r) => r.id))}
                         disabled={decidingRequests}
-                        className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {decidingRequests ? 'Working…' : 'Approve all'}
                       </button>
@@ -4852,7 +4859,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
 
                 {pendingMockRequests.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
                     No pending requests.
                   </div>
                 ) : (
@@ -4878,7 +4885,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             e.preventDefault()
                             setSelectedRequestIds(new Set(coveredRequestIds))
                           }}
-                          className="focus-ring ml-auto rounded-full border border-brass/40 px-2.5 py-1 font-semibold text-brass hover:bg-brass/10"
+                          className="focus-ring ml-auto rounded-xl border border-brass/40 px-2.5 py-1 font-semibold text-brass hover:bg-brass/10"
                           title="These students already hold an unused code for the same mock — select them, then Reject selected"
                         >
                           Select {coveredRequestIds.length} who already have a code
@@ -4919,7 +4926,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               onClick={() => rejectMockAccessRequests([req.id])}
                               disabled={decidingRequests}
-                              className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
+                              className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -4927,7 +4934,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               onClick={() => approveMockAccessRequests([req.id])}
                               disabled={decidingRequests}
-                              className="focus-ring text-xs font-semibold rounded-full border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
+                              className="focus-ring text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
                             >
                               Approve
                             </button>
@@ -4944,7 +4951,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   (migration_45). One code per student per attempt;
                   students can't reach any Full Mock without one.
                  ================================================ */}
-              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+              <div className="rounded-[20px] border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-paper">Access codes</p>
@@ -4974,7 +4981,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         )
                       }
                       disabled={accessCodes.filter((row) => !row.revoked && !row.used_at).length === 0}
-                      className="focus-ring rounded-full border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="focus-ring rounded-xl border border-line text-mist text-sm font-semibold px-4 py-2 hover:border-brass hover:text-brass transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       title="Opens a printable page with one slip per unused code — handy for anyone not on Telegram"
                     >
                       <Icon name="printer" className="h-4 w-4" /> Print unused
@@ -4983,7 +4990,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       type="button"
                       onClick={openIssueAccessCode}
                       disabled={fullMockSets.length === 0}
-                      className="focus-ring rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       title={fullMockSets.length === 0 ? 'Add a full mock set first' : undefined}
                     >
                       + Issue codes
@@ -4998,7 +5005,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         key={f.key}
                         type="button"
                         onClick={() => setCodeFilter(f.key)}
-                        className={`focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        className={`focus-ring rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
                           codeFilter === f.key ? 'border-brass bg-brass/15 text-brass' : 'border-line text-mist hover:text-paper'
                         }`}
                       >
@@ -5010,17 +5017,17 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       value={codeQuery}
                       onChange={(e) => setCodeQuery(e.target.value)}
                       placeholder="Search name or code"
-                      className="focus-ring ml-auto h-9 w-full sm:w-56 rounded-full border border-line bg-panel px-3.5 text-sm text-paper placeholder:text-mist"
+                      className="focus-ring ml-auto h-9 w-full sm:w-56 rounded-xl border border-line bg-panel px-3.5 text-sm text-paper placeholder:text-mist"
                     />
                   </div>
                 )}
 
                 {accessCodes.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
                     No codes issued yet.
                   </div>
                 ) : visibleCodes.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-8 text-center text-sm text-mist">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-8 text-center text-sm text-mist">
                     No codes match.
                   </div>
                 ) : (
@@ -5045,12 +5052,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 {row.code}
                               </span>
                               <span
-                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-xl border px-2 py-0.5 ${status.cls}`}
                               >
                                 {status.label}
                               </span>
                               {row.telegram_sent_at && (
-                                <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full border border-line text-mist px-2 py-0.5">
+                                <span className="text-[10px] font-semibold uppercase tracking-wide rounded-xl border border-line text-mist px-2 py-0.5">
                                   Sent via Telegram
                                 </span>
                               )}
@@ -5072,7 +5079,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 type="button"
                                 onClick={() => sendSingleCodeViaTelegram(row)}
                                 disabled={sendingCodeIds.has(row.id)}
-                                className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass hover:text-brass transition-colors disabled:opacity-50"
+                                className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass hover:text-brass transition-colors disabled:opacity-50"
                               >
                                 {sendingCodeIds.has(row.id) ? 'Sending…' : 'Send via Telegram'}
                               </button>
@@ -5081,7 +5088,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               <button
                                 type="button"
                                 onClick={() => revokeAccessCode(row)}
-                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                               >
                                 Revoke
                               </button>
@@ -5096,7 +5103,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   <button
                     type="button"
                     onClick={() => setCodeLimit((n) => n + 50)}
-                    className="focus-ring self-center rounded-full border border-line px-4 py-2 text-sm font-semibold text-mist hover:text-paper"
+                    className="focus-ring self-center rounded-xl border border-line px-4 py-2 text-sm font-semibold text-mist hover:text-paper"
                   >
                     Show {Math.min(50, visibleCodes.length - codeLimit)} more of {visibleCodes.length - codeLimit}
                   </button>
@@ -5111,7 +5118,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   automatically once that time arrives, reading the
                   group's live membership at fire time.
                  ================================================ */}
-              <div className="rounded-3xl border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
+              <div className="rounded-[20px] border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-paper">Scheduled sessions</p>
@@ -5125,7 +5132,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     type="button"
                     onClick={openScheduleSession}
                     disabled={fullMockSets.length === 0 || groups.length === 0}
-                    className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     title={
                       fullMockSets.length === 0
                         ? 'Add a full mock set first'
@@ -5139,7 +5146,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 </div>
 
                 {scheduledSessions.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
                     No sessions scheduled yet.
                   </div>
                 ) : (
@@ -5167,7 +5174,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 {group?.name || 'Unknown group'}
                               </span>
                               <span
-                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${status.cls}`}
+                                className={`text-[10px] font-semibold uppercase tracking-wide rounded-xl border px-2 py-0.5 ${status.cls}`}
                               >
                                 {status.label}
                               </span>
@@ -5191,7 +5198,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               <button
                                 type="button"
                                 onClick={() => cancelScheduledSession(session)}
-                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                               >
                                 Cancel
                               </button>
@@ -5220,7 +5227,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   readin/listening are not separate?") — each is its own
                   exam list now, and "+ Add exam" from inside one already
                   knows its module, no picker needed. */}
-              <div className="flex gap-2 rounded-full border border-line bg-panel-2 p-1 w-fit">
+              <div className="flex gap-2 rounded-xl border border-line bg-panel-2 p-1 w-fit">
                 <button
                   type="button"
                   onClick={() => {
@@ -5228,7 +5235,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     setContentFilterQuery('')
                     setContentFilterStatus('all')
                   }}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'writing' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
                 >
@@ -5242,7 +5249,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     setContentFilterStatus('all')
                     backToRlExams()
                   }}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'reading' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
                 >
@@ -5256,7 +5263,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     setContentFilterStatus('all')
                     backToRlExams()
                   }}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'listening' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
                 >
@@ -5269,7 +5276,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     setContentFilterQuery('')
                     setContentFilterStatus('all')
                   }}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
                     contentTab === 'full-mocks' ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
                   }`}
                 >
@@ -5287,7 +5294,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     <button
                       type="button"
                       onClick={openCreateExam}
-                      className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                      className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                     >
                       + Add writing mock
                     </button>
@@ -5307,12 +5314,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   )}
 
                   {writingExams.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                    <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                       No writing mocks yet — add one to let students sit it from their Mock Test
                       Center.
                     </div>
                   ) : filteredWritingExams.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                    <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                       No writing mocks match these filters.
                     </div>
                   ) : (
@@ -5334,7 +5341,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <button
                               type="button"
                               onClick={() => toggleExamActive(exam)}
-                              className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                              className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 transition-colors ${
                                 exam.is_active
                                   ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
                                   : 'text-mist border-line bg-panel-2 hover:text-paper'
@@ -5347,7 +5354,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <button
                               type="button"
                               onClick={() => openEditExam(exam)}
-                              className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                              className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                             >
                               Edit
                             </button>
@@ -5356,7 +5363,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               onClick={() => duplicateWritingExam(exam)}
                               disabled={duplicatingExamId === exam.id}
-                              className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                              className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
                             >
                               {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
                             </button>
@@ -5364,7 +5371,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <button
                               type="button"
                               onClick={() => deleteWritingExam(exam)}
-                              className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                              className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                             >
                               Delete
                             </button>
@@ -5394,7 +5401,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               ? setListeningWizard({ mode: 'create' })
                               : setReadingWizard({ mode: 'create' })
                           }
-                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                          className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
                           + Add {contentTab} exam
                         </button>
@@ -5414,13 +5421,13 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       )}
 
                       {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           {contentTab === 'reading'
                             ? "No reading mocks yet — \"+ Add reading exam\" walks you through all 3 passages before it can be created."
                             : "No listening mocks yet — \"+ Add listening exam\" walks you through all 4 parts before it can be created."}
                         </div>
                       ) : filteredRlExams.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           No {contentTab} mocks match these filters.
                         </div>
                       ) : (
@@ -5438,7 +5445,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => toggleRlExamActive(exam)}
-                                  className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                                  className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 transition-colors ${
                                     exam.is_active
                                       ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
                                       : 'text-mist border-line bg-panel-2 hover:text-paper'
@@ -5469,7 +5476,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                     <button
                                       type="button"
                                       onClick={() => openEditRlExam(exam)}
-                                      className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                      className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                     >
                                       Edit
                                     </button>
@@ -5479,7 +5486,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => openExamPreview(exam)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                   title="See it laid out like a student would, and fix anything from there"
                                 >
                                   View test
@@ -5489,7 +5496,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                   type="button"
                                   onClick={() => duplicateRlExam(exam)}
                                   disabled={duplicatingExamId === exam.id}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
                                 >
                                   {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
                                 </button>
@@ -5497,7 +5504,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteRlExam(exam)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -5531,7 +5538,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         <button
                           type="button"
                           onClick={openCreateSection}
-                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                          className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
                           + Add section
                         </button>
@@ -5540,7 +5547,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       {rlLoading ? (
                         <p className="text-sm text-mist">Loading sections…</p>
                       ) : rlSections.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           No sections yet — add one (a passage for reading, an audio track for
                           listening), then add its questions.
                         </div>
@@ -5578,7 +5585,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditSection(sec)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                 >
                                   Edit
                                 </button>
@@ -5586,7 +5593,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteSection(sec)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -5620,7 +5627,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         <button
                           type="button"
                           onClick={openCreateQuestion}
-                          className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                          className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
                           + Add question
                         </button>
@@ -5660,7 +5667,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       {rlLoading ? (
                         <p className="text-sm text-mist">Loading questions…</p>
                       ) : rlQuestions.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           No questions yet — click "+ Add question" and you'll set its correct
                           answer as part of that form.
                         </div>
@@ -5689,7 +5696,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditQuestion(q)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                 >
                                   Edit
                                 </button>
@@ -5697,7 +5704,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteQuestion(q)}
-                                  className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -5739,7 +5746,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       ) : examPreview.error ? (
                         <p className="text-sm text-coral">{examPreview.error}</p>
                       ) : examPreview.sections.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           No sections yet — add them from "Manage sections" first.
                         </div>
                       ) : (
@@ -5758,7 +5765,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                   <button
                                     type="button"
                                     onClick={() => openEditSection(sec)}
-                                    className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                    className="focus-ring shrink-0 text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                   >
                                     Edit
                                   </button>
@@ -5832,7 +5839,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                         <button
                                           type="button"
                                           onClick={() => previewEditQuestion(q)}
-                                          className="focus-ring shrink-0 text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                          className="focus-ring shrink-0 text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                                         >
                                           Edit
                                         </button>
@@ -5880,14 +5887,14 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     <button
                       type="button"
                       onClick={openCreateFullMock}
-                      className="focus-ring shrink-0 rounded-full bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+                      className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                     >
                       + Add full mock
                     </button>
                   </div>
 
                   {fullMockSets.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+                    <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                       No full mocks yet — once you have at least one published Listening, Reading
                       and Writing exam, bundle them into a set here.
                     </div>
@@ -5915,7 +5922,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               <button
                                 type="button"
                                 onClick={() => toggleFullMockActive(set)}
-                                className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 transition-colors ${
+                                className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 transition-colors ${
                                   set.is_active
                                     ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
                                     : 'text-mist border-line bg-panel-2 hover:text-paper'
@@ -5928,7 +5935,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               <button
                                 type="button"
                                 onClick={() => openEditFullMock(set)}
-                                className="focus-ring text-xs font-semibold rounded-full border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
                               >
                                 Edit
                               </button>
@@ -5936,7 +5943,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               <button
                                 type="button"
                                 onClick={() => deleteFullMockSet(set)}
-                                className="focus-ring text-xs font-semibold rounded-full border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
                               >
                                 Delete
                               </button>
@@ -6169,7 +6176,7 @@ function BandBadge({ band, target }) {
   const diff = target != null ? band - target : null
   const tone = diff == null ? 'bg-panel-2 text-paper' : diff >= 0 ? 'bg-sage/15 text-sage' : diff > -1 ? 'bg-amber/15 text-amber' : 'bg-coral/15 text-coral'
   return (
-    <span className={`self-center inline-flex w-fit items-baseline gap-1 rounded-full px-2.5 py-0.5 text-sm font-bold ${tone}`}>
+    <span className={`self-center inline-flex w-fit items-baseline gap-1 rounded-xl px-2.5 py-0.5 text-sm font-bold ${tone}`}>
       {formatBand(band)}
       {diff != null && <span className="text-[10px] font-semibold">{diff >= 0 ? `+${formatBand(diff)}` : `−${formatBand(-diff)}`}</span>}
     </span>
@@ -6183,7 +6190,7 @@ function BandBadge({ band, target }) {
 function StudentRowList({ rows, onOpenProfile, emptyLabel, summaryById = {}, groupNamesFor }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+      <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
         {emptyLabel}
       </div>
     )
@@ -6749,14 +6756,14 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
             onClick={handleDownloadReport}
             disabled={downloadingReport}
             title="Downloads a PDF using each skill's most recently RELEASED result only — never a score the student hasn't been shown yet"
-            className="focus-ring ml-auto rounded-full border border-line bg-panel-2 text-paper text-xs font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-60"
+            className="focus-ring ml-auto rounded-xl border border-line bg-panel-2 text-paper text-xs font-semibold px-4 py-2 shadow-sm hover:border-brass/40 hover:text-brass transition-colors disabled:opacity-60"
           >
             {downloadingReport ? 'Generating…' : <><Icon name="file" className="h-3.5 w-3.5" /> Download PDF report</>}
           </button>
           <button
             type="button"
             onClick={() => onMessage(student.id)}
-            className="focus-ring rounded-full bg-brass text-onbrass text-xs font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
+            className="focus-ring rounded-xl bg-brass text-onbrass text-xs font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
           >
             Message {studentLabel(student)} →
           </button>
@@ -6863,7 +6870,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                                 <button
                                   type="button"
                                   onClick={() => onOpenMarking('writing', r.id)}
-                                  className="focus-ring rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                  className="focus-ring rounded-xl border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
                                 >
                                   Comments &amp; marks
                                 </button>
@@ -6969,7 +6976,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                             <div className="flex items-center justify-between gap-3 text-sm">
                               <span className="text-paper">{formatSlotTime(slot.scheduled_at)}</span>
                               <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full border px-2 py-0.5 ${meta.className}`}>
+                                <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-xl border px-2 py-0.5 ${meta.className}`}>
                                   {meta.label}
                                 </span>
                                 {slot.examiner_band != null && (
@@ -6982,7 +6989,7 @@ function StudentProfileModal({ row, onClose, onMessage, expandedEssays, onToggle
                                   <button
                                     type="button"
                                     onClick={() => onOpenMarking('speaking', slot.id)}
-                                    className="focus-ring rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                    className="focus-ring rounded-xl border border-line px-2.5 py-0.5 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
                                   >
                                     {slot.examiner_band != null ? 'Change marks' : 'Mark'}
                                   </button>
@@ -7054,7 +7061,7 @@ function SpeakingSlotRow({ slot, onMessage, onMarks }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full border px-2.5 py-1 ${meta.className}`}>
+          <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 ${meta.className}`}>
             {meta.label}
           </span>
           {slot.examiner_band != null ? (
@@ -7075,7 +7082,7 @@ function SpeakingSlotRow({ slot, onMessage, onMarks }) {
             <button
               type="button"
               onClick={onMarks}
-              className="focus-ring rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
+              className="focus-ring rounded-xl border border-line px-2.5 py-1 text-xs font-semibold text-paper hover:border-brass/50 hover:text-brass"
             >
               {slot.examiner_band != null ? 'Change marks' : 'Mark'}
             </button>
@@ -7154,7 +7161,7 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -7317,7 +7324,7 @@ function WritingExamFormModal({ modal, saving, error, onCancel, onSave }) {
               })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -7352,7 +7359,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -7422,7 +7429,7 @@ function ExamFormModal({ modal, saving, error, onCancel, onSave }) {
               })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -7540,7 +7547,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -7670,7 +7677,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
               })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -7710,7 +7717,7 @@ function FileInputButton({
   return (
     <span className={`inline-flex items-center gap-3 min-w-0 ${className}`}>
       <label
-        className={`focus-ring shrink-0 rounded-full border border-brass/40 bg-brass/15 px-3 py-1.5 text-xs font-semibold text-brass shadow-sm transition-colors hover:bg-brass/25 cursor-pointer ${
+        className={`focus-ring shrink-0 rounded-xl border border-brass/40 bg-brass/15 px-3 py-1.5 text-xs font-semibold text-brass shadow-sm transition-colors hover:bg-brass/25 cursor-pointer ${
           disabled ? 'opacity-50 pointer-events-none' : ''
         }`}
       >
@@ -7939,7 +7946,7 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -8038,7 +8045,7 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
               })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -8264,7 +8271,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -8324,7 +8331,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               type="button"
               onClick={() => setRevealedCount((n) => Math.min(n + 1, 4))}
               disabled={!isPartValid(parts[revealedCount - 1], revealedCount - 1)}
-              className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="focus-ring rounded-xl border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next part →
             </button>
@@ -8349,7 +8356,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+              className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
               {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create listening exam'}
             </button>
@@ -8578,7 +8585,7 @@ function ListeningPartEditor({ part, index, valid, onChange, onAddQuestion, onUp
         <button
           type="button"
           onClick={onAddQuestion}
-          className="focus-ring self-start text-xs font-semibold rounded-full border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
+          className="focus-ring self-start text-xs font-semibold rounded-xl border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
         >
           + Add question
         </button>
@@ -8739,7 +8746,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -8793,7 +8800,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               type="button"
               onClick={() => setRevealedCount((n) => Math.min(n + 1, 3))}
               disabled={!isPassageValid(passages[revealedCount - 1])}
-              className="focus-ring rounded-full border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="focus-ring rounded-xl border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next passage →
             </button>
@@ -8818,7 +8825,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+              className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
               {saving ? 'Saving…' : 'Create reading exam'}
             </button>
@@ -9019,7 +9026,7 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
         <button
           type="button"
           onClick={onAddQuestion}
-          className="focus-ring self-start text-xs font-semibold rounded-full border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
+          className="focus-ring self-start text-xs font-semibold rounded-xl border border-brass/40 bg-brass/10 text-brass px-3 py-1.5 hover:bg-brass/20 transition-colors"
         >
           + Add question
         </button>
@@ -9076,7 +9083,7 @@ function FullMockSetFormModal({
           <button
             type="button"
             onClick={onCancel}
-            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
+            className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition-colors hover:border-brass hover:text-brass"
             aria-label="Close"
           >
             ×
@@ -9209,7 +9216,7 @@ function FullMockSetFormModal({
               onSave({ title, listeningExamId, readingExamId, writingExamId, isActive, sortOrder, maxAttempts })
             }
             disabled={saving || !canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -9265,7 +9272,7 @@ function SectionPicker({ value, onChange, disabled = false }) {
             disabled={disabled}
             onClick={() => toggle(o.key)}
             aria-pressed={on}
-            className={`focus-ring rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+            className={`focus-ring rounded-xl border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
               on ? 'border-brass/50 bg-brass/15 text-brass' : 'border-line text-mist line-through hover:border-brass/40'
             }`}
           >
@@ -9458,7 +9465,7 @@ function AccessCodeIssueModal({
                       key={g.id}
                       type="button"
                       onClick={() => addGroup(g.id)}
-                      className="focus-ring text-[11px] rounded-full border border-line px-2.5 py-1 text-mist hover:border-brass hover:text-brass transition-colors"
+                      className="focus-ring text-[11px] rounded-xl border border-line px-2.5 py-1 text-mist hover:border-brass hover:text-brass transition-colors"
                     >
                       + {g.name}
                     </button>
@@ -9511,7 +9518,7 @@ function AccessCodeIssueModal({
                 type="button"
                 onClick={handleGenerate}
                 disabled={!canGenerate}
-                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+                className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
               >
                 {generating
                   ? 'Generating…'
@@ -9576,7 +9583,7 @@ function AccessCodeIssueModal({
                 type="button"
                 onClick={handleSend}
                 disabled={sending}
-                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+                className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
               >
                 {sending ? 'Sending…' : 'Send via Telegram'}
               </button>
@@ -9634,7 +9641,7 @@ function AccessCodeIssueModal({
               <button
                 type="button"
                 onClick={onDone}
-                className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors"
+                className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors"
               >
                 Done
               </button>
@@ -9758,7 +9765,7 @@ function ScheduleSessionModal({ groups, fullMockSets, saving, error, onCancel, o
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
           >
             {saving ? 'Scheduling…' : 'Schedule'}
           </button>

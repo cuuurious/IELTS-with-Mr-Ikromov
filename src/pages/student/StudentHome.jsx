@@ -215,11 +215,20 @@ const MOCK_STATUS = {
 }
 
 // Band tiles: deep tile colours that read the same in light and dark.
+// Calmer (2026-10-29): every band tile is the same white card; the
+// skill colour is only on the label and the number.
+const BAND_BAR = {
+  listening: 'bg-listening',
+  reading: 'bg-reading',
+  writing: 'bg-writing',
+  speaking: 'bg-speaking',
+}
+
 const BAND_TILE = {
-  listening: 'bg-[#1b3b73] text-white',
-  reading: 'bg-[#1e9e9a] text-white',
-  writing: 'bg-[#b23a48] text-white',
-  speaking: 'bg-[#6a3f99] text-white',
+  listening: 'text-listening',
+  reading: 'text-reading',
+  writing: 'text-writing',
+  speaking: 'text-speaking',
 }
 
 function greetingFor(now) {
@@ -237,7 +246,7 @@ function Pill({ state, className = '' }) {
 
 function Card({ className = '', children, ...rest }) {
   return (
-    <section className={`rounded-[22px] border border-line bg-panel ${className}`} {...rest}>
+    <section className={`rounded-[20px] border border-line bg-panel ${className}`} {...rest}>
       {children}
     </section>
   )
@@ -363,7 +372,7 @@ export default function StudentHome({
             <div className="tile-cut flex flex-col gap-4 bg-[#f6f5f1] p-5 text-[#17213a] sm:flex-row sm:items-center sm:p-6">
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-[13px] font-bold">
-                  <span className="inline-flex items-center gap-1.5 text-[#1b3b73]">
+                  <span className="inline-flex items-center gap-1.5 text-[#2456b0]">
                     <SkillIcon skill={hero.skill.key} className="h-4 w-4" />
                     {hero.skill.key === 'general' ? 'Homework' : hero.skill.label}
                   </span>
@@ -379,7 +388,7 @@ export default function StudentHome({
                 <button
                   type="button"
                   onClick={() => onOpenHomework(hero.hw.id)}
-                  className="focus-ring inline-flex h-12 items-center gap-2 rounded-[12px] bg-[#1b3b73] px-5 text-[15px] font-bold text-white hover:bg-[#24498a]"
+                  className="focus-ring inline-flex h-12 items-center gap-2 rounded-[12px] bg-[#2456b0] px-5 text-[15px] font-bold text-white hover:bg-[#2a63c6]"
                 >
                   {hero.skill.key === 'writing' ? 'Start writing' : hero.skill.key === 'speaking' ? 'Start recording' : 'Open homework'}
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -387,7 +396,7 @@ export default function StudentHome({
                 <button
                   type="button"
                   onClick={() => onNavigate('homework')}
-                  className="focus-ring inline-flex h-12 items-center rounded-[12px] border-2 border-[#1b3b73] px-4 text-[15px] font-bold text-[#1b3b73] hover:bg-[#1b3b73] hover:text-white"
+                  className="focus-ring inline-flex h-12 items-center rounded-[12px] border-2 border-[#2456b0] px-4 text-[15px] font-bold text-[#2456b0] hover:bg-[#2456b0] hover:text-white"
                 >
                   All homework
                 </button>
@@ -411,7 +420,7 @@ export default function StudentHome({
                 <button
                   type="button"
                   onClick={() => (overdue.length ? onOpenHomework(overdue[0].hw.id) : onNavigate('wordlists'))}
-                  className="focus-ring inline-flex h-12 w-fit shrink-0 items-center rounded-[12px] bg-[#1b3b73] px-5 text-[15px] font-bold text-white hover:bg-[#24498a]"
+                  className="focus-ring inline-flex h-12 w-fit shrink-0 items-center rounded-[12px] bg-[#2456b0] px-5 text-[15px] font-bold text-white hover:bg-[#2a63c6]"
                 >
                   {overdue.length ? 'Catch up now' : 'Revise words'}
                 </button>
@@ -469,13 +478,14 @@ export default function StudentHome({
             const tone = BAND_TILE[skill.key]
             const gap = band != null && target != null ? target - band : null
             return (
-              <div key={skill.key} className={`tile-cut flex flex-col gap-1 px-4 py-4 ${band != null ? tone : 'bg-panel text-paper'}`}>
-                <span className="flex items-center gap-1.5 text-[13px] font-bold opacity-90">
+              <div key={skill.key} className="tile-cut relative flex flex-col gap-1 overflow-hidden border border-line bg-panel px-4 pb-4 pt-5 text-paper">
+                <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${BAND_BAR[skill.key]}`} />
+                <span className={`flex items-center gap-1.5 text-[13px] font-bold ${tone}`}>
                   <SkillIcon skill={skill.key} className="h-4 w-4" />
                   {skill.label}
                 </span>
-                <span className="font-brand text-[30px] font-semibold leading-tight tabular-nums">{band != null ? formatBand(band) : '–'}</span>
-                <span className="text-[12.5px] opacity-85">
+                <span className={`font-brand text-[30px] font-semibold leading-tight tabular-nums ${band != null ? tone : 'text-mist'}`}>{band != null ? formatBand(band) : '–'}</span>
+                <span className="text-[12.5px] text-mist">
                   {band == null ? 'After your first mock' : gap == null ? 'Set a target to compare' : gap <= 0 ? 'Target reached' : `${formatBand(gap)} to target`}
                 </span>
               </div>
@@ -484,7 +494,7 @@ export default function StudentHome({
           <button
             type="button"
             onClick={onOpenMockCenter}
-            className="tile-cut col-span-2 flex flex-col justify-between gap-1 bg-[#e6a33a] px-4 py-4 text-left text-[#17213a] md:col-span-1"
+            className="tile-cut registan-band col-span-2 flex flex-col justify-between gap-1 px-4 py-4 text-left text-white md:col-span-1"
           >
             <span className="text-[13px] font-bold">Overall</span>
             <span className="font-brand text-[30px] font-semibold leading-tight tabular-nums">{bands?.overall != null ? formatBand(bands.overall) : '–'}</span>
@@ -525,7 +535,7 @@ export default function StudentHome({
               key={hw.id}
               type="button"
               onClick={() => onOpenHomework(hw.id)}
-              className="tile-cut tile-cut-lg focus-ring group flex flex-col overflow-hidden bg-panel text-left transition hover:brightness-[1.02]"
+              className="tile-cut tile-cut-lg focus-ring group flex flex-col overflow-hidden border border-line bg-panel text-left transition hover:brightness-[1.02]"
             >
               <div className={`flex h-[118px] items-center justify-center ${skill.tint}`}>
                 <SkillArt skill={skill.key} title={hw.title} className="h-[96px] w-[220px]" />
@@ -575,7 +585,7 @@ export default function StudentHome({
       {/* LATEST MARKING */}
       <Card className="lg:col-span-5 flex flex-col gap-3.5 p-6">
         <div className="flex items-center gap-3">
-          <img src={TEACHER_PHOTO} alt="" className="h-10 w-10 rounded-full object-cover" />
+          <img src={TEACHER_PHOTO} alt="" className="h-10 w-10 rounded-xl object-cover" />
           <div className="flex min-w-0 flex-col leading-snug">
             <h2 className="text-[15px] font-semibold">
               {feedback ? 'Mr Ikromov marked your work' : 'Mr Ikromov’s feedback'}

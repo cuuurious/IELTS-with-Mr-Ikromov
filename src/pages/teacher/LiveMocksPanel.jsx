@@ -574,7 +574,7 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
     { key: 'all', label: 'All sittings' },
   ]
 
-  const btn = 'focus-ring rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-mist hover:border-brass hover:text-brass disabled:opacity-50'
+  const btn = 'focus-ring rounded-xl border border-line px-3 py-1.5 text-xs font-semibold text-mist hover:border-brass hover:text-brass disabled:opacity-50'
 
   return (
     <div className="flex flex-col gap-4">
@@ -586,19 +586,19 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
             several at once. Changes reach their screens within a few seconds.
           </p>
         </div>
-        <div className="flex flex-wrap rounded-full border border-line bg-panel-2 p-1">
+        <div className="flex flex-wrap rounded-xl border border-line bg-panel-2 p-1">
           {tabs.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setView(t.key)}
-              className={`focus-ring rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+              className={`focus-ring rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                 view === t.key ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'
               }`}
             >
               {t.label}
               {t.count != null && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-px text-[10px] ${view === t.key ? 'bg-onbrass/20' : t.key === 'abandoned' && t.count ? 'bg-coral/15 text-coral' : 'bg-panel'}`}>
+                <span className={`ml-1.5 rounded-xl px-1.5 py-px text-[10px] ${view === t.key ? 'bg-onbrass/20' : t.key === 'abandoned' && t.count ? 'bg-coral/15 text-coral' : 'bg-panel'}`}>
                   {t.count}
                 </span>
               )}
@@ -654,11 +654,11 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search a student…"
-            className="focus-ring w-full rounded-full border border-line bg-panel py-2 pl-9 pr-3 text-sm text-paper"
+            className="focus-ring w-full rounded-xl border border-line bg-panel py-2 pl-9 pr-3 text-sm text-paper"
           />
         </label>
         {usedGroupIds.length > 0 && (
-          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper">
+          <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper">
             <option value="">All groups</option>
             {usedGroupIds.map((g) => (
               <option key={g} value={g}>
@@ -667,7 +667,7 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
             ))}
           </select>
         )}
-        <select value={sectionFilter} onChange={(e) => setSectionFilter(e.target.value)} className="focus-ring rounded-full border border-line bg-panel px-3 py-2 text-sm text-paper">
+        <select value={sectionFilter} onChange={(e) => setSectionFilter(e.target.value)} className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper">
           <option value="">All sections</option>
           {STAGES.map((s) => (
             <option key={s} value={s}>
@@ -706,7 +706,7 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
               <button type="button" onClick={bulk.voidRetake} className={`${btn} hover:border-coral hover:text-coral`}>Void &amp; retake</button>
             </>
           )}
-          <button type="button" onClick={bulk.remove} className="focus-ring rounded-full border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10">
+          <button type="button" onClick={bulk.remove} className="focus-ring rounded-xl border border-coral/40 px-3 py-1.5 text-xs font-semibold text-coral hover:bg-coral/10">
             Delete
           </button>
           <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-xs font-semibold text-mist underline hover:text-paper">
@@ -718,7 +718,7 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
       {loading ? (
         <p className="text-sm text-mist">Loading…</p>
       ) : shown.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
+        <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
           {view === 'live'
             ? search || groupFilter || sectionFilter
               ? 'Nobody matches these filters.'
@@ -786,12 +786,12 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
                 {/* section */}
                 <div className="col-span-2 col-start-2 flex flex-wrap items-center gap-1.5 lg:col-span-1 lg:col-start-auto">
                   {r.done ? (
-                    <span className="rounded-full border border-line px-2 py-0.5 text-[11px] font-semibold text-mist">Finished</span>
+                    <span className="rounded-xl border border-line px-2 py-0.5 text-[11px] font-semibold text-mist">Finished</span>
                   ) : r.paused ? (
-                    <span className="whitespace-nowrap rounded-full border border-amber/40 bg-amber/10 px-2 py-0.5 text-[11px] font-semibold text-amber">{STAGE_LABEL[s.stage]} · paused</span>
+                    <span className="whitespace-nowrap rounded-xl border border-amber/40 bg-amber/10 px-2 py-0.5 text-[11px] font-semibold text-amber">{STAGE_LABEL[s.stage]} · paused</span>
                   ) : (
                     <>
-                      <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${STAGE_COLOR[s.stage] || ''}`}>{STAGE_LABEL[s.stage]}</span>
+                      <span className={`whitespace-nowrap rounded-xl px-2 py-0.5 text-[11px] font-semibold ${STAGE_COLOR[s.stage] || ''}`}>{STAGE_LABEL[s.stage]}</span>
                       {!r.live && <span className="whitespace-nowrap text-[11px] text-mist">not started</span>}
                     </>
                   )}
@@ -852,9 +852,9 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
 
                 {/* alerts */}
                 <div className="col-span-2 col-start-2 flex flex-wrap gap-1 lg:col-span-1 lg:col-start-auto">
-                  {r.abandoned && <span className="rounded-full bg-coral/10 px-2 py-0.5 text-[11px] font-semibold text-coral">No activity {formatAgo(r.sinceActivity).replace(' ago', '')}</span>}
+                  {r.abandoned && <span className="rounded-xl bg-coral/10 px-2 py-0.5 text-[11px] font-semibold text-coral">No activity {formatAgo(r.sinceActivity).replace(' ago', '')}</span>}
                   {r.alerts.map(([sev, text]) => (
-                    <span key={text} className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${sev === 2 ? 'bg-coral/15 text-coral' : 'bg-amber/15 text-amber'}`}>
+                    <span key={text} className={`rounded-xl px-2 py-0.5 text-[11px] font-semibold ${sev === 2 ? 'bg-coral/15 text-coral' : 'bg-amber/15 text-amber'}`}>
                       {text}
                     </span>
                   ))}
@@ -864,11 +864,11 @@ export default function LiveMocksPanel({ students, fullMockSets, groups = [], gr
                 <div className="hidden items-center justify-end gap-1.5 lg:flex">
                   {!r.done &&
                     (r.paused ? (
-                      <button type="button" disabled={busy} onClick={() => resume(r)} className="focus-ring rounded-full bg-brass px-2.5 py-1 text-[11px] font-bold text-onbrass hover:bg-brass-dim disabled:opacity-50">
+                      <button type="button" disabled={busy} onClick={() => resume(r)} className="focus-ring rounded-xl bg-brass px-2.5 py-1 text-[11px] font-bold text-onbrass hover:bg-brass-dim disabled:opacity-50">
                         ▶ Resume
                       </button>
                     ) : (
-                      <button type="button" disabled={busy} onClick={() => pause(r)} className="focus-ring inline-flex items-center gap-1 rounded-full border border-amber/40 px-2.5 py-1 text-[11px] font-bold text-amber hover:bg-amber/10 disabled:opacity-50">
+                      <button type="button" disabled={busy} onClick={() => pause(r)} className="focus-ring inline-flex items-center gap-1 rounded-xl border border-amber/40 px-2.5 py-1 text-[11px] font-bold text-amber hover:bg-amber/10 disabled:opacity-50">
                         <Icon name="pause" className="h-3 w-3" /> Pause
                       </button>
                     ))}

@@ -89,7 +89,7 @@ export default function TeacherGroupChats({
   return (
     <div className="flex min-h-0 flex-col gap-4">
 
-      <div className="rounded-[22px] border border-line bg-panel p-4 sm:p-5">
+      <div className="rounded-[20px] border border-line bg-panel p-4 sm:p-5">
 
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-lg font-semibold text-paper">
@@ -118,14 +118,14 @@ export default function TeacherGroupChats({
                   type="button"
                   onClick={() => setActiveGroup(group.id)}
                   aria-pressed={active}
-                  className={`focus-ring inline-flex items-center gap-2 rounded-full py-1 pl-1 pr-3.5 text-sm font-medium transition-colors ${
+                  className={`focus-ring inline-flex items-center gap-2 rounded-xl py-1 pl-1 pr-3.5 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-brass text-onbrass'
                       : 'bg-panel-2 text-paper hover:bg-line'
                   }`}
                 >
                   <span
-                    className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-xs font-semibold ${look.tint} ${look.text}`}
+                    className={`inline-flex h-7 min-w-7 items-center justify-center rounded-xl px-1.5 text-xs font-semibold ${look.tint} ${look.text}`}
                   >
                     {groupBadge(group.name)}
                   </span>

@@ -229,7 +229,7 @@ export default function SpeakingComments({ slot, editable = false, showAuthors =
                 role="radio"
                 aria-checked={category === c.key}
                 onClick={() => setCategory(c.key)}
-                className={`focus-ring rounded-full px-2.5 py-1 text-[12px] font-semibold ${c.chip} ${category === c.key ? 'ring-2 ring-paper/70' : 'opacity-70 hover:opacity-100'}`}
+                className={`focus-ring rounded-xl px-2.5 py-1 text-[12px] font-semibold ${c.chip} ${category === c.key ? 'ring-2 ring-paper/70' : 'opacity-70 hover:opacity-100'}`}
               >
                 {c.label}
               </button>
@@ -248,7 +248,7 @@ export default function SpeakingComments({ slot, editable = false, showAuthors =
             type="button"
             onClick={add}
             disabled={adding}
-            className="focus-ring self-end rounded-full bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
+            className="focus-ring self-end rounded-xl bg-brass px-4 py-1.5 text-sm font-semibold text-onbrass hover:bg-brass-dim disabled:opacity-50"
           >
             {adding ? 'Saving…' : 'Add comment'}
           </button>
@@ -289,15 +289,15 @@ function SpeakingCommentRow({ comment, author, editable, playable, onSeek, onUpd
             <button
               type="button"
               onClick={onSeek}
-              className="focus-ring inline-flex items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-[11px] font-semibold tabular-nums text-panel"
+              className="focus-ring inline-flex items-center gap-1 rounded-xl bg-paper px-2 py-0.5 text-[11px] font-semibold tabular-nums text-panel"
               title="Play from here"
             >
               ▶ {stamp}
             </button>
           ) : (
-            <span className="rounded-full bg-panel-2 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-paper">{stamp}</span>
+            <span className="rounded-xl bg-panel-2 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-paper">{stamp}</span>
           ))}
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${cat.chip}`}>{cat.label}</span>
+        <span className={`rounded-xl px-2 py-0.5 text-[11px] font-semibold ${cat.chip}`}>{cat.label}</span>
         {author && <span className="ml-auto truncate text-[11px] text-mist">{author.full_name || author.username}</span>}
       </div>
 
@@ -335,7 +335,7 @@ function SpeakingCommentRow({ comment, author, editable, playable, onSeek, onUpd
                   setEditing(false)
                 })
               }
-              className="focus-ring rounded-full bg-brass px-3 py-1 text-[13px] font-semibold text-onbrass disabled:opacity-50"
+              className="focus-ring rounded-xl bg-brass px-3 py-1 text-[13px] font-semibold text-onbrass disabled:opacity-50"
             >
               Save
             </button>

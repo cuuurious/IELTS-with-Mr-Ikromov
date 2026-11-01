@@ -103,7 +103,7 @@ function Viewer({ url, name, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-paper hover:bg-panel-2"
+          className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-paper hover:bg-panel-2"
           aria-label="Close"
           title="Close (Esc)"
         >
@@ -115,7 +115,7 @@ function Viewer({ url, name, onClose }) {
         <a
           href={downloadHref(url, /\.html?$/i.test(name) ? name : `${name}.html`)}
           download
-          className="focus-ring hidden shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-paper hover:bg-panel-2 sm:inline-flex"
+          className="focus-ring hidden shrink-0 items-center gap-1.5 rounded-xl border border-line px-3 py-1.5 text-sm font-medium text-paper hover:bg-panel-2 sm:inline-flex"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16" />

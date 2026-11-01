@@ -2333,7 +2333,7 @@ export default function Chat({
       className={`chat-pane relative flex min-h-0 flex-col overflow-hidden bg-panel ${
         embedded
           ? 'h-full'
-          : 'h-[36rem] rounded-[22px] border border-line'
+          : 'h-[36rem] rounded-[20px] border border-line'
       }`}
     >
 
@@ -2387,7 +2387,7 @@ export default function Chat({
           }}
           className={
             selectMode
-              ? 'focus-ring shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
+              ? 'focus-ring shrink-0 rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper transition-colors hover:bg-line'
               : CHAT_ICON_BUTTON
           }
           aria-label={selectMode ? 'Cancel selecting' : 'Select messages'}
@@ -2554,7 +2554,7 @@ export default function Chat({
               onClick={() => jumpToMessage(pinnedMessage.id)}
               className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-0.5 text-left"
             >
-              <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
+              <span className="h-8 w-[3px] shrink-0 rounded-xl bg-brass" aria-hidden="true" />
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1 text-[11px] font-medium text-paper">
@@ -2578,7 +2578,7 @@ export default function Chat({
                     (index) => (index + 1) % pins.length
                   )
                 }
-                className="focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
+                className="focus-ring shrink-0 rounded-xl px-2.5 py-1 text-xs font-medium text-paper-dim hover:bg-panel-2"
               >
                 Next
               </button>
@@ -2589,7 +2589,7 @@ export default function Chat({
               onClick={() => unpinMessage(pinnedMessage.id)}
               title="Unpin"
               aria-label="Unpin message"
-              className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+              className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-mist hover:bg-panel-2 hover:text-paper"
             >
               <Icon name="close" className="h-3.5 w-3.5" />
             </button>
@@ -2608,7 +2608,7 @@ export default function Chat({
               type="button"
               onClick={loadOlder}
               disabled={loadingOlder}
-              className="focus-ring rounded-full border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
+              className="focus-ring rounded-xl border border-line bg-panel px-3.5 py-1.5 text-xs font-medium text-paper-dim transition-colors hover:text-paper disabled:opacity-40"
             >
               {loadingOlder ? 'Loading…' : 'Load older messages'}
             </button>
@@ -2718,7 +2718,7 @@ export default function Chat({
 
               {dateChanged && (
                 <div className={`flex justify-center ${index === 0 ? 'mb-3' : 'my-4'}`}>
-                  <span className="rounded-full border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
+                  <span className="rounded-xl border border-line bg-panel px-3 py-1 text-[11px] font-medium text-paper-dim">
                     {formatDateDivider(m.created_at)}
                   </span>
                 </div>
@@ -2809,7 +2809,7 @@ export default function Chat({
                   className={`relative max-w-full select-none text-[14.5px] leading-[1.45] ${
                     isRound
                       ? ''
-                      : `rounded-[18px] ${corners} ${
+                      : `rounded-[20px] ${corners} ${
                           mine
                             ? 'bg-brass text-onbrass'
                             : 'border border-line bg-panel text-paper'
@@ -2890,7 +2890,7 @@ export default function Chat({
                       <button
                         type="button"
                         onClick={() => saveEdit(m)}
-                        className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
+                        className="shrink-0 rounded-xl px-2 py-1 text-xs font-semibold"
                       >
                         Save
                       </button>
@@ -2914,7 +2914,7 @@ export default function Chat({
                   )}
 
                   {isMedia && (
-                    <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
+                    <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-xl bg-black/50 px-2 py-1 text-[11px] leading-none text-white">
                       {metaContent}
                     </span>
                   )}
@@ -2922,7 +2922,7 @@ export default function Chat({
                   {!isText && !isMedia && (
                     <div
                       className={`mt-1 flex items-center justify-end gap-1 text-[11px] leading-none ${
-                        isRound ? 'w-fit ml-auto rounded-full bg-panel px-2 py-1 text-mist' : metaTone
+                        isRound ? 'w-fit ml-auto rounded-xl bg-panel px-2 py-1 text-mist' : metaTone
                       }`}
                     >
                       {metaContent}
@@ -2946,7 +2946,7 @@ export default function Chat({
                             e.stopPropagation()
                             toggleReaction(m, reaction)
                           }}
-                          className={`focus-ring inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                          className={`focus-ring inline-flex items-center gap-1 rounded-xl border px-2 py-0.5 text-xs transition-colors ${
                             mineReaction
                               ? 'border-brass/40 bg-brass/10 text-paper'
                               : 'border-line bg-panel text-paper-dim hover:text-paper'
@@ -2995,7 +2995,7 @@ export default function Chat({
 
           <span className="text-mist"><ChatGlyph name="reply" className="h-4 w-4" /></span>
 
-          <span className="h-8 w-[3px] shrink-0 rounded-full bg-brass" aria-hidden="true" />
+          <span className="h-8 w-[3px] shrink-0 rounded-xl bg-brass" aria-hidden="true" />
 
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold text-paper">
@@ -3013,7 +3013,7 @@ export default function Chat({
           <button
             type="button"
             onClick={() => setReplyingTo(null)}
-            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-mist hover:bg-panel-2 hover:text-paper"
+            className="focus-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-mist hover:bg-panel-2 hover:text-paper"
             aria-label="Cancel reply"
           >
             <Icon name="close" className="h-4 w-4" />
@@ -3036,7 +3036,7 @@ export default function Chat({
             <button
               type="button"
               onClick={cancelSelecting}
-              className="focus-ring rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
+              className="focus-ring rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-paper"
             >
               Cancel
             </button>
@@ -3045,7 +3045,7 @@ export default function Chat({
               type="button"
               onClick={bulkDeleteForMe}
               disabled={!selectedIds.size}
-              className="focus-ring rounded-full bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
+              className="focus-ring rounded-xl bg-urgent-tint px-3.5 py-2 text-xs font-medium text-urgent transition-opacity disabled:opacity-40"
             >
               Delete for me
             </button>
@@ -3055,7 +3055,7 @@ export default function Chat({
                 type="button"
                 onClick={bulkDeleteForEveryone}
                 disabled={!selectedIds.size}
-                className="focus-ring rounded-full bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
+                className="focus-ring rounded-xl bg-urgent px-3.5 py-2 text-xs font-medium text-panel transition-opacity disabled:opacity-40"
               >
                 Delete for everyone
               </button>
@@ -3081,7 +3081,7 @@ export default function Chat({
             type="button"
             onClick={discardRecording}
             disabled={uploading}
-            className="focus-ring ml-auto shrink-0 rounded-full bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent disabled:opacity-40"
+            className="focus-ring ml-auto shrink-0 rounded-xl bg-panel-2 px-3.5 py-2 text-xs font-medium text-paper-dim transition-colors hover:text-urgent disabled:opacity-40"
           >
             Discard
           </button>
@@ -3090,7 +3090,7 @@ export default function Chat({
             type="button"
             onClick={sendRecording}
             disabled={uploading}
-            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
+            className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brass px-4 py-2 text-xs font-medium text-onbrass hover:bg-brass-dim disabled:opacity-40"
           >
             <Icon name="send" className="h-3.5 w-3.5" />
             {uploading ? 'Sending…' : 'Send'}
@@ -3109,8 +3109,8 @@ export default function Chat({
           )}
 
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-urgent opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-urgent" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-xl bg-urgent opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-xl bg-urgent" />
           </span>
 
           <Icon name={recordingKind === 'video' ? 'video' : 'mic'} className="h-4 w-4" />
@@ -3120,7 +3120,7 @@ export default function Chat({
           <button
             type="button"
             onClick={stopRecording}
-            className="focus-ring ml-auto shrink-0 rounded-full bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
+            className="focus-ring ml-auto shrink-0 rounded-xl bg-urgent px-3.5 py-1.5 text-xs font-medium text-panel"
           >
             Stop
           </button>
@@ -3147,7 +3147,7 @@ export default function Chat({
 
         <PendingAttachment file={pendingFile} onRemove={() => setPendingFile(null)} disabled={uploading} />
 
-        <div className="flex items-center gap-1 rounded-[26px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40">
+        <div className="flex items-center gap-1 rounded-[20px] border border-line bg-panel-2 p-1.5 transition-colors focus-within:border-paper-dim/40">
 
           {/* PHOTO / VIDEO / FILE */}
           <button

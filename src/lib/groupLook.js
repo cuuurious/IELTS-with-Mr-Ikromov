@@ -6,14 +6,19 @@
  * Home, in Groups & Homework and in the Mock Center.
  */
 
+// Group colours (2026-10-29): their own six Registan colours, separate
+// from the skill colours, so "blue" never means both Listening and a group.
 const PALETTE = [
-  { tint: 'bg-reading-tint', text: 'text-reading', bar: 'bg-reading' },
-  { tint: 'bg-writing-tint', text: 'text-writing', bar: 'bg-writing' },
-  { tint: 'bg-listening-tint', text: 'text-listening', bar: 'bg-listening' },
-  { tint: 'bg-speaking-tint', text: 'text-speaking', bar: 'bg-speaking' },
-  { tint: 'bg-vocab-tint', text: 'text-vocab', bar: 'bg-vocab' },
+  { tint: 'bg-group1-tint', text: 'text-group1', bar: 'bg-group1', border: 'border-group1', hex: 'var(--color-group1)' },
+  { tint: 'bg-group2-tint', text: 'text-group2', bar: 'bg-group2', border: 'border-group2', hex: 'var(--color-group2)' },
+  { tint: 'bg-group3-tint', text: 'text-group3', bar: 'bg-group3', border: 'border-group3', hex: 'var(--color-group3)' },
+  { tint: 'bg-group4-tint', text: 'text-group4', bar: 'bg-group4', border: 'border-group4', hex: 'var(--color-group4)' },
+  { tint: 'bg-group5-tint', text: 'text-group5', bar: 'bg-group5', border: 'border-group5', hex: 'var(--color-group5)' },
+  { tint: 'bg-group6-tint', text: 'text-group6', bar: 'bg-group6', border: 'border-group6', hex: 'var(--color-group6)' },
 ]
 
+// A group's colour comes from its position in the list of groups ordered
+// by creation date, so it is the same on every page.
 export function groupColour(index) {
   return PALETTE[(index < 0 ? 0 : index) % PALETTE.length]
 }

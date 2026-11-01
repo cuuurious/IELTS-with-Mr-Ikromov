@@ -29,7 +29,7 @@ export default function PendingAttachment({ file, onRemove, disabled = false }) 
   const size = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(sizeKb))} KB`
 
   return (
-    <div className="mb-2 flex items-center gap-3 rounded-[18px] border border-line bg-panel-2 p-2 pr-3">
+    <div className="mb-2 flex items-center gap-3 rounded-[20px] border border-line bg-panel-2 p-2 pr-3">
       {preview ? (
         <img src={preview} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
       ) : (

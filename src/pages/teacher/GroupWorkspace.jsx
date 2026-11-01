@@ -1,3 +1,4 @@
+import { groupColour } from '../../lib/groupLook'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
@@ -10,6 +11,7 @@ import { useSessionState } from '../../lib/sessionState'
 import { skillOfHomework, formatDue } from '../../lib/skills'
 import { SkillIcon } from '../../components/SkillArt'
 import { fetchAll } from '../../lib/fetchAll'
+import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import Icon from '../../components/Icon'
 
 export default function GroupWorkspace({ teacherId }) {
@@ -116,7 +118,7 @@ export default function GroupWorkspace({ teacherId }) {
     const [{ data: members }, { data: hw }] = await Promise.all([
       supabase
         .from('group_members')
-        .select('group_id, profiles!inner(status)')
+        .select('group_id, student_id, profiles!inner(status)')
         .in('group_id', groupIds)
         .eq('profiles.status', 'approved'),
       supabase
@@ -148,31 +150,75 @@ export default function GroupWorkspace({ teacherId }) {
 
     setGroupCounts(counts)
 
-    // How many have handed in each group's newest homework.
-    const latestIds = Object.values(counts).map((c) => c.latest?.id).filter(Boolean)
-    if (latestIds.length) {
-      // fetchAll (2026-10-06): past 1000 rows the counts came out short.
-      const { data: done } = await fetchAll(() =>
-        supabase
-          .from('submissions')
-          .select('id, homework_id')
-          .in('homework_id', latestIds)
-          .eq('status', 'done')
-          .order('id')
-      )
-      const doneBy = {}
-      ;(done || []).forEach((row) => {
-        doneBy[row.homework_id] = (doneBy[row.homework_id] || 0) + 1
-      })
-      setGroupCounts((prev) => {
-        const next = { ...prev }
-        Object.keys(next).forEach((id) => {
-          const latest = next[id].latest
-          if (latest) next[id] = { ...next[id], latestDone: doneBy[latest.id] || 0 }
+    // Card numbers (redesign 2026-11-02): homework on time over the last
+    // 4 weeks, missed this week, open tasks, next deadline, average of
+    // each student's latest mock band.
+    const now = Date.now()
+    const DAY = 86400000
+    const studentsOf = {}
+    ;(members || []).forEach((m) => {
+      ;(studentsOf[m.group_id] ||= new Set()).add(m.student_id)
+    })
+    const recent = (hw || []).filter((h) => h.due_date && now - new Date(h.due_date).getTime() < 28 * DAY)
+    const wanted = [...new Set([...recent.map((h) => h.id), ...Object.values(counts).map((c) => c.latest?.id).filter(Boolean)])]
+    const allStudentIds = [...new Set((members || []).map((m) => m.student_id))]
+    const [{ data: subs }, { data: mocks }] = await Promise.all([
+      wanted.length
+        ? fetchAll(() =>
+            supabase.from('submissions').select('id, homework_id, student_id, submitted_at, status').in('homework_id', wanted).order('id')
+          )
+        : Promise.resolve({ data: [] }),
+      allStudentIds.length
+        ? fetchAll(() =>
+            supabase
+              .from('mock_attempts')
+              .select('id, user_id, score, max_score, band, submitted_at')
+              .in('user_id', allStudentIds)
+              .not('submitted_at', 'is', null)
+              .order('id')
+          )
+        : Promise.resolve({ data: [] }),
+    ])
+    const subsBy = {}
+    ;(subs || []).forEach((row) => {
+      ;(subsBy[row.homework_id] ||= []).push(row)
+    })
+    const lastMock = {}
+    ;(mocks || []).forEach((a) => {
+      const prev = lastMock[a.user_id]
+      if (!prev || String(a.submitted_at) > String(prev.submitted_at)) lastMock[a.user_id] = a
+    })
+    const mockBand = (a) => a.band ?? (a.max_score ? estimateBandFromPercent((a.score / a.max_score) * 100) : null)
+    setGroupCounts((prev) => {
+      const next = { ...prev }
+      Object.keys(next).forEach((id) => {
+        const c = { ...next[id] }
+        const roster = studentsOf[id] || new Set()
+        const own = (hw || []).filter((h) => h.group_id === id)
+        if (c.latest) c.latestDone = (subsBy[c.latest.id] || []).filter((r) => r.status === 'done' && roster.has(r.student_id)).length
+        let due = 0
+        let onTime = 0
+        let missedWeek = 0
+        own.forEach((h) => {
+          if (!h.due_date) return
+          const dueAt = new Date(h.due_date).getTime()
+          if (dueAt > now || now - dueAt > 28 * DAY) return
+          const handed = (subsBy[h.id] || []).filter((r) => roster.has(r.student_id))
+          due += roster.size
+          onTime += handed.filter((r) => new Date(r.submitted_at).getTime() <= dueAt).length
+          if (now - dueAt <= 7 * DAY) missedWeek += Math.max(0, roster.size - handed.length)
         })
-        return next
+        const upcoming = own.filter((h) => h.due_date && new Date(h.due_date).getTime() > now).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+        const bands = [...roster].map((sid) => lastMock[sid]).filter(Boolean).map(mockBand).filter((b) => b != null)
+        c.onTimePct = due ? Math.round((onTime / due) * 100) : null
+        c.missedWeek = missedWeek
+        c.open = upcoming.length
+        c.next = upcoming[0] || null
+        c.avgBand = bands.length ? roundOverallBand(bands.reduce((x, y) => x + y, 0) / bands.length) : null
+        next[id] = c
       })
-    }
+      return next
+    })
   }
 
   useEffect(() => {
@@ -223,10 +269,12 @@ export default function GroupWorkspace({ teacherId }) {
     { bg: 'bg-lavender/15', text: 'text-lavender', border: 'border-lavender/30' },
   ]
 
+  // The group's own colour (lib/groupLook.js) — same on Home, here and
+  // in the Mock Center. groups are loaded in creation order.
   const getGroupAccent = (groupId) => {
     const index = groups.findIndex((group) => group.id === groupId)
-    const safeIndex = index === -1 ? 0 : index
-    return groupAccentPalette[safeIndex % groupAccentPalette.length]
+    const c = groupColour(index === -1 ? 0 : index)
+    return { bg: c.tint, tint: c.tint, text: c.text, border: c.border, bar: c.bar }
   }
 
   // Groups named like "71", "72", "73"... all share the same first
@@ -1082,15 +1130,10 @@ export default function GroupWorkspace({ teacherId }) {
       {screen === 'groups' && (
         <div className="space-y-6">
 
-          <div>
-            <p className="max-w-xl text-sm leading-6 text-mist sm:text-base">
-              Open a group to post homework and see who's done it.
-            </p>
-          </div>
 
           {groups.length === 0 ? (
 
-            <div className="rounded-3xl border-2 border-dashed border-line px-6 py-16 text-center">
+            <div className="rounded-[20px] border-2 border-dashed border-line px-6 py-16 text-center">
 
               <div className="font-display text-2xl text-paper">
                 No groups yet
@@ -1146,19 +1189,48 @@ export default function GroupWorkspace({ teacherId }) {
                         openGroup(group.id)
                       }
                     }}
-                    className={`focus-ring group relative flex flex-col justify-between overflow-hidden rounded-3xl border ${accent.border} bg-panel p-6 text-left shadow-[0_16px_36px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] transition hover:-translate-y-1 hover:shadow-[0_24px_44px_-20px_rgba(0,0,0,0.7)] cursor-pointer`}
+                    className="focus-ring group relative flex cursor-pointer flex-col overflow-hidden rounded-[20px] border border-line bg-panel p-5 pt-6 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-16px_rgba(23,33,58,0.35)]"
                   >
+                    {/* Redesign 2026-11-01: group colour as a stripe on top
+                        and in the big name, like the cards on Home. */}
+                    <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${accent.bar}`} />
 
-                    <div className="relative flex items-start justify-between gap-3">
+                    <div className="relative flex items-start justify-between gap-3 pr-[84px]">
 
-                      <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display font-semibold shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${
-                          getGroupBadge(group.name).length > 1
-                            ? 'text-base'
-                            : 'text-lg'
-                        } ${accent.bg} ${accent.text}`}
-                      >
-                        {getGroupBadge(group.name)}
+                      <div className="min-w-0">
+                        {isRenaming ? (
+                          <input
+                            autoFocus
+                            value={renameValue}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onBlur={() => saveRename(group.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveRename(group.id)
+                              if (e.key === 'Escape') setRenamingId(null)
+                            }}
+                            className="focus-ring w-full rounded-lg border border-accent bg-panel-2 px-2.5 py-1.5 font-brand text-xl text-paper outline-none"
+                          />
+                        ) : (
+                          <div
+                            className={`truncate font-brand font-semibold leading-none ${accent.text} ${
+                              /^\d+$/.test((group.name || '').trim()) ? 'text-[40px]' : 'text-[26px] leading-tight'
+                            }`}
+                          >
+                            {(group.name || '').trim() || 'Group'}
+                          </div>
+                        )}
+                        <div className="mt-2 flex items-center gap-2 text-[13px] text-mist">
+                          <span>
+                            <strong className="font-semibold text-paper">{counts.students}</strong>{' '}
+                            {counts.students === 1 ? 'student' : 'students'}
+                          </span>
+                          <span className="h-1 w-1 rounded-full bg-line" />
+                          <span>
+                            <strong className="font-semibold text-paper">{counts.tasks}</strong>{' '}
+                            {counts.tasks === 1 ? 'assignment' : 'assignments'}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex shrink-0 items-center gap-1">
@@ -1202,89 +1274,63 @@ export default function GroupWorkspace({ teacherId }) {
 
                     </div>
 
-                    <div className="relative mt-5">
-
-                      {isRenaming ? (
-                        <input
-                          autoFocus
-                          value={renameValue}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onBlur={() => saveRename(group.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveRename(group.id)
-                            if (e.key === 'Escape') setRenamingId(null)
-                          }}
-                          className="focus-ring w-full rounded-lg border border-accent bg-panel-2 px-2.5 py-1.5 font-display text-xl text-paper outline-none"
-                        />
-                      ) : (
-                        // A purely numeric name is already shown in
-                        // full in the badge above (see getGroupBadge)
-                        // — repeating it here as a second line was
-                        // the exact same text twice. Text names still
-                        // need this line, since their badge is only
-                        // the first letter, not the full name.
-                        !/^\d+$/.test((group.name || '').trim()) && (
-                          <div className="truncate font-display text-xl font-semibold text-paper">
-                            {group.name}
-                          </div>
+                    {/* Ring, three numbers, next deadline (redesign 2026-11-02). */}
+                    <div className="pointer-events-none absolute right-5 top-6" aria-hidden="true">
+                      {(() => {
+                        const pct = counts.onTimePct
+                        const r = 30
+                        const circ = 2 * Math.PI * r
+                        return (
+                          <svg width="76" height="76" viewBox="0 0 76 76" className={accent.text}>
+                            <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeOpacity="0.18" strokeWidth="8" />
+                            {pct != null && (
+                              <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} transform="rotate(-90 38 38)" />
+                            )}
+                            <text x="38" y="43" textAnchor="middle" className="fill-paper font-brand text-[15px] font-semibold">{pct == null ? '—' : `${pct}%`}</text>
+                          </svg>
                         )
-                      )}
+                      })()}
+                    </div>
+                    <span className="sr-only">{counts.onTimePct == null ? 'No homework due yet' : `${counts.onTimePct}% of homework handed in on time`}</span>
 
-                      <div className="mt-2 flex items-center gap-2.5 text-sm text-mist">
-                        <span>
-                          <strong className="font-semibold text-paper">{counts.students}</strong>{' '}
-                          {counts.students === 1 ? 'student' : 'students'}
-                        </span>
-                        <span className="h-1 w-1 rounded-full bg-line" />
-                        <span>
-                          <strong className="font-semibold text-paper">{counts.tasks}</strong>{' '}
-                          {counts.tasks === 1 ? 'assignment' : 'assignments'}
-                        </span>
+                    <div className="relative mt-4 grid grid-cols-3 gap-2">
+                      <div className={`rounded-[14px] px-3 py-2.5 ${accent.tint}`}>
+                        <div className={`font-brand text-[18px] font-semibold ${accent.text}`}>{formatBand(counts.avgBand)}</div>
+                        <div className="text-[12px] font-bold text-paper-dim">avg mock</div>
                       </div>
-
+                      <div className={`rounded-[14px] px-3 py-2.5 ${accent.tint}`}>
+                        <div className={`font-brand text-[18px] font-semibold ${counts.missedWeek >= 4 ? 'text-coral' : accent.text}`}>{counts.missedWeek ?? 0}</div>
+                        <div className="text-[12px] font-bold text-paper-dim">missed this week</div>
+                      </div>
+                      <div className={`rounded-[14px] px-3 py-2.5 ${accent.tint}`}>
+                        <div className={`font-brand text-[18px] font-semibold ${accent.text}`}>{counts.open ?? 0}</div>
+                        <div className="text-[12px] font-bold text-paper-dim">tasks open</div>
+                      </div>
                     </div>
 
-                    {/*
-                      * Was gray text that only picked up color on
-                      * hover — meant every card looked identically
-                      * neutral until a cursor found it. Showing this
-                      * card's own accent color at rest instead ties
-                      * the "Open" action back to the badge above it.
-                      */}
-                    {/* Newest homework + how many handed it in (2026-10-06,
-                        so a tile isn't just a number and two counts). */}
-                    {counts.latest && (() => {
-                      const skill = skillOfHomework(counts.latest)
-                      const pct = counts.students ? Math.min(100, Math.round((counts.latestDone / counts.students) * 100)) : 0
-                      return (
-                        <div className="relative mt-5 rounded-2xl bg-panel-2 px-3.5 py-3">
-                          <div className="flex items-center gap-2 text-[13px] text-mist">
-                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${skill.tint} ${skill.key === 'general' ? 'text-paper' : skill.text}`}>
-                              <SkillIcon skill={skill.key} className="h-3.5 w-3.5" />
-                            </span>
-                            <span>Latest</span>
-                            <span className="ml-auto">{counts.latest.due_date ? `Due ${formatDue(counts.latest.due_date)}` : 'No deadline'}</span>
-                          </div>
-                          <div className="mt-1.5 truncate text-[15px] font-medium text-paper">{counts.latest.title}</div>
-                          <div className="mt-2 flex items-center gap-2.5">
-                            <div className="h-1.5 flex-1 rounded bg-panel">
-                              <div className={`h-full rounded ${skill.key === 'general' ? 'bg-paper' : skill.bg}`} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="text-[13px] font-semibold tabular-nums text-paper">
-                              {counts.latestDone}/{counts.students}
-                            </span>
-                          </div>
+                    <div className="relative mt-4 flex flex-col gap-1.5 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="font-bold text-mist">Next deadline</span>
+                        <span className="min-w-0 truncate text-right font-extrabold text-paper">
+                          {counts.next ? `${counts.next.title} · ${formatDue(counts.next.due_date)}` : 'Nothing due'}
+                        </span>
+                      </div>
+                      {counts.latest && (
+                        <div className="flex justify-between gap-3">
+                          <span className="font-bold text-mist">Latest handed in</span>
+                          <span className="font-extrabold tabular-nums text-paper">{counts.latestDone}/{counts.students}</span>
                         </div>
-                      )
-                    })()}
+                      )}
+                    </div>
 
-                    <div className={`relative mt-5 flex items-center gap-1.5 text-sm font-semibold transition ${accent.text}`}>
-                      Open
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition group-hover:translate-x-0.5">
-                        <path d="M5 12h14" />
-                        <path d="M12 5l7 7-7 7" />
-                      </svg>
+                    <div className={`relative mt-auto pt-4`}>
+                      <span className={`flex h-11 items-center justify-center gap-1.5 rounded-[14px] text-sm font-extrabold text-white ${accent.bar}`}>
+                        Open group
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="transition group-hover:translate-x-0.5">
+                          <path d="M5 12h14" />
+                          <path d="M12 5l7 7-7 7" />
+                        </svg>
+                      </span>
                     </div>
 
                   </div>
@@ -1294,7 +1340,7 @@ export default function GroupWorkspace({ teacherId }) {
               {/* New-group tile — same footprint as a real group card */}
               <form
                 onSubmit={createGroup}
-                className="flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-line p-6 text-center transition hover:border-accent/40"
+                className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed border-line p-6 text-center transition hover:border-accent/40"
               >
 
                 {composingGroup ? (
@@ -1319,7 +1365,7 @@ export default function GroupWorkspace({ teacherId }) {
                     <button
                       type="submit"
                       disabled={creating || !newGroupName.trim()}
-                      className="focus-ring rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
+                      className="focus-ring rounded-xl bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:brightness-105 disabled:opacity-50"
                     >
                       {creating ? 'Adding…' : 'Create group'}
                     </button>
@@ -1357,9 +1403,9 @@ export default function GroupWorkspace({ teacherId }) {
           <button
             type="button"
             onClick={backToGroups}
-            className="focus-ring group inline-flex items-center gap-2 rounded-full border border-line bg-panel py-1.5 pl-1.5 pr-4 text-sm font-medium text-paper-dim shadow-[0_6px_16px_-10px_rgba(0,0,0,0.6)] transition hover:border-accent/40 hover:text-accent"
+            className="focus-ring group inline-flex items-center gap-2 rounded-[12px] border border-line bg-panel py-1.5 pl-1.5 pr-4 text-sm font-semibold text-paper-dim transition hover:border-accent/40 hover:text-accent"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-panel-2 text-mist transition group-hover:bg-accent/15 group-hover:text-accent">
+            <span className="flex h-6 w-6 items-center justify-center rounded-xl bg-panel-2 text-mist transition group-hover:bg-accent/15 group-hover:text-accent">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5" />
                 <path d="M12 19l-7-7 7-7" />
@@ -1376,21 +1422,18 @@ export default function GroupWorkspace({ teacherId }) {
             const accent = getGroupAccent(activeGroup)
 
             return (
-              <section className="relative overflow-hidden rounded-2xl border border-line bg-panel px-5 py-4 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/[0.03] sm:px-7 sm:py-5">
+              <section className="relative overflow-hidden rounded-[20px] border border-line bg-panel px-5 pb-4 pt-5 sm:px-7 sm:pb-5 sm:pt-6">
+                <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${accent.bar}`} />
 
                 <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                   <div className="flex min-w-0 items-center gap-3.5">
 
-                    <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display font-semibold shadow-[0_6px_18px_-6px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/10 ${
-                        getGroupBadge(activeGroupObj?.name).length > 1
-                          ? 'text-base'
-                          : 'text-lg'
-                      } ${accent.bg} ${accent.text}`}
-                    >
-                      {getGroupBadge(activeGroupObj?.name)}
-                    </div>
+                    {/^\d+$/.test((activeGroupObj?.name || '').trim()) && (
+                      <div className={`shrink-0 font-brand text-[44px] font-semibold leading-none ${accent.text}`}>
+                        {activeGroupObj.name.trim()}
+                      </div>
+                    )}
 
                     <div className="min-w-0">
 
@@ -1416,7 +1459,7 @@ export default function GroupWorkspace({ teacherId }) {
                           {activeGroupObj?.name || 'Group'}
                         </h1>
                       ) : (
-                        <h1 className="truncate font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
+                        <h1 className={`truncate font-brand text-[26px] font-semibold tracking-tight sm:text-[30px] ${accent.text}`}>
                           {activeGroupObj?.name || 'Group'}
                         </h1>
                       )}
@@ -1519,6 +1562,132 @@ export default function GroupWorkspace({ teacherId }) {
           })()}
 
           {/* =================================================
+              THIS WEEK (redesign 2026-11-02): four numbers, this
+              week's homework with hand-in bars, and who needs a word.
+          ================================================= */}
+          {!groupDataLoading && roster.length > 0 && (() => {
+            const accent = getGroupAccent(activeGroup)
+            const now = Date.now()
+            const DAY = 86400000
+            const subOf = (hw, st) => submissions[`${hw.id}_${st.id}`]
+            const pastDue = homeworks
+              .filter((h) => h.due_date && new Date(h.due_date).getTime() <= now)
+              .sort((a, b) => new Date(b.due_date) - new Date(a.due_date))
+            const month = pastDue.filter((h) => now - new Date(h.due_date).getTime() <= 28 * DAY)
+            let slots = 0
+            let onTime = 0
+            month.forEach((h) =>
+              roster.forEach((st) => {
+                slots += 1
+                if (getSubmissionStatus(subOf(h, st), h.due_date) === 'done') onTime += 1
+              })
+            )
+            const missedWeek = pastDue
+              .filter((h) => now - new Date(h.due_date).getTime() <= 7 * DAY)
+              .reduce((n, h) => n + roster.filter((st) => getSubmissionStatus(subOf(h, st), h.due_date) === 'overdue').length, 0)
+            const lastFour = pastDue.slice(0, 4)
+            const needWord = roster
+              .map((st) => {
+                const states = lastFour.map((h) => getSubmissionStatus(subOf(h, st), h.due_date))
+                let streak = 0
+                for (const x of states) {
+                  if (x === 'overdue') streak += 1
+                  else break
+                }
+                const missed = states.filter((x) => x === 'overdue').length
+                const late = states.filter((x) => x === 'late').length
+                const reason = streak >= 2 ? `${streak} missed in a row` : missed >= 2 ? `${missed} of last 4 missed` : late >= 2 ? `Late ${late} times` : null
+                return reason ? { st, reason, weight: streak * 10 + missed * 3 + late } : null
+              })
+              .filter(Boolean)
+              .sort((a, b) => b.weight - a.weight)
+            const week = homeworks
+              .filter((h) => h.due_date && Math.abs(new Date(h.due_date).getTime() - now) <= 7 * DAY)
+              .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+            const open = homeworks.filter((h) => h.due_date && new Date(h.due_date).getTime() > now).length
+            const pct = slots ? Math.round((onTime / slots) * 100) : null
+            return (
+              <>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                    <div className={`font-brand text-[28px] font-semibold leading-none ${accent.text}`}>{pct == null ? '—' : `${pct}%`}</div>
+                    <div className="mt-1.5 text-[13px] font-bold text-mist">homework on time (4 weeks)</div>
+                  </div>
+                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                    <div className={`font-brand text-[28px] font-semibold leading-none ${missedWeek ? 'text-coral' : 'text-paper'}`}>{missedWeek}</div>
+                    <div className="mt-1.5 text-[13px] font-bold text-mist">missed this week</div>
+                  </div>
+                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                    <div className={`font-brand text-[28px] font-semibold leading-none ${needWord.length ? 'text-coral' : 'text-paper'}`}>{needWord.length}</div>
+                    <div className="mt-1.5 text-[13px] font-bold text-mist">students need a word</div>
+                  </div>
+                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                    <div className="font-brand text-[28px] font-semibold leading-none text-brass">{open}</div>
+                    <div className="mt-1.5 text-[13px] font-bold text-mist">tasks still open</div>
+                  </div>
+                </div>
+
+                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
+                  <section className="rounded-[20px] border border-line bg-panel px-5 py-4 sm:px-6">
+                    <h2 className="font-brand text-[18px] font-semibold text-paper">Homework this week</h2>
+                    {week.length === 0 ? (
+                      <p className="py-4 text-sm text-mist">Nothing due in the last or next 7 days.</p>
+                    ) : (
+                      <ul className="mt-1">
+                        {week.map((h) => {
+                          const skill = skillOfHomework(h)
+                          const handed = roster.filter((st) => subOf(h, st)?.status === 'done').length
+                          const past = new Date(h.due_date).getTime() <= now
+                          const missing = roster.length - handed
+                          return (
+                            <li key={h.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_170px_96px]">
+                              <span className={`grid h-9 w-9 place-items-center rounded-xl ${skill.tint} ${skill.key === 'general' ? 'text-paper' : skill.text}`}>
+                                <SkillIcon skill={skill.key} className="h-4 w-4" />
+                              </span>
+                              <div className="min-w-0">
+                                <div className="truncate text-[15px] font-extrabold text-paper">{h.title}</div>
+                                <div className="text-[13px] font-semibold text-mist">{past ? 'Closed' : 'Due'} {formatDue(h.due_date)}</div>
+                              </div>
+                              <div className="col-span-2 sm:col-span-1">
+                                <div className="h-2 overflow-hidden rounded-md bg-panel-2">
+                                  <div className={`h-full rounded-md ${accent.bar}`} style={{ width: `${roster.length ? (handed / roster.length) * 100 : 0}%` }} />
+                                </div>
+                                <div className="mt-1 text-xs font-bold text-mist">{handed} of {roster.length} handed in</div>
+                              </div>
+                              <div className={`hidden text-right text-[13px] font-extrabold sm:block ${past && missing ? 'text-coral' : 'text-mist'}`}>
+                                {past ? (missing ? `${missing} missed` : 'All in') : 'Open'}
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </section>
+
+                  <section className="overflow-hidden rounded-[20px] border border-line bg-panel">
+                    <div className={`px-5 py-4 ${accent.tint}`}>
+                      <h2 className={`font-brand text-[18px] font-semibold ${accent.text}`}>Needs a word</h2>
+                      <p className="text-[13px] font-semibold text-paper-dim">From the last 4 homeworks.</p>
+                    </div>
+                    <ul className="flex flex-col gap-2.5 px-5 py-4 text-sm">
+                      {needWord.length === 0 ? (
+                        <li className="text-mist">Everyone is keeping up.</li>
+                      ) : (
+                        needWord.slice(0, 6).map(({ st, reason }) => (
+                          <li key={st.id} className="flex justify-between gap-3 font-bold">
+                            <span className="min-w-0 truncate text-paper">{st.full_name || st.username}</span>
+                            <span className={`shrink-0 ${reason.startsWith('Late') ? 'text-amber' : 'text-coral'}`}>{reason}</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </section>
+                </div>
+              </>
+            )
+          })()}
+
+          {/* =================================================
               STUDENT PROGRESS TITLE
           ================================================= */}
 
@@ -1534,27 +1703,19 @@ export default function GroupWorkspace({ teacherId }) {
 
               <div>
 
-                <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full bg-accent ${
-                      groupDataLoading || refreshingGroup ? 'animate-pulse' : ''
-                    }`}
-                  />
-                  Assignments
-                </div>
-
-                <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl">
+                <h2 className="mt-2 flex items-center gap-2 font-brand text-[20px] font-semibold text-brass">
                   Student progress
+                  {(groupDataLoading || refreshingGroup) && <span className="h-1.5 w-1.5 animate-pulse rounded-xl bg-brass" />}
                 </h2>
 
               </div>
 
               {groupDataLoading ? (
-                <div className="rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist">
+                <div className="rounded-[12px] border border-line bg-panel px-3.5 py-1.5 text-[13px] text-mist">
                   Loading this group…
                 </div>
               ) : (
-                <div className="hidden rounded-full border border-line bg-panel px-4 py-2 font-mono text-xs text-mist sm:block">
+                <div className="hidden rounded-[12px] border border-line bg-panel px-3.5 py-1.5 text-[13px] text-mist sm:block">
                   {refreshingGroup
                     ? 'Refreshing…'
                     : `${homeworks.length} assignment${
@@ -1571,7 +1732,7 @@ export default function GroupWorkspace({ teacherId }) {
             ================================================= */}
 
             {roster.length > 0 && (
-              <div className="mt-3 rounded-2xl border border-line bg-panel p-3 sm:p-4">
+              <div className="mt-3">
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 

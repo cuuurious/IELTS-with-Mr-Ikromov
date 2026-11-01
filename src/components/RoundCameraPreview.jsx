@@ -26,7 +26,7 @@ export function RoundCameraPreview({ stream, size = 'h-28 w-28' }) {
   }, [stream])
 
   return (
-    <div className={`${size} shrink-0 overflow-hidden rounded-full border-2 border-coral/70 bg-black shadow-[0_6px_18px_-8px_rgba(0,0,0,0.6)]`}>
+    <div className={`${size} shrink-0 overflow-hidden rounded-full border-2 border-coral/70 bg-black`}>
       <video
         ref={videoRef}
         muted

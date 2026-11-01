@@ -75,7 +75,7 @@ export async function copyImage(url) {
 }
 
 const btn =
-  'focus-ring inline-flex items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-paper transition-colors hover:bg-panel-2 disabled:opacity-50'
+  'focus-ring inline-flex items-center gap-1.5 rounded-xl border border-line bg-panel px-3 py-1.5 text-xs font-semibold text-paper transition-colors hover:bg-panel-2 disabled:opacity-50'
 
 export default function FileActions({ url, name, isImage = false, className = '' }) {
   const [busy, setBusy] = useState('')

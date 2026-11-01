@@ -349,7 +349,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close"
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist text-xl leading-none transition hover:border-brass hover:text-brass"
           >
             ×
           </button>
@@ -615,7 +615,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="focus-ring rounded-full border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
+              className="focus-ring rounded-xl border border-brass/40 bg-brass/10 px-3 py-1.5 text-xs font-medium text-brass hover:bg-brass/20"
             >
               ＋ Add from Library
             </button>

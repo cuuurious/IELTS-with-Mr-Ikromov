@@ -543,7 +543,7 @@ export default function GroupChats({
     // Study room look (2026-10-07): list + conversation as ONE card that
     // fills the screen; on a phone it shows the list OR the open chat.
     <div
-      className={`chat-card flex overflow-hidden rounded-[22px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
+      className={`chat-card flex overflow-hidden rounded-[20px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
         activeGroupData ? 'h-[calc(100dvh-196px)] min-h-[440px]' : 'min-h-[320px]'
       }`}
     >
@@ -579,13 +579,13 @@ export default function GroupChats({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search groups"
                 aria-label="Search groups"
-                className="focus-ring w-full rounded-full border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
+                className="focus-ring w-full rounded-xl border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-mist hover:bg-panel hover:text-paper"
+                  className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-xl text-mist hover:bg-panel hover:text-paper"
                   aria-label="Clear search"
                   title="Clear"
                 >
@@ -606,8 +606,8 @@ export default function GroupChats({
                 <div key={i} className="flex items-center gap-3 rounded-2xl px-2 py-2.5">
                   <span className="h-11 w-11 shrink-0 animate-pulse rounded-[14px] bg-panel-2" />
                   <span className="flex-1 space-y-2">
-                    <span className="block h-3 w-1/2 animate-pulse rounded-full bg-panel-2" />
-                    <span className="block h-3 w-3/4 animate-pulse rounded-full bg-panel-2" />
+                    <span className="block h-3 w-1/2 animate-pulse rounded-xl bg-panel-2" />
+                    <span className="block h-3 w-3/4 animate-pulse rounded-xl bg-panel-2" />
                   </span>
                 </div>
               ))}
@@ -766,7 +766,7 @@ export default function GroupChats({
           />
 
           <div
-            className="fixed z-[100] flex flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-[0_24px_60px_-20px_rgba(31,35,64,0.45)]"
+            className="fixed z-[100] flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel shadow-[0_24px_60px_-20px_rgba(31,35,64,0.45)]"
             style={{
               top: previewPosition?.top,
               left: previewPosition?.left,

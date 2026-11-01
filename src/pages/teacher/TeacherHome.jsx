@@ -169,7 +169,7 @@ function useTeacherOverview(reloadKey) {
 
 function Card({ className = '', children, ...rest }) {
   return (
-    <section className={`rounded-[22px] border border-line bg-panel ${className}`} {...rest}>
+    <section className={`rounded-[20px] border border-line bg-panel ${className}`} {...rest}>
       {children}
     </section>
   )
@@ -445,7 +445,7 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
     return (
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12" aria-busy="true">
         {['lg:col-span-12 h-[96px]', 'lg:col-span-8 h-[420px]', 'lg:col-span-4 h-[420px]', 'lg:col-span-5 h-[280px]', 'lg:col-span-7 h-[280px]'].map((c) => (
-          <div key={c} className={`${c} animate-pulse rounded-[22px] border border-line bg-panel`} />
+          <div key={c} className={`${c} animate-pulse rounded-[20px] border border-line bg-panel`} />
         ))}
       </div>
     )
@@ -514,11 +514,13 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
   // Waiting items as tiles on the lapis band (2026-10-16 Registan look).
   // The band is always deep blue, so these colours don't change with
   // the light/dark theme.
+  // Calmer (2026-10-29): one card style on the band; only the number
+  // carries the colour, so four solid colours don't compete.
   const TILE_TONE = {
-    access: 'bg-[#e6a33a] text-[#17213a]',
-    release: 'bg-[#1e9e9a] text-white',
-    behind: 'bg-[#b23a48] text-white',
-    approvals: 'bg-[#f6f5f1] text-[#17213a]',
+    access: { num: 'text-[#ffc961]', bg: 'bg-[#f0b95a]/20 ring-[#f0b95a]/45 hover:bg-[#f0b95a]/30' },
+    release: { num: 'text-[#8ff0e8]', bg: 'bg-[#2bb3ae]/25 ring-[#7fd6d2]/45 hover:bg-[#2bb3ae]/35' },
+    behind: { num: 'text-[#ffb0b8]', bg: 'bg-[#e05a6a]/25 ring-[#ff9aa5]/45 hover:bg-[#e05a6a]/35' },
+    approvals: { num: 'text-white', bg: 'bg-white/[0.12] ring-white/30 hover:bg-white/[0.18]' },
   }
 
   return (
@@ -558,12 +560,12 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
                 key={s.key}
                 type="button"
                 onClick={s.action}
-                className="focus-ring inline-flex h-9 items-center gap-2 rounded-full bg-white/10 px-3.5 text-[14px] text-onband hover:bg-white/20"
+                className="focus-ring inline-flex h-9 items-center gap-2 rounded-[12px] bg-white/10 px-3.5 text-[14px] text-onband hover:bg-white/20"
               >
                 {s.dot && (
                   <span className="relative flex h-2 w-2" aria-hidden="true">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7fd6d2] opacity-70" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#7fd6d2]" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-xl bg-[#7fd6d2] opacity-70" />
+                    <span className="relative inline-flex h-2 w-2 rounded-xl bg-[#7fd6d2]" />
                   </span>
                 )}
                 <span className="font-bold tabular-nums">{s.value}</span>
@@ -579,18 +581,18 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
                   key={w.key}
                   type="button"
                   onClick={w.action}
-                  className={`tile-cut focus-ring flex items-center gap-3.5 px-4 py-3.5 text-left transition hover:brightness-105 ${TILE_TONE[w.key]}`}
+                  className={`focus-ring flex items-center gap-3.5 rounded-[20px] px-4 py-3.5 text-left text-onband ring-1 transition ${TILE_TONE[w.key].bg}`}
                 >
-                  <span className="font-brand text-[28px] font-semibold leading-none tabular-nums">{w.count}</span>
+                  <span className={`font-brand text-[28px] font-semibold leading-none tabular-nums ${TILE_TONE[w.key].num}`}>{w.count}</span>
                   <span className="flex min-w-0 flex-col leading-tight">
                     <span className="text-[15px] font-bold">{w.label}</span>
-                    {w.hint && <span className="text-[12.5px] opacity-80">{w.hint}</span>}
+                    {w.hint && <span className="text-[12.5px] text-onband-dim">{w.hint}</span>}
                   </span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="tile-cut w-fit bg-[#1e9e9a] px-4 py-3 text-[15px] font-bold text-white">All clear. Nothing is waiting for you.</p>
+            <p className="w-fit rounded-[20px] bg-white/[0.08] px-4 py-3 text-[15px] font-bold text-[#7fd6d2] ring-1 ring-white/15">All clear. Nothing is waiting for you.</p>
           )}
         </div>
       </section>
@@ -612,11 +614,12 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
             return (
               <div
                 key={c.group.id}
-                className={`tile-cut tile-cut-lg flex flex-col gap-3.5 p-5 ${c.next ? 'bg-panel' : 'bg-panel-2'}`}
+                className="relative flex flex-col gap-3.5 overflow-hidden rounded-[20px] border border-line bg-panel p-5 pt-6 transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-14px_rgba(23,33,58,0.35)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <button type="button" onClick={() => onOpenGroup(c.group.id)} className="focus-ring min-w-0 rounded-lg text-left">
-                    <span className={`block font-brand font-semibold leading-none ${numeric ? 'text-[40px]' : 'text-[24px]'} ${colour.text}`}>
+                    <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${colour.bar}`} />
+                    <span className={`block font-brand font-semibold leading-none ${colour.text} ${numeric ? 'text-[40px]' : 'text-[24px]'}`}>
                       {numeric ? c.group.name.trim() : c.group.name}
                     </span>
                     <span className="mt-2 block text-[13px] text-mist">
@@ -630,14 +633,25 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
                       role="img"
                       aria-label={`${p.done} of ${p.total} handed in`}
                       className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-full"
-                      style={{ background: `conic-gradient(var(--color-turquoise) ${Math.max(p.done ? 6 : 0, deg)}deg, var(--color-panel-2) 0)` }}
+                      style={{ background: `conic-gradient(${colour.hex} ${Math.max(p.done ? 6 : 0, deg)}deg, var(--color-panel-2) 0)` }}
                     >
                       <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-panel text-[14px] font-extrabold tabular-nums">
                         {p.done}/{p.total}
                       </span>
                     </div>
                   ) : (
-                    <span className="font-brand text-[22px] font-medium tabular-nums text-paper">{c.rate != null ? `${c.rate}%` : '–'}</span>
+                    // Same ring as the other cards: hand-in rate over the
+                    // last two weeks.
+                    <div
+                      role="img"
+                      aria-label={c.rate != null ? `${c.rate}% handed in` : 'No deadlines yet'}
+                      className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-full"
+                      style={{ background: `conic-gradient(${colour.hex} ${Math.round(((c.rate || 0) / 100) * 360)}deg, var(--color-panel-2) 0)` }}
+                    >
+                      <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-panel text-[14px] font-extrabold tabular-nums">
+                        {c.rate != null ? `${c.rate}%` : '–'}
+                      </span>
+                    </div>
                   )}
                 </div>
 

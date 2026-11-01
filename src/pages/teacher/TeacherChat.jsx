@@ -335,7 +335,7 @@ export default function TeacherChat({
   return (
     // Study room look (2026-10-07) — same card as PrivateChats.jsx.
     <div
-      className={`flex overflow-hidden rounded-[22px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
+      className={`flex overflow-hidden rounded-[20px] border border-line bg-panel md:h-[calc(100dvh-196px)] md:min-h-[540px] ${
         selected ? 'h-[calc(100dvh-196px)] min-h-[440px]' : 'min-h-[320px]'
       }`}
     >
@@ -372,13 +372,13 @@ export default function TeacherChat({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search chats"
               aria-label="Search chats"
-              className="focus-ring w-full rounded-full border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
+              className="focus-ring w-full rounded-xl border !border-transparent !bg-panel-2 py-2.5 pl-9 pr-9 text-sm !text-paper placeholder:text-mist focus:!border-line"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-mist hover:bg-panel hover:text-paper"
+                className="focus-ring absolute right-1.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-xl text-mist hover:bg-panel hover:text-paper"
                 aria-label="Clear search"
                 title="Clear"
               >

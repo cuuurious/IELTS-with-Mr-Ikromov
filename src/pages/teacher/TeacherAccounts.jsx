@@ -361,7 +361,7 @@ export default function TeacherAccounts({ currentTeacherId }) {
                     </span>
 
                     <span
-                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${ROLE_BADGE_CLASSES[meta.accent]}`}
+                      className={`shrink-0 rounded-xl border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${ROLE_BADGE_CLASSES[meta.accent]}`}
                     >
                       {meta.label}
                     </span>

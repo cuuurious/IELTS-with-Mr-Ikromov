@@ -369,7 +369,7 @@ export default function MaterialsLibrary() {
         <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
           {botState.loading ? null : botState.linked ? (
             <>
-              <span className="inline-flex items-center gap-2 rounded-full border border-sage/40 bg-sage/10 px-3 py-1 text-xs text-sage">
+              <span className="inline-flex items-center gap-2 rounded-xl border border-sage/40 bg-sage/10 px-3 py-1 text-xs text-sage">
                 ● Bot connected
               </span>
               <label className="flex items-center gap-2 text-xs text-mist">
@@ -403,7 +403,7 @@ export default function MaterialsLibrary() {
             <button
               type="button"
               onClick={connectBot}
-              className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
+              className="focus-ring rounded-xl bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-medium text-onbrass"
             >
               Connect the bot
             </button>
@@ -428,7 +428,7 @@ export default function MaterialsLibrary() {
             <button
               type="button"
               onClick={() => setNewFolderOpen((v) => !v)}
-              className="focus-ring rounded-full px-2 py-0.5 text-xs text-brass hover:bg-brass/10"
+              className="focus-ring rounded-xl px-2 py-0.5 text-xs text-brass hover:bg-brass/10"
               title={currentFolder !== ALL && currentFolder !== INBOX ? `New folder inside "${folderLabel}"` : 'New folder'}
             >
               + New
@@ -509,7 +509,7 @@ export default function MaterialsLibrary() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search all files — name, caption, folder…"
-                className="focus-ring w-full rounded-full border border-line bg-panel-2 py-2.5 pl-9 pr-4 text-sm text-paper placeholder:text-mist"
+                className="focus-ring w-full rounded-xl border border-line bg-panel-2 py-2.5 pl-9 pr-4 text-sm text-paper placeholder:text-mist"
               />
             </div>
             <input
@@ -525,7 +525,7 @@ export default function MaterialsLibrary() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="focus-ring rounded-full bg-brass hover:bg-brass-dim px-4 py-2.5 text-sm font-medium text-onbrass shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]"
+              className="focus-ring rounded-xl bg-brass hover:bg-brass-dim px-4 py-2.5 text-sm font-medium text-onbrass"
             >
               Upload files
             </button>
@@ -546,10 +546,10 @@ export default function MaterialsLibrary() {
             {selected.size > 0 && (
               <div className="relative flex items-center gap-2">
                 <span className="text-xs text-mist">{selected.size} selected</span>
-                <button type="button" onClick={() => setMoveOpen((v) => !v)} className="focus-ring rounded-full border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
+                <button type="button" onClick={() => setMoveOpen((v) => !v)} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
                   Move to…
                 </button>
-                <button type="button" onClick={() => deleteMaterials([...selected])} className="focus-ring rounded-full border border-coral/50 px-3 py-1.5 text-xs text-coral hover:bg-coral hover:text-paper">
+                <button type="button" onClick={() => deleteMaterials([...selected])} className="focus-ring rounded-xl border border-coral/50 px-3 py-1.5 text-xs text-coral hover:bg-coral hover:text-paper">
                   Delete
                 </button>
                 <button type="button" onClick={() => setSelected(new Set())} className="focus-ring px-1 text-xs text-mist hover:text-paper">
@@ -672,14 +672,14 @@ export default function MaterialsLibrary() {
                       <button
                         type="button"
                         onClick={() => setRenaming({ type: 'file', id: m.id, value: m.title })}
-                        className="focus-ring rounded-full px-2 py-1 text-xs text-mist hover:text-brass"
+                        className="focus-ring rounded-xl px-2 py-1 text-xs text-mist hover:text-brass"
                       >
                         Rename
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteMaterials([m.id])}
-                        className="focus-ring rounded-full px-2 py-1 text-xs text-mist hover:text-coral"
+                        className="focus-ring rounded-xl px-2 py-1 text-xs text-mist hover:text-coral"
                       >
                         Delete
                       </button>

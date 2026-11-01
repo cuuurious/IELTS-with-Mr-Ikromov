@@ -17,7 +17,7 @@ import { VocabArt } from '../../components/SkillArt'
 const DAY = 86400000
 
 function Card({ className = '', children }) {
-  return <section className={`rounded-[22px] border border-line bg-panel ${className}`}>{children}</section>
+  return <section className={`rounded-[20px] border border-line bg-panel ${className}`}>{children}</section>
 }
 
 function dayNumber(d = new Date()) {

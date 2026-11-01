@@ -67,6 +67,10 @@ export default function ForgotPassword() {
         <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
           {loading ? 'Sending…' : 'Send reset link'}
         </button>
+
+        <p className="text-[13px] font-semibold leading-relaxed text-mist">
+          No email on your account? Ask Mr Ikromov in Telegram and he will reset it for you.
+        </p>
       </form>
     </AuthShell>
   )

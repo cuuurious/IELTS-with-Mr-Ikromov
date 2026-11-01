@@ -65,7 +65,7 @@ const SPEAKING_TIPS = {
 }
 
 const SKILL_TONE = {
-  listening: 'bg-[#1b3b73] text-white',
+  listening: 'bg-[#2456b0] text-white',
   reading: 'bg-[#1e9e9a] text-white',
   writing: 'bg-[#b23a48] text-white',
   speaking: 'bg-[#6a3f99] text-white',

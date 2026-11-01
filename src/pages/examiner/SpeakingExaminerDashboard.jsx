@@ -421,7 +421,7 @@ export default function SpeakingExaminerDashboard() {
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
                     placeholder="Search students by name…"
-                    className="focus-ring w-full rounded-full border border-line bg-panel py-2 pl-10 pr-4 text-sm text-paper placeholder:text-mist"
+                    className="focus-ring w-full rounded-xl border border-line bg-panel py-2 pl-10 pr-4 text-sm text-paper placeholder:text-mist"
                   />
                 </label>
               )}
@@ -453,7 +453,7 @@ export default function SpeakingExaminerDashboard() {
                   return (
                     <div
                       key={student.id}
-                      className="rounded-[22px] border border-line bg-panel p-4 flex flex-col gap-3.5"
+                      className="rounded-[20px] border border-line bg-panel p-4 flex flex-col gap-3.5"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar person={student} size="h-11 w-11" tone="bg-speaking-tint text-speaking" />
@@ -483,14 +483,14 @@ export default function SpeakingExaminerDashboard() {
                         <button
                           type="button"
                           onClick={() => openBookModal(student)}
-                          className="focus-ring flex-1 rounded-full bg-brass text-onbrass text-[13px] font-medium px-3 py-2 hover:bg-brass-dim transition-colors"
+                          className="focus-ring flex-1 rounded-xl bg-brass text-onbrass text-[13px] font-medium px-3 py-2 hover:bg-brass-dim transition-colors"
                         >
                           Book exam
                         </button>
                         <button
                           type="button"
                           onClick={() => handleMessageStudent(student)}
-                          className="focus-ring flex-1 rounded-full border border-line text-[13px] font-medium px-3 py-2 text-paper-dim hover:text-paper hover:border-paper/30"
+                          className="focus-ring flex-1 rounded-xl border border-line text-[13px] font-medium px-3 py-2 text-paper-dim hover:text-paper hover:border-paper/30"
                         >
                           Message
                         </button>
@@ -647,7 +647,7 @@ function EmptyCard({ icon, title, line }) {
 // Small neutral action pill used in SlotRow (2026-10-07: one calm style
 // instead of five competing accent colours; behaviour unchanged).
 const PILL =
-  'focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-line px-3 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper'
+  'focus-ring inline-flex h-8 items-center gap-1.5 rounded-xl border border-line px-3 text-[13px] font-medium text-paper-dim transition-colors hover:border-paper/30 hover:text-paper'
 
 function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
   const meta = STATUS_META[slot.status] || STATUS_META.scheduled
@@ -705,7 +705,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
                 onClick={() => onStatus('completed')}
                 className={
                   slotTimeHasPassed
-                    ? 'focus-ring inline-flex h-8 items-center rounded-full bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim'
+                    ? 'focus-ring inline-flex h-8 items-center rounded-xl bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim'
                     : PILL
                 }
               >
@@ -764,7 +764,7 @@ function SlotRow({ slot, student, onEdit, onStatus, onScore, onDelete }) {
               <button
                 type="button"
                 onClick={onScore}
-                className="focus-ring inline-flex h-8 items-center rounded-full bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim"
+                className="focus-ring inline-flex h-8 items-center rounded-xl bg-brass px-3.5 text-[13px] font-medium text-onbrass transition-colors hover:bg-brass-dim"
               >
                 {scored ? 'View / edit' : 'Mark'}
               </button>
@@ -817,7 +817,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
+      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-[20px] border border-line bg-panel shadow-xl p-5 sm:p-6">
         <h3 className="text-lg font-semibold text-paper">Score speaking exam</h3>
         <p className="text-sm text-mist mt-0.5">{studentName}</p>
         <p className="text-[13px] text-mist mt-0.5">{formatSlotTime(slot.scheduled_at)}</p>
@@ -898,7 +898,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
+            className="focus-ring rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -915,7 +915,7 @@ function ScoreModal({ studentName, slot, saving, error, onCancel, onSave }) {
               })
             }
             disabled={saving}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save score'}
           </button>
@@ -933,7 +933,7 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[22px] border border-line bg-panel shadow-xl p-5 sm:p-6">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[20px] border border-line bg-panel shadow-xl p-5 sm:p-6">
         <h3 className="text-lg font-semibold text-paper">
           {mode === 'create' ? 'Book speaking exam' : 'Edit speaking exam'}
         </h3>
@@ -997,7 +997,7 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
             type="button"
             onClick={onCancel}
             disabled={saving}
-            className="focus-ring rounded-full border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
+            className="focus-ring rounded-xl border border-line bg-panel-2 px-4 py-2 text-sm font-semibold text-paper-dim shadow-sm transition-colors hover:border-brass/50 hover:text-brass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -1012,7 +1012,7 @@ function SlotModal({ mode, studentName, initial, saving, error, workloadNote, on
               })
             }
             disabled={saving || !scheduledAt}
-            className="focus-ring rounded-full bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

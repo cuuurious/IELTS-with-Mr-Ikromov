@@ -446,7 +446,7 @@ export default function NotificationBell({ profile }) {
               min-w-[18px]
               h-[18px]
               px-1
-              rounded-full
+              rounded-xl
               bg-coral
               text-white
               text-[9px]

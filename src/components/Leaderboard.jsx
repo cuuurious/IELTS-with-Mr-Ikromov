@@ -1212,15 +1212,15 @@ export default function Leaderboard({
   if (rows === null) {
     return (
       <div className="grid gap-4 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)]" aria-busy="true">
-        <div className="h-64 animate-pulse rounded-[22px] bg-panel-2" />
-        <div className="h-96 animate-pulse rounded-[22px] bg-panel-2" />
+        <div className="h-64 animate-pulse rounded-[20px] bg-panel-2" />
+        <div className="h-96 animate-pulse rounded-[20px] bg-panel-2" />
       </div>
     )
   }
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-[22px] border border-dashed border-line bg-panel px-6 py-12 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-[20px] border border-dashed border-line bg-panel px-6 py-12 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vocab-tint text-vocab">
           <Icon name="target" className="h-6 w-6" />
         </span>
@@ -1278,7 +1278,7 @@ export default function Leaderboard({
         <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-24">
           {/* YOUR PLACE (students) */}
           {me && !isTeacher && (
-            <div className="wp-pop flex items-center gap-4 rounded-[22px] border border-[#F3D27A] bg-vocab-tint px-5 py-4">
+            <div className="wp-pop flex items-center gap-4 rounded-[20px] border border-[#F3D27A] bg-vocab-tint px-5 py-4">
               <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-white/70">
                 <span className="text-[10px] font-semibold text-vocab">Place</span>
                 <span className="text-xl font-semibold leading-none tabular-nums text-paper">{me.rank}</span>
@@ -1300,7 +1300,7 @@ export default function Leaderboard({
 
           {/* PODIUM */}
           {podium.length === 3 && (
-            <div className="rounded-[22px] border border-line bg-panel px-5 pb-0 pt-5">
+            <div className="rounded-[20px] border border-line bg-panel px-5 pb-0 pt-5">
               <div className="mb-4 flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold text-paper">Top of the {groupId === 'all' ? 'school' : 'group'}</p>
                 <p className="text-xs text-mist">Most homework handed in</p>
@@ -1323,7 +1323,7 @@ export default function Leaderboard({
                           size={student.rank === 1 ? 'h-16 w-16' : 'h-12 w-12'}
                           ring={`ring-4 ${m.ring} transition-transform group-hover:scale-105`}
                         />
-                        <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-px text-[10px] font-bold ${m.chip}`}>
+                        <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-xl px-1.5 py-px text-[10px] font-bold ${m.chip}`}>
                           {m.label}
                         </span>
                       </div>
@@ -1355,8 +1355,8 @@ export default function Leaderboard({
             <div className="rounded-2xl border border-line bg-panel px-3 py-3">
               <p className="text-[11px] text-mist">Average</p>
               <p className="text-lg font-semibold tabular-nums text-paper">{avgPct}%</p>
-              <div className="mt-1 h-1 overflow-hidden rounded-full bg-panel-2">
-                <div className="h-full rounded-full bg-reading" style={{ width: `${avgPct}%` }} />
+              <div className="mt-1 h-1 overflow-hidden rounded-xl bg-panel-2">
+                <div className="h-full rounded-xl bg-reading" style={{ width: `${avgPct}%` }} />
               </div>
             </div>
             <div className="rounded-2xl border border-line bg-panel px-3 py-3">
@@ -1379,7 +1379,7 @@ export default function Leaderboard({
 
         {/* LIST */}
         {rest.length > 0 && (
-          <div className="min-w-0 overflow-hidden rounded-[22px] border border-line bg-panel">
+          <div className="min-w-0 overflow-hidden rounded-[20px] border border-line bg-panel">
             <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
               <p className="text-sm font-semibold text-paper">{podium.length ? 'Everyone else' : 'Everyone'}</p>
               <p className="text-xs text-mist">
@@ -1405,7 +1405,7 @@ export default function Leaderboard({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="truncate text-sm font-semibold text-paper">{student.full_name}</span>
-                          {mine && <span className="shrink-0 rounded-full bg-vocab px-1.5 text-[10px] font-bold text-white">You</span>}
+                          {mine && <span className="shrink-0 rounded-xl bg-vocab px-1.5 text-[10px] font-bold text-white">You</span>}
                           {student.streak > 0 && (
                             <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-writing">
                               <Icon name="flame" className="h-3 w-3" />
@@ -1477,14 +1477,14 @@ export default function Leaderboard({
                           onClick={() => setViewingPhoto(true)}
                           aria-label="Open photo"
                           title="Open photo"
-                          className="focus-ring block cursor-zoom-in rounded-full"
+                          className="focus-ring block cursor-zoom-in rounded-xl"
                         >
                           <Avatar student={selectedStudent} size="h-14 w-14" />
                         </button>
                       ) : (
                         <Avatar student={selectedStudent} size="h-14 w-14" />
                       )}
-                      <span className="absolute -bottom-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-panel bg-brass px-1 text-[11px] font-bold text-onbrass">
+                      <span className="absolute -bottom-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-xl border-2 border-panel bg-brass px-1 text-[11px] font-bold text-onbrass">
                         {selectedStudent.rank}
                       </span>
                     </div>
@@ -1499,7 +1499,7 @@ export default function Leaderboard({
                   <button
                     type="button"
                     onClick={closeStudentProfile}
-                    className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
+                    className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line text-mist transition hover:bg-panel-2 hover:text-paper"
                     aria-label="Close student profile"
                   >
                     <Icon name="close" className="h-4 w-4" />
@@ -1533,26 +1533,26 @@ export default function Leaderboard({
                   </div>
                 </div>
 
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-panel-2">
-                  <div className="h-full rounded-full bg-reading transition-[width] duration-700" style={{ width: `${pct(selectedStudent.percentage)}%` }} />
+                <div className="mt-4 h-2 overflow-hidden rounded-xl bg-panel-2">
+                  <div className="h-full rounded-xl bg-reading transition-[width] duration-700" style={{ width: `${pct(selectedStudent.percentage)}%` }} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   {isTeacher && selectedStudent.target_band != null && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-speaking-tint px-3 py-1.5 text-sm font-medium text-speaking">
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-speaking-tint px-3 py-1.5 text-sm font-medium text-speaking">
                       <TargetBandIcon value={selectedStudent.target_band} className="h-4 w-4" />
                       Target {formatTargetBand(selectedStudent.target_band)}
                     </span>
                   )}
                   {isTeacher && selectedStudent.status && selectedStudent.status !== 'approved' && (
-                    <span className="rounded-full bg-urgent-tint px-3 py-1.5 text-sm font-medium text-urgent">{selectedStudent.status}</span>
+                    <span className="rounded-xl bg-urgent-tint px-3 py-1.5 text-sm font-medium text-urgent">{selectedStudent.status}</span>
                   )}
                   <span className="flex-1" />
                   {typeof onOpenChat === 'function' && (
                     <button
                       type="button"
                       onClick={() => handleChat(selectedStudent)}
-                      className="focus-ring rounded-full bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
+                      className="focus-ring rounded-xl bg-brass px-4 py-2 text-sm font-semibold text-onbrass transition hover:bg-brass-dim"
                     >
                       Chat with student
                     </button>
@@ -1561,7 +1561,7 @@ export default function Leaderboard({
                     <button
                       type="button"
                       onClick={() => openManageGroups(selectedStudent)}
-                      className="focus-ring rounded-full border border-line px-4 py-2 text-sm font-medium text-paper transition hover:bg-panel-2"
+                      className="focus-ring rounded-xl border border-line px-4 py-2 text-sm font-medium text-paper transition hover:bg-panel-2"
                     >
                       Manage groups
                     </button>
@@ -1690,7 +1690,7 @@ export default function Leaderboard({
                                   </div>
 
                                   <span
-                                    className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                    className={`flex-shrink-0 rounded-xl px-2.5 py-1 text-xs font-semibold ${
                                       !task.completed
                                         ? 'bg-urgent-tint text-urgent'
                                         : task.late
@@ -1719,7 +1719,7 @@ export default function Leaderboard({
                   <button
                     type="button"
                     onClick={closeStudentProfile}
-                    className="focus-ring rounded-full border border-line px-5 py-2 text-sm font-semibold text-paper transition hover:bg-panel-2"
+                    className="focus-ring rounded-xl border border-line px-5 py-2 text-sm font-semibold text-paper transition hover:bg-panel-2"
                   >
                     Close
                   </button>
@@ -1760,7 +1760,7 @@ export default function Leaderboard({
                 <button
                   type="button"
                   onClick={closeManageGroups}
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
                   aria-label="Close"
                 >
                   ×

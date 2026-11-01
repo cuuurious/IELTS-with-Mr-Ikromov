@@ -41,7 +41,7 @@ const monthLabel = (key, style = 'long') => {
 function MonthStrip({ months }) {
   if (!months.length) return null
   return (
-    <div className="rounded-[22px] border border-line bg-panel p-4">
+    <div className="rounded-[20px] border border-line bg-panel p-4">
       <p className="mb-3 text-sm font-semibold text-paper">Month by month</p>
       <div className="flex items-end gap-2 overflow-x-auto pb-1">
         {months.map((m) => {
@@ -153,7 +153,7 @@ export default function ParentReport() {
   if (state === 'loading') return shell(<p className="text-sm text-mist">Loading the report…</p>)
   if (state === 'off') {
     return shell(
-      <div className="rounded-[22px] border border-line bg-panel p-6">
+      <div className="rounded-[20px] border border-line bg-panel p-6">
         <h1 className="text-2xl font-semibold">This link is no longer active</h1>
         <p className="mt-2 text-sm text-mist">Please ask the teacher for a new progress report link.</p>
       </div>
@@ -161,10 +161,10 @@ export default function ParentReport() {
   }
   if (state === 'error') {
     return shell(
-      <div className="rounded-[22px] border border-line bg-panel p-6">
+      <div className="rounded-[20px] border border-line bg-panel p-6">
         <h1 className="text-2xl font-semibold">Couldn&apos;t load the report</h1>
         <p className="mt-2 text-sm text-mist">Please check the internet connection and try again.</p>
-        <button type="button" onClick={() => window.location.reload()} className="focus-ring mt-4 rounded-full border border-line px-4 py-2 text-sm">
+        <button type="button" onClick={() => window.location.reload()} className="focus-ring mt-4 rounded-xl border border-line px-4 py-2 text-sm">
           Try again
         </button>
       </div>
@@ -210,9 +210,9 @@ export default function ParentReport() {
     <>
       <header className="flex flex-wrap items-center gap-4">
         {student.avatar_url ? (
-          <img src={student.avatar_url} alt="" className="h-14 w-14 rounded-full border border-line object-cover" />
+          <img src={student.avatar_url} alt="" className="h-14 w-14 rounded-xl border border-line object-cover" />
         ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-panel font-display text-xl">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-line bg-panel font-display text-xl">
             {(student.full_name || '?').trim().charAt(0)}
           </div>
         )}
@@ -227,7 +227,7 @@ export default function ParentReport() {
           type="button"
           onClick={downloadPdf}
           disabled={pdfBusy}
-          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-full bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-semibold text-onbrass disabled:opacity-60"
+          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-xl bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-semibold text-onbrass disabled:opacity-60"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 3v12" />
@@ -267,7 +267,7 @@ export default function ParentReport() {
                     {group.handed} of {group.items.length} done
                   </p>
                 </div>
-                <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-[22px] border border-line bg-panel">
+                <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-[20px] border border-line bg-panel">
                   {group.items.map((hw, i) => {
                     const label = STATE_LABEL[hw.state] || STATE_LABEL.open
                     return (
@@ -280,7 +280,7 @@ export default function ParentReport() {
                             {hw.done_at && (hw.state === 'done' || hw.state === 'late') ? ` · handed in ${formatDate(hw.done_at)}` : ''}
                           </p>
                         </div>
-                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${label.cls}`}>{label.text}</span>
+                        <span className={`shrink-0 rounded-xl px-2.5 py-1 text-xs font-semibold ${label.cls}`}>{label.text}</span>
                       </li>
                     )
                   })}
@@ -291,7 +291,7 @@ export default function ParentReport() {
               <button
                 type="button"
                 onClick={() => setShowAllMonths((v) => !v)}
-                className="focus-ring self-center rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium text-paper hover:bg-panel-2"
+                className="focus-ring self-center rounded-xl border border-line bg-panel px-4 py-2 text-sm font-medium text-paper hover:bg-panel-2"
               >
                 {showAllMonths ? 'Show fewer months' : `Show earlier months (${historyByMonth.length - 2})`}
               </button>

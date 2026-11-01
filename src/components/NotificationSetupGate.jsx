@@ -171,7 +171,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
                   type="button"
                   onClick={turnOnPush}
                   disabled={Boolean(busy)}
-                  className="focus-ring mt-3 rounded-full bg-brass hover:bg-brass-dim px-5 py-2.5 text-sm font-semibold text-onbrass disabled:opacity-50"
+                  className="focus-ring mt-3 rounded-xl bg-brass hover:bg-brass-dim px-5 py-2.5 text-sm font-semibold text-onbrass disabled:opacity-50"
                 >
                   {busy === 'push' ? 'Turning on…' : 'Turn on'}
                 </button>
@@ -195,7 +195,7 @@ export default function NotificationSetupGate({ profile, onReady, onSignOut }) {
                   type="button"
                   onClick={connectTelegram}
                   disabled={busy === 'telegram'}
-                  className="focus-ring mt-3 rounded-full border border-cyan/50 bg-cyan/10 px-5 py-2.5 text-sm font-semibold text-cyan disabled:opacity-50"
+                  className="focus-ring mt-3 rounded-xl border border-cyan/50 bg-cyan/10 px-5 py-2.5 text-sm font-semibold text-cyan disabled:opacity-50"
                 >
                   {busy === 'telegram' ? 'Opening Telegram…' : telegramWaiting ? 'Open Telegram again' : 'Connect Telegram'}
                 </button>

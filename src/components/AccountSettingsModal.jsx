@@ -781,7 +781,7 @@ const deleteAccount = async () => {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
           >
             ×
           </button>
@@ -799,10 +799,10 @@ const deleteAccount = async () => {
               <img
                 src={avatarUrl}
                 alt="Your profile photo"
-                className="w-16 h-16 rounded-full object-cover border border-line shrink-0"
+                className="w-16 h-16 rounded-xl object-cover border border-line shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-brass flex items-center justify-center text-xl font-semibold text-onbrass shrink-0">
+              <div className="w-16 h-16 rounded-xl bg-brass flex items-center justify-center text-xl font-semibold text-onbrass shrink-0">
                 {String(
                   profile?.full_name ||
                     profile?.username ||

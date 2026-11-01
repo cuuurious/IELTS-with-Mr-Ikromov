@@ -94,7 +94,7 @@ export default function WordReview({ studentId, wordlistIds, onExit }) {
       <button type="button" onClick={onExit} className="focus-ring text-sm text-mist hover:text-paper">
         ← Back to word lists
       </button>
-      <span className="rounded-full bg-vocab-tint px-2.5 py-1 text-xs font-semibold text-vocab">Daily review</span>
+      <span className="rounded-xl bg-vocab-tint px-2.5 py-1 text-xs font-semibold text-vocab">Daily review</span>
     </div>
   )
 
@@ -111,7 +111,7 @@ export default function WordReview({ studentId, wordlistIds, onExit }) {
     return (
       <div className="flex flex-col gap-5">
         {header}
-        <div className="rounded-[22px] border border-line bg-panel px-5 py-8 text-center text-sm text-mist">
+        <div className="rounded-[20px] border border-line bg-panel px-5 py-8 text-center text-sm text-mist">
           {status === 'error' ? error : 'Nothing to review right now — come back tomorrow!'}
         </div>
       </div>

@@ -111,9 +111,9 @@ export default function SpeakingMarkModal({ slotId, onClose, onSaved }) {
         if (e.target === e.currentTarget && backdropDown.current) onClose()
       }}
     >
-      <div role="dialog" aria-modal="true" aria-label="Speaking marks" className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-xl">
+      <div role="dialog" aria-modal="true" aria-label="Speaking marks" className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[20px] border border-line bg-panel shadow-xl">
         <div className="flex items-center gap-3 border-b border-line px-5 py-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-speaking-tint text-speaking">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-speaking-tint text-speaking">
             <Icon name="mic" className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
@@ -136,16 +136,16 @@ export default function SpeakingMarkModal({ slotId, onClose, onSaved }) {
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <div className="flex flex-wrap gap-1.5 text-[12px]">
                 {slot.examiner_reviewed_at ? (
-                  <span className="rounded-full bg-reading-tint px-2.5 py-1 font-medium text-reading">Marked {when(slot.examiner_reviewed_at)}</span>
+                  <span className="rounded-xl bg-reading-tint px-2.5 py-1 font-medium text-reading">Marked {when(slot.examiner_reviewed_at)}</span>
                 ) : (
-                  <span className="rounded-full bg-speaking-tint px-2.5 py-1 font-medium text-speaking">Not marked yet</span>
+                  <span className="rounded-xl bg-speaking-tint px-2.5 py-1 font-medium text-speaking">Not marked yet</span>
                 )}
                 {slot.teacher_edited_at && (
-                  <span className="rounded-full bg-listening-tint px-2.5 py-1 font-medium text-listening">
+                  <span className="rounded-xl bg-listening-tint px-2.5 py-1 font-medium text-listening">
                     Changed by {nameOf(people[slot.teacher_edited_by])} {when(slot.teacher_edited_at)}
                   </span>
                 )}
-                <span className="rounded-full bg-panel-2 px-2.5 py-1 font-medium text-mist">{slot.released_at ? 'Released to student' : 'Not released'}</span>
+                <span className="rounded-xl bg-panel-2 px-2.5 py-1 font-medium text-mist">{slot.released_at ? 'Released to student' : 'Not released'}</span>
               </div>
 
 

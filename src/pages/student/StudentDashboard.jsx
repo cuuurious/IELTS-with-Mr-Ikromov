@@ -55,7 +55,7 @@ function HomeworkFilterBar({ counts, value, onChange }) {
   ]
   const total = counts.all || 1
   return (
-    <div className="flex flex-col gap-3 rounded-[22px] border border-line bg-panel p-4">
+    <div className="flex flex-col gap-3 rounded-[20px] border border-line bg-panel p-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-lg font-semibold text-paper">
@@ -79,12 +79,12 @@ function HomeworkFilterBar({ counts, value, onChange }) {
             role="tab"
             aria-selected={value === key}
             onClick={() => onChange(key)}
-            className={`focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`focus-ring inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
               value === key ? 'bg-brass text-onbrass' : 'border border-line text-paper-dim hover:border-brass/40'
             }`}
           >
             {label}
-            <span className={`rounded-full px-1.5 text-xs font-semibold tabular-nums ${value === key ? 'bg-white/20 text-onbrass' : tone}`}>
+            <span className={`rounded-xl px-1.5 text-xs font-semibold tabular-nums ${value === key ? 'bg-white/20 text-onbrass' : tone}`}>
               {counts[key]}
             </span>
           </button>
@@ -708,7 +708,7 @@ const messageId = linkParts[2] || null
                   group.id
                 )
               }
-              className={`focus-ring px-3 py-1.5 rounded-full text-sm border transition-colors ${
+              className={`focus-ring px-3 py-1.5 rounded-xl text-sm border transition-colors ${
                 activeGroup ===
                 group.id
                   ? 'bg-brass text-onbrass border-brass-dim font-medium'
@@ -881,7 +881,7 @@ const messageId = linkParts[2] || null
             </div>
 
             {myGroups.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 sm:py-14 text-center">
+              <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 sm:py-14 text-center">
                 <div className="mx-auto h-14 w-14 rounded-2xl border border-brass-dim/25 bg-brass/10 flex items-center justify-center text-brass text-2xl">
                   —
                 </div>
@@ -909,7 +909,7 @@ const messageId = linkParts[2] || null
                 )}
 
                 {homeworks.length === 0 && (
-                  <div className="rounded-3xl border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
                     <div className="mx-auto h-14 w-14 rounded-2xl border border-line bg-panel-2 flex items-center justify-center text-brass text-2xl">
                       —
                     </div>
@@ -925,7 +925,7 @@ const messageId = linkParts[2] || null
                 )}
 
                 {homeworks.length > 0 && visibleHomeworks.length === 0 && (
-                  <div className="rounded-[22px] border border-dashed border-line bg-panel px-6 py-10 text-center text-sm text-mist">
+                  <div className="rounded-[20px] border border-dashed border-line bg-panel px-6 py-10 text-center text-sm text-mist">
                     {homeworkFilter === 'todo' ? 'Nothing left to do — well done!' : 'Nothing here.'}
                   </div>
                 )}
@@ -936,7 +936,7 @@ const messageId = linkParts[2] || null
                       <div
                         key={homework.id}
                         id={`homework-${homework.id}`}
-                        className={`wp-pop group relative overflow-hidden rounded-[22px] border bg-panel transition-shadow duration-200 hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)] ${
+                        className={`wp-pop group relative overflow-hidden rounded-[20px] border bg-panel transition-shadow duration-200 hover:shadow-[0_10px_28px_-16px_rgba(31,35,64,0.35)] ${
                           homeworkStateById[homework.id]?.key === 'overdue' || homeworkStateById[homework.id]?.key === 'today'
                             ? 'border-urgent/30'
                             : 'border-line'
@@ -1003,7 +1003,7 @@ const messageId = linkParts[2] || null
                 </div>
               </section>
             ) : (
-              <div className="rounded-3xl border border-dashed border-line bg-panel px-6 py-12 text-center">
+              <div className="rounded-[20px] border border-dashed border-line bg-panel px-6 py-12 text-center">
                 <h2 className="font-display text-xl">
                   No group selected
                 </h2>
