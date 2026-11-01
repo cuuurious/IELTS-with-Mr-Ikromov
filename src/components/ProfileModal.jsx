@@ -103,23 +103,30 @@ export default function ProfileModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm bg-panel border border-line rounded-2xl shadow-xl overflow-hidden"
+        className="w-full max-w-sm overflow-hidden rounded-[24px] bg-panel shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
 
-        <div className="relative px-5 pt-7 pb-5 bg-panel-2/60 border-b border-line flex flex-col items-center text-center">
-
+        <div className="registan-band relative h-28 overflow-hidden">
+          <div className="absolute -bottom-6 left-6 h-24 w-16 rounded-[999px_999px_0_0] bg-white/10" />
+          <div className="absolute -top-4 right-16 h-20 w-14 rounded-[0_0_999px_999px] bg-white/10" />
+          <div className="absolute bottom-3 right-6 h-12 w-9 rounded-[999px_999px_0_0] border-[3px] border-b-0 border-saffron/70" aria-hidden="true" />
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="focus-ring absolute top-3 right-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel-2 text-mist transition hover:border-brass hover:text-brass"
+            className="focus-ring absolute right-3 top-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-lg text-white transition hover:bg-white/30"
           >
             ×
           </button>
+        </div>
+
+        <div className="relative -mt-12 flex flex-col items-center px-5 pb-5 text-center">
+
+
 
           {loading && (
-            <div className="w-20 h-20 rounded-full bg-panel animate-pulse" />
+            <div className="h-24 w-24 animate-pulse rounded-full border-4 border-panel bg-panel-2" />
           )}
 
           {!loading && profile?.avatar_url && (
@@ -137,31 +144,31 @@ export default function ProfileModal({
                   profile.username ||
                   'Profile photo'
                 }
-                className="w-20 h-20 rounded-full object-cover border border-line"
+                className="h-24 w-24 rounded-full border-4 border-panel object-cover shadow-md"
               />
             </button>
           )}
 
           {!loading && profile && !profile.avatar_url && (
-            <div className="w-20 h-20 rounded-full bg-brass flex items-center justify-center text-2xl font-semibold text-onbrass">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-panel bg-[color-mix(in_srgb,var(--color-brass)_16%,var(--color-panel))] font-brand text-3xl font-bold text-brass shadow-md">
               {initial}
             </div>
           )}
 
           {!loading && profile && (
             <>
-              <div className="mt-3 font-display text-lg text-paper">
+              <div className="mt-3 font-brand text-xl font-semibold text-paper">
                 {profile.full_name ||
                   profile.username ||
                   'Member'}
               </div>
 
-              <div className="text-xs text-mist">
+              <div className="mt-0.5 text-[13px] font-semibold text-mist">
                 @{profile.username || 'unknown'}
               </div>
 
               {profile.role === 'teacher' && (
-                <span className="mt-2 inline-block rounded-xl border border-brass/40 px-2 py-0.5 text-[11px] text-brass">
+                <span className="mt-2 inline-block rounded-xl bg-saffron px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-[#17213a]">
                   TEACHER
                 </span>
               )}
@@ -170,7 +177,7 @@ export default function ProfileModal({
 
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="space-y-3 px-5 pb-5">
 
           {loading && (
             <p className="text-sm text-mist">
@@ -190,8 +197,8 @@ export default function ProfileModal({
 
           {!loading && !error && profile && (
             <>
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1">
+              <div className="rounded-[16px] bg-panel-2 px-4 py-3">
+                <div className="mb-1 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                   Bio
                 </div>
 
@@ -209,12 +216,12 @@ export default function ProfileModal({
               </div>
 
               {targetInfo && (
-                <div>
-                  <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1">
+                <div className="rounded-[16px] bg-[color-mix(in_srgb,var(--color-brass)_10%,var(--color-panel))] px-4 py-3">
+                  <div className="mb-1 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                     Target band
                   </div>
 
-                  <p className="flex items-center gap-1.5 text-sm text-brass">
+                  <p className="flex items-center gap-1.5 text-[15px] font-extrabold text-brass">
                     <TargetBandIcon value={profile.target_band} className="h-4 w-4" />
                     {formatTargetBand(profile.target_band)}
                     {' — '}

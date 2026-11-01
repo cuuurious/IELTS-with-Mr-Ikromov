@@ -124,7 +124,7 @@ function FeedbackArt() {
           Approved by Mr Ikromov
         </span>
       </div>
-      <div className="absolute -right-1.5 -top-2.5 rounded-xl bg-brass px-2 py-1 text-center text-white">
+      <div className="absolute right-1.5 top-1.5 rounded-xl bg-brass px-2 py-1 text-center text-white">
         <div className="font-brand text-[15px] font-bold leading-tight">7.5</div>
         <div className="text-[9px] font-extrabold">band</div>
       </div>
@@ -206,10 +206,10 @@ const SKILL_LABELS = [
 
 export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, children, footer }) {
   return (
-    <div className="min-h-screen bg-ink text-paper">
-      <div className="mx-auto grid min-h-screen max-w-[1440px] grid-cols-1 gap-4 p-3 sm:gap-6 sm:p-6 lg:grid-cols-[1.15fr_1fr]">
+    <div className="min-h-screen bg-ink text-paper lg:h-[100dvh] lg:overflow-hidden">
+      <div className="mx-auto grid min-h-screen max-w-[1440px] grid-cols-1 gap-4 p-3 sm:gap-5 sm:p-5 lg:h-full lg:min-h-0 lg:grid-cols-[1.15fr_1fr]">
         {/* LEFT — the school */}
-        <section className="registan-band order-2 flex flex-col gap-6 rounded-[28px] px-5 py-7 sm:px-9 sm:py-9 lg:order-1">
+        <section className="registan-band auth-scroll order-2 flex flex-col gap-5 rounded-[28px] px-5 py-7 sm:px-8 sm:py-7 lg:order-1 lg:min-h-0 lg:overflow-y-auto [@media(min-width:1024px)_and_(max-height:860px)]:gap-3.5 [@media(min-width:1024px)_and_(max-height:860px)]:py-5">
           <Link to="/login" className="focus-ring flex w-fit items-center gap-3 rounded-xl text-onband">
             <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#ffffff] font-brand text-[15px] font-bold text-[#2456b0]">MI</span>
             <span className="flex flex-col leading-tight">
@@ -218,22 +218,22 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
             </span>
           </Link>
 
-          <div className="grid items-end gap-6 sm:grid-cols-[170px_minmax(0,1fr)]">
-            <div className="relative hidden h-[210px] w-[170px] sm:block">
+          <div className="grid items-end gap-6 sm:grid-cols-[130px_minmax(0,1fr)]">
+            <div className="relative hidden h-[160px] w-[130px] sm:block">
               <div className="absolute inset-[14px_-14px_-8px_14px] rounded-[999px_999px_22px_22px] bg-white/15" aria-hidden="true" />
               <div className="absolute inset-0 overflow-hidden rounded-[999px_999px_22px_22px] border-[5px] border-white bg-listening-tint">
                 <img src="/mrikromov.jpg" alt="Mr Jasur Ikromov" className="h-full w-full object-cover" />
               </div>
             </div>
             <div className="flex flex-col gap-2.5 pb-1">
-              <h1 className="font-brand text-[28px] font-semibold leading-[1.15] sm:text-[32px]">{title}</h1>
+              <h1 className="font-brand text-[26px] font-semibold leading-[1.15] sm:text-[29px]">{title}</h1>
               {subtitle && <p className="text-base leading-relaxed text-onband-dim">{subtitle}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2.5">
             {FACTS.map((f) => (
-              <div key={f.label} className="rounded-2xl bg-white/15 px-2.5 py-3 sm:px-3.5">
+              <div key={f.label} className="rounded-2xl bg-white/15 px-2.5 py-2.5 sm:px-3.5">
                 <div className="whitespace-nowrap font-brand text-[15px] font-semibold sm:text-[22px]">{f.value}</div>
                 <div className="text-[12px] font-bold text-onband-dim sm:text-[13px]">{f.label}</div>
               </div>
@@ -245,12 +245,12 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
               {PERKS.map(({ art: Art, bg, title: t, text }) => (
                 <div key={t} className="flex flex-col overflow-hidden rounded-[20px] bg-panel text-paper">
-                  <div className={`flex min-h-[100px] flex-1 items-center justify-center p-3.5 ${bg}`} aria-hidden="true">
+                  <div className={`flex h-[104px] items-center justify-center p-2.5 pt-3.5 ${bg} [@media(min-width:1024px)_and_(max-height:860px)]:h-[86px] [&>*]:origin-center [@media(min-width:1024px)_and_(max-height:860px)]:[&>*]:scale-[0.82]`} aria-hidden="true">
                     <Art />
                   </div>
-                  <div className="px-3.5 pb-3.5 pt-3">
+                  <div className="px-3.5 pb-3 pt-2.5">
                     <div className="text-[15px] font-extrabold">{t}</div>
-                    <div className="mt-0.5 text-[13px] font-semibold leading-snug text-mist">{text}</div>
+                    <div className="mt-0.5 text-[13px] font-semibold leading-snug text-mist [@media(min-width:1024px)_and_(max-height:860px)]:hidden">{text}</div>
                   </div>
                 </div>
               ))}
@@ -281,12 +281,12 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
         </section>
 
         {/* RIGHT — the form */}
-        <section className="auth-side relative order-1 flex flex-col items-center justify-center gap-4 overflow-hidden rounded-[28px] px-3 py-8 sm:px-5 lg:order-2">
+        <section className="auth-side auth-scroll relative order-1 flex flex-col items-center gap-4 overflow-hidden rounded-[28px] px-3 py-8 sm:px-5 lg:order-2 lg:min-h-0 lg:overflow-y-auto lg:py-6">
           <div className="auth-arch-a pointer-events-none absolute -bottom-10 -left-16 h-[340px] w-[260px] rounded-[999px_999px_0_0]" aria-hidden="true" />
           <div className="auth-arch-b pointer-events-none absolute -right-12 -top-8 h-[300px] w-[220px] rounded-[0_0_999px_999px]" aria-hidden="true" />
           <div className="pointer-events-none absolute bottom-12 right-14 h-[120px] w-[90px] rounded-[999px_999px_0_0] border-[3px] border-b-0 border-saffron/60" aria-hidden="true" />
 
-          <div className="relative w-full max-w-[460px] overflow-hidden rounded-[22px] bg-panel shadow-[0_18px_40px_rgba(36,86,176,0.14)]">
+          <div className="relative mt-auto w-full max-w-[460px] shrink-0 overflow-hidden rounded-[22px] bg-panel shadow-[0_18px_40px_rgba(36,86,176,0.14)]">
             <div className="h-1.5 bg-[linear-gradient(90deg,#2456b0,#1a9bb5)]" aria-hidden="true" />
             {(cardTitle || cardSubtitle) && (
               <div className="flex items-center gap-3.5 px-6 pb-1.5 pt-7 sm:px-8">
@@ -305,7 +305,7 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
             )}
           </div>
 
-          <div className="relative flex flex-wrap justify-center gap-2" aria-hidden="true">
+          <div className="relative mb-auto flex flex-wrap justify-center gap-2" aria-hidden="true">
             {SKILL_LABELS.map((s) => (
               <span key={s.label} className={`rounded-[10px] bg-panel px-2.5 py-1.5 text-xs font-extrabold ${s.cls}`}>{s.label}</span>
             ))}

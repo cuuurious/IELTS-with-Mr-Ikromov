@@ -5,6 +5,7 @@ import ProfileModal from './ProfileModal'
 import ConfirmModal from './ConfirmModal'
 import { compressImageIfNeeded } from '../lib/compressImage'
 import Icon from './Icon'
+import { groupBadge, groupColour, groupDisplayName } from '../lib/groupLook'
 
 /*
  * ================================================================
@@ -29,6 +30,7 @@ export default function GroupSettingsModal({
   onClose,
   onUpdated,
   onLeft,
+  lookIndex = null,
 }) {
   // Two different questions, kept separate on purpose:
   //  - isTeacherAccount: "is this a teacher account at all" — decides
@@ -43,6 +45,7 @@ export default function GroupSettingsModal({
   //    who *isn't* promoted on a specific group will correctly see it
   //    read-only once a second staff account exists.
   const isTeacherAccount = selfRole === 'teacher'
+  const look = groupColour(lookIndex ?? 0)
 
   // Group info opens READ-ONLY by default, Telegram-style — tapping a
   // group's photo/name should never immediately hand you editable
@@ -601,7 +604,7 @@ export default function GroupSettingsModal({
       onClick={onClose}
     >
       <div
-        className="surface my-4 w-full max-w-lg rounded-2xl border border-line shadow-2xl"
+        className="surface my-4 w-full max-w-lg overflow-hidden rounded-[24px] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -623,98 +626,75 @@ export default function GroupSettingsModal({
           }}
         />
 
-        {/* HEADER */}
+        {/* HEADER — banner in the group's own colour (2026-11-02). */}
+              <div className={`relative h-28 overflow-hidden ${look.bar}`}>
+                <div className="absolute -bottom-6 left-8 h-24 w-16 rounded-[999px_999px_0_0] bg-white/15" aria-hidden="true" />
+                <div className="absolute -top-4 right-24 h-20 w-14 rounded-[0_0_999px_999px] bg-white/15" aria-hidden="true" />
+                <div className="absolute bottom-3 right-36 h-12 w-9 rounded-[999px_999px_0_0] border-[3px] border-b-0 border-white/50" aria-hidden="true" />
+                <div className="absolute left-5 top-4 text-xs font-extrabold uppercase tracking-[0.08em] text-white/90 sm:left-6">Group info</div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="focus-ring absolute right-4 top-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-lg text-white transition hover:bg-white/30"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
 
-        <div className="flex items-start justify-between gap-4 border-b border-line p-5 sm:p-6">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
-            Group info
-          </div>
+              <div className="-mt-10 flex flex-col gap-6 px-5 pb-5 sm:px-6 sm:pb-6">
+                <div className="flex flex-col items-start gap-3">
+                  <label
+                    className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[22px] border-4 border-panel font-brand text-2xl font-bold shadow-md ${look.tint} ${look.text} ${
+                      isGroupAdmin && editMode ? 'cursor-pointer' : ''
+                    }`}
+                    title={isGroupAdmin && editMode ? 'Change group photo' : undefined}
+                  >
+                    {photoUrl ? (
+                      <img src={photoUrl} alt={name || 'Group photo'} className="h-full w-full object-cover" />
+                    ) : (
+                      groupBadge(name)
+                    )}
+                    {isGroupAdmin && editMode && (
+                      <>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-transparent transition hover:bg-black/40 hover:text-white">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        </div>
+                        <input type="file" accept="image/*" className="hidden" disabled={photoUploading} onChange={handlePhotoChange} />
+                      </>
+                    )}
+                  </label>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition hover:text-paper hover:border-brass"
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-6 p-5 sm:p-6">
-
-          {/* PHOTO + NAME */}
-
-          <div className="flex items-center gap-4">
-
-            <label
-              className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brass/30 bg-brass/15 font-display text-xl font-semibold text-brass ${
-                isGroupAdmin && editMode ? 'cursor-pointer' : ''
-              }`}
-              title={isGroupAdmin && editMode ? 'Change group photo' : undefined}
-            >
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={name || 'Group photo'}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                groupInitial
-              )}
-
-              {isGroupAdmin && editMode && (
-                <>
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 text-transparent transition hover:bg-black/40 hover:text-white">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
+                  <div className="w-full min-w-0">
+                    {isGroupAdmin && editMode ? (
+                      <input
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value)
+                          setDetailsDirty(true)
+                        }}
+                        placeholder="Group name"
+                        className="focus-ring w-full rounded-xl border border-line bg-panel-2 px-3 py-2 font-brand text-lg text-paper outline-none"
+                      />
+                    ) : (
+                      <div className={`truncate font-brand text-[22px] font-semibold ${look.text}`}>{groupDisplayName(name)}</div>
+                    )}
+                    <div className="mt-0.5 text-[13px] font-bold text-mist">
+                      {loadingMembers ? 'Group chat' : `${members.length} member${members.length === 1 ? '' : 's'} · Group chat`}
+                    </div>
+                    {photoUploading && <div className="mt-1 text-xs text-mist">Uploading photo…</div>}
+                    {photoError && <div className="mt-1 text-xs text-coral">{photoError}</div>}
                   </div>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={photoUploading}
-                    onChange={handlePhotoChange}
-                  />
-                </>
-              )}
-            </label>
-
-            <div className="min-w-0 flex-1">
-              {isGroupAdmin && editMode ? (
-                <input
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value)
-                    setDetailsDirty(true)
-                  }}
-                  placeholder="Group name"
-                  className="focus-ring w-full rounded-lg border border-line bg-panel-2 px-3 py-2 font-display text-lg text-paper outline-none"
-                />
-              ) : (
-                <div className="font-display text-lg text-paper truncate">
-                  {name || 'Group'}
                 </div>
-              )}
-
-              {photoUploading && (
-                <div className="mt-1 text-xs text-mist">Uploading photo…</div>
-              )}
-
-              {photoError && (
-                <div className="mt-1 text-xs text-coral">{photoError}</div>
-              )}
-            </div>
-
-          </div>
 
           {/* DESCRIPTION */}
 
           <div>
             {(editMode && isGroupAdmin) || description ? (
-              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-1.5">
+              <div className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                 Description
               </div>
             ) : null}
@@ -762,13 +742,11 @@ export default function GroupSettingsModal({
               <button
                 type="button"
                 onClick={() => setEditMode((v) => !v)}
-                className={`focus-ring flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
-                  editMode
-                    ? 'border-brass/50 bg-brass/15 text-brass'
-                    : 'border-line text-paper hover:border-brass/40'
+                className={`focus-ring flex h-11 flex-1 items-center justify-center gap-2 rounded-[14px] px-3 text-sm font-extrabold transition ${
+                  editMode ? `border-2 ${look.border} ${look.tint} ${look.text}` : `${look.bar} text-white hover:brightness-110`
                 }`}
               >
-                {editMode ? 'Done' : 'Manage'}
+                {editMode ? 'Done' : 'Manage group'}
               </button>
             )}
 
@@ -777,7 +755,7 @@ export default function GroupSettingsModal({
                 type="button"
                 onClick={toggleMute}
                 disabled={mutingBusy}
-                className={`focus-ring flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition disabled:opacity-50 ${
+                className={`focus-ring h-11 flex-1 rounded-[14px] border px-3 text-sm font-extrabold transition disabled:opacity-50 ${
                   selfMuted
                     ? 'border-brass/50 bg-brass/15 text-brass'
                     : 'border-line text-paper hover:border-brass/40'
@@ -792,7 +770,7 @@ export default function GroupSettingsModal({
                 type="button"
                 onClick={leaveGroup}
                 disabled={leaving}
-                className="focus-ring flex-1 rounded-lg border border-coral/40 bg-coral/5 px-3 py-2.5 text-sm font-medium text-coral transition hover:bg-coral/10 disabled:opacity-50"
+                className="focus-ring h-11 flex-1 rounded-[14px] border border-coral/40 bg-coral/5 px-3 text-sm font-extrabold text-coral transition hover:bg-coral/10 disabled:opacity-50"
               >
                 {leaving ? 'Leaving…' : 'Leave'}
               </button>
@@ -805,11 +783,11 @@ export default function GroupSettingsModal({
 
           {mediaCounts && (
             <div>
-              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
+              <div className="mb-2 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                 Shared media
               </div>
 
-              <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
+              <div className="flex flex-col divide-y divide-line overflow-hidden rounded-[16px] bg-panel-2">
                 {[
                   { key: 'image', label: 'Photos', icon: <Icon name="image" className="h-4 w-4" /> },
                   { key: 'video', label: 'Videos', icon: <Icon name="video" className="h-4 w-4" /> },
@@ -844,7 +822,7 @@ export default function GroupSettingsModal({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
+              <div className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                 Members{members.length ? ` · ${members.length}` : ''}
               </div>
 
@@ -923,7 +901,7 @@ export default function GroupSettingsModal({
                             className="h-9 w-9 shrink-0 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass/15 text-sm font-semibold text-brass">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-brand text-sm font-bold ${look.tint} ${look.text}`}>
                             {initial}
                           </div>
                         )}
@@ -977,7 +955,7 @@ export default function GroupSettingsModal({
 
           {isGroupAdmin && editMode && (
             <div className="border-t border-line pt-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono mb-2">
+              <div className="mb-2 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                 Member permissions
               </div>
 
@@ -1049,7 +1027,7 @@ export default function GroupSettingsModal({
           {isGroupAdmin && editMode && (
             <div className="border-t border-line pt-4">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-mist font-mono">
+                <div className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
                   Recent activity
                 </div>
 

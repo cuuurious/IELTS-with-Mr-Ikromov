@@ -1973,6 +1973,7 @@ export default function GroupChat({
           group={groupInfo || { id: groupId, name: groupName }}
           selfId={selfId}
           selfRole={selfRole}
+          lookIndex={lookIndex}
           onClose={() => setSettingsOpen(false)}
           onUpdated={(patch) =>
             setGroupInfo((prev) => ({ ...(prev || { id: groupId }), ...patch }))

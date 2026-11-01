@@ -2163,3 +2163,7 @@ html[data-theme='dark'] .uk-backdrop::before,
 html:not([data-theme='light']) .uk-backdrop::before { background-color: #9db8e6; opacity: 0.1; }
 html[data-theme='light'] .uk-backdrop::before { background-color: #2456b0; opacity: 0.08; }
 @media print { .uk-backdrop::before { display: none; } }
+
+/* Sign-in halves scroll on their own without a visible bar (2026-11-02). */
+.auth-scroll { scrollbar-width: none; }
+.auth-scroll::-webkit-scrollbar { display: none; }
