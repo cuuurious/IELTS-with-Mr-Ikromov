@@ -1,3 +1,4 @@
+import SkillAudioPlayer from './SkillAudioPlayer'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -151,7 +152,7 @@ export default function SpeakingComments({ slot, editable = false, showAuthors =
     <section className="flex flex-col gap-3" aria-label="Speaking comments">
       {slot?.recording_url &&
         (playable ? (
-          <audio ref={audioRef} src={slot.recording_url} controls preload="metadata" className="w-full" />
+          <SkillAudioPlayer audioRef={audioRef} src={slot.recording_url} label="Speaking exam recording" />
         ) : (
           <a href={slot.recording_url} target="_blank" rel="noopener noreferrer" className="w-fit text-sm font-medium text-paper underline-offset-2 hover:underline">
             Open the recording ↗

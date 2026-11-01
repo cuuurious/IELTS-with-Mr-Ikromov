@@ -1,3 +1,4 @@
+import SkillAudioPlayer from './SkillAudioPlayer'
 import { KIND_LABEL, fileKind, formatBytes } from '../lib/materials'
 import FileActions from './FileActions'
 
@@ -43,7 +44,7 @@ export default function HomeworkFiles({ files }) {
                   </span>
                 </span>
               </a>
-              {kind === 'audio' && <audio controls preload="none" src={f.url} className="w-full" />}
+              {kind === 'audio' && <SkillAudioPlayer src={f.url} tone="listening" download={false} />}
               <FileActions url={f.url} name={f.name} />
               {kind === 'video' && <video controls preload="metadata" src={f.url} className="max-h-72 w-full rounded-lg" />}
             </li>

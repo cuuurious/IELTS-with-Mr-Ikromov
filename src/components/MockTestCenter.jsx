@@ -1,3 +1,6 @@
+import { SkillIcon } from './SkillArt'
+import SkillAudioPlayer from './SkillAudioPlayer'
+import EmptyState from './EmptyState'
 import { useEffect, useMemo, useState } from 'react'
 import TargetBandIcon from './TargetBandIcon'
 import { supabase } from '../lib/supabaseClient'
@@ -797,48 +800,44 @@ export default function MockTestCenter({ onExit }) {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-line bg-panel p-5">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-mist font-mono mb-3">
-                  Writing mock feedback
-                </p>
+              <div className="rounded-[20px] border border-line bg-panel p-5">
+                <h3 className="mb-3 font-brand text-[18px] font-semibold text-paper">Writing mock feedback</h3>
 
                 {writingReviews.length === 0 ? (
-                  <p className="text-sm text-mist">No writing mocks marked yet.</p>
+                  <p className="rounded-[14px] bg-panel-2 px-4 py-3 text-sm font-semibold text-mist">No writing mocks marked yet.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-3">
                     {writingReviews.map((review) => (
-                      <div key={review.id} className="rounded-xl border border-line bg-panel-2 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-paper">{review.examTitle}</p>
+                      <div key={review.id} className="flex flex-col gap-3 rounded-[20px] bg-writing-tint/60 p-4">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-panel text-writing" aria-hidden="true">
+                            <SkillIcon skill="writing" className="h-5 w-5" />
+                          </span>
+                          <p className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-paper">{review.examTitle}</p>
                           {review.released_at != null ? (
-                            <span className="text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                              Band {review.examiner_band ?? '—'}
+                            <span className="grid min-w-[60px] place-items-center rounded-2xl bg-panel px-3 py-1.5 text-center">
+                              <span className="font-brand text-[20px] font-semibold leading-none text-writing">{review.examiner_band ?? '—'}</span>
+                              <span className="text-[10px] font-extrabold uppercase tracking-wide text-paper-dim">band</span>
                             </span>
                           ) : (
-                            <span className="text-xs font-semibold rounded-xl border border-line bg-panel text-mist px-2.5 py-1">
-                              Awaiting release
-                            </span>
+                            <span className="rounded-xl bg-panel px-2.5 py-1 text-xs font-extrabold text-mist">Waiting for release</span>
                           )}
                         </div>
                         {review.released_at != null ? (
                           <>
                             {review.examiner_feedback && (
-                              <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
-                                {review.examiner_feedback}
-                              </p>
+                              <p className="whitespace-pre-wrap rounded-[14px] bg-panel px-4 py-3 text-sm leading-6 text-paper">{review.examiner_feedback}</p>
                             )}
                             <button
                               type="button"
                               onClick={() => setEssayReviewId(review.id)}
-                              className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-xl bg-writing-tint px-3.5 py-1.5 text-sm font-semibold text-writing hover:brightness-95"
+                              className="focus-ring h-11 self-start rounded-[14px] bg-writing px-4 text-sm font-extrabold text-white transition hover:brightness-110"
                             >
                               See your essay with comments
                             </button>
                           </>
                         ) : (
-                          <p className="text-sm text-mist mt-2">
-                            Marked — your teacher will release your result soon.
-                          </p>
+                          <p className="text-sm font-semibold text-paper-dim">Marked — your teacher will release your result soon.</p>
                         )}
                       </div>
                     ))}
@@ -857,100 +856,89 @@ export default function MockTestCenter({ onExit }) {
           )}
 
           {!loading && section === 'speaking' && (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {slots.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center">
-                  <h2 className="font-display text-xl">No speaking exam booked yet</h2>
-                  <p className="text-sm text-mist mt-2">
-                    Message the speaking examiner to arrange a time.
-                  </p>
-                </div>
+                <EmptyState icon="people" title="No speaking exam booked yet" text="Message the speaking examiner to arrange a time." />
               ) : (
-                slots.map((slot) => (
-                  <div key={slot.id} className="rounded-2xl border border-line bg-panel p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-display text-lg text-paper">
-                        {formatSlotTime(slot.scheduled_at)}
-                      </p>
-                      <span
-                        className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 ${
-                          slot.status === 'scheduled'
-                            ? 'text-brass border-brass-dim/30 bg-brass/10'
-                            : slot.status === 'completed'
-                              ? 'text-sage border-sage/30 bg-sage/10'
-                              : 'text-mist border-line bg-panel-2'
-                        }`}
-                      >
-                        {slot.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-mist mt-1">{slot.duration_minutes} minutes</p>
-                    {slot.status === 'scheduled' && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {slot.meeting_link && (
-                          <a
-                            href={slot.meeting_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="focus-ring inline-block rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2"
-                          >
-                            Join exam link
-                          </a>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            downloadSpeakingSlotIcs(slot, {
-                              summary: 'IELTS Speaking Mock Exam',
-                            })
-                          }
-                          className="focus-ring inline-block rounded-xl border border-line text-sm font-medium px-4 py-2 text-mist hover:text-paper hover:border-brass/40"
-                        >
-                          📅 Add to calendar
-                        </button>
-                      </div>
-                    )}
-
-                    {slot.status === 'completed' && (
-                      <div className="mt-3 rounded-xl border border-line bg-panel-2 p-3.5">
-                        {slot.examiner_band == null ? (
-                          <p className="text-sm text-mist">Not marked yet.</p>
-                        ) : slot.released_at == null ? (
-                          <p className="text-sm text-mist">
-                            Marked — your teacher will release your result soon.
-                          </p>
-                        ) : (
-                          <span className="text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1">
-                            Band {slot.examiner_band}
+                slots.map((slot) => {
+                  const d = new Date(slot.scheduled_at)
+                  const statusCls =
+                    slot.status === 'scheduled' ? 'bg-speaking-tint text-speaking'
+                      : slot.status === 'completed' ? 'bg-reading-tint text-reading'
+                        : 'bg-panel-2 text-mist'
+                  const statusLabel = { scheduled: 'Booked', completed: 'Done', cancelled: 'Cancelled', no_show: 'Missed' }[slot.status] || slot.status
+                  return (
+                    <div key={slot.id} className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5">
+                      <div className="flex items-center gap-4">
+                        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-speaking text-white">
+                          <span className="text-center leading-none">
+                            <span className="block font-brand text-[22px] font-bold">{d.getDate()}</span>
+                            <span className="block text-[11px] font-extrabold uppercase">{d.toLocaleDateString(undefined, { month: 'short' })}</span>
                           </span>
-                        )}
-                        {slot.released_at != null && slot.examiner_feedback && (
-                          <p className="text-sm text-mist mt-2 whitespace-pre-wrap">
-                            {slot.examiner_feedback}
-                          </p>
-                        )}
-                        {slot.released_at != null && (
-                          <details className="mt-3">
-                            <summary className="cursor-pointer text-sm font-semibold text-paper">Examiner’s comments</summary>
-                            <div className="mt-2">
-                              <SpeakingComments slot={slot} showAuthors={false} />
-                            </div>
-                          </details>
-                        )}
-                        {slot.recording_url && (
-                          <a
-                            href={slot.recording_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-brass hover:text-brass-dim mt-2 inline-block"
-                          >
-                            🎙 Listen to your recording
-                          </a>
-                        )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-brand text-[18px] font-semibold text-paper">{formatSlotTime(slot.scheduled_at)}</p>
+                          <p className="text-[13px] font-bold text-mist">IELTS Speaking mock · {slot.duration_minutes} minutes</p>
+                        </div>
+                        <span className={`rounded-xl px-2.5 py-1 text-xs font-extrabold ${statusCls}`}>{statusLabel}</span>
                       </div>
-                    )}
-                  </div>
-                ))
+
+                      {slot.status === 'scheduled' && (
+                        <div className="flex flex-wrap gap-2">
+                          {slot.meeting_link && (
+                            <a
+                              href={slot.meeting_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="focus-ring inline-flex h-11 items-center rounded-[14px] bg-saffron px-5 text-sm font-extrabold text-[#17213a] hover:brightness-105"
+                            >
+                              Join the exam
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => downloadSpeakingSlotIcs(slot, { summary: 'IELTS Speaking Mock Exam' })}
+                            className="focus-ring inline-flex h-11 items-center gap-2 rounded-[14px] border border-line bg-panel px-4 text-sm font-extrabold text-paper hover:bg-panel-2"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></svg>
+                            Add to calendar
+                          </button>
+                        </div>
+                      )}
+
+                      {slot.status === 'completed' && (
+                        <div className="flex flex-col gap-3 rounded-[20px] bg-speaking-tint/60 p-4">
+                          {slot.examiner_band == null ? (
+                            <p className="text-sm font-semibold text-paper-dim">Not marked yet.</p>
+                          ) : slot.released_at == null ? (
+                            <p className="text-sm font-semibold text-paper-dim">Marked — your teacher will release your result soon.</p>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <span className="grid min-w-[64px] place-items-center rounded-2xl bg-panel px-3 py-2 text-center">
+                                <span className="font-brand text-[22px] font-semibold leading-none text-speaking">{slot.examiner_band}</span>
+                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-paper-dim">band</span>
+                              </span>
+                              <span className="text-sm font-extrabold text-paper">Your speaking band</span>
+                            </div>
+                          )}
+                          {slot.released_at != null && slot.examiner_feedback && (
+                            <p className="whitespace-pre-wrap rounded-[14px] bg-panel px-4 py-3 text-sm leading-6 text-paper">{slot.examiner_feedback}</p>
+                          )}
+                          {slot.released_at != null ? (
+                            <details className="rounded-[14px] bg-panel p-3">
+                              <summary className="cursor-pointer text-sm font-extrabold text-paper">Recording and examiner’s comments</summary>
+                              <div className="mt-3">
+                                <SpeakingComments slot={slot} showAuthors={false} />
+                              </div>
+                            </details>
+                          ) : (
+                            slot.recording_url && <SkillAudioPlayer src={slot.recording_url} label="Your recording" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
               )}
             </div>
           )}

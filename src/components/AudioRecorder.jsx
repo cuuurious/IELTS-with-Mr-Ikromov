@@ -1,3 +1,4 @@
+import SkillAudioPlayer from './SkillAudioPlayer'
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 import { reportError } from '../lib/errorReporter'
@@ -399,7 +400,7 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
 
       {!recording && hasTake && !finishing && (
         <>
-          <audio controls src={previewUrl || existingUrl} className="w-full" />
+          <SkillAudioPlayer src={previewUrl || existingUrl} download={false} />
           {recordingSize > 0 && <span className="text-xs text-mist">Recorded audio: {sizeMb} MB</span>}
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={start} disabled={uploading} className={`${btn} border border-line text-paper hover:border-brass`}>

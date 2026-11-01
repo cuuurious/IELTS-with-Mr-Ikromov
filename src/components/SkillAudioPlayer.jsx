@@ -27,8 +27,19 @@ function barsFor(seed, n = 48) {
   })
 }
 
-export default function SkillAudioPlayer({ src, label, sublabel }) {
-  const audioRef = useRef(null)
+const TONES = {
+  speaking: { card: 'bg-speaking-tint', solid: 'bg-speaking', text: 'text-speaking', soft: 'bg-speaking/25', shadow: 'shadow-[0_6px_16px_rgba(106,63,153,0.35)]' },
+  listening: { card: 'bg-listening-tint', solid: 'bg-listening', text: 'text-listening', soft: 'bg-listening/25', shadow: 'shadow-[0_6px_16px_rgba(31,78,140,0.35)]' },
+}
+
+export default function SkillAudioPlayer({ src, label, sublabel, audioRef: externalRef, tone = 'speaking', download = true }) {
+  const t = TONES[tone] || TONES.speaking
+  const ownRef = useRef(null)
+  const audioRef = ownRef
+  const setAudioEl = (el) => {
+    ownRef.current = el
+    if (externalRef) externalRef.current = el
+  }
   const [playing, setPlaying] = useState(false)
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -38,8 +49,32 @@ export default function SkillAudioPlayer({ src, label, sublabel }) {
   useEffect(() => {
     const a = audioRef.current
     if (!a) return undefined
-    const onMeta = () => setDuration(Number.isFinite(a.duration) ? a.duration : 0)
-    const onTime = () => setTime(a.currentTime || 0)
+    // Recordings made in the browser (webm) often say their length is
+    // "Infinity" until the whole file is read. Jumping far ahead makes the
+    // browser work out the real length; then we jump back to the start.
+    let probing = false
+    const onMeta = () => {
+      if (Number.isFinite(a.duration) && a.duration > 0) {
+        setDuration(a.duration)
+        if (probing) {
+          probing = false
+          a.currentTime = 0
+          setTime(0)
+        }
+      } else if (!probing) {
+        probing = true
+        try { a.currentTime = 1e7 } catch { probing = false }
+      }
+    }
+    const onTime = () => {
+      if (probing) return
+      setTime(a.currentTime || 0)
+      if (Number.isFinite(a.duration) && a.duration > 0) setDuration(a.duration)
+      else if (a.seekable && a.seekable.length) {
+        const end = a.seekable.end(a.seekable.length - 1)
+        if (Number.isFinite(end) && end > 0) setDuration(end)
+      }
+    }
     const onEnd = () => {
       setPlaying(false)
       setTime(0)
@@ -95,26 +130,26 @@ export default function SkillAudioPlayer({ src, label, sublabel }) {
   const progress = duration ? time / duration : 0
 
   return (
-    <div className="flex flex-col gap-3 rounded-[20px] bg-speaking-tint p-4">
-      <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
+    <div className={`flex flex-col gap-3 rounded-[20px] p-4 ${t.card}`}>
+      <audio ref={setAudioEl} src={src} preload="auto" className="hidden" />
       {(label || sublabel) && (
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-speaking text-white" aria-hidden="true">
+            <span className={`grid h-7 w-7 place-items-center rounded-lg text-white ${t.solid}`} aria-hidden="true">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
             </span>
-            <span className="text-sm font-extrabold text-speaking">{label}</span>
+            <span className={`text-sm font-extrabold ${t.text}`}>{label}</span>
             {sublabel && <span className="text-xs font-bold text-paper-dim">{sublabel}</span>}
           </div>
-          <a
+          {download && <a
             href={src}
             target="_blank"
             rel="noopener noreferrer"
             download
-            className="focus-ring rounded-lg px-2 py-1 text-xs font-extrabold text-speaking hover:bg-panel/60"
+            className={`focus-ring rounded-lg px-2 py-1 text-xs font-extrabold hover:bg-panel/60 ${t.text}`}
           >
             Download
-          </a>
+          </a>}
         </div>
       )}
       <div className="flex items-center gap-3">
@@ -122,7 +157,7 @@ export default function SkillAudioPlayer({ src, label, sublabel }) {
           type="button"
           onClick={toggle}
           aria-label={playing ? 'Pause' : 'Play'}
-          className="focus-ring grid h-12 w-12 shrink-0 place-items-center rounded-full bg-speaking text-white shadow-[0_6px_16px_rgba(106,63,153,0.35)] transition hover:brightness-110"
+          className={`focus-ring grid h-12 w-12 shrink-0 place-items-center rounded-full text-white transition hover:brightness-110 ${t.solid} ${t.shadow}`}
         >
           {playing ? (
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" /><rect x="14" y="5" width="4" height="14" rx="1.5" /></svg>
@@ -144,20 +179,20 @@ export default function SkillAudioPlayer({ src, label, sublabel }) {
           {bars.map((h, i) => (
             <span
               key={i}
-              className={`flex-1 rounded-full transition-colors ${i / bars.length < progress ? 'bg-speaking' : 'bg-speaking/25'}`}
+              className={`flex-1 rounded-full transition-colors duration-150 ${i / bars.length < progress ? t.solid : t.soft}`}
               style={{ height: `${Math.round(h * 100)}%` }}
             />
           ))}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="font-brand text-[13px] font-semibold tabular-nums text-paper">
-            {fmt(time)} <span className="text-mist">/ {fmt(duration)}</span>
+            {fmt(time)}{duration > 0 && <span className="text-mist"> / {fmt(duration)}</span>}
           </span>
           <button
             type="button"
             onClick={nextSpeed}
             aria-label={`Playback speed ${speed}x`}
-            className="focus-ring rounded-md bg-panel px-1.5 py-0.5 text-[11px] font-extrabold text-speaking"
+            className={`focus-ring rounded-md bg-panel px-1.5 py-0.5 text-[11px] font-extrabold ${t.text}`}
           >
             {speed}×
           </button>
