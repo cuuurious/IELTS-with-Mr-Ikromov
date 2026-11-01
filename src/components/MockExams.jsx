@@ -522,9 +522,13 @@ export function ExamTaker({
   // ------------------------------------------------------------------
   const flatQuestions = useMemo(() => sections.flatMap((s) => s.questions), [sections])
   const questionIndexById = useMemo(() => {
+    // A "choose TWO" question is worth 2 numbers in the real test
+    // (21–22), so the next question is 23 (2026-11-01, see migration_83).
     const map = {}
-    flatQuestions.forEach((q, i) => {
-      map[q.id] = i + 1
+    let n = 1
+    flatQuestions.forEach((q) => {
+      map[q.id] = n
+      n += q.type === 'multi_select' ? Math.max(1, Number(q.points) || 1) : 1
     })
     return map
   }, [flatQuestions])

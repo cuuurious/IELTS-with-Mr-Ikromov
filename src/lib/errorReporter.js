@@ -31,6 +31,8 @@ const IGNORE = [
   /AbortError/i,
   /The operation was aborted/i,
   /Non-Error promise rejection captured/i,
+  // Safari's own audio/video controls (iOS 18 bug), not our code.
+  /EmptyRanges/i,
 ]
 
 export function setErrorUser(profile) {
@@ -42,7 +44,9 @@ function clip(value, max) {
   return text.length > max ? text.slice(0, max) : text
 }
 
-export function reportError(error, extra = '') {
+// opts.always: report even errors normally ignored as network noise
+// (used by the speaking recorder, where a failed save matters).
+export function reportError(error, extra = '', opts = {}) {
   try {
     const message = clip(
       (error && (error.message || error.reason?.message)) || (typeof error === 'string' ? error : String(error)),
@@ -50,7 +54,7 @@ export function reportError(error, extra = '') {
     )
     const stack = clip(error?.stack || error?.reason?.stack || extra || '', 4000)
     if (!message) return
-    if (IGNORE.some((re) => re.test(message))) return
+    if (!opts.always && IGNORE.some((re) => re.test(message))) return
     if (/chrome-extension:|moz-extension:|safari-extension:/i.test(stack)) return
 
     const key = `${message}|${stack.split('\n')[1] || ''}`

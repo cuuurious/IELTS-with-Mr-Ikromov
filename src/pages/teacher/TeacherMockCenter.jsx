@@ -130,6 +130,56 @@ const QUESTION_TYPE_LABELS = {
 // Every type whose editor needs a list of options at all (as opposed to
 // short_answer, which is just free text). Used to decide whether to
 // show the "Choices" box across every question form in this file.
+
+// Import check (2026-11-01, "inserting mock material is making the
+// questions wrongly"): the AI now returns each question's printed number.
+// This finds numbers that are missing, repeated or out of order, so the
+// teacher sees the problem right after import instead of in a student's
+// result. A "choose TWO/THREE" question uses two/three numbers.
+function checkImportNumbering(sections, module) {
+  const qs = sections.flatMap((s) => s.questions || [])
+  const numbered = qs.filter((q) => Number.isInteger(q.number) && q.number > 0)
+  const problems = []
+  if (!qs.length) return problems
+  if (numbered.length < qs.length) {
+    problems.push(`${qs.length - numbered.length} question${qs.length - numbered.length === 1 ? ' has' : 's have'} no question number — check the order.`)
+  }
+  const width = (q) => {
+    if (q.type !== 'multi_select') return 1
+    const m = /\b(TWO|THREE|FOUR)\b/i.exec(q.prompt || '')
+    return m ? { TWO: 2, THREE: 3, FOUR: 4 }[m[1].toUpperCase()] : Math.max(1, (q.correct_answer || '').split(',').filter((x) => x.trim()).length)
+  }
+  const covered = []
+  const dupes = new Set()
+  for (const q of numbered) {
+    for (let k = 0; k < width(q); k++) {
+      const n = q.number + k
+      if (covered.includes(n)) dupes.add(n)
+      covered.push(n)
+    }
+  }
+  if (dupes.size) problems.push(`Question number${dupes.size === 1 ? '' : 's'} ${[...dupes].sort((a, b) => a - b).join(', ')} appear${dupes.size === 1 ? 's' : ''} twice.`)
+  if (covered.length) {
+    const lo = Math.min(...covered)
+    const hi = Math.max(...covered)
+    const missing = []
+    for (let n = lo; n <= hi; n++) if (!covered.includes(n)) missing.push(n)
+    if (missing.length) problems.push(`Question${missing.length === 1 ? '' : 's'} ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} missing.`)
+    const fullPaper = sections.length >= (module === 'reading' ? 3 : 4)
+    if (fullPaper && (lo !== 1 || hi !== 40)) problems.push(`A full test has questions 1–40, but this file gave ${lo}–${hi}.`)
+  }
+  for (let i = 1; i < numbered.length; i++) {
+    if (numbered[i].number < numbered[i - 1].number) {
+      problems.push(`Questions are out of order around number ${numbered[i].number}.`)
+      break
+    }
+  }
+  return problems
+}
+
+const importWarningText = (problems) =>
+  problems.length ? ` ⚠ Please check before saving: ${problems.join(' ')}` : ''
+
 const CHOICE_BASED_TYPES = ['multiple_choice', 'multi_select', 'matching']
 
 const TRUE_FALSE_NG_CHOICES = ['True', 'False', 'Not Given']
@@ -1275,10 +1325,36 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
         throw new Error('No answers were found in that file.')
       }
 
+      // FIX 2026-11-01: the key's numbers are the PRINTED question numbers
+      // (1–40 across the whole paper), but each passage/part stores its
+      // questions from 0. Uploading a whole-test key while Passage 2 was
+      // open used to put Passage 1's answers (Q1–13) onto Passage 2's
+      // questions. Now the printed number is shifted by how many questions
+      // come before this section in the same test.
+      const thisSection = rlSections.find((sec) => sec.id === rlSelectedSectionId)
+      const earlierIds = rlSections
+        .filter((sec) => thisSection && sec.order_index < thisSection.order_index)
+        .map((sec) => sec.id)
+      let offset = 0
+      if (earlierIds.length) {
+        const { count, error: countError } = await supabase
+          .from('mock_questions')
+          .select('id', { count: 'exact', head: true })
+          .in('section_id', earlierIds)
+        if (countError) throw countError
+        offset = count || 0
+      }
+      // A key for this section alone (numbered from 1 again) is still
+      // accepted: if no printed number reaches this section's range but
+      // they fit from 1, use them as they are.
+      const inRange = answers.filter((a) => a.order_index >= offset && a.order_index < offset + rlQuestions.length)
+      const useOffset = offset > 0 && inRange.length > 0 ? offset : 0
+
       const answerByIndex = {}
       answers.forEach((a) => {
-        answerByIndex[a.order_index] = a.correct_answer
+        answerByIndex[a.order_index - useOffset] = a.correct_answer
       })
+
 
       let filled = 0
       let leftAlone = 0
@@ -1325,7 +1401,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
       }
 
       const matchedIndexes = new Set(rlQuestions.map((q) => q.order_index))
-      const unmatched = answers.filter((a) => !matchedIndexes.has(a.order_index)).length
+      const unmatched = answers.filter((a) => !matchedIndexes.has(a.order_index - useOffset)).length
 
       await reloadRlQuestions(rlSelectedSectionId)
       refreshExamPreviewIfOpen()
@@ -7434,6 +7510,7 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
       const allQuestions = sections.flatMap((s) => s.questions || [])
       const missingAnswers = allQuestions.filter((q) => !q.correct_answer?.trim()).length
 
+      const numberingProblems = checkImportNumbering(sections, 'reading')
       setImportInfo(
         (primary.section_title || primary.passage_text ? 'Title, passage, and ' : '') +
           `${extracted.length} question${extracted.length === 1 ? '' : 's'} imported — review below, then save.` +
@@ -7442,7 +7519,8 @@ function SectionFormModal({ modal, module: examModule, saving, error, onCancel, 
             : '') +
           (missingAnswers
             ? ` ${missingAnswers} question${missingAnswers === 1 ? '' : 's'} across this file had no visible answer key, so you'll need to fill ${missingAnswers === 1 ? 'it' : 'them'} in after saving.`
-            : '')
+            : '') +
+          importWarningText(numberingProblems)
       )
     } catch (err) {
       console.error('Mock content import failed:', err)
@@ -8369,7 +8447,8 @@ function ListeningPartEditor({ part, index, valid, onChange, onAddQuestion, onUp
           : `Imported ${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} — check each one below.`) +
           (missingAnswers
             ? ` ${missingAnswers} of ${totalQuestions} had no answer key in the file, so the correct answer is still blank — fill those in before saving.`
-            : ' Double-check the correct answers before saving.')
+            : ' Double-check the correct answers before saving.') +
+          importWarningText(checkImportNumbering(sections, 'listening'))
       )
     } catch (err) {
       console.error('Mock content import failed:', err)
@@ -8837,7 +8916,8 @@ function ReadingPartEditor({ part, valid, onChange, onAddQuestion, onUpdateQuest
             `${primary.questions.length} question${primary.questions.length === 1 ? '' : 's'} imported — check each one below.`) +
           (missingAnswers
             ? ` ${missingAnswers} of ${totalQuestions} had no visible answer key, so the correct answer is still blank — fill those in after saving.`
-            : '')
+            : '') +
+          importWarningText(checkImportNumbering(sections, 'reading'))
       )
     } catch (err) {
       console.error('Mock content import failed:', err)

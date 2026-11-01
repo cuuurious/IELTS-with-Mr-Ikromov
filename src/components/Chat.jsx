@@ -1374,7 +1374,7 @@ export default function Chat({
 
     const file = new File(
       [recordedBlob],
-      `${isVideo ? 'video-note' : 'voice'}-${Date.now()}.webm`,
+      `${isVideo ? 'video-note' : 'voice'}-${Date.now()}.${/mp4/i.test(recordedBlob.type || '') ? (isVideo ? 'mp4' : 'm4a') : 'webm'}`,
       {
         type:
           recordedBlob.type ||

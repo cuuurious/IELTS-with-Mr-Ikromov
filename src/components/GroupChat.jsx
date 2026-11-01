@@ -1074,7 +1074,7 @@ export default function GroupChat({
 
     const file = new File(
       [recordedBlob],
-      `${isVideo ? 'video-note' : 'voice-message'}.webm`,
+      `${isVideo ? 'video-note' : 'voice-message'}.${/mp4/i.test(recordedBlob.type || '') ? (isVideo ? 'mp4' : 'm4a') : 'webm'}`,
       {
         type:
           recordedBlob.type ||

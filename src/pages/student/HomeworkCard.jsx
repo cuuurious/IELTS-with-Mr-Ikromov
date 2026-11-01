@@ -932,10 +932,9 @@ export default function HomeworkCard({
         err
       )
 
-      setError(
-        err?.message ||
-          'Failed to save speaking recording.'
-      )
+      // Thrown back to AudioRecorder (2026-11-01) so it keeps the take
+      // and shows "Save again" instead of looking saved when it isn't.
+      throw err
     } finally {
       setUploading(false)
     }

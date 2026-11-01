@@ -155,6 +155,11 @@ const IMPORT_SECTION_SCHEMA = {
             description:
               'Starts at 0 for EACH section — the first question of Passage 2 is order_index 0 again, not a continuation of Passage 1\'s numbering.',
           },
+          number: {
+            type: 'integer',
+            description:
+              'The question number PRINTED on the paper (1–40), exactly as printed. For a "choose TWO/THREE" question that covers several numbers (e.g. "Questions 21–22"), give the FIRST number (21). 0 only if no number is printed.',
+          },
           type: {
             type: 'string',
             enum: [
@@ -179,7 +184,7 @@ const IMPORT_SECTION_SCHEMA = {
               'Only fill this in when an answer key is genuinely printed in the document. Otherwise leave it as an empty string so the teacher fills it in. For multi_select, when there IS an answer key, join every correct choice with ", " (comma-space), in the same order those choices appear in "choices" — never in click/answer order.',
           },
         },
-        required: ['order_index', 'type', 'prompt', 'choices', 'correct_answer'],
+        required: ['order_index', 'number', 'type', 'prompt', 'choices', 'correct_answer'],
         additionalProperties: false,
       },
     },
@@ -273,6 +278,8 @@ function buildPrompt(module) {
     '- yes_no_ng — the question asks whether a statement agrees with the writer\'s claims/views — Yes, No, or Not Given. Do NOT map this to true_false_ng even though the shape looks similar: True/False/Not Given and Yes/No/Not Given are different question types in real IELTS papers and must come back with their own type here.',
     '- matching — the question asks the student to match something (a paragraph, a heading, a name, a piece of information) to ONE option out of a shared bank of options printed once for the whole group (matching headings, matching information, matching names/features, and similar). Put the full bank of options, in order, into "choices" — the same bank is usually reused across several matching questions in the same group.',
     '- short_answer — every kind of gap-filling / completion question, PLUS plain short-answer questions: sentence completion, summary completion, note completion, table completion, flow-chart completion, and diagram/map/plan label completion all belong here — anywhere the student types the missing word(s) into a blank rather than picking from a list. "prompt" should make clear exactly what they need to type (include the surrounding sentence/label with its blank so the question stands on its own without needing to see the original page layout). This type covers every "gap fill" style question in the paper — there is no separate gap-filling type, they all map to short_answer.',
+    '',
+    'Also give every question its PRINTED number in "number" (the real 1–40 numbering of the paper). Never skip, merge or renumber questions: if the paper prints questions 14–26, return exactly 13 questions numbered 14 to 26 (a "choose TWO" question like 21–22 is ONE entry with number 21). Do not drop a question because it is hard to read — include it with what you can read.',
     '',
     `Number the questions in "order_index" starting at 0 WITHIN EACH SECTION — the first question of the second ${unitWord} is order_index 0 again, not a continuation of the first ${unitWord}'s numbering (the builder inserts each ${unitWord}'s questions separately and renumbers them itself).`,
     '',
