@@ -16,6 +16,8 @@ import QuestionGroupsPanel, { autoGroupSection } from './QuestionGroupsPanel'
 import { useSessionState } from '../../lib/sessionState'
 import { cleanPrompt } from '../../components/exam/questionGroups'
 import Icon from '../../components/Icon'
+import EmptyState from '../../components/EmptyState'
+import { SkillIcon } from '../../components/SkillArt'
 import WritingReviewModal from '../../components/writing/WritingReviewModal'
 import SpeakingMarkModal from '../../components/SpeakingMarkModal'
 import StudentTrend, { SKILL_LINES, Sparkline, trendPoints } from '../../components/StudentTrend'
@@ -4351,16 +4353,16 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 </p>
 
                 {/* summary */}
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {[
-                    ['Waiting', allPendingItems.length, 'text-paper'],
-                    ['With a score', scoredItems.length, 'text-sage'],
-                    ['Incomplete', emptyItems.length, emptyItems.length ? 'text-coral' : 'text-paper'],
-                    ['Students', pendingRelease.length, 'text-paper'],
+                    ['waiting to be released', allPendingItems.length, 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass'],
+                    ['with a score', scoredItems.length, 'bg-reading-tint text-reading'],
+                    ['incomplete', emptyItems.length, emptyItems.length ? 'bg-urgent-tint text-coral' : 'bg-panel-2 text-paper'],
+                    ['students', pendingRelease.length, 'bg-speaking-tint text-speaking'],
                   ].map(([label, n, cls]) => (
-                    <div key={label} className="rounded-xl border border-line bg-panel px-3 py-2.5">
-                      <span className={`block font-display text-2xl leading-none ${cls}`}>{n}</span>
-                      <span className="mt-1 block text-[11px] font-medium text-mist">{label}</span>
+                    <div key={label} className={`rounded-[20px] px-5 py-4 ${cls}`}>
+                      <span className="block font-brand text-[30px] font-semibold leading-none">{n}</span>
+                      <span className="mt-1.5 block text-[13px] font-extrabold text-paper-dim">{label}</span>
                     </div>
                   ))}
                 </div>
@@ -4431,16 +4433,14 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 {releaseError && <p className="text-sm text-coral">{releaseError}</p>}
 
                 {allPendingItems.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
-                    Nothing waiting — every scored or marked result is already visible to its student.
-                  </div>
+                  <EmptyState icon="check" title="Nothing waiting" text="Every result is already released." />
                 ) : shownItems.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-line bg-panel/60 px-6 py-10 text-center text-sm text-mist">
                     Nothing matches these filters.
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-                    <div className="hidden grid-cols-[2rem_minmax(0,1.4fr)_6rem_minmax(0,1.2fr)_minmax(0,1fr)_5rem_5.5rem_auto] items-center gap-3 border-b border-line bg-panel-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-mist md:grid">
+                  <div className="flex flex-col gap-2.5">
+                    <label className="flex items-center gap-2.5 px-2 text-[13px] font-bold text-mist">
                       <input
                         type="checkbox"
                         checked={allShownSelected}
@@ -4451,23 +4451,22 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             return next
                           })
                         }
-                        className="h-4 w-4 accent-brass"
-                        aria-label="Select all shown"
+                        className="h-[18px] w-[18px] accent-brass"
                       />
-                      <span>Student</span>
-                      <span>Skill</span>
-                      <span>Test</span>
-                      <span>Score</span>
-                      <span>Time</span>
-                      <span>Band</span>
-                      <span className="text-right">Actions</span>
-                    </div>
+                      Select all shown ({shownItems.length})
+                    </label>
                     {shownItems.map((it) => {
                       const p = it.maxScore ? Math.round((it.score / it.maxScore) * 100) : null
+                      const skillKey = String(it.skill || '').toLowerCase()
+                      const tone =
+                        skillKey === 'listening' ? { tint: 'bg-listening-tint text-listening', bar: 'bg-listening' }
+                          : skillKey === 'reading' ? { tint: 'bg-reading-tint text-reading', bar: 'bg-reading' }
+                            : skillKey === 'writing' ? { tint: 'bg-writing-tint text-writing', bar: 'bg-writing' }
+                              : { tint: 'bg-speaking-tint text-speaking', bar: 'bg-speaking' }
                       return (
                         <div
                           key={it.key}
-                          className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 border-b border-line px-4 py-2.5 last:border-b-0 md:grid-cols-[2rem_minmax(0,1.4fr)_6rem_minmax(0,1.2fr)_minmax(0,1fr)_5rem_5.5rem_auto] ${it.empty ? 'bg-coral/[0.03]' : ''}`}
+                          className={`grid grid-cols-[22px_48px_minmax(0,1fr)] items-center gap-x-3.5 gap-y-3 rounded-[20px] border bg-panel px-4 py-3.5 lg:grid-cols-[22px_48px_minmax(0,1.3fr)_minmax(0,1fr)_90px_auto] ${it.empty ? 'border-coral/40' : 'border-line'}`}
                         >
                           <input
                             type="checkbox"
@@ -4480,78 +4479,90 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 return next
                               })
                             }
-                            className="h-4 w-4 accent-brass"
+                            className="h-[18px] w-[18px] accent-brass"
                             aria-label={`Select ${it.skill} result for ${studentLabel(it.student)}`}
                           />
-                          <button type="button" onClick={() => setProfileStudentId(it.student.id)} className="focus-ring min-w-0 text-left">
-                            <span className="block truncate text-sm font-semibold text-paper hover:text-brass">{studentLabel(it.student)}</span>
-                            <span className="block text-[11px] text-mist">
-                              {it.date ? new Date(it.date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                          <span className={`grid h-12 w-12 place-items-center rounded-2xl ${tone.tint}`} aria-hidden="true">
+                            <SkillIcon skill={skillKey} className="h-5 w-5" />
+                          </span>
+                          <button type="button" onClick={() => setProfileStudentId(it.student.id)} className="focus-ring min-w-0 rounded-lg text-left">
+                            <span className="block truncate text-[15px] font-extrabold text-paper hover:text-brass">{studentLabel(it.student)}</span>
+                            <span className="mt-1 flex flex-wrap gap-1.5 text-xs font-extrabold">
+                              <span className={`rounded-lg px-2 py-0.5 ${tone.tint}`}>{it.skill}</span>
+                              <span className="max-w-[220px] truncate rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{it.title}</span>
+                              {it.date && (
+                                <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">
+                                  {new Date(it.date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                              {it.minutes != null && <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{it.minutes} min</span>}
                             </span>
                           </button>
-                          <span className="text-xs font-semibold text-paper-dim md:order-none">{it.skill}</span>
-                          <span className="col-span-2 col-start-2 truncate text-sm text-paper-dim md:col-span-1 md:col-start-auto">{it.title}</span>
-                          <span className="col-span-2 col-start-2 md:col-span-1 md:col-start-auto">
+                          <span className="col-span-3 col-start-1 lg:col-span-1 lg:col-start-auto">
                             {it.scoreLabel ? (
-                              <span className="flex items-center gap-2">
-                                <span className={`text-sm font-semibold ${it.empty ? 'text-coral' : 'text-paper'}`}>{it.scoreLabel}</span>
+                              <span className="flex flex-col gap-1.5">
+                                <span className="flex items-baseline gap-2">
+                                  <span className={`font-brand text-[20px] font-semibold ${it.empty ? 'text-coral' : 'text-paper'}`}>{it.scoreLabel}</span>
+                                  {it.empty && <span className="text-xs font-extrabold uppercase text-coral">{it.score > 0 ? 'ended early' : 'empty'}</span>}
+                                </span>
                                 {p != null && (
-                                  <span className="h-1.5 w-16 overflow-hidden rounded-full bg-panel-2">
-                                    <span className={`block h-full rounded-full ${it.empty ? 'bg-coral' : 'bg-brass'}`} style={{ width: `${Math.max(2, p)}%` }} />
+                                  <span className="block h-2 overflow-hidden rounded-full bg-panel-2">
+                                    <span className={`block h-full rounded-full ${it.empty ? 'bg-coral' : tone.bar}`} style={{ width: `${Math.max(2, p)}%` }} />
                                   </span>
                                 )}
-                                {it.empty && <span className="text-[10px] font-semibold uppercase text-coral">{it.score > 0 ? 'ended early' : 'empty'}</span>}
                               </span>
                             ) : (
-                              <span className="text-xs text-mist">examiner marked</span>
+                              <span className="text-[13px] font-bold text-mist">Marked by the examiner</span>
                             )}
                           </span>
-                          <span className="hidden text-xs text-mist md:block">{it.minutes != null ? `${it.minutes} min` : '—'}</span>
-                          <span className="col-start-2 md:col-start-auto">
+                          <span className="col-span-1 col-start-2 lg:col-start-auto">
                             {it.editableBand ? (
-                              <input
-                                type="number"
-                                step="0.5"
-                                min="1"
-                                max="9"
-                                value={bandOverride(it.key, it.suggestedBand) ?? ''}
-                                onChange={(e) =>
-                                  setBandDrafts((prev) => ({ ...prev, [it.key]: e.target.value === '' ? null : Number(e.target.value) }))
-                                }
-                                className="focus-ring w-16 rounded-lg border border-line bg-panel-2 px-2 py-1 text-center text-sm text-paper"
-                                aria-label={`Band for ${it.skill}, editable before release`}
-                              />
+                              <label className={`flex flex-col items-center rounded-2xl px-2 py-1.5 ${tone.tint}`}>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="1"
+                                  max="9"
+                                  value={bandOverride(it.key, it.suggestedBand) ?? ''}
+                                  onChange={(e) =>
+                                    setBandDrafts((prev) => ({ ...prev, [it.key]: e.target.value === '' ? null : Number(e.target.value) }))
+                                  }
+                                  className="focus-ring w-16 rounded-lg bg-transparent text-center font-brand text-[20px] font-semibold outline-none"
+                                  aria-label={`Band for ${it.skill}, editable before release`}
+                                />
+                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-paper-dim">band</span>
+                              </label>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => openMarking(it.table === 'mock_speaking_slots' ? 'speaking' : 'writing', it.id)}
-                                className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-sm font-semibold text-paper hover:border-brass/50 hover:text-brass"
+                                className={`focus-ring flex w-full flex-col items-center rounded-2xl px-2 py-1.5 ${tone.tint}`}
                                 title={it.table === 'mock_speaking_slots' ? 'See or change the speaking marks' : 'See the essay with comments, or change the marks'}
                               >
-                                {formatBand(it.suggestedBand)}
-                                <Icon name="pencil" className="h-3 w-3 opacity-70" />
+                                <span className="font-brand text-[20px] font-semibold">{formatBand(it.suggestedBand)}</span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide text-paper-dim">band <Icon name="pencil" className="h-2.5 w-2.5" /></span>
                               </button>
                             )}
                           </span>
-                          <span className="col-span-2 col-start-2 flex justify-start gap-1.5 md:col-span-1 md:col-start-auto md:justify-end">
-                            <button
-                              type="button"
-                              disabled={releasing}
-                              onClick={() => (it.empty ? confirmRelease([it]) : releaseItems([it]))}
-                              className="focus-ring rounded-xl border border-line px-3 py-1 text-xs font-semibold text-mist hover:border-brass/40 hover:text-brass disabled:opacity-40"
-                            >
-                              Release
-                            </button>
+                          <span className="col-span-2 col-start-3 flex justify-end gap-2 lg:col-span-1 lg:col-start-auto">
                             {it.table !== 'mock_speaking_slots' && (
                               <button
                                 type="button"
                                 disabled={releasing}
                                 onClick={() => deleteResultItems([it])}
-                                className="focus-ring rounded-xl border border-coral/30 px-3 py-1 text-xs font-semibold text-coral hover:bg-coral/10 disabled:opacity-40"
+                                className="focus-ring h-10 rounded-[14px] px-3 text-[13px] font-extrabold text-coral hover:bg-urgent-tint disabled:opacity-40"
                               >
                                 Delete
                               </button>
                             )}
+                            <button
+                              type="button"
+                              disabled={releasing}
+                              onClick={() => (it.empty ? confirmRelease([it]) : releaseItems([it]))}
+                              className="focus-ring h-10 rounded-[14px] bg-brass px-4 text-[13px] font-extrabold text-onbrass hover:brightness-110 disabled:opacity-40"
+                            >
+                              Release
+                            </button>
                           </span>
                         </div>
                       )
@@ -4682,7 +4693,8 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search students by name…"
-                  className="focus-ring w-full sm:max-w-xs rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
+                  aria-label="Search students"
+                  className="focus-ring h-[46px] w-full rounded-[14px] border border-line bg-panel px-4 text-sm font-semibold text-paper placeholder:text-mist sm:max-w-sm"
                 />
 
                 <div className="flex items-center gap-1 rounded-xl border border-line bg-panel p-1 self-start">
@@ -4719,7 +4731,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   No groups yet.
                 </div>
               ) : (
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-3">
                   {groupSections
                     .filter((s) => s.rows.length > 0 || !search.trim())
                     .map(({ group, rows: groupRows }) => {
@@ -4739,35 +4751,40 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       const groupAvg = getGroupAvgBand(groupRows)
                       return (
                         <div key={group.id} className="flex w-full flex-col gap-3">
-                          <button
-                            type="button"
-                            onClick={() => toggleGroupExpanded(group.id)}
-                            className={`focus-ring relative flex items-center gap-3 overflow-hidden rounded-[20px] border border-line bg-panel py-3 pl-5 pr-4 text-left transition-colors hover:bg-panel-2`}
-                          >
-                            <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === group.id))).bar}`} />
-                            <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display font-semibold ${
-                                badge.length > 1 ? 'text-sm' : 'text-base'
-                              } ${accent.bg} ${accent.text} ring-1 ring-inset ring-white/10`}
-                            >
-                              {badge}
-                            </div>
-                            {!isNumericName && (
-                              <p className="font-display text-base text-paper">{group.name}</p>
-                            )}
-                            <span className="text-sm text-paper-dim">
-                              {groupRows.length} student{groupRows.length === 1 ? '' : 's'}
-                            </span>
-                            <span className="text-xs text-mist">
-                              · {groupRows.filter((r) => bandSummaryByStudentId[r.student.id]?.overallBand != null).length} with a mock band
-                            </span>
-                            <span className="ml-auto flex items-center gap-3">
-                              {groupAvg != null && (
-                                <span className="rounded-xl bg-brass/10 px-2.5 py-0.5 text-sm font-bold text-paper">avg {formatBand(groupAvg)}</span>
-                              )}
-                              <span className="text-xs text-mist">{isOpen ? '▲' : '▼'}</span>
-                            </span>
-                          </button>
+                          {(() => {
+                            const look = groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === group.id)))
+                            const banded = groupRows.filter((r) => bandSummaryByStudentId[r.student.id]?.overallBand != null).length
+                            const pct = groupRows.length ? Math.round((banded / groupRows.length) * 100) : 0
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => toggleGroupExpanded(group.id)}
+                                aria-expanded={isOpen}
+                                className={`focus-ring relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 overflow-hidden rounded-[20px] border bg-panel py-4 pl-6 pr-4 text-left transition hover:-translate-y-0.5 sm:grid-cols-[180px_minmax(0,1fr)_auto_auto] ${isOpen ? `border-2 ${look.border}` : 'border-line'}`}
+                              >
+                                <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-2 ${look.bar}`} />
+                                <span className="min-w-0">
+                                  <span className={`block truncate font-brand font-semibold leading-tight ${look.text} ${isNumericName ? 'text-[30px]' : 'text-[22px]'}`}>
+                                    {isNumericName ? group.name.trim() : group.name}
+                                  </span>
+                                  <span className="mt-0.5 block text-[13px] font-bold text-mist">
+                                    {groupRows.length} student{groupRows.length === 1 ? '' : 's'}
+                                  </span>
+                                </span>
+                                <span className="hidden min-w-0 sm:block">
+                                  <span className="block h-2.5 overflow-hidden rounded-full bg-panel-2">
+                                    <span className={`block h-full rounded-full ${look.bar}`} style={{ width: `${pct}%` }} />
+                                  </span>
+                                  <span className="mt-1.5 block text-xs font-bold text-mist">{banded} of {groupRows.length} have a mock band</span>
+                                </span>
+                                <span className={`grid h-14 min-w-[64px] place-items-center rounded-2xl px-3 text-center ${look.tint}`}>
+                                  <span className={`font-brand text-[20px] font-semibold leading-none ${look.text}`}>{groupAvg != null ? formatBand(groupAvg) : '—'}</span>
+                                  <span className="text-[10px] font-extrabold uppercase tracking-wide text-paper-dim">avg band</span>
+                                </span>
+                                <svg className={`hidden h-5 w-5 text-mist transition sm:block ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                              </button>
+                            )
+                          })()}
 
                           {isOpen && (
                             <StudentRowList
@@ -4828,61 +4845,62 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
              ====================================================== */}
           {!loading && section === 'speaking' && (
             <div className="flex flex-col gap-6">
-              <p className="text-sm text-mist max-w-lg">
-                Every booked speaking exam, across every speaking examiner — upcoming first,
-                with the band and feedback once a session has been marked.
-              </p>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {[
+                  { n: upcomingSpeaking.length, l: 'booked, coming up', c: 'bg-speaking-tint text-speaking' },
+                  { n: pastSpeaking.filter((s) => s.status === 'completed').length, l: 'done', c: 'bg-reading-tint text-reading' },
+                  { n: pastSpeaking.filter((s) => s.status === 'completed' && s.examiner_band == null).length, l: 'waiting for a band', c: 'bg-[color-mix(in_srgb,var(--color-saffron)_16%,var(--color-panel))] text-amber' },
+                  { n: pastSpeaking.filter((s) => s.status === 'no_show').length, l: 'no-shows', c: 'bg-urgent-tint text-coral' },
+                ].map((t) => (
+                  <div key={t.l} className={`rounded-[20px] px-5 py-4 ${t.c}`}>
+                    <div className="font-brand text-[30px] font-semibold leading-none">{t.n}</div>
+                    <div className="mt-1.5 text-[13px] font-extrabold text-paper-dim">{t.l}</div>
+                  </div>
+                ))}
+              </div>
 
               {examinerWorkload.length > 0 && (
                 <div>
-                  <h3 className="font-display text-lg text-paper mb-2.5">Examiner workload</h3>
-                  <div className="rounded-2xl border border-line bg-panel overflow-hidden">
-                    <div className="hidden sm:grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line text-[10px] uppercase tracking-[0.14em] text-mist font-mono">
-                      <span>Examiner</span>
-                      <span>This week</span>
-                      <span>All-time</span>
-                      <span>No-shows</span>
-                    </div>
+                  <h3 className="mb-3 font-brand text-[18px] font-semibold text-paper">Examiners</h3>
+                  <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {examinerWorkload.map((entry) => {
                       const isOverloaded =
                         examinerWorkloadAvgThisWeek != null &&
                         entry.thisWeek - examinerWorkloadAvgThisWeek >= WORKLOAD_IMBALANCE_THRESHOLD
+                      const name = studentLabel(entry.examiner)
+                      const initials = String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('')
                       return (
-                        <div
-                          key={entry.examinerId}
-                          className={`grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-3 px-5 py-3 border-b border-line last:border-b-0 text-sm ${
-                            isOverloaded ? 'bg-amber/5' : ''
-                          }`}
-                        >
-                          <span className="col-span-2 sm:col-span-1 text-paper font-medium truncate">
-                            {studentLabel(entry.examiner)}
-                            {isOverloaded && (
-                              <span
-                                className="ml-2 rounded-xl bg-amber/15 px-2 py-0.5 text-[10px] font-semibold text-amber align-middle"
-                                title={`Noticeably more than the team average (${examinerWorkloadAvgThisWeek.toFixed(1)}) this week`}
-                              >
-                                <Icon name="scale" className="h-3 w-3" /> above average
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-paper">{entry.thisWeek}</span>
-                          <span className="text-paper">{entry.total}</span>
-                          <span className={entry.noShows > 0 ? 'text-coral font-semibold' : 'text-mist'}>
-                            {entry.noShows}
-                          </span>
-                        </div>
+                        <li key={entry.examinerId} className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5">
+                          <div className="flex items-center gap-3">
+                            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-speaking-tint font-brand text-base font-bold text-speaking">{initials}</span>
+                            <div className="min-w-0">
+                              <div className="line-clamp-2 text-[15px] font-extrabold leading-snug text-paper">{name}</div>
+                              {isOverloaded && <span className="mt-1 inline-block rounded-lg bg-[color-mix(in_srgb,var(--color-saffron)_18%,var(--color-panel))] px-2 py-0.5 text-xs font-extrabold text-amber">Busier than the others</span>}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            {[
+                              [entry.thisWeek, 'this week', 'text-speaking'],
+                              [entry.total, 'all time', 'text-paper'],
+                              [entry.noShows, 'no-shows', entry.noShows ? 'text-coral' : 'text-mist'],
+                            ].map(([v, l, c]) => (
+                              <div key={l} className="rounded-[14px] bg-panel-2 px-2 py-2.5">
+                                <div className={`font-brand text-[18px] font-semibold ${c}`}>{v}</div>
+                                <div className="text-[11px] font-extrabold text-mist">{l}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </li>
                       )
                     })}
-                  </div>
+                  </ul>
                 </div>
               )}
 
               <div>
-                <h3 className="font-display text-lg text-paper mb-2.5">Upcoming</h3>
+                <h3 className="mb-3 font-brand text-[18px] font-semibold text-paper">Coming up</h3>
                 {upcomingSpeaking.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-line bg-panel/80 px-5 py-8 text-center text-sm text-mist">
-                    No upcoming speaking exams booked.
-                  </div>
+                  <EmptyState icon="people" title="Nothing booked yet" text="New speaking bookings will show here." />
                 ) : (
                   <div className="space-y-2.5">
                     {upcomingSpeaking.map((slot) => (
@@ -4893,11 +4911,9 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
               </div>
 
               <div>
-                <h3 className="font-display text-lg text-paper mb-2.5">Past / other</h3>
+                <h3 className="mb-3 font-brand text-[18px] font-semibold text-paper">Earlier</h3>
                 {pastSpeaking.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-line bg-panel/80 px-5 py-8 text-center text-sm text-mist">
-                    No past speaking exams yet.
-                  </div>
+                  <div className="rounded-[20px] border border-line bg-panel px-5 py-6 text-center text-sm font-semibold text-mist">No speaking exams yet.</div>
                 ) : (
                   <div className="space-y-2.5">
                     {pastSpeaking.map((slot) => (
@@ -4917,15 +4933,15 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
              ====================================================== */}
           {!loading && section === 'access' && (
             <div className="flex flex-col gap-5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
-                  { n: pendingMockRequests.length, label: pendingMockRequests.length === 1 ? 'request waiting' : 'requests waiting', tone: pendingMockRequests.length ? 'text-coral' : 'text-paper' },
-                  { n: codeCounts.unused, label: 'unused codes', tone: 'text-paper' },
-                  { n: upcomingSessions, label: upcomingSessions === 1 ? 'session scheduled' : 'sessions scheduled', tone: 'text-paper' },
+                  { n: pendingMockRequests.length, label: pendingMockRequests.length === 1 ? 'request waiting' : 'requests waiting', tone: pendingMockRequests.length ? 'text-coral' : 'text-reading', bg: pendingMockRequests.length ? 'bg-urgent-tint' : 'bg-reading-tint' },
+                  { n: codeCounts.unused, label: 'unused codes', tone: 'text-brass', bg: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]' },
+                  { n: upcomingSessions, label: upcomingSessions === 1 ? 'session scheduled' : 'sessions scheduled', tone: 'text-speaking', bg: 'bg-speaking-tint' },
                 ].map((c) => (
-                  <div key={c.label} className="rounded-2xl border border-line bg-panel px-4 py-3">
-                    <p className={`text-2xl font-semibold ${c.tone}`}>{c.n}</p>
-                    <p className="text-xs text-mist">{c.label}</p>
+                  <div key={c.label} className={`rounded-[20px] px-5 py-4 ${c.bg}`}>
+                    <p className={`font-brand text-[30px] font-semibold leading-none ${c.tone}`}>{c.n}</p>
+                    <p className="mt-1.5 text-[13px] font-extrabold text-paper-dim">{c.label}</p>
                   </div>
                 ))}
               </div>
@@ -4938,14 +4954,11 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   uses — one click both decides the request and gets
                   the student their code.
                  ================================================ */}
-              <div className="rounded-[20px] border border-line bg-panel/60 p-5 sm:p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-3">
+              <div className="rounded-[24px] border border-line bg-panel p-5 sm:p-6 flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-paper">Mock requests</p>
-                    <p className="text-sm text-mist max-w-lg mt-0.5">
-                      Students ask for a Full Mock from their Take a Test tab. Approving issues
-                      their code and sends it on Telegram.
-                    </p>
+                    <h3 className="font-brand text-[18px] font-semibold text-paper">Mock requests</h3>
+                    <p className="mt-0.5 text-[13px] font-semibold text-mist">Approving sends the student a code on Telegram.</p>
                   </div>
                   {pendingMockRequests.length > 0 && (
                     <div className="flex items-center gap-2 shrink-0">
@@ -4979,9 +4992,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
 
                 {pendingMockRequests.length > 0 && (
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xs text-mist font-mono uppercase tracking-wide">
-                      Approved codes cover
-                    </span>
+                    <span className="text-[13px] font-extrabold text-paper-dim">Codes cover</span>
                     <SectionPicker value={requestSections} onChange={setRequestSections} disabled={decidingRequests} />
                   </div>
                 )}
@@ -4989,9 +5000,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 {requestActionError && <p className="text-sm text-coral">{requestActionError}</p>}
 
                 {pendingMockRequests.length === 0 ? (
-                  <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-10 text-center text-sm text-mist">
-                    No pending requests.
-                  </div>
+                  <EmptyState icon="check" title="No requests waiting" text="When a student asks for a Full Mock it shows here." />
                 ) : (
                   <div className="rounded-2xl border border-line bg-panel overflow-hidden">
                     <label className="flex items-center gap-3 px-5 py-2.5 border-b border-line bg-panel-2 text-xs text-mist cursor-pointer">
@@ -5028,35 +5037,46 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       return (
                         <div
                           key={req.id}
-                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                          className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3.5 last:border-b-0 sm:px-5"
                         >
-                          <label className="flex items-center gap-3 min-w-0 cursor-pointer">
+                          <label className="flex min-w-0 cursor-pointer items-center gap-3.5">
                             <input
                               type="checkbox"
                               checked={selectedRequestIds.has(req.id)}
                               onChange={() => toggleRequestSelected(req.id)}
-                              className="focus-ring h-4 w-4 shrink-0 rounded border-line accent-brass"
+                              className="focus-ring h-[18px] w-[18px] shrink-0 rounded border-line accent-brass"
                             />
-                            <div className="min-w-0">
-                              <p className="font-medium text-paper truncate">
-                                {student?.full_name || student?.username || 'Unknown student'}
-                              </p>
-                              <p className="text-xs text-mist mt-0.5 truncate">
-                                {groupNamesOf(req.student_id) || 'No group'} · {set?.title || 'Unknown set'} · asked{' '}
-                                {requestAge(req.requested_at)}
-                              </p>
-                              {hasUnusedCode(req.student_id, req.full_mock_set_id) && (
-                                <p className="text-[11px] text-brass mt-0.5">Already has an unused code for this mock</p>
-                              )}
-                            </div>
+                            {(() => {
+                              const gid = (groupIdsByStudent[req.student_id] || [])[0]
+                              const look = gid ? groupColour(Math.max(0, groupsByCreated.findIndex((g) => g.id === gid))) : null
+                              const name = student?.full_name || student?.username || 'Unknown student'
+                              return (
+                                <>
+                                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full font-brand text-sm font-bold ${look ? `${look.tint} ${look.text}` : 'bg-panel-2 text-mist'}`}>
+                                    {name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('')}
+                                  </span>
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-[15px] font-extrabold text-paper">{name}</span>
+                                    <span className="mt-1 flex flex-wrap gap-1.5 text-xs font-extrabold">
+                                      <span className={`rounded-lg px-2 py-0.5 ${look ? `${look.tint} ${look.text}` : 'bg-panel-2 text-mist'}`}>{groupNamesOf(req.student_id) || 'No group'}</span>
+                                      <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{set?.title || 'Unknown set'}</span>
+                                      <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">asked {requestAge(req.requested_at)}</span>
+                                      {hasUnusedCode(req.student_id, req.full_mock_set_id) && (
+                                        <span className="rounded-lg bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] px-2 py-0.5 text-brass">Already has a code</span>
+                                      )}
+                                    </span>
+                                  </span>
+                                </>
+                              )
+                            })()}
                           </label>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
                               onClick={() => rejectMockAccessRequests([req.id])}
                               disabled={decidingRequests}
-                              className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors disabled:opacity-50"
+                              className="focus-ring h-10 rounded-[14px] border border-line px-4 text-[13px] font-extrabold text-coral transition hover:bg-urgent-tint disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -5064,7 +5084,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               onClick={() => approveMockAccessRequests([req.id])}
                               disabled={decidingRequests}
-                              className="focus-ring text-xs font-semibold rounded-xl border border-sage/30 bg-sage/10 text-sage px-2.5 py-1 hover:bg-sage/20 transition-colors disabled:opacity-50"
+                              className="focus-ring h-10 rounded-[14px] bg-brass px-4 text-[13px] font-extrabold text-onbrass transition hover:brightness-110 disabled:opacity-50"
                             >
                               Approve
                             </button>
@@ -5418,8 +5438,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 <div className="flex flex-col gap-5">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm text-mist max-w-lg">
-                      Writing mock exams students can sit from their own Mock Test Center — full
-                      timed test, task switching, word count, the works.
+                      Timed writing mocks students sit from their Mock Test Center.
                     </p>
                     <button
                       type="button"
@@ -5453,25 +5472,30 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       No writing mocks match these filters.
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                       {filteredWritingExams.map((exam) => (
                         <div
                           key={exam.id}
-                          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                          className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5"
                         >
-                          <div className="min-w-0">
-                            <p className="font-medium text-paper truncate">{exam.title}</p>
-                            <p className="text-xs text-mist font-mono mt-0.5">
-                              {exam.task1_prompt ? 'Task 1 + Task 2' : 'Task 2 only'} ·{' '}
-                              {exam.time_limit_minutes} min
-                            </p>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-writing-tint text-writing">
+                              <SkillIcon skill="writing" className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-[15px] font-extrabold text-paper">{exam.title}</p>
+                              <p className="mt-1 flex flex-wrap gap-1.5 text-xs font-extrabold">
+                                <span className="rounded-lg bg-writing-tint px-2 py-0.5 text-writing">{exam.task1_prompt ? 'Task 1 + Task 2' : 'Task 2 only'}</span>
+                                <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{exam.time_limit_minutes} min</span>
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => toggleExamActive(exam)}
-                              className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 transition-colors ${
+                              className={`focus-ring h-10 rounded-[14px] border px-3.5 text-[13px] font-extrabold transition-colors ${
                                 exam.is_active
                                   ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
                                   : 'text-mist border-line bg-panel-2 hover:text-paper'
@@ -5484,7 +5508,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <button
                               type="button"
                               onClick={() => openEditExam(exam)}
-                              className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                              className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2 transition-colors"
                             >
                               Edit
                             </button>
@@ -5493,7 +5517,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               type="button"
                               onClick={() => duplicateWritingExam(exam)}
                               disabled={duplicatingExamId === exam.id}
-                              className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                              className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2 transition-colors disabled:opacity-50"
                             >
                               {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
                             </button>
@@ -5501,7 +5525,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             <button
                               type="button"
                               onClick={() => deleteWritingExam(exam)}
-                              className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                              className="focus-ring h-10 rounded-[14px] px-3.5 text-[13px] font-extrabold text-coral hover:bg-urgent-tint transition-colors"
                             >
                               Delete
                             </button>
@@ -5521,8 +5545,8 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-mist max-w-lg">
                           {contentTab === 'reading'
-                            ? "Reading mock exams — always 3 passages, built in one guided flow. Can't be created until every passage has its text and questions."
-                            : "Listening mock exams — always 4 parts, built in one guided flow. Can't be created until every part has audio and questions."}
+                            ? 'Full Reading mocks: 3 passages, built step by step.'
+                            : 'Full Listening mocks: 4 parts with audio, built step by step.'}
                         </p>
                         <button
                           type="button"
@@ -5561,21 +5585,30 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                           No {contentTab} mocks match these filters.
                         </div>
                       ) : (
-                        <div className="rounded-2xl border border-line bg-panel overflow-hidden">
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                           {filteredRlExams.map((exam) => (
                             <div
                               key={exam.id}
-                              className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
+                              className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5"
                             >
-                              <div className="min-w-0">
-                                <p className="font-medium text-paper truncate">{exam.title}</p>
+                              <div className="flex min-w-0 items-center gap-3">
+                                <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${contentTab === 'listening' ? 'bg-listening-tint text-listening' : 'bg-reading-tint text-reading'}`}>
+                                  <SkillIcon skill={contentTab} className="h-5 w-5" />
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="truncate text-[15px] font-extrabold text-paper">{exam.title}</p>
+                                  <p className="mt-1 flex flex-wrap gap-1.5 text-xs font-extrabold">
+                                    <span className={`rounded-lg px-2 py-0.5 ${contentTab === 'listening' ? 'bg-listening-tint text-listening' : 'bg-reading-tint text-reading'}`}>{contentTab === 'listening' ? 'Listening' : 'Reading'}</span>
+                                    <span className={`rounded-lg px-2 py-0.5 ${exam.is_active ? 'bg-reading-tint text-reading' : 'bg-panel-2 text-mist'}`}>{exam.is_active ? 'Students can see it' : 'Hidden'}</span>
+                                  </p>
+                                </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <button
                                   type="button"
                                   onClick={() => toggleRlExamActive(exam)}
-                                  className={`text-[11px] font-semibold uppercase tracking-wide rounded-xl border px-2.5 py-1 transition-colors ${
+                                  className={`focus-ring h-10 rounded-[14px] border px-3.5 text-[13px] font-extrabold transition-colors ${
                                     exam.is_active
                                       ? 'text-sage border-sage/30 bg-sage/10 hover:bg-sage/20'
                                       : 'text-mist border-line bg-panel-2 hover:text-paper'
@@ -5589,7 +5622,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                   <button
                                     type="button"
                                     onClick={() => openListeningWizard(exam)}
-                                    className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                    className="focus-ring h-10 rounded-[14px] bg-brass px-3.5 text-[13px] font-extrabold text-onbrass hover:brightness-110"
                                   >
                                     Edit content →
                                   </button>
@@ -5598,7 +5631,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                     <button
                                       type="button"
                                       onClick={() => openExamSections(exam)}
-                                      className="focus-ring text-xs text-brass hover:text-brass-dim px-2 py-1 font-medium"
+                                      className="focus-ring h-10 rounded-[14px] bg-brass px-3.5 text-[13px] font-extrabold text-onbrass hover:brightness-110"
                                     >
                                       Manage sections →
                                     </button>
@@ -5606,7 +5639,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                     <button
                                       type="button"
                                       onClick={() => openEditRlExam(exam)}
-                                      className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                      className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2 transition-colors"
                                     >
                                       Edit
                                     </button>
@@ -5616,7 +5649,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => openExamPreview(exam)}
-                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                                  className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2 transition-colors"
                                   title="See it laid out like a student would, and fix anything from there"
                                 >
                                   View test
@@ -5626,7 +5659,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                   type="button"
                                   onClick={() => duplicateRlExam(exam)}
                                   disabled={duplicatingExamId === exam.id}
-                                  className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors disabled:opacity-50"
+                                  className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2 transition-colors disabled:opacity-50"
                                 >
                                   {duplicatingExamId === exam.id ? 'Duplicating…' : 'Duplicate'}
                                 </button>
@@ -5634,7 +5667,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteRlExam(exam)}
-                                  className="focus-ring text-xs font-semibold rounded-xl border border-coral/30 text-coral px-2.5 py-1 hover:bg-coral/10 transition-colors"
+                                  className="focus-ring h-10 rounded-[14px] px-3.5 text-[13px] font-extrabold text-coral hover:bg-urgent-tint transition-colors"
                                 >
                                   Delete
                                 </button>

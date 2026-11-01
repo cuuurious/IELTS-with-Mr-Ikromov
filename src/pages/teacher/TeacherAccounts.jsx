@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import ConfirmModal from '../../components/ConfirmModal'
+import EmptyState from '../../components/EmptyState'
 
 // Admin-only tab (see TeacherDashboard.jsx — only rendered when
 // profile.is_admin is true). Lets Jasur Ikromov's account see every
@@ -193,53 +194,58 @@ export default function TeacherAccounts({ currentTeacherId }) {
   return (
     <div className="flex flex-col gap-5">
 
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <p className="text-mist text-sm mt-1 max-w-xl">
-            Only your account can see this tab. Teachers, Speaking
-            examiners, and Writing examiners are all created and
-            removed here.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setShowAddForm((v) => !v)
-            setCreatedAccount(null)
-          }}
-          className="focus-ring shrink-0 rounded-md bg-brass px-4 py-2 text-sm font-medium text-onbrass transition hover:bg-brass-dim active:scale-95"
-        >
-          {showAddForm ? 'Close' : '+ Add staff account'}
-        </button>
-      </div>
+      {(() => {
+        const TILES = [
+          { role: 'teacher', label: 'teachers', cls: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass' },
+          { role: 'speaking_examiner', label: 'speaking examiners', cls: 'bg-speaking-tint text-speaking' },
+          { role: 'writing_examiner', label: 'writing examiners', cls: 'bg-writing-tint text-writing' },
+        ]
+        return (
+          <div className="grid gap-3 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
+            {TILES.map((t) => (
+              <div key={t.role} className={`rounded-[20px] px-5 py-4 ${t.cls}`}>
+                <div className="font-brand text-[30px] font-semibold leading-none">{otherStaff.filter((m) => m.role === t.role).length}</div>
+                <div className="mt-1.5 text-[13px] font-extrabold text-paper-dim">{t.label}</div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddForm((v) => !v)
+                setCreatedAccount(null)
+              }}
+              className="focus-ring flex min-h-[64px] items-center justify-center gap-2 rounded-[20px] bg-saffron px-6 text-sm font-extrabold text-[#17213a] transition hover:brightness-105"
+            >
+              {showAddForm ? 'Close' : '+ Add staff'}
+            </button>
+          </div>
+        )
+      })()}
 
       {showAddForm && (
         <form
           onSubmit={createStaffAccount}
-          className="ticket rounded-lg p-5 flex flex-col gap-3"
+          className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5 sm:p-6"
         >
-          <div className="text-xs uppercase tracking-wide text-mist font-mono">
-            New staff account
-          </div>
+          <h2 className="font-brand text-[18px] font-semibold text-paper">New staff account</h2>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-mist">Full name</label>
+              <label className="text-[13px] font-extrabold text-paper">Full name</label>
               <input
                 value={newFullName}
                 onChange={(e) => setNewFullName(e.target.value)}
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                className="focus-ring h-11 rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper"
                 required
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-mist">Role</label>
+              <label className="text-[13px] font-extrabold text-paper">Role</label>
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                className="focus-ring h-11 rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper"
               >
                 <option value="speaking_examiner">Speaking examiner</option>
                 <option value="writing_examiner">Writing examiner</option>
@@ -248,31 +254,31 @@ export default function TeacherAccounts({ currentTeacherId }) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-mist">Username</label>
+              <label className="text-[13px] font-extrabold text-paper">Username</label>
               <input
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
                 placeholder="letters, numbers, dots, underscores"
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                className="focus-ring h-11 rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper"
                 pattern="[A-Za-z0-9_.]{3,32}"
                 required
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-mist">Password</label>
+              <label className="text-[13px] font-extrabold text-paper">Password</label>
               <div className="flex gap-2">
                 <input
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="focus-ring flex-1 bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                  className="focus-ring h-11 flex-1 rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper"
                   minLength={6}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setNewPassword(randomPassword())}
-                  className="focus-ring shrink-0 rounded-md border border-line px-2.5 py-2 text-xs text-mist hover:border-brass hover:text-brass"
+                  className="focus-ring h-11 shrink-0 rounded-[14px] border border-line px-3.5 text-xs font-extrabold text-brass hover:bg-panel-2"
                 >
                   Generate
                 </button>
@@ -280,7 +286,7 @@ export default function TeacherAccounts({ currentTeacherId }) {
             </div>
 
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label className="text-xs text-mist">
+              <label className="text-[13px] font-extrabold text-paper">
                 Recovery email (optional)
               </label>
               <input
@@ -288,7 +294,7 @@ export default function TeacherAccounts({ currentTeacherId }) {
                 value={newContactEmail}
                 onChange={(e) => setNewContactEmail(e.target.value)}
                 placeholder="only needed if they'll use password reset"
-                className="focus-ring bg-panel-2 border border-line rounded-md px-3 py-2 text-sm"
+                className="focus-ring h-11 rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper"
               />
             </div>
           </div>
@@ -301,21 +307,17 @@ export default function TeacherAccounts({ currentTeacherId }) {
 
           <button
             disabled={creating}
-            className="focus-ring self-start rounded-md bg-brass px-4 py-2 text-sm font-medium text-onbrass disabled:opacity-50"
+            className="focus-ring h-11 self-start rounded-[14px] bg-brass px-5 text-sm font-extrabold text-onbrass disabled:opacity-50"
           >
             {creating ? 'Creating…' : 'Create account'}
           </button>
 
-          <p className="text-mist text-xs">
-            There's no email confirmation step — share the username and
-            password with them directly. They can change the password
-            themselves in Account Settings once they log in.
-          </p>
+          <p className="text-[13px] text-mist">Share the username and password with them. They can change it later.</p>
         </form>
       )}
 
       {createdAccount && (
-        <div className="rounded-lg border border-sage/40 bg-sage/10 px-4 py-3">
+        <div className="rounded-[20px] bg-reading-tint px-5 py-4">
           <p className="text-sage text-sm font-medium">
             {ROLE_META[createdAccount.role]?.label} account created —
             share these credentials with them:
@@ -336,59 +338,53 @@ export default function TeacherAccounts({ currentTeacherId }) {
       )}
 
       {otherStaff.length === 0 ? (
-        <div className="ticket rounded-lg p-4">
-          <p className="text-mist text-sm">
-            There are no other staff accounts right now.
-          </p>
-        </div>
+        <EmptyState icon="people" title="No other staff yet" text="Add a teacher or an examiner with the button above." />
       ) : (
-        <div className="flex flex-col gap-2">
+        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {otherStaff.map((member) => {
-            const meta = ROLE_META[member.role] || {
-              label: member.role,
-              accent: 'brass',
-            }
-
+            const meta = ROLE_META[member.role] || { label: member.role, accent: 'brass' }
+            const tone =
+              member.role === 'speaking_examiner'
+                ? { tint: 'bg-speaking-tint text-speaking', bar: 'bg-speaking' }
+                : member.role === 'writing_examiner'
+                  ? { tint: 'bg-writing-tint text-writing', bar: 'bg-writing' }
+                  : { tint: 'bg-[color-mix(in_srgb,var(--color-brass)_14%,var(--color-panel))] text-brass', bar: 'bg-brass' }
+            const initials = String(member.full_name || member.username || '?')
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((w) => w.charAt(0).toUpperCase())
+              .join('')
             return (
-              <div
-                key={member.id}
-                className="ticket rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap"
-              >
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-paper font-medium">
-                      {member.full_name || member.username}
-                    </span>
-
-                    <span
-                      className={`shrink-0 rounded-xl border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${ROLE_BADGE_CLASSES[meta.accent]}`}
-                    >
-                      {meta.label}
-                    </span>
+              <li key={member.id} className="flex flex-col overflow-hidden rounded-[20px] border border-line bg-panel">
+                <div className={`h-1.5 ${tone.bar}`} aria-hidden="true" />
+                <div className="flex flex-1 flex-col gap-4 p-5">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-full font-brand text-lg font-bold ${tone.tint}`}>{initials}</div>
+                    <div className="min-w-0">
+                      <div className="line-clamp-2 text-[15px] font-extrabold leading-snug text-paper">{member.full_name || member.username}</div>
+                      <span className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-extrabold ${tone.tint}`}>{meta.label}</span>
+                    </div>
                   </div>
-
-                  <div className="text-mist text-xs mt-0.5 font-mono">
-                    @{member.username}
-                    {member.contact_email ? ` · ${member.contact_email}` : ''}
-                    {' · '}
-                    {member.status}
+                  <div className="flex flex-col gap-1 text-[13px]">
+                    <div className="flex justify-between gap-3"><span className="text-mist">Username</span><span className="truncate font-bold text-paper">@{member.username}</span></div>
+                    {member.contact_email && (
+                      <div className="flex justify-between gap-3"><span className="text-mist">Email</span><span className="truncate font-bold text-paper">{member.contact_email}</span></div>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    disabled={busyAction === `delete-${member.id}`}
+                    onClick={() => deleteStaffAccount(member)}
+                    className="focus-ring mt-auto h-10 rounded-[14px] text-[13px] font-extrabold text-coral transition hover:bg-urgent-tint disabled:opacity-50"
+                  >
+                    {busyAction === `delete-${member.id}` ? 'Deleting…' : 'Delete account'}
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  disabled={busyAction === `delete-${member.id}`}
-                  onClick={() => deleteStaffAccount(member)}
-                  className="focus-ring px-3 py-2 rounded-md text-sm bg-panel-2 text-coral hover:bg-coral hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {busyAction === `delete-${member.id}`
-                    ? 'Deleting…'
-                    : 'Delete account'}
-                </button>
-              </div>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
 
       <ConfirmModal

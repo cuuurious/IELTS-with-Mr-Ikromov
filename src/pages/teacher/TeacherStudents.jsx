@@ -390,6 +390,10 @@ export default function TeacherStudents({ onStartChat }) {
             return studentGroupIds.length === 0
           }
 
+          if (groupFilter === 'any') {
+            return studentGroupIds.length > 0
+          }
+
           return studentGroupIds.includes(groupFilter)
         })
       }
@@ -948,7 +952,9 @@ export default function TeacherStudents({ onStartChat }) {
       ? 'none'
       : statusFilter === 'pending'
         ? 'pending'
-        : groupFilter !== 'all'
+        : statusFilter === 'all' && groupFilter === 'all'
+          ? 'everyone'
+          : groupFilter !== 'all'
           ? groupFilter
           : 'all'
   const pickRail = (key) => {
@@ -956,6 +962,10 @@ export default function TeacherStudents({ onStartChat }) {
       setView('without-group')
       setGroupFilter('all')
       setStatusFilter('approved')
+    } else if (key === 'everyone') {
+      setView('all')
+      setGroupFilter('all')
+      setStatusFilter('all')
     } else if (key === 'pending') {
       setView('all')
       setGroupFilter('all')
@@ -1167,14 +1177,22 @@ export default function TeacherStudents({ onStartChat }) {
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+        <button
+          type="button"
+          onClick={() => pickRail('everyone')}
+          className={`focus-ring rounded-[20px] border bg-panel px-5 py-4 text-left transition ${railKey === 'everyone' ? 'border-brass ring-2 ring-brass/25' : 'border-line hover:border-brass/50'}`}
+        >
           <div className="font-brand text-[28px] font-semibold leading-none text-brass">{stats.total}</div>
           <div className="mt-1.5 text-[13px] font-bold text-mist">Students in total</div>
-        </div>
-        <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
+        </button>
+        <button
+          type="button"
+          onClick={() => pickRail('any')}
+          className={`focus-ring rounded-[20px] border bg-panel px-5 py-4 text-left transition ${railKey === 'any' ? 'border-reading ring-2 ring-reading/25' : 'border-line hover:border-reading/50'}`}
+        >
           <div className="font-brand text-[28px] font-semibold leading-none text-reading">{stats.total - stats.withoutGroup}</div>
           <div className="mt-1.5 text-[13px] font-bold text-mist">In a group</div>
-        </div>
+        </button>
         <button
           type="button"
           onClick={() => pickRail('none')}

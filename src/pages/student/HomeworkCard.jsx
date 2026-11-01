@@ -1,3 +1,4 @@
+import SkillAudioPlayer from '../../components/SkillAudioPlayer'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
@@ -1956,22 +1957,10 @@ export default function HomeworkCard({
 
               {speakingAlreadySubmitted ? (
                 <>
-                  <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="grid gap-3">
                     {PARTS.map((p) =>
                       speakingParts[p.key] ? (
-                        <div
-                          key={p.key}
-                          className="rounded-lg border border-line bg-panel-2 p-3"
-                        >
-                          <div className="text-xs uppercase tracking-wide text-mist font-mono mb-2">
-                            {p.label}
-                          </div>
-                          <audio
-                            controls
-                            src={speakingParts[p.key]}
-                            className="w-full"
-                          />
-                        </div>
+                        <SkillAudioPlayer key={p.key} src={speakingParts[p.key]} label={p.label} />
                       ) : null
                     )}
                   </div>

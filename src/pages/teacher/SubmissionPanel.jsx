@@ -1,3 +1,4 @@
+import SkillAudioPlayer from '../../components/SkillAudioPlayer'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
@@ -323,21 +324,7 @@ export default function SubmissionPanel({
             ].map((key, i) =>
               submission?.[key] ? (
                 <section key={key}>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
-
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                      Speaking — Part {i + 1}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-line bg-panel-2 p-4">
-                    <audio
-                      controls
-                      src={submission[key]}
-                      className="w-full"
-                    />
-                  </div>
+                  <SkillAudioPlayer src={submission[key]} label={`Speaking — Part ${i + 1}`} />
                 </section>
               ) : null
             )}

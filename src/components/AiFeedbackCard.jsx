@@ -80,198 +80,147 @@ export default function AiFeedbackCard({
 
   if (status !== 'done' || !result) return null
 
+  const band = typeof result.overall_band === 'number' ? result.overall_band : null
+  const criteria = Array.isArray(result.criteria) ? result.criteria : []
+  const strengths = Array.isArray(result.strengths) ? result.strengths : []
+  const improvements = Array.isArray(result.improvements) ? result.improvements : []
+  const grammar = Array.isArray(result.grammar_structures) ? result.grammar_structures : []
+  const collocations = Array.isArray(result.useful_collocations) ? result.useful_collocations : []
+  const CRIT_TONES = [
+    'bg-listening-tint text-listening',
+    'bg-reading-tint text-reading',
+    'bg-writing-tint text-writing',
+    'bg-speaking-tint text-speaking',
+  ]
+
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+    <section className="flex flex-col gap-3">
+      {/* Header (redesign 2026-11-02): band ring + summary on the band. */}
+      <div className="registan-band relative overflow-hidden rounded-[22px] px-5 py-5 sm:px-6">
+        <div className="pointer-events-none absolute -bottom-8 right-10 h-24 w-16 rounded-[999px_999px_0_0] bg-white/10" aria-hidden="true" />
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.08em] text-white/90">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z" /><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg>
             AI evaluation
           </div>
+          {onReEvaluate && (
+            <button
+              type="button"
+              onClick={onReEvaluate}
+              disabled={reEvaluating}
+              className="focus-ring rounded-lg bg-white/15 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-white/25 disabled:opacity-50"
+            >
+              {reEvaluating ? 'Re-running…' : 'Re-run'}
+            </button>
+          )}
         </div>
-
-        {onReEvaluate && (
-          <button
-            type="button"
-            onClick={onReEvaluate}
-            disabled={reEvaluating}
-            className="focus-ring text-xs text-mist hover:text-paper disabled:opacity-50"
-          >
-            {reEvaluating ? 'Re-running…' : 'Re-run'}
-          </button>
-        )}
-      </div>
-
-      <div className="rounded-2xl border border-line bg-panel-2 px-5 py-5 flex flex-col gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-14px_rgba(0,0,0,0.22)]">
-
-        {/* OVERALL BAND — speaking only. Writing feedback has no
-            numeric score anywhere in it, by design, so this whole
-            block simply doesn't render when result.overall_band
-            isn't a number rather than showing a placeholder. */}
-        <div className="flex items-center gap-4">
-          {typeof result.overall_band === 'number' && (
-            <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl bg-brass text-onbrass">
-              <span className="font-display text-2xl leading-none">
-                {formatBand(result.overall_band)}
-              </span>
-              <span className="text-[9px] font-mono uppercase tracking-wide opacity-80">
-                band
-              </span>
+        <div className="relative mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+          {band != null && (
+            <div className="relative grid h-24 w-24 shrink-0 place-items-center" aria-label={`Band ${formatBand(band)}`}>
+              <svg className="absolute inset-0" viewBox="0 0 96 96" aria-hidden="true">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="9" />
+                <circle cx="48" cy="48" r="40" fill="none" stroke="var(--color-saffron)" strokeWidth="9" strokeLinecap="round" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - Math.min(1, band / 9))} transform="rotate(-90 48 48)" />
+              </svg>
+              <div className="text-center text-white">
+                <div className="font-brand text-[26px] font-bold leading-none">{formatBand(band)}</div>
+                <div className="mt-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white/80">band</div>
+              </div>
             </div>
           )}
-
-          {result.summary && (
-            <p className="text-sm text-paper-dim leading-6">
-              {result.summary}
-            </p>
-          )}
+          {result.summary && <p className="text-[15px] leading-relaxed text-white/95">{result.summary}</p>}
         </div>
+      </div>
 
-        {/* PER-CRITERION FEEDBACK — the band chip only shows up when
-            there's actually a number (speaking); writing criteria are
-            comment-only. */}
-        {Array.isArray(result.criteria) && result.criteria.length > 0 && (
-          <div className="grid sm:grid-cols-2 gap-2">
-            {result.criteria.map((criterion, i) => (
-              <div
-                key={`${criterion.name}-${i}`}
-                className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-paper">
-                    {criterion.name}
-                  </span>
-                  {typeof criterion.band === 'number' && (
-                    <span className="text-xs font-mono text-brass shrink-0">
-                      {formatBand(criterion.band)}
-                    </span>
+      {criteria.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {criteria.map((criterion, i) => {
+            const tone = CRIT_TONES[i % CRIT_TONES.length]
+            const cb = typeof criterion.band === 'number' ? criterion.band : null
+            return (
+              <div key={`${criterion.name}-${i}`} className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-extrabold text-paper">{criterion.name}</span>
+                  {cb != null && (
+                    <span className={`shrink-0 rounded-xl px-2.5 py-1 font-brand text-[15px] font-semibold ${tone}`}>{formatBand(cb)}</span>
                   )}
                 </div>
-
-                {criterion.comment && (
-                  <p className="mt-1 text-xs text-paper-dim leading-5">
-                    {criterion.comment}
-                  </p>
+                {cb != null && (
+                  <div className="h-1.5 overflow-hidden rounded-full bg-panel-2" aria-hidden="true">
+                    <div className={`h-full rounded-full ${tone.split(' ')[1].replace('text-', 'bg-')}`} style={{ width: `${Math.min(100, (cb / 9) * 100)}%` }} />
+                  </div>
                 )}
+                {criterion.comment && <p className="text-[13px] leading-6 text-paper-dim">{criterion.comment}</p>}
               </div>
-            ))}
-          </div>
-        )}
+            )
+          })}
+        </div>
+      )}
 
-        {/* STRENGTHS */}
-        {Array.isArray(result.strengths) && result.strengths.length > 0 && (
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
-              What's working
+      {(strengths.length > 0 || improvements.length > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {strengths.length > 0 && (
+            <div className="rounded-[20px] bg-reading-tint p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-extrabold text-reading">
+                <span className="grid h-6 w-6 place-items-center rounded-lg bg-reading text-white" aria-hidden="true">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M4 12l5 5L20 6" /></svg>
+                </span>
+                What's working
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {strengths.map((item, i) => (
+                  <li key={i} className="text-[13px] leading-6 text-paper">{item}</li>
+                ))}
+              </ul>
             </div>
+          )}
+          {improvements.length > 0 && (
+            <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--color-saffron)_16%,var(--color-panel))] p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-extrabold text-amber">
+                <span className="grid h-6 w-6 place-items-center rounded-lg bg-saffron text-[#17213a]" aria-hidden="true">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                </span>
+                To improve
+              </div>
+              <ul className="flex flex-col gap-1.5">
+                {improvements.map((item, i) => (
+                  <li key={i} className="text-[13px] leading-6 text-paper">{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
-            <div className="flex flex-col gap-1">
-              {result.strengths.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-paper-dim">
-                  <span className="mt-1.5 h-1 w-1 rounded-full bg-sage shrink-0" />
-                  <span>{item}</span>
+      {[
+        ['Grammar to practise', grammar, 'bg-listening text-white', 'G'],
+        ['Collocations to use', collocations, 'bg-speaking text-white', 'C'],
+      ].map(([title, items, chip, letter]) =>
+        items.length > 0 ? (
+          <div key={title} className="rounded-[20px] border border-line bg-panel p-4">
+            <div className="mb-3 text-sm font-extrabold text-paper">{title}</div>
+            <div className="flex flex-col gap-2.5">
+              {items.map((item, i) => (
+                <div key={i} className="flex gap-3">
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg font-brand text-xs font-bold ${chip}`} aria-hidden="true">{letter}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold text-paper">{item.tip}</p>
+                    {item.example && (
+                      <p className="mt-1 rounded-xl bg-panel-2 px-3 py-2 text-[13px] italic text-paper-dim">“{item.example}”</p>
+                    )}
+                    {item.why && <p className="mt-1 text-xs text-mist">{item.why}</p>}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
+        ) : null
+      )}
 
-        {/* IMPROVEMENTS */}
-        {Array.isArray(result.improvements) && result.improvements.length > 0 && (
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
-              To improve
-            </div>
-
-            <div className="flex flex-col gap-1">
-              {result.improvements.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-paper-dim">
-                  <span className="mt-1.5 h-1 w-1 rounded-full bg-amber shrink-0" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* GRAMMAR STRUCTURES TO PRACTISE */}
-        {Array.isArray(result.grammar_structures) &&
-          result.grammar_structures.length > 0 && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
-                Grammar to practise
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {result.grammar_structures.map((item, i) => (
-                  <div
-                    key={i}
-                    className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
-                  >
-                    <p className="text-sm font-medium text-paper">
-                      {item.tip}
-                    </p>
-
-                    {item.example && (
-                      <p className="mt-1 text-sm text-paper-dim italic">
-                        “{item.example}”
-                      </p>
-                    )}
-
-                    {item.why && (
-                      <p className="mt-1 text-xs text-mist">
-                        {item.why}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {/* USEFUL COLLOCATIONS */}
-        {Array.isArray(result.useful_collocations) &&
-          result.useful_collocations.length > 0 && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-mist font-mono mb-1.5">
-                Collocations to use
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {result.useful_collocations.map((item, i) => (
-                  <div
-                    key={i}
-                    className="rounded-xl border border-line border-l-[3px] border-l-brass bg-panel px-3 py-2.5 shadow-sm"
-                  >
-                    <p className="text-sm font-medium text-paper">
-                      {item.tip}
-                    </p>
-
-                    {item.example && (
-                      <p className="mt-1 text-sm text-paper-dim italic">
-                        “{item.example}”
-                      </p>
-                    )}
-
-                    {item.why && (
-                      <p className="mt-1 text-xs text-mist">
-                        {item.why}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {submission.ai_evaluated_at && (
-          <div className="text-[10px] font-mono text-mist">
-            Evaluated{' '}
-            {new Date(submission.ai_evaluated_at).toLocaleString()}
-          </div>
-        )}
-
-      </div>
+      {submission.ai_evaluated_at && (
+        <div className="px-1 text-xs font-semibold text-mist">
+          Evaluated {new Date(submission.ai_evaluated_at).toLocaleString()}
+        </div>
+      )}
     </section>
   )
 }
