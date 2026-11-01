@@ -20,47 +20,45 @@ export default function LoadingScreen({
   onRetry,
   retryLabel = 'Try again',
 }) {
+  // Same look as the sign-in pages (2026-11-02): the blue-to-turquoise
+  // band, Mr Ikromov's photo in an arch, soft arch shapes behind, and a
+  // saffron bar sliding along while the page loads.
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink px-6 text-paper">
-      <div className="flex flex-col items-center gap-5 text-center">
-        {/* His photo inside a ring that fills with the four skill
-            colours (Study room design, 2026-10-05). */}
-        <div className="relative h-24 w-24">
-          <div
-            className="absolute inset-0 animate-spin rounded-full"
-            style={{
-              animationDuration: '1.6s',
-              background:
-                'conic-gradient(var(--color-listening) 0 25%, var(--color-reading) 0 50%, var(--color-writing) 0 75%, var(--color-speaking) 0 100%)',
-              WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))',
-              mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))',
-            }}
-            aria-hidden="true"
-          />
-          <img
-            src="/mrikromov.jpg"
-            alt=""
-            className="absolute rounded-full object-cover"
-            style={{ inset: '9px', width: 'calc(100% - 18px)', height: 'calc(100% - 18px)' }}
-          />
+    <div className="registan-band relative flex min-h-screen items-center justify-center overflow-hidden px-6">
+      <div className="pointer-events-none absolute -bottom-16 left-[8%] h-[360px] w-[240px] rounded-[999px_999px_0_0] bg-white/[0.07]" aria-hidden="true" />
+      <div className="pointer-events-none absolute -top-10 right-[10%] h-[300px] w-[200px] rounded-[0_0_999px_999px] bg-white/[0.07]" aria-hidden="true" />
+      <div className="pointer-events-none absolute bottom-[12%] right-[22%] h-[110px] w-[80px] rounded-[999px_999px_0_0] border-[3px] border-b-0 border-saffron/70" aria-hidden="true" />
+
+      <div className="relative flex flex-col items-center gap-6 text-center text-white">
+        <div className="relative h-[150px] w-[120px]">
+          <div className="absolute inset-[10px_-10px_-6px_10px] rounded-[999px_999px_18px_18px] bg-white/15" aria-hidden="true" />
+          <div className="absolute inset-0 overflow-hidden rounded-[999px_999px_18px_18px] border-4 border-white bg-white/20">
+            <img src="/mrikromov.jpg" alt="" className="h-full w-full object-cover" />
+          </div>
         </div>
 
-        <div>
-          <div className="text-lg font-semibold">IELTS with Mr Ikromov</div>
-          <div className="mt-1.5 max-w-[280px] text-sm text-mist" role="status">
+        <div className="flex flex-col items-center gap-2">
+          <div className="font-brand text-[22px] font-semibold">IELTS with Mr Ikromov</div>
+          <div className="max-w-[300px] text-[15px] text-white/85" role="status">
             {label}
           </div>
-
-          {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="focus-ring mt-4 h-11 rounded-xl bg-brass px-5 text-sm font-medium text-onbrass transition-colors hover:bg-brass-dim"
-            >
-              {retryLabel}
-            </button>
-          )}
         </div>
+
+        {!onRetry && (
+          <div className="h-1.5 w-[180px] overflow-hidden rounded-full bg-white/20" aria-hidden="true">
+            <div className="loading-slide h-full w-1/3 rounded-full bg-saffron" />
+          </div>
+        )}
+
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="focus-ring h-11 rounded-[14px] bg-saffron px-6 text-sm font-extrabold text-[#17213a] transition hover:brightness-105"
+          >
+            {retryLabel}
+          </button>
+        )}
       </div>
     </div>
   )

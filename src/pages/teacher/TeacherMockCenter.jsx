@@ -18,6 +18,7 @@ import { cleanPrompt } from '../../components/exam/questionGroups'
 import Icon from '../../components/Icon'
 import WritingReviewModal from '../../components/writing/WritingReviewModal'
 import SpeakingMarkModal from '../../components/SpeakingMarkModal'
+import StudentTrend, { SKILL_LINES, Sparkline, trendPoints } from '../../components/StudentTrend'
 
 /*
  * ================================================================
@@ -666,6 +667,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
   const [resultsSearch, setResultsSearch] = useState('')
   const [progressSearch, setProgressSearch] = useState('')
   const [progressGroup, setProgressGroup] = useState('')
+  const [trendStudentId, setTrendStudentId] = useState(null)
   const [showNeverSat, setShowNeverSat] = useState(false)
   const [liveCount, setLiveCount] = useState(null)
   // Jasur 2026-09-26, right after asking for every group as its own
@@ -4054,9 +4056,9 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   target set.
                  ================================================== */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-                <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Sat a mock</p>
-                  <p className="font-display text-2xl text-paper mt-1">
+                <div className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Sat a mock</p>
+                  <p className="font-brand text-[24px] font-semibold text-paper mt-1">
                     {progressSummary.total - progressSummary.notStarted}
                     <span className="text-sm text-mist"> / {progressSummary.total}</span>
                   </p>
@@ -4070,9 +4072,9 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     least one. Given its own highlighted tile since it's
                     the headline number, distinct from each single-module
                     tile beside it. */}
-                <div className="rounded-2xl border border-brass/30 bg-brass/10 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-brass font-mono">Overall</p>
-                  <p className="font-display text-2xl text-paper mt-1">
+                <div className="rounded-[20px] border border-brass/30 bg-[color-mix(in_srgb,var(--color-brass)_10%,var(--color-panel))] px-4 py-3">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.06em] text-brass">Overall</p>
+                  <p className="font-brand text-[24px] font-semibold text-paper mt-1">
                     {progressSummary.overallAvg != null ? formatBand(progressSummary.overallAvg) : '—'}
                   </p>
                   <p className="text-xs text-paper-dim mt-0.5">
@@ -4080,16 +4082,16 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   </p>
                 </div>
                 {progressSummary.modules.map((m) => (
-                  <div key={m.key} className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-wide text-mist font-mono">{m.label}</p>
-                    <p className="font-display text-2xl text-paper mt-1">
+                  <div key={m.key} className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                    <p className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">{m.label}</p>
+                    <p className="font-brand text-[24px] font-semibold text-paper mt-1">
                       {m.avgBand != null ? formatBand(m.avgBand) : '—'}
                     </p>
                     <p className="text-xs text-paper-dim mt-0.5">{m.attemptedPct}% attempted</p>
                   </div>
                 ))}
-                <div className="rounded-2xl border border-line bg-panel-2 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-mist font-mono">Vs target</p>
+                <div className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.06em] text-mist">Vs target</p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <span className="text-sage text-sm font-semibold">{progressSummary.above} above</span>
                     <span className="text-brass text-sm font-semibold">{progressSummary.at} at target</span>
@@ -4099,7 +4101,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
               </div>
 
               {needsAttention.length > 0 && (
-                <div className="rounded-2xl border border-coral/30 bg-coral/5 p-4">
+                <div className="rounded-[20px] border border-coral/30 bg-coral/5 p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-coral font-mono mb-2">
                     A band or more below target · {needsAttention.length}
                   </p>
@@ -4122,41 +4124,169 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 </div>
               )}
 
-              {/* Search / filters (2026-10-14) */}
+              {/* Group chips + search (redesign 2026-11-02) */}
               <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="search"
-                  value={progressSearch}
-                  onChange={(e) => setProgressSearch(e.target.value)}
-                  placeholder="Search a student…"
-                  className="focus-ring min-w-[12rem] flex-1 sm:max-w-xs rounded-xl border border-line bg-panel px-4 py-2 text-sm text-paper placeholder:text-mist"
-                />
-                <select
-                  value={progressGroup}
-                  onChange={(e) => setProgressGroup(e.target.value)}
-                  className="focus-ring rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper"
+                <button
+                  type="button"
+                  onClick={() => setProgressGroup('')}
+                  aria-pressed={!progressGroup}
+                  className={`focus-ring inline-flex h-10 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-extrabold transition ${!progressGroup ? 'border-2 border-brass bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass' : 'border-line bg-panel text-paper hover:bg-panel-2'}`}
                 >
-                  <option value="">All groups</option>
-                  {sortedGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
+                  All
+                </button>
+                {groupsByCreated.map((g, i) => {
+                  const c = groupColour(i)
+                  const on = progressGroup === g.id
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setProgressGroup(on ? '' : g.id)}
+                      aria-pressed={on}
+                      className={`focus-ring inline-flex h-10 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-extrabold transition ${on ? `border-2 ${c.border} ${c.tint} ${c.text}` : 'border-line bg-panel text-paper hover:bg-panel-2'}`}
+                    >
+                      <span className={`h-2.5 w-2.5 rounded-[3px] ${c.bar}`} aria-hidden="true" />
                       {/^\d+$/.test(g.name.trim()) ? `Group ${g.name}` : g.name}
-                    </option>
-                  ))}
-                </select>
-                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper-dim">
-                  <input type="checkbox" checked={showNeverSat} onChange={(e) => setShowNeverSat(e.target.checked)} className="h-4 w-4 accent-brass" />
-                  Show students who never sat a mock ({progressSummary.notStarted})
-                </label>
-                <span className="ml-auto text-xs text-mist">{progressRows.length} shown</span>
+                    </button>
+                  )
+                })}
               </div>
 
-              <StudentRowList
-                rows={progressRows}
-                onOpenProfile={setProfileStudentId}
-                summaryById={bandSummaryByStudentId}
-                groupNamesFor={(id) => (groupIdsByStudent[id] || []).map((g) => groupNameById[g]).filter(Boolean)}
-                emptyLabel={progressSummary.notStarted === progressSummary.total ? 'Nobody has sat a mock yet.' : 'No students match these filters.'}
-              />
+              <div className="grid items-start gap-5 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
+                <section className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel p-3">
+                  <input
+                    type="search"
+                    value={progressSearch}
+                    onChange={(e) => setProgressSearch(e.target.value)}
+                    placeholder="Search a student…"
+                    aria-label="Search a student"
+                    className="focus-ring h-11 w-full rounded-[14px] border border-line bg-panel-2 px-3.5 text-sm font-semibold text-paper placeholder:text-mist"
+                  />
+                  <label className="flex cursor-pointer items-center gap-2 px-1 text-[13px] font-bold text-mist">
+                    <input type="checkbox" checked={showNeverSat} onChange={(e) => setShowNeverSat(e.target.checked)} className="h-4 w-4 accent-brass" />
+                    Show students who never sat a mock ({progressSummary.notStarted})
+                  </label>
+                  <div className="flex justify-between px-2.5 pt-1 text-xs font-extrabold uppercase tracking-[0.06em] text-mist">
+                    <span>{progressRows.length} students</span>
+                    <span>Overall</span>
+                  </div>
+                  {progressRows.length === 0 ? (
+                    <p className="px-2 py-6 text-center text-sm text-mist">
+                      {progressSummary.notStarted === progressSummary.total ? 'Nobody has sat a mock yet.' : 'No students match these filters.'}
+                    </p>
+                  ) : (
+                    <ul className="flex max-h-[720px] flex-col gap-1 overflow-y-auto pr-1">
+                      {progressRows.map((row) => {
+                        const sum = bandSummaryByStudentId[row.student.id]
+                        const pts = trendPoints(row)
+                        const first = pts[0]?.band
+                        const last = pts[pts.length - 1]?.band
+                        const diff = pts.length > 1 ? last - first : null
+                        const selected = (trendStudentId || progressRows[0]?.student.id) === row.student.id
+                        return (
+                          <li key={row.student.id}>
+                            <button
+                              type="button"
+                              onClick={() => setTrendStudentId(row.student.id)}
+                              aria-pressed={selected}
+                              className={`focus-ring grid w-full grid-cols-[minmax(0,1fr)_66px_48px] items-center gap-2.5 rounded-[14px] px-3 py-2.5 text-left transition ${selected ? 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] ring-2 ring-brass' : 'hover:bg-panel-2'}`}
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-extrabold text-paper">{studentLabel(row.student)}</span>
+                                <span className={`block text-xs font-extrabold ${diff == null ? 'text-mist' : diff > 0 ? 'text-reading' : diff < 0 ? 'text-coral' : 'text-mist'}`}>
+                                  {diff == null ? (sum?.hasAnyActivity ? 'One mock so far' : 'No mock yet') : `${diff > 0 ? '+' : diff < 0 ? '−' : ''}${Math.abs(diff).toFixed(1)} since first mock`}
+                                </span>
+                              </span>
+                              <Sparkline points={pts} className="text-brass" />
+                              <span className="text-right font-brand text-[17px] font-semibold text-brass">{formatBand(sum?.overallBand)}</span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </section>
+
+                {(() => {
+                  const row = progressRows.find((r) => r.student.id === (trendStudentId || progressRows[0]?.student.id))
+                  if (!row) return <div className="hidden lg:block" />
+                  const sum = bandSummaryByStudentId[row.student.id]
+                  const pts = trendPoints(row)
+                  const recent = [...pts].reverse().slice(0, 8)
+                  return (
+                    <div className="flex min-w-0 flex-col gap-5">
+                      <section className="flex flex-col gap-3 rounded-[20px] border border-line bg-panel px-5 py-4 sm:px-6">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <h2 className="font-brand text-[22px] font-semibold text-paper">{studentLabel(row.student)}</h2>
+                            <p className="mt-0.5 text-sm font-bold text-mist">
+                              {pts.length} marked {pts.length === 1 ? 'result' : 'results'}
+                              {sum?.overallBand != null && <> · overall {formatBand(sum.overallBand)}</>}
+                              {row.student.target_band != null && <> · target {formatTargetBand(row.student.target_band)}</>}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            {SKILL_LINES.map((s) => (
+                              <span key={s.key} className={`inline-flex items-center gap-1.5 text-[13px] font-extrabold ${s.text}`}>
+                                <span className="h-1 w-3.5 rounded-sm" style={{ background: s.color }} aria-hidden="true" />
+                                {s.label}
+                              </span>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => setProfileStudentId(row.student.id)}
+                              className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper hover:bg-panel-2"
+                            >
+                              Full profile
+                            </button>
+                          </div>
+                        </div>
+                        <StudentTrend points={pts} />
+                      </section>
+
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <section className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                          <h3 className="mb-2 font-brand text-[17px] font-semibold text-paper">Bands by skill</h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              ['Listening', sum?.listeningBand, 'bg-listening-tint text-listening'],
+                              ['Reading', sum?.readingBand, 'bg-reading-tint text-reading'],
+                              ['Writing', sum?.writingBand, 'bg-writing-tint text-writing'],
+                              ['Speaking', sum?.speakingBand, 'bg-speaking-tint text-speaking'],
+                            ].map(([label, band, cls]) => (
+                              <div key={label} className={`rounded-[14px] px-3 py-2.5 text-center ${cls}`}>
+                                <div className="font-brand text-[20px] font-semibold">{formatBand(band)}</div>
+                                <div className="text-xs font-extrabold">{label}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                        <section className="rounded-[20px] border border-line bg-panel px-5 py-4">
+                          <h3 className="mb-1 font-brand text-[17px] font-semibold text-paper">Latest results</h3>
+                          {recent.length === 0 ? (
+                            <p className="py-3 text-sm text-mist">Nothing marked yet.</p>
+                          ) : (
+                            <ul>
+                              {recent.map((p, i) => {
+                                const s = SKILL_LINES.find((x) => x.key === p.skill)
+                                return (
+                                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto_44px] items-center gap-3 border-t border-line py-2 text-sm first:border-t-0">
+                                    <span className="min-w-0 truncate font-bold text-paper">{p.title || s.label}</span>
+                                    <span className={`text-xs font-extrabold ${s.text}`}>
+                                      {s.label} · {new Date(p.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                    </span>
+                                    <span className={`text-right font-brand text-[15px] font-semibold ${s.text}`}>{formatBand(p.band)}</span>
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          )}
+                        </section>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           )}
 

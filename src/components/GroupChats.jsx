@@ -4,6 +4,7 @@ import GroupChat from './GroupChat'
 import { ChatGlyph } from './Chat'
 import Icon from './Icon'
 import { groupBadge, groupColour, groupDisplayName } from '../lib/groupLook'
+import ChatEmptyState from './ChatEmptyState'
 import { useSessionState } from '../lib/sessionState'
 
 /*
@@ -741,15 +742,22 @@ export default function GroupChats({
             }}
           />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center bg-panel-2 px-6 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-reading-tint text-reading">
-              <ChatGlyph name="people" className="h-8 w-8" />
-            </span>
-            <div className="mt-4 text-base font-semibold text-paper">Pick a group</div>
-            <p className="mt-1 max-w-xs text-sm leading-6 text-mist">
-              Choose a class on the left to read and send messages.
-            </p>
-          </div>
+          <ChatEmptyState title="Pick a group" text="Choose a class to read and send messages.">
+            {groups.slice(0, 8).map((group) => {
+              const look = groupColour(group.lookIndex ?? 0)
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => openGroup(group)}
+                  className="focus-ring inline-flex h-10 items-center gap-2 rounded-xl bg-panel px-3.5 text-[13px] font-extrabold text-paper shadow-sm transition hover:-translate-y-0.5"
+                >
+                  <span className={`h-2.5 w-2.5 rounded-[3px] ${look.bar}`} aria-hidden="true" />
+                  {groupDisplayName(group.name)}
+                </button>
+              )
+            })}
+          </ChatEmptyState>
         )}
 
       </section>

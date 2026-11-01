@@ -339,7 +339,7 @@ export default function Layout({
   const bottomTabs = allItems.filter((item) => item.key !== 'howto' && item.icon).slice(0, 4)
 
   return (
-    <div className="min-h-screen flex flex-col text-paper bg-ink">
+    <div className="uk-backdrop min-h-screen flex flex-col text-paper bg-ink">
       <header ref={navRef} className="sticky top-0 z-40 border-b border-line bg-panel">
         <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 xl:gap-4 min-[1400px]:gap-6 xl:px-8">
           <button

@@ -4,6 +4,7 @@ import Chat, { ChatAvatar, ChatGlyph } from './Chat'
 import Icon from './Icon'
 import ConfirmModal from './ConfirmModal'
 import { useSessionState } from '../lib/sessionState'
+import ChatEmptyState from './ChatEmptyState'
 
 /*
  * ================================================================
@@ -992,17 +993,14 @@ export default function PrivateChats({
             }}
           />
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center bg-panel-2 px-6 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-listening-tint text-listening">
-              <ChatGlyph name="chat" className="h-8 w-8" />
-            </span>
-            <div className="mt-4 text-base font-semibold text-paper">Pick a conversation</div>
-            <p className="mt-1 max-w-xs text-sm leading-6 text-mist">
-              {selfRole === 'teacher'
+          <ChatEmptyState
+            title="Pick a conversation"
+            text={
+              selfRole === 'teacher'
                 ? "Choose a chat on the left, or open a student's profile in the Leaderboard to start a new one."
-                : 'Choose a chat on the left to start messaging.'}
-            </p>
-          </div>
+                : 'Choose a chat on the left to start messaging.'
+            }
+          />
         )}
 
       </section>

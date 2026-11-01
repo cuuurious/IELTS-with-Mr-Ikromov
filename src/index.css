@@ -2133,3 +2133,33 @@ html[data-theme='light'] .auth-arch-b { background-color: #d2ecef; }
   background-image: linear-gradient(100deg, #2456b0, #1a9bb5);
   box-shadow: 0 8px 18px rgba(36, 86, 176, 0.22);
 }
+
+/* Loading screen bar (2026-11-02). */
+@keyframes loading-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(320%); } }
+.loading-slide { animation: loading-slide 1.3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .loading-slide { animation: none; width: 100%; opacity: 0.7; } }
+
+/* Faint Great Britain line drawings behind every page (2026-11-02):
+   Big Ben, the London Eye, a bus, a phone box, Tower Bridge, tea, an
+   umbrella and a guard's hat. Drawn once as a mask so the colour
+   follows the theme; kept very light so it never competes with text. */
+.uk-backdrop { position: relative; isolation: isolate; }
+.uk-backdrop::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--color-brass);
+  opacity: 0.07;
+  -webkit-mask-image: url('/uk-pattern.svg');
+  mask-image: url('/uk-pattern.svg');
+  -webkit-mask-size: 1200px 820px;
+  mask-size: 1200px 820px;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+html[data-theme='dark'] .uk-backdrop::before,
+html:not([data-theme='light']) .uk-backdrop::before { background-color: #9db8e6; opacity: 0.1; }
+html[data-theme='light'] .uk-backdrop::before { background-color: #2456b0; opacity: 0.08; }
+@media print { .uk-backdrop::before { display: none; } }
