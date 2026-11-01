@@ -1640,7 +1640,7 @@ export default function GroupWorkspace({ teacherId }) {
                           const past = new Date(h.due_date).getTime() <= now
                           const missing = roster.length - handed
                           return (
-                            <li key={h.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_170px_96px]">
+                            <li key={h.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_170px_auto]">
                               <span className={`grid h-9 w-9 place-items-center rounded-xl ${skill.tint} ${skill.key === 'general' ? 'text-paper' : skill.text}`}>
                                 <SkillIcon skill={skill.key} className="h-4 w-4" />
                               </span>
@@ -1654,8 +1654,25 @@ export default function GroupWorkspace({ teacherId }) {
                                 </div>
                                 <div className="mt-1 text-xs font-bold text-mist">{handed} of {roster.length} handed in</div>
                               </div>
-                              <div className={`hidden text-right text-[13px] font-extrabold sm:block ${past && missing ? 'text-coral' : 'text-mist'}`}>
-                                {past ? (missing ? `${missing} missed` : 'All in') : 'Open'}
+                              <div className="col-span-2 flex items-center justify-end gap-2 sm:col-span-1">
+                                <span
+                                  className={`rounded-lg px-2 py-1 text-xs font-extrabold ${
+                                    past ? (missing ? 'bg-urgent-tint text-coral' : 'bg-reading-tint text-reading') : 'bg-panel-2 text-paper-dim'
+                                  }`}
+                                >
+                                  {past ? (missing ? `${missing} missed` : 'All in') : `${missing} to go`}
+                                </span>
+                                {missing > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => remindHomework(h)}
+                                    disabled={busyAction === `remind-${h.id}`}
+                                    className="focus-ring h-9 rounded-xl border border-line px-3 text-xs font-extrabold text-brass transition hover:bg-panel-2 disabled:opacity-50"
+                                    title="Send a reminder to everyone who hasn't handed it in"
+                                  >
+                                    {busyAction === `remind-${h.id}` ? 'Sending…' : 'Remind'}
+                                  </button>
+                                )}
                               </div>
                             </li>
                           )

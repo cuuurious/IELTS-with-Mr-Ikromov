@@ -70,22 +70,36 @@ async function staleWhileRevalidate(request) {
       if (res.ok && res.type === 'basic') cache.put(request, res.clone()).catch(() => {})
       return res
     })
-    .catch(() => hit)
+    .catch(() => hit || Response.error())
   return hit || fresh
 }
 
+// Shown only when the page can't be reached at all and no saved copy
+// exists (2026-11-02: a page load during a deploy came back as Chrome's
+// bare "ERR_FAILED"). It tries again by itself every few seconds.
+const OFFLINE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reconnecting…</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;color:#fff;background:linear-gradient(115deg,#2456b0,#1f7ab3 55%,#1a9bb5)}
+.c{text-align:center;padding:24px;max-width:340px}.b{width:180px;height:6px;border-radius:9px;background:rgba(255,255,255,.25);overflow:hidden;margin:22px auto 0}
+.b i{display:block;width:35%;height:100%;border-radius:9px;background:#e6a33a;animation:s 1.3s ease-in-out infinite}@keyframes s{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
+h1{font-size:22px;margin:0 0 8px}p{margin:0;opacity:.9;line-height:1.5}button{margin-top:18px;height:44px;padding:0 20px;border:0;border-radius:14px;background:#e6a33a;color:#17213a;font-weight:800;font-size:15px}</style></head>
+<body><div class="c"><h1>IELTS with Mr Ikromov</h1><p>Reconnecting… the site will open in a moment.</p><div class="b"><i></i></div><button onclick="location.reload()">Try now</button></div>
+<script>setTimeout(function(){location.reload()},4000)</script></body></html>`
+
 async function networkFirstPage(request) {
   const cache = await caches.open(SHELL_CACHE)
-  try {
-    const res = await fetch(request)
-    const type = res.headers.get('content-type') || ''
-    if (res.ok && type.includes('text/html')) cache.put('/__shell', res.clone()).catch(() => {})
-    return res
-  } catch (err) {
-    const hit = await cache.match('/__shell')
-    if (hit) return hit
-    throw err
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const res = await fetch(request)
+      const type = res.headers.get('content-type') || ''
+      if (res.ok && type.includes('text/html')) cache.put('/__shell', res.clone()).catch(() => {})
+      return res
+    } catch {
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 800))
+    }
   }
+  const hit = await cache.match('/__shell')
+  if (hit) return hit
+  return new Response(OFFLINE_PAGE, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } })
 }
 
 self.addEventListener('fetch', (event) => {
