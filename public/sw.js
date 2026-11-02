@@ -83,7 +83,14 @@ const OFFLINE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"
 .b i{display:block;width:35%;height:100%;border-radius:9px;background:#e6a33a;animation:s 1.3s ease-in-out infinite}@keyframes s{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 h1{font-size:22px;margin:0 0 8px}p{margin:0;opacity:.9;line-height:1.5}button{margin-top:18px;height:44px;padding:0 20px;border:0;border-radius:14px;background:#e6a33a;color:#17213a;font-weight:800;font-size:15px}</style></head>
 <body><div class="c"><h1>IELTS with Mr Ikromov</h1><p>Reconnecting… the site will open in a moment.</p><div class="b"><i></i></div><button onclick="location.reload()">Try now</button></div>
-<script>setTimeout(function(){location.reload()},4000)</script></body></html>`
+<script>
+// If the page still can't load after a few tries, take this helper out of
+// the way and load the site straight from the internet (2026-11-02).
+var n=0;try{n=+sessionStorage.getItem('sw-retry')||0;sessionStorage.setItem('sw-retry',n+1)}catch(e){}
+function direct(){if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}).then(function(){location.reload()},function(){location.reload()})}else location.reload()}
+var b=document.querySelector('button,a');if(b){b.onclick=function(e){e.preventDefault();direct()}}
+setTimeout(n>=2?direct:function(){location.reload()},n>=2?1500:4000)
+</script></body></html>`
 
 async function networkFirstPage(request) {
   const cache = await caches.open(SHELL_CACHE)
