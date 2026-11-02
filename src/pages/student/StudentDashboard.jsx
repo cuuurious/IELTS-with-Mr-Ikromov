@@ -33,6 +33,18 @@ const PrivateChats = lazyWithReload(() => import('../../components/PrivateChats'
 const MockTestCenter = lazyWithReload(() => import('../../components/MockTestCenter'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 const CoursesPage = lazyWithReload(() => import('./CoursesPage'))
+const BooksPage = lazyWithReload(() => import('./BooksPage'))
+
+// Books shelf nav icon (2026-11-02).
+function IconBooks({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H9v16H5.5A1.5 1.5 0 0 1 4 18.5z" />
+      <path d="M9 4h3.5A1.5 1.5 0 0 1 14 5.5V20H9" />
+      <path d="m15.2 5.6 2.9-.8a1.5 1.5 0 0 1 1.8 1l3 11.1a1.5 1.5 0 0 1-1 1.8l-2.9.8" />
+    </svg>
+  )
+}
 
 // Coins & courses nav icon (2026-11-02).
 function IconCoins({ className }) {
@@ -51,6 +63,7 @@ function IconCoins({ className }) {
 const PAGE_SUBTITLES = {
   homework: 'Keep track of your assignments and submit your work on time.',
   wordlists: 'Build your vocabulary and strengthen your English.',
+  books: 'Practise Reading and Listening by question type and fix your weak spots.',
   leaderboard: 'See your progress alongside your classmates.',
   'group-chat': 'Stay connected with your group and classmates.',
   chats: 'Private conversations with your teacher and other students.',
@@ -661,6 +674,7 @@ const messageId = linkParts[2] || null
           { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'homework', label: 'Homework', icon: IconHomework },
           { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
+          { key: 'books', label: 'Books', icon: IconBooks },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'group-chat', label: 'Group chat', icon: IconGroupChat },
           { key: 'chats', label: 'Chats', icon: IconChat },
@@ -1066,6 +1080,8 @@ const messageId = linkParts[2] || null
         {tab === 'courses' && (
           <CoursesPage studentId={profile.id} onOpenMockCenter={() => setMockCenterOpen(true)} />
         )}
+
+        {tab === 'books' && <BooksPage studentId={profile.id} />}
 
         {tab === 'howto' && <HowToUseGuide />}
       </div>

@@ -14,16 +14,16 @@ import TaskShell, { Panel } from './TaskShell'
  * "Hand in". If no score is found, it is handed in as done.
  */
 
-const HELPER = `<script>(function(){
+export const HELPER = `<script>(function(){
 try{window.localStorage.getItem('x')}catch(e){var mk=function(){var d={};return{getItem:function(k){return k in d?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}},key:function(i){return Object.keys(d)[i]||null},get length(){return Object.keys(d).length}}};try{Object.defineProperty(window,'localStorage',{value:mk()});Object.defineProperty(window,'sessionStorage',{value:mk()})}catch(_){}}
 var last='';function send(s,m){s=+s;m=+m;if(!(m>0)||s<0||s>m)return;var k=s+'/'+m;if(k===last)return;last=k;parent.postMessage({type:'ielts-workshop-score',score:s,max:m},'*')}
 window.reportScore=send;
-function scan(){var t=(document.body&&document.body.innerText)||'';var re=/(score|result|correct|marks?|points?|you got|natija|ball|to'g'ri)[^0-9\\n]{0,30}(\\d{1,3})\\s*(?:\\/|out of|of|dan)\\s*(\\d{1,3})/ig;var m,f=null;while((m=re.exec(t)))f=m;if(f)send(f[2],f[3])}
+function scan(){var t=(document.body&&document.body.innerText)||'';var re=/(score|result|correct|marks?|points?|you got|natija|ball|to'g'ri)[^0-9]{0,30}(\\d{1,3})\\s*(?:\\/|out of|of|dan)\\s*(\\d{1,3})/ig;var m,f=null;while((m=re.exec(t)))f=m;if(f)return send(f[2],f[3]);var re2=/(\\d{1,3})\\s*(?:\\/|out of|of)\\s*(\\d{1,3})\\s*(?:correct|right|points?|marks?)/ig;while((m=re2.exec(t)))f=m;if(f)send(f[1],f[2])}
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500)},true);
 document.addEventListener('DOMContentLoaded',function(){try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(scan,400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 })();</script>`
 
-function withHelper(html) {
+export function withHelper(html) {
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => `${m}${HELPER}`)
   return HELPER + html
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { WEEKDAYS, hhmm, lessonDay, lessonTime, slidesHref, tashkentDate } from '../../lib/courses'
+import AttendanceModal from './AttendanceModal'
 
 /*
  * A group's course (2026-11-02, migration_88): which course it follows,
@@ -17,6 +18,8 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [showAll, setShowAll] = useState(false)
+  const [attendance, setAttendance] = useState({}) // group_lesson_id -> { came, total }
+  const [marking, setMarking] = useState(null) // lesson being marked
 
   const load = async () => {
     const [c, p] = await Promise.all([
@@ -36,6 +39,18 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
       ])
       setLessons(l.data || [])
       setTitles(Object.fromEntries((t.data || []).map((r) => [r.number, r])))
+      // Attendance counts (migration_89) — quietly empty before it is run.
+      const startedIds = (l.data || []).filter((x) => new Date(x.starts_at).getTime() <= Date.now()).map((x) => x.id)
+      if (startedIds.length) {
+        const { data: att } = await supabase.from('lesson_attendance').select('group_lesson_id, status').in('group_lesson_id', startedIds)
+        const map = {}
+        ;(att || []).forEach((r) => {
+          map[r.group_lesson_id] = map[r.group_lesson_id] || { came: 0, total: 0 }
+          map[r.group_lesson_id].total += 1
+          if (r.status === 'present' || r.status === 'late') map[r.group_lesson_id].came += 1
+        })
+        setAttendance(map)
+      }
     }
   }
   useEffect(() => {
@@ -139,11 +154,23 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
           const t = titles[l.number] || {}
           const isNext = next?.id === l.id
           const past = new Date(l.ends_at).getTime() < now
+          const started = new Date(l.starts_at).getTime() <= now
+          const att = attendance[l.id]
           return (
             <li key={l.id} className={`flex flex-wrap items-center gap-3 rounded-[14px] px-3 py-2 ${isNext ? 'bg-[color-mix(in_srgb,var(--color-brass)_9%,var(--color-panel))] ring-1 ring-brass/40' : 'bg-panel-2/50'}`}>
               <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl font-brand text-[14px] font-semibold ${l.status === 'posted' ? 'bg-reading text-white' : isNext ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>{l.number}</span>
               <span className="w-36 shrink-0 whitespace-nowrap text-[13px] font-bold text-mist">{lessonDay(l.starts_at)} · {hhmm(l.starts_at)}</span>
               <span className={`min-w-0 flex-1 truncate text-sm font-extrabold ${t.title ? 'text-paper' : 'text-mist'}`}>{t.title || 'Not written yet'}</span>
+              {started && (
+                <button
+                  type="button"
+                  onClick={() => setMarking(l)}
+                  title="Mark who came"
+                  className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold ${att ? 'bg-sage/15 text-sage' : 'border border-dashed border-brass/60 text-brass hover:bg-panel'}`}
+                >
+                  {att ? `${att.came}/${att.total} came` : 'Attendance'}
+                </button>
+              )}
               {l.status === 'posted' ? (
                 <span className="rounded-lg bg-reading-tint px-2 py-1 text-[12px] font-extrabold text-reading">{l.homework_id ? 'Homework posted' : 'Done'}</span>
               ) : (
@@ -173,6 +200,15 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
           <span className="text-sm font-extrabold text-reading">Course finished. Next: {plans.find((p) => p.id === plan.next_plan_id)?.title}</span>
           <button type="button" onClick={() => setEditing({ suggest: plan.next_plan_id })} className="focus-ring h-9 rounded-[12px] bg-reading px-3 text-[13px] font-extrabold text-white">Start it</button>
         </div>
+      )}
+      {marking && (
+        <AttendanceModal
+          lesson={marking}
+          groupId={groupId}
+          lessonTitle={titles[marking.number]?.title}
+          onClose={() => setMarking(null)}
+          onSaved={load}
+        />
       )}
     </section>
   )

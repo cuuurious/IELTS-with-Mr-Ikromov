@@ -11,8 +11,10 @@ import {
   fileKind,
   folderPath,
   formatBytes,
+  titleFromFileName,
   uploadMaterial,
 } from '../../lib/materials'
+import { QUESTION_TYPES, SKILLS, detectFromPath, htmlTitle, qtypeLabel } from '../../lib/questionTypes'
 import Icon from '../../components/Icon'
 
 const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME
@@ -55,6 +57,10 @@ export default function MaterialsLibrary() {
   const [botState, setBotState] = useState({ linked: false, folderId: null, loading: true })
 
   const fileInputRef = useRef(null)
+  const bookInputRef = useRef(null)
+  const [bookImport, setBookImport] = useState(null) // { items, sections, shelf }
+  const [typeOpen, setTypeOpen] = useState(false)
+  const [typeDraft, setTypeDraft] = useState({ skill: 'reading', qtype: '' })
 
   const foldersById = useMemo(() => Object.fromEntries(folders.map((f) => [f.id, f])), [folders])
 
@@ -162,6 +168,148 @@ export default function MaterialsLibrary() {
       }
     }
     await Promise.all([worker(), worker(), worker()])
+  }
+
+  // ---------------- book folders (2026-11-02, migration_89) ----------------
+  // "Upload a book folder": every .html page in a folder like
+  // "thematic reading/21-40 TRUE FALSE NG/test_21.html" is uploaded into the
+  // same folder tree here, tagged with its skill and question type (from
+  // the folder names) and, if chosen, put on the students' Books shelf.
+  const pickBookFolder = (fileList) => {
+    const all = Array.from(fileList || []).filter((f) => f.size > 0)
+    const files = all.filter((f) => /\.html?$/i.test(f.name))
+    // Audio next to the pages (e.g. "Part 1/audio/part1-test1.mp3") is
+    // uploaded too and the pages are pointed at it.
+    const audio = all.filter((f) => /\.(mp3|m4a|wav|ogg|aac)$/i.test(f.name))
+    if (!files.length) {
+      setError('No HTML pages found in that folder.')
+      return
+    }
+    const items = files
+      .map((file) => {
+        const rel = file.webkitRelativePath || file.name
+        return { file, rel, ...detectFromPath(rel) }
+      })
+      .sort((a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }))
+    const sections = {}
+    items.forEach((it) => {
+      const key = `${it.skill === 'listening' ? 'Listening' : 'Reading'} · ${it.qtype ? qtypeLabel(it.qtype) : 'Type not recognised'}`
+      sections[key] = (sections[key] || 0) + 1
+    })
+    setError('')
+    setBookImport({ items, sections, shelf: true, audio })
+  }
+
+  const ensureFolder = async (name, parentId, cache) => {
+    const key = `${parentId || ''}/${name}`
+    if (cache[key]) return cache[key]
+    let query = supabase.from('material_folders').select('*').eq('name', name).limit(1)
+    query = parentId ? query.eq('parent_id', parentId) : query.is('parent_id', null)
+    const { data: existing } = await query
+    let row = existing?.[0]
+    if (!row) {
+      const { data, error: err } = await supabase.from('material_folders').insert({ name, parent_id: parentId }).select().single()
+      if (err) throw err
+      row = data
+      setFolders((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    }
+    cache[key] = row.id
+    return row.id
+  }
+
+  const runBookImport = async () => {
+    const { items, shelf, audio = [] } = bookImport
+    setBookImport(null)
+    const cache = {}
+    const folderOf = {}
+    try {
+      for (const it of items) {
+        let parent = folderIdForUploads
+        for (const dir of it.rel.split('/').slice(0, -1)) parent = await ensureFolder(dir, parent, cache)
+        folderOf[it.rel] = parent
+      }
+    } catch (err) {
+      setError(err?.message || 'Could not create the folders.')
+      return
+    }
+    // Audio first, so the pages can point at its address.
+    const audioUrl = {} // relative path → public URL
+    if (audio.length) {
+      const aq = [...audio]
+      const audioWorker = async () => {
+        while (aq.length) {
+          const file = aq.shift()
+          const rel = file.webkitRelativePath || file.name
+          try {
+            let parent = folderIdForUploads
+            for (const dir of rel.split('/').slice(0, -1)) parent = await ensureFolder(dir, parent, cache)
+            const row = await uploadMaterial(file, { folderId: parent, userId: profile?.id, extra: { skill: 'listening' } })
+            audioUrl[rel] = row.url
+            setMaterials((prev) => [row, ...prev])
+          } catch (err) {
+            setError(`Audio ${file.name}: ${err?.message || 'upload failed'}`)
+          }
+        }
+      }
+      await Promise.all([audioWorker(), audioWorker()])
+    }
+    const resolveRel = (base, src) => {
+      const parts = base.split('/').slice(0, -1)
+      for (const seg of src.split('/')) {
+        if (seg === '..') parts.pop()
+        else if (seg && seg !== '.') parts.push(seg)
+      }
+      return parts.join('/')
+    }
+    const batch = items.map((it) => ({ id: `${Date.now()}-${Math.random()}`, it, name: it.rel.split('/').pop(), status: 'uploading' }))
+    setUploads((prev) => [...batch.map(({ it: _it, ...rest }) => rest), ...prev].slice(0, 400))
+    const queue = [...batch]
+    const worker = async () => {
+      while (queue.length) {
+        const item = queue.shift()
+        try {
+          let text = await item.it.file.text()
+          let file = item.it.file
+          if (audio.length) {
+            const fixed = text.replace(/(src=["'])([^"':]+\.(?:mp3|m4a|wav|ogg|aac))(["'])/gi, (m, a, src, b) => {
+              const url = audioUrl[resolveRel(item.it.rel, decodeURIComponent(src))]
+              return url ? `${a}${url}${b}` : m
+            })
+            if (fixed !== text) {
+              text = fixed
+              file = new File([fixed], item.it.file.name, { type: 'text/html' })
+            }
+          }
+          const row = await uploadMaterial(file, {
+            folderId: folderOf[item.it.rel],
+            userId: profile?.id,
+            extra: {
+              title: htmlTitle(text, titleFromFileName(item.it.file.name)),
+              skill: item.it.skill,
+              question_type: item.it.qtype,
+              on_shelf: shelf,
+            },
+          })
+          setMaterials((prev) => (prev.some((m) => m.id === row.id) ? prev : [row, ...prev]))
+          setUploads((prev) => prev.map((u) => (u.id === item.id ? { ...u, status: 'done' } : u)))
+        } catch (err) {
+          setUploads((prev) => prev.map((u) => (u.id === item.id ? { ...u, status: 'error', error: err?.message || 'Upload failed' } : u)))
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker()])
+  }
+
+  const updateSelected = async (patch) => {
+    const ids = [...selected]
+    if (!ids.length) return
+    const { error: err } = await supabase.from('materials').update(patch).in('id', ids)
+    if (err) {
+      setError(/shelf_skill/.test(err.message) ? 'Set Reading or Listening for these files first, then put them on the shelf.' : err.message)
+      return
+    }
+    setError('')
+    setMaterials((prev) => prev.map((m) => (selected.has(m.id) ? { ...m, ...patch } : m)))
   }
 
   // Desktop drag-and-drop now goes through the shared useFileDrop hook
@@ -529,6 +677,26 @@ export default function MaterialsLibrary() {
             >
               Upload files
             </button>
+            <input
+              ref={bookInputRef}
+              type="file"
+              multiple
+              webkitdirectory=""
+              directory=""
+              className="hidden"
+              onChange={(e) => {
+                pickBookFolder(e.target.files)
+                e.target.value = ''
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => bookInputRef.current?.click()}
+              className="focus-ring rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-paper hover:border-brass"
+              title="Upload a whole folder of HTML tasks, e.g. your thematic Reading book"
+            >
+              Upload a book folder
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -549,12 +717,47 @@ export default function MaterialsLibrary() {
                 <button type="button" onClick={() => setMoveOpen((v) => !v)} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
                   Move to…
                 </button>
+                <button type="button" onClick={() => updateSelected({ on_shelf: true })} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
+                  Show on Books shelf
+                </button>
+                <button type="button" onClick={() => updateSelected({ on_shelf: false })} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
+                  Hide from shelf
+                </button>
+                <button type="button" onClick={() => setTypeOpen((v) => !v)} className="focus-ring rounded-xl border border-line px-3 py-1.5 text-xs text-paper hover:border-brass">
+                  Question type…
+                </button>
                 <button type="button" onClick={() => deleteMaterials([...selected])} className="focus-ring rounded-xl border border-coral/50 px-3 py-1.5 text-xs text-coral hover:bg-coral hover:text-paper">
                   Delete
                 </button>
                 <button type="button" onClick={() => setSelected(new Set())} className="focus-ring px-1 text-xs text-mist hover:text-paper">
                   Clear
                 </button>
+                {typeOpen && (
+                  <div className="absolute right-0 top-full z-30 mt-1 flex w-72 flex-col gap-2 rounded-xl border border-line bg-panel-2 p-3 shadow-xl">
+                    <select value={typeDraft.skill} onChange={(e) => setTypeDraft({ ...typeDraft, skill: e.target.value })} className="focus-ring rounded-lg border border-line bg-panel px-2 py-1.5 text-sm text-paper">
+                      {SKILLS.map((k) => (
+                        <option key={k.value} value={k.value}>{k.label}</option>
+                      ))}
+                    </select>
+                    <select value={typeDraft.qtype} onChange={(e) => setTypeDraft({ ...typeDraft, qtype: e.target.value })} className="focus-ring rounded-lg border border-line bg-panel px-2 py-1.5 text-sm text-paper">
+                      <option value="">Question type…</option>
+                      {QUESTION_TYPES.map((k) => (
+                        <option key={k.value} value={k.value}>{k.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={!typeDraft.qtype}
+                      onClick={() => {
+                        updateSelected({ skill: typeDraft.skill, question_type: typeDraft.qtype })
+                        setTypeOpen(false)
+                      }}
+                      className="focus-ring rounded-lg bg-brass px-3 py-1.5 text-sm font-medium text-onbrass disabled:opacity-50"
+                    >
+                      Apply to {selected.size} file{selected.size === 1 ? '' : 's'}
+                    </button>
+                  </div>
+                )}
                 {moveOpen && (
                   <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-60 overflow-y-auto rounded-xl border border-line bg-panel-2 py-1 shadow-xl">
                     <button type="button" onClick={() => moveSelected(null)} className="block w-full px-3 py-2 text-left text-sm text-paper hover:bg-panel">
@@ -576,6 +779,37 @@ export default function MaterialsLibrary() {
               </div>
             )}
           </div>
+
+          {bookImport && (
+            <div className="flex flex-col gap-3 rounded-[20px] border border-brass/40 bg-brass/5 p-4">
+              <div>
+                <p className="font-display text-base text-paper">
+                  {bookImport.items.length} pages found{bookImport.audio?.length ? ` · ${bookImport.audio.length} audio files` : ''}
+                </p>
+                <p className="text-sm text-mist">They go into the same folders as on your laptop{folderIdForUploads ? `, inside “${folderLabel}”` : ''}. Question types come from the folder names.</p>
+              </div>
+              <ul className="grid gap-1.5 sm:grid-cols-2">
+                {Object.entries(bookImport.sections).map(([label, n]) => (
+                  <li key={label} className={`flex items-center justify-between rounded-xl bg-panel px-3 py-1.5 text-sm ${/not recognised/.test(label) ? 'text-coral' : 'text-paper'}`}>
+                    <span className="truncate">{label}</span>
+                    <span className="shrink-0 font-bold text-brass">{n}</span>
+                  </li>
+                ))}
+              </ul>
+              <label className="flex items-center gap-2 text-sm text-paper">
+                <input type="checkbox" checked={bookImport.shelf} onChange={(e) => setBookImport({ ...bookImport, shelf: e.target.checked })} className="h-4 w-4 accent-brass" />
+                Show them on the students’ Books shelf for self-practice
+              </label>
+              <div className="flex gap-2">
+                <button type="button" onClick={runBookImport} className="focus-ring rounded-xl bg-saffron px-4 py-2 text-sm font-bold text-[#17213a]">
+                  Upload {bookImport.items.length} pages
+                </button>
+                <button type="button" onClick={() => setBookImport(null)} className="focus-ring rounded-xl px-3 py-2 text-sm text-mist hover:text-paper">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {uploads.length > 0 && (
             <div className="flex flex-col gap-1 rounded-xl border border-line bg-panel-2/60 p-3 text-xs">
@@ -662,6 +896,8 @@ export default function MaterialsLibrary() {
                           m.source === 'telegram' ? 'from Telegram' : null,
                           (search.trim() || currentFolder === ALL) && m.folder_id ? `${folderPath(m.folder_id, foldersById)}` : null,
                           usage[m.id] ? `used in ${usage[m.id]} homework` : null,
+                          m.question_type ? `${m.skill === 'listening' ? 'Listening' : 'Reading'} · ${qtypeLabel(m.question_type)}` : null,
+                          m.on_shelf ? 'on Books shelf' : null,
                         ]
                           .filter(Boolean)
                           .join(' · ')}

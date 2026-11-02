@@ -4,6 +4,7 @@ import SkillAudioPlayer from '../SkillAudioPlayer'
 import { supabase } from '../../lib/supabaseClient'
 import { SkillIcon } from '../SkillArt'
 import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskTitle } from '../../lib/homeworkTasks'
+import WeakSpots from '../WeakSpots'
 
 /*
  * GRADEBOOK (2026-11-02) — every in-site homework task of a group:
@@ -229,6 +230,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
               )}
             </div>
           )}
+          <WeakSpots userId={student.id} title="Weak spots by question type" emptyText="No scored Reading or Listening work yet." />
           <ul className="flex flex-col gap-2">
             {rows.map(({ t, s, hw }) => {
               const meta = TASK_KINDS[t.kind] || TASK_KINDS.reading

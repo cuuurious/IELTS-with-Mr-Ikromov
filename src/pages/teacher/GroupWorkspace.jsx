@@ -15,6 +15,7 @@ import { SkillIcon } from '../../components/SkillArt'
 import { fetchAll } from '../../lib/fetchAll'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import Icon from '../../components/Icon'
+import WeakSpots from '../../components/WeakSpots'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -1713,6 +1714,8 @@ export default function GroupWorkspace({ teacherId }) {
           {!groupDataLoading && roster.length > 0 && (
             <Gradebook roster={roster} homeworks={homeworks} accent={getGroupAccent(activeGroup)} />
           )}
+
+          {!groupDataLoading && roster.length > 0 && <WeakSpots groupId={activeGroup} title="Class weak spots" compact />}
 
           {/* =================================================
               STUDENT PROGRESS TITLE

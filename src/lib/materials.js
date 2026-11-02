@@ -64,7 +64,9 @@ export const KIND_LABEL = {
 
 // Upload one file into the library. `onProgress` isn't available from
 // supabase-js's simple upload, so callers show per-file "uploading…".
-export async function uploadMaterial(file, { folderId = null, userId } = {}) {
+// `extra` (2026-11-02): more columns for the row, e.g. the Books import's
+// title, skill, question_type and on_shelf.
+export async function uploadMaterial(file, { folderId = null, userId, extra = {} } = {}) {
   const contentType = guessMimeType(file.name, file.type)
   const path = `${userId || 'teacher'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeStorageName(file.name)}`
 
@@ -86,6 +88,7 @@ export async function uploadMaterial(file, { folderId = null, userId } = {}) {
       mime_type: contentType,
       size_bytes: file.size,
       source: 'upload',
+      ...extra,
     })
     .select()
     .single()

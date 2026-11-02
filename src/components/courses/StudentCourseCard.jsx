@@ -10,12 +10,26 @@ import { lessonDay, lessonTime, slidesHref } from '../../lib/courses'
 export default function StudentCourseCard({ groupId }) {
   const [rows, setRows] = useState(null)
   const [open, setOpen] = useState(false)
+  const [missed, setMissed] = useState({}) // lesson number -> 'absent' | 'late' | …
 
   useEffect(() => {
     if (!groupId) return undefined
     let cancelled = false
     supabase.rpc('my_course_lessons', { p_group_id: groupId }).then(({ data, error }) => {
       if (!cancelled) setRows(error ? [] : data || [])
+    })
+    // Attendance (migration_89): which lessons this student missed.
+    Promise.all([
+      supabase.from('group_lessons').select('id, number').eq('group_id', groupId),
+      supabase.from('lesson_attendance').select('group_lesson_id, status'),
+    ]).then(([gl, att]) => {
+      if (cancelled || gl.error || att.error) return
+      const num = Object.fromEntries((gl.data || []).map((r) => [r.id, r.number]))
+      const out = {}
+      ;(att.data || []).forEach((r) => {
+        if (num[r.group_lesson_id] != null) out[num[r.group_lesson_id]] = r.status
+      })
+      setMissed(out)
     })
     return () => {
       cancelled = true
@@ -30,7 +44,9 @@ export default function StudentCourseCard({ groupId }) {
   const total = rows[0].total || rows.length
   const current = had.length ? had[had.length - 1].number : 0
   const pct = total ? Math.round((current / total) * 100) : 0
-  const recent = [...had].reverse().slice(0, open ? had.length : 4)
+  // Missed lessons come first, so their slides are easy to find.
+  const recent = [...had].reverse().sort((a, b) => (missed[b.number] === 'absent') - (missed[a.number] === 'absent')).slice(0, open ? had.length : 4)
+  const missedCount = had.filter((r) => missed[r.number] === 'absent').length
 
   return (
     <section className="overflow-hidden rounded-[20px] border border-line bg-panel">
@@ -49,14 +65,19 @@ export default function StudentCourseCard({ groupId }) {
       </div>
       {had.length > 0 && (
         <div className="flex flex-col gap-2 p-4">
-          <p className="text-[13px] font-extrabold text-paper-dim">Missed a lesson? Study the slides.</p>
+          <p className="text-[13px] font-extrabold text-paper-dim">
+            {missedCount ? `You missed ${missedCount} lesson${missedCount === 1 ? '' : 's'} — study the slides.` : 'Missed a lesson? Study the slides.'}
+          </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {recent.map((r) => (
               <li key={r.number} className="flex items-center gap-3 rounded-[14px] bg-panel-2/60 px-3 py-2">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] font-brand text-[14px] font-semibold text-brass">{r.number}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-extrabold text-paper">{r.title || `Lesson ${r.number}`}</span>
-                  <span className="block text-[12px] font-bold text-mist">{lessonDay(r.starts_at)}</span>
+                  <span className="block text-[12px] font-bold text-mist">
+                    {lessonDay(r.starts_at)}
+                    {missed[r.number] === 'absent' && <span className="ml-1.5 rounded-md bg-urgent-tint px-1.5 py-0.5 text-[11px] font-extrabold text-coral">Missed</span>}
+                  </span>
                 </span>
                 {r.slides_url ? (
                   <a href={slidesHref(r.slides_url, r.slides_name)} target="_blank" rel="noreferrer" className="focus-ring shrink-0 rounded-[12px] bg-speaking-tint px-3 py-1.5 text-[13px] font-extrabold text-speaking">
