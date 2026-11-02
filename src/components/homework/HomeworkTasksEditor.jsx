@@ -31,9 +31,11 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
     let cancelled = false
     Promise.all([
       supabase.from('mock_exams').select('id, title, module, created_at').eq('bank', 'homework').order('created_at', { ascending: false }),
+      // In a course plan (no group yet) every word list can be picked; it is
+      // given to the group when the lesson's homework is posted.
       groupId
         ? supabase.from('wordlists').select('id, title, created_at').eq('group_id', groupId).order('created_at', { ascending: false })
-        : Promise.resolve({ data: [] }),
+        : supabase.from('wordlists').select('id, title, created_at').order('created_at', { ascending: false }),
       supabase.from('shadowing_clips').select('id, title, created_at').order('created_at', { ascending: false }),
     ]).then(([b, w, c]) => {
       if (cancelled) return

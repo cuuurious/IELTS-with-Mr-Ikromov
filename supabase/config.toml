@@ -50,3 +50,10 @@ entrypoint = "./functions/create-student-account/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/telegram-webhook/index.ts"
+# The database posts lesson homework to Telegram itself (migration_88),
+# proving it with the vault secret, so the gateway must let it through;
+# the function still checks a teacher sign-in or that secret.
+[functions.telegram-group-post]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/telegram-group-post/index.ts"

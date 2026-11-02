@@ -400,13 +400,23 @@ if (typeof Deno !== 'undefined' && (Deno as any).serve && !(globalThis as any)._
 
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
 
-    // Teachers only.
-    const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
-    const { data: userData } = await supabase.auth.getUser(token)
-    const userId = userData?.user?.id
-    if (!userId) return json({ ok: false, error: 'Not signed in.' }, 401)
-    const { data: profile } = await supabase.from('profiles').select('role, status').eq('id', userId).maybeSingle()
-    if (profile?.role !== 'teacher' || profile?.status !== 'approved') return json({ ok: false, error: 'Teachers only.' }, 403)
+    // Teachers only — or the database itself, when a lesson's homework is
+    // posted automatically (migration_88), proving it with the vault secret.
+    const notifySecret = req.headers.get('x-notify-secret')
+    let trusted = false
+    if (notifySecret) {
+      const { data: ok } = await supabase.rpc('check_notify_secret', { p_secret: notifySecret })
+      trusted = ok === true
+      if (!trusted) return json({ ok: false, error: 'Wrong secret.' }, 401)
+    }
+    if (!trusted) {
+      const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
+      const { data: userData } = await supabase.auth.getUser(token)
+      const userId = userData?.user?.id
+      if (!userId) return json({ ok: false, error: 'Not signed in.' }, 401)
+      const { data: profile } = await supabase.from('profiles').select('role, status').eq('id', userId).maybeSingle()
+      if (profile?.role !== 'teacher' || profile?.status !== 'approved') return json({ ok: false, error: 'Teachers only.' }, 403)
+    }
 
     const body = await req.json().catch(() => ({}))
     const action = body?.action === 'update' ? 'update' : 'post'

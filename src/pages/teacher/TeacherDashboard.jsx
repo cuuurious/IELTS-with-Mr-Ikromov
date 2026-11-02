@@ -16,6 +16,7 @@ import Layout, {
   IconStaff,
   IconMockExam,
   IconHelp,
+  IconHomework,
 } from '../../components/Layout'
 import GroupWorkspace from './GroupWorkspace'
 import TeacherHome from './TeacherHome'
@@ -35,6 +36,7 @@ const ClientErrors = lazyWithReload(() => import('./ClientErrors'))
 const ParentSms = lazyWithReload(() => import('./ParentSms'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 const CoinsAdmin = lazyWithReload(() => import('./CoinsAdmin'))
+const CoursePlans = lazyWithReload(() => import('./CoursePlans'))
 
 // Coins & courses nav icon (2026-11-02).
 function IconCoins({ className }) {
@@ -253,6 +255,7 @@ export default function TeacherDashboard() {
     {
       title: 'Classroom',
       items: [
+        { key: 'plans', label: 'Course Plans', icon: IconHomework, subtitle: 'Each course lesson by lesson: slides, class files and the homework that posts itself after class.' },
         { key: 'wordlists', label: 'Word Lists', icon: IconWordlist, subtitle: 'Vocabulary sets your students review and get tested on, by group.' },
         // All teaching files in one place — uploaded here or forwarded
         // from Telegram to the bot (2026-09-30).
@@ -447,6 +450,8 @@ export default function TeacherDashboard() {
       {tab === 'parent-sms' && <ParentSms />}
 
       {tab === 'coins' && <CoinsAdmin />}
+
+      {tab === 'plans' && <CoursePlans />}
 
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>

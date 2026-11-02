@@ -1,3 +1,4 @@
+import StudentCourseCard from '../../components/courses/StudentCourseCard'
 import {
   Suspense,
   useEffect,
@@ -886,6 +887,9 @@ const messageId = linkParts[2] || null
                 </div>
               )}
             </div>
+
+            {/* Where the group is in its course + slides of past lessons (migration_88). */}
+            {activeGroup && <StudentCourseCard groupId={activeGroup} />}
 
             {myGroups.length === 0 && (
               <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 sm:py-14 text-center">

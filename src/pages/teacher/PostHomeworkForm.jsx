@@ -1,3 +1,4 @@
+import { lessonTime, toLocalInput } from '../../lib/courses'
 import HomeworkTasksEditor from '../../components/homework/HomeworkTasksEditor'
 import { saveHomeworkTasks } from '../../lib/homeworkTasks'
 import { useEffect, useRef, useState } from 'react'
@@ -31,6 +32,21 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   // Tasks done inside the site (2026-11-02).
   const [tasks, setTasks] = useState([])
+  // Quick deadlines (2026-11-02): "Next lesson" comes from the group's
+  // course timetable (migration_88), if it has one.
+  const [nextLesson, setNextLesson] = useState(null)
+  useEffect(() => {
+    if (!open || !groupId) return undefined
+    let cancelled = false
+    supabase.rpc('next_group_lesson', { p_group_id: groupId }).then(({ data, error }) => {
+      if (cancelled || error) return
+      const row = Array.isArray(data) ? data[0] : data
+      setNextLesson(row?.starts_at ? row : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open, groupId])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -419,6 +435,28 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       onChange={(e) => setDueDate(e.target.value)}
       className="focus-ring w-full bg-panel border border-line rounded-md px-3 py-2 text-sm text-paper transition-colors focus:border-brass/60"
     />
+
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {[
+        nextLesson && { label: `Next lesson · ${lessonTime(nextLesson.starts_at)}`, value: toLocalInput(nextLesson.starts_at), main: true },
+        { label: 'Tonight 23:59', value: (() => { const d = new Date(); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
+        { label: 'Tomorrow 23:59', value: (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
+        { label: 'In 2 days', value: (() => { const d = new Date(); d.setDate(d.getDate() + 2); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
+      ]
+        .filter(Boolean)
+        .map((o) => (
+          <button
+            key={o.label}
+            type="button"
+            onClick={() => setDueDate(o.value)}
+            className={`focus-ring rounded-[10px] px-2.5 py-1 text-xs font-bold transition ${
+              dueDate === o.value ? 'bg-brass text-onbrass' : o.main ? 'bg-brass/15 text-brass hover:bg-brass/25' : 'bg-panel text-paper-dim hover:text-paper'
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+    </div>
 
     <p className="text-xs text-mist mt-1.5">
       {dueDate ? 'Students will see a live countdown.' : 'Optional — leave blank for no deadline.'}

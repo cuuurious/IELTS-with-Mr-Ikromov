@@ -1,3 +1,4 @@
+import GroupCoursePanel from '../../components/courses/GroupCoursePanel'
 import Gradebook from '../../components/homework/Gradebook'
 import { groupColour } from '../../lib/groupLook'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -1561,6 +1562,10 @@ export default function GroupWorkspace({ teacherId }) {
               </section>
             )
           })()}
+
+          {!groupDataLoading && activeGroup && (
+            <GroupCoursePanel groupId={activeGroup} accent={getGroupAccent(activeGroup)} onPosted={() => loadGroupData()} />
+          )}
 
           {/* =================================================
               THIS WEEK (redesign 2026-11-02): four numbers, this

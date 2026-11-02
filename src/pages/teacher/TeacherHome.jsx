@@ -1,3 +1,4 @@
+import TodayLessons from '../../components/courses/TodayLessons'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { skillOfHomework, formatDue, isSameDay } from '../../lib/skills'
@@ -596,6 +597,9 @@ export default function TeacherHome({ profile, pendingCount = 0, onNavigate, onO
           )}
         </div>
       </section>
+
+      {/* Today's lessons from the course plans (migration_88). */}
+      <TodayLessons onOpenGroup={onOpenGroup} />
 
       {/* GROUPS — one tile each */}
       <section aria-labelledby="th-groups" className="lg:col-span-12 flex flex-col gap-3.5">
