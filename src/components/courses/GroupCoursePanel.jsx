@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { WEEKDAYS, hhmm, lessonDay, lessonTime, slidesHref, tashkentDate } from '../../lib/courses'
 import AttendanceModal from './AttendanceModal'
+import LessonStatsModal from './LessonStatsModal'
 
 /*
  * A group's course (2026-11-02, migration_88): which course it follows,
@@ -20,6 +21,8 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
   const [showAll, setShowAll] = useState(false)
   const [attendance, setAttendance] = useState({}) // group_lesson_id -> { came, total }
   const [marking, setMarking] = useState(null) // lesson being marked
+  const [stats, setStats] = useState({}) // group_lesson_id -> group_lesson_stats row (migration_91)
+  const [statsFor, setStatsFor] = useState(null) // lesson whose stats window is open
 
   const load = async () => {
     const [c, p] = await Promise.all([
@@ -50,6 +53,9 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
           if (r.status === 'present' || r.status === 'late') map[r.group_lesson_id].came += 1
         })
         setAttendance(map)
+        // Per-lesson stats (migration_91) — also quiet before it is run.
+        const { data: st } = await supabase.rpc('group_lesson_stats', { p_group_id: groupId })
+        setStats(Object.fromEntries((st || []).map((r) => [r.group_lesson_id, r])))
       }
     }
   }
@@ -161,6 +167,18 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
               <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl font-brand text-[14px] font-semibold ${l.status === 'posted' ? 'bg-reading text-white' : isNext ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>{l.number}</span>
               <span className="w-36 shrink-0 whitespace-nowrap text-[13px] font-bold text-mist">{lessonDay(l.starts_at)} · {hhmm(l.starts_at)}</span>
               <span className={`min-w-0 flex-1 truncate text-sm font-extrabold ${t.title ? 'text-paper' : 'text-mist'}`}>{t.title || 'Not written yet'}</span>
+              {started && stats[l.id] && (
+                <button
+                  type="button"
+                  onClick={() => setStatsFor(l)}
+                  title="Who came, who did the homework, average score"
+                  className="focus-ring hidden h-8 items-center gap-2 rounded-[10px] bg-panel px-2.5 text-[12px] font-extrabold text-paper-dim hover:text-paper sm:flex"
+                >
+                  {l.homework_id && <span>HW {stats[l.id].hw_done}/{stats[l.id].members}</span>}
+                  {stats[l.id].avg_pct != null && <span className="text-reading">{stats[l.id].avg_pct}%</span>}
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+                </button>
+              )}
               {started && (
                 <button
                   type="button"
@@ -200,6 +218,18 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
           <span className="text-sm font-extrabold text-reading">Course finished. Next: {plans.find((p) => p.id === plan.next_plan_id)?.title}</span>
           <button type="button" onClick={() => setEditing({ suggest: plan.next_plan_id })} className="focus-ring h-9 rounded-[12px] bg-reading px-3 text-[13px] font-extrabold text-white">Start it</button>
         </div>
+      )}
+      {statsFor && (
+        <LessonStatsModal
+          lesson={statsFor}
+          title={titles[statsFor.number]?.title}
+          stats={stats[statsFor.id]}
+          onClose={() => setStatsFor(null)}
+          onMark={() => {
+            setMarking(statsFor)
+            setStatsFor(null)
+          }}
+        />
       )}
       {marking && (
         <AttendanceModal

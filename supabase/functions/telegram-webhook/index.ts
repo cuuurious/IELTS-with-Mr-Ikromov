@@ -461,6 +461,13 @@ export async function handleGroupMessage(supabase: any, botToken: string, messag
   }
 
   const text = String(message.text || '').trim()
+
+  // One-tap connect from the website (2026-11-02, migration_91): the
+  // group page opens t.me/<bot>?startgroup=<code>; Telegram then sends
+  // "/start <code>" in the chat the teacher picked.
+  const start = text.match(/^\/start(@[\w_]+)?\s+(g[0-9a-f]{24})\s*$/i)
+  if (start) return await connectByCode(supabase, botToken, message, start[2].toLowerCase())
+
   const cmd = text.match(/^\/(connect|disconnect)(@[\w_]+)?(\s|$)/i)?.[1]?.toLowerCase()
   if (!cmd) return 'ignored' // never react to ordinary group chat
 
@@ -505,6 +512,36 @@ export async function handleGroupMessage(supabase: any, botToken: string, messag
   return 'group-connect-menu'
 }
 
+async function connectByCode(supabase: any, botToken: string, message: any, code: string) {
+  const chat = message.chat
+  const { data: row } = await supabase
+    .from('telegram_group_connect')
+    .select('code, group_id, expires_at, groups(id, name)')
+    .eq('code', code)
+    .maybeSingle()
+  if (!row || !row.groups || new Date(row.expires_at).getTime() < Date.now()) {
+    await sendTelegramMessage(botToken, chat.id, 'This connect link has expired. On the website, open the group and press “Connect Telegram group” again.')
+    return 'group-code-expired'
+  }
+  const group = row.groups
+  await supabase.from('groups').update({ telegram_chat_id: null, telegram_chat_title: null, telegram_linked_at: null }).eq('telegram_chat_id', chat.id).neq('id', group.id)
+  const { error } = await supabase
+    .from('groups')
+    .update({ telegram_chat_id: chat.id, telegram_chat_title: chat.title || null, telegram_linked_at: new Date().toISOString() })
+    .eq('id', group.id)
+  await supabase.from('telegram_group_connect').delete().eq('code', code)
+  if (error) {
+    await sendTelegramMessage(botToken, chat.id, 'Not ready yet — the website database needs an update.')
+    return 'group-error'
+  }
+  await sendTelegramMessage(
+    botToken,
+    chat.id,
+    `✅ This chat is connected to group “${group.name}”.\nHomework posted on the website for ${group.name} will appear here. Send /disconnect to stop.`
+  )
+  return 'group-connected-by-code'
+}
+
 async function handleGroupCallback(supabase: any, botToken: string, callback: any) {
   const chat = callback.message?.chat
   const chatId = chat?.id
@@ -546,7 +583,7 @@ async function handleMembership(supabase: any, botToken: string, update: any) {
     await sendTelegramMessage(
       botToken,
       chat.id,
-      'Hello! 👋 Teacher: send /connect in this chat to link it with your group on the website. After that, homework you post on the website appears here automatically.'
+      'Hello! 👋 If you used “Connect Telegram group” on the website, the next message confirms the link. Otherwise, teacher: send /connect here to link this chat with your group on the website.'
     )
   } else if (now === 'left' || now === 'kicked') {
     await supabase.from('groups').update({ telegram_chat_id: null, telegram_chat_title: null, telegram_linked_at: null }).eq('telegram_chat_id', chat.id)

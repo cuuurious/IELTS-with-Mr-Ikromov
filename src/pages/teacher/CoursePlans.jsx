@@ -249,9 +249,16 @@ function PlanEditor({ plan: initial, plans, onBack }) {
   )
 }
 
+// Reading lessons keep a slot for their in-site Reading pages (the HTML
+// version of the thematic Reading books), added later (2026-11-02).
+function needsReadingPages(title, tasks) {
+  return /^\s*reading\b/i.test(title || '') && !tasks.some((t) => t.kind === 'html' || t.kind === 'reading')
+}
+
 function LessonRow({ lesson: l, onOpen }) {
   const tasks = Array.isArray(l.tasks) ? l.tasks : []
   const empty = !l.title?.trim()
+  const readingSlot = needsReadingPages(l.title, tasks)
   return (
     <button type="button" onClick={onOpen} className={`focus-ring flex w-full items-center gap-3 rounded-[16px] border px-3 py-2.5 text-left transition hover:bg-panel-2 ${empty ? 'border-dashed border-line bg-panel/60' : 'border-line bg-panel'}`}>
       <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl font-brand text-[15px] font-semibold ${empty ? 'bg-panel-2 text-mist' : 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass'}`}>{l.number}</span>
@@ -267,6 +274,7 @@ function LessonRow({ lesson: l, onOpen }) {
           return <span key={i} className={`rounded-lg px-2 py-0.5 ${m.tint} ${m.text}`}>{m.short}</span>
         })}
         {(l.homework_title || l.homework_text) && !tasks.length && <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">Homework</span>}
+        {readingSlot && <span className="rounded-lg border border-dashed border-reading/60 px-2 py-0.5 text-reading">Reading pages: to add</span>}
       </span>
     </button>
   )
@@ -378,6 +386,16 @@ function LessonEditor({ lesson, planTitle, onClose, onSaved, onRemove }) {
         </div>
         <input value={f.homework_title} onChange={(e) => set({ homework_title: e.target.value })} placeholder="Homework title (leave empty to use the lesson title)" className={input} />
         <textarea value={f.homework_text} onChange={(e) => set({ homework_text: e.target.value })} rows={3} placeholder="Instructions for students" className={input} />
+        {needsReadingPages(f.title, f.tasks) && (
+          <div className="flex items-center gap-3 rounded-[14px] border-2 border-dashed border-reading/50 bg-reading-tint/40 px-4 py-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-reading-tint text-reading" aria-hidden="true">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13" /></svg>
+            </span>
+            <p className="text-[13px] font-bold text-paper-dim">
+              Space for this lesson’s Reading pages. When the HTML pages of the Reading books are ready, upload them to the Library and add them here with <span className="text-reading">+ Workshop</span>.
+            </p>
+          </div>
+        )}
         <HomeworkTasksEditor groupId={null} tasks={f.tasks} onChange={(tasks) => set({ tasks })} />
         <div className="flex flex-wrap items-center gap-3 text-[13px] font-bold text-paper">
           <label className="flex items-center gap-2 rounded-[12px] bg-panel-2 px-3 py-2">

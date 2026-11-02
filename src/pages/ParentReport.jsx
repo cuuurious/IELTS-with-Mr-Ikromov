@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { downloadParentReport } from '../lib/generateParentReport'
+import { MonthReportCard, monthLabel as reportMonthLabel } from '../components/reports/monthReport'
 
 /*
  * PARENT PROGRESS REPORT (2026-10-02) — /report/<secret link>
@@ -74,6 +75,52 @@ function MonthStrip({ months }) {
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-line" />Still open</span>
       </div>
     </div>
+  )
+}
+
+// "This month" (2026-11-02, migration_91): attendance, homework, scores,
+// coins and a note from the teacher for one month. ?month=2026-10 picks
+// the month (the teacher's share link carries it).
+function MonthSection({ token }) {
+  const [data, setData] = useState(undefined)
+  const [month, setMonth] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get('month')
+    return /^\d{4}-\d{2}$/.test(q || '') ? `${q}-01` : null
+  })
+
+  useEffect(() => {
+    let cancelled = false
+    supabase.rpc('get_parent_month_report', { p_token: token, p_month: month }).then(({ data: d, error }) => {
+      if (!cancelled) setData(error ? null : d)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [token, month])
+
+  if (!data) return null
+  const months = data.months || []
+  return (
+    <section className="flex flex-col gap-3 rounded-[24px] border border-line bg-panel p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="mr-auto text-xl font-semibold">{reportMonthLabel(data.month)}</h2>
+        {months.length > 1 && (
+          <div className="flex flex-wrap gap-1.5">
+            {months.slice(0, 6).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMonth(m)}
+                className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-bold ${m === data.month ? 'bg-brass text-onbrass' : 'bg-panel-2 text-paper-dim hover:text-paper'}`}
+              >
+                {reportMonthLabel(m).split(' ')[0].slice(0, 3)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <MonthReportCard r={data} />
+    </section>
   )
 }
 
@@ -238,6 +285,8 @@ export default function ParentReport() {
         </button>
       </header>
       {pdfError && <p className="-mt-3 text-sm text-coral">{pdfError}</p>}
+
+      <MonthSection token={token} />
 
       <section className="flex flex-col gap-3">
         <div>

@@ -1,6 +1,7 @@
 import GroupCoursePanel from '../../components/courses/GroupCoursePanel'
+import GroupTools from '../../components/courses/GroupTools'
 import Gradebook from '../../components/homework/Gradebook'
-import { groupColour } from '../../lib/groupLook'
+import { groupColour, groupDisplayName } from '../../lib/groupLook'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PostHomeworkForm from './PostHomeworkForm'
@@ -1563,6 +1564,8 @@ export default function GroupWorkspace({ teacherId }) {
               </section>
             )
           })()}
+
+          {!groupDataLoading && activeGroup && <GroupTools groupId={activeGroup} groupName={groupDisplayName(groups.find((g) => g.id === activeGroup)?.name || '')} />}
 
           {!groupDataLoading && activeGroup && (
             <GroupCoursePanel groupId={activeGroup} accent={getGroupAccent(activeGroup)} onPosted={() => loadGroupData()} />
