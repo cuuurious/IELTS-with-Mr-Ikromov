@@ -74,7 +74,7 @@ function HomeworkArt() {
     { t: 'Speaking Part 2', done: false, due: 'Sat', cls: 'bg-speaking-tint text-speaking' },
   ]
   return (
-    <div className="flex w-full max-w-[250px] flex-col gap-[7px] rounded-[14px] bg-panel px-3 py-2.5 shadow-[0_6px_16px_rgba(36,86,176,0.15)]">
+    <div className="flex w-[230px] flex-col gap-[7px] rounded-[14px] bg-panel px-3 py-2.5 shadow-[0_6px_16px_rgba(36,86,176,0.15)]">
       {rows.map((r) => (
         <div key={r.t} className="flex items-center gap-2 text-[12px] font-extrabold">
           <span className={`grid h-[18px] w-[18px] place-items-center rounded-[6px] ${r.done ? 'bg-[#1f8f5c]' : 'border-2 border-line'}`}>
@@ -90,7 +90,7 @@ function HomeworkArt() {
 
 function MockArt() {
   return (
-    <div className="w-full max-w-[250px] overflow-hidden rounded-xl bg-panel shadow-[0_6px_16px_rgba(31,78,140,0.18)]">
+    <div className="w-[230px] overflow-hidden rounded-xl bg-panel shadow-[0_6px_16px_rgba(31,78,140,0.18)]">
       <div className="flex justify-between bg-listening px-2.5 py-1.5 text-[11px] font-extrabold text-white">
         <span>Listening, Part 2</span>
         <span className="font-brand">28:41</span>
@@ -113,7 +113,7 @@ function MockArt() {
 
 function FeedbackArt() {
   return (
-    <div className="relative w-full max-w-[250px]">
+    <div className="relative w-[230px]">
       <div className="flex flex-col gap-1.5 rounded-xl bg-panel px-3 py-2.5 shadow-[0_6px_16px_rgba(154,91,18,0.18)]">
         <span className="h-[5px] w-[80%] rounded bg-writing-tint" />
         <span className="h-[5px] w-[72%] rounded bg-[#f6d79c]" />
@@ -134,15 +134,15 @@ function FeedbackArt() {
 
 function LibraryArt() {
   const books = [
-    { c: 'bg-reading', h: 84, n: 38, l: 'Reading' },
-    { c: 'bg-listening', h: 74, n: 53, l: 'Listen' },
-    { c: 'bg-writing', h: 66, n: 81, l: 'Task 1' },
-    { c: 'bg-[#b8641a]', h: 78, n: 91, l: 'Task 2' },
+    { c: 'bg-reading', h: 66, n: 38, l: 'Reading' },
+    { c: 'bg-listening', h: 58, n: 53, l: 'Listen' },
+    { c: 'bg-writing', h: 52, n: 81, l: 'Task 1' },
+    { c: 'bg-[#b8641a]', h: 62, n: 91, l: 'Task 2' },
   ]
   return (
-    <div className="flex h-[84px] items-end gap-1.5">
+    <div className="flex h-[70px] items-end gap-1.5 border-b-[3px] border-black/10 px-1">
       {books.map((b) => (
-        <div key={b.l} style={{ height: b.h }} className={`flex w-[38px] flex-col items-center justify-end rounded-t-lg rounded-b pb-1.5 text-[9px] font-extrabold text-white ${b.c}`}>
+        <div key={b.l} style={{ height: b.h }} className={`flex w-[40px] flex-col items-center justify-end rounded-t-lg pb-1.5 text-[9px] font-extrabold leading-tight text-white ${b.c}`}>
           <span className="font-brand text-[11px] font-bold">{b.n}</span>
           {b.l}
         </div>
@@ -152,17 +152,17 @@ function LibraryArt() {
 }
 
 function CoinsArt() {
-  const coin = 'absolute grid h-11 w-11 place-items-center rounded-full border-[3px] border-[#f6c56b] bg-saffron font-brand text-sm font-bold text-[#7a4a0c]'
+  const coin = 'absolute grid h-10 w-10 place-items-center rounded-full border-[3px] border-[#f6c56b] bg-saffron font-brand text-sm font-bold text-[#7a4a0c]'
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative h-[70px] w-[70px]">
-        <span className={coin} style={{ left: 0, top: 22 }} />
-        <span className={coin} style={{ left: 22, top: 0 }} />
-        <span className={coin} style={{ left: 18, top: 24 }}>C</span>
+    <div className="flex min-w-0 items-center gap-2.5">
+      <div className="relative h-[62px] w-[62px] shrink-0">
+        <span className={coin} style={{ left: 0, top: 18 }} />
+        <span className={coin} style={{ left: 18, top: 0 }} />
+        <span className={coin} style={{ left: 16, top: 20 }}>C</span>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <span className="rounded-[9px] bg-[#dcf2e6] px-2 py-1 text-[12px] font-extrabold text-[#17704a]">+10 on time</span>
-        <span className="rounded-[9px] bg-panel px-2 py-1 text-[12px] font-extrabold text-paper">Swap for a full mock</span>
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <span className="whitespace-nowrap rounded-[9px] bg-[#dcf2e6] px-2 py-1 text-[12px] font-extrabold text-[#17704a]">+5 on time</span>
+        <span className="whitespace-nowrap rounded-[9px] bg-panel px-2 py-1 text-[12px] font-extrabold text-paper">= mocks</span>
       </div>
     </div>
   )
@@ -170,7 +170,7 @@ function CoinsArt() {
 
 function VideoArt() {
   return (
-    <div className="w-full max-w-[250px] overflow-hidden rounded-xl bg-[linear-gradient(135deg,#3b2a63,#6a3f99)] shadow-[0_6px_16px_rgba(106,63,153,0.25)]">
+    <div className="w-[230px] overflow-hidden rounded-xl bg-[linear-gradient(135deg,#3b2a63,#6a3f99)] shadow-[0_6px_16px_rgba(106,63,153,0.25)]">
       <div className="flex h-[66px] items-center gap-2.5 px-2.5">
         <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-white">
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="#6a3f99" /></svg>
@@ -187,7 +187,7 @@ const PERKS = [
   { art: MockArt, bg: 'bg-listening-tint', title: 'Mocks like the real test', text: 'The real computer-test screen, timer and all.' },
   { art: FeedbackArt, bg: 'bg-writing-tint', title: 'Feedback from examiners', text: 'Mocks marked by examiners and approved by Mr Ikromov.' },
   { art: LibraryArt, bg: 'bg-reading-tint', title: 'Practice library', text: 'Hundreds of tests to practise on your own.' },
-  { art: CoinsArt, bg: 'bg-[color-mix(in_srgb,var(--color-saffron)_18%,var(--color-panel))]', title: 'Coins for hard work', text: 'Earn coins for homework on time, spend them on mocks.' },
+  { art: CoinsArt, bg: 'bg-[color-mix(in_srgb,var(--color-saffron)_18%,var(--color-panel))]', title: 'Coins for hard work', text: 'Earn coins for homework on time, spend them on mocks and courses.' },
   { art: VideoArt, bg: 'bg-speaking-tint', title: 'Video lessons', text: 'Reading marathons and lessons to watch again.' },
 ]
 
@@ -209,7 +209,7 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
     <div className="min-h-screen bg-ink text-paper lg:h-[100dvh] lg:overflow-hidden">
       <div className="mx-auto grid min-h-screen max-w-[1440px] grid-cols-1 gap-4 p-3 sm:gap-5 sm:p-5 lg:h-full lg:min-h-0 lg:grid-cols-[1.15fr_1fr]">
         {/* LEFT — the school */}
-        <section className="registan-band auth-scroll order-2 flex flex-col gap-5 rounded-[28px] px-5 py-7 sm:px-8 sm:py-7 lg:order-1 lg:min-h-0 lg:overflow-y-auto [@media(min-width:1024px)_and_(max-height:860px)]:gap-3.5 [@media(min-width:1024px)_and_(max-height:860px)]:py-5">
+        <section className="registan-band auth-scroll order-2 flex flex-col gap-5 rounded-[28px] px-5 py-7 sm:px-8 sm:py-7 lg:order-1 lg:min-h-0 lg:overflow-y-auto [@media(min-width:1024px)_and_(max-height:940px)]:gap-3.5 [@media(min-width:1024px)_and_(max-height:940px)]:py-5">
           <Link to="/login" className="focus-ring flex w-fit items-center gap-3 rounded-xl text-onband">
             <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#ffffff] font-brand text-[15px] font-bold text-[#2456b0]">MI</span>
             <span className="flex flex-col leading-tight">
@@ -242,18 +242,22 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
 
           <div className="flex flex-col gap-2.5">
             <h2 className="text-[13px] font-extrabold uppercase tracking-[0.06em] text-onband-dim">Everything you need to reach your band</h2>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="@container">
+            <div className="grid grid-cols-1 gap-2.5 @min-[22rem]:grid-cols-2 @min-[34rem]:grid-cols-3">
               {PERKS.map(({ art: Art, bg, title: t, text }) => (
                 <div key={t} className="flex flex-col overflow-hidden rounded-[20px] bg-panel text-paper">
-                  <div className={`flex h-[104px] items-center justify-center p-2.5 pt-3.5 ${bg} [@media(min-width:1024px)_and_(max-height:860px)]:h-[86px] [&>*]:origin-center [@media(min-width:1024px)_and_(max-height:860px)]:[&>*]:scale-[0.82]`} aria-hidden="true">
-                    <Art />
+                  <div className={`@container flex h-[104px] items-center justify-center overflow-hidden p-2.5 ${bg} [@media(min-width:1024px)_and_(max-height:940px)]:h-[90px] [@media(min-width:1024px)_and_(max-height:940px)]:p-1`} aria-hidden="true">
+                    <div className="shrink-0 origin-center @max-[250px]:scale-[0.92] @max-[228px]:scale-[0.86] @max-[208px]:scale-[0.8] @max-[192px]:scale-[0.75]">
+                      <Art />
+                    </div>
                   </div>
                   <div className="px-3.5 pb-3 pt-2.5">
                     <div className="text-[15px] font-extrabold">{t}</div>
-                    <div className="mt-0.5 text-[13px] font-semibold leading-snug text-mist [@media(min-width:1024px)_and_(max-height:860px)]:hidden">{text}</div>
+                    <div className="mt-0.5 text-[13px] font-semibold leading-snug text-mist [@media(min-width:1024px)_and_(max-height:940px)]:hidden">{text}</div>
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </div>
 
