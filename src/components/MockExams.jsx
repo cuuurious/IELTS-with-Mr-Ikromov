@@ -1,3 +1,4 @@
+import SkillAudioPlayer from './SkillAudioPlayer'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import ConfirmModal from './ConfirmModal'
@@ -198,6 +199,7 @@ export default function MockExams({ selfId }) {
         .from('mock_exams')
         .select('*')
         .eq('is_active', true)
+        .eq('bank', 'mock')
         .order('module', { ascending: true })
         .order('sort_order', { ascending: true })
 
@@ -398,7 +400,13 @@ export function ExamTaker({
   // sitting to the next section, so the error screen must never offer it
   // while this section has no submitted attempt — only "Try again".
   allowExitOnError = true,
+  // Homework (2026-11-02): run the same test screen on another attempts
+  // table. { table, match, insertRow, submitRpc, untimed } — untimed is
+  // practice mode (no clock, free audio).
+  store = null,
 }) {
+  const attemptTable = store?.table || 'mock_attempts'
+  const untimed = Boolean(store?.untimed)
   const [phase, setPhase] = useState('starting')
   const [attemptId, setAttemptId] = useState(null)
   const [error, setError] = useState(null)
@@ -910,7 +918,7 @@ export function ExamTaker({
       }
 
       const { error: saveError } = await supabase
-        .from('mock_attempts')
+        .from(attemptTable)
         .update(payload)
         .eq('id', attemptId)
 
@@ -982,9 +990,9 @@ export function ExamTaker({
         if (i > 0) await sleep(1000 * 2 ** (i - 1))
         if (cancelled) return { cancelled: true }
         const { data, error: lookupError } = await supabase
-          .from('mock_attempts')
+          .from(attemptTable)
           .select('*')
-          .eq('exam_id', exam.id)
+          .match(store?.match || { exam_id: exam.id })
           .eq('user_id', selfId)
           .is('submitted_at', null)
           .order('started_at', { ascending: false })
@@ -1033,13 +1041,13 @@ export function ExamTaker({
           setDeadline(
             existing.deadline_at
               ? new Date(existing.deadline_at).getTime()
-              : new Date(draft.reviewStartedAt).getTime() + REVIEW_WINDOW_MS
+              : untimed ? null : new Date(draft.reviewStartedAt).getTime() + REVIEW_WINDOW_MS
           )
         } else {
           setDeadline(
             existing.deadline_at
               ? new Date(existing.deadline_at).getTime()
-              : new Date(existing.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
+              : untimed ? null : new Date(existing.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
           )
         }
         setPausedAt(existing.paused_at ? new Date(existing.paused_at).getTime() : null)
@@ -1069,8 +1077,8 @@ export function ExamTaker({
       }
 
       const { data, error: startError } = await supabase
-        .from('mock_attempts')
-        .insert({ exam_id: exam.id, user_id: selfId })
+        .from(attemptTable)
+        .insert(store?.insertRow || { exam_id: exam.id, user_id: selfId })
         .select('*')
         .single()
 
@@ -1097,7 +1105,7 @@ export function ExamTaker({
       setDeadline(
         data.deadline_at
           ? new Date(data.deadline_at).getTime()
-          : new Date(data.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
+          : untimed ? null : new Date(data.started_at).getTime() + TIME_LIMIT_MINUTES[exam.module] * 60_000
       )
       setPhase('in-progress')
       onAttemptStarted?.(data.id)
@@ -1117,7 +1125,7 @@ export function ExamTaker({
     const currentAttemptId = attemptIdRef.current
     if (!currentAttemptId) return
     supabase
-      .from('mock_attempts')
+      .from(attemptTable)
       .update({
         tab_switch_count: tabSwitchCountRef.current,
         draft_answers: {
@@ -1173,7 +1181,7 @@ export function ExamTaker({
       // Only the status columns (2026-10-06) — select('*') re-downloaded
       // the whole draft_answers jsonb every 5 s for every student.
       const { data: row, error: pollError } = await supabase
-        .from('mock_attempts')
+        .from(attemptTable)
         .select('id, submitted_at, deadline_at, paused_at')
         .eq('id', attemptId)
         .maybeSingle()
@@ -1187,7 +1195,7 @@ export function ExamTaker({
       if (row && !row.submitted_at && Date.now() - lastHeartbeatAt >= 30_000) {
         lastHeartbeatAt = Date.now()
         supabase
-          .from('mock_attempts')
+          .from(attemptTable)
           .update({ tab_switch_count: tabSwitchCountRef.current })
           .eq('id', attemptId)
           .then(({ error: beatError }) => {
@@ -1265,8 +1273,10 @@ export function ExamTaker({
     const startedAt = new Date(serverNow()).toISOString()
     reviewStartedAtRef.current = startedAt
     setReviewPhase(true)
-    setDeadline(serverNow() + REVIEW_WINDOW_MS)
-    setFlashMessage('Audio finished — 2 minutes to review your answers')
+    if (!untimed) {
+      setDeadline(serverNow() + REVIEW_WINDOW_MS)
+      setFlashMessage('Audio finished — 2 minutes to review your answers')
+    }
 
     // Save immediately rather than waiting for the next 30s autosave tick
     // — entering review phase is exactly the moment a refresh would do
@@ -1275,7 +1285,7 @@ export function ExamTaker({
     const currentAttemptId = attemptIdRef.current
     if (currentAttemptId) {
       supabase
-        .from('mock_attempts')
+        .from(attemptTable)
         .update({
           draft_answers: {
             answers: answersRef.current,
@@ -1395,7 +1405,7 @@ export function ExamTaker({
     // Save the integrity log one last time alongside the real submit —
     // best-effort, a failure here shouldn't block the actual grading.
     const { error: logError } = await supabase
-      .from('mock_attempts')
+      .from(attemptTable)
       .update({ tab_switch_count: tabSwitchCountRef.current })
       .eq('id', currentAttemptId)
     if (logError) console.error('Could not save integrity log:', logError)
@@ -1408,7 +1418,7 @@ export function ExamTaker({
       s.questions.map((q) => ({ question_id: q.id, answer: currentAnswers[q.id] ?? '' }))
     )
 
-    const { data, error: submitError } = await supabase.rpc('submit_mock_attempt', {
+    const { data, error: submitError } = await supabase.rpc(store?.submitRpc || 'submit_mock_attempt', {
       p_attempt_id: currentAttemptId,
       p_answers: payload,
     })
@@ -1443,7 +1453,14 @@ export function ExamTaker({
     // submit_mock_attempt returns score/max_score = null for students now
     // (2026-10-06 — only teachers get numbers), so pass through null rather
     // than inventing a 0/0; nothing on the student side shows them.
-    const finalResult = { score: row?.score ?? null, maxScore: row?.max_score ?? null }
+    const finalResult = {
+      score: row?.score ?? null,
+      maxScore: row?.max_score ?? null,
+      band: row?.band ?? null,
+      results: row?.results ?? null,
+      answers: currentAnswers,
+      attemptId: currentAttemptId,
+    }
     setResult(finalResult)
     setPhase('done')
     onSubmitted?.(finalResult)
@@ -1507,6 +1524,9 @@ export function ExamTaker({
     )
   }
 
+  // Homework shows its own result screen (answers straight away).
+  if (phase === 'done' && result && store) return null
+
   if (phase === 'done' && result) {
     // No score, percentage, or transcript here on purpose — same
     // release-gate rule the rest of the app already applies to Writing/
@@ -1557,7 +1577,9 @@ export function ExamTaker({
     )
   }
 
-  const timerLevel = reviewPhase || remainingMs <= 5 * 60_000
+  const timerLevel = untimed
+    ? 'normal'
+    : reviewPhase || remainingMs <= 5 * 60_000
     ? 'critical'
     : remainingMs <= 10 * 60_000
       ? 'warning'
@@ -1693,7 +1715,7 @@ export function ExamTaker({
                 title={`${formatClock(remainingMs)} · ${answeredCount} of ${totalQuestions} answered`}
               >
                 <Icon name="timer" className="h-4 w-4" />
-                {reviewPhase ? `Review time · ${timeLeftText}` : timeLeftText}
+                {untimed ? 'Practice · no time limit' : reviewPhase ? `Review time · ${timeLeftText}` : timeLeftText}
               </p>
             </div>
           </div>
@@ -2144,7 +2166,13 @@ export function ExamTaker({
               </p>
             )}
 
-            {exam.module === 'listening' && section.audio_url && (
+            {exam.module === 'listening' && section.audio_url && untimed && (
+              <div className="mb-4 max-w-xl">
+                <SkillAudioPlayer src={section.audio_url} tone="listening" download={false} />
+              </div>
+            )}
+
+            {exam.module === 'listening' && section.audio_url && !untimed && (
               <div className="mb-4">
                 <SectionAudioPlayer
                   url={section.audio_url}

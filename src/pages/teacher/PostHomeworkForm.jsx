@@ -1,3 +1,5 @@
+import HomeworkTasksEditor from '../../components/homework/HomeworkTasksEditor'
+import { saveHomeworkTasks } from '../../lib/homeworkTasks'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
@@ -27,6 +29,8 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   // Files ticked in the Materials Library (any number) — 2026-09-30.
   const [libraryFiles, setLibraryFiles] = useState([])
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Tasks done inside the site (2026-11-02).
+  const [tasks, setTasks] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -301,10 +305,22 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
       }
 
       // Into the group's Telegram chat (after the files are attached).
+      if (!isMock && tasks.length) {
+        try {
+          await saveHomeworkTasks(posted.id, tasks)
+        } catch (taskErr) {
+          onPosted(posted)
+          throw new Error(
+            `The homework was posted, but its in-site tasks couldn't be saved (${taskErr.message}). Open "Edit" on it to add them again.`
+          )
+        }
+      }
+
       if (telegram.linked && postToTelegram) postHomeworkToTelegram(posted.id, 'post')
 
       onPosted(posted)
       setLibraryFiles([])
+      setTasks([])
       setTitle('')
       setDescription('')
       setDueDate('')
@@ -454,6 +470,17 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   </label>
 )}
 
+
+{homeworkType === 'standard' && (
+  <HomeworkTasksEditor
+    groupId={groupId}
+    tasks={tasks}
+    onChange={(next) => {
+      if (tasks.length === 0 && next.length > 0 && minFiles > 0) setMinFiles(0)
+      setTasks(next)
+    }}
+  />
+)}
 
 {homeworkType === 'writing_mock' && (
   <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-3 cursor-pointer">

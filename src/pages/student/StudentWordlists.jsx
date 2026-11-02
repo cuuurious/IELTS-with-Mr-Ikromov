@@ -3,6 +3,69 @@ import { supabase } from '../../lib/supabaseClient'
 import { fetchAll } from '../../lib/fetchAll'
 import WordlistPlayer from './WordlistPlayer'
 import WordReview, { REVIEW_SESSION_SIZE } from './WordReview'
+import DailyMarathon, { MarathonArt } from './DailyMarathon'
+import MyWords from './MyWords'
+import EmptyState from '../../components/EmptyState'
+import { tashkentDay } from '../../lib/homeworkTasks'
+
+/*
+ * Daily Marathon + My words tiles (2026-11-02).
+ */
+function PracticeTiles({ studentId, refreshKey, onMarathon, onMyWords }) {
+  const [state, setState] = useState({ race: undefined, saved: null, due: 0 })
+  useEffect(() => {
+    if (!studentId) return undefined
+    let cancelled = false
+    Promise.all([
+      supabase.from('marathon_results').select('score, total').eq('user_id', studentId).eq('day', tashkentDay()).maybeSingle(),
+      supabase.from('student_words').select('id, due_at').eq('user_id', studentId),
+    ]).then(([race, words]) => {
+      if (cancelled) return
+      const now = Date.now()
+      setState({
+        race: race.error ? null : race.data || null,
+        saved: words.error ? null : (words.data || []).length,
+        due: (words.data || []).filter((w) => new Date(w.due_at).getTime() <= now).length,
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [studentId, refreshKey])
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <button
+        type="button"
+        onClick={onMarathon}
+        className="focus-ring group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#2456b0,#1a9bb5)] p-5 text-left text-white transition hover:-translate-y-0.5"
+      >
+        <MarathonArt className="pointer-events-none absolute -bottom-6 -right-6 h-32 w-40 opacity-80 transition group-hover:scale-105" />
+        <span className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">Daily Marathon</span>
+        <span className="relative font-brand text-[22px] font-semibold leading-tight">
+          {state.race ? `${state.race.score}/${state.race.total} today` : '15 words · one try'}
+        </span>
+        <span className="relative w-fit rounded-xl bg-saffron px-3 py-1.5 text-[13px] font-extrabold text-[#17213a]">
+          {state.race ? "See today's board" : 'Race now'}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onMyWords}
+        className="focus-ring group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-[20px] border border-[#F3D27A] bg-vocab-tint p-5 text-left transition hover:-translate-y-0.5"
+      >
+        <span className="pointer-events-none absolute -bottom-3 -right-2 select-none font-brand text-[84px] font-semibold leading-none text-vocab/15" aria-hidden="true">Aa</span>
+        <span className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-vocab">My words</span>
+        <span className="relative font-brand text-[22px] font-semibold leading-tight text-paper">
+          {state.saved ? `${state.saved} saved word${state.saved === 1 ? '' : 's'}` : 'Words you save'}
+        </span>
+        <span className="relative w-fit rounded-xl bg-panel px-3 py-1.5 text-[13px] font-extrabold text-vocab">
+          {state.due ? `${state.due} to review` : state.saved ? 'Open' : 'Double-click words in tests'}
+        </span>
+      </button>
+    </div>
+  )
+}
 
 /*
  * "Daily review" card (2026-10-02): how many words are due today in the
@@ -200,6 +263,8 @@ export default function StudentWordlists({
   const [mastery, setMastery] = useState({})
   const [playing, setPlaying] = useState(null)
   const [reviewing, setReviewing] = useState(false)
+  const [racing, setRacing] = useState(false)
+  const [myWordsOpen, setMyWordsOpen] = useState(false)
   const [reviewRefresh, setReviewRefresh] = useState(0)
   const [loading, setLoading] = useState(true)
   // 2026-10-06: a failed load used to show "no word lists" — now it
@@ -442,6 +507,40 @@ setLists(wordlists || [])
    * -------------------------------------------------------
    */
 
+  if (racing) {
+    return (
+      <DailyMarathon
+        studentId={studentId}
+        wordlistIds={lists.map((l) => l.id)}
+        onExit={() => {
+          setRacing(false)
+          setReviewRefresh((n) => n + 1)
+        }}
+      />
+    )
+  }
+
+  if (myWordsOpen) {
+    return (
+      <MyWords
+        studentId={studentId}
+        onExit={() => {
+          setMyWordsOpen(false)
+          setReviewRefresh((n) => n + 1)
+        }}
+      />
+    )
+  }
+
+  const practiceTiles = (
+    <PracticeTiles
+      studentId={studentId}
+      refreshKey={reviewRefresh}
+      onMarathon={() => setRacing(true)}
+      onMyWords={() => setMyWordsOpen(true)}
+    />
+  )
+
   if (reviewing) {
     return (
       <WordReview
@@ -479,10 +578,10 @@ setLists(wordlists || [])
     return (
       <div className="flex flex-col gap-5">
 
-        <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
-          <p className="text-mist text-sm">
-            Loading your vocabulary practice…
-          </p>
+        <div className="h-[132px] animate-pulse rounded-[20px] bg-panel-2" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="h-[150px] animate-pulse rounded-[20px] bg-panel-2" />
+          <div className="h-[150px] animate-pulse rounded-[20px] bg-panel-2" />
         </div>
 
       </div>
@@ -515,18 +614,7 @@ setLists(wordlists || [])
     return (
       <div className="flex flex-col gap-5">
 
-        <div>
-          <p className="text-mist text-sm">
-            Vocabulary practice assigned by your teacher will
-            appear here.
-          </p>
-        </div>
-
-        <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
-          <p className="text-mist text-sm">
-            You're not in a group yet.
-          </p>
-        </div>
+        <EmptyState icon="people" title="You're not in a group yet" text="Word lists from your teacher will appear here." />
 
       </div>
     )
@@ -536,18 +624,8 @@ setLists(wordlists || [])
     return (
       <div className="flex flex-col gap-5">
 
-        <div>
-          <p className="text-mist text-sm">
-            Your teacher hasn't posted a vocabulary list yet.
-          </p>
-        </div>
-
-        <div className="border border-line bg-panel-2 rounded-lg px-5 py-8">
-          <p className="text-mist text-sm">
-            New vocabulary practice will appear here when it is
-            assigned to your group.
-          </p>
-        </div>
+        {practiceTiles}
+        <EmptyState icon="check" title="No word lists yet" text="New lists from your teacher will appear here." />
 
       </div>
     )
@@ -562,24 +640,16 @@ setLists(wordlists || [])
   return (
     <div className="flex flex-col gap-7">
 
-      {/* HEADER */}
-
-      <div>
-
-        <p className="text-mist text-sm max-w-xl leading-relaxed">
-          Build your IELTS vocabulary one item at a time.
-          Complete a list, review your result, and practise again
-          whenever your teacher resets it.
-        </p>
-
-      </div>
-
       <DailyReviewCard
         studentId={studentId}
         wordlistIds={lists.map((l) => l.id)}
         refreshKey={reviewRefresh}
         onStart={() => setReviewing(true)}
       />
+
+      {practiceTiles}
+
+      <h2 className="-mb-3 font-brand text-[18px] font-semibold text-paper">Your word lists</h2>
 
       {/* LISTS — one card per list with word mastery (2026-10-06) */}
 

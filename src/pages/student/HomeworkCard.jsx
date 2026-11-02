@@ -1,3 +1,4 @@
+import HomeworkTasksPanel from '../../components/homework/HomeworkTasksPanel'
 import SkillAudioPlayer from '../../components/SkillAudioPlayer'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -1529,6 +1530,19 @@ export default function HomeworkCard({
 
           {/* Files from the teacher's Materials Library (any number). */}
           <HomeworkFiles files={homework.homework_attachments} />
+
+          {/* Tasks done inside the site (2026-11-02): tests, word lists,
+              workshops, shadowing. A homework with only tasks (no files,
+              no speaking) is handed in by itself once every task is done. */}
+          <HomeworkTasksPanel
+            homework={homework}
+            studentId={studentId}
+            onAllDone={() => {
+              if (submission?.status === 'done' || isMockHomework || homework.enable_speaking) return
+              if ((homework.min_submission_files ?? 1) > 0) return
+              doTaskSubmit()
+            }}
+          />
 
           {/* =================================================
               WRITING MOCK TEST

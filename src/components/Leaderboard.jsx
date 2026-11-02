@@ -1,3 +1,4 @@
+import WeeklySeason from './WeeklySeason'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PhotoViewer from './PhotoViewer'
@@ -1276,6 +1277,9 @@ export default function Leaderboard({
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,400px)_minmax(0,1fr)] xl:items-start">
         <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-24">
+          {/* Weekly season (2026-11-02): fresh board every Monday. */}
+          <WeeklySeason groupId={groupId} meId={profile?.id} />
+
           {/* YOUR PLACE (students) */}
           {me && !isTeacher && (
             <div className="wp-pop flex items-center gap-4 rounded-[20px] border border-[#F3D27A] bg-vocab-tint px-5 py-4">

@@ -1,3 +1,4 @@
+import Gradebook from '../../components/homework/Gradebook'
 import { groupColour } from '../../lib/groupLook'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
@@ -1703,6 +1704,10 @@ export default function GroupWorkspace({ teacherId }) {
               </>
             )
           })()}
+
+          {!groupDataLoading && roster.length > 0 && (
+            <Gradebook roster={roster} homeworks={homeworks} accent={getGroupAccent(activeGroup)} />
+          )}
 
           {/* =================================================
               STUDENT PROGRESS TITLE

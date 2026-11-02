@@ -326,23 +326,17 @@ const [loading, setLoading] =
         )
         .then((result) => result) // start it now (see above)
 
-      const {
-        data: hw,
-        error: homeworkError,
-      } = await supabase
-        .from('homeworks')
-        // + the files attached from the teacher's Materials Library
-        .select('*, homework_attachments(id, url, name, mime_type, size_bytes, sort_order)')
-        .eq(
-          'group_id',
-          activeGroup
-        )
-        .order(
-          'created_at',
-          {
-            ascending: false,
-          }
-        )
+      // + the files attached from the teacher's Materials Library and
+      // the tasks done in the site (migrations 84/85). If the newest
+      // columns aren't there yet, load without the tasks.
+      const loadHomeworks = (select) =>
+        supabase.from('homeworks').select(select).eq('group_id', activeGroup).order('created_at', { ascending: false })
+      let { data: hw, error: homeworkError } = await loadHomeworks(
+        '*, homework_attachments(id, url, name, mime_type, size_bytes, sort_order), homework_tasks(id, position, kind, exam_id, wordlist_id, html_url, title, shadowing_clip_id)'
+      )
+      if (homeworkError) {
+        ;({ data: hw, error: homeworkError } = await loadHomeworks('*, homework_attachments(id, url, name, mime_type, size_bytes, sort_order)'))
+      }
 
       if (cancelled) return
 

@@ -1,3 +1,5 @@
+import HomeworkTasksEditor from '../../components/homework/HomeworkTasksEditor'
+import { TASK_SELECT, saveHomeworkTasks } from '../../lib/homeworkTasks'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { guessMimeType } from '../../lib/mime'
@@ -57,6 +59,24 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
   const [addedFiles, setAddedFiles] = useState([])
   const [removedIds, setRemovedIds] = useState(() => new Set())
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Tasks done inside the site (2026-11-02). null = not loaded (or the
+  // table isn't there yet) — then they're left untouched on save.
+  const [tasks, setTasks] = useState(null)
+  const [originalTasks, setOriginalTasks] = useState([])
+
+  useEffect(() => {
+    if (isMock) return
+    supabase
+      .from('homework_tasks')
+      .select(TASK_SELECT)
+      .eq('homework_id', homework.id)
+      .order('position')
+      .then(({ data, error: taskErr }) => {
+        if (taskErr) return
+        setTasks(data || [])
+        setOriginalTasks(data || [])
+      })
+  }, [homework.id, isMock])
 
   useEffect(() => {
     if (isMock) return
@@ -256,6 +276,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
           const nextOrder = existingFiles.reduce((max, f) => Math.max(max, f.sort_order ?? 0), -1) + 1
           await attachMaterialsToHomework(homework.id, addedFiles, nextOrder)
         }
+        if (tasks) await saveHomeworkTasks(homework.id, tasks, originalTasks)
       }
 
       // Edit (or, if it was never posted there, post) the Telegram message.
@@ -322,6 +343,10 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
             <label className="flex items-center gap-2 text-sm bg-panel-2 border border-line rounded-md px-3 py-2 cursor-pointer"><input type="checkbox" checked={enableSpeaking} onChange={(e) => setEnableSpeaking(e.target.checked)} /> Include speaking recording</label>
           )}
         </div>
+
+        {!isMock && tasks && (
+          <HomeworkTasksEditor groupId={homework.group_id} tasks={tasks} onChange={setTasks} />
+        )}
 
         {!isMock && (
           <div className="bg-panel-2 border border-line rounded-lg p-3 flex flex-col gap-2">

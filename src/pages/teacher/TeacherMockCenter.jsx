@@ -725,6 +725,10 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
   const contentFilterActive = Boolean(contentFilterQuery.trim()) || contentFilterStatus !== 'all'
 
   const [rlExams, setRlExams] = useState([])
+  // Homework bank (migration_84): the same Reading/Listening builder, but
+  // these tests are set as homework and never show up as mocks.
+  const [contentBank, setContentBank] = useState('mock') // 'mock' | 'homework'
+  const bankOf = (e) => e.bank || 'mock'
   const [rlSelectedExamId, setRlSelectedExamId] = useState(null)
   const [rlSections, setRlSections] = useState([])
   const [rlSelectedSectionId, setRlSelectedSectionId] = useState(null)
@@ -838,12 +842,12 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
   )
   const filteredRlExams = useMemo(
     () =>
-      filterAndSortExams(rlExams.filter((e) => e.module === contentTab), {
+      filterAndSortExams(rlExams.filter((e) => e.module === contentTab && bankOf(e) === contentBank), {
         query: contentFilterQuery,
         status: contentFilterStatus,
         sort: contentSort,
       }),
-    [rlExams, contentTab, contentFilterQuery, contentFilterStatus, contentSort]
+    [rlExams, contentTab, contentBank, contentFilterQuery, contentFilterStatus, contentSort]
   )
 
   /*
@@ -1441,7 +1445,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
    */
   const openListeningWizard = async (exam) => {
     setListeningWizardError('')
-    setListeningWizard({ mode: 'edit', exam, loading: true, sections: [], questionsBySection: {} })
+    setListeningWizard({ mode: 'edit', bank: exam.bank || 'mock', exam, loading: true, sections: [], questionsBySection: {} })
 
     const { data: sections, error: sectionsError } = await supabase
       .from('mock_sections')
@@ -1451,7 +1455,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
 
     if (sectionsError) {
       console.error('Failed to load listening sections:', sectionsError)
-      setListeningWizard({ mode: 'edit', exam, loading: false, sections: [], questionsBySection: {} })
+      setListeningWizard({ mode: 'edit', bank: exam.bank || 'mock', exam, loading: false, sections: [], questionsBySection: {} })
       return
     }
 
@@ -1473,7 +1477,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
       })
     }
 
-    setListeningWizard({ mode: 'edit', exam, loading: false, sections: sections || [], questionsBySection })
+    setListeningWizard({ mode: 'edit', bank: exam.bank || 'mock', exam, loading: false, sections: sections || [], questionsBySection })
   }
 
   const saveListeningWizard = async (values) => {
@@ -1507,6 +1511,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           .insert({
             title: values.title.trim(),
             module: 'listening',
+            bank: listeningWizard.bank === 'homework' ? 'homework' : 'mock',
             is_active: false,
             sort_order: Number(values.sortOrder) || 0,
             ...randomizePayload,
@@ -1644,6 +1649,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
         .insert({
           title: values.title.trim(),
           module: 'reading',
+          bank: readingWizard?.bank === 'homework' ? 'homework' : 'mock',
           is_active: false,
           sort_order: Number(values.sortOrder) || 0,
           // Randomize-from-bank was retired 2026-09-26 — Jasur pointed
@@ -2948,6 +2954,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
         .insert({
           title: `${exam.title} (copy)`,
           module: exam.module,
+          bank: exam.bank || 'mock',
           is_active: false,
           sort_order: exam.sort_order,
           randomize_questions: exam.randomize_questions,
@@ -5377,7 +5384,41 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                   readin/listening are not separate?") — each is its own
                   exam list now, and "+ Add exam" from inside one already
                   knows its module, no picker needed. */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { key: 'mock', title: 'Mock tests', text: 'Full tests for mock days', tone: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass', ring: 'ring-brass' },
+                  { key: 'homework', title: 'Homework bank', text: 'Passages and parts to set as homework', tone: 'bg-[color-mix(in_srgb,var(--color-saffron)_16%,var(--color-panel))] text-amber', ring: 'ring-saffron' },
+                ].map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={() => {
+                      setContentBank(b.key)
+                      setContentFilterQuery('')
+                      setContentFilterStatus('all')
+                      backToRlExams()
+                      if (b.key === 'homework' && (contentTab === 'writing' || contentTab === 'full-mocks')) setContentTab('reading')
+                    }}
+                    aria-pressed={contentBank === b.key}
+                    className={`focus-ring flex items-center gap-3 rounded-[20px] px-5 py-4 text-left transition ${b.tone} ${contentBank === b.key ? `ring-2 ${b.ring}` : 'opacity-70 hover:opacity-100'}`}
+                  >
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-panel" aria-hidden="true">
+                      {b.key === 'mock' ? (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="4" y="3" width="16" height="18" rx="3" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
+                      ) : (
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6a2 2 0 0 1 2-2h5v16H6a2 2 0 0 1-2-2zM20 6a2 2 0 0 0-2-2h-5v16h5a2 2 0 0 0 2-2z" /></svg>
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-brand text-[17px] font-semibold">{b.title}</span>
+                      <span className="block text-[13px] font-bold text-paper-dim">{b.text}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
               <div className="flex gap-2 rounded-xl border border-line bg-panel-2 p-1 w-fit">
+                {contentBank === 'mock' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -5391,6 +5432,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 >
                   Writing
                 </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -5419,6 +5461,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 >
                   Listening
                 </button>
+                {contentBank === 'mock' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -5432,6 +5475,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 >
                   Full Mocks
                 </button>
+                )}
               </div>
 
               {contentTab === 'writing' && (
@@ -5544,24 +5588,28 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                     <>
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm text-mist max-w-lg">
-                          {contentTab === 'reading'
-                            ? 'Full Reading mocks: 3 passages, built step by step.'
-                            : 'Full Listening mocks: 4 parts with audio, built step by step.'}
+                          {contentBank === 'homework'
+                            ? contentTab === 'reading'
+                              ? 'Homework tests: 1 to 3 passages. Set them as homework; they never show as mocks.'
+                              : 'Homework tests: 1 to 4 parts with audio. Set them as homework; they never show as mocks.'
+                            : contentTab === 'reading'
+                              ? 'Full Reading mocks: 3 passages, built step by step.'
+                              : 'Full Listening mocks: 4 parts with audio, built step by step.'}
                         </p>
                         <button
                           type="button"
                           onClick={() =>
                             contentTab === 'listening'
-                              ? setListeningWizard({ mode: 'create' })
-                              : setReadingWizard({ mode: 'create' })
+                              ? setListeningWizard({ mode: 'create', bank: contentBank })
+                              : setReadingWizard({ mode: 'create', bank: contentBank })
                           }
                           className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
                         >
-                          + Add {contentTab} exam
+                          {contentBank === 'homework' ? `+ Add ${contentTab} homework test` : `+ Add ${contentTab} exam`}
                         </button>
                       </div>
 
-                      {rlExams.filter((e) => e.module === contentTab).length > 0 && (
+                      {rlExams.filter((e) => e.module === contentTab && bankOf(e) === contentBank).length > 0 && (
                         <ContentFilterBar
                           query={contentFilterQuery}
                           onQueryChange={setContentFilterQuery}
@@ -5570,11 +5618,11 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                           sort={contentSort}
                           onSortChange={setContentSort}
                           resultCount={filteredRlExams.length}
-                          totalCount={rlExams.filter((e) => e.module === contentTab).length}
+                          totalCount={rlExams.filter((e) => e.module === contentTab && bankOf(e) === contentBank).length}
                         />
                       )}
 
-                      {rlExams.filter((e) => e.module === contentTab).length === 0 ? (
+                      {rlExams.filter((e) => e.module === contentTab && bankOf(e) === contentBank).length === 0 ? (
                         <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 text-center text-sm text-mist">
                           {contentTab === 'reading'
                             ? "No reading mocks yet — \"+ Add reading exam\" walks you through all 3 passages before it can be created."
@@ -5599,12 +5647,17 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                   <p className="truncate text-[15px] font-extrabold text-paper">{exam.title}</p>
                                   <p className="mt-1 flex flex-wrap gap-1.5 text-xs font-extrabold">
                                     <span className={`rounded-lg px-2 py-0.5 ${contentTab === 'listening' ? 'bg-listening-tint text-listening' : 'bg-reading-tint text-reading'}`}>{contentTab === 'listening' ? 'Listening' : 'Reading'}</span>
-                                    <span className={`rounded-lg px-2 py-0.5 ${exam.is_active ? 'bg-reading-tint text-reading' : 'bg-panel-2 text-mist'}`}>{exam.is_active ? 'Students can see it' : 'Hidden'}</span>
+                                    {bankOf(exam) === 'homework' ? (
+                                      <span className="rounded-lg bg-[color-mix(in_srgb,var(--color-saffron)_18%,var(--color-panel))] px-2 py-0.5 text-amber">Homework bank</span>
+                                    ) : (
+                                      <span className={`rounded-lg px-2 py-0.5 ${exam.is_active ? 'bg-reading-tint text-reading' : 'bg-panel-2 text-mist'}`}>{exam.is_active ? 'Students can see it' : 'Hidden'}</span>
+                                    )}
                                   </p>
                                 </div>
                               </div>
 
                               <div className="flex flex-wrap items-center gap-2">
+                                {bankOf(exam) === 'mock' && (
                                 <button
                                   type="button"
                                   onClick={() => toggleRlExamActive(exam)}
@@ -5617,6 +5670,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 >
                                   {exam.is_active ? 'Published' : 'Draft'}
                                 </button>
+                                )}
 
                                 {contentTab === 'listening' ? (
                                   <button
@@ -6198,8 +6252,8 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
       {fullMockModal && (
         <FullMockSetFormModal
           modal={fullMockModal}
-          listeningExams={rlExams.filter((e) => e.module === 'listening' && e.is_active)}
-          readingExams={rlExams.filter((e) => e.module === 'reading' && e.is_active)}
+          listeningExams={rlExams.filter((e) => e.module === 'listening' && e.is_active && bankOf(e) === 'mock')}
+          readingExams={rlExams.filter((e) => e.module === 'reading' && e.is_active && bankOf(e) === 'mock')}
           writingExams={writingExams.filter((e) => e.is_active)}
           saving={fullMockModalSaving}
           error={fullMockModalError}
@@ -8233,6 +8287,7 @@ function QuestionFormModal({ modal, saving, error, onCancel, onSave }) {
  */
 function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   const isEdit = wizard.mode === 'edit'
+  const isHomework = wizard.bank === 'homework'
   const exam = isEdit ? wizard.exam : null
 
   const [title, setTitle] = useState(exam?.title || '')
@@ -8281,7 +8336,9 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
   // Jasur: "space for pasting part 1... then part two but they should
   // not be separate... next part should be there." Edit mode shows all
   // 4 at once, since the content already exists.
-  const [revealedCount, setRevealedCount] = useState(isEdit ? 4 : 1)
+  const [revealedCount, setRevealedCount] = useState(
+    isEdit ? (isHomework ? Math.max(1, (wizard.sections || []).length) : 4) : 1
+  )
 
   const updatePart = (index, patch) => {
     setParts((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
@@ -8398,7 +8455,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
     onSave({
       title,
       sortOrder,
-      parts: parts.map((p) => ({
+      parts: (isHomework ? parts.slice(0, revealedCount) : parts).map((p) => ({
         sectionId: p.sectionId,
         title: p.title,
         audioFile: p.audioFile,
@@ -8488,7 +8545,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
           ))}
         </div>
 
-        {!isEdit && revealedCount < 4 && (
+        {(!isEdit || isHomework) && revealedCount < 4 && (
           <div className="mt-4 flex justify-end">
             <button
               type="button"
@@ -8496,7 +8553,7 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
               disabled={!isPartValid(parts[revealedCount - 1], revealedCount - 1)}
               className="focus-ring rounded-xl border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Next part →
+              {isHomework ? `+ Add part ${revealedCount + 1}` : 'Next part →'}
             </button>
           </div>
         )}
@@ -8514,14 +8571,14 @@ function ListeningExamWizard({ wizard, saving, error, onCancel, onSave }) {
           >
             Cancel
           </button>
-          {(isEdit || revealedCount === 4) && (
+          {(isEdit || isHomework || revealedCount === 4) && (
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
               className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
-              {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create listening exam'}
+              {saving ? 'Saving…' : isEdit ? 'Save changes' : isHomework ? `Save homework test (${revealedCount} part${revealedCount === 1 ? '' : 's'})` : 'Create listening exam'}
             </button>
           )}
         </div>
@@ -8767,7 +8824,8 @@ function ListeningPartEditor({ part, index, valid, onChange, onAddQuestion, onUp
  * the readingWizard state in the parent for why editing an existing
  * exam still goes through "Manage sections" instead.
  */
-function ReadingExamWizard({ saving, error, onCancel, onSave }) {
+function ReadingExamWizard({ wizard, saving, error, onCancel, onSave }) {
+  const isHomework = wizard?.bank === 'homework'
   const [title, setTitle] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
 
@@ -8888,7 +8946,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
     onSave({
       title,
       sortOrder,
-      passages: passages.map((p) => ({
+      passages: (isHomework ? passages.slice(0, revealedCount) : passages).map((p) => ({
         title: p.title,
         passageText: p.passageText,
         questions: p.questions.map((q) => ({
@@ -8965,7 +9023,7 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
               disabled={!isPassageValid(passages[revealedCount - 1])}
               className="focus-ring rounded-xl border border-brass/40 bg-brass/10 text-brass px-4 py-2 text-sm font-semibold hover:bg-brass/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Next passage →
+              {isHomework ? `+ Add passage ${revealedCount + 1}` : 'Next passage →'}
             </button>
           </div>
         )}
@@ -8983,14 +9041,14 @@ function ReadingExamWizard({ saving, error, onCancel, onSave }) {
           >
             Cancel
           </button>
-          {revealedCount === 3 && (
+          {(isHomework || revealedCount === 3) && (
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
               className="focus-ring rounded-xl bg-brass text-onbrass px-5 py-2 text-sm font-semibold shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50 disabled:hover:bg-brass"
             >
-              {saving ? 'Saving…' : 'Create reading exam'}
+              {saving ? 'Saving…' : isHomework ? `Save homework test (${revealedCount} passage${revealedCount === 1 ? '' : 's'})` : 'Create reading exam'}
             </button>
           )}
         </div>
