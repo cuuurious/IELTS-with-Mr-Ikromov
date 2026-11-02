@@ -18,7 +18,11 @@
 // stayed white on that browser even after the deploy finished. Bumping
 // the version wipes every v1 cache; cacheFirst below now refuses to
 // store or serve anything that isn't really JS/CSS/etc.
-const VERSION = 'v2'
+// v3 (2026-11-02): page loads are no longer handled here at all. On some
+// browsers our own fetch of the page kept failing and students got stuck
+// on the "Reconnecting…" screen while the site itself was fine. The
+// browser now loads pages directly, like any normal website.
+const VERSION = 'v3'
 const ASSET_CACHE = `assets-${VERSION}`
 const STATIC_CACHE = `static-${VERSION}`
 const SHELL_CACHE = `shell-${VERSION}`
@@ -115,10 +119,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  if (request.mode === 'navigate') {
-    event.respondWith(networkFirstPage(request))
-    return
-  }
+  // Page loads: left to the browser (v3).
+  if (request.mode === 'navigate') return
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(cacheFirst(request))
     return

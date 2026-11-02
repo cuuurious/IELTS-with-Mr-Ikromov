@@ -264,11 +264,24 @@ async function buildMessages(admin: any, runShift: number) {
 }
 
 // "Send now": texts for the students the teacher ticked.
-async function composeManual(admin: any, studentIds: string[]) {
+// Which text a manual send uses (2026-11-02):
+//   'missed' — the saved missed-homework text (as before);
+//   'thanks' — the saved thank-you text;
+//   'custom' — a one-off text the teacher typed for this send only.
+// Returns the template plus the parent_sms_log kind.
+function pickTemplate(settings: any, kind: string, customText: string) {
+  if (kind === 'thanks') return { template: settings?.thanks_template || '', logKind: 'thanks' }
+  if (kind === 'custom') return { template: String(customText || '').slice(0, 1000), logKind: 'custom' }
+  return { template: settings?.template || '', logKind: 'manual' }
+}
+
+async function composeManual(admin: any, studentIds: string[], kind = 'missed', customText = '') {
   const ids = [...new Set((studentIds || []).filter((x) => typeof x === 'string'))].slice(0, 500)
   const today = tashkentDay(0)
   const since = new Date(Date.now() - 14 * DAY).toISOString()
-  const { data: settings } = await admin.from('parent_sms_settings').select('template').eq('id', 1).maybeSingle()
+  const { data: rawSettings } = await admin.from('parent_sms_settings').select('*').eq('id', 1).maybeSingle()
+  const picked = pickTemplate(rawSettings, kind, customText)
+  const settings = { ...(rawSettings || {}), template: picked.template, logKind: picked.logKind }
   if (!ids.length) return { today, settings, messages: [], skipped: [] }
 
   const [members, phones] = await Promise.all([
@@ -382,13 +395,13 @@ Deno.serve(async (req) => {
     }
 
     if (mode === 'compose') {
-      const r = await composeManual(admin, body?.studentIds)
+      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text)
       return json({ date: r.today.date, messages: r.messages, skipped: r.skipped })
     }
 
     if (mode === 'send') {
-      const r = await composeManual(admin, body?.studentIds)
-      if (!r.settings?.template?.trim()) return json({ error: 'Write and save the message text first.' }, 400)
+      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text)
+      if (!r.settings?.template?.trim()) return json({ error: 'Write the message text first.' }, 400)
       if (!r.messages.length) return json({ error: 'None of the chosen students has a parent number.' }, 400)
       const token = await eskizToken()
       let sent = 0
@@ -397,7 +410,7 @@ Deno.serve(async (req) => {
       const sendOne = async (m: any) => {
         const { data: row } = await admin
           .from('parent_sms_log')
-          .insert({ student_id: m.studentId, phone: m.phone, message: m.text, homework_ids: m.homeworkIds, for_date: r.today.date, kind: 'manual' })
+          .insert({ student_id: m.studentId, phone: m.phone, message: m.text, homework_ids: r.settings.logKind === 'manual' ? m.homeworkIds : [], for_date: r.today.date, kind: r.settings.logKind })
           .select('id')
           .maybeSingle()
         const res = await eskizSend(token, m.phone, m.text)

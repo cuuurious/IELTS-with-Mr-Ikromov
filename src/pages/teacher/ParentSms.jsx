@@ -213,13 +213,60 @@ const WEEKDAYS = [
  * send. {homework}/{count} are that student's homework not handed in
  * with a deadline in the last 14 days; {date} is today.
  */
-function SendNow({ students, phones, groups, template, onSent }) {
+// Send now (2026-11-02): any time, three kinds of text —
+//   Missed homework (the saved daily text), Thank you (a saved text for
+//   parents of students who worked well) or a one-off message.
+// "Thank you" and one-off messages can also go to the student
+// themselves (site bell, push and Telegram).
+const KINDS = [
+  { key: 'missed', title: 'Missed homework', text: 'Your saved daily text', tone: 'bg-urgent-tint text-coral' },
+  { key: 'thanks', title: 'Thank you', text: 'Praise for good work', tone: 'bg-reading-tint text-reading' },
+  { key: 'custom', title: 'Your own message', text: 'Write it now, send once', tone: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass' },
+]
+const STUDENT_THANKS_DEFAULT = 'Thank you for your hard work, {student}! Keep it up. — Mr Ikromov'
+
+function SendNow({ students, phones, groups, template, thanksTemplate, onSaveThanks, onSent }) {
+  const [kind, setKind] = useState('missed')
   const [groupFilter, setGroupFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [picked, setPicked] = useState(() => new Set())
   const [review, setReview] = useState(null) // null | {loading} | {error} | {messages, skipped}
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState('')
+  const [thanksDraft, setThanksDraft] = useState(thanksTemplate || '')
+  const [thanksSaved, setThanksSaved] = useState('')
+  const [customText, setCustomText] = useState('')
+  const [alsoStudent, setAlsoStudent] = useState(true)
+  const [studentText, setStudentText] = useState(STUDENT_THANKS_DEFAULT)
+  const [stars, setStars] = useState(null) // Set of students with every homework on time (14 days)
+
+  useEffect(() => setThanksDraft(thanksTemplate || ''), [thanksTemplate])
+
+  // Who handed in every homework on time in the last 14 days — one tap
+  // to pick them for a thank-you.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const since = new Date(Date.now() - 14 * 86400000).toISOString()
+      const { data: hws } = await supabase.from('homeworks').select('id, group_id, due_date').gte('due_date', since).lt('due_date', new Date().toISOString())
+      if (cancelled || !hws?.length) return setStars(new Set())
+      const { data: subs } = await supabase.from('submissions').select('homework_id, student_id, submitted_at, status').in('homework_id', hws.map((h) => h.id)).eq('status', 'done')
+      if (cancelled) return
+      const due = Object.fromEntries(hws.map((h) => [h.id, h]))
+      const onTime = new Set((subs || []).filter((x) => x.submitted_at && x.submitted_at <= due[x.homework_id]?.due_date).map((x) => `${x.homework_id}:${x.student_id}`))
+      const out = new Set()
+      for (const st of students) {
+        const mine = hws.filter((h) => st.groupIds.includes(h.group_id))
+        if (mine.length && mine.every((h) => onTime.has(`${h.id}:${st.id}`))) out.add(st.id)
+      }
+      setStars(out)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [students])
+
+  const activeTemplate = kind === 'thanks' ? (thanksTemplate || '').trim() : kind === 'custom' ? customText.trim() : template
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -230,13 +277,21 @@ function SendNow({ students, phones, groups, template, onSent }) {
     )
   }, [students, groupFilter, search])
 
-  const pickable = visible.filter((s) => phones[s.id])
+  // Thank-you / own messages can go to students without a parent number
+  // (in the site only); missed-homework SMS needs the number.
+  const studentToo = kind !== 'missed' && alsoStudent
+  const canPick = (s) => Boolean(phones[s.id]) || studentToo
+  const pickable = visible.filter(canPick)
   const allPicked = pickable.length > 0 && pickable.every((s) => picked.has(s.id))
   const pickedWithPhone = [...picked].filter((id) => phones[id])
+  const pickedAll = [...picked].filter((id) => students.some((s) => s.id === id && canPick(s)))
 
-  const toggle = (id) => {
+  const reset = () => {
     setReview(null)
     setResult('')
+  }
+  const toggle = (id) => {
+    reset()
     setPicked((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -245,59 +300,142 @@ function SendNow({ students, phones, groups, template, onSent }) {
     })
   }
   const toggleAll = () => {
-    setReview(null)
-    setResult('')
+    reset()
     setPicked((prev) => {
       const next = new Set(prev)
       for (const s of pickable) allPicked ? next.delete(s.id) : next.add(s.id)
       return next
     })
   }
+  const pickStars = () => {
+    reset()
+    setPicked(new Set([...(stars || [])].filter((id) => visible.some((s) => s.id === id))))
+  }
 
   const openReview = async () => {
-    setResult('')
+    reset()
+    if (!pickedWithPhone.length) {
+      setReview({ messages: [], skipped: [] })
+      return
+    }
     setReview({ loading: true })
-    const { data, error } = await supabase.functions.invoke('parent-sms', { body: { mode: 'compose', studentIds: pickedWithPhone } })
+    const { data, error } = await supabase.functions.invoke('parent-sms', {
+      body: { mode: 'compose', kind, text: customText, studentIds: pickedWithPhone },
+    })
     if (error || data?.error) return setReview({ error: await fnErrorMessage(error, data) })
     setReview(data)
   }
 
+  const nameOf = (id) => {
+    const s = students.find((x) => x.id === id)
+    return (s?.full_name || s?.username || '').trim()
+  }
+  const groupOf = (id) => students.find((x) => x.id === id)?.groups?.join(', ') || ''
+
   const send = async () => {
     setSending(true)
-    const { data, error } = await supabase.functions.invoke('parent-sms', { body: { mode: 'send', studentIds: review.messages.map((m) => m.studentId) } })
-    setSending(false)
-    if (error || data?.error) {
-      setResult(await fnErrorMessage(error, data))
-    } else {
-      setResult(
-        data.failed
-          ? `Sent ${data.sent}, ${data.failed} failed${data.errors?.length ? `: ${data.errors.join('; ')}` : ''}`
-          : `Sent to ${data.sent} ${data.sent === 1 ? 'parent' : 'parents'}.`
-      )
-      setPicked(new Set())
+    const parts = []
+    if (review.messages.length) {
+      const { data, error } = await supabase.functions.invoke('parent-sms', {
+        body: { mode: 'send', kind, text: customText, studentIds: review.messages.map((m) => m.studentId) },
+      })
+      if (error || data?.error) parts.push(await fnErrorMessage(error, data))
+      else parts.push(data.failed ? `SMS: sent ${data.sent}, ${data.failed} failed${data.errors?.length ? ` (${data.errors.join('; ')})` : ''}` : `SMS sent to ${data.sent} ${data.sent === 1 ? 'parent' : 'parents'}`)
     }
+    if (studentToo && pickedAll.length) {
+      const body = (kind === 'thanks' ? studentText : customText).trim()
+      const rows = pickedAll.map((id) => ({
+        user_id: id,
+        type: kind === 'thanks' ? 'thanks' : 'teacher_message',
+        title: kind === 'thanks' ? 'Mr Ikromov says thank you' : 'Message from Mr Ikromov',
+        body: body.replaceAll('{student}', nameOf(id).split(' ')[0] || nameOf(id)).replaceAll('{group}', groupOf(id)),
+        link: '/app',
+      }))
+      const { error } = await supabase.from('notifications').insert(rows)
+      if (!error) {
+        // Phone notifications, a few at a time (each text has the student's name).
+        for (let i = 0; i < rows.length; i += 5) {
+          await Promise.all(
+            rows.slice(i, i + 5).map((r) =>
+              supabase.functions.invoke('send-push', { body: { userIds: [r.user_id], title: r.title, body: r.body, link: r.link } }).catch(() => {})
+            )
+          )
+        }
+      }
+      parts.push(error ? `Students: ${error.message}` : `${rows.length} ${rows.length === 1 ? 'student' : 'students'} told in the site`)
+    }
+    setSending(false)
+    setResult(parts.join(' · '))
+    setPicked(new Set())
     setReview(null)
     onSent()
   }
 
+  const saveThanks = async () => {
+    setThanksSaved('')
+    const ok = await onSaveThanks(thanksDraft.trim())
+    setThanksSaved(ok ? 'Saved.' : 'Could not save.')
+  }
+
   const totalParts = review?.messages ? review.messages.reduce((n, m) => n + smsParts(m.text).parts, 0) : 0
-  const sentOk = result.startsWith('Sent to')
+  const ok = result && !/fail|could not|error|sign in|only/i.test(result)
+  const ready = kind === 'custom' ? customText.trim().length > 0 : kind === 'thanks' ? (thanksTemplate || '').trim().length > 0 || studentToo : Boolean(template)
 
   return (
     <section className={`${card} lg:order-3 lg:col-span-12 flex flex-col gap-4 p-5 sm:p-6`}>
       <div>
         <h2 className={sectionTitle}>Send now</h2>
-        <p className="mt-1 text-[14px] text-paper-dim">
-          Tick the students whose parents should get your message right now. You’ll see every text and the cost before anything is sent.
-        </p>
+        <p className="mt-1 text-[14px] text-paper-dim">Any time. Pick what to send, tick the students, check every text and the cost, then send.</p>
       </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {KINDS.map((k) => (
+          <button
+            key={k.key}
+            type="button"
+            onClick={() => {
+              setKind(k.key)
+              reset()
+            }}
+            aria-pressed={kind === k.key}
+            className={`focus-ring flex flex-col items-start rounded-[16px] px-4 py-3 text-left transition ${k.tone} ${kind === k.key ? 'ring-2 ring-current' : 'opacity-70 hover:opacity-100'}`}
+          >
+            <span className="font-brand text-[16px] font-semibold">{k.title}</span>
+            <span className="text-[13px] font-bold text-paper-dim">{k.text}</span>
+          </button>
+        ))}
+      </div>
+
+      {kind === 'thanks' && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="flex flex-col gap-2 rounded-2xl bg-reading-tint/60 p-4">
+            <p className="text-[13px] font-extrabold text-reading">SMS to the parent (saved for next time)</p>
+            <textarea value={thanksDraft} onChange={(e) => setThanksDraft(e.target.value)} rows={3} className="w-full rounded-xl border border-line bg-panel px-3 py-2 text-[14px] text-paper outline-none focus:border-brass" />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12px] text-mist">{'{student}'} and {'{group}'} are filled in · {smsParts(fill(thanksDraft)).parts} SMS part(s)</span>
+              <button type="button" onClick={saveThanks} disabled={thanksDraft.trim() === (thanksTemplate || '').trim()} className="focus-ring ml-auto h-9 rounded-xl bg-reading px-3 text-[13px] font-bold text-white disabled:opacity-40">
+                Save text
+              </button>
+              {thanksSaved && <span className="text-[12px] font-bold text-reading">{thanksSaved}</span>}
+            </div>
+          </div>
+          <StudentToo on={alsoStudent} onChange={setAlsoStudent} text={studentText} onText={setStudentText} />
+        </div>
+      )}
+
+      {kind === 'custom' && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="flex flex-col gap-2 rounded-2xl bg-panel-2 p-4">
+            <p className="text-[13px] font-extrabold text-brass">Your message (sent once, not saved)</p>
+            <textarea value={customText} onChange={(e) => { setCustomText(e.target.value); reset() }} rows={3} placeholder="E.g. Tomorrow's lesson starts at 16:00 instead of 15:00." className="w-full rounded-xl border border-line bg-panel px-3 py-2 text-[14px] text-paper outline-none focus:border-brass" />
+            <span className="text-[12px] text-mist">{'{student}'} and {'{group}'} are filled in · {customText ? smsParts(fill(customText)).parts : 0} SMS part(s) per parent</span>
+          </div>
+          <StudentToo on={alsoStudent} onChange={setAlsoStudent} sameText />
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={groupFilter}
-          onChange={(e) => setGroupFilter(e.target.value)}
-          aria-label="Group"
-          className="h-10 rounded-xl border border-line bg-panel-2 px-3 text-[14px] text-paper"
-        >
+        <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} aria-label="Group" className="h-10 rounded-xl border border-line bg-panel-2 px-3 text-[14px] text-paper">
           <option value="all">All groups</option>
           {groups.map((g) => (
             <option key={g.id} value={g.id}>
@@ -305,23 +443,17 @@ function SendNow({ students, phones, groups, template, onSent }) {
             </option>
           ))}
         </select>
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search a student…"
-          className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-panel-2 px-3 text-[14px] text-paper outline-none focus:border-brass sm:max-w-[280px]"
-        />
-        <button
-          type="button"
-          onClick={toggleAll}
-          disabled={!pickable.length}
-          className="focus-ring h-10 rounded-xl border border-line px-3 text-[14px] font-semibold text-paper hover:border-brass disabled:opacity-50"
-        >
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search a student…" className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-panel-2 px-3 text-[14px] text-paper outline-none focus:border-brass sm:max-w-[280px]" />
+        <button type="button" onClick={toggleAll} disabled={!pickable.length} className="focus-ring h-10 rounded-xl border border-line px-3 text-[14px] font-semibold text-paper hover:border-brass disabled:opacity-50">
           {allPicked ? 'Clear these' : groupFilter === 'all' ? 'Select all' : 'Select whole group'}
         </button>
+        {kind === 'thanks' && stars && stars.size > 0 && (
+          <button type="button" onClick={pickStars} className="focus-ring h-10 rounded-xl bg-reading-tint px-3 text-[14px] font-bold text-reading">
+            ★ Everyone on time (14 days) · {[...stars].filter((id) => visible.some((s) => s.id === id)).length}
+          </button>
+        )}
         {picked.size > 0 && (
-          <button type="button" onClick={() => { setPicked(new Set()); setReview(null) }} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
+          <button type="button" onClick={() => { setPicked(new Set()); reset() }} className="focus-ring text-[13px] font-medium text-paper-dim hover:text-paper">
             Clear all ({picked.size})
           </button>
         )}
@@ -331,13 +463,17 @@ function SendNow({ students, phones, groups, template, onSent }) {
         <ul className="grid max-h-[360px] grid-cols-1 gap-x-6 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((s) => {
             const has = Boolean(phones[s.id])
+            const can = canPick(s)
             return (
               <li key={s.id} className="border-b border-line">
-                <label className={`flex items-center gap-3 py-2.5 ${has ? 'cursor-pointer' : 'opacity-55'}`}>
-                  <input type="checkbox" className="h-4 w-4 shrink-0" checked={picked.has(s.id)} disabled={!has} onChange={() => toggle(s.id)} />
+                <label className={`flex items-center gap-3 py-2.5 ${can ? 'cursor-pointer' : 'opacity-55'}`}>
+                  <input type="checkbox" className="h-4 w-4 shrink-0" checked={picked.has(s.id)} disabled={!can} onChange={() => toggle(s.id)} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-semibold text-paper">{s.full_name || s.username}</span>
-                    <span className="block truncate text-[12px] text-mist">{has ? s.groups.join(', ') : 'No parent number'}</span>
+                    <span className="flex items-center gap-1.5 truncate text-[14px] font-semibold text-paper">
+                      {s.full_name || s.username}
+                      {stars?.has(s.id) && <span className="text-[12px] text-reading" title="Every homework on time in the last 14 days">★</span>}
+                    </span>
+                    <span className="block truncate text-[12px] text-mist">{has ? s.groups.join(', ') : studentToo ? 'No parent number · student only' : 'No parent number'}</span>
                   </span>
                 </label>
               </li>
@@ -350,64 +486,68 @@ function SendNow({ students, phones, groups, template, onSent }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-panel-2 px-4 py-3">
         <p className="text-[14px] text-paper">
-          <strong className="font-semibold">{pickedWithPhone.length}</strong> {pickedWithPhone.length === 1 ? 'parent' : 'parents'} selected
-          {pickedWithPhone.length > 0 && template && (
-            <span className="text-mist">
-              {' '}· about {(pickedWithPhone.length * Math.max(1, smsParts(fill(template)).parts) * PRICE_PER_SMS).toLocaleString('en-US')} so’m
-            </span>
+          <strong className="font-semibold">{pickedWithPhone.length}</strong> {pickedWithPhone.length === 1 ? 'parent' : 'parents'}
+          {studentToo && <> · <strong className="font-semibold">{pickedAll.length}</strong> {pickedAll.length === 1 ? 'student' : 'students'} in the site</>}
+          {pickedWithPhone.length > 0 && activeTemplate && (
+            <span className="text-mist"> · about {(pickedWithPhone.length * Math.max(1, smsParts(fill(activeTemplate)).parts) * PRICE_PER_SMS).toLocaleString('en-US')} so’m</span>
           )}
         </p>
-        <button
-          type="button"
-          onClick={openReview}
-          disabled={!pickedWithPhone.length || !template || review?.loading}
-          className="focus-ring h-10 rounded-xl bg-brass px-5 text-[14px] font-bold text-onbrass hover:bg-brass-dim disabled:opacity-50"
-        >
+        <button type="button" onClick={openReview} disabled={!pickedAll.length || !ready || review?.loading} className="focus-ring h-10 rounded-xl bg-brass px-5 text-[14px] font-bold text-onbrass hover:bg-brass-dim disabled:opacity-50">
           {review?.loading ? 'Preparing…' : 'Review and send'}
         </button>
       </div>
-      {!template && <p className="text-[13px] text-urgent">Save your message above first.</p>}
-      {result && <p className={`text-[14px] font-medium ${sentOk ? 'text-reading' : 'text-urgent'}`}>{result}</p>}
+      {kind === 'missed' && !template && <p className="text-[13px] text-urgent">Save your missed-homework message above first.</p>}
+      {result && <p className={`text-[14px] font-medium ${ok ? 'text-reading' : 'text-urgent'}`}>{result}</p>}
 
       {review?.error && <p className="text-[14px] text-urgent">{review.error}</p>}
       {review?.messages && (
         <div className="flex flex-col gap-3 rounded-2xl border-2 border-brass p-4">
           <p className="text-[15px] font-bold text-paper">
-            {review.messages.length} {review.messages.length === 1 ? 'SMS' : 'SMS'} to send · {totalParts} SMS {totalParts === 1 ? 'part' : 'parts'} · about{' '}
-            {(totalParts * PRICE_PER_SMS).toLocaleString('en-US')} so’m
+            {review.messages.length} SMS · {totalParts} {totalParts === 1 ? 'part' : 'parts'} · about {(totalParts * PRICE_PER_SMS).toLocaleString('en-US')} so’m
+            {studentToo && pickedAll.length > 0 && <span className="font-semibold text-reading"> · plus {pickedAll.length} in-site {pickedAll.length === 1 ? 'message' : 'messages'} (free)</span>}
           </p>
-          <ul className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
-            {review.messages.map((m) => (
-              <li key={m.studentId} className="rounded-xl bg-panel-2 px-3.5 py-2.5">
-                <p className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-[14px] font-semibold text-paper">{m.student}</span>
-                  <span className="text-[12px] tabular-nums text-mist">
-                    {prettyPhone(m.phone)} · {smsParts(m.text).parts} {smsParts(m.text).parts === 1 ? 'part' : 'parts'}
-                  </span>
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-[14px] text-paper-dim">{m.text}</p>
-                {!m.homework.length && /\{homework\}|\{count\}/.test(template) && (
-                  <p className="mt-1 text-[12px] text-urgent">Has no missed homework in the last 14 days, so the homework part is empty.</p>
-                )}
-              </li>
-            ))}
-          </ul>
+          {review.messages.length > 0 && (
+            <ul className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
+              {review.messages.map((m) => (
+                <li key={m.studentId} className="rounded-xl bg-panel-2 px-3.5 py-2.5">
+                  <p className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-[14px] font-semibold text-paper">{m.student}</span>
+                    <span className="text-[12px] tabular-nums text-mist">{prettyPhone(m.phone)} · {smsParts(m.text).parts} {smsParts(m.text).parts === 1 ? 'part' : 'parts'}</span>
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-[14px] text-paper-dim">{m.text}</p>
+                  {kind === 'missed' && !m.homework.length && /\{homework\}|\{count\}/.test(template) && (
+                    <p className="mt-1 text-[12px] text-urgent">Has no missed homework in the last 14 days, so the homework part is empty.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="flex flex-wrap justify-end gap-2">
             <button type="button" onClick={() => setReview(null)} disabled={sending} className="focus-ring h-10 rounded-xl border border-line px-4 text-[14px] font-semibold text-paper hover:border-brass">
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={send}
-              disabled={sending || !review.messages.length}
-              className="focus-ring h-10 rounded-xl bg-[#e6a33a] px-5 text-[14px] font-bold text-[#17213a] hover:brightness-105 disabled:opacity-60"
-            >
-              {sending ? 'Sending…' : `Send ${review.messages.length} SMS`}
+            <button type="button" onClick={send} disabled={sending || (!review.messages.length && !(studentToo && pickedAll.length))} className="focus-ring h-10 rounded-xl bg-[#e6a33a] px-5 text-[14px] font-bold text-[#17213a] hover:brightness-105 disabled:opacity-60">
+              {sending ? 'Sending…' : 'Send'}
             </button>
           </div>
         </div>
       )}
     </section>
+  )
+}
+
+function StudentToo({ on, onChange, text, onText, sameText = false }) {
+  return (
+    <div className={`flex flex-col gap-2 rounded-2xl p-4 ${on ? 'bg-[color-mix(in_srgb,var(--color-saffron)_14%,var(--color-panel))]' : 'bg-panel-2'}`}>
+      <label className="flex cursor-pointer items-center gap-2 text-[13px] font-extrabold text-paper">
+        <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />
+        Also tell the student (site, phone notification and Telegram — free)
+      </label>
+      {on && !sameText && (
+        <textarea value={text} onChange={(e) => onText(e.target.value)} rows={3} className="w-full rounded-xl border border-line bg-panel px-3 py-2 text-[14px] text-paper outline-none focus:border-brass" />
+      )}
+      {on && sameText && <p className="text-[13px] text-paper-dim">The student gets the same message.</p>}
+    </div>
   )
 }
 
@@ -432,7 +572,7 @@ export default function ParentSms() {
   const load = async () => {
     setLoadError('')
     const [s, g, m, p, l] = await Promise.all([
-      supabase.from('parent_sms_settings').select('enabled, template, send_days, audience, updated_at').eq('id', 1).maybeSingle(),
+      supabase.from('parent_sms_settings').select('*').eq('id', 1).maybeSingle(),
       supabase.from('groups').select('id, name, parent_sms_enabled').order('created_at'),
       supabase
         .from('group_members')
@@ -750,7 +890,19 @@ export default function ParentSms() {
       </section>
 
       {/* SEND NOW */}
-      <SendNow students={students} phones={phones} groups={groups} template={(settings.template || '').trim()} onSent={reloadLog} />
+      <SendNow
+        students={students}
+        phones={phones}
+        groups={groups}
+        template={(settings.template || '').trim()}
+        thanksTemplate={settings.thanks_template || ''}
+        onSaveThanks={async (text) => {
+          const { error } = await supabase.from('parent_sms_settings').update({ thanks_template: text }).eq('id', 1)
+          if (!error) setSettings((prev) => ({ ...prev, thanks_template: text }))
+          return !error
+        }}
+        onSent={reloadLog}
+      />
 
       {/* WHO GETS ONE */}
       <section className={`${card} lg:order-3 lg:col-span-12 flex flex-col gap-4 p-5 sm:p-6`}>
@@ -922,7 +1074,7 @@ export default function ParentSms() {
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[14px] font-semibold text-paper">
-                    {r.kind === 'test' ? 'Test SMS' : nameOf[r.student_id] || 'Student'}{r.kind === 'manual' && <span className="ml-1.5 rounded-md bg-panel-2 px-1.5 py-0.5 text-[11px] font-medium text-mist">Sent by hand</span>} · <span className="font-normal tabular-nums text-mist">{prettyPhone(r.phone)}</span>
+                    {r.kind === 'test' ? 'Test SMS' : nameOf[r.student_id] || 'Student'}{r.kind === 'manual' && <span className="ml-1.5 rounded-md bg-panel-2 px-1.5 py-0.5 text-[11px] font-medium text-mist">Sent by hand</span>}{r.kind === 'thanks' && <span className="ml-1.5 rounded-md bg-reading-tint px-1.5 py-0.5 text-[11px] font-bold text-reading">Thank you</span>}{r.kind === 'custom' && <span className="ml-1.5 rounded-md bg-panel-2 px-1.5 py-0.5 text-[11px] font-medium text-brass">Own message</span>} · <span className="font-normal tabular-nums text-mist">{prettyPhone(r.phone)}</span>
                   </span>
                   <span className="block truncate text-[13px] text-paper-dim" title={r.message}>
                     {r.message}
