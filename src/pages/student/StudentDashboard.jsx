@@ -31,6 +31,18 @@ const StudentWordlists = lazyWithReload(() => import('./StudentWordlists'))
 const PrivateChats = lazyWithReload(() => import('../../components/PrivateChats'))
 const MockTestCenter = lazyWithReload(() => import('../../components/MockTestCenter'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
+const CoursesPage = lazyWithReload(() => import('./CoursesPage'))
+
+// Coins & courses nav icon (2026-11-02).
+function IconCoins({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="9" r="6" />
+      <path d="M15.5 9.4A6 6 0 1 1 9.4 15.5" />
+      <path d="M7.5 7h3M9 7v4.5M7.5 11.5h3" />
+    </svg>
+  )
+}
 
 // One-line description shown under the top bar's own title — see the
 // "PAGE INTRO" comment below for why this no longer repeats the title
@@ -651,6 +663,7 @@ const messageId = linkParts[2] || null
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'group-chat', label: 'Group chat', icon: IconGroupChat },
           { key: 'chats', label: 'Chats', icon: IconChat },
+          { key: 'courses', label: 'Coins & courses', icon: IconCoins },
         ],
       },
       {
@@ -797,7 +810,7 @@ const messageId = linkParts[2] || null
             (which the top bar doesn't have room for) plus the
             homework tab's group/task-count readout.
            ====================================================== */}
-        {PAGE_SUBTITLES[tab] && !['homework', 'leaderboard', 'groupchat', 'chats', 'chat', 'group-chat'].includes(tab) && (
+        {PAGE_SUBTITLES[tab] && !['homework', 'leaderboard', 'groupchat', 'chats', 'chat', 'group-chat', 'courses'].includes(tab) && (
           <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
 
             <div className="relative px-5 py-4 sm:px-7 sm:py-5">
@@ -1046,6 +1059,10 @@ const messageId = linkParts[2] || null
             HowToUseGuide.jsx. Also downloadable as a PDF from
             inside that component (public/how-to-use-ielts-portal.pdf).
            ====================================================== */}
+        {tab === 'courses' && (
+          <CoursesPage studentId={profile.id} onOpenMockCenter={() => setMockCenterOpen(true)} />
+        )}
+
         {tab === 'howto' && <HowToUseGuide />}
       </div>
       </Suspense>

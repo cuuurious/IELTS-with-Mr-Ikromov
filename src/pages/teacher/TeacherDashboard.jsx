@@ -34,6 +34,18 @@ const MaterialsLibrary = lazyWithReload(() => import('./MaterialsLibrary'))
 const ClientErrors = lazyWithReload(() => import('./ClientErrors'))
 const ParentSms = lazyWithReload(() => import('./ParentSms'))
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
+const CoinsAdmin = lazyWithReload(() => import('./CoinsAdmin'))
+
+// Coins & courses nav icon (2026-11-02).
+function IconCoins({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="9" r="6" />
+      <path d="M15.5 9.4A6 6 0 1 1 9.4 15.5" />
+      <path d="M7.5 7h3M9 7v4.5M7.5 11.5h3" />
+    </svg>
+  )
+}
 
 export default function TeacherDashboard() {
   const { profile } = useAuth()
@@ -246,6 +258,7 @@ export default function TeacherDashboard() {
         // from Telegram to the bot (2026-09-30).
         { key: 'materials', label: 'Materials Library', icon: IconFolder, subtitle: 'Every teaching file in one place: upload here or forward from Telegram.' },
         { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard, subtitle: 'Ranked by homework handed in, then by completion rate.' },
+        { key: 'coins', label: 'Coins & Courses', icon: IconCoins, subtitle: 'Video courses students unlock with coins, and what coins are worth.' },
       ],
     },
     {
@@ -432,6 +445,8 @@ export default function TeacherDashboard() {
       {tab === 'errors' && profile.is_admin && <ClientErrors />}
 
       {tab === 'parent-sms' && <ParentSms />}
+
+      {tab === 'coins' && <CoinsAdmin />}
 
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>

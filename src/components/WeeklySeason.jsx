@@ -22,10 +22,24 @@ export default function WeeklySeason({ groupId, meId }) {
   const [rows, setRows] = useState(null)
   const [champion, setChampion] = useState(null)
   const [openRules, setOpenRules] = useState(false)
+  const [race, setRace] = useState([])
+  const [prize, setPrize] = useState(20)
 
   useEffect(() => {
     if (!groupId || groupId === 'all') return undefined
     let cancelled = false
+    // Group race + coins (migration_86): pays last week's winners once,
+    // then shows this week's group standings. Quietly skipped if the
+    // migration isn't there yet.
+    supabase
+      .rpc('claim_weekly_prizes')
+      .then(() => Promise.all([supabase.rpc('group_race', { p_week_start: weekStart() }), supabase.from('coin_settings').select('top_group_bonus').eq('id', 1).maybeSingle()]))
+      .then(([r, s]) => {
+        if (cancelled || r.error) return
+        setRace([...(r.data || [])].sort((a, b) => b.average - a.average))
+        if (s.data) setPrize(s.data.top_group_bonus)
+      })
+      .catch(() => {})
     Promise.all([
       supabase.rpc('weekly_leaderboard', { p_group_id: groupId, p_week_start: weekStart() }),
       supabase.rpc('weekly_leaderboard', { p_group_id: groupId, p_week_start: weekStart(new Date(), -1) }),
@@ -120,6 +134,34 @@ export default function WeeklySeason({ groupId, meId }) {
             <span className="text-sm font-extrabold text-brass">{r.points}</span>
           </div>
         ))}
+        {race.length > 1 && (
+          <div className="mt-1 rounded-[16px] border border-line p-3">
+            <p className="mb-2 flex items-center justify-between gap-2 text-[13px] font-extrabold text-paper">
+              <span>Group race</span>
+              <span className="flex items-center gap-1 text-amber">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#e6a33a" /><path d="M9.2 9.2h5.6M12 9.2v6.2M9.6 15.4h4.8" stroke="#7a4a00" strokeWidth="1.9" strokeLinecap="round" /></svg>
+                +{prize} each for the winners
+              </span>
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {race.slice(0, 4).map((g, i) => {
+                const top = race[0]?.average || 1
+                const mine = g.group_id === groupId
+                return (
+                  <div key={g.group_id} className="flex items-center gap-2">
+                    <span className={`w-5 text-center text-[12px] font-extrabold ${i === 0 ? 'text-amber' : 'text-mist'}`}>{i + 1}</span>
+                    <span className={`w-20 truncate text-[13px] font-extrabold ${mine ? 'text-brass' : 'text-paper'}`}>{g.name}</span>
+                    <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-panel-2">
+                      <span className={`block h-full rounded-full ${mine ? 'bg-brass' : i === 0 ? 'bg-saffron' : 'bg-mist/40'}`} style={{ width: `${Math.max(4, (g.average / top) * 100)}%` }} />
+                    </span>
+                    <span className="w-10 text-right text-[12px] font-extrabold tabular-nums text-paper-dim">{Number(g.average).toFixed(0)}</span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="mt-2 text-[11px] font-bold text-mist">Average points per student, so small groups can win too.</p>
+          </div>
+        )}
         {champion && (
           <div className="mt-1 flex items-center gap-3 rounded-[16px] bg-[color-mix(in_srgb,var(--color-saffron)_16%,var(--color-panel))] px-3 py-2.5">
             <svg className="h-6 w-6 shrink-0 text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" /></svg>

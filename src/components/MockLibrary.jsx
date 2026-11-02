@@ -58,6 +58,18 @@ export default function MockLibrary({
   onContinue,
 }) {
   const [details, setDetails] = useState(null)
+  // Coins (2026-11-02): a request costs coins, held until approved.
+  const [coins, setCoins] = useState(null) // { balance, price }
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([supabase.rpc('my_coins'), supabase.from('coin_settings').select('mock_slot_price').eq('id', 1).maybeSingle()]).then(([b, p]) => {
+      if (cancelled || b.error || p.error || !p.data) return
+      setCoins({ balance: b.data ?? 0, price: p.data.mock_slot_price ?? 0 })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [requestingSetId])
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
 
@@ -203,6 +215,13 @@ export default function MockLibrary({
         ))}
       </div>
 
+      {coins && coins.price > 0 && (
+        <p className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span className="font-semibold">A request costs {coins.price} coins</span>
+          <span>· you have {coins.balance}. Coins come back if it isn't approved.</span>
+        </p>
+      )}
+
       {requestError && <p className="mt-3 text-sm text-red-600">{requestError}</p>}
 
       {loading || !details ? (
@@ -326,7 +345,8 @@ export default function MockLibrary({
                       <button
                         type="button"
                         onClick={() => onRequest(set.id)}
-                        disabled={requestingSetId === set.id}
+                        disabled={requestingSetId === set.id || (coins && coins.price > 0 && coins.balance < coins.price)}
+                        title={coins && coins.price > 0 && coins.balance < coins.price ? `You need ${coins.price - coins.balance} more coins` : ''}
                         className="rounded-xl border border-slate-900 px-4 py-2 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {requestingSetId === set.id
@@ -336,6 +356,7 @@ export default function MockLibrary({
                             : finished
                               ? 'Request a retake'
                               : 'Request access'}
+                        {coins && coins.price > 0 && requestingSetId !== set.id ? ` · ${coins.price} coins` : ''}
                       </button>
                     </>
                   )}
