@@ -17,7 +17,15 @@ import { TASK_KINDS, taskTitle } from '../../lib/homeworkTasks'
  *
  * Props: groupId, tasks ([{ id?, kind, exam_id, wordlist_id, html_url, title, shadowing_clip_id }]), onChange(tasks)
  */
-const ADDABLE = ['reading', 'listening', 'wordlist', 'html', 'shadowing']
+// Tiles (2026-11-05): the Practice Bank by skill comes first, since
+// that is where the built-in pages live; word lists and shadowing next.
+// A full test from the Mock Center homework bank and an HTML file from
+// the Materials Library are small links underneath.
+const PAGE_TILES = [
+  { skill: 'reading', label: 'Reading', unit: 'pages', tint: 'bg-reading-tint', text: 'text-reading' },
+  { skill: 'listening', label: 'Listening', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
+  { skill: 'writing', label: 'Writing', unit: 'tasks', tint: 'bg-writing-tint', text: 'text-writing' },
+]
 
 export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   const [adding, setAdding] = useState(null) // kind
@@ -26,6 +34,8 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   const [clips, setClips] = useState([])
   const [pickerOpen, setPickerOpen] = useState(false)
   const [bankOpen, setBankOpen] = useState(false)
+  const [bankSkill, setBankSkill] = useState('reading')
+  const [pageCounts, setPageCounts] = useState({})
   const [newClip, setNewClip] = useState(null) // { title, transcript, file }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -40,8 +50,15 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
         ? supabase.from('wordlists').select('id, title, created_at').eq('group_id', groupId).order('created_at', { ascending: false })
         : supabase.from('wordlists').select('id, title, created_at').order('created_at', { ascending: false }),
       supabase.from('shadowing_clips').select('id, title, created_at').order('created_at', { ascending: false }),
-    ]).then(([b, w, c]) => {
+      supabase.from('materials').select('skill').not('collection', 'is', null),
+    ]).then(([b, w, c, m]) => {
       if (cancelled) return
+      const counts = {}
+      ;(m.data || []).forEach((r) => {
+        const k = r.skill || 'reading'
+        counts[k] = (counts[k] || 0) + 1
+      })
+      setPageCounts(counts)
       setBank(b.data || [])
       setWordlists(w.data || [])
       setClips(c.data || [])
@@ -107,8 +124,8 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   return (
     <div className="flex flex-col gap-3 rounded-[20px] border border-line bg-panel-2 p-4">
       <div>
-        <p className="font-brand text-[16px] font-semibold text-paper">Tasks done in the site</p>
-        <p className="text-xs font-semibold text-mist">Marked straight away. The first try counts; students can retake.</p>
+        <p className="font-brand text-[16px] font-semibold text-paper">Add tasks</p>
+        <p className="text-xs font-semibold text-mist">Pick pages from the Practice Bank — scores save by themselves. The first try counts.</p>
       </div>
 
       {tasks.length > 0 && (
@@ -135,8 +152,27 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
         </ul>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-        {ADDABLE.map((k) => {
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {PAGE_TILES.filter((t) => t.skill !== 'writing' || pageCounts.writing).map((t) => (
+          <button
+            key={t.skill}
+            type="button"
+            onClick={() => {
+              setError('')
+              setAdding(null)
+              setBankSkill(t.skill)
+              setBankOpen(true)
+            }}
+            className={`focus-ring flex items-center gap-2.5 rounded-[14px] px-3 py-3 text-left transition hover:brightness-95 ${t.tint} ${t.text}`}
+          >
+            <SkillIcon skill={t.skill} className="h-5 w-5 shrink-0" />
+            <span className="min-w-0">
+              <span className="block text-[13px] font-extrabold leading-tight">+ {t.label}</span>
+              <span className="block text-[11px] font-bold opacity-75">{pageCounts[t.skill] ? `${pageCounts[t.skill]} ${t.unit}` : 'Practice Bank'}</span>
+            </span>
+          </button>
+        ))}
+        {['wordlist', 'shadowing'].map((k) => {
           const meta = TASK_KINDS[k]
           const on = adding === k
           return (
@@ -146,20 +182,27 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
               onClick={() => {
                 setError('')
                 setNewClip(null)
-                if (k === 'html') {
-                  setAdding(null)
-                  setBankOpen(true)
-                  return
-                }
                 setAdding(on ? null : k)
               }}
-              className={`focus-ring flex flex-col items-center gap-1.5 rounded-[14px] px-2 py-3 text-center transition ${meta.tint} ${meta.text} ${on ? 'ring-2 ring-current' : 'hover:brightness-95'}`}
+              className={`focus-ring flex items-center gap-2.5 rounded-[14px] px-3 py-3 text-left transition ${meta.tint} ${meta.text} ${on ? 'ring-2 ring-current' : 'hover:brightness-95'}`}
             >
-              <SkillIcon skill={meta.skill} className="h-5 w-5" />
-              <span className="text-[12px] font-extrabold leading-tight">+ {meta.label}</span>
+              <SkillIcon skill={meta.skill} className="h-5 w-5 shrink-0" />
+              <span className="min-w-0">
+                <span className="block text-[13px] font-extrabold leading-tight">+ {meta.label}</span>
+                <span className="block text-[11px] font-bold opacity-75">{k === 'wordlist' ? `${wordlists.length} in this group` : `${clips.length} clips`}</span>
+              </span>
             </button>
           )
         })}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-extrabold">
+        {bank.length > 0 && (
+          <>
+            <button type="button" onClick={() => setAdding(adding === 'reading' ? null : 'reading')} className="focus-ring text-mist hover:text-paper">+ Full Reading test (Mock Center)</button>
+            <button type="button" onClick={() => setAdding(adding === 'listening' ? null : 'listening')} className="focus-ring text-mist hover:text-paper">+ Full Listening test (Mock Center)</button>
+          </>
+        )}
+        <button type="button" onClick={() => { setAdding(null); setPickerOpen(true) }} className="focus-ring text-mist hover:text-paper">+ HTML file from Materials Library</button>
       </div>
 
       {adding && (
@@ -219,6 +262,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
 
       <BankPicker
         open={bankOpen}
+        initialSkill={bankSkill}
         onClose={() => setBankOpen(false)}
         onLibrary={() => {
           setBankOpen(false)

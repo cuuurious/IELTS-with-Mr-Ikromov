@@ -12,11 +12,11 @@ import { getSubmissionStatus } from '../../components/StampBadge'
 import { notifyGroup, notifyUsers } from '../../lib/notify'
 import { useSessionState } from '../../lib/sessionState'
 import { skillOfHomework, formatDue } from '../../lib/skills'
-import { SkillIcon } from '../../components/SkillArt'
 import { fetchAll } from '../../lib/fetchAll'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import Icon from '../../components/Icon'
-import WeakSpots from '../../components/WeakSpots'
+import GroupHomeworkTable from '../../components/groups/GroupHomeworkTable'
+import GroupStudentsTab from '../../components/groups/GroupStudentsTab'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -24,6 +24,8 @@ export default function GroupWorkspace({ teacherId }) {
   // me to take to this window constantly") — the group you had open and
   // whether you were inside it, see lib/sessionState.js.
   const [activeGroup, setActiveGroup] = useSessionState(`ielts:${teacherId}:groups:activeGroup`, null)
+  // Group page tabs (2026-11-05): homework | students | grades | course
+  const [groupTab, setGroupTab] = useSessionState(`ielts:${teacherId}:groups:tab`, 'homework')
 
   // Keeps the latest activeGroup readable from inside async callbacks
   // without them closing over a stale value. Used so a slow-loading
@@ -1511,6 +1513,7 @@ export default function GroupWorkspace({ teacherId }) {
                       <PostHomeworkForm
                         groupId={activeGroup}
                         teacherId={teacherId}
+                        groupName={activeGroupObj?.name || ''}
                         onPosted={(hw) => {
                           setHomeworks((prev) => [
                             hw,
@@ -1565,17 +1568,66 @@ export default function GroupWorkspace({ teacherId }) {
             )
           })()}
 
-          {!groupDataLoading && activeGroup && <GroupTools groupId={activeGroup} groupName={groupDisplayName(groups.find((g) => g.id === activeGroup)?.name || '')} />}
+          {/* =================================================
+              TABS (2026-11-05) — one screen each, no long scroll.
+          ================================================= */}
+          {(() => {
+            const accent = getGroupAccent(activeGroup)
+            const TABS = [
+              { key: 'homework', label: 'Homework', count: homeworks.length },
+              { key: 'students', label: 'Students', count: roster.length },
+              { key: 'grades', label: 'Grades' },
+              { key: 'course', label: 'Course & tools' },
+            ]
+            return (
+              <nav aria-label="Group sections" className="sticky top-[72px] z-20 -mx-1 overflow-x-auto px-1 py-1">
+                <div role="tablist" className="flex w-max min-w-full gap-1 rounded-[16px] border border-line bg-panel p-1 shadow-sm">
+                  {TABS.map((t) => {
+                    const on = groupTab === t.key
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={on}
+                        onClick={() => setGroupTab(t.key)}
+                        className={`focus-ring flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[12px] px-4 text-sm font-extrabold transition ${on ? `${accent.tint} ${accent.text}` : 'text-paper-dim hover:bg-panel-2 hover:text-paper'}`}
+                      >
+                        {t.label}
+                        {t.count != null && (
+                          <span className={`rounded-lg px-1.5 py-0.5 text-[11px] ${on ? 'bg-panel/70' : 'bg-panel-2 text-mist'}`}>{t.count}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </nav>
+            )
+          })()}
 
-          {!groupDataLoading && activeGroup && (
+          {groupTab === 'course' && !groupDataLoading && activeGroup && <GroupTools groupId={activeGroup} groupName={groupDisplayName(groups.find((g) => g.id === activeGroup)?.name || '')} />}
+
+          {groupTab === 'course' && !groupDataLoading && activeGroup && (
             <GroupCoursePanel groupId={activeGroup} accent={getGroupAccent(activeGroup)} onPosted={() => loadGroupData()} />
+          )}
+
+          {groupTab === 'students' && !groupDataLoading && activeGroup && (
+            <GroupStudentsTab
+              groupId={activeGroup}
+              roster={roster}
+              homeworks={homeworks}
+              submissions={submissions}
+              accent={getGroupAccent(activeGroup)}
+              busyAction={busyAction}
+              onRemove={removeStudent}
+            />
           )}
 
           {/* =================================================
               THIS WEEK (redesign 2026-11-02): four numbers, this
               week's homework with hand-in bars, and who needs a word.
           ================================================= */}
-          {!groupDataLoading && roster.length > 0 && (() => {
+          {groupTab === 'homework' && !groupDataLoading && roster.length > 0 && (() => {
             const accent = getGroupAccent(activeGroup)
             const now = Date.now()
             const DAY = 86400000
@@ -1611,119 +1663,57 @@ export default function GroupWorkspace({ teacherId }) {
               })
               .filter(Boolean)
               .sort((a, b) => b.weight - a.weight)
-            const week = homeworks
-              .filter((h) => h.due_date && Math.abs(new Date(h.due_date).getTime() - now) <= 7 * DAY)
-              .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
             const open = homeworks.filter((h) => h.due_date && new Date(h.due_date).getTime() > now).length
             const pct = slots ? Math.round((onTime / slots) * 100) : null
             return (
               <>
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
-                    <div className={`font-brand text-[28px] font-semibold leading-none ${accent.text}`}>{pct == null ? '—' : `${pct}%`}</div>
+                  <div className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                    <div className={`font-brand text-[24px] font-semibold leading-none ${accent.text}`}>{pct == null ? '—' : `${pct}%`}</div>
                     <div className="mt-1.5 text-[13px] font-bold text-mist">homework on time (4 weeks)</div>
                   </div>
-                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
-                    <div className={`font-brand text-[28px] font-semibold leading-none ${missedWeek ? 'text-coral' : 'text-paper'}`}>{missedWeek}</div>
+                  <div className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                    <div className={`font-brand text-[24px] font-semibold leading-none ${missedWeek ? 'text-coral' : 'text-paper'}`}>{missedWeek}</div>
                     <div className="mt-1.5 text-[13px] font-bold text-mist">missed this week</div>
                   </div>
-                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
-                    <div className={`font-brand text-[28px] font-semibold leading-none ${needWord.length ? 'text-coral' : 'text-paper'}`}>{needWord.length}</div>
-                    <div className="mt-1.5 text-[13px] font-bold text-mist">students need a word</div>
-                  </div>
-                  <div className="rounded-[20px] border border-line bg-panel px-5 py-4">
-                    <div className="font-brand text-[28px] font-semibold leading-none text-brass">{open}</div>
+                  <button type="button" onClick={() => setGroupTab('students')} className="focus-ring rounded-[20px] border border-line bg-panel px-4 py-3 text-left transition hover:border-coral/40">
+                    <div className={`font-brand text-[24px] font-semibold leading-none ${needWord.length ? 'text-coral' : 'text-paper'}`}>{needWord.length}</div>
+                    <div className="mt-1.5 text-[13px] font-bold text-mist">students need a word ›</div>
+                  </button>
+                  <div className="rounded-[20px] border border-line bg-panel px-4 py-3">
+                    <div className="font-brand text-[24px] font-semibold leading-none text-brass">{open}</div>
                     <div className="mt-1.5 text-[13px] font-bold text-mist">tasks still open</div>
                   </div>
                 </div>
 
-                <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
-                  <section className="rounded-[20px] border border-line bg-panel px-5 py-4 sm:px-6">
-                    <h2 className="font-brand text-[18px] font-semibold text-paper">Homework this week</h2>
-                    {week.length === 0 ? (
-                      <p className="py-4 text-sm text-mist">Nothing due in the last or next 7 days.</p>
-                    ) : (
-                      <ul className="mt-1">
-                        {week.map((h) => {
-                          const skill = skillOfHomework(h)
-                          const handed = roster.filter((st) => subOf(h, st)?.status === 'done').length
-                          const past = new Date(h.due_date).getTime() <= now
-                          const missing = roster.length - handed
-                          return (
-                            <li key={h.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t border-line py-3 first:border-t-0 sm:grid-cols-[auto_minmax(0,1fr)_170px_auto]">
-                              <span className={`grid h-9 w-9 place-items-center rounded-xl ${skill.tint} ${skill.key === 'general' ? 'text-paper' : skill.text}`}>
-                                <SkillIcon skill={skill.key} className="h-4 w-4" />
-                              </span>
-                              <div className="min-w-0">
-                                <div className="truncate text-[15px] font-extrabold text-paper">{h.title}</div>
-                                <div className="text-[13px] font-semibold text-mist">{past ? 'Closed' : 'Due'} {formatDue(h.due_date)}</div>
-                              </div>
-                              <div className="col-span-2 sm:col-span-1">
-                                <div className="h-2 overflow-hidden rounded-md bg-panel-2">
-                                  <div className={`h-full rounded-md ${accent.bar}`} style={{ width: `${roster.length ? (handed / roster.length) * 100 : 0}%` }} />
-                                </div>
-                                <div className="mt-1 text-xs font-bold text-mist">{handed} of {roster.length} handed in</div>
-                              </div>
-                              <div className="col-span-2 flex items-center justify-end gap-2 sm:col-span-1">
-                                <span
-                                  className={`rounded-lg px-2 py-1 text-xs font-extrabold ${
-                                    past ? (missing ? 'bg-urgent-tint text-coral' : 'bg-reading-tint text-reading') : 'bg-panel-2 text-paper-dim'
-                                  }`}
-                                >
-                                  {past ? (missing ? `${missing} missed` : 'All in') : `${missing} to go`}
-                                </span>
-                                {missing > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => remindHomework(h)}
-                                    disabled={busyAction === `remind-${h.id}`}
-                                    className="focus-ring h-9 rounded-xl border border-line px-3 text-xs font-extrabold text-brass transition hover:bg-panel-2 disabled:opacity-50"
-                                    title="Send a reminder to everyone who hasn't handed it in"
-                                  >
-                                    {busyAction === `remind-${h.id}` ? 'Sending…' : 'Remind'}
-                                  </button>
-                                )}
-                              </div>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    )}
-                  </section>
-
-                  <section className="overflow-hidden rounded-[20px] border border-line bg-panel">
-                    <div className={`px-5 py-4 ${accent.tint}`}>
-                      <h2 className={`font-brand text-[18px] font-semibold ${accent.text}`}>Needs a word</h2>
-                      <p className="text-[13px] font-semibold text-paper-dim">From the last 4 homeworks.</p>
-                    </div>
-                    <ul className="flex flex-col gap-2.5 px-5 py-4 text-sm">
-                      {needWord.length === 0 ? (
-                        <li className="text-mist">Everyone is keeping up.</li>
-                      ) : (
-                        needWord.slice(0, 6).map(({ st, reason }) => (
-                          <li key={st.id} className="flex justify-between gap-3 font-bold">
-                            <span className="min-w-0 truncate text-paper">{st.full_name || st.username}</span>
-                            <span className={`shrink-0 ${reason.startsWith('Late') ? 'text-amber' : 'text-coral'}`}>{reason}</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </section>
-                </div>
               </>
             )
           })()}
 
-          {!groupDataLoading && roster.length > 0 && (
-            <Gradebook roster={roster} homeworks={homeworks} accent={getGroupAccent(activeGroup)} />
+          {groupTab === 'homework' && !groupDataLoading && (
+            <GroupHomeworkTable
+              homeworks={homeworks}
+              roster={roster}
+              submissions={submissions}
+              accent={getGroupAccent(activeGroup)}
+              busyAction={busyAction}
+              onRemind={remindHomework}
+              onEdit={setEditingHomework}
+              onReset={clearHomeworkContent}
+              onDelete={deleteHomework}
+              onOpenSubmission={setViewing}
+            />
           )}
 
-          {!groupDataLoading && roster.length > 0 && <WeakSpots groupId={activeGroup} title="Class weak spots" compact />}
+          {groupTab === 'grades' && !groupDataLoading && roster.length > 0 && (
+            <Gradebook roster={roster} homeworks={homeworks} accent={getGroupAccent(activeGroup)} />
+          )}
 
           {/* =================================================
               STUDENT PROGRESS TITLE
           ================================================= */}
 
+          {(groupTab === 'grades' || groupDataLoading) && (
           <section
             className={
               groupDataLoading
@@ -1737,7 +1727,7 @@ export default function GroupWorkspace({ teacherId }) {
               <div>
 
                 <h2 className="mt-2 flex items-center gap-2 font-brand text-[20px] font-semibold text-brass">
-                  Student progress
+                  Hand-ins
                   {(groupDataLoading || refreshingGroup) && <span className="h-1.5 w-1.5 animate-pulse rounded-xl bg-brass" />}
                 </h2>
 
@@ -2240,6 +2230,7 @@ export default function GroupWorkspace({ teacherId }) {
             )}
 
           </section>
+          )}
 
         </>
       )}

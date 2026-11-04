@@ -239,6 +239,8 @@ export default function TeacherDashboard() {
   // pill tabs — the old shape stopped scaling once there were 8-9 of
   // these, and it's only going to grow (Mock Exams, Speaking/Writing
   // examiner views, etc.).
+  // Menu (2026-11-05): Home · Groups · Practice Bank · Mock Center ·
+  // Messages · More. The rest of Classroom and Admin share "More".
   const sections = [
     {
       title: 'Teaching',
@@ -246,24 +248,7 @@ export default function TeacherDashboard() {
         // Overview of every group (2026-10-06) — the teacher's Home.
         { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
         { key: 'groups', label: 'Groups & Homework', icon: IconGroups, subtitle: 'Open a group to post homework and see who has done it.' },
-        { key: 'students', label: 'Students', icon: IconStudents, subtitle: 'Student accounts, groups and targets.' },
-      ],
-    },
-    // Top bar trimmed 2026-10-14 (Jasur: "improve ... design overall"):
-    // Word lists, Materials and Leaderboards share one "Classroom" menu,
-    // so the bar reads Home · Groups · Students · Mock Center ·
-    // Classroom · Messages · Admin.
-    {
-      title: 'Classroom',
-      items: [
-        { key: 'plans', label: 'Course Plans', icon: IconHomework, subtitle: 'Each course lesson by lesson: slides, class files and the homework that posts itself after class.' },
         { key: 'bank', label: 'Practice Bank', icon: IconHomework, subtitle: 'Your interactive Reading, Listening and Writing pages by book: preview them and give them as homework.' },
-        { key: 'wordlists', label: 'Word Lists', icon: IconWordlist, subtitle: 'Vocabulary sets your students review and get tested on, by group.' },
-        // All teaching files in one place — uploaded here or forwarded
-        // from Telegram to the bot (2026-09-30).
-        { key: 'materials', label: 'Materials Library', icon: IconFolder, subtitle: 'Every teaching file in one place: upload here or forward from Telegram.' },
-        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard, subtitle: 'Ranked by homework handed in, then by completion rate.' },
-        { key: 'coins', label: 'Coins & Courses', icon: IconCoins, subtitle: 'Video courses students unlock with coins, and what coins are worth.' },
       ],
     },
     {
@@ -276,8 +261,16 @@ export default function TeacherDashboard() {
       ],
     },
     {
-      title: 'Admin',
+      title: 'More',
       items: [
+        { key: 'students', label: 'Students', icon: IconStudents, subtitle: 'Student accounts, groups and targets.' },
+        { key: 'plans', label: 'Course Plans', icon: IconHomework, subtitle: 'Each course lesson by lesson: slides, class files and the homework that posts itself after class.' },
+        { key: 'wordlists', label: 'Word Lists', icon: IconWordlist, subtitle: 'Vocabulary sets your students review and get tested on, by group.' },
+        // All teaching files in one place — uploaded here or forwarded
+        // from Telegram to the bot (2026-09-30).
+        { key: 'materials', label: 'Materials Library', icon: IconFolder, subtitle: 'Every teaching file in one place: upload here or forward from Telegram.' },
+        { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard, subtitle: 'Ranked by homework handed in, then by completion rate.' },
+        { key: 'coins', label: 'Coins & Courses', icon: IconCoins, subtitle: 'Video courses students unlock with coins, and what coins are worth.' },
         { key: 'ai-grading', label: 'AI Grading', icon: IconAI },
         {
           key: 'approvals',

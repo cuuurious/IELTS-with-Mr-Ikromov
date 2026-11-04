@@ -8,7 +8,7 @@ import { qtypeLabel } from '../../lib/questionTypes'
  * Skill tabs → books/sets → tick pages. onPick(pages) with the chosen rows.
  * onLibrary (optional) switches to the Materials Library picker.
  */
-export default function BankPicker({ open, onClose, onPick, onLibrary }) {
+export default function BankPicker({ open, onClose, onPick, onLibrary, initialSkill = 'reading' }) {
   const [pages, setPages] = useState(null)
   const [missing, setMissing] = useState(false)
   const [skill, setSkill] = useState('reading')
@@ -18,11 +18,13 @@ export default function BankPicker({ open, onClose, onPick, onLibrary }) {
   useEffect(() => {
     if (!open) return
     setPicked(new Set())
+    setSkill(initialSkill)
+    setCollection(null)
     loadBank().then((r) => {
       setPages(r.pages)
       setMissing(r.missing)
     })
-  }, [open])
+  }, [open, initialSkill])
 
   const collections = useMemo(() => {
     const map = {}
@@ -31,6 +33,14 @@ export default function BankPicker({ open, onClose, onPick, onLibrary }) {
     })
     return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
   }, [pages, skill])
+
+  // Only tabs that have pages (plus the one open now), with counts.
+  const counts = {}
+  ;(pages || []).forEach((p) => {
+    const k = p.skill || 'reading'
+    counts[k] = (counts[k] || 0) + 1
+  })
+  const tabs = BANK_SKILLS.filter((s) => pages === null || counts[s.value] || s.value === skill)
 
   if (!open) return null
   const list = (pages || []).filter((p) => p.collection === collection)
@@ -76,14 +86,15 @@ export default function BankPicker({ open, onClose, onPick, onLibrary }) {
           ) : (
             <>
               <div className="flex flex-wrap gap-1.5">
-                {BANK_SKILLS.map((s) => (
-                  <button key={s.value} type="button" onClick={() => setSkill(s.value)} className={`focus-ring h-9 rounded-[12px] px-3 text-[13px] font-extrabold ${s.value === skill ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>
+                {tabs.map((s) => (
+                  <button key={s.value} type="button" onClick={() => setSkill(s.value)} className={`focus-ring flex h-9 items-center gap-1.5 rounded-[12px] px-3 text-[13px] font-extrabold ${s.value === skill ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>
                     {s.label}
+                    {counts[s.value] > 0 && <span className={`text-[11px] ${s.value === skill ? 'text-onbrass/75' : 'text-mist'}`}>{counts[s.value]}</span>}
                   </button>
                 ))}
               </div>
               {pages === null && <p className="text-sm font-semibold text-mist">Loading…</p>}
-              {pages && collections.length === 0 && <p className="rounded-[14px] bg-panel px-4 py-6 text-center text-sm font-semibold text-mist">Nothing here yet. Add pages in Classroom → Practice Bank.</p>}
+              {pages && collections.length === 0 && <p className="rounded-[14px] bg-panel px-4 py-6 text-center text-sm font-semibold text-mist">No {BANK_SKILLS.find((x) => x.value === skill)?.label.toLowerCase()} pages yet. Add them in Practice Bank.</p>}
               <div className="grid gap-2 sm:grid-cols-2">
                 {collections.map(([name, n]) => (
                   <button key={name} type="button" onClick={() => setCollection(name)} className="focus-ring flex flex-col items-start rounded-[16px] bg-panel px-4 py-3 text-left hover:bg-panel-2">

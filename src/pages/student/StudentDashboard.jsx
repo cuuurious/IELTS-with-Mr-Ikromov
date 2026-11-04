@@ -682,16 +682,28 @@ const messageId = linkParts[2] || null
   // than one natural grouping, which happens once Mock Exams lands.
   const sections = useMemo(
     () => [
+      // Menu (2026-11-05): Home · Homework · Practice · My progress ·
+      // Mocks · Chats · More.
       {
         items: [
           { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'homework', label: 'Homework', icon: IconHomework },
+          { key: 'books', label: 'Practice', icon: IconBooks, subtitle: 'Reading and listening books to practise on your own.' },
           { key: 'progress', label: 'My progress', icon: IconProgress },
-          { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
-          { key: 'books', label: 'Books', icon: IconBooks },
-          { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
+        ],
+      },
+      {
+        title: 'Chats',
+        items: [
           { key: 'group-chat', label: 'Group chat', icon: IconGroupChat },
           { key: 'chats', label: 'Chats', icon: IconChat },
+        ],
+      },
+      {
+        title: 'More',
+        items: [
+          { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
+          { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
           { key: 'courses', label: 'Coins & courses', icon: IconCoins },
         ],
       },
@@ -823,6 +835,7 @@ const messageId = linkParts[2] || null
       spotlight={{
         key: 'mock-center',
         label: 'Mock Test Center',
+        navLabel: 'Mocks',
         description: 'Take a timed reading, listening or writing mock',
         icon: IconMockExam,
       }}
