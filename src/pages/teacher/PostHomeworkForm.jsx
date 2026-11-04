@@ -35,6 +35,7 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
   // Quick deadlines (2026-11-02): "Next lesson" comes from the group's
   // course timetable (migration_88), if it has one.
   const [nextLesson, setNextLesson] = useState(null)
+  const [needSchedule, setNeedSchedule] = useState(false)
   useEffect(() => {
     if (!open || !groupId) return undefined
     let cancelled = false
@@ -438,7 +439,9 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
 
     <div className="mt-2 flex flex-wrap gap-1.5">
       {[
-        nextLesson && { label: `Next lesson · ${lessonTime(nextLesson.starts_at)}`, value: toLocalInput(nextLesson.starts_at), main: true },
+        nextLesson
+          ? { label: `Next lesson · ${lessonTime(nextLesson.starts_at)}`, value: toLocalInput(nextLesson.starts_at), main: true }
+          : { label: 'Next lesson', value: null, main: true },
         { label: 'Tonight 23:59', value: (() => { const d = new Date(); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
         { label: 'Tomorrow 23:59', value: (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
         { label: 'In 2 days', value: (() => { const d = new Date(); d.setDate(d.getDate() + 2); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()) })() },
@@ -448,7 +451,11 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
           <button
             key={o.label}
             type="button"
-            onClick={() => setDueDate(o.value)}
+            onClick={() => {
+              if (o.value === null) return setNeedSchedule(true)
+              setNeedSchedule(false)
+              setDueDate(o.value)
+            }}
             className={`focus-ring rounded-[10px] px-2.5 py-1 text-xs font-bold transition ${
               dueDate === o.value ? 'bg-brass text-onbrass' : o.main ? 'bg-brass/15 text-brass hover:bg-brass/25' : 'bg-panel text-paper-dim hover:text-paper'
             }`}
@@ -458,6 +465,11 @@ export default function PostHomeworkForm({ groupId, teacherId, onPosted }) {
         ))}
     </div>
 
+    {needSchedule && (
+      <p className="mt-2 rounded-[10px] bg-brass/10 px-3 py-2 text-xs font-semibold text-paper">
+        This group has no lesson times yet. On the group page, in the <span className="font-bold">Follow a course</span> box, choose the lesson days and times and press Start the course. After that this button sets the start of the next lesson.
+      </p>
+    )}
     <p className="text-xs text-mist mt-1.5">
       {dueDate ? 'Students will see a live countdown.' : 'Optional — leave blank for no deadline.'}
     </p>

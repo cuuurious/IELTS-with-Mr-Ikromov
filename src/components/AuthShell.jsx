@@ -134,9 +134,12 @@ function FeedbackArt() {
 
 function LibraryArt() {
   const books = [
-    { c: 'bg-reading', h: 66, n: 38, l: 'Reading' },
-    { c: 'bg-listening', h: 58, n: 53, l: 'Listen' },
-    { c: 'bg-writing', h: 52, n: 81, l: 'Task 1' },
+    // Fixed dark shades (not the theme skill colours, which turn pastel in
+    // dark mode and made the white numbers unreadable). Counts = pages
+    // built into the site (2026-11-05).
+    { c: 'bg-[#13807c]', h: 66, n: 315, l: 'Reading' },
+    { c: 'bg-[#1f4e8c]', h: 58, n: 212, l: 'Listen' },
+    { c: 'bg-[#9a5b12]', h: 52, n: 81, l: 'Task 1' },
     { c: 'bg-[#b8641a]', h: 62, n: 91, l: 'Task 2' },
   ]
   return (

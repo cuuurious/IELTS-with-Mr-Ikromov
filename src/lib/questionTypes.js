@@ -13,6 +13,9 @@ const EXTRA = {
   listening_part2: 'Part 2 · one speaker, maps',
   listening_part3: 'Part 3 · discussion',
   listening_part4: 'Part 4 · lecture',
+  // Writing pages (2026-11-02): homework only, never on the Books shelf.
+  writing_task1: 'Writing Task 1',
+  writing_task2: 'Writing Task 2',
   completion: 'Gap-fill (completion)',
   matching: 'Matching',
   other: 'Other',
@@ -23,6 +26,8 @@ const LABELS = { ...Object.fromEntries(GROUP_KINDS.map((k) => [k.value, k.label]
 export const QUESTION_TYPES = [
   ...GROUP_KINDS.filter((k) => k.value !== 'other').map((k) => ({ value: k.value, label: k.label })),
   ...[1, 2, 3, 4].map((n) => ({ value: `listening_part${n}`, label: `Listening ${EXTRA[`listening_part${n}`]}` })),
+  { value: 'writing_task1', label: 'Writing Task 1' },
+  { value: 'writing_task2', label: 'Writing Task 2' },
 ]
 
 export function qtypeLabel(key) {
@@ -33,7 +38,19 @@ export function qtypeLabel(key) {
 export const SKILLS = [
   { value: 'reading', label: 'Reading' },
   { value: 'listening', label: 'Listening' },
+  { value: 'writing', label: 'Writing' },
 ]
+
+// What a page is, from its own <title> and headings — used when the folder
+// name says nothing (e.g. "Task 1 · IELTS Writing Task 1 · MrIkromov's IELTS").
+export function detectFromHtml(html = '', fallback = { skill: 'reading', qtype: null }) {
+  const head = `${(String(html).match(/<title[^>]*>([^<]*)/i) || [])[1] || ''} ${String(html).slice(0, 4000)}`
+  if (/writing\s*task\s*1|task\s*1\b[^<]{0,40}(graph|chart|table|map|process|diagram)/i.test(head)) return { skill: 'writing', qtype: 'writing_task1' }
+  if (/writing\s*task\s*2|task\s*2\b[^<]{0,40}essay/i.test(head)) return { skill: 'writing', qtype: 'writing_task2' }
+  if (fallback.qtype) return fallback
+  if (/listening/i.test(head)) return { skill: 'listening', qtype: fallback.qtype }
+  return fallback
+}
 
 // Guess skill + question type from a book folder path, e.g.
 // "thematic reading/21-40 IDENTIFYING INFORMATION TRUE FALSE NG/test_21.html".

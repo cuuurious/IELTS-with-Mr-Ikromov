@@ -101,6 +101,17 @@ export async function uploadMaterial(file, { folderId = null, userId, extra = {}
   return data
 }
 
+// The Library's own files: everything except Practice Bank pages
+// (migration_92 `collection`). Before that migration the column doesn't
+// exist, so fall back to every file.
+export async function listLibraryMaterials() {
+  const res = await supabase.from('materials').select('*').is('collection', null).order('created_at', { ascending: false })
+  if (res.error && /collection/.test(res.error.message || '')) {
+    return supabase.from('materials').select('*').order('created_at', { ascending: false })
+  }
+  return res
+}
+
 // Folder helpers — folders come back flat; these build the tree/paths.
 export function folderPath(folderId, foldersById) {
   const parts = []

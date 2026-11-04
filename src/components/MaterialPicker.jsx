@@ -8,6 +8,7 @@ import {
   fileKind,
   folderPath,
   formatBytes,
+  listLibraryMaterials,
   uploadMaterial,
 } from '../lib/materials'
 
@@ -42,7 +43,7 @@ export default function MaterialPicker({ open, onClose, onPick, alreadyPickedIds
     setLoading(true)
     Promise.all([
       supabase.from('material_folders').select('*').order('name'),
-      supabase.from('materials').select('*').order('created_at', { ascending: false }),
+      listLibraryMaterials(),
     ]).then(([f, m]) => {
       setFolders(f.data || [])
       setMaterials(m.data || [])

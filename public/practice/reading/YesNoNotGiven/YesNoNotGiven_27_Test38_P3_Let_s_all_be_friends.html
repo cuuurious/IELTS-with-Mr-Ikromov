@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mr.Ikromov's IELTS — Yes / No / Not Given 27: Let&#x27;s all be friends</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1.25rem;background:#fff;border-bottom:1px solid #d1d5db;flex-shrink:0;flex-wrap:wrap;gap:0.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:0.6rem;}
+.header__brand img{height:28px;}
+.header__brand-name{font-weight:800;color:#d97706;font-size:1.05rem;}
+.header__candidate{font-size:0.78rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:0.85rem;}
+.header__icon-btn{background:none;border:none;font-size:1.05rem;color:#92400e;cursor:pointer;position:relative;}
+body.dark .header__icon-btn{color:#fbbf24;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:0.65rem;font-weight:700;border-radius:999px;padding:0.05rem 0.35rem;}
+.header__timer{font-weight:800;font-size:1.1rem;color:#92400e;border:2px solid #d97706;border-radius:999px;padding:0.35rem 1rem;background:#fffbeb;}
+body.dark .header__timer{background:#1f2937;color:#fbbf24;}
+.header__timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.55;}}
+.test-container{flex:1;display:flex;overflow:hidden;height:calc(100vh - 68px);}
+.passage-container{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;position:relative;}
+body.dark .divider{background:#374151;}
+.divider:hover,.divider.dragging{background:#d97706;}
+.passage-instructions{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:0.85rem 1rem;margin-bottom:1.1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;color:#1f2937;margin-bottom:0.3rem;}
+body.dark .passage-title{color:#f3f4f6;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+body.dark .passage-subtitle{color:#9ca3af;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.answer-location{border-radius:3px;transition:background .3s;}
+.answer-location.location-found{background:#fde68a;}
+body.dark .answer-location.location-found{background:#78350f;}
+.highlight-yellow{background:#fef08a;} .highlight-green{background:#bbf7d0;} .highlight-blue{background:#bfdbfe;}
+body.dark .highlight-yellow{background:#854d0e;} body.dark .highlight-green{background:#14532d;} body.dark .highlight-blue{background:#1e3a8a;}
+.questions-container{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.75rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.5rem;}
+.q-group-title{font-weight:800;color:#d97706;font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:0.75rem;}
+body.dark .q-group-instructions{color:#9ca3af;}
+.flag-toggle{background:none;border:none;font-size:1.05rem;color:#d1d5db;cursor:pointer;transition:all .2s;flex-shrink:0;width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;}
+.flag-toggle:hover{color:#f59e0b;}
+.flag-toggle.flagged{color:#dc2626;}
+.q-row{display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.65rem;font-size:.94rem;}
+.q-num{font-weight:800;color:#92400e;background:#fef3c7;border-radius:6px;min-width:1.7rem;height:1.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid #d1d5db;border-radius:6px;padding:0.35rem 0.5rem;font-size:.9rem;flex:1;max-width:220px;background:#fff;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid #d97706;padding:0.2rem 0.4rem;font-size:.94rem;background:transparent;min-width:120px;}
+body.dark input.q-text{color:#e5e7eb;}
+input.q-text:focus{outline:none;border-bottom-color:#92400e;}
+/* Multiple choice */
+.mcq-block{margin-bottom:1.1rem;}
+.mcq-options{display:flex;flex-direction:column;gap:0.35rem;margin-left:2.3rem;}
+.mcq-option{display:flex;align-items:flex-start;gap:0.5rem;padding:0.4rem 0.6rem;border:1.5px solid #fde68a;border-radius:8px;cursor:pointer;font-size:.92rem;transition:background .15s;}
+.mcq-option:hover{background:#fffbeb;}
+.mcq-option.selected{background:#fef3c7;border-color:#d97706;}
+.mcq-option input{margin-top:0.25rem;accent-color:#d97706;}
+.mcq-letter{font-weight:800;color:#92400e;min-width:1rem;}
+body.dark .mcq-option{border-color:#374151;}
+body.dark .mcq-option:hover{background:#1f2937;}
+body.dark .mcq-option.selected{background:#78350f;border-color:#fbbf24;}
+body.dark .mcq-letter{color:#fbbf24;}
+/* Note completion */
+.notes-box{border:1.5px solid #fde68a;border-radius:8px;padding:1rem 1.1rem;background:#fffdf7;font-size:.94rem;line-height:2;}
+body.dark .notes-box{background:#0f172a;border-color:#374151;}
+.notes-title{font-weight:800;text-align:center;color:#92400e;font-size:1.02rem;margin-bottom:0.2rem;}
+.notes-head{font-weight:800;color:#92400e;margin-top:0.5rem;}
+body.dark .notes-title,body.dark .notes-head{color:#fbbf24;}
+.notes-box ul{margin-left:1.3rem;}
+.notes-box .q-num{display:inline-flex;vertical-align:middle;}
+/* Summary completion with word bank */
+.summary-box{background:#fffdf7;border:1.5px solid #fde68a;border-radius:8px;padding:1rem;line-height:2.1;font-size:.94rem;}
+body.dark .summary-box{background:#0f172a;border-color:#374151;}
+.summary-title{font-weight:800;text-align:center;margin-bottom:0.4rem;color:#92400e;}
+body.dark .summary-title{color:#fbbf24;}
+.summary-box .q-num{display:inline-flex;vertical-align:middle;}
+select.q-inline{border:1.5px solid #d97706;border-radius:6px;padding:0.15rem 0.35rem;font-size:.88rem;background:#fff;font-weight:700;}
+body.dark select.q-inline{background:#1f2937;color:#e5e7eb;}
+.word-bank{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem 1rem;margin-top:0.9rem;border:1.5px solid #fde68a;border-radius:8px;padding:0.75rem 0.9rem;font-size:.9rem;}
+body.dark .word-bank{border-color:#374151;}
+.word-bank b{color:#92400e;margin-right:0.35rem;}
+body.dark .word-bank b{color:#fbbf24;}
+.data-table{width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:0.5rem;}
+.data-table th,.data-table td{border:1.5px solid #fde68a;padding:0.6rem 0.7rem;text-align:left;vertical-align:top;}
+.data-table th{background:#fef3c7;color:#92400e;font-weight:800;}
+body.dark .data-table th{background:#1f2937;color:#fbbf24;border-color:#374151;}
+body.dark .data-table td{border-color:#374151;}
+.footer{display:flex;align-items:center;justify-content:flex-end;gap:0.75rem;padding:0.65rem 1.25rem;background:#fff;border-top:1px solid #d1d5db;flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navbtn{width:2.1rem;height:2.1rem;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;font-size:.78rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .footer__navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.footer__navbtn.answered{background:#d1fae5;border-color:#34d399;}
+body.dark .footer__navbtn.answered{background:#065f46;border-color:#10b981;}
+.footer__navbtn.flagged{position:relative;}
+.footer__navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.footer__navwrap{display:flex;gap:0.3rem;flex-wrap:wrap;flex:1;align-items:center;}
+.footer__reviewBtn{padding:0.55rem 1.1rem;border-radius:8px;border:1.5px solid #d97706;background:#fff;color:#d97706;font-weight:700;cursor:pointer;}
+body.dark .footer__reviewBtn{background:#1f2937;}
+.footer__deliverButton{padding:0.55rem 1.3rem;border-radius:8px;border:none;background:#d97706;color:#fff;font-weight:700;cursor:pointer;}
+.footer__deliverButton:hover{background:#b45309;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.75rem;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:#d97706;border-bottom:2px solid #fde68a;padding-bottom:0.6rem;margin-bottom:1rem;}
+body.dark .modal-box h2{border-color:#374151;}
+.review-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0.4rem;margin:1rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;color:#e5e7eb;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;}
+body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.modal-close-btn{margin-top:1rem;padding:0.55rem 1.2rem;border-radius:8px;border:none;background:#d97706;color:#fff;font-weight:700;cursor:pointer;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:#d97706;}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:0.3rem 0;}
+body.dark .score-hero .band{color:#fbbf24;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:0.5rem;margin-top:0.6rem;}
+body.dark .score-hero .verdict{background:#064e3b;color:#6ee7b7;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:0.6rem 0.8rem;margin-bottom:0.55rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;}
+body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;}
+body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid #d97706;background:#fff;color:#d97706;border-radius:6px;padding:0.15rem 0.5rem;font-size:.75rem;cursor:pointer;margin-left:0.4rem;}
+body.dark .ai-locate-btn{background:#1f2937;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:absolute;display:none;background:#1f2937;border-radius:8px;padding:0.35rem;gap:0.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.4rem;height:1.4rem;border-radius:4px;border:none;cursor:pointer;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+.plabel{display:inline-block;background:#d97706;color:#fff;font-weight:800;border-radius:4px;min-width:1.5rem;text-align:center;margin-right:.35rem;font-size:.85rem;padding:0 .2rem;}
+</style>
+
+<style id="ws-style">
+#ws-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#fff7ed;overflow:auto;font-family:inherit;color:#1f2937}
+body.dark #ws-overlay{background:#0b1220;color:#e5e7eb}
+#ws-overlay.open{display:block}
+.ws-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;background:#fff;border-bottom:2px solid #d97706}
+body.dark .ws-top{background:#111827}
+.ws-title{font-weight:800;color:#b45309;font-size:1.05rem}
+.ws-sub{font-size:.8rem;color:#6b7280}
+.ws-close{margin-left:auto;padding:.45rem 1rem;border-radius:8px;border:1.5px solid #d97706;background:#fff;color:#d97706;font-weight:700;cursor:pointer}
+body.dark .ws-close{background:#1f2937}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;padding:.8rem 1.25rem 0;max-width:980px;margin:0 auto}
+.ws-tab{padding:.5rem .9rem;border-radius:999px;border:1.5px solid #fbbf24;background:#fff;color:#92400e;font-weight:700;font-size:.85rem;cursor:pointer}
+body.dark .ws-tab{background:#1f2937;color:#fcd34d}
+.ws-tab.on{background:#d97706;color:#fff;border-color:#d97706}
+.ws-tab .ws-done{margin-left:.3rem;color:#16a34a}
+.ws-main{max-width:980px;margin:0 auto;padding:1rem 1.25rem 3rem}
+.ws-card-h{font-size:1.15rem;font-weight:800;margin:.4rem 0 .2rem}
+.ws-help{font-size:.9rem;color:#6b7280;margin:0 0 1rem}
+.ws-fc{perspective:900px;max-width:560px;margin:0 auto}
+.ws-fc-in{position:relative;min-height:260px;transition:transform .5s;transform-style:preserve-3d;cursor:pointer}
+.ws-fc-in.flip{transform:rotateY(180deg)}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1.4rem;border-radius:16px;background:#fff;border:2px solid #fbbf24;box-shadow:0 6px 18px rgba(217,119,6,.15)}
+body.dark .ws-face{background:#1f2937}
+.ws-back{transform:rotateY(180deg);background:#fffbeb}
+body.dark .ws-back{background:#273449}
+.ws-word{font-size:2rem;font-weight:800;color:#b45309}
+.ws-pos{font-style:italic;color:#6b7280;margin-top:.3rem}
+.ws-uz{font-size:1.3rem;font-weight:800;color:#0f766e;margin:.4rem 0}
+.ws-def{font-size:1rem;margin:.2rem 0}
+.ws-ex{font-style:italic;color:#4b5563;margin-top:.5rem;font-size:.92rem}
+body.dark .ws-ex{color:#cbd5e1}
+.ws-hint{font-size:.78rem;color:#9ca3af;margin-top:1rem}
+.ws-row{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
+.ws-btn{padding:.55rem 1.1rem;border-radius:8px;border:1.5px solid #d97706;background:#fff;color:#b45309;font-weight:700;cursor:pointer}
+body.dark .ws-btn{background:#1f2937;color:#fcd34d}
+.ws-btn.pri{background:#d97706;color:#fff}
+.ws-btn.good{border-color:#16a34a;color:#15803d}
+.ws-btn.bad{border-color:#dc2626;color:#b91c1c}
+.ws-prog{text-align:center;font-size:.85rem;color:#6b7280}
+.ws-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:640px){.ws-cols{grid-template-columns:1fr}}
+.ws-item{padding:.7rem .9rem;border-radius:10px;border:2px solid #e5e7eb;background:#fff;margin-bottom:.55rem;cursor:pointer;font-size:.95rem;line-height:1.35}
+body.dark .ws-item{background:#1f2937;border-color:#374151}
+.ws-item:hover{border-color:#fbbf24}
+.ws-item.sel{border-color:#d97706;background:#fffbeb;box-shadow:0 0 0 3px rgba(217,119,6,.2)}
+body.dark .ws-item.sel{background:#3b2f12}
+.ws-item.ok{border-color:#16a34a;background:#dcfce7;color:#14532d;cursor:default}
+body.dark .ws-item.ok{background:#064e3b;color:#d1fae5}
+.ws-item.no{border-color:#dc2626;background:#fee2e2;animation:ws-sh .35s}
+@keyframes ws-sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-uzb{font-weight:700;color:#0f766e}
+.ws-score{text-align:center;margin:.8rem 0;font-weight:800;color:#15803d}
+.ws-sent{background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:.9rem 1rem;margin-bottom:.8rem;font-size:1.02rem;line-height:1.6}
+body.dark .ws-sent{background:#1f2937;border-color:#374151}
+.ws-blank{display:inline-block;min-width:120px;border-bottom:3px solid #d97706;text-align:center;font-weight:800;color:#b45309;padding:0 .4rem;margin:0 .15rem;cursor:pointer}
+.ws-blank.ok{color:#15803d;border-color:#16a34a}
+.ws-blank.no{color:#b91c1c;border-color:#dc2626}
+.ws-clue{display:block;font-size:.82rem;color:#6b7280;margin-top:.35rem}
+.ws-bank{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;margin:.4rem 0 1rem;padding:.7rem;background:#fff;border:2px dashed #fbbf24;border-radius:12px;position:sticky;top:62px;z-index:1}
+body.dark .ws-bank{background:#1f2937}
+.ws-chip{padding:.35rem .8rem;border-radius:999px;border:1.5px solid #d97706;background:#fffbeb;color:#92400e;font-weight:700;cursor:pointer}
+.ws-chip.sel{background:#d97706;color:#fff}
+.ws-chip.used{opacity:.35;pointer-events:none;text-decoration:line-through}
+.ws-ta{width:100%;min-height:90px;border-radius:10px;border:2px solid #fbbf24;padding:.7rem;font:inherit;background:#fff;color:#111}
+body.dark .ws-ta{background:#1f2937;color:#e5e7eb}
+.ws-say{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1.5px solid #d97706;background:#fff;color:#b45309;cursor:pointer;font-size:1rem;line-height:1;vertical-align:middle;margin-left:.35rem;padding:0}
+.ws-say:hover{background:#fffbeb}
+.ws-say.on{background:#d97706;color:#fff}
+body.dark .ws-say{background:#1f2937;color:#fcd34d}
+.ws-say.sm{width:28px;height:28px;font-size:.85rem}
+.ws-faceRow{display:flex;gap:.5rem;justify-content:center;margin-top:.7rem;flex-wrap:wrap}
+.ws-seg{display:flex;gap:.4rem;justify-content:center;margin:0 0 .9rem;flex-wrap:wrap}
+.ws-seg button{padding:.45rem 1rem;border-radius:999px;border:1.5px solid #d97706;background:#fff;color:#92400e;font-weight:700;cursor:pointer}
+.ws-seg button.on{background:#d97706;color:#fff}
+body.dark .ws-seg button{background:#1f2937;color:#fcd34d}
+body.dark .ws-seg button.on{background:#d97706;color:#fff}
+.ws-tick{display:flex;align-items:center;gap:.4rem;justify-content:center;font-size:.85rem;color:#6b7280;margin:.2rem 0}
+.ws-pt{width:100%;border-collapse:collapse;margin:.6rem 0}.ws-pt th{text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#0f766e;padding:.4rem .6rem;border-bottom:2px solid #99f6e4}.ws-pt td{padding:.55rem .6rem;border-bottom:1px solid #e5e7eb;vertical-align:top}.ws-pt tr{cursor:pointer}.ws-ptc .ws-pta{display:none;color:#0f766e;font-weight:600}.ws-ptq{color:#94a3b8;font-style:italic}.ws-pt tr.on .ws-pta{display:inline}.ws-pt tr.on .ws-ptq{display:none}body.dark .ws-pt td{border-color:#334155}
+.ws-opp small{display:block;color:#0f766e;font-weight:700;margin-top:.15rem}
+.ev-card{background:#fff;border:2px solid #e5e7eb;border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem}
+body.dark .ev-card{background:#1f2937;border-color:#374151}
+.ev-tag{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.04em;padding:.15rem .55rem;border-radius:999px;background:#fef3c7;color:#92400e;margin-right:.4rem}
+.ev-tag.t{background:#dcfce7;color:#166534}.ev-tag.f{background:#fee2e2;color:#991b1b}.ev-tag.ng{background:#e0e7ff;color:#3730a3}
+.ev-q{font-weight:700;margin:.5rem 0 .2rem;font-size:1.02rem;line-height:1.5}
+.ev-task{font-size:.88rem;color:#6b7280;margin:.2rem 0 .6rem}
+.ev-opt{padding:.65rem .85rem;border-radius:10px;border:2px solid #e5e7eb;margin-bottom:.45rem;cursor:pointer;font-size:.95rem;line-height:1.5;background:#fff}
+body.dark .ev-opt{background:#111827;border-color:#374151}
+.ev-opt:hover{border-color:#fbbf24}
+.ev-opt.ok{border-color:#16a34a;background:#dcfce7;color:#14532d;cursor:default}
+body.dark .ev-opt.ok{background:#064e3b;color:#d1fae5}
+.ev-opt.no{border-color:#dc2626;background:#fee2e2;animation:ws-sh .35s}
+.ev-opt.lock{pointer-events:none}
+.ev-opt mark{background:#fde68a;color:inherit;padding:0 .12rem;border-radius:3px}
+.ev-why{display:none;margin-top:.6rem;padding:.7rem .9rem;border-radius:10px;background:#ecfeff;border:1px solid #67e8f9;color:#155e75;font-size:.92rem;line-height:1.5}
+body.dark .ev-why{background:#083344;color:#a5f3fc}
+.ev-a{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 0 .8rem;align-items:center}.ev-a .ev-opt{margin:0;padding:.45rem .9rem;font-weight:700}.ev-in{padding:.5rem .7rem;border:2px solid #e5e7eb;border-radius:10px;font-size:1rem;min-width:14rem}.ev-in.ok{border-color:#16a34a;background:#dcfce7}.ev-in.no{border-color:#dc2626;animation:ws-sh .35s}.ev-msg{font-size:.88rem;color:#b45309}.ev-ans{font-size:.9rem;margin:.1rem 0 .3rem;color:#374151}
+body.dark .ev-ans{color:#d1d5db}
+.ws-model{display:none;margin-top:.6rem;padding:.7rem 1rem;border-radius:10px;background:#ecfeff;border:1px solid #67e8f9;color:#155e75;font-size:.92rem}
+body.dark .ws-model{background:#083344;color:#a5f3fc}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header__brand">
+    <img src="https://em-content.zobj.net/source/microsoft-teams/363/graduation-cap_1f393.png" alt="logo">
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Academic Reading &bull; Yes / No / Not Given &bull; Task 6.27 &bull; Test 38, Passage 3<br>1 passage &bull; 5 questions &bull; 8 minutes</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="header__icon-btn" id="textDecreaseBtn" title="Decrease text size"><i class="fas fa-minus"></i></button>
+    <button class="header__icon-btn" id="textIncreaseBtn" title="Increase text size"><i class="fas fa-plus"></i></button>
+    <button class="header__icon-btn" id="darkModeToggle" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
+    <button class="header__icon-btn" id="flagOverviewBtn" title="Flagged questions"><i class="fas fa-flag"></i><span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="header__timer" id="testTimer">08:00</div>
+  </div>
+</div>
+
+<div class="test-container">
+  <div class="passage-container" id="passage-container-1">
+    <div class="passage-instructions">You should spend about 8 minutes on Questions 1&ndash;5, which are based on the extract below.</div>
+    <div class="passage-title">Let's all be friends</div>
+    <div class="passage-subtitle">New research shows how the people we are in social contact with can influence us for better &ndash; and worse. Governments should take heed.</div>
+<p>From healthcare to climate change, governments today face a range of problems in which they must persuade people to change their behaviour. But maybe instead of relying on their powers of persuasion, governments should consider using the science of social networks as a tool to do this. True, many claims for the power of these are based on the hype surrounding major social networking websites. But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave. The shape of these networks has surprising effects. Take an unlikely example: stage musicals. Brian Uzzi is a sociologist at Northwestern University in Chicago. He is also a big fan of musicals. Musicals have been big business for decades, but investors have to guess which shows will be a hit. Bye Bye Birdie, a profitable 1960 production, ran for 607 nights. Bring Back Birdie, its 1981 sequel, closed after just four. Intrigued, Uzzi used network science to find out why.</p>
+<p style="text-align:center;color:#94a3b8;letter-spacing:.5em;margin:.2rem 0 .8rem;">&bull; &bull; &bull;</p><p>All this has some intriguing implications for policy. Take health. Network science shows that teenagers are more likely to eat junk food if friends of their friends (whom they don't know) eat it too. That said, teenagers may change to a better diet if their friends eat healthily. Here, governments could make budget savings. Let's say a health authority has £100, and wants to get ten people to improve their diets. If it spends £10 on each person, one at a time, perhaps one might do so. But imagine if instead it brought them together in a new network. Spend £100 on this new group, and three out of the ten people might change their eating habits.</p>
+<p><span class="answer-location" id="loc-q1">If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.</span> <span class="answer-location" id="loc-q2">More generally, if creating the right type of social networks helps people get on in life, shouldn't the state seek to help people build such links?</span> Experts in 'social capital' theory have pushed this for years, to little practical effect. But they do have a point: governments should try to build new social systems that support social ties, and design policies to take them into account.</p>
+<p>How might this work? <span class="answer-location" id="loc-q3">If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.</span> Why then should schools not try to introduce more parents to each other? Elsewhere, we know that prisoners who keep good social links to the outside world find it easier to rehabilitate. So helping them keep in touch with people outside should be a specific aim. <span class="answer-location" id="loc-q5">Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.</span></p>
+<p>And social networks could bring even greater benefits to society. Innovation in business is strongly influenced by the network structure of project teams, and by communication between trading partners or scientists. Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.</p>
+  </div>
+  <div class="divider" data-passage="passage-container-1"></div>
+  <div class="questions-container" id="questions-container-1">
+    <div class="q-group" data-flagrange="1,5">
+      <div class="q-group-header"><div class="q-group-title">Questions 1&ndash;5</div><button type="button" class="flag-toggle" data-flagrange="1,5" title="Flag questions 1-5 for review"><i class="fas fa-flag"></i></button></div>
+      <div class="q-group-instructions">Do the following statements agree with the claims of the writer in the Reading Passage? Choose <b>YES</b> if the statement agrees with the claims of the writer, <b>NO</b> if the statement contradicts the claims of the writer, or <b>NOT GIVEN</b> if it is impossible to say what the writer thinks about this.</div>
+
+      <div class="q-row"><span class="q-num">1</span><span>Policies involving social networking may be successful in tackling problems connected with business, health and other issues.</span></div>
+      <div class="q-row"><select class="q-select" name="q1"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div>
+      <div class="q-row"><span class="q-num">2</span><span>'Social capital' theorists oppose the involvement of the state in helping people build social networks.</span></div>
+      <div class="q-row"><select class="q-select" name="q2"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div>
+      <div class="q-row"><span class="q-num">3</span><span>Social networks could allow parents of young children to share child care arrangements.</span></div>
+      <div class="q-row"><select class="q-select" name="q3"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div>
+      <div class="q-row"><span class="q-num">4</span><span>School social networking sites have a positive effect on the relationships between teaching staff and parents of young children.</span></div>
+      <div class="q-row"><select class="q-select" name="q4"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div>
+      <div class="q-row"><span class="q-num">5</span><span>Allowing prisoners to use social networking sites is a dangerous development that should be stopped.</span></div>
+      <div class="q-row"><select class="q-select" name="q5"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="footer__reviewBtn" id="wsBtn" onclick="openWorkshop()"><i class="fas fa-book-open"></i> Workshop</button><button class="footer__reviewBtn" id="reviewBtn">Review</button>
+  <button id="deliver-button" class="footer__deliverButton"><i class="fas fa-check"></i> Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal-box">
+    <h2>Review Your Answers</h2>
+    <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red dot = flagged.</p>
+    <div class="review-grid" id="reviewGrid"></div>
+    <button class="modal-close-btn" onclick="document.getElementById('reviewModal').style.display='none';">Close</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="submissionModal">
+  <div class="modal-box">
+    <h2>Test Submitted</h2>
+    <p>Thank you for completing the test.</p>
+    <p style="font-size:.85rem;color:#6b7280;margin-bottom:0.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+    <div class="score-hero">
+      <div class="big-num" id="scoreBig">0</div>
+      <div id="scoreTotal">out of 13</div>
+      <div class="band" id="bandDisplay">Band: 0</div>
+      <div class="verdict" id="verdictDisplay"></div>
+    </div>
+    <h3 style="color:#d97706;margin-bottom:0.6rem;">Your Answers</h3>
+    <div id="answerReviewList"></div>
+    <button class="modal-close-btn" onclick="document.getElementById('submissionModal').style.display='none';">Close</button>
+  </div>
+</div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="highlight-yellow" onclick="applyHighlight('highlight-yellow')"></button>
+  <button class="highlight-green" onclick="applyHighlight('highlight-green')"></button>
+  <button class="highlight-blue" onclick="applyHighlight('highlight-blue')"></button>
+</div>
+
+<script>
+/* ============ Answers ============ */
+const TEXT_ANSWERS = {};
+const answerKey = {"1": "YES", "2": "NO", "3": "YES", "4": "NOT GIVEN", "5": "NO"};
+const LOC_ALIAS = {};
+const WORD_BANK = {};
+const bankQuestions = [];
+const textQuestions = Object.keys(TEXT_ANSWERS).map(Number);
+const selectQuestions = Object.keys(answerKey).map(Number);
+const allQuestions = textQuestions.concat(selectQuestions).sort((a,b)=>a-b);
+const TOTAL = allQuestions.length;
+
+function normalizeText(s){ return (s||"").trim().toLowerCase().replace(/\s+/g," "); }
+function formatAnswer(q, ans){
+  if(!ans) return ans;
+  return (bankQuestions.includes(q) && WORD_BANK[ans]) ? `${ans} (${WORD_BANK[ans]})` : ans;
+}
+
+/* ============ Read a student's answer (select / radio / text) ============ */
+function getUserAnswer(qNum){
+  const sel = document.querySelector(`select[name="q${qNum}"]`);
+  if(sel) return sel.value;
+  const radios = document.querySelectorAll(`input[type="radio"][name="q${qNum}"]`);
+  if(radios.length){ const r = document.querySelector(`input[type="radio"][name="q${qNum}"]:checked`); return r ? r.value : ''; }
+  const inp = document.querySelector(`input.q-text[name="q${qNum}"]`);
+  return inp ? inp.value.trim() : '';
+}
+function isAnswered(qNum){ return getUserAnswer(qNum).length > 0; }
+function scrollToQuestion(q){
+  const el = document.querySelector(`[name="q${q}"]`);
+  const target = el ? (el.closest('.mcq-block') || el.closest('.q-group')) : null;
+  if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* ============ MCQ selected styling ============ */
+document.querySelectorAll('.mcq-option input').forEach(radio => {
+  radio.addEventListener('change', () => {
+    radio.closest('.mcq-options').querySelectorAll('.mcq-option').forEach(o => o.classList.toggle('selected', o.querySelector('input').checked));
+  });
+});
+
+/* ============ Flag / review ============ */
+let flaggedRanges = new Set();
+document.querySelectorAll('.flag-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const range = btn.dataset.flagrange;
+    if(flaggedRanges.has(range)){ flaggedRanges.delete(range); btn.classList.remove('flagged'); }
+    else { flaggedRanges.add(range); btn.classList.add('flagged'); }
+    document.querySelectorAll(`.flag-toggle[data-flagrange="${range}"]`).forEach(b => b.classList.toggle('flagged', flaggedRanges.has(range)));
+    updateFlagBadge();
+    updateFooterNav();
+  });
+});
+function updateFlagBadge(){
+  const badge = document.getElementById('flagBadge');
+  let count = 0;
+  flaggedRanges.forEach(r => { const [a,b] = r.split(',').map(Number); count += (b-a+1); });
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+}
+function isFlagged(qNum){
+  for(const r of flaggedRanges){ const [a,b] = r.split(',').map(Number); if(qNum>=a && qNum<=b) return true; }
+  return false;
+}
+
+/* ============ Footer nav ============ */
+function buildFooterNav(){
+  const wrap = document.getElementById('footerNav');
+  wrap.innerHTML = '';
+  allQuestions.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'footer__navbtn'; btn.textContent = q; btn.dataset.q = q;
+    btn.addEventListener('click', () => scrollToQuestion(q));
+    wrap.appendChild(btn);
+  });
+  updateFooterNav();
+}
+function updateFooterNav(){
+  document.querySelectorAll('.footer__navbtn').forEach(btn => {
+    const q = Number(btn.dataset.q);
+    btn.classList.toggle('answered', isAnswered(q));
+    btn.classList.toggle('flagged', isFlagged(q));
+  });
+}
+document.querySelectorAll('select, input').forEach(el => { el.addEventListener('input', updateFooterNav); el.addEventListener('change', updateFooterNav); });
+buildFooterNav();
+
+/* ============ Review modal ============ */
+document.getElementById('reviewBtn').addEventListener('click', () => { buildReviewGrid(); document.getElementById('reviewModal').style.display = 'flex'; });
+document.getElementById('flagOverviewBtn').addEventListener('click', () => { buildReviewGrid(); document.getElementById('reviewModal').style.display = 'flex'; });
+function buildReviewGrid(){
+  const grid = document.getElementById('reviewGrid');
+  grid.innerHTML = '';
+  allQuestions.forEach(q => {
+    const cell = document.createElement('div');
+    cell.className = 'review-cell';
+    cell.textContent = q;
+    if(isAnswered(q)) cell.classList.add('answered');
+    if(isFlagged(q)) cell.classList.add('flagged');
+    cell.addEventListener('click', () => {
+      document.getElementById('reviewModal').style.display = 'none';
+      scrollToQuestion(q);
+    });
+    grid.appendChild(cell);
+  });
+}
+
+/* ============ Timer ============ */
+let secondsLeft = 8*60;
+let startTime = Date.now();
+function updateTimer(){ if(window.__wsPaused) return;
+  const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+  const el = document.getElementById('testTimer');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.classList.toggle('low', secondsLeft <= 180);
+  if(secondsLeft <= 0){ clearInterval(timerInterval); showSubmissionModal(); return; }
+  secondsLeft--;
+}
+updateTimer();
+const timerInterval = setInterval(updateTimer, 1000);
+
+/* ============ Locate answer in passage ============ */
+function locateAnswerInPassage(qNum){
+  const target = document.getElementById(LOC_ALIAS[qNum] || `loc-q${qNum}`);
+  document.getElementById('submissionModal').style.display = 'none';
+  document.querySelectorAll('.answer-location.location-found').forEach(el => el.classList.remove('location-found'));
+  if(target){
+    target.classList.add('location-found');
+    setTimeout(() => target.scrollIntoView({behavior:'smooth', block:'center'}), 60);
+    setTimeout(() => target.classList.remove('location-found'), 3200);
+  } else {
+    alert('No specific location is marked for this question.');
+  }
+}
+
+/* ============ Scoring ============ */
+function calculateBandScore(score, total){
+  const pct = score/total;
+  if(pct >= 0.93) return 9.0;
+  if(pct >= 0.86) return 8.5;
+  if(pct >= 0.79) return 8.0;
+  if(pct >= 0.71) return 7.5;
+  if(pct >= 0.64) return 7.0;
+  if(pct >= 0.57) return 6.5;
+  if(pct >= 0.50) return 6.0;
+  if(pct >= 0.43) return 5.5;
+  if(pct >= 0.36) return 5.0;
+  return 0.0;
+}
+let resultsShown = false;
+function showSubmissionModal(){
+  let score = 0;
+  const reviewList = document.getElementById('answerReviewList');
+  reviewList.innerHTML = '';
+  allQuestions.forEach(qNum => {
+    const userAns = getUserAnswer(qNum);
+    let correctAns = '', isCorrect = false;
+    if(selectQuestions.includes(qNum)){
+      correctAns = answerKey[qNum];
+      isCorrect = userAns === correctAns;
+    } else {
+      const accepted = TEXT_ANSWERS[qNum];
+      isCorrect = accepted.some(a => normalizeText(a) === normalizeText(userAns));
+      correctAns = accepted[0];
+    }
+    if(isCorrect) score++;
+    const item = document.createElement('div');
+    item.className = 'answer-item' + (isCorrect ? '' : ' wrong');
+    item.innerHTML = `<span class="ai-check">${isCorrect ? '✓' : '✗'}</span><b>Question ${qNum}:</b> ${formatAnswer(qNum, userAns) || '(not answered)'}<br><span class="ai-correct">(Correct answer: ${formatAnswer(qNum, correctAns)}) <button class="ai-locate-btn" onclick="locateAnswerInPassage(${qNum})">Show in passage</button></span>`;
+    reviewList.appendChild(item);
+  });
+  document.getElementById('scoreBig').textContent = score;
+  document.getElementById('scoreTotal').textContent = `out of ${TOTAL}`;
+  const band = calculateBandScore(score, TOTAL);
+  document.getElementById('bandDisplay').textContent = 'Band: ' + band.toFixed(1);
+  const verdictEl = document.getElementById('verdictDisplay');
+  const pct = score/TOTAL;
+  if(pct >= 0.9) verdictEl.textContent = 'Excellent!';
+  else if(pct >= 0.7) verdictEl.textContent = 'Very good!';
+  else if(pct >= 0.45) verdictEl.textContent = 'Good effort!';
+  else verdictEl.textContent = 'Keep practicing!';
+  const elapsed = Math.floor((Date.now()-startTime)/1000);
+  document.getElementById('timeSpentDisplay').textContent = `${Math.floor(elapsed/60)}m ${elapsed%60}s`;
+  document.getElementById('submissionModal').style.display = 'flex';
+  resultsShown = true;
+  clearInterval(timerInterval);
+  document.querySelectorAll('select, input').forEach(el => el.disabled = true);
+  document.getElementById('deliver-button').disabled = true;
+}
+document.getElementById('deliver-button').addEventListener('click', function(){
+  if(resultsShown){ document.getElementById('submissionModal').style.display = 'flex'; return; }
+  if(confirm('Are you sure you want to submit the test? You cannot change your answers after submitting.')){
+    showSubmissionModal();
+  }
+});
+
+/* ============ Dark mode / text size ============ */
+function toggleDarkMode(){
+  document.body.classList.toggle('dark');
+  const icon = document.querySelector('#darkModeToggle i');
+  icon.className = document.body.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+}
+document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+let textScale = 1;
+document.getElementById('textIncreaseBtn').addEventListener('click', () => { textScale = Math.min(1.4, textScale+0.1); document.body.style.fontSize = textScale+'rem'; });
+document.getElementById('textDecreaseBtn').addEventListener('click', () => { textScale = Math.max(0.8, textScale-0.1); document.body.style.fontSize = textScale+'rem'; });
+
+/* ============ Draggable divider ============ */
+document.querySelectorAll('.divider').forEach(divider => {
+  let dragging = false;
+  divider.addEventListener('mousedown', () => { dragging = true; divider.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { dragging = false; divider.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', (e) => {
+    if(!dragging) return;
+    const container = divider.parentElement;
+    const rect = container.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    const passage = document.getElementById(divider.dataset.passage);
+    if(passage && pct > 0.15 && pct < 0.85){
+      passage.style.flex = `0 0 ${pct*100}%`;
+      passage.nextElementSibling.nextElementSibling.style.flex = `0 0 ${(1-pct)*100 - 1}%`;
+    }
+  });
+});
+
+/* ============ Highlighter ============ */
+function handleTextSelection(e){
+  const sel = window.getSelection();
+  const popup = document.getElementById('highlightPopup');
+  if(sel && sel.toString().trim().length > 0 && e.target.closest('.passage-container')){
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    popup.style.left = (rect.left + window.scrollX) + 'px';
+    popup.style.top = (rect.top + window.scrollY - 40) + 'px';
+    popup.style.display = 'flex';
+    window._activeRange = range;
+  } else if(!e.target.closest('.highlight-popup')){
+    popup.style.display = 'none';
+  }
+}
+document.addEventListener('mouseup', handleTextSelection);
+function applyHighlight(cls){
+  const range = window._activeRange;
+  if(!range) return;
+  const span = document.createElement('span');
+  span.className = cls;
+  try{ range.surroundContents(span); } catch(e){}
+  document.getElementById('highlightPopup').style.display = 'none';
+  window.getSelection().removeAllRanges();
+}
+</script>
+<div id="ws-overlay"><div class="ws-top"><div><div class="ws-title"><i class="fas fa-book-open"></i> Workshop</div><div class="ws-sub">Let&#x27;s all be friends</div></div><button class="ws-close" id="ws-x">Close &times;</button></div><div class="ws-tabs" id="ws-tabs"></div><div class="ws-main" id="ws-main"></div></div>
+<script id="ws-script">
+(function(){
+const D={"words": [{"head": "persuade", "pos": "v.", "df": "to make someone do something by giving reasons", "uz": "ishontirmoq", "ex": "Governments must persuade people."}, {"head": "hype", "pos": "n.", "df": "exaggerated publicity", "uz": "bo'rttirilgan reklama", "ex": "Claims are based on the hype around websites."}, {"head": "pattern", "pos": "n.", "df": "a regular arrangement or way of behaving", "uz": "andoza, qonuniyat", "ex": "Groups form particular patterns."}, {"head": "unlikely example", "pos": "collocation", "df": "a surprising case", "uz": "kutilmagan misol", "ex": "Take an unlikely example: stage musicals."}, {"head": "sociologist", "pos": "n.", "df": "a scientist who studies society", "uz": "sotsiolog", "ex": "He is a sociologist in Chicago."}, {"head": "profitable", "pos": "adj.", "df": "making money", "uz": "foydali, daromadli", "ex": "The show was profitable."}, {"head": "sequel", "pos": "n.", "df": "a later work that continues an earlier one", "uz": "davomi (ikkinchi qism)", "ex": "The sequel closed after four nights."}, {"head": "intrigued", "pos": "adj.", "df": "very interested", "uz": "qiziqib qolgan", "ex": "He was intrigued by the result."}, {"head": "crunch", "pos": "v.", "df": "to process large amounts of data", "uz": "ma'lumotni qayta ishlamoq", "ex": "After crunching the statistics, he saw a pattern."}, {"head": "fare poorly", "pos": "collocation", "df": "to perform badly", "uz": "yomon natija ko'rsatmoq", "ex": "New teams fared poorly."}, {"head": "flop", "pos": "n.", "df": "a complete failure", "uz": "muvaffaqiyatsizlik", "ex": "The shows were flops."}, {"head": "lacking", "pos": "adj.", "df": "without something needed", "uz": "yetishmaydigan", "ex": "Lacking new ideas, they repeated old ones."}, {"head": "rehash", "pos": "v.", "df": "to use old ideas again without change", "uz": "eski narsani qaytarmoq", "ex": "The team rehashed the same ideas."}, {"head": "lightning never strikes twice", "pos": "idiom", "df": "a lucky event rarely repeats", "uz": "omad ikki marta kelmaydi", "ex": "Lightning rarely struck twice."}, {"head": "density", "pos": "n.", "df": "how closely connected or packed something is", "uz": "zichlik", "ex": "The density of ties mattered."}, {"head": "foster", "pos": "v.", "df": "to help something grow", "uz": "rivojlantirmoq", "ex": "This fostered creativity."}, {"head": "mesh with", "pos": "phrasal verb", "df": "to fit together well", "uz": "uyg'unlashmoq", "ex": "New ideas meshed with experience."}, {"head": "implication", "pos": "n.", "df": "a possible effect", "uz": "oqibat", "ex": "This has implications for policy."}, {"head": "junk food", "pos": "collocation", "df": "unhealthy food", "uz": "zararli tez ovqat", "ex": "Teenagers eat junk food."}, {"head": "budget savings", "pos": "collocation", "df": "money saved by spending less", "uz": "byudjet tejami", "ex": "Governments could make budget savings."}, {"head": "overly simplistic", "pos": "collocation", "df": "too simple to be accurate", "uz": "haddan ortiq sodda", "ex": "The distinction is overly simplistic."}, {"head": "social capital", "pos": "collocation", "df": "the value of relationships in society", "uz": "ijtimoiy kapital", "ex": "Social capital theory stresses links."}, {"head": "to little practical effect", "pos": "collocation", "df": "without making much real difference", "uz": "amaliy ta'sirsiz", "ex": "Experts pushed this to little practical effect."}, {"head": "rehabilitate", "pos": "v.", "df": "to help return to normal life", "uz": "reabilitatsiya qilmoq", "ex": "Prisoners find it easier to rehabilitate."}, {"head": "innovation", "pos": "n.", "df": "a new idea or method", "uz": "yangilik, innovatsiya", "ex": "Innovation is influenced by networks."}, {"head": "tap into", "pos": "phrasal verb", "df": "to use a source of something", "uz": "... dan foydalanmoq", "ex": "Policies could tap into this."}, {"head": "norm", "pos": "n.", "df": "a standard of behaviour", "uz": "me'yor, qoida", "ex": "They set up new social norms."}, {"head": "outlay", "pos": "n.", "df": "money spent on something", "uz": "xarajat", "ex": "There is little financial outlay."}, {"head": "unpick", "pos": "v.", "df": "to understand something by studying its parts", "uz": "tahlil qilib ochmoq", "ex": "Policies help unpick pressing problems."}, {"head": "bridge the divide", "pos": "idiom", "df": "to bring two sides closer together", "uz": "ikki tomonni yaqinlashtirmoq", "ex": "They might bridge the divide."}], "cloze": [{"pre": "It took weeks to ", "post": " the council to repair the playground, but the children finally got new swings.", "tok": "persuade", "uz": "ishontirmoq", "df": "to make someone do something by giving reasons"}, {"pre": "Despite the enormous ", "post": ", the new phone offered few real improvements, and reviewers were unimpressed.", "tok": "hype", "uz": "bo'rttirilgan reklama", "df": "exaggerated publicity"}, {"pre": "Scientists study ", "post": " in the weather over decades, hoping to predict droughts and floods more accurately.", "tok": "patterns", "uz": "andoza, qonuniyat", "df": "a regular arrangement or way of behaving"}, {"pre": "A tiny village shop seems an ", "post": " of a successful business, yet it earns millions online.", "tok": "unlikely example", "uz": "kutilmagan misol", "df": "a surprising case"}, {"pre": "The ", "post": " interviewed hundreds of families to find out how neighbours help each other in times of crisis.", "tok": "sociologist", "uz": "sotsiolog", "df": "a scientist who studies society"}, {"pre": "The ", "post": " bakery opened a second branch within a year and now employs thirty people.", "tok": "profitable", "uz": "foydali, daromadli", "df": "making money"}, {"pre": "The ", "post": " was less popular than the original, and critics said it repeated the same jokes.", "tok": "sequel", "uz": "davomi (ikkinchi qism)", "df": "a later work that continues an earlier one"}, {"pre": "I was ", "post": " by the strange noise from the attic and went upstairs with a torch.", "tok": "intrigued", "uz": "qiziqib qolgan", "df": "very interested"}, {"pre": "Analysts have been ", "post": " the figures all night, and they will publish the results tomorrow morning.", "tok": "crunching", "uz": "ma'lumotni qayta ishlamoq", "df": "to process large amounts of data"}, {"pre": "The team ", "post": " in the first half, but a clever substitution changed the whole game.", "tok": "fared poorly", "uz": "yomon natija ko'rsatmoq", "df": "to perform badly"}, {"pre": "Several expensive films became box-office ", "post": " last summer, and two studios lost millions of dollars.", "tok": "flops", "uz": "muvaffaqiyatsizlik", "df": "a complete failure"}, {"pre": "The report is ", "post": " in detail, so the committee has asked the author to provide more evidence.", "tok": "lacking", "uz": "yetishmaydigan", "df": "without something needed"}, {"pre": "The comedian ", "post": " old jokes from his earlier shows, and the audience yawned throughout the evening.", "tok": "rehashed", "uz": "eski narsani qaytarmoq", "df": "to use old ideas again without change"}, {"pre": "Though she tried again, ", "post": ", and her second novel sold only a few copies.", "tok": "lightning rarely struck twice", "uz": "omad ikki marta kelmaydi", "df": "a lucky event rarely repeats"}, {"pre": "The ", "post": " of the fog was frightening; drivers could not see the road a few metres ahead.", "tok": "density", "uz": "zichlik", "df": "how closely connected or packed something is"}, {"pre": "The club ", "post": " friendships between old and young members by organising dinners, walks and quiz nights.", "tok": "fostered", "uz": "rivojlantirmoq", "df": "to help something grow"}, {"pre": "The wheels of the old clock ", "post": " one another perfectly, and the hands moved without a sound.", "tok": "meshed with", "uz": "uyg'unlashmoq", "df": "to fit together well"}, {"pre": "The report's ", "post": " for schools are serious, because it suggests that thousands of teachers will soon retire.", "tok": "implications", "uz": "oqibat", "df": "a possible effect"}, {"pre": "Eating ", "post": " every day can lead to weight gain, tiredness and problems with the heart.", "tok": "junk food", "uz": "zararli tez ovqat", "df": "unhealthy food"}, {"pre": "", "post": " from the closure were spent on repairing roads and replacing the oldest buses.", "tok": "Budget savings", "uz": "byudjet tejami", "df": "money saved by spending less"}, {"pre": "The solution is ", "post": ", as it ignores the cost of training and the difficulty of finding staff.", "tok": "overly simplistic", "uz": "haddan ortiq sodda", "df": "too simple to be accurate"}, {"pre": "Villages with strong ", "post": " recover faster from disasters, because neighbours trust and help one another.", "tok": "social capital", "uz": "ijtimoiy kapital", "df": "the value of relationships in society"}, {"pre": "The new law was introduced ", "post": ", since few officers had been trained to enforce it.", "tok": "to little practical effect", "uz": "amaliy ta'sirsiz", "df": "without making much real difference"}, {"pre": "Volunteers ", "post": " injured owls in the sanctuary, then release them into the forest when they are strong.", "tok": "rehabilitate", "uz": "reabilitatsiya qilmoq", "df": "to help return to normal life"}, {"pre": "", "post": " is the company's strength, and each year its engineers invent products that surprise the market.", "tok": "Innovation", "uz": "yangilik, innovatsiya", "df": "a new idea or method"}, {"pre": "Advertisers try to ", "post": " young people's love of music by sponsoring concerts and festivals.", "tok": "tap into", "uz": "... dan foydalanmoq", "df": "to use a source of something"}, {"pre": "Social ", "post": " vary: in some places it is rude to arrive early, while in others it is polite.", "tok": "norms", "uz": "me'yor, qoida", "df": "a standard of behaviour"}, {"pre": "The initial ", "post": " on equipment was large, but the machines saved the factory a fortune in wages.", "tok": "outlay", "uz": "xarajat", "df": "money spent on something"}, {"pre": "It will take weeks to ", "post": " the contract and discover exactly who is responsible for the delays.", "tok": "unpick", "uz": "tahlil qilib ochmoq", "df": "to understand something by studying its parts"}, {"pre": "The new community centre helps to ", "post": " between young and old residents of the neighbourhood.", "tok": "bridge the divide", "uz": "ikki tomonni yaqinlashtirmoq", "df": "to bring two sides closer together"}], "para": [["Policies involving social networking may be successful in tackling problems connected with business, health and other issues.", "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could …"], ["Social networks could allow parents of young children to share child care arrangements.", "If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems."]], "ptab": [["tackling problems connected with business, health and other issues", "From healthcare to climate change, governments today face a range of problems"], ["parents of young children to share child care arrangements", "save money on childcare by relying on friends"], ["successful", "profitable"], ["parents of young children", "working parents with young children"], ["arrangements", "systems"]], "evid": [{"k": "TF3", "lab": "TFNG", "q": "Policies involving social networking may be successful in tackling problems connected with business, health and other issues.", "opts": ["YES", "NO", "NOT GIVEN"], "a": "YES", "o": ["But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave.", "Innovation in business is strongly influenced by the network structure of project teams, and by communication between trading partners or scientists.", "And social networks could bring even greater benefits to society.", "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "None of these sentences answers the question."], "c": 3, "ev": "If \u0001policies\u0002 which \u0001involve\u0002 the use of \u0001social\u0002 \u0001networks\u0002 could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to \u0001tackle\u0002 other \u0001problems\u0002.", "n": 1}, {"k": "TF3", "lab": "TFNG", "q": "'Social capital' theorists oppose the involvement of the state in helping people build social networks.", "opts": ["YES", "NO", "NOT GIVEN"], "a": "NO", "o": ["And social networks could bring even greater benefits to society.", "Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.", "But maybe instead of relying on their powers of persuasion, governments should consider using the science of social networks as a tool to do this.", "Experts in 'social capital' theory have pushed this for years, to little practical effect.", "None of these sentences answers the question."], "c": 3, "ev": "Experts in 'social \u0001capital\u0002' \u0001theory\u0002 have pushed this for years, to little practical effect.", "n": 2}, {"k": "TF3", "lab": "TFNG", "q": "Social networks could allow parents of young children to share child care arrangements.", "opts": ["YES", "NO", "NOT GIVEN"], "a": "YES", "o": ["New research shows how the people we are in social contact with can influence us for better – and worse.", "The shape of these networks has surprising effects.", "But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave.", "If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.", "None of these sentences answers the question."], "c": 3, "ev": "If working \u0001parents\u0002 with \u0001young\u0002 \u0001children\u0002 had better \u0001social\u0002 links, they could save money on \u0001childcare\u0002 by relying on friends, or even setting up their own \u0001childcare\u0002 systems.", "n": 3}, {"k": "TF3", "lab": "TFNG", "q": "School social networking sites have a positive effect on the relationships between teaching staff and parents of young children.", "opts": ["YES", "NO", "NOT GIVEN"], "a": "NOT GIVEN", "o": ["If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.", "Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.", "But maybe instead of relying on their powers of persuasion, governments should consider using the science of social networks as a tool to do this.", "True, many claims for the power of these are based on the hype surrounding major social networking websites.", "None of these sentences answers the question."], "c": 4, "ev": "", "n": 4}]};
+const $=(s,r)=>(r||document).querySelector(s);
+const ov=$('#ws-overlay'), main=$('#ws-main'), tabsEl=$('#ws-tabs');
+const done={};
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// ---------- read aloud (Web Speech API)
+const TTS=('speechSynthesis' in window)&&('SpeechSynthesisUtterance' in window);
+let voice=null, speakTok=0;
+function pickVoice(){try{const v=speechSynthesis.getVoices();voice=v.find(x=>/^en[-_]GB/i.test(x.lang))||v.find(x=>/^en[-_]US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null;}catch(e){}}
+if(TTS){pickVoice();try{speechSynthesis.addEventListener('voiceschanged',pickVoice);}catch(e){}}
+function sayText(t){return String(t).replace(/\([^)]*\)/g,' ').replace(/\//g,' or ').replace(/[\u2026_]+/g,' ').replace(/\s+/g,' ').trim();}
+let readStop=null;
+function stopSay(){if(readStop)readStop();stopSpeech();}
+function stopSpeech(){if(!TTS)return;speakTok++;try{speechSynthesis.cancel();}catch(e){}document.querySelectorAll('.ws-say.on').forEach(b=>b.classList.remove('on'));}
+function say(t,rate,done,btn){
+  if(!TTS){if(done)done();return;}
+  stopSpeech(); const tok=speakTok; const u=new SpeechSynthesisUtterance(sayText(t));
+  u.lang=voice?voice.lang:'en-GB'; if(voice)u.voice=voice; u.rate=rate||0.9;
+  if(btn)btn.classList.add('on');
+  u.onend=u.onerror=()=>{if(btn)btn.classList.remove('on'); if(done&&tok===speakTok)done();};
+  try{speechSynthesis.speak(u);}catch(e){if(done)done();}
+}
+function sayBtn(txt,cls,rate){
+  if(!TTS)return null;
+  const b=document.createElement('button');b.type='button';b.className='ws-say '+(cls||'');b.innerHTML='&#128266;';b.title='Listen';b.setAttribute('aria-label','Listen');
+  b.onclick=e=>{e.stopPropagation();e.preventDefault();say(txt,rate,null,b);};
+  return b;
+}
+const STEPS=[
+ {id:'cards',t:'1 Word cards'},
+ {id:'mean',t:'2 Meaning match'},
+ {id:'uz',t:'3 Translation match'},
+ {id:'use',t:'4 Use the words'},
+ {id:'para',t:'5 Paraphrase table'},
+ {id:'evid',t:'6 Evidence hunt'}];
+function mark(id){done[id]=1;drawTabs();}
+function drawTabs(){
+  tabsEl.innerHTML='';
+  STEPS.forEach(s=>{
+    if(s.id==='para'&&!D.ptab.length) return;
+    if(s.id==='evid'&&!D.evid.length) return;
+    const b=document.createElement('button');b.className='ws-tab'+(cur===s.id?' on':'');
+    b.innerHTML=s.t+(done[s.id]?'<span class="ws-done">&#10003;</span>':'');
+    b.onclick=()=>go(s.id);tabsEl.appendChild(b);});
+}
+let cur='cards';
+function go(id){stopSay();cur=id;drawTabs();main.innerHTML='';({cards,mean:()=>match('mean'),uz:()=>match('uz'),use,para:()=>para(),evid})[id]();window.scrollTo(0,0);ov.scrollTop=0;}
+// ---------- flashcards
+function cards(){
+  let order=D.words.map((w,i)=>i), i=0; const known=new Set(); let auto=true, reading=false; readStop=()=>{reading=false;};
+  main.innerHTML='<div class="ws-card-h">Word cards</div><p class="ws-help">Read the word, say it aloud, then click the card to see the meaning, the Uzbek translation and an example. Press the speaker to <b>hear</b> the word or the example sentence. Mark each card as <b>Know it</b> or <b>Still learning</b>.</p><div class="ws-prog" id="fcp"></div><div class="ws-fc"><div class="ws-fc-in" id="fci"></div></div><div class="ws-row"><button class="ws-btn" id="fcprev">&larr; Back</button><button class="ws-btn bad" id="fcno">Still learning</button><button class="ws-btn good" id="fcyes">Know it</button><button class="ws-btn" id="fcnext">Next &rarr;</button></div><div class="ws-row"><button class="ws-btn" id="fcsh">Shuffle</button>'+(TTS?'<button class="ws-btn pri" id="fcall">&#9654; Read all words aloud</button>':'')+'</div>'+(TTS?'<label class="ws-tick"><input type="checkbox" id="fcauto" checked> Say each new word automatically</label>':'<div class="ws-prog">Your browser has no speech voice, so the listen buttons are hidden.</div>');
+  const fci=$('#fci');
+  function draw(speak){
+    const w=D.words[order[i]];
+    fci.classList.remove('flip');
+    fci.innerHTML='<div class="ws-face"><div class="ws-word">'+esc(w.head)+'</div><div class="ws-pos">'+esc(w.pos)+'</div><div class="ws-faceRow" id="fsf"></div><div class="ws-hint">Click to flip</div></div><div class="ws-face ws-back"><div class="ws-uz">'+esc(w.uz)+'</div><div class="ws-def">'+esc(w.df)+'</div><div class="ws-ex">'+esc(w.ex)+'</div><div class="ws-faceRow" id="fsb"></div></div>';
+    if(TTS){
+      const a=sayBtn(w.head,'',0.8); $('#fsf').appendChild(a);
+      const b1=sayBtn(w.head,'',0.8), b2=sayBtn(w.ex,'',0.9); const bx=$('#fsb');
+      const l1=document.createElement('span');l1.className='ws-hint';l1.style.margin='0';l1.textContent='word';
+      const l2=document.createElement('span');l2.className='ws-hint';l2.style.margin='0';l2.textContent='example';
+      bx.appendChild(b1);bx.appendChild(l1);bx.appendChild(b2);bx.appendChild(l2);
+      if(speak&&auto&&!reading) say(w.head,0.8,null,a);
+    }
+    $('#fcp').textContent='Card '+(i+1)+' of '+order.length+' • Known: '+known.size;
+  }
+  fci.onclick=()=>fci.classList.toggle('flip');
+  function stopAll(){reading=false;stopSay();const b=$('#fcall');if(b)b.innerHTML='&#9654; Read all words aloud';}
+  $('#fcprev').onclick=()=>{stopAll();i=(i-1+order.length)%order.length;draw(true);};
+  $('#fcnext').onclick=()=>{stopAll();i=(i+1)%order.length;draw(true);};
+  $('#fcyes').onclick=()=>{stopAll();known.add(order[i]);if(known.size===order.length)mark('cards');i=(i+1)%order.length;draw(true);};
+  $('#fcno').onclick=()=>{stopAll();known.delete(order[i]);i=(i+1)%order.length;draw(true);};
+  $('#fcsh').onclick=()=>{stopAll();order=shuffle(order);i=0;draw(true);};
+  const ca=$('#fcauto'); if(ca) ca.onchange=()=>{auto=ca.checked;};
+  const all=$('#fcall');
+  if(all) all.onclick=()=>{
+    if(reading){stopAll();return;}
+    reading=true; all.innerHTML='&#9632; Stop'; i=0; draw(false);
+    (function step(){
+      if(!reading)return;
+      const w=D.words[order[i]]; fci.classList.remove('flip');
+      say(w.head,0.8,()=>{ if(!reading)return; setTimeout(()=>{ if(!reading)return; fci.classList.add('flip');
+        say(w.ex,0.9,()=>{ if(!reading)return; setTimeout(()=>{ if(!reading)return;
+          if(i<order.length-1){i++;draw(false);step();} else {stopAll();}
+        },700);});
+      },500);});
+    })();
+  };
+  draw(true);
+}
+// ---------- matching (meaning / uzbek / paraphrase)
+function matchUI(title,help,pairs,doneKey,leftCls,rightCls,opts){
+  const CH=6; let round=0; let total=0;
+  const rounds=[];for(let k=0;k<pairs.length;k+=CH)rounds.push(pairs.slice(k,k+CH));
+  function draw(){
+    const R=rounds[round]; let sel=null, ok=0;
+    const left=R.map((p,i)=>({i,t:p[0],s:p[2]})), right=shuffle(R.map((p,i)=>({i,t:p[1]})));
+    main.innerHTML='<div class="ws-card-h">'+title+'</div><p class="ws-help">'+help+'</p><div class="ws-prog">Round '+(round+1)+' of '+rounds.length+' • Matched so far: '+total+' / '+pairs.length+'</div><div class="ws-cols"><div id="mL"></div><div id="mR"></div></div><div class="ws-score" id="msc"></div><div class="ws-row"><button class="ws-btn" id="mre">Restart this round</button></div>';
+    if(opts&&opts.bar) main.insertBefore(opts.bar(),main.firstChild);
+    function mk(arr,box,cls,side){
+      arr.forEach(o=>{const d=document.createElement('div');d.className='ws-item '+cls;d.innerHTML=o.t;d.dataset.i=o.i;
+        if(side==='L'&&o.s){const sb=sayBtn(o.s,'sm');if(sb){sb.style.float='right';d.appendChild(sb);}}
+        d.onclick=()=>{
+          if(d.classList.contains('ok'))return;
+          if(!sel||sel.side===side){ if(sel)sel.el.classList.remove('sel'); sel={el:d,side,i:o.i}; d.classList.add('sel'); return;}
+          const a=sel; sel=null; a.el.classList.remove('sel');
+          if(a.i===o.i){a.el.classList.add('ok');d.classList.add('ok');ok++;total++;
+            if(ok===R.length){ if(round<rounds.length-1){$('#msc').innerHTML='Round complete! <button class="ws-btn pri" id="mnx">Next round &rarr;</button>';$('#mnx').onclick=()=>{round++;draw();};}
+              else{$('#msc').textContent='✓ All '+pairs.length+' matched – well done!';if(opts&&opts.onDone)opts.onDone();else mark(doneKey);} }
+          } else {a.el.classList.add('no');d.classList.add('no');setTimeout(()=>{a.el.classList.remove('no');d.classList.remove('no');},450);}
+        };box.appendChild(d);});
+    }
+    mk(left,$('#mL'),leftCls,'L'); mk(right,$('#mR'),rightCls,'R');
+    $('#mre').onclick=()=>{total-=ok;draw();};
+  }
+  draw();
+}
+function match(kind){
+  if(kind==='mean') matchUI('Meaning match','Click a word, then click its meaning. Wrong pairs shake – try again.',D.words.map(w=>['<b>'+esc(w.head)+'</b>',esc(w.df),w.head]),'mean','','');
+  else matchUI('Translation match','Click an English word, then click its Uzbek translation.',D.words.map(w=>['<b>'+esc(w.head)+'</b>','<span class="ws-uzb">'+esc(w.uz)+'</span>',w.head]),'uz','','');
+}
+function para(){
+  matchUI('Paraphrase table','The questions never copy the passage. Match each <b>word or phrase from the questions</b> with the <b>words used in the passage</b> that mean the same thing.',D.ptab.map(p=>[esc(p[0]),esc(p[1])]),'para','','',{});
+}
+// ---------- evidence hunt
+function mk(t){return esc(t).replace(/\u0001/g,'<mark>').replace(/\u0002/g,'</mark>');}
+function evid(){
+  const Q=D.evid; let okc=0;
+  main.innerHTML='<div class="ws-card-h">Evidence hunt</div><p class="ws-help">In IELTS every answer is <b>proved by one place in the passage</b>. For each question, first <b>decide the answer yourself</b>, then <b>find the sentence that proves it</b>. If you think the passage never answers the question, choose &ldquo;None of these sentences&rdquo;. Nothing is shown until you answer.</p><div class="ws-prog" id="evp"></div><div id="evb"></div><div class="ws-score" id="evs"></div>';
+  const box=$('#evb');
+  const norm=t=>String(t).toLowerCase().replace(/[’']/g,"'").replace(/[-–]/g,' ').replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim();
+  function upd(){$('#evp').textContent='Completed '+okc+' of '+Q.length;if(okc===Q.length){$('#evs').textContent='✓ Every answer decided and every piece of evidence found – well done!';mark('evid');}}
+  Q.forEach((q,qi)=>{
+    const c=document.createElement('div');c.className='ev-card';
+    const needAns=q.k!=='EV'; let ansOk=!needAns, evOk=false, wrongA=0, wrongE=0, fin=false;
+    const task={TF3:'<b>Step 1.</b> Decide: is the statement True, False or Not Given?',MC:'<b>Step 1.</b> Choose the correct answer.',WP:'<b>Step 1.</b> Which paragraph contains this information?',GAP:'<b>Step 1.</b> Type the missing word(s) or number, exactly as in the passage.'}[q.k]||'';
+    c.innerHTML='<div><b>Question '+(qi+1)+'</b> · <span class="ev-tag">'+esc(q.lab)+'</span></div><div class="ev-q">'+esc(q.q)+'</div>'+
+      (needAns?'<div class="ev-task">'+task+'</div><div class="ev-a"></div>':'')+
+      '<div class="ev-task"><b>'+(needAns?'Step 2.':'')+'</b> Which sentence in the passage gives the evidence?'+(q.k==='EV'?' (Find the sentence that matches this statement.)':'')+'</div><div class="ev-opts"></div><div class="ev-why"></div>';
+    const ab=c.querySelector('.ev-a'), ob=c.querySelector('.ev-opts'), why=c.querySelector('.ev-why');
+    function hint(){ if(!why.dataset.h && (wrongA>=2||wrongE>=2)){why.dataset.h=1;why.style.display='block';why.innerHTML='Hint: the question never copies the passage. Look for a sentence with <b>different words that mean the same thing</b> – and check every detail (names, numbers, direction) before you decide.';} }
+    function check(){ if(ansOk&&evOk&&!fin){fin=true;okc++;upd();} }
+    function wrongFlash(el){el.classList.add('no');setTimeout(()=>el.classList.remove('no'),500);}
+    // ---- step 1: answer
+    if(q.k==='TF3'||q.k==='WP'||q.k==='MC'){
+      const list=q.k==='MC'?q.opts.map(o=>[o[0],o[0]+'  '+o[1]]):q.opts.map(o=>[o,o]);
+      list.forEach(([val,txt])=>{const d=document.createElement('div');d.className='ev-opt ev-ch';d.textContent=txt;
+        d.onclick=()=>{ if(ansOk)return;
+          if(val===q.a){ansOk=true;d.classList.add('ok');ab.querySelectorAll('.ev-opt').forEach(x=>x.classList.add('lock'));check();}
+          else{wrongA++;wrongFlash(d);hint();}};ab.appendChild(d);});
+    } else if(q.k==='GAP'){
+      ab.innerHTML='<input class="ev-in" type="text" placeholder="your answer" autocomplete="off"><button class="ws-btn pri ev-go" type="button">Check</button><span class="ev-msg"></span>';
+      const inp=ab.querySelector('input'), msg=ab.querySelector('.ev-msg');
+      const go1=()=>{ if(ansOk)return; if(norm(inp.value)===norm(q.a)){ansOk=true;inp.disabled=true;inp.classList.add('ok');msg.textContent='✓';check();} else {wrongA++;wrongFlash(inp);msg.textContent='Not yet – re-read the evidence.';hint();} };
+      ab.querySelector('.ev-go').onclick=go1; inp.onkeydown=e=>{if(e.key==='Enter')go1();};
+    }
+    // ---- step 2: evidence
+    const idx=q.o.map((_,i)=>i); shuffle(idx).forEach(i=>{
+      const d=document.createElement('div');d.className='ev-opt';d.textContent=q.o[i];
+      d.onclick=()=>{ if(evOk)return;
+        if(i===q.c){evOk=true;d.classList.add('ok');ob.querySelectorAll('.ev-opt').forEach(x=>x.classList.add('lock'));
+          if(i===q.o.length-1){why.innerHTML='<b>Correct – NOT GIVEN.</b> These sentences are on the same topic, but none of them says what the question asks. If the passage never states it (and never states the opposite), the answer is Not Given.';}
+          else{d.innerHTML=mk(q.ev);why.innerHTML='<b>Evidence found.</b> The highlighted words are the ones that match the question – notice how the passage paraphrases it.';}
+          why.style.display='block';check();
+        } else {wrongE++;wrongFlash(d);hint();}};
+      ob.appendChild(d);});
+    box.appendChild(c);});
+  upd();
+}
+// ---------- use the words (cloze)
+function use(){
+  const S=D.cloze; let picked=null; const filled={};
+  main.innerHTML='<div class="ws-card-h">Use the words</div><p class="ws-help">Click a word in the bank, then click the gap where it fits. The Uzbek hint is under each sentence. You may need to change the shape of a word – the bank already shows the correct form.</p><div class="ws-bank" id="bank"></div><div id="sents"></div><div class="ws-score" id="usc"></div>';
+  const bank=$('#bank'), box=$('#sents'); let correct=0;
+  shuffle(S.map((s,i)=>i)).forEach(i=>{const c=document.createElement('span');c.className='ws-chip';c.textContent=S[i].tok;c.dataset.i=i;
+    c.onclick=()=>{bank.querySelectorAll('.ws-chip').forEach(x=>x.classList.remove('sel'));if(picked===i){picked=null;return;}picked=i;c.classList.add('sel');};bank.appendChild(c);});
+  S.forEach((s,i)=>{const d=document.createElement('div');d.className='ws-sent';
+    d.innerHTML=esc(s.pre)+'<span class="ws-blank" data-i="'+i+'">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>'+esc(s.post)+'<span class="ws-clue">'+esc(s.uz)+' – '+esc(s.df)+'</span>';
+    const b=d.querySelector('.ws-blank');
+    b.onclick=()=>{
+      if(b.classList.contains('ok'))return;
+      if(picked===null)return;
+      if(picked===i){b.textContent=S[i].tok;b.classList.remove('no');b.classList.add('ok');
+        const chip=bank.querySelector('.ws-chip[data-i="'+picked+'"]');chip.classList.remove('sel');chip.classList.add('used');picked=null;correct++;
+        say(S[i].pre+S[i].tok+S[i].post,0.95);
+        if(correct===S.length){$('#usc').textContent='✓ All sentences complete!';mark('use');}
+      } else {b.classList.add('no');b.textContent=bank.querySelector('.ws-chip[data-i="'+picked+'"]').textContent;setTimeout(()=>{b.classList.remove('no');b.innerHTML='&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';},700);}
+    };
+    box.appendChild(d);});
+}
+window.openWorkshop=function(){window.__wsPaused=true;window.__wsT0=Date.now();ov.classList.add('open');document.body.style.overflow='hidden';go(cur);};
+$('#ws-x').onclick=()=>{stopSay();if(window.__wsPaused){window.__wsPaused=false;try{startTime+=Date.now()-window.__wsT0;}catch(e){}}ov.classList.remove('open');document.body.style.overflow='';};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#ws-x').click();});
+})();
+</script>
+</body>
+</html>

@@ -252,6 +252,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
                   </div>
                   <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
                   {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
+                  {t.kind === 'html' && s.first && <PageAnswer attemptId={s.first.id} />}
                 </li>
               )
             })}
@@ -260,6 +261,47 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
       </div>
     </div>,
     document.body
+  )
+}
+
+// What the student typed on a practice page (Writing pages) and the
+// page's own part scores — loaded when the teacher opens it (2026-11-02).
+function PageAnswer({ attemptId }) {
+  const [open, setOpen] = useState(false)
+  const [res, setRes] = useState(undefined)
+  const toggle = async () => {
+    setOpen((v) => !v)
+    if (res !== undefined) return
+    const { data } = await supabase.from('homework_attempts').select('results').eq('id', attemptId).maybeSingle()
+    setRes(data?.results || null)
+  }
+  return (
+    <div className="w-full">
+      <button type="button" onClick={toggle} className="focus-ring h-9 rounded-[12px] bg-writing-tint px-3 text-[13px] font-extrabold text-writing">
+        {open ? 'Hide answer' : 'Read answer'}
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2">
+          {res === undefined && <p className="text-xs font-bold text-mist">Loading…</p>}
+          {res !== undefined && !res?.texts?.length && !res?.parts?.length && <p className="text-xs font-bold text-mist">Nothing typed on this page — only the score was saved.</p>}
+          {(res?.parts || []).length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              {res.parts.map((p, i) => (
+                <span key={i} className="rounded-lg bg-panel-2 px-2 py-0.5 text-[12px] font-bold text-paper-dim" title={p.label}>
+                  {p.score}/{p.max}
+                </span>
+              ))}
+            </div>
+          )}
+          {(res?.texts || []).map((t) => (
+            <div key={t.id} className="rounded-[14px] bg-panel-2/60 px-3 py-2">
+              <p className="mb-1 text-[11px] font-extrabold uppercase tracking-wide text-mist">{t.text.trim().split(/\s+/).length} words</p>
+              <p className="whitespace-pre-wrap text-sm text-paper">{t.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

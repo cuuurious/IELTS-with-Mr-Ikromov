@@ -12,7 +12,7 @@ export const TASK_KINDS = {
   reading: { label: 'Reading test', short: 'Reading', skill: 'reading', tint: 'bg-reading-tint', text: 'text-reading', solid: 'bg-reading' },
   listening: { label: 'Listening test', short: 'Listening', skill: 'listening', tint: 'bg-listening-tint', text: 'text-listening', solid: 'bg-listening' },
   wordlist: { label: 'Word list', short: 'Words', skill: 'vocab', tint: 'bg-vocab-tint', text: 'text-vocab', solid: 'bg-vocab' },
-  html: { label: 'Workshop', short: 'Workshop', skill: 'general', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', solid: 'bg-brass' },
+  html: { label: 'Practice page', short: 'Page', skill: 'general', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', solid: 'bg-brass' },
   shadowing: { label: 'Shadowing', short: 'Shadowing', skill: 'speaking', tint: 'bg-speaking-tint', text: 'text-speaking', solid: 'bg-speaking' },
 }
 

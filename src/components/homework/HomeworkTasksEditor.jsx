@@ -4,6 +4,8 @@ import { safeFileName } from '../../lib/storageKey'
 import { guessMimeType } from '../../lib/mime'
 import { SkillIcon } from '../SkillArt'
 import MaterialPicker from '../MaterialPicker'
+import BankPicker from '../bank/BankPicker'
+import { shortTitle } from '../../lib/pageBank'
 import { TASK_KINDS, taskTitle } from '../../lib/homeworkTasks'
 
 /*
@@ -23,6 +25,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   const [wordlists, setWordlists] = useState([])
   const [clips, setClips] = useState([])
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [bankOpen, setBankOpen] = useState(false)
   const [newClip, setNewClip] = useState(null) // { title, transcript, file }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -145,7 +148,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
                 setNewClip(null)
                 if (k === 'html') {
                   setAdding(null)
-                  setPickerOpen(true)
+                  setBankOpen(true)
                   return
                 }
                 setAdding(on ? null : k)
@@ -213,6 +216,19 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
       )}
 
       {error && <p className="text-sm font-bold text-coral">{error}</p>}
+
+      <BankPicker
+        open={bankOpen}
+        onClose={() => setBankOpen(false)}
+        onLibrary={() => {
+          setBankOpen(false)
+          setPickerOpen(true)
+        }}
+        onPick={(pages) => {
+          setBankOpen(false)
+          onChange([...tasks, ...pages.map((p) => ({ kind: 'html', html_url: p.url, title: shortTitle(p.title) }))])
+        }}
+      />
 
       <MaterialPicker
         open={pickerOpen}

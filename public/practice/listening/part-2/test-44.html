@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Part 2 – Test 44</title>
+<style>
+:root{--red:#c8102e;--ink:#1a1a1a;--bg:#fff;--line:#c9c9c9;--soft:#f1f1ef;--ok:#1b7a3a;--bad:#b3261e;--accent:#1f5fbf}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);font-size:15px}
+header{position:fixed;top:0;left:0;right:0;height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:20}
+.logo{font-weight:900;color:var(--red);font-size:24px;letter-spacing:-1px}
+.hmid{font-size:13px;line-height:1.25;margin-left:12px;flex:1}
+.hmid b{display:block;font-size:14px}
+#audiostat{color:#555}
+.hbtn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px}
+main{padding:72px 16px 90px;max-width:960px;margin:0 auto}
+.banner{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:18px}
+.banner b{display:block}
+h3{margin:22px 0 4px;font-size:15px}
+.instr{margin:0 0 10px}
+.ptitle{font-weight:700;font-size:17px;margin:10px 0}
+.notes{margin:8px 0 6px}
+.notes .h{font-weight:700;margin:12px 0 4px}
+.notes .t{margin:6px 0}
+.notes .b{margin:6px 0 6px 18px;position:relative}.notes .b:before{content:"•";position:absolute;left:-14px}
+.notes .s{margin:6px 0 6px 38px;position:relative}.notes .s:before{content:"–";position:absolute;left:-14px}
+input.gap{width:140px;height:28px;border:1px solid #777;border-radius:3px;padding:0 6px;text-align:center;font-weight:700;font-size:14px;margin:0 4px;vertical-align:middle;background:#fff}
+input.gap::placeholder{color:#111;opacity:1}
+input.gap:focus{outline:2px solid var(--accent)}
+.q{margin:16px 0}.q .n{display:inline-block;min-width:22px;font-weight:700;border:1px solid transparent;padding:0 3px}
+.q.cur .n{border-color:var(--accent)}
+.opt{display:flex;align-items:center;gap:8px;margin:7px 0 7px 22px;cursor:pointer}
+.opt input{width:16px;height:16px}
+.zone{display:inline-flex;align-items:center;justify-content:center;min-width:150px;height:30px;border:1.5px dashed #555;border-radius:4px;font-weight:700;padding:0 8px;margin:0 6px;vertical-align:middle;background:#fff;cursor:pointer}
+.zone.filled{border-style:solid;background:#f7fbff}
+.zone.over{background:#e6f0ff}
+.zone.letter{min-width:56px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.chip{border:1px solid #666;border-radius:4px;padding:5px 10px;background:#fff;cursor:grab;user-select:none;font-size:14px}
+.chip.sel{outline:2px solid var(--accent);background:#eaf1ff}
+.chip.letter b{margin-right:6px}
+.drow{margin:12px 0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.drow .lab{min-width:170px}
+.mapwrap{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.mapwrap img{max-width:520px;width:100%;border:1px solid var(--line)}
+.helpline{font-size:12px;color:#666;margin:2px 0 8px}
+nav#bar{position:fixed;bottom:0;left:0;right:0;height:52px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:stretch;z-index:20}
+.pt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:14px;color:#444;padding:0 6px;border-right:1px solid #eee}
+.pt.act{flex:3;color:#000;font-weight:700;justify-content:flex-start;padding-left:14px}
+.pt .nums{display:none;gap:4px;flex-wrap:nowrap;font-weight:400}
+.pt.act .nums{display:flex}
+.pt .cnt{font-weight:400;font-size:12px}.pt.act .cnt{display:none}
+.nb{min-width:22px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;border:1px solid transparent;border-radius:2px;cursor:pointer;position:relative}
+.nb.done{font-weight:700;background:#e9f0fb}
+.nb.cur{border-color:var(--accent)}
+.nb.flag:after{content:"";position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%}
+.nb.ok{background:#dff3e5;color:var(--ok)}.nb.no{background:#fbe2e0;color:var(--bad)}
+#submit{width:64px;background:#eee;border:0;cursor:pointer;font-size:22px}
+.arrows{position:fixed;right:16px;bottom:70px;display:flex;gap:2px;z-index:15}
+.arrows button{width:44px;height:44px;border:0;background:#111;color:#fff;font-size:22px;cursor:pointer;border-radius:3px}
+.arrows button.dis{background:#ddd;color:#888}
+.overlay{position:fixed;inset:0;background:rgba(60,60,60,.93);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px}
+.overlay .play{margin-top:20px;background:#000;color:#fff;border:0;border-radius:4px;padding:12px 24px;font-size:16px;cursor:pointer}
+.modal{background:#fff;color:#111;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:8px;padding:24px;text-align:left}
+.score{font-size:40px;font-weight:800;margin:6px 0}
+table.res{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+table.res td,table.res th{border-bottom:1px solid #ddd;padding:5px 8px;text-align:left}
+td.ok{color:var(--ok);font-weight:700}td.no{color:var(--bad);font-weight:700}
+.fb{display:inline-block;margin-left:8px;font-size:13px;font-weight:700}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
+.locked input.gap{background:#f6f6f6}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:5px;padding:10px 18px;font-size:15px;cursor:pointer;margin:6px 6px 0 0}
+.btn.sec{background:#eee;color:#111}
+
+.side{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin:8px 0}.side>div{flex:1 1 260px;min-width:0}
+img.pic{max-width:100%;width:520px;border:1px solid var(--line)}
+table.tb{border-collapse:collapse;margin:10px 0;width:100%}
+table.tb td,table.tb th{border:1px solid #777;padding:6px 8px;vertical-align:top;text-align:left}
+table.tb th{background:#f3f3f1}
+table.form{max-width:760px}
+table.opt{width:auto;min-width:320px}
+.flow{max-width:560px;margin:8px 0}.fb{border:1px solid #444;padding:7px 9px;text-align:center}.arr{text-align:center;line-height:1.1}
+.cb{margin:3px 0 3px 12px;position:relative}.cb:before{content:"•";position:absolute;left:-11px}
+p.b{font-weight:700}p.c{text-align:center}p.i{font-style:italic}p.sub{font-weight:700}p.bh{font-weight:700;text-align:center}
+.ptitle.c{text-align:center}
+.nt{font-weight:700;text-align:center;margin-bottom:6px}
+.notes{border:1px solid #444;padding:8px 12px;margin:8px 0}
+.notes .gp{height:8px}
+.bl{letter-spacing:1px}
+.lines .drow{margin:8px 0}
+input.gap.short{width:64px}
+.gw{white-space:nowrap}
+@media(max-width:640px){.pt.act{flex:5}.pt:not(.act) .cnt{display:none}input.gap{width:110px}}
+</style></head><body>
+<header><div class="logo">IELTS</div><div class="hmid"><b>MrIkromov's IELTS · Part 2 · Test 44</b><span id="audiostat"></span></div><button class="hbtn" id="notesbtn">Notes</button></header>
+<main id="main"></main>
+<div class="arrows"><button id="prev">←</button><button id="next">→</button></div>
+<nav id="bar"></nav>
+<div class="overlay" id="start"><div style="font-size:64px">🎧</div><p style="max-width:640px">You will be listening to an audio recording during this test. You will not be permitted to pause or rewind the audio while answering the questions.</p><p>To continue, click Play.</p><button class="play" id="playbtn">▶ Play</button></div>
+<audio id="aud" preload="auto" src="/practice/listening/audio/part2-test44.mp3"></audio>
+<script>
+const TEST={"no": 44, "key": {"1": {"type": "gap", "accept": ["Fordyce"]}, "2": {"type": "gap", "accept": ["07840051963"]}, "3": {"type": "gap", "accept": ["nurse"]}, "4": {"type": "gap", "accept": ["primary"]}, "5": {"type": "gap", "accept": ["south"]}, "6": {"type": "gap", "accept": ["station"]}, "7": {"type": "gap", "accept": ["park"]}, "8": {"type": "gap", "accept": ["house"]}, "9": {"type": "gap", "accept": ["2"]}, "10": {"type": "gap", "accept": ["office"]}, "11": {"type": "letter", "accept": "C"}, "12": {"type": "letter", "accept": "B"}, "13": {"type": "letter", "accept": "A"}, "14": {"type": "letter", "accept": "B"}, "15": {"type": "letter", "accept": "A"}, "16": {"type": "letter", "accept": "B"}, "17": {"type": "pick", "g": 17, "idx": 0, "set": ["C", "D"]}, "18": {"type": "pick", "g": 17, "idx": 1, "set": ["C", "D"]}, "19": {"type": "pick", "g": 19, "idx": 0, "set": ["C", "E"]}, "20": {"type": "pick", "g": 19, "idx": 1, "set": ["C", "E"]}, "21": {"type": "letter", "accept": "A"}, "22": {"type": "letter", "accept": "A"}, "23": {"type": "letter", "accept": "C"}, "24": {"type": "letter", "accept": "B"}, "25": {"type": "letter", "accept": "A"}, "26": {"type": "letter", "accept": "C"}, "27": {"type": "letter", "accept": "D"}, "28": {"type": "letter", "accept": "G"}, "29": {"type": "letter", "accept": "E"}, "30": {"type": "letter", "accept": "A"}, "31": {"type": "gap", "accept": ["commercial"]}, "32": {"type": "gap", "accept": ["knowledge"]}, "33": {"type": "gap", "accept": ["lines"]}, "34": {"type": "gap", "accept": ["Photography"]}, "35": {"type": "gap", "accept": ["advertise"]}, "36": {"type": "gap", "accept": ["foot"]}, "37": {"type": "gap", "accept": ["objects"]}, "38": {"type": "gap", "accept": ["newspapers"]}, "39": {"type": "gap", "accept": ["packaging"]}, "40": {"type": "gap", "accept": ["mathematics", "math", "maths"]}}, "zg": {"27": 4, "28": 4, "29": 4, "30": 4}, "parts": [{"n": 2, "from": 11, "to": 20, "range": "11–20", "html": "<h3>Questions 11–16</h3><p class='instr'>Choose the correct letter, <b>A</b>, <b>B</b> or <b>C</b>.</p><p class=''><b>Moving Office</b></p><div class='q' data-q='11'><span class='n'>11</span> What reason does the manager give for moving to a new office building?<label class='opt'><input type='radio' name='q11' value='A' data-q='11'> <b>A</b> to have more space</label><label class='opt'><input type='radio' name='q11' value='B' data-q='11'> <b>B</b> to pay less rent</label><label class='opt'><input type='radio' name='q11' value='C' data-q='11'> <b>C</b> to be in a central location</label></div><div class='q' data-q='12'><span class='n'>12</span> What is best about the new office building?<label class='opt'><input type='radio' name='q12' value='A' data-q='12'> <b>A</b> the air-conditioning system</label><label class='opt'><input type='radio' name='q12' value='B' data-q='12'> <b>B</b> the amount of natural light</label><label class='opt'><input type='radio' name='q12' value='C' data-q='12'> <b>C</b> the low level of noise</label></div><div class='q' data-q='13'><span class='n'>13</span> When will the office move take place?<label class='opt'><input type='radio' name='q13' value='A' data-q='13'> <b>A</b> after the sales conference</label><label class='opt'><input type='radio' name='q13' value='B' data-q='13'> <b>B</b> after the end of the tax year</label><label class='opt'><input type='radio' name='q13' value='C' data-q='13'> <b>C</b> after the annual holiday period</label></div><div class='q' data-q='14'><span class='n'>14</span> What information about the new location is already on the company website?<label class='opt'><input type='radio' name='q14' value='A' data-q='14'> <b>A</b> where to park</label><label class='opt'><input type='radio' name='q14' value='B' data-q='14'> <b>B</b> places to eat</label><label class='opt'><input type='radio' name='q14' value='C' data-q='14'> <b>C</b> public transport</label></div><div class='q' data-q='15'><span class='n'>15</span> What practical thing must staff do now?<label class='opt'><input type='radio' name='q15' value='A' data-q='15'> <b>A</b> give details of damaged furniture</label><label class='opt'><input type='radio' name='q15' value='B' data-q='15'> <b>B</b> throw away unnecessary papers</label><label class='opt'><input type='radio' name='q15' value='C' data-q='15'> <b>C</b> take home personal items</label></div><div class='q' data-q='16'><span class='n'>16</span> Staff will need to put folders containing confidential details<label class='opt'><input type='radio' name='q16' value='A' data-q='16'> <b>A</b> into packing boxes</label><label class='opt'><input type='radio' name='q16' value='B' data-q='16'> <b>B</b> into grey plastic bags</label><label class='opt'><input type='radio' name='q16' value='C' data-q='16'> <b>C</b> into new filing cabinets</label></div><h3>Questions 17 and 18</h3><p class='instr'>Choose <b>TWO</b> letters, <b>A–E</b>.</p><p class=''>Which <b>TWO</b> things do people often forget when lifting heavy things?</p><div class='q' data-q='17'><label class='opt'><input type='checkbox' class='pick' value='A' data-g='17' data-max='2'> <b>A</b> keep your head up</label><label class='opt'><input type='checkbox' class='pick' value='B' data-g='17' data-max='2'> <b>B</b> don’t bend your back</label><label class='opt'><input type='checkbox' class='pick' value='C' data-g='17' data-max='2'> <b>C</b> don’t lean to one side</label><label class='opt'><input type='checkbox' class='pick' value='D' data-g='17' data-max='2'> <b>D</b> use handles</label><label class='opt'><input type='checkbox' class='pick' value='E' data-g='17' data-max='2'> <b>E</b> stand with feet apart</label></div><h3>Questions 19 and 20</h3><p class='instr'>Choose <b>TWO</b> letters, <b>A–E</b>.</p><p class=''>Which <b>TWO</b> things should staff do when moving papers?</p><div class='q' data-q='19'><label class='opt'><input type='checkbox' class='pick' value='A' data-g='19' data-max='2'> <b>A</b> wear a face mask</label><label class='opt'><input type='checkbox' class='pick' value='B' data-g='19' data-max='2'> <b>B</b> open windows</label><label class='opt'><input type='checkbox' class='pick' value='C' data-g='19' data-max='2'> <b>C</b> wear gloves</label><label class='opt'><input type='checkbox' class='pick' value='D' data-g='19' data-max='2'> <b>D</b> take frequent breaks</label><label class='opt'><input type='checkbox' class='pick' value='E' data-g='19' data-max='2'> <b>E</b> drink plenty of water</label></div>"}]};
+const $=s=>document.querySelector(s);
+const ans={},flags={};let part=0,cur=TEST.parts[0].from,submitted=false;
+const aud=$('#aud');
+// ---------- normalisation ----------
+function norm(s){s=(s||'').toLowerCase().replace(/[£$]/g,'').replace(/[.,;:!?]+$/,'').replace(/\s+/g,' ').trim();s=s.replace(/^(a|an|the)\s+/,'');return s}
+function isOK(q,v){
+  const k=TEST.key[q];
+  if(k.type==='gap'){const n=norm(v);if(!n)return false;if(k.all){return k.all.every(g=>g.some(a=>n.split(' ').includes(norm(a))||n.includes(norm(a))))}return k.accept.some(a=>norm(a)===n)}
+  if(k.type==='letter'){return (v||'')===k.accept}
+  if(k.type==='set'){return k.set.includes(v||'')}
+  if(k.type==='pick'){return false}
+  return false}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function render(){
+  const P=TEST.parts[part];
+  $('#main').innerHTML='<div class="banner"><b>Part '+P.n+'</b>Listen and answer questions '+P.range+'.</div>'+P.html;
+  restore();bindAll();renderBar();updateArrows();
+  if(submitted)decorate();
+  window.scrollTo(0,0)}
+function restore(){
+  document.querySelectorAll('input.gap').forEach(i=>{i.value=ans[i.dataset.q]||''});
+  document.querySelectorAll('input[type=radio]').forEach(i=>{i.checked=ans[i.dataset.q]===i.value});
+  document.querySelectorAll('input.pick').forEach(i=>{const a=ans['p'+i.dataset.g]||[];i.checked=a.includes(i.value)});
+  document.querySelectorAll('.zone').forEach(z=>{fillZone(z,ans[z.dataset.q])});
+  document.querySelectorAll('.chip').forEach(c=>{const used=Object.entries(ans).some(([q,v])=>v===c.dataset.id&&zoneGrp(q)===c.dataset.grp);c.style.display=used?'none':''});
+}
+function zoneGrp(q){return (TEST.zg||{})[q]}
+function fillZone(z,id){z.textContent=id?id:z.dataset.q;z.classList.toggle('filled',!!id)}
+let selChip=null;
+function place(z,id){const q=z.dataset.q,grp=z.dataset.grp;
+  for(const k in ans){if(ans[k]===id&&zoneGrp(k)===grp)delete ans[k]}
+  ans[q]=id;restore();renderBar()}
+function bindAll(){
+  document.querySelectorAll('input.gap').forEach(i=>{i.addEventListener('input',()=>{ans[i.dataset.q]=i.value;cur=+i.dataset.q;renderBar()});i.addEventListener('focus',()=>{cur=+i.dataset.q;renderBar()})});
+  document.querySelectorAll('input[type=radio]').forEach(i=>i.addEventListener('change',()=>{ans[i.dataset.q]=i.value;cur=+i.dataset.q;renderBar()}));
+  document.querySelectorAll('input.pick').forEach(i=>i.addEventListener('change',()=>{
+    const g=i.dataset.g;const all=[...document.querySelectorAll('input.pick[data-g="'+g+'"]')];
+    const on=all.filter(x=>x.checked);if(on.length>(+i.dataset.max||2)){i.checked=false;return}
+    ans['p'+g]=on.map(x=>x.value);renderBar()}));
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('dragstart',e=>{if(submitted){e.preventDefault();return}e.dataTransfer.setData('text/plain',c.dataset.grp+'|'+c.dataset.id)});
+    c.addEventListener('click',()=>{if(submitted)return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));selChip=c;c.classList.add('sel')})});
+  document.querySelectorAll('.zone').forEach(z=>{
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over')});
+    z.addEventListener('dragleave',()=>z.classList.remove('over'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');if(submitted)return;const [g,id]=e.dataTransfer.getData('text/plain').split('|');if(g===z.dataset.grp)place(z,id)});
+    z.addEventListener('click',()=>{if(submitted)return;cur=+z.dataset.q;
+      if(selChip&&selChip.dataset.grp===z.dataset.grp){place(z,selChip.dataset.id);selChip=null}
+      else if(ans[z.dataset.q]){delete ans[z.dataset.q];restore();renderBar()}
+      else renderBar()})});
+}
+// ---------- bar ----------
+function answered(q){
+  const k=TEST.key[q];
+  if(k.type==='pick'){const a=ans['p'+k.g]||[];return a.length>k.idx}
+  if(k.type==='none'&&!ans[q])return false
+  return !!(ans[q]&&String(ans[q]).trim())}
+function renderBar(){
+  const b=$('#bar');b.innerHTML='';
+  TEST.parts.forEach((P,i)=>{
+    const d=document.createElement('div');d.className='pt'+(i===part?' act':'');
+    const qs=[];for(let q=P.from;q<=P.to;q++)qs.push(q);
+    const n=qs.filter(answered).length;
+    d.innerHTML='<span>Part '+P.n+'</span><span class="cnt">'+n+' of '+(P.to-P.from+1)+'</span><span class="nums">'+qs.map(q=>'<span class="nb'+(answered(q)?' done':'')+(q===cur?' cur':'')+(flags[q]?' flag':'')+(res&&res[q]!==undefined&&res[q]!==null?(res[q]?' ok':' no'):'')+'" data-q="'+q+'">'+q+'</span>').join('')+'</span>';
+    d.addEventListener('click',e=>{const nb=e.target.closest('.nb');if(i!==part){part=i;cur=P.from;render()}if(nb){goTo(+nb.dataset.q)}});
+    b.appendChild(d)});
+  const s=document.createElement('button');s.id='submit';s.textContent='✔';s.title='Submit';s.onclick=askSubmit;b.appendChild(s)}
+function goTo(q){cur=q;renderBar();const el=document.querySelector('[data-q="'+q+'"],[data-q2="'+q+'"]');if(el){const t=el.closest('.q')||el;t.scrollIntoView({block:'center',behavior:'smooth'});const inp=t.querySelector('input.gap');if(inp&&!submitted)inp.focus()}}
+function updateArrows(){$('#prev').classList.toggle('dis',cur<=TEST.parts[0].from);$('#next').classList.toggle('dis',cur>=TEST.parts[0].to)}
+$('#next').onclick=()=>{const P=TEST.parts[0];if(cur<P.to)goTo(cur+1)};
+$('#prev').onclick=()=>{const P=TEST.parts[0];if(cur>P.from)goTo(cur-1)};
+document.addEventListener('contextmenu',e=>{const nb=e.target.closest('.nb');if(nb){e.preventDefault();const q=nb.dataset.q;flags[q]=!flags[q];renderBar()}});
+// ---------- audio ----------
+$('#playbtn').onclick=()=>{$('#start').style.display='none';
+  aud.play().then(()=>{$('#audiostat').textContent='Audio is playing'}).catch(()=>{$('#audiostat').textContent='No audio file attached'});
+  aud.addEventListener('ended',()=>{$('#audiostat').textContent='Audio finished'})};
+aud.addEventListener('error',()=>{$('#audiostat').textContent='No audio file attached'});
+// ---------- submit / results ----------
+let res=null;
+function band(s){const t=[[39,9],[37,8.5],[35,8],[32,7.5],[30,7],[26,6.5],[23,6],[18,5.5],[16,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5]];for(const [m,b] of t)if(s>=m)return b;return 'below 2.5'}
+function score(){
+  const r={},det=[];
+  for(let q=TEST.parts[0].from;q<=TEST.parts[0].to;q++){const k=TEST.key[q];let ok=false,mine,corr;
+    if(k.type==='none'){mine=ans[q]||'—';ok=null;corr='(no key available)'}
+    else if(k.type==='pick'){const a=ans['p'+k.g]||[];const hit=a.filter(x=>k.set.includes(x)).length;ok=hit>k.idx;mine=a.join(' & ')||'—';corr=k.set.join(' & ')}
+    else{mine=ans[q]||'—';ok=isOK(q,ans[q]);corr=k.type==='gap'?k.accept[0]+(k.accept.length>1?'  (also: '+k.accept.slice(1).join(' / ')+')':''):(k.type==='set'?k.set.join(' / '):k.accept)}
+    r[q]=ok;det.push([q,mine,corr,ok])}
+  return {r,det}}
+function askSubmit(){
+  if(submitted){showResults();return}
+  const un=[];for(let q=TEST.parts[0].from;q<=TEST.parts[0].to;q++)if(!answered(q))un.push(q);
+  const o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="modal"><h2 style="margin-top:0">Submit your answers?</h2><p>'+(un.length?'You have not answered '+un.length+' question(s): '+un.join(', ')+'.':'You have answered all 10 questions.')+'</p><button class="btn" id="yes">Submit and check</button><button class="btn sec" id="no">Keep working</button></div>';
+  document.body.appendChild(o);$('#no').onclick=()=>o.remove();$('#yes').onclick=()=>{o.remove();doSubmit()}}
+function doSubmit(){submitted=true;aud.pause();document.body.classList.add('locked');
+  document.querySelectorAll('input').forEach(i=>i.disabled=true);
+  const s=score();res=s.r;window._det=s.det;showResults();render()}
+function showResults(){
+  const det=window._det;const scorable=det.filter(d=>d[3]!==null).length;const total=det.filter(d=>d[3]===true).length;
+  const o=document.createElement('div');o.className='overlay';
+  const parts=TEST.parts.map(P=>{const n=det.filter(d=>d[0]>=P.from&&d[0]<=P.to&&d[3]===true).length;const m=det.filter(d=>d[0]>=P.from&&d[0]<=P.to&&d[3]!==null).length;return 'Part '+P.n+': '+n+'/'+m}).join(' &nbsp;·&nbsp; ');
+  o.innerHTML='<div class="modal"><div>Your result</div><div class="score">'+total+' / '+scorable+'</div><div><b>'+Math.round(total*100/scorable)+'%</b> correct</div><table class="res"><tr><th>Q</th><th>Your answer</th><th>Correct answer</th><th></th></tr>'+det.map(d=>'<tr><td>'+d[0]+'</td><td>'+esc(String(d[1]))+'</td><td>'+esc(String(d[2]))+'</td><td class="'+(d[3]===null?'':(d[3]?'ok':'no'))+'">'+(d[3]===null?'–':(d[3]?'✔':'✘'))+'</td></tr>').join('')+'</table><button class="btn" id="rev">Review test</button><button class="btn sec" id="retry">Retake</button></div>';
+  document.body.appendChild(o);
+  $('#rev').onclick=()=>o.remove();$('#retry').onclick=()=>location.reload()}
+function decorate(){
+  document.querySelectorAll('[data-q]').forEach(el=>{});
+  const det=window._det;if(!det)return;
+  const P=TEST.parts[part];
+  det.filter(d=>d[0]>=P.from&&d[0]<=P.to).forEach(d=>{
+    const q=d[0];const k=TEST.key[q];
+    let host=document.querySelector('.q[data-q="'+q+'"]')||document.querySelector('.q[data-q2="'+q+'"]');
+    if(k.type==='pick'&&k.idx>0)return;
+    if(k.type==='none')return;
+    if(!host)return;
+    const sp=document.createElement('span');if(d[3]===null)return;sp.className='fb '+(d[3]?'ok':'no');
+    sp.textContent=d[3]?'✔':'✘ Answer: '+d[2];
+    const tgt=host.querySelector('input.gap,.zone')||host.querySelector('.n')||host;
+    if(tgt.parentNode&&(tgt.tagName==='INPUT'||tgt.classList.contains('zone')))tgt.insertAdjacentElement('afterend',sp);else host.appendChild(sp)})}
+$('#notesbtn').onclick=()=>{const o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="modal"><h3>Notes</h3><textarea id="nt" style="width:100%;height:220px"></textarea><br><button class="btn" id="cl">Close</button></div>';document.body.appendChild(o);$('#nt').value=window._notes||'';$('#cl').onclick=()=>{window._notes=$('#nt').value;o.remove()}};
+render();
+</script></body></html>

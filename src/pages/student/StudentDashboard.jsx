@@ -34,6 +34,18 @@ const MockTestCenter = lazyWithReload(() => import('../../components/MockTestCen
 const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuide'))
 const CoursesPage = lazyWithReload(() => import('./CoursesPage'))
 const BooksPage = lazyWithReload(() => import('./BooksPage'))
+const MyProgress = lazyWithReload(() => import('./MyProgress'))
+
+// My progress nav icon (2026-11-02).
+function IconProgress({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20V4" />
+      <path d="M4 20h16" />
+      <path d="m7 15 4-4 3 3 5-6" />
+    </svg>
+  )
+}
 
 // Books shelf nav icon (2026-11-02).
 function IconBooks({ className }) {
@@ -64,6 +76,7 @@ const PAGE_SUBTITLES = {
   homework: 'Keep track of your assignments and submit your work on time.',
   wordlists: 'Build your vocabulary and strengthen your English.',
   books: 'Practise Reading and Listening by question type and fix your weak spots.',
+  progress: 'Every score you get on the site, week by week.',
   leaderboard: 'See your progress alongside your classmates.',
   'group-chat': 'Stay connected with your group and classmates.',
   chats: 'Private conversations with your teacher and other students.',
@@ -673,6 +686,7 @@ const messageId = linkParts[2] || null
         items: [
           { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'homework', label: 'Homework', icon: IconHomework },
+          { key: 'progress', label: 'My progress', icon: IconProgress },
           { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
           { key: 'books', label: 'Books', icon: IconBooks },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
@@ -1082,6 +1096,8 @@ const messageId = linkParts[2] || null
         )}
 
         {tab === 'books' && <BooksPage studentId={profile.id} />}
+
+        {tab === 'progress' && <MyProgress studentId={profile.id} />}
 
         {tab === 'howto' && <HowToUseGuide />}
       </div>

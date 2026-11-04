@@ -392,11 +392,11 @@ function LessonEditor({ lesson, planTitle, onClose, onSaved, onRemove }) {
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13" /></svg>
             </span>
             <p className="text-[13px] font-bold text-paper-dim">
-              Space for this lesson’s Reading pages. When the HTML pages of the Reading books are ready, upload them to the Library and add them here with <span className="text-reading">+ Workshop</span>.
+              Space for this lesson’s Reading pages. Add them from the Practice Bank with <span className="text-reading">+ Practice page</span>.
             </p>
           </div>
         )}
-        <HomeworkTasksEditor groupId={null} tasks={f.tasks} onChange={(tasks) => set({ tasks })} />
+        <HomeworkTasksEditor groupId={null} tasks={f.tasks} onChange={(tasks) => set(f.tasks.length === 0 && tasks.length > 0 && Number(f.min_files) > 0 ? { tasks, min_files: 0 } : { tasks })} />
         <div className="flex flex-wrap items-center gap-3 text-[13px] font-bold text-paper">
           <label className="flex items-center gap-2 rounded-[12px] bg-panel-2 px-3 py-2">
             Pictures / files to upload, at least
