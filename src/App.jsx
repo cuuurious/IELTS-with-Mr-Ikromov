@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import PendingApproval from './pages/PendingApproval'
 import { lazyWithReload } from './lib/lazyWithReload'
 import { reportError, setErrorUser } from './lib/errorReporter'
+import { useDeviceGuard } from './lib/deviceSession'
 
 // SPEED (2026-09-30): each dashboard is now its own download instead of
 // one ~1 MB file with everything in it. A student never downloads the
@@ -30,7 +31,11 @@ function Gate() {
     profileLoading,
     authError,
     refreshProfile,
+    signOut,
   } = useAuth()
+
+  // Students: one device at a time (2026-11-06, migration_109).
+  useDeviceGuard(profile?.status === 'approved' ? profile : null, signOut)
 
   // profileLoading covers every profile fetch, not just the first one
   // (tab refocus, a silent token refresh — Supabase re-validates the

@@ -9,6 +9,7 @@ import { getTargetBandInfo, formatTargetBand } from '../../lib/targetBands'
 import TargetBandIcon from '../../components/TargetBandIcon'
 import ConfirmModal from '../../components/ConfirmModal'
 import ParentReportLink from '../../components/ParentReportLink'
+import SharedLogins from '../../components/teacher/SharedLogins'
 import ResetStudentPasswordModal from '../../components/ResetStudentPasswordModal'
 import { useSessionState } from '../../lib/sessionState'
 
@@ -1174,6 +1175,9 @@ export default function TeacherStudents({ onStartChat }) {
           {error}
         </div>
       )}
+
+      {/* Shared logins (2026-11-06, migration_109) */}
+      <SharedLogins />
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

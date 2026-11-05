@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthShell, { AuthField, AuthNotice, authInputClass, authPrimaryButtonClass } from '../components/AuthShell'
+import { takeKickedMessage } from '../lib/deviceSession'
 
 export default function Login() {
   const { signIn } = useAuth()
@@ -10,6 +11,8 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  // Signed out because the account was opened on another device (migration_109).
+  const [kicked] = useState(() => takeKickedMessage())
   const [loading, setLoading] = useState(false)
 
   const submit = async (e) => {
@@ -72,6 +75,7 @@ export default function Login() {
           />
         </AuthField>
 
+        {kicked && !error && <AuthNotice>{kicked}</AuthNotice>}
         {error && <AuthNotice>{error}</AuthNotice>}
 
         <button type="submit" disabled={loading} className={authPrimaryButtonClass}>

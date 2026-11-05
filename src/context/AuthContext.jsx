@@ -1,3 +1,4 @@
+import { claimThisDevice } from '../lib/deviceSession'
 import {
   createContext,
   useContext,
@@ -483,6 +484,9 @@ export function AuthProvider({ children }) {
       throw signInError
     }
 
+    // One device at a time (migration_109): this device is the account's.
+    await claimThisDevice()
+
     await loadProfile(data.userId)
 
     return data
@@ -534,6 +538,9 @@ export function AuthProvider({ children }) {
     }
 
     setIsRecoveringPassword(false)
+
+    // One device at a time (migration_109): this device is the account's.
+    await claimThisDevice()
 
     await loadProfile(
       data.user.id
