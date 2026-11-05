@@ -69,6 +69,7 @@ export default function CoursesPage({ studentId, onOpenMockCenter }) {
   const earn = [
     { v: `+${settings.homework_on_time}`, l: 'homework on time', sub: `late +${settings.homework_late}` },
     { v: `+${settings.streak_bonus}`, l: `${settings.streak_length} on time in a row`, sub: 'streak bonus' },
+    ...(settings.score_coins_top ? [{ v: `+${settings.score_coins_top}`, l: 'score 90%+ on a task', sub: `70%+ gets +${settings.score_coins_good ?? 0}, 50%+ gets +${settings.score_coins_ok ?? 0} · first try` }] : []),
     { v: `+${settings.top_group_bonus}`, l: 'your group wins the week', sub: 'everyone in the group' },
   ]
 
@@ -82,7 +83,7 @@ export default function CoursesPage({ studentId, onOpenMockCenter }) {
           <CoinIcon className="h-10 w-10" />
           {balance ?? '—'}
         </p>
-        <div className="mt-5 grid max-w-2xl gap-2 sm:grid-cols-3">
+        <div className="mt-5 grid max-w-3xl gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {earn.map((e) => (
             <div key={e.l} className="rounded-[16px] bg-white/12 px-4 py-3 backdrop-blur-[2px]" style={{ background: 'rgba(255,255,255,0.13)' }}>
               <div className="flex items-center gap-1.5 font-brand text-[20px] font-semibold"><CoinIcon className="h-5 w-5" />{e.v}</div>

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { qtypeLabel } from '../../lib/questionTypes'
 import { withHelper } from '../../components/homework/HtmlTask'
-import TaskShell, { Panel } from '../../components/homework/TaskShell'
+import PageFrame from '../../components/homework/PageFrame'
 import WeakSpots from '../../components/WeakSpots'
 import SkillArt, { SkillIcon } from '../../components/SkillArt'
 
@@ -234,28 +234,21 @@ function BookPlayer({ item, onClose, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id])
 
-  const kind = item.skill === 'listening' ? 'listening' : 'reading'
 
   return (
-    <TaskShell kind={kind} title={item.title} subtitle={`Books shelf · ${qtypeLabel(item.question_type)}`} onClose={onClose} wide>
-      <div className="flex flex-col gap-4">
-        <Panel className="flex items-center gap-3">
-          <span className={`grid h-12 min-w-[64px] place-items-center rounded-2xl px-3 font-brand text-[18px] font-semibold ${score ? 'bg-reading-tint text-reading' : 'bg-panel-2 text-mist'}`}>
-            {score ? `${score.score}/${score.max}` : '—'}
-          </span>
-          <p className="text-sm font-bold text-paper-dim">
-            {score && saved === `${score.score}/${score.max}` ? 'Score saved. It counts toward your weak-spot report.' : 'Press Submit at the end of the task — your score is saved by itself.'}
-          </p>
-        </Panel>
-        {error && <p className="rounded-[14px] bg-urgent-tint px-4 py-3 text-sm font-bold text-coral">{error}</p>}
-        <div className="overflow-hidden rounded-[20px] border border-line bg-white">
-          {html ? (
-            <iframe title={item.title} srcDoc={html} sandbox="allow-scripts allow-forms allow-modals allow-popups" className="block h-[78vh] w-full" />
-          ) : (
-            !error && <p className="p-6 text-sm font-semibold text-mist">Opening…</p>
-          )}
-        </div>
-      </div>
-    </TaskShell>
+    <PageFrame
+      title={item.title}
+      kicker={`Practice · ${qtypeLabel(item.question_type)}`}
+      html={html}
+      error={error}
+      onClose={onClose}
+      score={score}
+      status={score && saved === `${score.score}/${score.max}` ? 'Score saved. It counts toward your weak-spot report.' : 'Press Submit at the end — your score is saved by itself.'}
+      action={
+        score && saved === `${score.score}/${score.max}` ? (
+          <span className="hidden h-10 shrink-0 items-center rounded-[12px] bg-white/15 px-3 text-xs font-extrabold text-white sm:flex">✓ Saved</span>
+        ) : null
+      }
+    />
   )
 }

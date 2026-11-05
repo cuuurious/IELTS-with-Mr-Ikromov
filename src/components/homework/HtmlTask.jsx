@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import TaskShell, { Panel } from './TaskShell'
+import PageFrame from './PageFrame'
 
 /*
  * One of Mr Ikromov's interactive HTML workshops set as homework
@@ -33,9 +33,17 @@ var best=found[0];found.forEach(function(f){if(f.m>best.m||(f.m===best.m&&f.at>b
 var seen={};var parts=found.filter(function(f){var k=f.label;if(seen[k])return false;seen[k]=1;return true}).slice(0,8).map(function(f){return{score:f.s,max:f.m,label:f.label.slice(0,80)}});
 post(best.s,best.m,parts)}
 var tt;function texts(){clearTimeout(tt);tt=setTimeout(function(){var out=[];document.querySelectorAll('textarea,[contenteditable="true"]').forEach(function(el,i){var v=el.tagName==='TEXTAREA'?el.value:el.innerText;if(v&&v.trim().length>20)out.push({id:el.id||('box'+(i+1)),text:v.slice(0,20000)})});if(out.length)parent.postMessage({type:'ielts-workshop-text',texts:out},'*')},600)}
+function ovOpen(){var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
+var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
+window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
+function mobile(){if(!(window.innerWidth<760))return;var tc=document.querySelector('.test-container');if(!tc||!document.querySelector('.passage-container')||!document.querySelector('.questions-container')||document.getElementById('ielts-mtabs'))return;
+var st=document.createElement('style');st.textContent='body.ielts-m{height:100vh;height:100dvh}body.ielts-m .header{padding:.4rem .75rem}body.ielts-m .header__candidate{display:none}body.ielts-m .header__timer{padding:.2rem .7rem;font-size:.95rem}body.ielts-m .test-container{flex-direction:column;height:auto!important;flex:1;min-height:0}body.ielts-m .divider{display:none!important}body.ielts-m .passage-container,body.ielts-m .questions-container{flex:1 1 auto!important;width:100%!important;max-width:none!important;min-height:0}body.ielts-m.ielts-q .passage-container{display:none!important}body.ielts-m:not(.ielts-q) .questions-container{display:none!important}body.ielts-m .footer{flex-wrap:wrap;gap:.4rem;padding:.45rem .6rem}body.ielts-m .footer__navwrap{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}body.ielts-m .footer__navbtn{flex:0 0 auto}#ielts-mtabs{display:flex;gap:6px;padding:6px 8px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0}#ielts-mtabs button{flex:1;height:38px;border-radius:10px;border:1.5px solid #d97706;background:#fff;color:#92400e;font-weight:800;font-size:.95rem}#ielts-mtabs button.on{background:#d97706;color:#fff}';
+document.head.appendChild(st);document.body.classList.add('ielts-m');var bar=document.createElement('div');bar.id='ielts-mtabs';var a=document.createElement('button');a.type='button';a.textContent='Passage';var b=document.createElement('button');b.type='button';b.textContent='Questions';bar.appendChild(a);bar.appendChild(b);tc.parentNode.insertBefore(bar,tc);
+function show(q){document.body.classList.toggle('ielts-q',q);a.className=q?'':'on';b.className=q?'on':''}a.onclick=function(){show(false)};b.onclick=function(){show(true)};show(false);
+document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&t.closest('.footer__navbtn'))show(true)},true)}
 document.addEventListener('input',texts,true);
-document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts()},true);
-document.addEventListener('DOMContentLoaded',function(){try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(scan,400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
+document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80)},true);
+document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(scan,400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 })();</script>`
 
 export function withHelper(html) {
@@ -94,51 +102,36 @@ export default function HtmlTask({ task, onClose, onChanged }) {
     onChanged?.()
   }
 
-  const srcDoc = useMemo(() => html, [html])
+  const status = done
+    ? done.attempt_no === 1
+      ? 'Handed in. Your first try counts.'
+      : 'Handed in as a retake. Your first try still counts.'
+    : score
+      ? 'Score found. Hand it in when you are happy.'
+      : texts.length
+        ? `Your writing is saved (${texts[0].text.trim().split(/\s+/).length} words). Hand it in when you finish.`
+        : 'Press the page’s own Submit — your score appears here.'
 
   return (
-    <TaskShell kind="html" title={task.title || 'Workshop'} subtitle="Do the page, press its Submit, then hand it in" onClose={onClose} wide>
-      <div className="flex flex-col gap-4">
-        <Panel className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className={`grid h-12 min-w-[64px] place-items-center rounded-2xl px-3 font-brand text-[18px] font-semibold ${score ? 'bg-reading-tint text-reading' : 'bg-panel-2 text-mist'}`}>
-              {score ? `${score.score}/${score.max}` : '—'}
-            </span>
-            <p className="text-sm font-bold text-paper-dim">
-              {done
-                ? done.attempt_no === 1
-                  ? 'Handed in. Your first try counts.'
-                  : 'Handed in as a retake. Your first try still counts.'
-                : score
-                  ? 'Score found. Hand it in when you are happy.'
-                  : texts.length
-                    ? `Your writing is saved with the homework (${texts[0].text.trim().split(/\s+/).length} words). Hand it in when you finish.`
-                    : 'Press the page’s own Submit or Check button — your score appears here.'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handIn}
-            disabled={saving || !html}
-            className="focus-ring h-11 shrink-0 rounded-[14px] bg-saffron px-5 text-sm font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50"
-          >
-            {saving ? 'Handing in…' : done ? 'Hand in again' : 'Hand in'}
-          </button>
-        </Panel>
-        {error && <p className="rounded-[14px] bg-urgent-tint px-4 py-3 text-sm font-bold text-coral">{error}</p>}
-        <div className="overflow-hidden rounded-[20px] border border-line bg-white">
-          {html ? (
-            <iframe
-              title={task.title || 'Workshop'}
-              srcDoc={srcDoc}
-              sandbox="allow-scripts allow-forms allow-modals allow-popups"
-              className="block h-[78vh] w-full"
-            />
-          ) : (
-            !error && <p className="p-6 text-sm font-semibold text-mist">Opening the workshop…</p>
-          )}
-        </div>
-      </div>
-    </TaskShell>
+    <PageFrame
+      title={task.title || 'Practice page'}
+      kicker="Homework"
+      html={html}
+      error={error}
+      onClose={onClose}
+      score={score}
+      status={status}
+      action={
+        <button
+          type="button"
+          onClick={handIn}
+          disabled={saving || !html}
+          title={status}
+          className="focus-ring h-10 shrink-0 rounded-[12px] bg-saffron px-3.5 text-sm font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50 sm:px-5"
+        >
+          {saving ? 'Handing in…' : done ? '✓ Hand in again' : 'Hand in'}
+        </button>
+      }
+    />
   )
 }

@@ -269,6 +269,10 @@ function CourseEditor({ course, onDone }) {
 const PRICE_FIELDS = [
   { key: 'homework_on_time', label: 'Homework handed in on time', unit: 'coins earned' },
   { key: 'homework_late', label: 'Homework handed in late', unit: 'coins earned' },
+  // First try of each in-site task, by its score (migration_95).
+  { key: 'score_coins_top', label: 'Task score 90% or more', unit: 'coins earned' },
+  { key: 'score_coins_good', label: 'Task score 70% or more', unit: 'coins earned' },
+  { key: 'score_coins_ok', label: 'Task score 50% or more', unit: 'coins earned' },
   { key: 'streak_length', label: 'Homeworks in a row for a bonus', unit: 'homeworks' },
   { key: 'streak_bonus', label: 'Streak bonus', unit: 'coins earned' },
   { key: 'top_group_bonus', label: 'Week’s top group, each student', unit: 'coins earned' },
@@ -287,7 +291,8 @@ function PricesTab() {
   }, [])
   const save = async () => {
     setSaved('')
-    const patch = Object.fromEntries(PRICE_FIELDS.map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
+    // Score tiers only once migration_95 has added their columns.
+    const patch = Object.fromEntries(PRICE_FIELDS.filter((f) => f.key in values || !f.key.startsWith("score_")).map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
     const { error: e } = await supabase.from('coin_settings').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
     if (e) setError(e.message)
     else setSaved('Saved.')
@@ -296,7 +301,7 @@ function PricesTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {PRICE_FIELDS.map((f) => (
+        {PRICE_FIELDS.filter((f) => f.key in values || !f.key.startsWith("score_")).map((f) => (
           <label key={f.key} className={`flex flex-col gap-2 rounded-[20px] p-5 ${f.key === 'mock_slot_price' ? 'bg-[color-mix(in_srgb,var(--color-brass)_10%,var(--color-panel))]' : 'bg-[color-mix(in_srgb,var(--color-saffron)_12%,var(--color-panel))]'}`}>
             <span className="text-sm font-extrabold text-paper">{f.label}</span>
             <span className="flex items-center gap-2">
