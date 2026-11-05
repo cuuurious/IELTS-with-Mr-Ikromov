@@ -4,6 +4,7 @@ import { parseSpeakingUrl, loadSpeakingSet } from '../../lib/speaking'
 import TeacherBand from '../../components/homework/TeacherBand'
 import WritingFeedback from '../../components/homework/WritingFeedback'
 import SpeakingFeedback from '../../components/speaking/SpeakingFeedback'
+import CommonMistakes from '../../components/teacher/CommonMistakes'
 
 /*
  * REVIEW (2026-11-05, migration_107). One queue for Mr Ikromov:
@@ -87,6 +88,7 @@ export default function ReviewQueue() {
         {[
           ['check', `To check${waitingCount ? ` · ${waitingCount}` : ''}`],
           ['mocks', `Speaking mocks${requests.length ? ` · ${requests.length} new` : ''}`],
+          ['common', 'Common mistakes'],
         ].map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`focus-ring h-10 shrink-0 rounded-[12px] px-4 text-[13px] font-extrabold ${tab === k ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim hover:text-paper'}`}>
             {l}
@@ -140,6 +142,8 @@ export default function ReviewQueue() {
           )}
         </section>
       )}
+
+      {tab === 'common' && <GroupMistakes />}
 
       {tab === 'mocks' && (
         <section className="flex flex-col gap-4">
@@ -297,5 +301,40 @@ function ReviewItem({ item, onBack }) {
       )}
       </>}
     </div>
+  )
+}
+
+// Common mistakes of one group (2026-11-05): the grammar to teach next.
+function GroupMistakes() {
+  const [groups, setGroups] = useState(null)
+  const [gid, setGid] = useState('')
+  const [days, setDays] = useState(14)
+  useEffect(() => {
+    supabase
+      .from('groups')
+      .select('id, name')
+      .order('created_at')
+      .then(({ data }) => {
+        setGroups(data || [])
+        if (data?.[0]) setGid(data[0].id)
+      })
+  }, [])
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={gid} onChange={(e) => setGid(e.target.value)} className="focus-ring h-10 rounded-[12px] border border-line bg-panel px-2 text-[14px] font-bold text-paper" aria-label="Group">
+          {(groups || []).map((g) => (
+            <option key={g.id} value={g.id}>{g.name}</option>
+          ))}
+        </select>
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="focus-ring h-10 rounded-[12px] border border-line bg-panel px-2 text-[14px] font-bold text-paper" aria-label="Period">
+          <option value={7}>Last 7 days</option>
+          <option value={14}>Last 14 days</option>
+          <option value={30}>Last 30 days</option>
+        </select>
+        <p className="min-w-0 flex-1 text-[13px] font-semibold text-mist">The AI’s corrections in this group’s writing and speaking, grouped by reason — most students first. Teach these next lesson.</p>
+      </div>
+      {gid && <CommonMistakes groupId={gid} days={days} />}
+    </section>
   )
 }

@@ -8,6 +8,7 @@ import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
 import { BookCoverCard, PageRow, skillShade, splitSet } from '../../components/bank/BookCover'
 import { QUESTION_TYPES, qtypeLabel } from '../../lib/questionTypes'
 import PagePreview from '../../components/bank/PagePreview'
+import PageChecker from '../../components/bank/PageChecker'
 import SpeakingSetEditor from '../../components/speaking/SpeakingSetEditor'
 import { loadSpeakingSets } from '../../lib/speaking'
 import AssignPagesModal from '../../components/bank/AssignPagesModal'
@@ -26,6 +27,7 @@ import AssignPagesModal from '../../components/bank/AssignPagesModal'
 
 export default function PracticeBank() {
   const [pages, setPages] = useState(null)
+  const [checking, setChecking] = useState(false)
   const [missing, setMissing] = useState(false)
   const [skill, setSkill] = useState('reading')
   const [collection, setCollection] = useState(null)
@@ -299,6 +301,15 @@ export default function PracticeBank() {
       ) : (
         <>
           <WeeklyDrafts pages={pages || []} given={given} stats={stats} groups={groups} onPosted={load} />
+
+          {/* Page checker (2026-11-05): every page sends its score? */}
+          <div className="flex flex-wrap items-center gap-3 rounded-[16px] border border-line bg-panel px-4 py-3">
+            <p className="min-w-0 flex-1 text-[13px] font-semibold text-mist">Check that every Reading and Listening page sends its score before students use it.</p>
+            <button type="button" onClick={() => setChecking(true)} disabled={!pages?.length} className="focus-ring h-10 rounded-[12px] bg-panel-2 px-4 text-[13px] font-extrabold text-paper hover:brightness-95 disabled:opacity-50">
+              Check pages
+            </button>
+          </div>
+          {checking && <PageChecker pages={pages} onClose={() => setChecking(false)} onPreview={(p) => { setChecking(false); setPreview(p) }} />}
 
           {sets && sets.length > 0 && (
             <section className="flex flex-col gap-2">

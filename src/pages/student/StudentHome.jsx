@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { WishGoal } from '../../components/coins/RewardsShop'
 import { WarmupCard } from '../../components/speaking/SpeakingWarmup'
 import { NotebookCard } from '../../components/notebook/MistakeNotebook'
+import { GrammarCard } from '../../components/grammar/GrammarCards'
+import BandForecast from '../../components/progress/BandForecast'
+import { openCard, usePlanExtras } from '../../lib/planExtras'
 import { supabase } from '../../lib/supabaseClient'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import {
@@ -307,6 +310,7 @@ export default function StudentHome({
   const bands = useReleasedBands(profile?.id)
   const [targetOpen, setTargetOpen] = useState(false)
   const words = useWordsDue(profile?.id)
+  const extras = usePlanExtras(profile?.id)
   const feedback = useLatestFeedback(profile?.id)
   const activity = useStudyActivity(profile?.id)
   const mock = useMockStatus(profile?.id)
@@ -514,6 +518,16 @@ export default function StudentHome({
           ...(words.due
             ? [{ key: 'words', skill: 'vocab', title: `Revise ${words.due} ${words.due === 1 ? 'word' : 'words'}`, line: 'Word review · about 5 minutes', go: () => onNavigate('wordlists'), cta: 'Review' }]
             : []),
+          // Daily habits (2026-11-05): warm-up, notebook, grammar cards.
+          ...(extras.warmup
+            ? [{ key: 'warmup', skill: 'speaking', title: 'Speaking warm-up', line: '3 questions · about 3 minutes', go: () => openCard('warmup'), cta: 'Start' }]
+            : []),
+          ...(extras.notebook
+            ? [{ key: 'notebook', skill: 'reading', title: `Fix ${Math.min(extras.notebook, 5)} ${Math.min(extras.notebook, 5) === 1 ? 'mistake' : 'mistakes'} from your notebook`, line: `${extras.notebook} waiting · Mistake notebook`, go: () => openCard('notebook'), cta: 'Fix' }]
+            : []),
+          ...(extras.grammar
+            ? [{ key: 'grammar', skill: 'writing', title: `Review ${Math.min(extras.grammar, 10)} grammar ${Math.min(extras.grammar, 10) === 1 ? 'mistake' : 'mistakes'}`, line: 'From your own writing and speaking · 2 minutes', go: () => openCard('grammar'), cta: 'Review' }]
+            : []),
           ...(weakPractice
             ? [{
                 key: 'weak',
@@ -566,9 +580,11 @@ export default function StudentHome({
       {/* BANDS — one tile per skill */}
       {/* Daily habits (2026-11-05): warm-up, mistake notebook, saving goal.
           Cards that have nothing to show hide themselves. */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:col-span-12 xl:grid-cols-3">
+      <BandForecast studentId={profile?.id} className="lg:col-span-12" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:col-span-12">
         <WarmupCard studentId={profile?.id} />
         <NotebookCard studentId={profile?.id} />
+        <GrammarCard studentId={profile?.id} />
         <WishGoal studentId={profile?.id} onOpen={() => onNavigate('courses')} />
       </div>
 

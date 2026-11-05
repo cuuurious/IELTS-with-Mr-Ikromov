@@ -43,7 +43,8 @@ function useWarmup(studentId) {
     ;(async () => {
       const [set, sets, led] = await Promise.all([
         supabase.from('coin_settings').select('speaking_warmup, warmup_coins').eq('id', 1).maybeSingle(),
-        supabase.from('speaking_sets').select('id, number, content'),
+        // Only the warm-up bank when there is one (2026-11-05: less to download on every Home visit).
+        supabase.from('speaking_sets').select('id, number, content').not('content->warmup', 'is', null).then((r) => (!r.error && r.data?.length ? r : supabase.from('speaking_sets').select('id, number, content'))),
         supabase.from('coin_ledger').select('id').eq('user_id', studentId).eq('ref_type', 'warmup').eq('ref_key', today()).limit(1),
       ])
       if (cancelled) return
@@ -98,6 +99,11 @@ function useWarmup(studentId) {
 export function WarmupCard({ studentId, className = '' }) {
   const [w, setW] = useWarmup(studentId)
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const onOpen = (e) => e.detail === 'warmup' && setOpen(true)
+    window.addEventListener('ielts:open', onOpen)
+    return () => window.removeEventListener('ielts:open', onOpen)
+  }, [])
   if (!w?.on) return null
   return (
     <>

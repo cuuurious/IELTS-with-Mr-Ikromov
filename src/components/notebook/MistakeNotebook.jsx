@@ -34,6 +34,11 @@ export function useNotebook(studentId) {
 export function NotebookCard({ studentId, className = '' }) {
   const [pages, reload] = useNotebook(studentId)
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const onOpen = (e) => e.detail === 'notebook' && setOpen(true)
+    window.addEventListener('ielts:open', onOpen)
+    return () => window.removeEventListener('ielts:open', onOpen)
+  }, [])
   if (!pages) return null
   const todo = pages.filter((p) => p.wrong?.length)
   const count = todo.reduce((n, p) => n + p.wrong.length, 0)
