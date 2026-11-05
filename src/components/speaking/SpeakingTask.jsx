@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { LIMITS, SPEAKING_PARTS, buildSteps, fetchVoice, fmtTime, linesOf, loadSpeakingSet, modelFor, parseSpeakingUrl, setTitle } from '../../lib/speaking'
+import { LIMITS, SPEAKING_PARTS, buildSteps, fetchVoice, fmtTime, linesOf, loadSpeakingSet, modelFor, parseSpeakingUrl, setTitle, withMockPart1 } from '../../lib/speaking'
 import SpeakingFeedback, { MicIcon } from './SpeakingFeedback'
 import { GetReady, targets } from './speakingPrep'
 
@@ -165,7 +165,9 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
     }
     ;(async () => {
       try {
-        const s = await loadSpeakingSet(ref.setId)
+        let s = await loadSpeakingSet(ref.setId)
+        // A mock on a Part 2 & 3 topic gets its Part 1 from the Part 1 bank.
+        if (mock && ref.part === 'full') s = await withMockPart1(s, mock.id).catch(() => s)
         if (cancelled) return
         setSet(s)
         if (mock?.results?.speaking) {
@@ -207,7 +209,12 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   useEffect(() => {
     if (!set || stage !== 'intro' || voice) return
     let cancelled = false
-    fetchVoice(set.id, linesOf(steps)).then((urls) => !cancelled && setVoice(urls))
+    // Borrowed Part 1 topics (mocks) are voiced from their own sets.
+    const borrowed = (set.content?.part1 || []).filter((t) => t.from)
+    Promise.all([
+      fetchVoice(set.id, linesOf(steps)),
+      ...borrowed.map((t) => fetchVoice(t.from, [t.intro, ...(t.questions || []).map((q) => q.q)].map((x) => String(x || '').replace(/\s+/g, ' ').trim()).filter(Boolean))),
+    ]).then((all) => !cancelled && setVoice(Object.assign({}, ...all)))
     const t = setTimeout(() => !cancelled && setVoice((v) => v || {}), 45000)
     return () => {
       cancelled = true
@@ -540,6 +547,8 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   })()
   const c = set?.content || {}
   const title = set ? setTitle(set, part) : 'Speaking test'
+  // A Part 2 & 3 topic opened as a whole (no Part 1) is not a full test.
+  const partInfo = part === 'full' && set && !(set.content?.part1 || []).some((t) => (t.questions || []).length) ? { label: 'Parts 2 & 3', minutes: '8–9 min' } : SPEAKING_PARTS[part]
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-ink">
@@ -552,7 +561,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
           <span className="hidden sm:inline">Back</span>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="hidden truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70 sm:block">{preview ? 'Teacher preview · Speaking' : mock ? 'Speaking mock' : 'Speaking'} · {SPEAKING_PARTS[part]?.label}</p>
+          <p className="hidden truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70 sm:block">{preview ? 'Teacher preview · Speaking' : mock ? 'Speaking mock' : 'Speaking'} · {partInfo?.label}</p>
           <p className="truncate text-[14px] font-extrabold text-white sm:text-[15px]">{title}</p>
         </div>
         {stage === 'run' && (
@@ -570,13 +579,13 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
           {stage === 'intro' && set && (
             <section className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-5 sm:p-6">
               <div>
-                <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-speaking">IELTS Speaking · {SPEAKING_PARTS[part]?.label} · {SPEAKING_PARTS[part]?.minutes}</p>
+                <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-speaking">IELTS Speaking · {partInfo?.label} · {partInfo?.minutes}</p>
                 <h2 className="mt-1 font-brand text-[22px] font-semibold leading-tight text-paper">{part === 'part2' ? c.part2?.cue : part === 'part3' ? `Discussion: ${c.part3?.theme || ''}` : part === 'part1' ? (c.part1 || []).map((t) => t.topic).join(' · ') : set.topics || set.title}</h2>
               </div>
               <ul className="flex flex-col gap-2 text-[14px] font-semibold text-paper-dim">
                 {[
                   'The examiner asks each question out loud. Your answer is recorded straight away.',
-                  <>Answer like in the real test, then press <b className="text-paper">I’ve finished</b>. {part === 'part3' ? 'Give your opinion, a reason and an example.' : part === 'part2' ? 'Use your notes.' : 'Part 1: 2–4 sentences with a reason.'}</>,
+                  <>Answer like in the real test, then press <b className="text-paper">I’ve finished</b>. {part === 'part3' ? 'Give your opinion, a reason and an example.' : part === 'part2' ? 'Use your notes.' : partInfo?.label === 'Parts 2 & 3' ? 'Part 3: give your opinion, a reason and an example.' : 'Part 1: 2–4 sentences with a reason.'}</>,
                   ...(part === 'full' || part === 'part2' ? ['Part 2: one minute to make notes, then speak for up to two minutes.'] : []),
                   'Find a quiet place and use headphones if you can.',
                 ].map((t, i) => (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BANK_SKILLS, TOPICS, loadBank, loadGivenPages, loadPageStats, loadSets, shortTitle } from '../../lib/pageBank'
+import { BANK_SKILLS, SPEAKING_TOPICS, TOPICS, loadBank, loadGivenPages, loadPageStats, loadSets, shortTitle } from '../../lib/pageBank'
 import { BookCoverCard, PageRow, skillShade, splitSet } from './BookCover'
 
 /*
@@ -272,7 +272,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
                 <section className="flex flex-col gap-2">
                   <p className="px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-mist">By topic</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {TOPICS.filter((t) => topicCounts[t]).map((t) => (
+                    {[...TOPICS, ...SPEAKING_TOPICS].filter((t) => topicCounts[t]).map((t) => (
                       <button key={t} type="button" onClick={() => setTopic(t)} className="focus-ring h-8 rounded-[10px] border border-line bg-panel px-2.5 text-[12px] font-extrabold text-paper-dim hover:border-brass hover:text-paper">
                         {t} <span className="text-mist">{topicCounts[t]}</span>
                       </button>

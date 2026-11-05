@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
-import { loadSpeakingSets } from '../../lib/speaking'
+import { loadSpeakingSets, setLabel } from '../../lib/speaking'
 import { lazyWithReload } from '../../lib/lazyWithReload'
 import { MicIcon } from './SpeakingFeedback'
 
@@ -75,13 +75,13 @@ export default function SpeakingMockCard({ studentId, balance = null, onBalance,
     setBusy('start')
     setError('')
     try {
-      const sets = (await loadSpeakingSets()).filter((s) => s.content?.part2 && s.content?.part3)
+      const sets = (await loadSpeakingSets()).filter((s) => s.content?.part2?.cue && (s.content?.part3?.questions || []).length)
       if (!sets.length) throw new Error('No speaking tests yet. Ask Mr Ikromov.')
       const used = new Set(done.map((m) => m.set_id))
       const fresh = sets.filter((s) => !used.has(s.id))
       const pool = fresh.length ? fresh : sets
       const pick = pool[Math.floor(Math.random() * pool.length)]
-      setRun({ mock, setId: pick.id, title: `Speaking mock · Set ${pick.number}` })
+      setRun({ mock, setId: pick.id, title: `Speaking mock · ${setLabel(pick)}` })
     } catch (e) {
       setError(e.message)
     } finally {

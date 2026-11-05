@@ -42,6 +42,9 @@ export const TOPICS = [
   'Society & sport',
 ]
 
+// Speaking Part 2 & 3 topics (migration_110/111), the usual cue-card groups.
+export const SPEAKING_TOPICS = ['People', 'Places', 'Things & ideas', 'Events & experiences']
+
 export async function loadBank() {
   // With topics when migration_97 has been run, without them before.
   const first = await supabase.from('materials').select(BANK_FIELDS_TOPIC).not('collection', 'is', null).order('collection').order('position', { ascending: true })

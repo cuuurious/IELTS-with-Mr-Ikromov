@@ -41,6 +41,7 @@ const CODES = {
 // Big short name on a cover: "Part 2", "T / F / NG", "Summary + list".
 export function coverCode(name, types) {
   if (/^Speaking Tests · Full/.test(name)) return 'Full test'
+  if (/^Speaking Topics · Parts 2 & 3/.test(name)) return 'Parts 2+3'
   const part = /Part\s*(\d)/i.exec(name)
   if (part) return `Part ${part[1]}`
   if (/word list/i.test(name)) return 'Summary + list'
@@ -67,6 +68,10 @@ export function splitSet(name) {
   if (book === 'Full Listening Tests') return { book, short, subtitle: '4 parts · 40 questions · 30 min' }
   if (book === 'Speaking Tests') {
     const sp = { 'Full tests': 'Parts 1, 2 and 3 · 11–14 min', 'Part 1': 'Familiar topics · 4–5 min', 'Part 2': 'Cue card · 3–4 min', 'Part 3': 'Discussion · 4–5 min' }[short]
+    return { book, short, subtitle: sp || short }
+  }
+  if (book === 'Speaking Topics') {
+    const sp = { 'Parts 2 & 3': 'Cue card + discussion · 8–9 min', 'Part 1': 'Familiar topics · 4–5 min', 'Part 2': 'Cue card · 3–4 min', 'Part 3': 'Discussion · 4–5 min' }[short]
     return { book, short, subtitle: sp || short }
   }
   if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }

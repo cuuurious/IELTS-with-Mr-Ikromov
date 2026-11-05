@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
-import { BANK_SKILLS, TOPICS, deleteSet, loadBank, loadGivenPages, loadPageStats, loadSets, saveSet, shortTitle, uploadPages } from '../../lib/pageBank'
+import { BANK_SKILLS, SPEAKING_TOPICS, TOPICS, deleteSet, loadBank, loadGivenPages, loadPageStats, loadSets, saveSet, shortTitle, uploadPages } from '../../lib/pageBank'
 import PageReport from '../../components/bank/PageReport'
 import WeeklyDrafts from '../../components/bank/WeeklyDrafts'
 import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
@@ -10,7 +10,7 @@ import { QUESTION_TYPES, qtypeLabel } from '../../lib/questionTypes'
 import PagePreview from '../../components/bank/PagePreview'
 import PageChecker from '../../components/bank/PageChecker'
 import SpeakingSetEditor from '../../components/speaking/SpeakingSetEditor'
-import { loadSpeakingSets } from '../../lib/speaking'
+import { loadSpeakingSets, setLabel } from '../../lib/speaking'
 import AssignPagesModal from '../../components/bank/AssignPagesModal'
 
 /*
@@ -178,7 +178,7 @@ export default function PracticeBank() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search every page by passage name…"
+          placeholder={skill === 'speaking' ? 'Search topics and cue cards, e.g. river, teacher, gift…' : 'Search every page by passage name…'}
           className="focus-ring h-11 min-w-[200px] flex-1 rounded-[14px] border border-line bg-panel px-4 text-sm text-paper placeholder:text-mist/70"
         />
         <select
@@ -224,22 +224,44 @@ export default function PracticeBank() {
         <section className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel p-4">
           <div className="flex flex-wrap items-baseline gap-2">
             <p className="font-brand text-[17px] font-semibold text-paper">Speaking sets</p>
-            <p className="text-[12px] font-semibold text-mist">Each set is one full test; it also shows as Part 1, Part 2 and Part 3 below.</p>
+            <p className="text-[12px] font-semibold text-mist">Each set is one full test; it also shows as Part 1, Part 2 and Part 3 below. Search finds any topic or cue card.</p>
           </div>
           {speakingSets === null ? (
             <p className="text-sm font-semibold text-mist">Run migration_101_speaking_tests.sql to add speaking tests.</p>
           ) : speakingSets.length === 0 ? (
             <p className="text-sm font-semibold text-mist">No sets yet — press “New speaking set”.</p>
           ) : (
-            <ul className="flex flex-wrap gap-2">
-              {speakingSets.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 rounded-[14px] bg-speaking-tint px-3 py-1.5">
-                  <span className="text-[13px] font-extrabold text-speaking">Set {s.number}</span>
-                  <span className="max-w-[220px] truncate text-[12px] font-bold text-paper-dim">{s.topics}</span>
-                  <button type="button" onClick={() => setEditingSet(s)} className="focus-ring rounded-[8px] px-1.5 text-[12px] font-extrabold text-brass hover:bg-panel">Edit</button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="flex flex-wrap gap-2">
+                {speakingSets.filter((s) => !s.content?.topic_no && !s.content?.p1_no).map((s) => (
+                  <li key={s.id} className="flex items-center gap-2 rounded-[14px] bg-speaking-tint px-3 py-1.5">
+                    <span className="text-[13px] font-extrabold text-speaking">Set {s.number}</span>
+                    <span className="max-w-[220px] truncate text-[12px] font-bold text-paper-dim">{s.topics}</span>
+                    <button type="button" onClick={() => setEditingSet(s)} className="focus-ring rounded-[8px] px-1.5 text-[12px] font-extrabold text-brass hover:bg-panel">Edit</button>
+                  </li>
+                ))}
+              </ul>
+              {speakingSets.some((s) => s.content?.topic_no || s.content?.p1_no) && (
+                <details className="rounded-[14px] bg-panel-2/70 px-3 py-2">
+                  <summary className="focus-ring cursor-pointer list-none text-[13px] font-extrabold text-paper">
+                    Topic banks · {speakingSets.filter((s) => s.content?.p1_no).length} Part 1 topics · {speakingSets.filter((s) => s.content?.topic_no).length} Part 2 & 3 topics
+                    <span className="ml-2 text-brass">Tap one to edit</span>
+                  </summary>
+                  <ul className="mt-2 flex max-h-72 flex-wrap gap-1.5 overflow-y-auto">
+                    {speakingSets
+                      .filter((s) => s.content?.topic_no || s.content?.p1_no)
+                      .map((s) => (
+                        <li key={s.id}>
+                          <button type="button" onClick={() => setEditingSet(s)} title={`Edit ${setLabel(s)}`} className="focus-ring flex max-w-[260px] items-center gap-1.5 rounded-[12px] bg-panel px-2.5 py-1 text-left hover:bg-speaking-tint">
+                            <span className="shrink-0 text-[12px] font-extrabold text-speaking">{setLabel(s)}</span>
+                            <span className="truncate text-[12px] font-bold text-paper-dim">{s.topics}</span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              )}
+            </>
           )}
         </section>
       )}
@@ -364,12 +386,12 @@ export default function PracticeBank() {
             </section>
           )}
 
-          {skill === 'reading' && (pages || []).some((p) => p.topic) && (
+          {(skill === 'reading' || skill === 'speaking') && (pages || []).some((p) => p.topic && p.skill === skill) && (
             <section className="flex flex-col gap-2">
               <h2 className="font-brand text-[17px] font-semibold text-paper">By topic</h2>
               <div className="flex flex-wrap gap-1.5">
-                {TOPICS.map((t) => {
-                  const n = (pages || []).filter((p) => p.topic === t).length
+                {(skill === 'speaking' ? SPEAKING_TOPICS : TOPICS).map((t) => {
+                  const n = (pages || []).filter((p) => p.topic === t && p.skill === skill).length
                   if (!n) return null
                   return (
                     <button key={t} type="button" onClick={() => setTopic(t)} className="focus-ring h-9 rounded-[12px] border border-line bg-panel px-3 text-[13px] font-extrabold text-paper-dim hover:border-brass hover:text-paper">
@@ -519,7 +541,7 @@ export default function PracticeBank() {
       {editingSet && (
         <SpeakingSetEditor
           set={editingSet === 'new' ? null : editingSet}
-          nextNumber={Math.max(0, ...(speakingSets || []).map((s) => s.number)) + 1}
+          nextNumber={Math.max(0, ...(speakingSets || []).filter((s) => s.number < 1000).map((s) => s.number)) + 1}
           onClose={() => setEditingSet(null)}
           onSaved={() => {
             setEditingSet(null)

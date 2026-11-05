@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
-import { blankContent, buildSteps, checkContent, fetchVoice, linesOf, parseScript, tidyContent } from '../../lib/speaking'
+import { blankContent, buildSteps, checkContent, fetchVoice, linesOf, parseScript, setLabel, tidyContent } from '../../lib/speaking'
 
 /*
  * New / edit a speaking set (2026-11-05). One set = one full test:
@@ -133,7 +133,7 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
       return
     }
     setBusy(true)
-    const row = { number: n, title: `Set ${n}`, topics: topics.trim() || autoTopics, content, updated_at: new Date().toISOString() }
+    const row = { number: n, title: set?.content?.topic_no || set?.content?.p1_no ? set.title : `Set ${n}`, topics: topics.trim() || autoTopics, content, updated_at: new Date().toISOString() }
     const { data: savedRows, error: err } = set?.id
       ? await supabase.from('speaking_sets').update(row).eq('id', set.id).select('id')
       : await supabase.from('speaking_sets').insert(row).select('id')
@@ -149,7 +149,7 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
   }
 
   const remove = async () => {
-    if (!set?.id || !window.confirm(`Delete Set ${set.number}? Its four Practice Bank pages go too. Homework already given keeps its recordings, but the test can no longer be opened.`)) return
+    if (!set?.id || !window.confirm(`Delete ${setLabel(set)}? Its Practice Bank pages go too. Homework already given keeps its recordings, but the test can no longer be opened.`)) return
     setBusy(true)
     const { error: err } = await supabase.from('speaking_sets').delete().eq('id', set.id)
     setBusy(false)
@@ -162,7 +162,7 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
       <div className="registan-band flex shrink-0 items-center gap-3 px-3 py-3 text-white sm:px-6">
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">Practice Bank · Speaking</p>
-          <p className="truncate font-brand text-[19px] font-semibold">{set ? `Edit Set ${set.number}` : 'New speaking set'}</p>
+          <p className="truncate font-brand text-[19px] font-semibold">{set ? `Edit ${setLabel(set)}` : 'New speaking set'}</p>
         </div>
         <button type="button" onClick={onClose} aria-label="Close" className="focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white/15 hover:bg-white/25">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -199,6 +199,7 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
             </div>
           </Section>
 
+          {!c.topic_no && (
           <Section title="Part 1" hint="Two or three familiar topics, 3–5 questions each.">
             {(c.part1 || []).map((t, i) => (
               <div key={i} className="flex flex-col gap-2 rounded-[16px] border border-line p-3">
@@ -212,7 +213,10 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
             ))}
             <button type="button" onClick={() => setC((o) => ({ ...o, part1: [...(o.part1 || []), { topic: '', intro: '', questions: [{ q: '' }, { q: '' }, { q: '' }] }] }))} className="focus-ring self-start text-[13px] font-extrabold text-brass">+ Topic</button>
           </Section>
+          )}
 
+          {!c.p1_no && (
+          <>
           <Section title="Part 2 · Cue card" hint="One minute to prepare, then up to two minutes.">
             <input value={p2.cue || ''} onChange={(e) => setP2({ cue: e.target.value })} placeholder="Describe a place you like to visit" className={`${field} font-extrabold`} />
             <p className="text-[12px] font-extrabold text-mist">You should say:</p>
@@ -244,6 +248,8 @@ export default function SpeakingSetEditor({ set = null, nextNumber = 1, onClose,
             <input value={c.part3?.theme || ''} onChange={(e) => setP3({ theme: e.target.value })} placeholder="Theme, e.g. Tourism" className={`${field} font-extrabold`} />
             <QuestionList list={c.part3?.questions || []} onChange={(qs) => setP3({ questions: qs })} placeholder="Question" />
           </Section>
+          </>
+          )}
         </div>
       </div>
 

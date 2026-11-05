@@ -13,6 +13,13 @@ import { supabase } from './supabaseClient'
  *   model = { answer, phrases: [[phrase, meaning]], grammar: [{ pattern, use, example, try }] }
  *   (Part 2 model also has sections: [{ label, text }] and why: [])
  *
+ * Two banks from the Sep–Dec 2026 books (migration_110/111/112) are sets too:
+ *   - Part 2 & 3 topics: content.topic_no (1–66), no Part 1, numbers 1001–1066,
+ *     shown as "Topic N"; content.category = People / Places / …
+ *   - Part 1 topics: content.p1_no (1–39), only Part 1, numbers 2001–2039,
+ *     shown as "Part 1 · Topic N". A speaking mock on a Part 2 & 3 topic
+ *     borrows its Part 1 from these (withMockPart1).
+ *
  * In the Practice Bank each set is four pages whose url is
  * "speaking:<set id>#full" / "#part1" / "#part2" / "#part3"; a homework
  * task keeps that url in html_url and opens the speaking exam screen.
@@ -79,7 +86,7 @@ export function buildSteps(content, part = 'full') {
 
   if (part === 'full') steps.push({ type: 'say', text: FIXED.hello })
 
-  if (want('part1')) {
+  if (want('part1') && (c.part1 || []).some((t) => (t.questions || []).length)) {
     steps.push({ type: 'section', part: 1, title: 'Part 1' })
     ;(c.part1 || []).forEach((t, ti) => {
       const intro = clean(t.intro)
@@ -149,13 +156,62 @@ export async function fetchVoice(setId, texts) {
   }
 }
 
+// "Set 8", "Topic 12" or "Part 1 · Topic 5".
+export function setLabel(set) {
+  const c = set?.content || {}
+  if (c.topic_no) return `Topic ${c.topic_no}`
+  if (c.p1_no) return `Part 1 · Topic ${c.p1_no}`
+  return `Set ${set?.number ?? ''}`
+}
+
 export function setTitle(set, part = 'full') {
   if (!set) return 'Speaking test'
   const c = set.content || {}
-  if (part === 'part1') return `Set ${set.number} · Part 1: ${(c.part1 || []).map((t) => t.topic).join(' · ')}`
-  if (part === 'part2') return `Set ${set.number} · Part 2: ${c.part2?.cue || ''}`
-  if (part === 'part3') return `Set ${set.number} · Part 3: ${c.part3?.theme || ''}`
-  return `Set ${set.number} · ${set.topics || set.title}`
+  const n = setLabel(set)
+  if (part === 'part1') return `${n} · Part 1: ${(c.part1 || []).map((t) => t.topic).join(' · ')}`
+  if (part === 'part2') return `${n} · Part 2: ${c.part2?.cue || ''}`
+  if (part === 'part3') return `${n} · Part 3: ${c.part3?.theme || ''}`
+  if (c.topic_no) return `${n} · Parts 2 & 3: ${set.topics || set.title}`
+  return `${n} · ${set.topics || set.title}`
+}
+
+// A small steady random number from a text (same mock → same Part 1).
+function seeded(seed) {
+  let h = 2166136261
+  for (const ch of String(seed || 'x')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619)
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)
+    return ((h ^= h >>> 16) >>> 0) / 4294967296
+  }
+}
+
+/*
+ * A mock is a full test. When its set has no Part 1 (a Part 2 & 3 topic),
+ * it borrows three Part 1 topics from the Part 1 bank, like the real test:
+ * first one of the "about you" topics (work/studies, hometown, home, area),
+ * then two others. The same mock always gets the same three. Each borrowed
+ * topic keeps `from` (its set id) so the examiner's voice can be made.
+ */
+export async function withMockPart1(set, seed) {
+  const c = set?.content || {}
+  if ((c.part1 || []).some((t) => (t.questions || []).length)) return set
+  const { data } = await supabase.from('speaking_sets').select('id, content').not('content->p1_no', 'is', null)
+  const bank = (data || [])
+    .filter((s) => s.content?.p1_no && s.content.part1?.[0]?.questions?.length)
+    .sort((a, b) => a.content.p1_no - b.content.p1_no)
+  if (!bank.length) return set
+  const rnd = seeded(`${seed}:${set.id}`)
+  const pick = (list) => list.splice(Math.floor(rnd() * list.length), 1)[0]
+  const about = bank.filter((s) => s.content.p1_no <= 4)
+  const rest = bank.filter((s) => s.content.p1_no > 4)
+  const chosen = [about.length ? pick(about) : pick(rest)]
+  while (chosen.length < 3 && rest.length) chosen.push(pick(rest))
+  const part1 = chosen.map((s, i) => {
+    const t = s.content.part1[0]
+    // The opening line is the examiner's standard one, then the questions.
+    return { ...t, intro: i === 0 && s.content.p1_no !== 1 ? '' : t.intro, questions: (t.questions || []).slice(0, 4), from: s.id }
+  })
+  return { ...set, content: { ...c, part1 } }
 }
 
 export function fmtTime(secs) {
@@ -288,7 +344,8 @@ export function tidyContent(c) {
 export function checkContent(c) {
   const problems = []
   const p1 = (c.part1 || []).reduce((n, t) => n + (t.questions || []).length, 0)
-  if (p1 < 3) problems.push('Part 1 needs at least 3 questions.')
+  if (c.p1_no) return p1 < 3 ? ['Part 1 needs at least 3 questions.'] : []
+  if (!c.topic_no && p1 < 3) problems.push('Part 1 needs at least 3 questions.')
   if (!c.part2?.cue) problems.push('Part 2 needs a cue card ("Describe …").')
   if ((c.part2?.bullets || []).length < 2) problems.push('The cue card needs at least 2 “You should say” points.')
   if ((c.part3?.questions || []).length < 3) problems.push('Part 3 needs at least 3 questions.')
