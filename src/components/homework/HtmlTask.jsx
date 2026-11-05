@@ -18,7 +18,8 @@ import PageFrame from './PageFrame'
 
 export const HELPER = `<script>(function(){
 try{window.localStorage.getItem('x')}catch(e){var mk=function(){var d={};return{getItem:function(k){return k in d?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}},key:function(i){return Object.keys(d)[i]||null},get length(){return Object.keys(d).length}}};try{Object.defineProperty(window,'localStorage',{value:mk()});Object.defineProperty(window,'sessionStorage',{value:mk()})}catch(_){}}
-var last='';function post(s,m,parts){s=+s;m=+m;if(!(m>0)||s<0||s>m)return;var k=s+'/'+m+'|'+JSON.stringify(parts||[]);if(k===last)return;last=k;parent.postMessage({type:'ielts-workshop-score',score:s,max:m,parts:parts||[]},'*')}
+function qsNow(){var out=[];try{document.querySelectorAll('#answerReviewList .answer-item').forEach(function(el){var b=el.querySelector('b');var n=parseInt(((b&&b.textContent)||'').replace(/[^0-9]/g,''),10);if(n)out.push({n:n,ok:!el.classList.contains('wrong')})});if(!out.length&&Array.isArray(window._det))window._det.forEach(function(d){if(d&&d[3]!==null&&d[3]!==undefined)out.push({n:+d[0],ok:!!d[3]})})}catch(_){}return out.slice(0,80)}
+var last='';function post(s,m,parts){s=+s;m=+m;if(!(m>0)||s<0||s>m)return;var qs=qsNow();var k=s+'/'+m+'|'+JSON.stringify(parts||[])+'|'+qs.length;if(k===last)return;last=k;parent.postMessage({type:'ielts-workshop-score',score:s,max:m,parts:parts||[],qs:qs},'*')}
 window.reportScore=function(s,m){post(s,m,[])};
 function scan(){var sb=document.getElementById('scoreBig');if(sb){if(sb.offsetParent!==null){var tm=((sb.parentElement&&sb.parentElement.innerText)||'').match(/out\\s+of\\s+(\\d{1,3})/i);if(tm)post(parseInt(sb.textContent,10),+tm[1],[])}return}
 var t=(document.body&&document.body.innerText)||'';var found=[];var m;
@@ -46,6 +47,16 @@ document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80)},true);
 document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(scan,400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 })();</script>`
+
+// Which questions were right / wrong, as the page reported them (2026-11-05).
+export function cleanQs(qs) {
+  return Array.isArray(qs)
+    ? qs
+        .slice(0, 80)
+        .map((q) => ({ n: Number(q?.n), ok: Boolean(q?.ok) }))
+        .filter((q) => Number.isInteger(q.n) && q.n > 0 && q.n < 200)
+    : []
+}
 
 export function withHelper(html) {
   // The thematic pages load their logo from an outside emoji site, which
@@ -80,7 +91,7 @@ export default function HtmlTask({ task, onClose, onChanged }) {
   useEffect(() => {
     const onMessage = (e) => {
       const d = e.data
-      if (d && d.type === 'ielts-workshop-score' && Number(d.max) > 0) setScore({ score: Number(d.score), max: Number(d.max), parts: Array.isArray(d.parts) ? d.parts.slice(0, 8) : [] })
+      if (d && d.type === 'ielts-workshop-score' && Number(d.max) > 0) setScore({ score: Number(d.score), max: Number(d.max), parts: Array.isArray(d.parts) ? d.parts.slice(0, 8) : [], qs: cleanQs(d.qs) })
       if (d && d.type === 'ielts-workshop-text' && Array.isArray(d.texts)) setTexts(d.texts.slice(0, 4).map((t) => ({ id: String(t.id || '').slice(0, 40), text: String(t.text || '').slice(0, 20000) })))
     }
     window.addEventListener('message', onMessage)
@@ -94,7 +105,7 @@ export default function HtmlTask({ task, onClose, onChanged }) {
       p_task_id: task.id,
       p_score: score ? score.score : null,
       p_max: score ? score.max : null,
-      p_details: texts.length || score?.parts?.length ? { texts, parts: score?.parts || [] } : null,
+      p_details: texts.length || score?.parts?.length || score?.qs?.length ? { texts, parts: score?.parts || [], qs: score?.qs || [] } : null,
     })
     setSaving(false)
     if (rpcError) {

@@ -264,6 +264,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
         open={bankOpen}
         initialSkill={bankSkill}
         groupId={groupId}
+        lockSkill
         onClose={() => setBankOpen(false)}
         onLibrary={() => {
           setBankOpen(false)

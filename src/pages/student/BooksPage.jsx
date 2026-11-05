@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { qtypeLabel } from '../../lib/questionTypes'
-import { withHelper } from '../../components/homework/HtmlTask'
+import { cleanQs, withHelper } from '../../components/homework/HtmlTask'
 import PageFrame from '../../components/homework/PageFrame'
 import WeakSpots from '../../components/WeakSpots'
 import SkillArt, { SkillIcon } from '../../components/SkillArt'
@@ -22,13 +22,48 @@ export default function BooksPage({ studentId }) {
   const [qtype, setQtype] = useState(null)
   const [open, setOpen] = useState(null)
   const listRef = useRef(null)
+  // Pages the student starred (migration_97); null = not available yet.
+  const [favs, setFavs] = useState(null)
+  useEffect(() => {
+    if (!studentId) return
+    supabase
+      .from('page_favourites')
+      .select('material_id')
+      .eq('user_id', studentId)
+      .then(({ data, error }) => setFavs(error ? null : new Set((data || []).map((r) => r.material_id))))
+  }, [studentId])
+  const toggleFav = async (id) => {
+    if (!favs) return
+    const on = favs.has(id)
+    setFavs((prev) => {
+      const n = new Set(prev)
+      if (on) n.delete(id)
+      else n.add(id)
+      return n
+    })
+    const { error } = on
+      ? await supabase.from('page_favourites').delete().eq('user_id', studentId).eq('material_id', id)
+      : await supabase.from('page_favourites').insert({ material_id: id })
+    if (error)
+      setFavs((prev) => {
+        const n = new Set(prev)
+        if (on) n.add(id)
+        else n.delete(id)
+        return n
+      })
+  }
 
   const load = async () => {
-    const [m, b] = await Promise.all([
-      supabase.from('materials').select('id, title, url, skill, question_type, shelf_order, created_at').eq('on_shelf', true),
+    const [m, b, gs] = await Promise.all([
+      supabase.from('materials').select('id, title, url, skill, question_type, collection, shelf_order, created_at').eq('on_shelf', true),
       supabase.from('book_practice').select('material_id, score, max_score, created_at').eq('user_id', studentId),
+      // Sets the teacher put on the shelf for this student's group(s) only
+      // (migration_96). None picked for the group: every set on the shelf.
+      supabase.from('group_shelf').select('collection'),
     ])
-    setItems(m.error ? [] : m.data || [])
+    const only = new Set((gs.error ? [] : gs.data || []).map((r) => r.collection))
+    const list = m.error ? [] : m.data || []
+    setItems(only.size ? list.filter((i) => only.has(i.collection)) : list)
     setTries(b.error ? [] : b.data || [])
   }
 
@@ -141,11 +176,11 @@ export default function BooksPage({ studentId }) {
               {pages.map((p, i) => {
                 const b = best[p.id]
                 return (
-                  <li key={p.id}>
+                  <li key={p.id} className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setOpen(p)}
-                      className="focus-ring flex w-full items-center gap-3 rounded-[14px] bg-panel-2/60 px-3 py-2.5 text-left hover:bg-panel-2"
+                      className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-[14px] bg-panel-2/60 px-3 py-2.5 text-left hover:bg-panel-2"
                     >
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] font-brand text-[13px] font-semibold text-brass">{i + 1}</span>
                       <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-paper">{p.title}</span>
@@ -157,6 +192,18 @@ export default function BooksPage({ studentId }) {
                         <span className="shrink-0 text-[12px] font-bold text-mist">Start</span>
                       )}
                     </button>
+                    {favs && (
+                      <button
+                        type="button"
+                        onClick={() => toggleFav(p.id)}
+                        aria-pressed={favs.has(p.id)}
+                        aria-label={favs.has(p.id) ? 'Remove the star' : 'Star this page — I liked it'}
+                        title={favs.has(p.id) ? 'You starred this' : 'Liked it? Star it'}
+                        className={`focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-[12px] text-lg transition ${favs.has(p.id) ? 'text-amber' : 'text-mist/60 hover:text-amber'}`}
+                      >
+                        {favs.has(p.id) ? '★' : '☆'}
+                      </button>
+                    )}
                   </li>
                 )
               })}
@@ -205,11 +252,16 @@ function BookPlayer({ item, onClose, onSaved }) {
     const key = `${s.score}/${s.max}`
     if (savedRef.current === key) return
     savedRef.current = key
-    const { data, error: err } = await supabase
+    const row = { material_id: item.id, score: s.score, max_score: s.max }
+    let { data, error: err } = await supabase
       .from('book_practice')
-      .insert({ material_id: item.id, score: s.score, max_score: s.max })
+      .insert(s.qs?.length ? { ...row, details: { qs: s.qs } } : row)
       .select('material_id, score, max_score, created_at')
       .single()
+    // Before migration_97 there is no details column: save the score alone.
+    if (err && s.qs?.length && /details/.test(err.message || '')) {
+      ;({ data, error: err } = await supabase.from('book_practice').insert(row).select('material_id, score, max_score, created_at').single())
+    }
     if (err) {
       savedRef.current = null
       setError('Your score could not be saved. Try again.')
@@ -223,7 +275,7 @@ function BookPlayer({ item, onClose, onSaved }) {
     const onMessage = (e) => {
       const d = e.data
       if (d && d.type === 'ielts-workshop-score' && Number(d.max) > 0 && Number(d.max) <= 200) {
-        const s = { score: Number(d.score), max: Number(d.max) }
+        const s = { score: Number(d.score), max: Number(d.max), qs: cleanQs(d.qs) }
         scoreRef.current = s
         setScore(s)
         save(s)
