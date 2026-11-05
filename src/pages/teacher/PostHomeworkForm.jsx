@@ -92,6 +92,23 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
 
   // Deadline: 'next' (each group's next lesson), 'none', or a datetime-local string.
   const [due, setDue] = useState('next')
+  const classTimeKey = `ielts:classTime:${groupId}`
+  const [classDay, setClassDay] = useState('')
+  const [classTime, setClassTime] = useState(() => {
+    try {
+      return window.localStorage.getItem(classTimeKey) || '18:00'
+    } catch {
+      return '18:00'
+    }
+  })
+  const rememberClassTime = (t) => {
+    setClassTime(t)
+    try {
+      window.localStorage.setItem(classTimeKey, t)
+    } catch {
+      /* private window — fine */
+    }
+  }
 
   // Lesson number/date + Telegram (2026-10-08).
   const [lessonsSupported, setLessonsSupported] = useState(false)
@@ -229,16 +246,20 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
   const nameOf = (id) => (id === groupId && groupName ? groupDisplayName(groupName) : groupDisplayName(groups.find((g) => g.id === id)?.name || ''))
   const targetIds = [groupId, ...[...extraGroups].filter((id) => id !== groupId)]
 
+  // No lesson times for this group yet: ask the teacher when the next
+  // class is (day chips + the class time, remembered for this group).
+  const askedIso = classDay && classTime ? new Date(`${classDay}T${classTime}`).toISOString() : null
+  const nextFor = (gid) => nextLessons[gid] || (gid === groupId ? askedIso : null)
   const dueFor = (gid) => {
     if (due === 'none') return null
-    if (due === 'next') return nextLessons[gid] || new Date(endOfDay(2)).toISOString()
+    if (due === 'next') return nextFor(gid) || new Date(endOfDay(2)).toISOString()
     return new Date(due).toISOString()
   }
   const dueSummary = (() => {
     if (due === 'none') return 'no deadline'
     if (due === 'next') {
-      const iso = nextLessons[groupId]
-      return iso ? `next lesson · ${lessonTime(iso)}` : 'in 2 days (no lesson times yet)'
+      const iso = nextFor(groupId)
+      return iso ? `next lesson · ${lessonTime(iso)}` : 'next lesson — choose the day'
     }
     return lessonTime(new Date(due).toISOString())
   })()
@@ -258,6 +279,7 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
     setTitle('')
     setDescription('')
     setDue('next')
+    setClassDay('')
     setEnableSpeaking(false)
     setAiEvalEnabled(false)
     setAllowedTypes(DEFAULT_TYPES)
@@ -289,6 +311,7 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
         if ((mockTaskMode === 'task2' || mockTaskMode === 'full') && !mockTask2Prompt.trim()) throw new Error('Add the Task 2 prompt.')
       }
       if (!finalTitle) throw new Error('Give the homework a title.')
+      if (due === 'next' && !nextFor(groupId)) throw new Error('Choose the day and time of the next class (step 3).')
 
       // Uploads happen once and are shared by every group.
       let attachment_url = null
@@ -753,7 +776,7 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
           <section className="flex flex-col gap-3">
             <StepTitle n={3}>Deadline</StepTitle>
             <div className="flex flex-wrap gap-1.5">
-              {dueChip('next', 'Next lesson', nextLessons[groupId] ? lessonTime(nextLessons[groupId]) : 'no lesson times — 2 days')}
+              {dueChip('next', 'Next lesson', nextFor(groupId) ? lessonTime(nextFor(groupId)) : 'choose the day')}
               {dueChip(endOfDay(0), 'Tonight', '23:59')}
               {dueChip(endOfDay(1), 'Tomorrow', '23:59')}
               {dueChip(endOfDay(2), 'In 2 days', '23:59')}
@@ -771,13 +794,47 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
             {due === 'next' && extraGroups.size > 0 && (
               <p className="text-xs font-semibold text-mist">
                 Each group gets its own next lesson:{' '}
-                {targetIds.map((id) => `${nameOf(id)} ${nextLessons[id] ? lessonTime(nextLessons[id]) : '— in 2 days'}`).join(' · ')}
+                {targetIds.map((id) => `${nameOf(id)} ${nextFor(id) ? lessonTime(nextFor(id)) : '— no lesson times, in 2 days'}`).join(' · ')}
               </p>
             )}
             {due === 'next' && !nextLessons[groupId] && (
-              <p className="rounded-[14px] bg-brass/10 px-3 py-2 text-xs font-semibold text-paper">
-                This group has no lesson times yet. Set the lesson days and times under <span className="font-extrabold">Course &amp; tools → Follow a course</span>, and “Next lesson” will use the real lesson.
-              </p>
+              <div className="flex flex-col gap-2.5 rounded-[20px] border border-brass/30 bg-brass/5 p-3.5">
+                <p className="text-[13px] font-extrabold text-paper">When is the next class?</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: 7 }, (_, k) => {
+                    const d = new Date()
+                    d.setDate(d.getDate() + k)
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                    const label = k === 0 ? 'Today' : k === 1 ? 'Tomorrow' : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })
+                    const on = classDay === iso
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setClassDay(iso)}
+                        className={`focus-ring h-9 rounded-[12px] px-3 text-[13px] font-extrabold transition ${on ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim hover:text-paper'}`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <label className="flex flex-wrap items-center gap-2 text-[13px] font-extrabold text-paper-dim">
+                  <Icon name="clock" className="h-4 w-4" />
+                  Class starts at
+                  <input
+                    type="time"
+                    value={classTime}
+                    onChange={(e) => rememberClassTime(e.target.value)}
+                    className="focus-ring rounded-[12px] border border-line bg-panel px-2.5 py-1.5 text-sm font-bold text-paper"
+                  />
+                  {askedIso && <span className="text-brass">Due {lessonTime(askedIso)}</span>}
+                </label>
+                <p className="text-[11px] font-semibold text-mist">
+                  To fill this in by itself, set the lesson days and times under Course &amp; tools → Follow a course.
+                </p>
+              </div>
             )}
           </section>
 

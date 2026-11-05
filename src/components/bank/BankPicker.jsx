@@ -53,8 +53,8 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
     })
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-ink/60 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-ink sm:rounded-[28px]" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Practice Bank">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-ink/85 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+      <div className="flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-ink shadow-2xl sm:rounded-[28px]" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Practice Bank">
         <div className="registan-band flex items-center gap-3 px-5 py-4 text-white">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">Practice Bank</p>
@@ -95,14 +95,29 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
               </div>
               {pages === null && <p className="text-sm font-semibold text-mist">Loading…</p>}
               {pages && collections.length === 0 && <p className="rounded-[14px] bg-panel px-4 py-6 text-center text-sm font-semibold text-mist">No {BANK_SKILLS.find((x) => x.value === skill)?.label.toLowerCase()} pages yet. Add them in Practice Bank.</p>}
-              <div className="grid gap-2 sm:grid-cols-2">
-                {collections.map(([name, n]) => (
-                  <button key={name} type="button" onClick={() => setCollection(name)} className="focus-ring flex flex-col items-start rounded-[16px] bg-panel px-4 py-3 text-left hover:bg-panel-2">
-                    <span className="text-[15px] font-extrabold text-paper">{name}</span>
-                    <span className="text-[12px] font-bold text-mist">{n} pages</span>
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                // Group by book: "Thematic Reading · Note Completion" →
+                // heading "Thematic Reading", card "Note Completion".
+                const books = {}
+                collections.forEach(([name, n]) => {
+                  const cut = name.indexOf(' · ')
+                  const book = cut > 0 ? name.slice(0, cut) : ''
+                  ;(books[book] = books[book] || []).push({ name, short: cut > 0 ? name.slice(cut + 3) : name, n })
+                })
+                return Object.entries(books).map(([book, list]) => (
+                  <div key={book || '-'} className="flex flex-col gap-2">
+                    {book && <p className="px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-mist">{book}</p>}
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {list.map((c) => (
+                        <button key={c.name} type="button" onClick={() => setCollection(c.name)} className="focus-ring flex flex-col items-start gap-0.5 rounded-[16px] bg-panel px-3.5 py-3 text-left transition hover:bg-panel-2">
+                          <span className="text-[14px] font-extrabold leading-snug text-paper">{c.short}</span>
+                          <span className="text-[12px] font-bold text-mist">{c.n} {skill === 'listening' ? 'tests' : 'pages'}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              })()}
             </>
           )}
         </div>
