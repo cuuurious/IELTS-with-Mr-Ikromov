@@ -342,6 +342,95 @@ function buildSpeakingTaskPrompt(criteriaText, speaking, answers, transcripts) {
   ].join('\n')
 }
 
+// Writing Task 1 / Task 2 pages (2026-11-05). Used only until a teacher
+// uploads the writing criteria.
+const DEFAULT_WRITING_CRITERIA = [
+  'IELTS Writing band descriptors (summary). Four criteria, each 0–9:',
+  'Task Achievement (Task 1) / Task Response (Task 2): Task 1 — a clear overview of the main trends or stages, key features selected and accurately reported with data, no personal opinion. Task 2 — all parts of the question answered, a clear position throughout, main ideas extended and supported.',
+  'Coherence and Cohesion: logical organisation, clear paragraphing, a range of cohesive devices used naturally, clear referencing.',
+  'Lexical Resource: a wide range of vocabulary used precisely and naturally, less common items, collocation, few errors in word choice and spelling.',
+  'Grammatical Range and Accuracy: a wide range of structures, the majority of sentences error-free, good control of punctuation.',
+  'Task 1 needs at least 150 words, Task 2 at least 250: under-length answers are penalised in Task Achievement / Task Response. Task 2 counts twice as much as Task 1 in the overall Writing band.',
+  'The band for a task is the average of the four criteria, rounded down to the nearest half band in practice for borderline cases.',
+].join('\n')
+
+const WRITING_TASK_SCHEMA = {
+  type: 'object',
+  properties: {
+    overall_band: { type: 'number' },
+    criteria: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { name: { type: 'string' }, band: { type: 'number' }, comment: { type: 'string' } },
+        required: ['name', 'band', 'comment'],
+        additionalProperties: false,
+      },
+    },
+    summary: { type: 'string' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improvements: { type: 'array', items: { type: 'string' } },
+    corrections: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { original: { type: 'string' }, better: { type: 'string' }, why: { type: 'string' } },
+        required: ['original', 'better', 'why'],
+        additionalProperties: false,
+      },
+    },
+    better_version: { type: 'string' },
+    exercises: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { title: { type: 'string' }, instructions: { type: 'string' }, items: { type: 'array', items: { type: 'string' } } },
+        required: ['title', 'instructions', 'items'],
+        additionalProperties: false,
+      },
+    },
+    grammar_structures: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+    useful_collocations: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+  },
+  required: ['overall_band', 'criteria', 'summary', 'strengths', 'improvements', 'corrections', 'better_version', 'exercises', 'grammar_structures', 'useful_collocations'],
+  additionalProperties: false,
+}
+
+function buildWritingTaskPrompt(criteriaText, { task, question, taskType, sample, essay, words, hasImage }) {
+  const isT1 = task === 'task1'
+  return [
+    `You are an experienced, kind but honest IELTS Writing examiner. A student wrote this IELTS Writing ${isT1 ? 'Task 1 report' : 'Task 2 essay'} as homework on a timed practice page. Mark it and coach them.`,
+    '',
+    'Grade STRICTLY according to the grading criteria below and use its own criterion names (normally Task Achievement / Task Response, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy).',
+    '',
+    '=== GRADING CRITERIA ===',
+    criteriaText,
+    '=== END OF GRADING CRITERIA ===',
+    '',
+    isT1
+      ? `=== THE TASK ===\nGraphic: ${question || '(see the image)'}${taskType ? ` (${taskType})` : ''}\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least 150 words.${hasImage ? '\nThe graphic itself is attached as an image: check every figure and feature the student reports against it.' : ''}`
+      : `=== THE QUESTION ===\n${question || '(not recorded)'}${taskType ? `\nEssay type: ${taskType}` : ''}\nWrite at least 250 words.`,
+    sample ? `\n=== A BAND 8 SAMPLE ANSWER (for reference only — the student need not match it; use it to see the key features / ideas) ===\n${sample}` : '',
+    '',
+    `=== THE STUDENT'S ${isT1 ? 'REPORT' : 'ESSAY'} (${words} words) ===`,
+    essay,
+    '=== END ===',
+    '',
+    SCORING_DISCIPLINE,
+    '',
+    'Write for an Uzbek learner of English at about B1–C1 level: short, clear sentences, no jargon.',
+    'criteria: one item per criterion, each comment quoting the student’s own words as evidence.' + (isT1 ? ' For Task Achievement say whether there is a clear overview and which key features or figures are missing or wrong.' : ' For Task Response say whether every part of the question is answered and the position is clear.'),
+    'summary: 2–3 sentences, the main message.',
+    'strengths and improvements: 2–4 each, specific to this student.',
+    'corrections: 5 to 8 items. original = a sentence or phrase the student really wrote (copied exactly), better = the corrected / Band 8 version, why = what changed, in a few words. Pick the mistakes and weak phrases that matter most.',
+    `better_version: the student’s own ${isT1 ? 'report' : 'essay'} rewritten at Band 8 — keep their ideas, structure and details where possible, fix the language, ${isT1 ? 'add a clear overview and the key figures they missed, about 170–190 words' : 'develop the arguments properly, about 270–300 words'}. Paragraphs separated by a blank line.`,
+    'exercises: 2 or 3 short exercises aimed at this student’s weakest criterion (for example: rewrite 3 of their sentences with a given structure; write an overview for the graphic; add a supporting example to a body paragraph). Each has a title, one-line instructions and 3–5 concrete items.',
+    LANGUAGE_TIPS_INSTRUCTION,
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -985,6 +1074,101 @@ Deno.serve(async (req) => {
           ...result,
           overall_band: band,
         }
+
+        await save(Number.isFinite(band) ? band : null, ai)
+
+        return jsonResponse({ ai })
+      } catch (err) {
+        const message = err?.message || 'Marking failed.'
+        await save(null, { status: 'error', error: message }).catch(() => {})
+        return jsonResponse({ error: message }, 500)
+      }
+    }
+
+    /*
+     * writing_task (2026-11-05): mark a Writing Task 1 / Task 2 page
+     * handed in as homework. The essay is the text saved on the attempt;
+     * the page sends its question (and, for Task 1, the graphic and the
+     * book's sample answer). Saved on the attempt (results.ai, band).
+     */
+
+    if (action === 'writing_task') {
+      const attemptId = payload?.attemptId
+      const task = payload?.task === 'task1' ? 'task1' : 'task2'
+      const question = String(payload?.question || '').slice(0, 3000)
+      const taskType = String(payload?.taskType || '').slice(0, 120)
+      const sample = String(payload?.sample || '').slice(0, 6000)
+      const image = typeof payload?.image === 'string' && /^data:image\/(png|jpe?g|webp|gif);base64,/.test(payload.image) && payload.image.length < 2_000_000 ? payload.image : null
+
+      if (!attemptId) {
+        return jsonResponse({ error: 'attemptId is required.' }, 400)
+      }
+
+      const { data: attempt, error: attemptError } = await admin
+        .from('homework_attempts')
+        .select('id, user_id, results')
+        .eq('id', attemptId)
+        .maybeSingle()
+
+      if (attemptError) throw attemptError
+      if (!attempt) return jsonResponse({ error: 'Attempt not found.' }, 404)
+
+      if (!callerIsTeacher && attempt.user_id !== caller.id) {
+        return jsonResponse({ error: 'Not allowed to mark this attempt.' }, 403)
+      }
+
+      const essay = String(attempt.results?.texts?.[0]?.text || '').trim()
+      const words = essay ? essay.split(/\s+/).length : 0
+      if (words < 20) {
+        return jsonResponse({ error: 'The essay is too short to mark (under 20 words).' }, 400)
+      }
+
+      const save = async (band, ai) => {
+        const { error } = await admin.rpc('save_speaking_feedback', {
+          p_attempt_id: attemptId,
+          p_band: band,
+          p_ai: ai,
+        })
+        if (error) throw error
+      }
+
+      await save(null, { status: 'processing', started_at: new Date().toISOString() })
+
+      try {
+        const { data: criteria } = await admin
+          .from('grading_criteria')
+          .select('criteria_text')
+          .eq('skill', 'writing')
+          .maybeSingle()
+
+        const criteriaText = criteria?.criteria_text?.trim() || DEFAULT_WRITING_CRITERIA
+
+        const content = [
+          {
+            type: 'input_text',
+            text: buildWritingTaskPrompt(criteriaText, { task, question, taskType, sample, essay, words, hasImage: Boolean(image) }),
+          },
+        ]
+        if (image && task === 'task1') {
+          content.push({ type: 'input_image', image_url: image, detail: 'high' })
+        }
+
+        const evaluation = await callOpenAiResponses(openaiKey, {
+          model: TEXT_MODEL,
+          input: [{ role: 'user', content }],
+          text: {
+            format: {
+              type: 'json_schema',
+              name: 'writing_task_evaluation',
+              strict: true,
+              schema: WRITING_TASK_SCHEMA,
+            },
+          },
+        })
+
+        const result = parseJsonLoose(extractOutputText(evaluation))
+        const band = Math.max(0, Math.min(9, Math.round(Number(result.overall_band) * 2) / 2))
+        const ai = { status: 'done', graded_at: new Date().toISOString(), task, words, ...result, overall_band: band }
 
         await save(Number.isFinite(band) ? band : null, ai)
 

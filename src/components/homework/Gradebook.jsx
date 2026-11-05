@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import SkillAudioPlayer from '../SkillAudioPlayer'
 import { supabase } from '../../lib/supabaseClient'
 import SpeakingFeedback from '../speaking/SpeakingFeedback'
+import WritingFeedback from './WritingFeedback'
 import { SkillIcon } from '../SkillArt'
 import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 import WeakSpots from '../WeakSpots'
@@ -344,12 +345,13 @@ function PageAnswer({ attemptId }) {
               ))}
             </div>
           )}
-          {res?.check?.tot > 0 && (
+          {!res?.ai && res?.check?.tot > 0 && (
             <p className="text-[12px] font-bold text-paper-dim">
               Page self-check: <span className="font-extrabold text-paper">{res.check.got}/{res.check.tot}</span> features of the sample answer (not a band score)
             </p>
           )}
-          {(res?.texts || []).map((t) => (
+          {res?.ai && <WritingFeedback results={res} teacher />}
+          {!res?.ai && (res?.texts || []).map((t) => (
             <div key={t.id} className="rounded-[14px] bg-panel-2/60 px-3 py-2">
               <p className="mb-1 text-[11px] font-extrabold uppercase tracking-wide text-mist">{t.text.trim().split(/\s+/).length} words</p>
               <p className="whitespace-pre-wrap text-sm text-paper">{t.text}</p>

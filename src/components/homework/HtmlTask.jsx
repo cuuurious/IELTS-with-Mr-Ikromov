@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { markWriting, writingContext } from '../../lib/writingAi'
 import PageFrame from './PageFrame'
+import WritingFeedback from './WritingFeedback'
 
 /*
  * One of Mr Ikromov's interactive HTML workshops set as homework
@@ -69,8 +71,11 @@ export function withHelper(html) {
   return HELPER + html
 }
 
-export default function HtmlTask({ task, onClose, onChanged }) {
+export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   const [html, setHtml] = useState(null)
+  const rawRef = useRef('') // the page as it came, for the AI's task details
+  const [fb, setFb] = useState(null) // writing: { id, results } of the latest hand-in
+  const [showFb, setShowFb] = useState(false)
   const [error, setError] = useState('')
   const [score, setScore] = useState(null)
   const [texts, setTexts] = useState([]) // typed answers (Writing pages)
@@ -85,7 +90,11 @@ export default function HtmlTask({ task, onClose, onChanged }) {
         if (!r.ok) throw new Error('The workshop file could not be opened.')
         return r.text()
       })
-      .then((text) => !cancelled && setHtml(withHelper(text)))
+      .then((text) => {
+        if (cancelled) return
+        rawRef.current = text
+        setHtml(withHelper(text))
+      })
       .catch((err) => !cancelled && setError(err.message))
     return () => {
       cancelled = true
@@ -104,8 +113,52 @@ export default function HtmlTask({ task, onClose, onChanged }) {
   }, [])
 
   // Writing pages (Task 1 / Task 2 essays): no score, the essay itself is
-  // what is handed in (2026-11-05).
+  // what is handed in (2026-11-05). The AI marks it after hand-in.
   const isWriting = /\/writing\//.test(task.html_url || '')
+
+  // The last AI feedback on this task, if any.
+  useEffect(() => {
+    if (!isWriting || !task.id || !studentId) return undefined
+    let cancelled = false
+    supabase
+      .from('homework_attempts')
+      .select('id, results, submitted_at')
+      .eq('task_id', task.id)
+      .eq('user_id', studentId)
+      .not('submitted_at', 'is', null)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        const last = data?.[0]
+        if (!cancelled && last?.results?.ai) setFb({ id: last.id, results: last.results })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isWriting, task.id, studentId])
+
+  // While the AI is marking, look again every few seconds.
+  const fbStatus = fb?.results?.ai?.status
+  useEffect(() => {
+    if (fbStatus !== 'processing' || !fb?.id) return undefined
+    const t = setInterval(async () => {
+      const { data } = await supabase.from('homework_attempts').select('id, results').eq('id', fb.id).maybeSingle()
+      if (data?.results?.ai && data.results.ai.status !== 'processing') {
+        setFb({ id: data.id, results: data.results })
+        onChanged?.()
+      }
+    }, 6000)
+    return () => clearInterval(t)
+  }, [fbStatus, fb?.id, onChanged])
+
+  const runMarking = async (attemptId, results) => {
+    const ctx = writingContext(rawRef.current, task.html_url)
+    setFb({ id: attemptId, results: { ...results, ai: { status: 'processing', task: ctx.task } } })
+    setShowFb(true)
+    const res = await markWriting(attemptId, ctx)
+    setFb((cur) => (cur?.id === attemptId ? { id: attemptId, results: { ...results, ai: res.ai || { status: 'error', error: res.error, task: ctx.task } } } : cur))
+    onChanged?.()
+  }
 
   const handIn = async () => {
     setSaving(true)
@@ -127,6 +180,9 @@ export default function HtmlTask({ task, onClose, onChanged }) {
     const row = Array.isArray(data) ? data[0] : data
     setDone(row || { attempt_no: 1 })
     onChanged?.()
+    // Writing: the AI marks the essay (about a minute).
+    const essayWords = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
+    if (isWriting && row?.id && essayWords >= 20) runMarking(row.id, { texts, ...(check ? { check } : {}) })
   }
 
   const words = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
@@ -160,18 +216,55 @@ export default function HtmlTask({ task, onClose, onChanged }) {
       onClose={leave}
       score={isWriting ? null : score}
       badge={isWriting ? `${words}w` : null}
-      status={status}
+      status={showFb ? 'AI feedback on your hand-in' : status}
+      cover={showFb && fb ? <FeedbackCover fb={fb} onBack={() => setShowFb(false)} onRetry={() => runMarking(fb.id, fb.results)} /> : null}
+      onCloseCover={() => setShowFb(false)}
       action={
-        <button
-          type="button"
-          onClick={handIn}
-          disabled={saving || !html}
-          title={status}
-          className="focus-ring h-10 shrink-0 rounded-[12px] bg-saffron px-3.5 text-sm font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50 sm:px-5"
-        >
-          {saving ? 'Handing in…' : done ? '✓ Hand in again' : 'Hand in'}
-        </button>
+        <>
+          {fb && !showFb && (
+            <button
+              type="button"
+              onClick={() => setShowFb(true)}
+              className="focus-ring h-10 shrink-0 rounded-[12px] bg-white/15 px-3 text-sm font-extrabold text-white hover:bg-white/25"
+            >
+              {fb.results?.ai?.status === 'done' && fb.results.ai.overall_band != null ? `Feedback · ${Number(fb.results.ai.overall_band).toFixed(1)}` : 'Feedback'}
+            </button>
+          )}
+          {showFb ? (
+            <button type="button" onClick={() => setShowFb(false)} className="focus-ring h-10 shrink-0 rounded-[12px] bg-saffron px-3.5 text-sm font-extrabold text-[#17213a] hover:brightness-105 sm:px-5">
+              Back to essay
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handIn}
+              disabled={saving || !html}
+              title={status}
+              className="focus-ring h-10 shrink-0 rounded-[12px] bg-saffron px-3.5 text-sm font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50 sm:px-5"
+            >
+              {saving ? 'Handing in…' : done ? '✓ Hand in again' : 'Hand in'}
+            </button>
+          )}
+        </>
       }
     />
+  )
+}
+
+// The AI feedback over the writing page (Back returns to the essay).
+function FeedbackCover({ fb, onBack, onRetry }) {
+  const ai = fb.results?.ai
+  return (
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-5 sm:py-8">
+      <WritingFeedback results={fb.results} />
+      {ai?.status === 'error' && (
+        <button type="button" onClick={onRetry} className="focus-ring h-11 self-start rounded-[14px] bg-writing px-5 text-sm font-extrabold text-white">
+          Try marking again
+        </button>
+      )}
+      <button type="button" onClick={onBack} className="focus-ring h-11 self-center rounded-[14px] bg-panel px-5 text-sm font-extrabold text-paper hover:bg-panel-2">
+        Back to the essay
+      </button>
+    </div>
   )
 }

@@ -11,11 +11,14 @@ import { useEffect, useRef } from 'react'
  * The page itself keeps its real-test look; on phones the helper in
  * HtmlTask.jsx switches it to Passage / Questions tabs.
  */
-export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null }) {
+export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null }) {
+  // `cover`: a panel shown over the page (e.g. AI feedback); Back closes it first.
   const frameRef = useRef(null)
   const overlayOpen = useRef(false)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
+  const coverRef = useRef(null)
+  coverRef.current = cover ? onCloseCover : null
 
   // Listen for the page telling us its Workshop / pop-up is open.
   useEffect(() => {
@@ -39,6 +42,15 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
     const mountedAt = Date.now()
     const onPop = () => {
       if (leaving) return
+      if (coverRef.current) {
+        coverRef.current()
+        try {
+          window.history.pushState(marker, '')
+        } catch {
+          /* ignore */
+        }
+        return
+      }
       if (overlayOpen.current) {
         frameRef.current?.contentWindow?.postMessage({ type: 'ielts-close-overlay' }, '*')
         overlayOpen.current = false
@@ -99,7 +111,8 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
         {action}
       </div>
       {error && <p className="shrink-0 bg-urgent-tint px-4 py-2 text-sm font-bold text-coral">{error}</p>}
-      <div className="min-h-0 flex-1 bg-white">
+      {cover && <div className="min-h-0 flex-1 overflow-y-auto bg-ink">{cover}</div>}
+      <div className={`min-h-0 flex-1 bg-white ${cover ? 'hidden' : ''}`}>
         {html ? (
           <iframe
             ref={frameRef}
