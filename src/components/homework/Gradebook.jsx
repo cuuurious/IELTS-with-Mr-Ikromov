@@ -293,6 +293,11 @@ function PageAnswer({ attemptId }) {
               ))}
             </div>
           )}
+          {res?.check?.tot > 0 && (
+            <p className="text-[12px] font-bold text-paper-dim">
+              Page self-check: <span className="font-extrabold text-paper">{res.check.got}/{res.check.tot}</span> features of the sample answer (not a band score)
+            </p>
+          )}
           {(res?.texts || []).map((t) => (
             <div key={t.id} className="rounded-[14px] bg-panel-2/60 px-3 py-2">
               <p className="mb-1 text-[11px] font-extrabold uppercase tracking-wide text-mist">{t.text.trim().split(/\s+/).length} words</p>

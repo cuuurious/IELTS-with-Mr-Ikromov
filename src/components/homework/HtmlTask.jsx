@@ -21,7 +21,7 @@ try{window.localStorage.getItem('x')}catch(e){var mk=function(){var d={};return{
 function qsNow(){var out=[];try{document.querySelectorAll('#answerReviewList .answer-item').forEach(function(el){var b=el.querySelector('b');var n=parseInt(((b&&b.textContent)||'').replace(/[^0-9]/g,''),10);if(n)out.push({n:n,ok:!el.classList.contains('wrong')})});if(!out.length&&Array.isArray(window._det))window._det.forEach(function(d){if(d&&d[3]!==null&&d[3]!==undefined)out.push({n:+d[0],ok:!!d[3]})})}catch(_){}return out.slice(0,80)}
 var last='';function post(s,m,parts){s=+s;m=+m;if(!(m>0)||s<0||s>m)return;var qs=qsNow();var k=s+'/'+m+'|'+JSON.stringify(parts||[])+'|'+qs.length;if(k===last)return;last=k;parent.postMessage({type:'ielts-workshop-score',score:s,max:m,parts:parts||[],qs:qs},'*')}
 window.reportScore=function(s,m){post(s,m,[])};
-function scan(){if(document.getElementById('essay')&&document.getElementById('workshopView'))return;var sb=document.getElementById('scoreBig');if(sb){if(sb.offsetParent!==null){var tm=((sb.parentElement&&sb.parentElement.innerText)||'').match(/out\\s+of\\s+(\\d{1,3})/i);if(tm)post(parseInt(sb.textContent,10),+tm[1],[])}return}
+function t1(){return document.getElementById('answer')&&document.getElementById('scoreTot')&&document.getElementById('results')}function t1Res(){var r=t1();return r&&getComputedStyle(r).display!=='none'}var t1Last='';function scan(){if(document.getElementById('essay')&&document.getElementById('workshopView'))return;if(t1()){if(t1Res()){var g=parseInt(document.getElementById('scoreNum').textContent,10),tt=parseInt(document.getElementById('scoreTot').textContent,10);if(tt>0&&g+'/'+tt!==t1Last){t1Last=g+'/'+tt;parent.postMessage({type:'ielts-writing-check',got:g,tot:tt},'*')}}return}var sb=document.getElementById('scoreBig');if(sb){if(sb.offsetParent!==null){var tm=((sb.parentElement&&sb.parentElement.innerText)||'').match(/out\\s+of\\s+(\\d{1,3})/i);if(tm)post(parseInt(sb.textContent,10),+tm[1],[])}return}
 var t=(document.body&&document.body.innerText)||'';var found=[];var m;
 var re=/(score|result|correct|marks?|points?|you got|natija|ball|to'g'ri)[^0-9]{0,30}?(\\d{1,3})\\s*(?:\\/|out of|of|dan)\\s*(\\d{1,3})/ig;
 while((m=re.exec(t)))found.push({s:+m[2],m:+m[3],at:m.index,label:t.slice(Math.max(0,m.index-30),m.index+m[0].length).replace(/\\s+/g,' ').trim()});
@@ -34,12 +34,13 @@ var best=found[0];found.forEach(function(f){if(f.m>best.m||(f.m===best.m&&f.at>b
 var seen={};var parts=found.filter(function(f){var k=f.label;if(seen[k])return false;seen[k]=1;return true}).slice(0,8).map(function(f){return{score:f.s,max:f.m,label:f.label.slice(0,80)}});
 post(best.s,best.m,parts)}
 var tt;function texts(){clearTimeout(tt);tt=setTimeout(function(){var out=[];document.querySelectorAll('textarea,[contenteditable="true"]').forEach(function(el,i){var v=el.tagName==='TEXTAREA'?el.value:el.innerText;if(v&&v.trim().length>20)out.push({id:el.id||('box'+(i+1)),text:v.slice(0,20000)})});if(out.length)parent.postMessage({type:'ielts-workshop-text',texts:out},'*')},600)}
-function ovOpen(){var wv=document.getElementById('workshopView');if(wv&&!wv.classList.contains('hidden')&&document.getElementById('essay'))return true;var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
+function ovOpen(){var cf=document.getElementById('confirm');if(t1()&&cf&&cf.classList.contains('show'))return true;if(t1Res())return true;var wv=document.getElementById('workshopView');if(wv&&!wv.classList.contains('hidden')&&document.getElementById('essay'))return true;var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
 var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
-window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;var hb=document.getElementById('hdrBack');var wv=document.getElementById('workshopView');if(hb&&wv&&!wv.classList.contains('hidden')){hb.click();setTimeout(ovTell,50);return}var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
+window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;if(t1()){var cf=document.getElementById('confirm');if(cf&&cf.classList.contains('show'))cf.classList.remove('show');else if(t1Res()&&window.backToEdit)window.backToEdit();setTimeout(ovTell,50);return}var hb=document.getElementById('hdrBack');var wv=document.getElementById('workshopView');if(hb&&wv&&!wv.classList.contains('hidden')){hb.click();setTimeout(ovTell,50);return}var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
 function fitTables(){if(!(window.innerWidth<760))return;document.querySelectorAll('table').forEach(function(t){if(t.getAttribute('data-ielts-fit'))return;var p=t.parentElement;if(!p)return;if(t.scrollWidth<=p.clientWidth+2)return;t.setAttribute('data-ielts-fit','1');var w=document.createElement('div');w.className='ielts-swipe';w.style.cssText='overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:0 0 .5rem';var h=document.createElement('div');h.textContent='Swipe the table sideways \u2192';h.style.cssText='font-size:11px;font-weight:700;color:#92400e;margin:2px 0 4px';p.insertBefore(h,t);p.insertBefore(w,t);w.appendChild(t);var cols=0;t.querySelectorAll('tr').forEach(function(r){cols=Math.max(cols,r.children.length)});t.style.width='auto';t.style.minWidth=Math.min(Math.max(cols,2)*150,900)+'px';t.style.fontSize='.86rem';t.querySelectorAll('th,td').forEach(function(c){c.style.padding='.35rem .45rem'})})}
-function writingPhone(){if(!(window.innerWidth<480)||!document.getElementById('essay')||!document.querySelector('.header .brand'))return;var st=document.createElement('style');st.textContent='.header .brand{display:none}.header{padding:0 12px}';document.head.appendChild(st)}
-function mobile(){try{writingPhone()}catch(_){}if(!(window.innerWidth<760))return;var tc=document.querySelector('.test-container')||(document.querySelector('.part .passage-container')&&document.querySelector('.main'));if(!tc||!document.querySelector('.passage-container')||!document.querySelector('.questions-container')||document.getElementById('ielts-mtabs'))return;
+function writingPhone(){if(!(window.innerWidth<480)||!(document.getElementById('essay')||t1())||!document.querySelector('.header .brand'))return;var st=document.createElement('style');st.textContent='.header .brand{display:none}.header{padding:0 12px}';document.head.appendChild(st)}
+function t1Tabs(){var pc=document.querySelector('.panels-container');if(!t1()||!pc||document.getElementById('ielts-mtabs'))return;var st=document.createElement('style');st.textContent='body.ielts-t1 .left-panel{border:0!important}body.ielts-t1.ielts-w .left-panel{display:none!important}body.ielts-t1:not(.ielts-w) .right-panel{display:none!important}#ielts-mtabs{display:flex;gap:6px;padding:8px 20px;position:sticky;top:60px;z-index:5;background:#fff;border-bottom:1px solid #e5e7eb}#ielts-mtabs button{flex:1;height:40px;border-radius:10px;border:1.5px solid #d97706;background:#fff;color:#92400e;font-weight:800;font-size:.95rem}#ielts-mtabs button.on{background:#d97706;color:#fff}';document.head.appendChild(st);document.body.classList.add('ielts-t1');var bar=document.createElement('div');bar.id='ielts-mtabs';var a=document.createElement('button');a.type='button';a.textContent='Graphic';var b=document.createElement('button');b.type='button';b.textContent='Write';bar.appendChild(a);bar.appendChild(b);pc.parentNode.insertBefore(bar,pc);var tp=document.querySelector('.task-prompt strong');if(tp)tp.textContent='Study the task below, then press Write to write your report.';function show(w){document.body.classList.toggle('ielts-w',w);a.className=w?'':'on';b.className=w?'on':''}a.onclick=function(){show(false)};b.onclick=function(){show(true);setTimeout(function(){var t=document.getElementById('answer');if(t)t.focus()},50)};show(false)}
+function mobile(){try{writingPhone()}catch(_){}if(!(window.innerWidth<760))return;try{t1Tabs()}catch(_){};var tc=document.querySelector('.test-container')||(document.querySelector('.part .passage-container')&&document.querySelector('.main'));if(!tc||!document.querySelector('.passage-container')||!document.querySelector('.questions-container')||document.getElementById('ielts-mtabs'))return;
 var st=document.createElement('style');st.textContent='body.ielts-m{height:100vh;height:100dvh}body.ielts-m .header{padding:.4rem .75rem}body.ielts-m .header__candidate{display:none}body.ielts-m .header__timer{padding:.2rem .7rem;font-size:.95rem}body.ielts-m .test-container{flex-direction:column;height:auto!important;flex:1;min-height:0}body.ielts-m .divider{display:none!important}body.ielts-m .passage-container,body.ielts-m .questions-container{flex:1 1 auto!important;width:100%!important;max-width:none!important;min-height:0}body.ielts-m.ielts-q .passage-container{display:none!important}body.ielts-m:not(.ielts-q) .questions-container{display:none!important}body.ielts-m .footer{flex-wrap:wrap;gap:.4rem;padding:.45rem .6rem}body.ielts-m .footer__navwrap{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}body.ielts-m .footer__navbtn{flex:0 0 auto}body.ielts-m .part.active{flex-direction:column}body.ielts-m .navbar{display:flex!important;overflow-x:auto;gap:.4rem;padding:.4rem .6rem}body.ielts-m .navbar>*{flex:0 0 auto;min-width:150px}body.ielts-m .navpart{flex-wrap:nowrap;flex:0 0 auto}body.ielts-m .navbtn{flex:0 0 auto}body.ielts-m .header__right{gap:.4rem}#ielts-mtabs{display:flex;gap:6px;padding:6px 8px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0}#ielts-mtabs button{flex:1;height:38px;border-radius:10px;border:1.5px solid #d97706;background:#fff;color:#92400e;font-weight:800;font-size:.95rem}#ielts-mtabs button.on{background:#d97706;color:#fff}';
 document.head.appendChild(st);document.body.classList.add('ielts-m');var bar=document.createElement('div');bar.id='ielts-mtabs';var a=document.createElement('button');a.type='button';a.textContent='Passage';var b=document.createElement('button');b.type='button';b.textContent='Questions';bar.appendChild(a);bar.appendChild(b);tc.parentNode.insertBefore(bar,tc);
 function show(q){document.body.classList.toggle('ielts-q',q);a.className=q?'':'on';b.className=q?'on':'';setTimeout(function(){try{fitTables()}catch(_){}},30)}a.onclick=function(){show(false)};b.onclick=function(){show(true)};show(false);
@@ -75,6 +76,7 @@ export default function HtmlTask({ task, onClose, onChanged }) {
   const [texts, setTexts] = useState([]) // typed answers (Writing pages)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
+  const [check, setCheck] = useState(null) // Task 1 self-check: { got, tot }
 
   useEffect(() => {
     let cancelled = false
@@ -94,20 +96,28 @@ export default function HtmlTask({ task, onClose, onChanged }) {
     const onMessage = (e) => {
       const d = e.data
       if (d && d.type === 'ielts-workshop-score' && Number(d.max) > 0) setScore({ score: Number(d.score), max: Number(d.max), parts: Array.isArray(d.parts) ? d.parts.slice(0, 8) : [], qs: cleanQs(d.qs) })
+      if (d && d.type === 'ielts-writing-check' && Number(d.tot) > 0) setCheck({ got: Number(d.got) || 0, tot: Number(d.tot) })
       if (d && d.type === 'ielts-workshop-text' && Array.isArray(d.texts)) setTexts(d.texts.slice(0, 4).map((t) => ({ id: String(t.id || '').slice(0, 40), text: String(t.text || '').slice(0, 20000) })))
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [])
 
+  // Writing pages (Task 1 / Task 2 essays): no score, the essay itself is
+  // what is handed in (2026-11-05).
+  const isWriting = /\/writing\//.test(task.html_url || '')
+
   const handIn = async () => {
     setSaving(true)
     setError('')
     const { data, error: rpcError } = await supabase.rpc('submit_homework_score', {
       p_task_id: task.id,
-      p_score: score ? score.score : null,
-      p_max: score ? score.max : null,
-      p_details: texts.length || score?.parts?.length || score?.qs?.length ? { texts, parts: score?.parts || [], qs: score?.qs || [] } : null,
+      // Writing has no score: the teacher marks the essay itself.
+      p_score: score && !isWriting ? score.score : null,
+      p_max: score && !isWriting ? score.max : null,
+      p_details: texts.length || score?.parts?.length || score?.qs?.length || check
+        ? { texts, parts: isWriting ? [] : score?.parts || [], qs: isWriting ? [] : score?.qs || [], ...(check ? { check } : {}) }
+        : null,
     })
     setSaving(false)
     if (rpcError) {
@@ -119,9 +129,6 @@ export default function HtmlTask({ task, onClose, onChanged }) {
     onChanged?.()
   }
 
-  // Writing pages (Task 1 / Task 2 essays): no score, the essay itself is
-  // what is handed in (2026-11-05).
-  const isWriting = /\/writing\//.test(task.html_url || '')
   const words = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
   const status = done
     ? done.attempt_no === 1
@@ -129,7 +136,7 @@ export default function HtmlTask({ task, onClose, onChanged }) {
       : 'Handed in as a retake. Your first try still counts.'
     : isWriting
       ? words
-        ? `${words} words — press Hand in when you finish. Your essay is sent with it.`
+        ? `${words} words${check ? ` · self-check ${check.got}/${check.tot}` : ''} — press Hand in when you finish. Your essay is sent with it.`
         : 'Write your essay in the page, then press Hand in.'
       : score
         ? 'Score found. Hand it in when you are happy.'

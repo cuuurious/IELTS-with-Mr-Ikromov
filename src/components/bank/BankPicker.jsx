@@ -170,7 +170,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${ofSkill.length || ''} ${book ? 'tests' : `${skillLabel.toLowerCase()} pages`}…`}
+            placeholder={`Search ${ofSkill.length || ''} ${book === 'Writing Task 1' ? 'reports' : book === 'Writing Task 2' ? 'essays' : book ? 'tests' : `${skillLabel.toLowerCase()} pages`}…`}
             className="focus-ring h-10 min-w-0 flex-1 rounded-[12px] border border-line bg-panel px-3.5 text-sm text-paper placeholder:text-mist/70"
           />
           {groupId && (

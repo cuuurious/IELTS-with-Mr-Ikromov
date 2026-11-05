@@ -164,6 +164,19 @@ export function peekPage(url) {
             /* fall through */
           }
         }
+        // Writing Task 1 pages: the graphic's name, its type and the picture.
+        const cfg = /const CFG = \{"no": \d+, "minutes": \d+, "minWords": \d+, "title": ("(?:[^"\\]|\\.)*")/.exec(html)
+        if (cfg) {
+          let name = ''
+          try {
+            name = JSON.parse(cfg[1])
+          } catch {
+            /* keep empty */
+          }
+          const kind = /<strong>Task \d+<\/strong> &middot; ([^<]+)<\/p>/.exec(html)
+          const img = /<div class="chart-container">\s*<img src="(data:image\/[^"]+)"/.exec(html)
+          return { title: name, sub: kind ? kind[1].trim() : '', text: 'Write at least 150 words in 20 minutes. The page checks the report against a sample answer.', img: img ? img[1] : '' }
+        }
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const title = doc.querySelector('.passage-title')?.textContent?.trim() || ''
         const sub = doc.querySelector('.passage-subtitle')?.textContent?.trim() || ''

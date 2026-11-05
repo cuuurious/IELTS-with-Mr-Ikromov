@@ -42,6 +42,10 @@ export function coverCode(name, types) {
   const part = /Part\s*(\d)/i.exec(name)
   if (part) return `Part ${part[1]}`
   if (/word list/i.test(name)) return 'Summary + list'
+  if (/^Writing Task 1/.test(name)) {
+    const t1 = { 'change charts': 'Change', 'comparative graphs': 'Compare', 'mixed graphs': 'Mixed', maps: 'Maps', processes: 'Process' }[name.split(' · ').pop().toLowerCase()]
+    if (t1) return t1
+  }
   const essay = { 'agree or disagree': 'Agree?', 'discuss both views': 'Both views', 'positive or negative': '+ or −', 'advantages & disadvantages': 'Pros & cons', 'problems & solutions': 'Problems', 'two-part questions': 'Two-part' }[name.split(' · ').pop().toLowerCase()]
   if (essay) return essay
   const list = [...(types || [])]
@@ -58,12 +62,13 @@ export function splitSet(name) {
   const short = cut > 0 ? name.slice(cut + 3) : name
   const part = /Part\s*(\d)/i.exec(name)
   if (book === 'Full Reading Tests') return { book, short, subtitle: '3 passages · 40 questions · 60 min' }
+  if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
 }
 
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
-  if (!unit && skill === 'writing') unit = 'essays'
+  if (!unit && skill === 'writing') unit = /^Writing Task 1/.test(name) ? 'reports' : 'essays'
   if (!unit && /^Full Reading Tests/.test(name)) unit = 'tests'
   return (
     <button
@@ -165,6 +170,7 @@ export function PageRow({ page, checked, onToggle, given = [], stat, showType = 
             <>
               {peek.title && <p className="font-extrabold text-paper">{peek.title}</p>}
               {peek.sub && <p className="text-xs italic text-mist">{peek.sub}</p>}
+              {peek.img && <img src={peek.img} alt="" className="mt-2 max-h-[220px] w-auto max-w-full rounded-[12px] border border-line bg-white" />}
               <p className="mt-1">{peek.text}{peek.text?.length >= 260 ? '…' : ''}</p>
             </>
           )}
