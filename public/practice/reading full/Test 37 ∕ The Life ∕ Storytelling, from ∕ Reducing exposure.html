@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 37 / The Life / Storytelling, from / Reducing exposure</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 37 / The Life / Storytelling, from / Reducing exposure</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The Life of Louis Braille</div><div class="passage-subtitle">Teacher and advocate for the blind, Louis Braille designed the coding system, based on patterns of raised dots, by which the blind can read through touch.</div><p data-para="1"><span class="sent" id="s0_0">Louis Braille was born in Coupvray, France on January 4, 1809, the only child of Louis and Constance Braille.</span> <span class="sent" id="s0_1">His father made leather saddles and harnesses for farmers in the area.</span> <span class="sent" id="s0_2">At the age of three, while playing in his father&#x27;s shop, young Louis was struck in the eye by a tool.</span> <span class="sent" id="s0_3">Within weeks of the accident, the infection that had developed in his eyes took away his sight completely.</span> <span class="sent" id="s0_4">Although there were few options for blind people at that time, Braille&#x27;s parents wanted their son to be educated.</span> <span class="sent" id="s0_5">He attended school in their village with sighted children and followed the lessons through listening alone.</span> <span class="sent" id="s0_6">He was an excellent student, mostly because of his exceptional memory.</span></p><p data-para="2"><span class="sent" id="s0_7">In 1819 Braille received a scholarship that enabled him to attend the Institut National des Jeunes Aveugles (National Institute of Blind Youth) in Paris, France.</span> <span class="sent" id="s0_8">He continued to excel in his studies and also began playing the piano and organ.</span> <span class="sent" id="s0_9">The same year Braille entered the school, Captain Charles Barbier invented sonography, or night writing, a system of embossed symbols (standing out from the surface) that soldiers adopted to communicate silently at night on the battlefield.</span> <span class="sent" id="s0_10">The fifteen-year-old Braille was inspired by a lecture Barbier gave at the Institute a few years later.</span> <span class="sent" id="s0_11">Braille adapted Barbier&#x27;s system to replace the awkward embossed-word books in the Institute&#x27;s library, which were the only thing he and his classmates could use up to that point.</span></p><p data-para="3"><span class="sent" id="s0_12">Louis Braille was one of many people at the school who found Barbier&#x27;s system promising; but he also discovered its shortcomings.</span> <span class="sent" id="s0_13">It was quite complex (soldiers had difficulty learning it) and it was based on sounds rather than letters.</span> <span class="sent" id="s0_14">Braille spent three years developing a much simpler system.</span> <span class="sent" id="s0_15">Braille began experimenting with shapes cut from leather as well as nails and tacks hammered into boards.</span> <span class="sent" id="s0_16">He finally settled on a six-dot code, based on the twenty-six letters of the alphabet, which could be recognized with a single contact of one finger.</span></p><p data-para="4"><span class="sent" id="s0_17">By changing the number and placement of dots, he coded letters, punctuation, numbers, familiar words, scientific symbols, mathematical and musical notation, and capitalization.</span> <span class="sent" id="s0_18">With the right hand the reader touched individual dots, and with the left hand he or she moved toward the next line, grasping the text as smoothly and rapidly as sighted readers.</span> <span class="sent" id="s0_19">Using the Braille system, students were also able to take notes and write essays by punching dots into paper with a pointed instrument that was lined up with a metal guide.</span> <span class="sent" id="s0_20">This writing technique devised by Braille was known as &#x27;decapoint&#x27; and it was later developed by one of his colleagues into a machine that operated like a typewriter.</span></p><p data-para="5"><span class="sent" id="s0_21">At the age of twenty, Braille published a written account describing the use of his coded system.</span> <span class="sent" id="s0_22">In 1837 he issued a second publication featuring an expanded system of coding text.</span> <span class="sent" id="s0_23">King Louis Philippe (1773–1850) praised the system publicly after a demonstration at the Paris Exposition of Industry in 1834, and Braille&#x27;s fellow students loved it.</span> <span class="sent" id="s0_24">However, Braille&#x27;s system proved to be controversial at the Institute.</span> <span class="sent" id="s0_25">The school&#x27;s director, Alexandre Francois Pignier, supported using the Braille system, but Pierre-Armand Dufau banned it when he became director of the school in 1840.</span> <span class="sent" id="s0_26">Sighted instructors and school board members worried that growing numbers of well-educated blind individuals might take away their jobs so they decided to stick with the embossed-letter system.</span> <span class="sent" id="s0_27">Nonetheless, by 1850, when illness forced Louis Braille to retire from teaching, his six-dot method was well on its way to widespread acceptance.</span></p><p data-para="6"><span class="sent" id="s0_28">Braille&#x27;s ear for music enabled him to become an accomplished cellist and organist.</span> <span class="sent" id="s0_29">Later in life, his musical talents led him to play the organ all over France, where he became famous as a musician, composer, and teacher.</span> <span class="sent" id="s0_30">Unfortunately, he grew seriously ill with incurable tuberculosis (a lung infection) in 1835.</span> <span class="sent" id="s0_31">Shortly before his death, a former student of his, a blind musician, gave a performance in Paris.</span> <span class="sent" id="s0_32">She made a point of letting the audience know that she had learned everything she knew using the forgotten system developed by the now-dying Braille.</span> <span class="sent" id="s0_33">This created renewed interest and a revival of the Braille system, although it was not fully accepted until 1854, two years after the inventor&#x27;s death.</span> <span class="sent" id="s0_34">The system underwent alteration from time to time.</span> <span class="sent" id="s0_35">The version employed today was first used in the United States in 1860 at the Missouri School for the Blind.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,7" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;7</div><button type="button" class="flag-toggle" data-flagrange="1,7" title="Flag for review" aria-label="Flag questions 1-7">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 1–7 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Louis Braille</div><div class="notes-sub"><b>Early life in Coupvray</b></div><ul><li>was born in 1809</li><li>became blind as the result of an <span class="q-num">1</span> <input type="text" class="q-text" name="q1" autocomplete="off" spellcheck="false"> in the eye</li><li>excelled at the local school on account of his outstanding memory</li></ul><div class="notes-sub"><b>National Institute of Blind Youth, Paris</b></div><ul><li>Braille was awarded a scholarship</li><li>Captain Charles Barbier developed sonography, based on a system originally used by <span class="q-num">2</span> <input type="text" class="q-text" name="q2" autocomplete="off" spellcheck="false"></li><li>Braille became aware of sonography after attending Barbier&#x27;s</li><li style="list-style:none"><span class="q-num">3</span> <input type="text" class="q-text" name="q3" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>The development of the Braille system</b></div><ul><li>Problems with Barbier&#x27;s system: too complex; <span class="q-num">4</span> <input type="text" class="q-text" name="q4" autocomplete="off" spellcheck="false"> were used as its basis instead of letters</li><li>Braille&#x27;s system was based on the alphabet and could be recognised with the touch of an individual&#x27;s <span class="q-num">5</span> <input type="text" class="q-text" name="q5" autocomplete="off" spellcheck="false"></li><li>the left hand takes readers to the following <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false">, while the right hand touches dots</li><li>blind students could write using Braille&#x27;s method, called</li><li style="list-style:none"><span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"></li></ul></div></div><div class="q-group" data-flagrange="8,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 8&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="8,13" title="Flag for review" aria-label="Flag questions 8-13">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 8–13 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">8</span><span class="q-stem">Braille received financial assistance from King Louis Philippe.</span><select class="q-select" name="q8"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">9</span><span class="q-stem">Braille&#x27;s invention was rejected by students at the National Institute of Blind Youth.</span><select class="q-select" name="q9"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">10</span><span class="q-stem">Sighted teachers at the National Institute of Blind Youth felt threatened by Braille&#x27;s reading system.</span><select class="q-select" name="q10"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">11</span><span class="q-stem">Braille&#x27;s students visited him after his retirement.</span><select class="q-select" name="q11"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">12</span><span class="q-stem">Braille&#x27;s system became popular again after it was promoted by a musician.</span><select class="q-select" name="q12"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">13</span><span class="q-stem">The Braille system that is currently used is unchanged from Braille&#x27;s original invention.</span><select class="q-select" name="q13"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">Storytelling, from prehistoric caves to modern cinemas</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">It was told, we suppose, to people crouched around a fire: a tale of adventure, most likely – relating perhaps a remarkable hunt, an escape from mortal danger, or something else out of the ordinary.</span> <span class="sent" id="s1_1">Whatever its thread, the weaving of this story was done with a prime purpose.</span> <span class="sent" id="s1_2">The listeners must keep listening.</span> <span class="sent" id="s1_3">They must not fall asleep.</span> <span class="sent" id="s1_4">So, as the story went on, its audience should be sustained by one question above all: What happens next?</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_5">The first fireside stories in human history can never be known.</span> <span class="sent" id="s1_6">They were kept in the heads of those who told them.</span> <span class="sent" id="s1_7">This method of storage is not necessarily inefficient.</span> <span class="sent" id="s1_8">From documented oral traditions in Australia and elsewhere we know that specialised storytellers and poets can recite from memory literally thousands of lines, in verse or prose, word for word.</span> <span class="sent" id="s1_9">But while memory is rightly considered an art in itself, it is clear that a primary purpose of making signs is to have a system of reminders or mnemonic cues – signs that help us to recall certain information in the mind&#x27;s eye.</span> <span class="sent" id="s1_10">For example, in some Polynesian communities a notched memory stick may be used to help to guide a storyteller through successive stages of recitation.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_11">But in other parts of the world, the activity of storytelling historically resulted in the development or even the invention of writing systems.</span> <span class="sent" id="s1_12">One theory about the arrival of literacy in ancient Greece, for example, argues that the epic tales traditionally attributed to Homer, a storyteller of the eighth century BC, were just so enchanting to hear that they had to be preserved.</span> <span class="sent" id="s1_13">So the Greeks borrowed an alphabet from their neighbours in the eastern Mediterranean, the Phoenicians.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_14">The custom of recording stories can be found around the world, from the archives of ancient Egypt which were written on paper derived from papyrus plants, to the scrolls made from the bark of trees on which the North American Ojibway Indians set down their creation myth.</span> <span class="sent" id="s1_15">It is a well-tried and universal practice: so much so that to this day storytime is probably most often associated with words on paper.</span> <span class="sent" id="s1_16">Nowadays the formal practice of narrating a story aloud would seem – so we assume – to have given way to newspapers, novels and comic strips.</span> <span class="sent" id="s1_17">This, however, is not the case.</span> <span class="sent" id="s1_18">Statistically it is doubtful that the majority of humans currently rely upon the written word to get access to stories.</span> <span class="sent" id="s1_19">So what is the alternative source?</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_20">Each year, millions of people across the world go to the cinema, now the supreme storyteller.</span> <span class="sent" id="s1_21">Any account of visual storytelling must begin with the recognition that a &#x27;good story&#x27; relies upon formal patterns of plot and characterisation that have been embedded in the practice of storytelling over many generations.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_22">Aspiring screenwriters really need look no further for essential advice than the fourth-century BC Greek philosopher Aristotle.</span> <span class="sent" id="s1_23">He left some incomplete lecture notes on the art of telling stories in various literary and dramatic modes, a slim volume known as Poetics.</span> <span class="sent" id="s1_24">Though he can never have imagined a modern cinema, Aristotle is very accurate about the key elements required to get the crowds flocking to such a cultural centre.</span> <span class="sent" id="s1_25">He analysed the process with cool rationalism.</span> <span class="sent" id="s1_26">When a story enchants us, we lose the sense of where we are; we are drawn into the story so thoroughly that we forget it is a story being told, and react as though it is real.</span> <span class="sent" id="s1_27">This is, in Aristotle&#x27;s phrase, &quot;the suspension of disbelief&quot;.</span> <span class="sent" id="s1_28">We know the feeling.</span> <span class="sent" id="s1_29">If we ever have stayed in our seats, stunned with grief, as the credits roll by, or for days after seeing that vivid evocation of horror have kept looking over our shoulders, then we have suspended disbelief.</span> <span class="sent" id="s1_30">We have been caught in the storyteller&#x27;s web.</span> <span class="sent" id="s1_31">Did it all really happen?</span> <span class="sent" id="s1_32">We really thought so – for a while.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_33">Aristotle must have witnessed this experience often enough.</span> <span class="sent" id="s1_34">He taught in Athens, the city where theatre developed as a primary form of civic ritual and recreation.</span> <span class="sent" id="s1_35">Two theatrical types of storytelling, tragedy and comedy, caused Athenian audiences to lose themselves in sadness and laughter respectively.</span> <span class="sent" id="s1_36">Tragedy, for Aristotle, was particularly potent in its capacity to enlist and then purge the emotions of those watching the story unfold on the stage, so he tried to identify those factors in the storyteller&#x27;s art that brought about such engagement.</span> <span class="sent" id="s1_37">For analysis he had not only the masterpieces of classical Greek tragedy, but also Homer, whose Iliad and Odyssey were already considered landmarks – stories by which all other stories should be measured.</span> <span class="sent" id="s1_38">So, what was the secret of Homer&#x27;s narrative art?</span></p><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s1_39">It was not hard to find.</span> <span class="sent" id="s1_40">Homer created credible heroes.</span> <span class="sent" id="s1_41">His heroes belonged to the past, they were mighty and magnificent, yet they were not fantasy figures.</span> <span class="sent" id="s1_42">Homer reported the speeches of his heroes as if he had heard them himself.</span> <span class="sent" id="s1_43">He made his heroes sulk, argue, cheat, and cry.</span> <span class="sent" id="s1_44">They were, in short, people who seemed real, though in a story, and audiences could care about them, follow them, and want to know what happened to them next.</span> <span class="sent" id="s1_45">As Aristotle saw, the hero who shows some weaknesses is intrinsically dramatic.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,18" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;18</div><button type="button" class="flag-toggle" data-flagrange="14,18" title="Flag for review" aria-label="Flag questions 14-18">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has eight paragraphs, A–H.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–H, in boxes 14–18 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">a reference to a mistaken view of storytelling today</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">a categorisation of stories</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">a mention of the ability to recall complete stories without assistance</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">a reference to the fundamental aim of storytelling</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">18</span><span class="q-stem">how characters in a story can be made appealing to listeners</span><select class="q-select" name="q18"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div></div><div class="q-group" data-flagrange="19,22" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 19&ndash;22</div><button type="button" class="flag-toggle" data-flagrange="19,22" title="Flag for review" aria-label="Flag questions 19-22">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct practice, A–C, for each group of people.</p><p>Write the correct letter, A–C, in boxes 19–22 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of Practices</div><span class="wb-item"><span class="wb-letter">A</span> adopting a means of writing from elsewhere</span><span class="wb-item"><span class="wb-letter">B</span> recording stories on organic materials</span><span class="wb-item"><span class="wb-letter">C</span> using tools while telling stories</span></div><div class="q-row"><span class="q-num">19</span><span class="q-stem">Ancient Egyptians</span><select class="q-select" name="q19"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">20</span><span class="q-stem">Ancient Greeks</span><select class="q-select" name="q20"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">21</span><span class="q-stem">Ojibway Indians</span><select class="q-select" name="q21"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">22</span><span class="q-stem">Polynesians</span><select class="q-select" name="q22"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div></div><div class="q-group" data-flagrange="23,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 23&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="23,26" title="Flag for review" aria-label="Flag questions 23-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 23–26 on your answer sheet.</p></div><div class="q-row"><span class="q-num">23</span><span>Aristotle&#x27;s work on storytelling is called <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">24</span><span>Aristotle saw <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false"> as a very powerful type of drama.</span></div><div class="q-row"><span class="q-num">25</span><span>In Aristotle&#x27;s time, Homer&#x27;s works were already regarded as <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false"> of literature.</span></div><div class="q-row"><span class="q-num">26</span><span>Aristotle recognised the dramatic potential of a hero who has several <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"></span></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Reducing exposure to indoor air pollution in developing countries</div><div class="passage-subtitle">In a review of ways of reducing smoke levels, interventions were considered in three areas: the source of smoke, the living environment and the user.</div><p data-para="1"><span class="sent" id="s2_0">Cooking on a cleaner fuel The most effective means of reducing indoor air pollution is to switch from biomass* to cleaner fuel that produces significantly lower emissions.</span> <span class="sent" id="s2_1">For those who are able to switch to fuels such as kerosene or Liquefied Petroleum Gas (LPG), the benefits are great.</span> <span class="sent" id="s2_2">In many urban areas these fuels cost less per unit than biomass.</span> <span class="sent" id="s2_3">However, there is often a larger initial investment needed to purchase the fuels and the stoves.</span> <span class="sent" id="s2_4">For example, LPG must be purchased each week or month by the cylinder, but many people can only afford to get a little fuel daily.</span> <span class="sent" id="s2_5">Making fuel available in smaller units would benefit poorer customers.</span> <span class="sent" id="s2_6">In rural areas there is less incentive to switch fuels, as biomass is gathered at no financial cost to the user.</span></p><p data-para="2"><span class="sent" id="s2_7">Another alternative fuel, biogas, is extremely effective, as it converts a renewable material (dung and other organic waste materials) into a gaseous, clean fuel.</span> <span class="sent" id="s2_8">While biogas is being introduced in parts of Asia very successfully – there are over 120,000 biogas plants in Nepal alone – traditional attitudes in other regions make it harder to introduce.</span></p><p data-para="3"><span class="sent" id="s2_9">Getting smoke out of the house For those trapped into using biomass as their main domestic fuel for the foreseeable future, options for reducing exposure to indoor air pollution will entail safe ways of getting smoke out of the home.</span> <span class="sent" id="s2_10">Substantial reductions to smoke exposure have been obtained with relatively simple methods.</span> <span class="sent" id="s2_11">For example, one project in Kenya reduced particulate and carbon monoxide pollution in homes by nearly 80% through the use of smoke hoods.</span> <span class="sent" id="s2_12">These work on the same principle as chimneys but have the advantage of being freestanding and independent of the stove.</span> <span class="sent" id="s2_13">Substantial benefits were also achieved by increasing the roof spaces in traditional houses and installing better-fitting doors.</span> <span class="sent" id="s2_14">However, the enlargement of windows in the same project seemed to have little impact.</span></p><p data-para="4"><span class="sent" id="s2_15">Cutting smoke volumes in improved biomass stoves Improved stoves were primarily designed to increase energy efficiency.</span> <span class="sent" id="s2_16">As many of them incorporate a chimney, one would anticipate that smoke would be reduced.</span> <span class="sent" id="s2_17">There are some very effective chimney stoves which, when tested in the home, show a significant reduction in smoke.</span> <span class="sent" id="s2_18">Good examples are the rocket stove and Ecostove, which are increasingly being used in Central America.</span></p><p data-para="5"><span class="sent" id="s2_19">However, there are also potential problems with many chimney stoves: they may not perform well if they are not installed properly, or are poorly designed.</span> <span class="sent" id="s2_20">Chimneys are expensive and may be ineffective if the smoke returns through doors and windows.</span> <span class="sent" id="s2_21">They can also block up quickly with soot and require regular cleaning.</span></p><p data-para="6"><span class="sent" id="s2_22">Reducing the need for fire A very simple technology can reduce the need for fuel for cooking – this is the fireless cooker, or &#x27;hay box&#x27;.</span> <span class="sent" id="s2_23">This acts like a slow cooker, and is good for making soups, rice or stews.</span> <span class="sent" id="s2_24">The food is heated to boiling, then placed in a box filled with insulating material, such as hay or crumpled newspaper.</span> <span class="sent" id="s2_25">The food continues to cook slowly.</span> <span class="sent" id="s2_26">The development organisation Winrock found that the hay box was in demand with women&#x27;s groups in Nairobi, where they are proving as popular as improved stoves.</span></p><p data-para="7"><span class="sent" id="s2_27">As much of the need for improved cooking comes from countries with abundant sunshine, it would seem a logical step to move towards solar power, and there are some passionate advocates for this technology.</span> <span class="sent" id="s2_28">Solar cookers, which concentrate sunlight directly to cook food, have been seen as a clean, alternative way of cooking.</span> <span class="sent" id="s2_29">Unfortunately, there has been limited success in practice.</span> <span class="sent" id="s2_30">The use of solar energy means preparing a meal at midday, which does not coincide with the main family mealtime in many cultures.</span> <span class="sent" id="s2_31">It also requires the cook to work outdoors.</span></p><p data-para="8"><span class="sent" id="s2_32">Changing patterns of behaviour Simple changes in the way the cook behaves can reduce exposure to smoke.</span> <span class="sent" id="s2_33">For example, making sure that fuel wood is dry cuts emissions.</span> <span class="sent" id="s2_34">The use of a pot lid can reduce the fuel consumed during simmering by a factor of three, and overall emission levels by almost a half.</span> <span class="sent" id="s2_35">On the other hand, keeping children away from the fire may seem an obvious way of reducing their exposure, but as many children are habitually carried on their mother&#x27;s back, this can be very difficult, especially where the mother is the only childminder.</span> <span class="sent" id="s2_36">Cooking outdoors would also reduce exposure to indoor air pollution, and in some parts of the world, for example among Aboriginal Australians, this is standard practice.</span> <span class="sent" id="s2_37">However, for most cultures, cooking indoors is standard.</span> <span class="sent" id="s2_38">Identifying appropriate solutions Experience has indicated that there is no point trying to dictate a solution to a community.</span> <span class="sent" id="s2_39">This is a view supported by a World Health Organization and US aid-supported consultation on indoor air pollution and health: &#x27;A single-issue, technology-driven approach to indoor air quality is doomed to failure...</span> <span class="sent" id="s2_40">Such an approach frequently demands changes of the local community that affect numerous aspects of their lives.</span> <span class="sent" id="s2_41">The authors argue that &#x27;the key to success is to adopt project approaches that broaden the range of secure and sustainable choices available locally, and thus enable people to devise their own solutions&#x27;.</span></p><p class="fnote">Biomass*: Biomass is renewable organic material that comes from plants and animals. Biomass can be burned directly for heat or converted to liquid and gaseous fuels through various processes.</p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,31" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;31</div><button type="button" class="flag-toggle" data-flagrange="27,31" title="Flag for review" aria-label="Flag questions 27-31">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in boxes 27–31 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">27</span><span>For many people living in towns, one problem with switching to kerosene or LPG is that</span></div><label class="mcq-option"><input type="radio" name="q27" value="A"><span class="opt-letter">A</span><span>these have to be bought in relatively large quantities.</span></label><label class="mcq-option"><input type="radio" name="q27" value="B"><span class="opt-letter">B</span><span>these are usually more expensive than biomass fuel.</span></label><label class="mcq-option"><input type="radio" name="q27" value="C"><span class="opt-letter">C</span><span>the fuel containers are too heavy to carry very far.</span></label><label class="mcq-option"><input type="radio" name="q27" value="D"><span class="opt-letter">D</span><span>the right types of stove are often unavailable.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">28</span><span>What does the writer say about biogas?</span></div><label class="mcq-option"><input type="radio" name="q28" value="A"><span class="opt-letter">A</span><span>It is a source of indoor pollution.</span></label><label class="mcq-option"><input type="radio" name="q28" value="B"><span class="opt-letter">B</span><span>It has not been tried on a large scale yet.</span></label><label class="mcq-option"><input type="radio" name="q28" value="C"><span class="opt-letter">C</span><span>There is a reluctance to use it in some places.</span></label><label class="mcq-option"><input type="radio" name="q28" value="D"><span class="opt-letter">D</span><span>A lot of energy is wasted in the production process.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">29</span><span>Which of the following was ineffective in one project in Kenya?</span></div><label class="mcq-option"><input type="radio" name="q29" value="A"><span class="opt-letter">A</span><span>installation of smoke hoods</span></label><label class="mcq-option"><input type="radio" name="q29" value="B"><span class="opt-letter">B</span><span>bigger windows</span></label><label class="mcq-option"><input type="radio" name="q29" value="C"><span class="opt-letter">C</span><span>better door construction</span></label><label class="mcq-option"><input type="radio" name="q29" value="D"><span class="opt-letter">D</span><span>enlargement of space under the roof</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">30</span><span>What does the writer say about chimneys on improved biomass stoves?</span></div><label class="mcq-option"><input type="radio" name="q30" value="A"><span class="opt-letter">A</span><span>They can cut smoke pollution considerably.</span></label><label class="mcq-option"><input type="radio" name="q30" value="B"><span class="opt-letter">B</span><span>They generally need very little maintenance.</span></label><label class="mcq-option"><input type="radio" name="q30" value="C"><span class="opt-letter">C</span><span>They do not have to be fitted by specialists.</span></label><label class="mcq-option"><input type="radio" name="q30" value="D"><span class="opt-letter">D</span><span>They work best if the room is well ventilated.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">31</span><span>What point does the writer make about &#x27;hay boxes&#x27;?</span></div><label class="mcq-option"><input type="radio" name="q31" value="A"><span class="opt-letter">A</span><span>A reliable supply of hay is essential.</span></label><label class="mcq-option"><input type="radio" name="q31" value="B"><span class="opt-letter">B</span><span>Any type of food can be cooked in them.</span></label><label class="mcq-option"><input type="radio" name="q31" value="C"><span class="opt-letter">C</span><span>People cannot be easily convinced of their usefulness.</span></label><label class="mcq-option"><input type="radio" name="q31" value="D"><span class="opt-letter">D</span><span>Fuel is only required at the start of the cooking process.</span></label></div><div class="q-group" data-flagrange="32,36" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 32&ndash;36</div><button type="button" class="flag-toggle" data-flagrange="32,36" title="Flag for review" aria-label="Flag questions 32-36">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the claims of the writer in Reading Passage 3?</p><p>In boxes 32–36 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">Certain people strongly recommend a change to solar power for cooking.</span><select class="q-select" name="q32"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">Solar-powered ovens are unavailable in many countries.</span><select class="q-select" name="q33"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">Covering a cooking pot has little effect on smoke emissions.</span><select class="q-select" name="q34"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">Keeping their children away from the source of heat is a practical option for most mothers.</span><select class="q-select" name="q35"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">There are some societies where cooking is normally done in the open.</span><select class="q-select" name="q36"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="37,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 37&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="37,40" title="Flag for review" aria-label="Flag questions 37-40">&#9873;</button></div><div class="q-group-instructions"><p>Complete each sentence with the correct ending, A–G, below.</p><p>Write the correct letter, A–G, in boxes 37–40 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of Endings</div><span class="wb-item"><span class="wb-letter">A</span> an increase in the size of windows.</span><span class="wb-item"><span class="wb-letter">B</span> a fuel-saving method of cooking mainly without fire.</span><span class="wb-item"><span class="wb-letter">C</span> the use of solid plant or animal matter as fuel.</span><span class="wb-item"><span class="wb-letter">D</span> a focus on the single most effective cooking method.</span><span class="wb-item"><span class="wb-letter">E</span> the possibility of choice for users.</span><span class="wb-item"><span class="wb-letter">F</span> the conversion of solid organic waste into gas.</span><span class="wb-item"><span class="wb-letter">G</span> the suitability of its design and construction.</span></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">The best way to cut smoke pollution is to discourage</span><select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">38</span><span class="q-stem">The effectiveness of a chimney stove depends on</span><select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">39</span><span class="q-stem">In Nairobi, a technique which proved popular was</span><select class="q-select" name="q39"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">40</span><span class="q-stem">Successful projects to reduce indoor pollution must involve</span><select class="q-select" name="q40"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 37, "minutes": 60, "parts": [{"title": "The Life of Louis Braille", "short": "The Life", "qstart": 1, "qend": 13}, {"title": "Storytelling, from prehistoric caves to modern cinemas", "short": "Storytelling, from", "qstart": 14, "qend": 26}, {"title": "Reducing exposure to indoor air pollution in developing countries", "short": "Reducing exposure", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "text", "ans": ["infection"], "group": "p0g0", "part": 1}, {"n": 2, "kind": "text", "ans": ["soldiers"], "group": "p0g0", "part": 1}, {"n": 3, "kind": "text", "ans": ["lecture"], "group": "p0g0", "part": 1}, {"n": 4, "kind": "text", "ans": ["sounds"], "group": "p0g0", "part": 1}, {"n": 5, "kind": "text", "ans": ["finger"], "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["line"], "group": "p0g0", "part": 1}, {"n": 7, "kind": "text", "ans": ["decapoint"], "group": "p0g0", "part": 1}, {"n": 8, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 9, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 10, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 11, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 12, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 13, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 14, "kind": "select", "ans": "D", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "G", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "A", "group": "p1g0", "part": 2}, {"n": 18, "kind": "select", "ans": "H", "group": "p1g0", "part": 2}, {"n": 19, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 20, "kind": "select", "ans": "A", "group": "p1g1", "part": 2}, {"n": 21, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 22, "kind": "select", "ans": "C", "group": "p1g1", "part": 2}, {"n": 23, "kind": "text", "ans": ["Poetics"], "group": "p1g2", "part": 2}, {"n": 24, "kind": "text", "ans": ["tragedy"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["landmarks", "landmark"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["weaknesses"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "radio", "ans": "A", "group": "p2g0", "part": 3}, {"n": 28, "kind": "radio", "ans": "C", "group": "p2g0", "part": 3}, {"n": 29, "kind": "radio", "ans": "B", "group": "p2g0", "part": 3}, {"n": 30, "kind": "radio", "ans": "A", "group": "p2g0", "part": 3}, {"n": 31, "kind": "radio", "ans": "D", "group": "p2g0", "part": 3}, {"n": 32, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 33, "kind": "select", "ans": "NOT GIVEN", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "C", "group": "p2g2", "part": 3}, {"n": 38, "kind": "select", "ans": "G", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "B", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "E", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_3", "2": "s0_9", "3": "s0_10", "4": "s0_13", "5": "s0_16", "6": "s0_18", "7": "s0_19", "8": "s0_23", "9": "s0_23", "10": "s0_26", "11": "s0_27", "12": "s0_31", "13": "s0_34", "14": "s1_16", "15": "s1_35", "16": "s1_6", "17": "s1_1", "18": "s1_44", "19": "s1_14", "20": "s1_13", "21": "s1_14", "22": "s1_10", "23": "s1_23", "24": "s1_36", "25": "s1_37", "26": "s1_45", "27": "s2_3", "28": "s2_8", "29": "s2_14", "30": "s2_17", "31": "s2_24", "32": "s2_27", "33": "s2_28", "34": "s2_34", "35": "s2_35", "36": "s2_36", "37": "s2_0", "38": "s2_19", "39": "s2_26", "40": "s2_41"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "became blind as the result of an <b>.........<\/b> in the eye", "options": [{"t": "He was an excellent student, mostly because of his exceptional memory.", "ok": false}, {"t": "At the age of three, while playing in his father's shop, young Louis was struck in the eye by a tool.", "ok": false}, {"t": "Within weeks of the accident, the infection that had developed in his eyes took away his sight completely.", "ok": true}, {"t": "Although there were few options for blind people at that time, Braille's parents wanted their son to be educated.", "ok": false}], "pairs": ["became blind as the result of an ___ in the eye = the infection that had developed in his eyes took away his sight completely"], "kind": "Completion", "answer": "infection", "accept": ["infection"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 2, "question": "used by <b>.........<\/b>", "options": [{"t": "The same year Braille entered the school, Captain Charles Barbier invented sonography, or night writing, a system of embossed symbols (standing out from the surface) that soldiers adopted to communicate silently at night on the battlefield.", "ok": true}, {"t": "In 1819 Braille received a scholarship that enabled him to attend the Institut National des Jeunes Aveugles (National Institute of Blind Youth) in Paris, France.", "ok": false}, {"t": "Braille adapted Barbier's system to replace the awkward embossed-word books in the Institute's library, which were the only thing he and his classmates could use up to that point.", "ok": false}, {"t": "He continued to excel in his studies and also began playing the piano and organ.", "ok": false}], "pairs": ["a system originally used by ___ = that soldiers adopted to communicate silently at night"], "kind": "Completion", "answer": "soldiers", "accept": ["soldiers"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 3, "question": "<b>.........<\/b>", "options": [{"t": "The fifteen-year-old Braille was inspired by a lecture Barbier gave at the Institute a few years later.", "ok": true}, {"t": "He continued to excel in his studies and also began playing the piano and organ.", "ok": false}, {"t": "The same year Braille entered the school, Captain Charles Barbier invented sonography, or night writing, a system of embossed symbols (standing out from the surface) that soldiers adopted to communicate silently at night on the battlefield.", "ok": false}, {"t": "Braille adapted Barbier's system to replace the awkward embossed-word books in the Institute's library, which were the only thing he and his classmates could use up to that point.", "ok": false}], "pairs": ["became aware of sonography after attending Barbier's ___ = was inspired by a lecture Barbier gave at the Institute"], "kind": "Completion", "answer": "lecture", "accept": ["lecture"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 4, "question": "Problems with Barbier&#x27;s system: too complex; <b>.........<\/b> were", "options": [{"t": "Louis Braille was one of many people at the school who found Barbier's system promising; but he also discovered its shortcomings.", "ok": false}, {"t": "Braille spent three years developing a much simpler system.", "ok": false}, {"t": "It was quite complex (soldiers had difficulty learning it) and it was based on sounds rather than letters.", "ok": true}, {"t": "He finally settled on a six-dot code, based on the twenty-six letters of the alphabet, which could be recognized with a single contact of one finger.", "ok": false}], "pairs": ["___ were used as its basis instead of letters = it was based on sounds rather than letters"], "kind": "Completion", "answer": "sounds", "accept": ["sounds"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 5, "question": "touch of an individual&#x27;s <b>.........<\/b>", "options": [{"t": "Braille spent three years developing a much simpler system.", "ok": false}, {"t": "He finally settled on a six-dot code, based on the twenty-six letters of the alphabet, which could be recognized with a single contact of one finger.", "ok": true}, {"t": "Braille began experimenting with shapes cut from leather as well as nails and tacks hammered into boards.", "ok": false}, {"t": "It was quite complex (soldiers had difficulty learning it) and it was based on sounds rather than letters.", "ok": false}], "pairs": ["recognised with the touch of an individual's ___ = recognized with a single contact of one finger"], "kind": "Completion", "answer": "finger", "accept": ["finger"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 6, "question": "the left hand takes readers to the following <b>.........<\/b>, while the", "options": [{"t": "With the right hand the reader touched individual dots, and with the left hand he or she moved toward the next line, grasping the text as smoothly and rapidly as sighted readers.", "ok": true}, {"t": "Using the Braille system, students were also able to take notes and write essays by punching dots into paper with a pointed instrument that was lined up with a metal guide.", "ok": false}, {"t": "By changing the number and placement of dots, he coded letters, punctuation, numbers, familiar words, scientific symbols, mathematical and musical notation, and capitalization.", "ok": false}, {"t": "This writing technique devised by Braille was known as 'decapoint' and it was later developed by one of his colleagues into a machine that operated like a typewriter.", "ok": false}], "pairs": ["takes readers to the following ___ = moved toward the next line"], "kind": "Completion", "answer": "line", "accept": ["line"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 7, "question": "<b>.........<\/b>", "options": [{"t": "King Louis Philippe (1773–1850) praised the system publicly after a demonstration at the Paris Exposition of Industry in 1834, and Braille's fellow students loved it.", "ok": false}, {"t": "In 1819 Braille received a scholarship that enabled him to attend the Institut National des Jeunes Aveugles (National Institute of Blind Youth) in Paris, France.", "ok": false}, {"t": "Using the Braille system, students were also able to take notes and write essays by punching dots into paper with a pointed instrument that was lined up with a metal guide.", "ok": true}, {"t": "This writing technique devised by Braille was known as 'decapoint' and it was later developed by one of his colleagues into a machine that operated like a typewriter.", "ok": false}], "pairs": ["blind students could write = take notes and write essays by punching dots into paper", "called ___ = was known as 'decapoint'"], "kind": "Completion", "answer": "decapoint", "accept": ["decapoint"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 8, "question": "Braille received financial assistance from King Louis Philippe.", "options": [{"t": "Louis Braille was born in Coupvray, France on January 4, 1809, the only child of Louis and Constance Braille.", "ok": false}, {"t": "King Louis Philippe (1773–1850) praised the system publicly after a demonstration at the Paris Exposition of Industry in 1834, and Braille's fellow students loved it.", "ok": true}, {"t": "Nonetheless, by 1850, when illness forced Louis Braille to retire from teaching, his six-dot method was well on its way to widespread acceptance.", "ok": false}, {"t": "At the age of twenty, Braille published a written account describing the use of his coded system.", "ok": false}], "pairs": ["financial assistance from King Louis Philippe ? praised the system publicly"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 9, "question": "Braille&#x27;s invention was rejected by students at the National Institute of Blind Youth.", "options": [{"t": "King Louis Philippe (1773–1850) praised the system publicly after a demonstration at the Paris Exposition of Industry in 1834, and Braille's fellow students loved it.", "ok": true}, {"t": "In 1819 Braille received a scholarship that enabled him to attend the Institut National des Jeunes Aveugles (National Institute of Blind Youth) in Paris, France.", "ok": false}, {"t": "Sighted instructors and school board members worried that growing numbers of well-educated blind individuals might take away their jobs so they decided to stick with the embossed-letter system.", "ok": false}, {"t": "At the age of twenty, Braille published a written account describing the use of his coded system.", "ok": false}], "pairs": ["was rejected by students ≠ Braille's fellow students loved it"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 10, "question": "Sighted teachers at the National Institute of Blind Youth felt threatened by Braille&#x27;s reading system.", "options": [{"t": "In 1819 Braille received a scholarship that enabled him to attend the Institut National des Jeunes Aveugles (National Institute of Blind Youth) in Paris, France.", "ok": false}, {"t": "However, Braille's system proved to be controversial at the Institute.", "ok": false}, {"t": "Sighted instructors and school board members worried that growing numbers of well-educated blind individuals might take away their jobs so they decided to stick with the embossed-letter system.", "ok": true}, {"t": "At the age of twenty, Braille published a written account describing the use of his coded system.", "ok": false}], "pairs": ["Sighted teachers felt threatened = worried that growing numbers of well-educated blind individuals might take away their jobs"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 11, "question": "Braille&#x27;s students visited him after his retirement.", "options": [{"t": "At the age of twenty, Braille published a written account describing the use of his coded system.", "ok": false}, {"t": "Nonetheless, by 1850, when illness forced Louis Braille to retire from teaching, his six-dot method was well on its way to widespread acceptance.", "ok": true}, {"t": "King Louis Philippe (1773–1850) praised the system publicly after a demonstration at the Paris Exposition of Industry in 1834, and Braille's fellow students loved it.", "ok": false}, {"t": "The school's director, Alexandre Francois Pignier, supported using the Braille system, but Pierre-Armand Dufau banned it when he became director of the school in 1840.", "ok": false}], "pairs": ["students visited him after his retirement ? illness forced Louis Braille to retire from teaching"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 12, "question": "Braille&#x27;s system became popular again after it was promoted by a musician.", "options": [{"t": "This created renewed interest and a revival of the Braille system, although it was not fully accepted until 1854, two years after the inventor's death.", "ok": false}, {"t": "She made a point of letting the audience know that she had learned everything she knew using the forgotten system developed by the now-dying Braille.", "ok": false}, {"t": "Later in life, his musical talents led him to play the organ all over France, where he became famous as a musician, composer, and teacher.", "ok": false}, {"t": "Shortly before his death, a former student of his, a blind musician, gave a performance in Paris.", "ok": true}], "pairs": ["became popular again = This created renewed interest and a revival of the Braille system", "promoted by a musician = a blind musician, gave a performance in Paris"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 13, "question": "The Braille system that is currently used is unchanged from Braille&#x27;s original invention.", "options": [{"t": "This created renewed interest and a revival of the Braille system, although it was not fully accepted until 1854, two years after the inventor's death.", "ok": false}, {"t": "The version employed today was first used in the United States in 1860 at the Missouri School for the Blind.", "ok": false}, {"t": "She made a point of letting the audience know that she had learned everything she knew using the forgotten system developed by the now-dying Braille.", "ok": false}, {"t": "The system underwent alteration from time to time.", "ok": true}], "pairs": ["is unchanged from the original invention ≠ The system underwent alteration from time to time."], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}], "paraphrase": [{"q": "became blind as the result of an ___ in the eye", "p": "the infection that had developed in his eyes took away his sight completely", "rel": "=", "note": "", "n": "1"}, {"q": "a system originally used by ___", "p": "that soldiers adopted to communicate silently at night", "rel": "=", "note": "", "n": "2"}, {"q": "became aware of sonography after attending Barbier's ___", "p": "was inspired by a lecture Barbier gave at the Institute", "rel": "=", "note": "", "n": "3"}, {"q": "___ were used as its basis instead of letters", "p": "it was based on sounds rather than letters", "rel": "=", "note": "", "n": "4"}, {"q": "recognised with the touch of an individual's ___", "p": "recognized with a single contact of one finger", "rel": "=", "note": "", "n": "5"}, {"q": "takes readers to the following ___", "p": "moved toward the next line", "rel": "=", "note": "", "n": "6"}, {"q": "blind students could write", "p": "take notes and write essays by punching dots into paper", "rel": "=", "note": "", "n": "7"}, {"q": "called ___", "p": "was known as 'decapoint'", "rel": "=", "note": "", "n": "7"}, {"q": "financial assistance from King Louis Philippe", "p": "praised the system publicly", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "8"}, {"q": "was rejected by students", "p": "Braille's fellow students loved it", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "9"}, {"q": "Sighted teachers felt threatened", "p": "worried that growing numbers of well-educated blind individuals might take away their jobs", "rel": "=", "note": "", "n": "10"}, {"q": "students visited him after his retirement", "p": "illness forced Louis Braille to retire from teaching", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "11"}, {"q": "became popular again", "p": "This created renewed interest and a revival of the Braille system", "rel": "=", "note": "", "n": "12"}, {"q": "promoted by a musician", "p": "a blind musician, gave a performance in Paris", "rel": "=", "note": "", "n": "12"}, {"q": "is unchanged from the original invention", "p": "The system underwent alteration from time to time.", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "13"}], "vocab": [{"w": "scholarship", "pos": "noun", "loc": "¶2", "d": "money given to a student to pay for education", "uz": "stipendiya", "ex": "He won a scholarship to study engineering at a leading university.", "form": "scholarship"}, {"w": "excel", "pos": "verb", "loc": "¶1, ¶2", "d": "to be extremely good at something", "uz": "ustun bo'lmoq, a'lo darajada bo'lmoq", "ex": "Some learners excel at grammar but struggle with speaking.", "form": "excel"}, {"w": "embossed", "pos": "adjective", "loc": "¶2, ¶5", "d": "decorated or marked with a raised pattern or letters", "uz": "bo'rtma, qabariq", "ex": "The invitation had an embossed gold border around the edge.", "form": "embossed"}, {"w": "awkward", "pos": "adjective", "loc": "¶2", "d": "difficult to use or handle; not convenient", "uz": "noqulay, qiyin", "ex": "The old keyboard was heavy and awkward to carry around.", "form": "awkward"}, {"w": "shortcomings", "pos": "noun", "loc": "¶3", "d": "faults or weaknesses in a plan or system", "uz": "kamchiliklar", "ex": "The report listed several shortcomings in the new timetable.", "form": "shortcomings"}, {"w": "settled on", "pos": "phrasal verb", "loc": "¶3", "d": "finally chose something after thinking about different options", "uz": "to'xtamoq, tanlamoq", "ex": "After weeks of debate, we settled on a simple design.", "form": "settled on"}, {"w": "grasping", "pos": "verb", "loc": "¶4", "d": "understanding something fully; also holding something firmly", "uz": "tushunmoq, anglab olmoq", "ex": "She was quick at grasping complex ideas in economics.", "form": "grasping"}, {"w": "lined up with", "pos": "phrasal verb", "loc": "¶4", "d": "placed in a straight row or position alongside something", "uz": "tekislangan, to'g'rilangan", "ex": "The ruler must be lined up with the edge of the paper.", "form": "lined up with"}, {"w": "devised", "pos": "verb", "loc": "¶4", "d": "invented or planned something using clever thinking", "uz": "ixtiro qilmoq, o'ylab topmoq", "ex": "The teacher devised a clever game to practise new vocabulary.", "form": "devised"}, {"w": "stick with", "pos": "phrasal verb", "loc": "¶5", "d": "to continue using or doing something and not change", "uz": "yopishib qolmoq, amal qilishda davom etmoq", "ex": "Many people prefer to stick with methods they already know.", "form": "stick with"}, {"w": "controversial", "pos": "adjective", "loc": "¶5", "d": "causing a lot of disagreement or public argument", "uz": "munozarali, bahsli", "ex": "The mayor's controversial plan divided the whole community.", "form": "controversial"}, {"w": "widespread acceptance", "pos": "collocation", "loc": "¶5", "d": "approval by large numbers of people in many places", "uz": "keng e'tirof", "ex": "Online learning gained widespread acceptance during the last decade.", "form": "widespread acceptance"}, {"w": "accomplished", "pos": "adjective", "loc": "¶6", "d": "highly skilled and experienced at something", "uz": "mohir, tajribali", "ex": "She is an accomplished pianist who has toured Europe twice.", "form": "accomplished"}, {"w": "incurable", "pos": "adjective", "loc": "¶6", "d": "impossible to cure or make healthy again", "uz": "davolab bo'lmaydigan", "ex": "In the past, many people died of incurable infections.", "form": "incurable"}, {"w": "made a point of", "pos": "idiom", "loc": "¶6", "d": "did something deliberately because it was important to do so", "uz": "alohida e'tibor bermoq, ataylab qilmoq", "ex": "He made a point of thanking every volunteer personally.", "form": "made a point of"}, {"w": "revival", "pos": "noun", "loc": "¶6", "d": "a new period of interest or success after a time of decline", "uz": "qayta tiklanish, jonlanish", "ex": "The town enjoyed a revival of traditional crafts last year.", "form": "revival"}]}, {"evidence": [{"q": 14, "question": "a reference to a mistaken view of storytelling today", "options": [{"t": "This, however, is not the case.", "ok": false}, {"t": "The custom of recording stories can be found around the world, from the archives of ancient Egypt which were written on paper derived from papyrus plants, to the scrolls made from the bark of trees on which the North American Ojibway Indians set down their creation myth.", "ok": false}, {"t": "Statistically it is doubtful that the majority of humans currently rely upon the written word to get access to stories.", "ok": false}, {"t": "Nowadays the formal practice of narrating a story aloud would seem – so we assume – to have given way to newspapers, novels and comic strips.", "ok": true}], "pairs": ["a mistaken view of storytelling today = would seem – so we assume – to have given way to newspapers, novels and comic strips", "mistaken ≠ This, however, is not the case."], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "D", "pill": true}}, {"q": 15, "question": "a categorisation of stories", "options": [{"t": "So, what was the secret of Homer's narrative art?", "ok": false}, {"t": "Two theatrical types of storytelling, tragedy and comedy, caused Athenian audiences to lose themselves in sadness and laughter respectively.", "ok": true}, {"t": "For analysis he had not only the masterpieces of classical Greek tragedy, but also Homer, whose Iliad and Odyssey were already considered landmarks – stories by which all other stories should be measured.", "ok": false}, {"t": "Aristotle must have witnessed this experience often enough.", "ok": false}], "pairs": ["a categorisation of stories = Two theatrical types of storytelling, tragedy and comedy"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "G", "pill": true}}, {"q": 16, "question": "a mention of the ability to recall complete stories without assistance", "options": [{"t": "They were kept in the heads of those who told them.", "ok": true}, {"t": "The first fireside stories in human history can never be known.", "ok": false}, {"t": "But while memory is rightly considered an art in itself, it is clear that a primary purpose of making signs is to have a system of reminders or mnemonic cues – signs that help us to recall certain information in the mind's eye.", "ok": false}, {"t": "For example, in some Polynesian communities a notched memory stick may be used to help to guide a storyteller through successive stages of recitation.", "ok": false}], "pairs": ["recall complete stories = recite from memory literally thousands of lines", "without assistance = They were kept in the heads of those who told them."], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "B", "pill": true}}, {"q": 17, "question": "a reference to the fundamental aim of storytelling", "options": [{"t": "Whatever its thread, the weaving of this story was done with a prime purpose.", "ok": true}, {"t": "But in other parts of the world, the activity of storytelling historically resulted in the development or even the invention of writing systems.", "ok": false}, {"t": "The listeners must keep listening.", "ok": false}, {"t": "They must not fall asleep.", "ok": false}], "pairs": ["the fundamental aim of storytelling = the weaving of this story was done with a prime purpose"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "A", "pill": true}}, {"q": 18, "question": "how characters in a story can be made appealing to listeners", "options": [{"t": "Homer reported the speeches of his heroes as if he had heard them himself.", "ok": false}, {"t": "It was not hard to find.", "ok": false}, {"t": "He made his heroes sulk, argue, cheat, and cry.", "ok": false}, {"t": "They were, in short, people who seemed real, though in a story, and audiences could care about them, follow them, and want to know what happened to them next.", "ok": true}], "pairs": ["characters made appealing = Homer created credible heroes", "appealing to listeners = audiences could care about them, follow them"], "kind": "Which paragraph?", "answer": "H", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "H", "pill": true}}, {"q": 19, "question": "Ancient Egyptians", "options": [{"t": "Statistically it is doubtful that the majority of humans currently rely upon the written word to get access to stories.", "ok": false}, {"t": "The custom of recording stories can be found around the world, from the archives of ancient Egypt which were written on paper derived from papyrus plants, to the scrolls made from the bark of trees on which the North American Ojibway Indians set down their creation myth.", "ok": true}, {"t": "This, however, is not the case.", "ok": false}, {"t": "It is a well-tried and universal practice: so much so that to this day storytime is probably most often associated with words on paper.", "ok": false}], "pairs": ["recording stories on organic materials = written on paper derived from papyrus plants"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "adopting a means of writing from elsewhere"}, {"k": "B", "t": "recording stories on organic materials"}, {"k": "C", "t": "using tools while telling stories"}], "ans": "B"}, "why": ""}, {"q": 20, "question": "Ancient Greeks", "options": [{"t": "The custom of recording stories can be found around the world, from the archives of ancient Egypt which were written on paper derived from papyrus plants, to the scrolls made from the bark of trees on which the North American Ojibway Indians set down their creation myth.", "ok": false}, {"t": "One theory about the arrival of literacy in ancient Greece, for example, argues that the epic tales traditionally attributed to Homer, a storyteller of the eighth century BC, were just so enchanting to hear that they had to be preserved.", "ok": false}, {"t": "But in other parts of the world, the activity of storytelling historically resulted in the development or even the invention of writing systems.", "ok": false}, {"t": "So the Greeks borrowed an alphabet from their neighbours in the eastern Mediterranean, the Phoenicians.", "ok": true}], "pairs": ["adopting a means of writing from elsewhere = the Greeks borrowed an alphabet from their neighbours"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "adopting a means of writing from elsewhere"}, {"k": "B", "t": "recording stories on organic materials"}, {"k": "C", "t": "using tools while telling stories"}], "ans": "A"}, "why": ""}, {"q": 21, "question": "Ojibway Indians", "options": [{"t": "This, however, is not the case.", "ok": false}, {"t": "So what is the alternative source?", "ok": false}, {"t": "The custom of recording stories can be found around the world, from the archives of ancient Egypt which were written on paper derived from papyrus plants, to the scrolls made from the bark of trees on which the North American Ojibway Indians set down their creation myth.", "ok": true}, {"t": "Statistically it is doubtful that the majority of humans currently rely upon the written word to get access to stories.", "ok": false}], "pairs": ["recording stories on organic materials = scrolls made from the bark of trees"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "adopting a means of writing from elsewhere"}, {"k": "B", "t": "recording stories on organic materials"}, {"k": "C", "t": "using tools while telling stories"}], "ans": "B"}, "why": ""}, {"q": 22, "question": "Polynesians", "options": [{"t": "The first fireside stories in human history can never be known.", "ok": false}, {"t": "He left some incomplete lecture notes on the art of telling stories in various literary and dramatic modes, a slim volume known as Poetics.", "ok": false}, {"t": "But while memory is rightly considered an art in itself, it is clear that a primary purpose of making signs is to have a system of reminders or mnemonic cues – signs that help us to recall certain information in the mind's eye.", "ok": false}, {"t": "For example, in some Polynesian communities a notched memory stick may be used to help to guide a storyteller through successive stages of recitation.", "ok": true}], "pairs": ["using tools while telling stories = a notched memory stick may be used to help to guide a storyteller"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "adopting a means of writing from elsewhere"}, {"k": "B", "t": "recording stories on organic materials"}, {"k": "C", "t": "using tools while telling stories"}], "ans": "C"}, "why": ""}, {"q": 23, "question": "Aristotle&#x27;s work on storytelling is called <b>.........<\/b>", "options": [{"t": "Aspiring screenwriters really need look no further for essential advice than the fourth-century BC Greek philosopher Aristotle.", "ok": false}, {"t": "He left some incomplete lecture notes on the art of telling stories in various literary and dramatic modes, a slim volume known as Poetics.", "ok": true}, {"t": "This is, in Aristotle's phrase, \"the suspension of disbelief\".", "ok": false}, {"t": "Though he can never have imagined a modern cinema, Aristotle is very accurate about the key elements required to get the crowds flocking to such a cultural centre.", "ok": false}], "pairs": ["Aristotle's work is called ___ = a slim volume known as Poetics"], "kind": "Completion", "answer": "Poetics", "accept": ["Poetics"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "Aristotle saw <b>.........<\/b> as a very powerful type of drama.", "options": [{"t": "Aristotle must have witnessed this experience often enough.", "ok": false}, {"t": "Two theatrical types of storytelling, tragedy and comedy, caused Athenian audiences to lose themselves in sadness and laughter respectively.", "ok": false}, {"t": "As Aristotle saw, the hero who shows some weaknesses is intrinsically dramatic.", "ok": false}, {"t": "Tragedy, for Aristotle, was particularly potent in its capacity to enlist and then purge the emotions of those watching the story unfold on the stage, so he tried to identify those factors in the storyteller's art that brought about such engagement.", "ok": true}], "pairs": ["a very powerful type of drama = Tragedy, for Aristotle, was particularly potent"], "kind": "Completion", "answer": "tragedy", "accept": ["tragedy"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "In Aristotle&#x27;s time, Homer&#x27;s works were already regarded as <b>.........<\/b> of literature.", "options": [{"t": "Aristotle must have witnessed this experience often enough.", "ok": false}, {"t": "For analysis he had not only the masterpieces of classical Greek tragedy, but also Homer, whose Iliad and Odyssey were already considered landmarks – stories by which all other stories should be measured.", "ok": true}, {"t": "Tragedy, for Aristotle, was particularly potent in its capacity to enlist and then purge the emotions of those watching the story unfold on the stage, so he tried to identify those factors in the storyteller's art that brought about such engagement.", "ok": false}, {"t": "He taught in Athens, the city where theatre developed as a primary form of civic ritual and recreation.", "ok": false}], "pairs": ["already regarded as ___ of literature = were already considered landmarks"], "kind": "Completion", "answer": "landmarks", "accept": ["landmarks", "landmark"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 26, "question": "Aristotle recognised the dramatic potential of a hero who has several <b>.........<\/b>", "options": [{"t": "Homer reported the speeches of his heroes as if he had heard them himself.", "ok": false}, {"t": "It was not hard to find.", "ok": false}, {"t": "As Aristotle saw, the hero who shows some weaknesses is intrinsically dramatic.", "ok": true}, {"t": "His heroes belonged to the past, they were mighty and magnificent, yet they were not fantasy figures.", "ok": false}], "pairs": ["a hero who has several ___ = the hero who shows some weaknesses", "dramatic potential = is intrinsically dramatic"], "kind": "Completion", "answer": "weaknesses", "accept": ["weaknesses"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "a mistaken view of storytelling today", "p": "would seem – so we assume – to have given way to newspapers, novels and comic strips", "rel": "=", "note": "", "n": "14"}, {"q": "mistaken", "p": "This, however, is not the case.", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "14"}, {"q": "a categorisation of stories", "p": "Two theatrical types of storytelling, tragedy and comedy", "rel": "=", "note": "", "n": "15"}, {"q": "recall complete stories", "p": "recite from memory literally thousands of lines", "rel": "=", "note": "", "n": "16"}, {"q": "without assistance", "p": "They were kept in the heads of those who told them.", "rel": "=", "note": "", "n": "16"}, {"q": "the fundamental aim of storytelling", "p": "the weaving of this story was done with a prime purpose", "rel": "=", "note": "", "n": "17"}, {"q": "characters made appealing", "p": "Homer created credible heroes", "rel": "=", "note": "", "n": "18"}, {"q": "appealing to listeners", "p": "audiences could care about them, follow them", "rel": "=", "note": "", "n": "18"}, {"q": "recording stories on organic materials", "p": "written on paper derived from papyrus plants", "rel": "=", "note": "", "n": "19"}, {"q": "adopting a means of writing from elsewhere", "p": "the Greeks borrowed an alphabet from their neighbours", "rel": "=", "note": "", "n": "20"}, {"q": "recording stories on organic materials", "p": "scrolls made from the bark of trees", "rel": "=", "note": "", "n": "21"}, {"q": "using tools while telling stories", "p": "a notched memory stick may be used to help to guide a storyteller", "rel": "=", "note": "", "n": "22"}, {"q": "Aristotle's work is called ___", "p": "a slim volume known as Poetics", "rel": "=", "note": "", "n": "23"}, {"q": "a very powerful type of drama", "p": "Tragedy, for Aristotle, was particularly potent", "rel": "=", "note": "", "n": "24"}, {"q": "already regarded as ___ of literature", "p": "were already considered landmarks", "rel": "=", "note": "", "n": "25"}, {"q": "a hero who has several ___", "p": "the hero who shows some weaknesses", "rel": "=", "note": "", "n": "26"}, {"q": "dramatic potential", "p": "is intrinsically dramatic", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "crouched", "pos": "adjective", "loc": "A", "d": "bent low with knees bent and body close to the ground", "uz": "cho'k tushgan, cho'nqaygan", "ex": "The hunters crouched behind the rocks and waited in silence.", "form": "crouched"}, {"w": "sustained", "pos": "verb", "loc": "A", "d": "kept going or kept at the same level over time", "uz": "qo'llab-quvvatlangan, saqlab turilgan", "ex": "Her interest was sustained by the surprising plot twists.", "form": "sustained"}, {"w": "mnemonic cues", "pos": "collocation", "loc": "B", "d": "signals or hints that help you remember information", "uz": "esda saqlovchi belgilar", "ex": "Colours and rhymes can act as useful mnemonic cues for learners.", "form": "mnemonic cues"}, {"w": "recite", "pos": "verb", "loc": "B", "d": "to say a poem or text aloud from memory", "uz": "yod aytmoq, ifodali o'qimoq", "ex": "The child could recite the whole poem without a single mistake.", "form": "recite"}, {"w": "enchanting", "pos": "adjective", "loc": "C", "d": "very attractive and charming in a magical way", "uz": "sehrli, maftunkor", "ex": "The audience found the old fairy tale enchanting.", "form": "enchanting"}, {"w": "derived from", "pos": "phrasal verb", "loc": "D", "d": "obtained or developed from a particular source", "uz": "kelib chiqqan, olingan", "ex": "Many English words are derived from Latin and French.", "form": "derived from"}, {"w": "set down", "pos": "phrasal verb", "loc": "D", "d": "to write something on paper so that it is recorded", "uz": "yozib qo'ymoq, qayd etmoq", "ex": "The monk set down the village's history in a thick book.", "form": "set down"}, {"w": "given way to", "pos": "phrasal verb", "loc": "D", "d": "been replaced by something newer or stronger", "uz": "o'rnini bo'shatgan, almashgan", "ex": "Letters have largely given way to emails and text messages.", "form": "given way to"}, {"w": "supreme", "pos": "adjective", "loc": "E", "d": "the highest in rank, quality or importance", "uz": "oliy, eng yuksak", "ex": "She showed supreme confidence during the final interview.", "form": "supreme"}, {"w": "embedded", "pos": "adjective", "loc": "E", "d": "fixed firmly and deeply in something", "uz": "singib ketgan, mustahkam o'rnashgan", "ex": "Respect for elders is deeply embedded in our culture.", "form": "embedded"}, {"w": "aspiring", "pos": "adjective", "loc": "F", "d": "hoping and working to become successful in a certain career", "uz": "orzu qiluvchi, intiluvchi", "ex": "Aspiring writers often send their first stories to magazines.", "form": "Aspiring"}, {"w": "suspension of disbelief", "pos": "collocation", "loc": "F", "d": "willingness to accept something unreal as true while enjoying a story", "uz": "ishonmaslikni to'xtatib turish", "ex": "Fantasy films depend on the audience's suspension of disbelief.", "form": "suspension of disbelief"}, {"w": "stunned with grief", "pos": "phrase", "loc": "F", "d": "so shocked by deep sadness that you cannot react", "uz": "qayg'udan karaxt bo'lgan", "ex": "The family sat stunned with grief after hearing the news.", "form": "stunned with grief"}, {"w": "potent", "pos": "adjective", "loc": "G", "d": "having a very strong effect or influence", "uz": "kuchli, ta'sirchan", "ex": "Music can be a potent way of bringing back memories.", "form": "potent"}, {"w": "enlist", "pos": "verb", "loc": "G", "d": "to obtain someone's help, support or involvement", "uz": "jalb qilmoq, yordam olmoq", "ex": "The charity managed to enlist the help of local schools.", "form": "enlist"}, {"w": "purge", "pos": "verb", "loc": "G", "d": "to remove something unwanted, especially feelings or people", "uz": "tozalamoq, yo'qotmoq", "ex": "Some people say that crying helps to purge sadness.", "form": "purge"}, {"w": "intrinsically", "pos": "adverb", "loc": "H", "d": "in a way that belongs to the basic nature of something", "uz": "mohiyatan, tabiatan", "ex": "Learning is intrinsically rewarding when the topic is interesting.", "form": "intrinsically"}, {"w": "sulk", "pos": "verb", "loc": "H", "d": "to stay silent and bad-tempered because you are annoyed", "uz": "bo'zrayib o'tirmoq, tumshayib olmoq", "ex": "He tends to sulk for hours whenever he loses a game.", "form": "sulk"}]}, {"evidence": [{"q": 27, "question": "For many people living in towns, one problem with switching to kerosene or LPG is that", "options": [{"t": "However, there is often a larger initial investment needed to purchase the fuels and the stoves.", "ok": true}, {"t": "In many urban areas these fuels cost less per unit than biomass.", "ok": false}, {"t": "Cooking on a cleaner fuel The most effective means of reducing indoor air pollution is to switch from biomass* to cleaner fuel that produces significantly lower emissions.", "ok": false}, {"t": "For example, LPG must be purchased each week or month by the cylinder, but many people can only afford to get a little fuel daily.", "ok": false}], "pairs": ["have to be bought in relatively large quantities = LPG must be purchased each week or month by the cylinder", "one problem with switching = there is often a larger initial investment needed to purchase the fuels and the stoves", "usually more expensive than biomass fuel ≠ In many urban areas these fuels cost less per unit than biomass"], "kind": "Multiple choice", "answer": "A", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "these have to be bought in relatively large quantities."}, {"k": "B", "t": "these are usually more expensive than biomass fuel."}, {"k": "C", "t": "the fuel containers are too heavy to carry very far."}, {"k": "D", "t": "the right types of stove are often unavailable."}], "ans": "A"}, "why": ""}, {"q": 28, "question": "What does the writer say about biogas?", "options": [{"t": "While biogas is being introduced in parts of Asia very successfully – there are over 120,000 biogas plants in Nepal alone – traditional attitudes in other regions make it harder to introduce.", "ok": true}, {"t": "The use of a pot lid can reduce the fuel consumed during simmering by a factor of three, and overall emission levels by almost a half.", "ok": false}, {"t": "For example, one project in Kenya reduced particulate and carbon monoxide pollution in homes by nearly 80% through the use of smoke hoods.", "ok": false}, {"t": "Another alternative fuel, biogas, is extremely effective, as it converts a renewable material (dung and other organic waste materials) into a gaseous, clean fuel.", "ok": false}], "pairs": ["a reluctance to use it in some places = traditional attitudes in other regions make it harder to introduce"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "It is a source of indoor pollution."}, {"k": "B", "t": "It has not been tried on a large scale yet."}, {"k": "C", "t": "There is a reluctance to use it in some places."}, {"k": "D", "t": "A lot of energy is wasted in the production process."}], "ans": "C"}, "why": ""}, {"q": 29, "question": "Which of the following was ineffective in one project in Kenya?", "options": [{"t": "However, the enlargement of windows in the same project seemed to have little impact.", "ok": true}, {"t": "For example, one project in Kenya reduced particulate and carbon monoxide pollution in homes by nearly 80% through the use of smoke hoods.", "ok": false}, {"t": "Getting smoke out of the house For those trapped into using biomass as their main domestic fuel for the foreseeable future, options for reducing exposure to indoor air pollution will entail safe ways of getting smoke out of the home.", "ok": false}, {"t": "Chimneys are expensive and may be ineffective if the smoke returns through doors and windows.", "ok": false}], "pairs": ["bigger windows = the enlargement of windows", "was ineffective = seemed to have little impact"], "kind": "Multiple choice", "answer": "B", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "installation of smoke hoods"}, {"k": "B", "t": "bigger windows"}, {"k": "C", "t": "better door construction"}, {"k": "D", "t": "enlargement of space under the roof"}], "ans": "B"}, "why": ""}, {"q": 30, "question": "What does the writer say about chimneys on improved biomass stoves?", "options": [{"t": "As many of them incorporate a chimney, one would anticipate that smoke would be reduced.", "ok": false}, {"t": "Getting smoke out of the house For those trapped into using biomass as their main domestic fuel for the foreseeable future, options for reducing exposure to indoor air pollution will entail safe ways of getting smoke out of the home.", "ok": false}, {"t": "There are some very effective chimney stoves which, when tested in the home, show a significant reduction in smoke.", "ok": true}, {"t": "Cutting smoke volumes in improved biomass stoves Improved stoves were primarily designed to increase energy efficiency.", "ok": false}], "pairs": ["cut smoke pollution considerably = show a significant reduction in smoke"], "kind": "Multiple choice", "answer": "A", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "They can cut smoke pollution considerably."}, {"k": "B", "t": "They generally need very little maintenance."}, {"k": "C", "t": "They do not have to be fitted by specialists."}, {"k": "D", "t": "They work best if the room is well ventilated."}], "ans": "A"}, "why": ""}, {"q": 31, "question": "What point does the writer make about &#x27;hay boxes&#x27;?", "options": [{"t": "The development organisation Winrock found that the hay box was in demand with women's groups in Nairobi, where they are proving as popular as improved stoves.", "ok": false}, {"t": "Reducing the need for fire A very simple technology can reduce the need for fuel for cooking – this is the fireless cooker, or 'hay box'.", "ok": false}, {"t": "The food is heated to boiling, then placed in a box filled with insulating material, such as hay or crumpled newspaper.", "ok": true}, {"t": "This acts like a slow cooker, and is good for making soups, rice or stews.", "ok": false}], "pairs": ["Fuel is only required at the start = The food is heated to boiling, then placed in a box", "no more fuel needed afterwards = The food continues to cook slowly."], "kind": "Multiple choice", "answer": "D", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "A reliable supply of hay is essential."}, {"k": "B", "t": "Any type of food can be cooked in them."}, {"k": "C", "t": "People cannot be easily convinced of their usefulness."}, {"k": "D", "t": "Fuel is only required at the start of the cooking process."}], "ans": "D"}, "why": ""}, {"q": 32, "question": "Certain people strongly recommend a change to solar power for cooking.", "options": [{"t": "Unfortunately, there has been limited success in practice.", "ok": false}, {"t": "Solar cookers, which concentrate sunlight directly to cook food, have been seen as a clean, alternative way of cooking.", "ok": false}, {"t": "The use of solar energy means preparing a meal at midday, which does not coincide with the main family mealtime in many cultures.", "ok": false}, {"t": "As much of the need for improved cooking comes from countries with abundant sunshine, it would seem a logical step to move towards solar power, and there are some passionate advocates for this technology.", "ok": true}], "pairs": ["Certain people strongly recommend = some passionate advocates for this technology"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 33, "question": "Solar-powered ovens are unavailable in many countries.", "options": [{"t": "The use of solar energy means preparing a meal at midday, which does not coincide with the main family mealtime in many cultures.", "ok": false}, {"t": "Solar cookers, which concentrate sunlight directly to cook food, have been seen as a clean, alternative way of cooking.", "ok": true}, {"t": "Unfortunately, there has been limited success in practice.", "ok": false}, {"t": "As much of the need for improved cooking comes from countries with abundant sunshine, it would seem a logical step to move towards solar power, and there are some passionate advocates for this technology.", "ok": false}], "pairs": ["Solar-powered ovens are unavailable in many countries ? Solar cookers, which concentrate sunlight directly to cook food"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 34, "question": "Covering a cooking pot has little effect on smoke emissions.", "options": [{"t": "Cooking outdoors would also reduce exposure to indoor air pollution, and in some parts of the world, for example among Aboriginal Australians, this is standard practice.", "ok": false}, {"t": "Changing patterns of behaviour Simple changes in the way the cook behaves can reduce exposure to smoke.", "ok": false}, {"t": "For example, making sure that fuel wood is dry cuts emissions.", "ok": false}, {"t": "The use of a pot lid can reduce the fuel consumed during simmering by a factor of three, and overall emission levels by almost a half.", "ok": true}], "pairs": ["Covering a cooking pot has little effect ≠ The use of a pot lid can reduce the fuel consumed", "little effect on smoke emissions ≠ overall emission levels by almost a half"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 35, "question": "Keeping their children away from the source of heat is a practical option for most mothers.", "options": [{"t": "The authors argue that 'the key to success is to adopt project approaches that broaden the range of secure and sustainable choices available locally, and thus enable people to devise their own solutions'.", "ok": false}, {"t": "On the other hand, keeping children away from the fire may seem an obvious way of reducing their exposure, but as many children are habitually carried on their mother's back, this can be very difficult, especially where the mother is the only childminder.", "ok": true}, {"t": "Such an approach frequently demands changes of the local community that affect numerous aspects of their lives.", "ok": false}, {"t": "The use of a pot lid can reduce the fuel consumed during simmering by a factor of three, and overall emission levels by almost a half.", "ok": false}], "pairs": ["a practical option for most mothers ≠ this can be very difficult", "children away from the source of heat = keeping children away from the fire"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 36, "question": "There are some societies where cooking is normally done in the open.", "options": [{"t": "Identifying appropriate solutions Experience has indicated that there is no point trying to dictate a solution to a community.", "ok": false}, {"t": "However, for most cultures, cooking indoors is standard.", "ok": false}, {"t": "Cooking outdoors would also reduce exposure to indoor air pollution, and in some parts of the world, for example among Aboriginal Australians, this is standard practice.", "ok": true}, {"t": "Such an approach frequently demands changes of the local community that affect numerous aspects of their lives.", "ok": false}], "pairs": ["cooking is normally done in the open = in some parts of the world, for example among Aboriginal Australians, this is standard practice"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 37, "question": "The best way to cut smoke pollution is to discourage", "options": [{"t": "Cooking on a cleaner fuel The most effective means of reducing indoor air pollution is to switch from biomass* to cleaner fuel that produces significantly lower emissions.", "ok": true}, {"t": "For example, one project in Kenya reduced particulate and carbon monoxide pollution in homes by nearly 80% through the use of smoke hoods.", "ok": false}, {"t": "Getting smoke out of the house For those trapped into using biomass as their main domestic fuel for the foreseeable future, options for reducing exposure to indoor air pollution will entail safe ways of getting smoke out of the home.", "ok": false}, {"t": "Making fuel available in smaller units would benefit poorer customers.", "ok": false}], "pairs": ["the use of solid plant or animal matter as fuel = switch from biomass* to cleaner fuel"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "an increase in the size of windows."}, {"k": "B", "t": "a fuel-saving method of cooking mainly without fire."}, {"k": "C", "t": "the use of solid plant or animal matter as fuel."}, {"k": "E", "t": "the possibility of choice for users."}, {"k": "G", "t": "the suitability of its design and construction."}], "ans": "C"}, "why": ""}, {"q": 38, "question": "The effectiveness of a chimney stove depends on", "options": [{"t": "Chimneys are expensive and may be ineffective if the smoke returns through doors and windows.", "ok": false}, {"t": "However, there are also potential problems with many chimney stoves: they may not perform well if they are not installed properly, or are poorly designed.", "ok": true}, {"t": "There are some very effective chimney stoves which, when tested in the home, show a significant reduction in smoke.", "ok": false}, {"t": "They can also block up quickly with soot and require regular cleaning.", "ok": false}], "pairs": ["the suitability of its design and construction = they may not perform well if they are not installed properly, or are poorly designed"], "kind": "Matching", "answer": "G", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "an increase in the size of windows."}, {"k": "C", "t": "the use of solid plant or animal matter as fuel."}, {"k": "E", "t": "the possibility of choice for users."}, {"k": "F", "t": "the conversion of solid organic waste into gas."}, {"k": "G", "t": "the suitability of its design and construction."}], "ans": "G"}, "why": ""}, {"q": 39, "question": "In Nairobi, a technique which proved popular was", "options": [{"t": "The development organisation Winrock found that the hay box was in demand with women's groups in Nairobi, where they are proving as popular as improved stoves.", "ok": true}, {"t": "The food is heated to boiling, then placed in a box filled with insulating material, such as hay or crumpled newspaper.", "ok": false}, {"t": "Cooking on a cleaner fuel The most effective means of reducing indoor air pollution is to switch from biomass* to cleaner fuel that produces significantly lower emissions.", "ok": false}, {"t": "Reducing the need for fire A very simple technology can reduce the need for fuel for cooking – this is the fireless cooker, or 'hay box'.", "ok": false}], "pairs": ["a fuel-saving method of cooking mainly without fire = the hay box was in demand with women's groups in Nairobi"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "a fuel-saving method of cooking mainly without fire."}, {"k": "C", "t": "the use of solid plant or animal matter as fuel."}, {"k": "D", "t": "a focus on the single most effective cooking method."}, {"k": "E", "t": "the possibility of choice for users."}, {"k": "G", "t": "the suitability of its design and construction."}], "ans": "B"}, "why": ""}, {"q": 40, "question": "Successful projects to reduce indoor pollution must involve", "options": [{"t": "Cooking outdoors would also reduce exposure to indoor air pollution, and in some parts of the world, for example among Aboriginal Australians, this is standard practice.", "ok": false}, {"t": "The authors argue that 'the key to success is to adopt project approaches that broaden the range of secure and sustainable choices available locally, and thus enable people to devise their own solutions'.", "ok": true}, {"t": "Changing patterns of behaviour Simple changes in the way the cook behaves can reduce exposure to smoke.", "ok": false}, {"t": "This is a view supported by a World Health Organization and US aid-supported consultation on indoor air pollution and health: 'A single-issue, technology-driven approach to indoor air quality is doomed to failure...", "ok": false}], "pairs": ["the possibility of choice for users = broaden the range of secure and sustainable choices available locally"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "C", "t": "the use of solid plant or animal matter as fuel."}, {"k": "D", "t": "a focus on the single most effective cooking method."}, {"k": "E", "t": "the possibility of choice for users."}, {"k": "F", "t": "the conversion of solid organic waste into gas."}, {"k": "G", "t": "the suitability of its design and construction."}], "ans": "E"}, "why": ""}], "paraphrase": [{"q": "have to be bought in relatively large quantities", "p": "LPG must be purchased each week or month by the cylinder", "rel": "=", "note": "", "n": "27"}, {"q": "one problem with switching", "p": "there is often a larger initial investment needed to purchase the fuels and the stoves", "rel": "=", "note": "", "n": "27"}, {"q": "usually more expensive than biomass fuel", "p": "In many urban areas these fuels cost less per unit than biomass", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "27"}, {"q": "a reluctance to use it in some places", "p": "traditional attitudes in other regions make it harder to introduce", "rel": "=", "note": "", "n": "28"}, {"q": "bigger windows", "p": "the enlargement of windows", "rel": "=", "note": "", "n": "29"}, {"q": "was ineffective", "p": "seemed to have little impact", "rel": "=", "note": "", "n": "29"}, {"q": "cut smoke pollution considerably", "p": "show a significant reduction in smoke", "rel": "=", "note": "", "n": "30"}, {"q": "Fuel is only required at the start", "p": "The food is heated to boiling, then placed in a box", "rel": "=", "note": "", "n": "31"}, {"q": "no more fuel needed afterwards", "p": "The food continues to cook slowly.", "rel": "=", "note": "", "n": "31"}, {"q": "Certain people strongly recommend", "p": "some passionate advocates for this technology", "rel": "=", "note": "", "n": "32"}, {"q": "Solar-powered ovens are unavailable in many countries", "p": "Solar cookers, which concentrate sunlight directly to cook food", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "33"}, {"q": "Covering a cooking pot has little effect", "p": "The use of a pot lid can reduce the fuel consumed", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "34"}, {"q": "little effect on smoke emissions", "p": "overall emission levels by almost a half", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "34"}, {"q": "a practical option for most mothers", "p": "this can be very difficult", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "35"}, {"q": "children away from the source of heat", "p": "keeping children away from the fire", "rel": "=", "note": "", "n": "35"}, {"q": "cooking is normally done in the open", "p": "in some parts of the world, for example among Aboriginal Australians, this is standard practice", "rel": "=", "note": "", "n": "36"}, {"q": "the use of solid plant or animal matter as fuel", "p": "switch from biomass* to cleaner fuel", "rel": "=", "note": "", "n": "37"}, {"q": "the suitability of its design and construction", "p": "they may not perform well if they are not installed properly, or are poorly designed", "rel": "=", "note": "", "n": "38"}, {"q": "a fuel-saving method of cooking mainly without fire", "p": "the hay box was in demand with women's groups in Nairobi", "rel": "=", "note": "", "n": "39"}, {"q": "the possibility of choice for users", "p": "broaden the range of secure and sustainable choices available locally", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "incentive", "pos": "noun", "loc": "¶1", "d": "something that encourages a person to act in a certain way", "uz": "rag'bat, rag'batlantirish", "ex": "Lower taxes provide an incentive for companies to hire more staff.", "form": "incentive"}, {"w": "initial investment", "pos": "collocation", "loc": "¶1", "d": "the money first spent to start a project or business", "uz": "dastlabki sarmoya", "ex": "The initial investment was high, but profits soon followed.", "form": "initial investment"}, {"w": "renewable", "pos": "adjective", "loc": "¶2", "d": "able to be replaced naturally and not used up", "uz": "tiklanuvchi", "ex": "Wind and solar power are important renewable sources of energy.", "form": "renewable"}, {"w": "trapped into", "pos": "phrasal verb", "loc": "¶3", "d": "forced by circumstances to do something with no real alternative", "uz": "majbur bo'lib qolgan", "ex": "Many families feel trapped into paying very high rents.", "form": "trapped into"}, {"w": "for the foreseeable future", "pos": "idiom", "loc": "¶3", "d": "for as long as we can reasonably predict", "uz": "yaqin kelajakda, oldindan ko'rish mumkin bo'lgan muddatda", "ex": "Prices will stay high for the foreseeable future.", "form": "for the foreseeable future"}, {"w": "freestanding", "pos": "adjective", "loc": "¶3", "d": "standing on its own without being fixed to anything", "uz": "mustaqil turuvchi", "ex": "They bought a freestanding bath for the new bathroom.", "form": "freestanding"}, {"w": "incorporate", "pos": "verb", "loc": "¶4", "d": "to include something as a part of a larger whole", "uz": "o'z ichiga olmoq, qo'shmoq", "ex": "The new phone will incorporate several features requested by customers.", "form": "incorporate"}, {"w": "block up", "pos": "phrasal verb", "loc": "¶5", "d": "to become completely filled so nothing can pass through", "uz": "tiqilib qolmoq", "ex": "Leaves can easily block up the drains during autumn.", "form": "block up"}, {"w": "crumpled", "pos": "adjective", "loc": "¶6", "d": "pressed into untidy folds and creases", "uz": "g'ijimlangan", "ex": "He pulled a crumpled receipt out of his jacket pocket.", "form": "crumpled"}, {"w": "coincide with", "pos": "phrasal verb", "loc": "¶7", "d": "to happen at the same time as something else", "uz": "bir vaqtga to'g'ri kelmoq", "ex": "My exam does not coincide with the school holiday.", "form": "coincide with"}, {"w": "advocates", "pos": "noun", "loc": "¶7", "d": "people who publicly support an idea or a policy", "uz": "tarafdorlar, himoyachilar", "ex": "Advocates of cycling want more safe lanes in the city.", "form": "Advocates"}, {"w": "simmering", "pos": "verb", "loc": "¶8", "d": "cooking gently in liquid just below boiling point", "uz": "past olovda qaynatish", "ex": "Leave the soup simmering for about twenty minutes.", "form": "simmering"}, {"w": "habitually", "pos": "adverb", "loc": "¶8", "d": "in a regular way that has become a habit", "uz": "odatiy ravishda, doimo", "ex": "She habitually arrives early to prepare the classroom.", "form": "habitually"}, {"w": "dictate", "pos": "verb", "loc": "¶8", "d": "to tell people firmly what they must do or accept", "uz": "buyruq bermoq, majburan belgilamoq", "ex": "Governments should not dictate how families spend their money.", "form": "dictate"}, {"w": "doomed to failure", "pos": "idiom", "loc": "¶8", "d": "certain to be unsuccessful from the very start", "uz": "muvaffaqiyatsizlikka mahkum", "ex": "A plan without enough funding is doomed to failure.", "form": "doomed to failure"}, {"w": "devise", "pos": "verb", "loc": "¶8", "d": "to invent or plan a method by using your own ideas", "uz": "o'ylab topmoq, ishlab chiqmoq", "ex": "Students must devise their own strategies for learning new words.", "form": "devise"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 3 / The growth / The aerofoil / Looking for</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 3 / The growth / The aerofoil / Looking for</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The growth of agriculture</div><div class="passage-subtitle">Some developments in Western agriculture from prehistory to the nineteenth century</div><p data-para="1"><span class="sent" id="s0_0">Agriculture is the art and science of cultivating the soil, growing crops and raising livestock.</span> <span class="sent" id="s0_1">It includes the preparation of plant and animal products for people to use and their distribution to markets.</span></p><p data-para="2"><span class="sent" id="s0_2">Before agriculture became widespread, prehistoric people spent most of their lives hunting animals and gathering wild plants.</span> <span class="sent" id="s0_3">Then, about 11,500 years ago, people gradually learned how to cultivate plants for food use and settled down to a life based on farming.</span> <span class="sent" id="s0_4">Scholars are unsure why this shift to farming took place, but it may have occurred because of climate change.</span> <span class="sent" id="s0_5">The earliest crop was most likely to have been rice, corn, or similar types of cereals.</span> <span class="sent" id="s0_6">At around the same time, people also began herding and breeding animals.</span> <span class="sent" id="s0_7">Sheep and goats were probably domesticated first, followed by cattle and pigs.</span> <span class="sent" id="s0_8">Eventually, people started keeping animals such as oxen for ploughing and transportation.</span></p><p data-para="3"><span class="sent" id="s0_9">Agriculture enabled people to produce a surplus of food which could be eaten when crops failed or swapped for other goods.</span> <span class="sent" id="s0_10">This exchange of goods was how trade began, and this in turn allowed people to work at other tasks unrelated to farming.</span> <span class="sent" id="s0_11">Agriculture also kept formerly nomadic people near their fields and led to the establishment of permanent villages which became linked through trade.</span> <span class="sent" id="s0_12">This development was so successful in some areas that cities emerged, and eventually entire civilisations arose.</span> <span class="sent" id="s0_13">The earliest of these developed near the Tigris and Euphrates rivers in Mesopotamia – now Iraq – and along the River Nile in Egypt, eventually spreading to Europe, Asia and beyond.</span> <span class="sent" id="s0_14">For thousands of years, agricultural development was very slow.</span> <span class="sent" id="s0_15">Farmers cultivated small plots of land by hand, using axes to clear away trees and sticks to break up and till the soil.</span> <span class="sent" id="s0_16">However, over time, improved farming tools of bone, stone, bronze, and iron were developed.</span> <span class="sent" id="s0_17">Around 7,500 years ago, farmers in Mesopotamia developed simple irrigation systems.</span> <span class="sent" id="s0_18">By channelling water from streams onto their fields, farmers were able to settle in areas once thought to be unsuited to agriculture.</span> <span class="sent" id="s0_19">In Mesopotamia and later in Egypt, people organized themselves and worked together to build and maintain larger irrigation systems.</span> <span class="sent" id="s0_20">Then, as the Roman empire expanded, the Romans adapted the best agricultural methods of the people they conquered.</span> <span class="sent" id="s0_21">They even wrote manuals about the farming techniques they observed in Africa, Asia, and Europe.</span> <span class="sent" id="s0_22">By 2,000 years ago much of the Earth&#x27;s population was reliant on agriculture.</span></p><p data-para="4"><span class="sent" id="s0_23">In medieval times, European farmers adopted an open-field system of planting in which one field would be planted in spring, another in autumn, and one would be left unplanted, or fallow.</span> <span class="sent" id="s0_24">This system preserved nutrients in the soil, thus increasing crop production.</span> <span class="sent" id="s0_25">Later, in the 15th and 16th centuries, explorers travelling to Africa, Asia and the Americas began to introduce new varieties of plants into Europe.</span> <span class="sent" id="s0_26">From the Americas, for example, they brought back agricultural products such as potatoes, tomatoes, maize and beans, which eventually became staple crops and an integral part of the European diet.</span></p><p data-para="5"><span class="sent" id="s0_27">A period of major agricultural development began in the early 1700s for Great Britain and northern Europe.</span> <span class="sent" id="s0_28">One of the most important of these developments was the horse-drawn seed drill, invented in England by Jethro Tull.</span> <span class="sent" id="s0_29">Until that time, farmers sowed seeds by hand.</span> <span class="sent" id="s0_30">Tull&#x27;s invention made rows of holes for the seeds and dropped them into the holes, thus greatly improving the speed and efficiency of the process.</span> <span class="sent" id="s0_31">By the end of the 18th century, seed drilling was widely practised in many countries across Europe.</span></p><p data-para="6"><span class="sent" id="s0_32">Along with new machines, there were several other important advances in farming methods.</span> <span class="sent" id="s0_33">By selectively breeding their livestock – deliberately breeding animals with a certain combination of desirable qualities from chosen parent animals – farmers increased both the size of their herds and the productivity of their livestock.</span> <span class="sent" id="s0_34">An early example of this is the Leicester sheep, an animal selectively bred in England for its quality meat and long, coarse wool.</span> <span class="sent" id="s0_35">Then, in Austria in 1866, a monk and science teacher by the name of Gregor Mendel published his studies of heredity, which were the first to show how traits are passed from one generation of plants to the next.</span> <span class="sent" id="s0_36">Mendel is widely recognised as the founder of the science of genetics, and his experiments paved the way for the selective breeding of plants and the improvement of crops through genetics.</span></p><p data-para="7"><span class="sent" id="s0_37">Another major agricultural breakthrough came from the field of chemistry.</span> <span class="sent" id="s0_38">For thousands of years, farmers had relied on natural fertiliser – materials such as animal or bird waste, wood ash, or ground bones to replenish or increase nutrients in the soil.</span> <span class="sent" id="s0_39">Then, in the early 1800s, scientists discovered which elements were most essential to plant growth: nitrogen, phosphorus, and potassium.</span> <span class="sent" id="s0_40">This led to the manufacture of chemical fertilisers based on nitrates and phosphates, which greatly increased crop yields.</span> <span class="sent" id="s0_41">With the population of Europe doubling during the 1800s – from around 200 million at the beginning of the century to around 400 million mouths to feed at its end – farming had finally become big business.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,7" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;7</div><button type="button" class="flag-toggle" data-flagrange="1,7" title="Flag for review" aria-label="Flag questions 1-7">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD AND</b>/<b>OR A NUMBER</b> from the passage for each answer.</p><p>Write your answers in boxes 1–7 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Farming in the ancient world</div><ul><li>prehistoric times – people collected wild plants, and <span class="q-num">1</span> <input type="text" class="q-text" name="q1" autocomplete="off" spellcheck="false"> animals to get meat</li><li>11,500 years ago – people began growing crops, probably</li><li style="list-style:none"><span class="q-num">2</span> <input type="text" class="q-text" name="q2" autocomplete="off" spellcheck="false">, e.g. rice or corn; people also started to domesticate</li></ul><div>various types of animals</div><ul><li>creation of a food <span class="q-num">3</span> <input type="text" class="q-text" name="q3" autocomplete="off" spellcheck="false"></li><li>led to the exchange of goods and the beginnings of trade, which resulted in the emergence of cities and the growth of <span class="q-num">4</span> <input type="text" class="q-text" name="q4" autocomplete="off" spellcheck="false"></li><li>farmers gradually began using better <span class="q-num">5</span> <input type="text" class="q-text" name="q5" autocomplete="off" spellcheck="false"> made from different materials</li><li>systems of providing fields with a supply of <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"> were invented in Mesopotamia</li><li><span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> years ago – a large proportion of people worldwide had become dependent on farming</li></ul></div></div><div class="q-group" data-flagrange="8,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 8&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="8,13" title="Flag for review" aria-label="Flag questions 8-13">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 8–13 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">8</span><span class="q-stem">The Romans adapted their own farming methods for use in Africa and Asia.</span><select class="q-select" name="q8"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">9</span><span class="q-stem">The medieval open-field system increased food production by allowing European farmers to have crops growing continuously in all their fields.</span><select class="q-select" name="q9"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">10</span><span class="q-stem">European eating habits changed as a result of international exploration in the 15th and 16th centuries.</span><select class="q-select" name="q10"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">11</span><span class="q-stem">During the 18th century many European countries created their own versions of the seed drill.</span><select class="q-select" name="q11"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">12</span><span class="q-stem">Selective breeding methods helped European farmers to produce more animals.</span><select class="q-select" name="q12"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">13</span><span class="q-stem">Many farmers continued to use natural methods of fertilising their land, even after the development of chemical fertilisers.</span><select class="q-select" name="q13"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">The aerofoil</div><div class="passage-subtitle">The shape of an aeroplane&#x27;s wing plays a key role in the achievement of flight</div><div class="para-dropzone dz-empty" data-letter="A" data-qnum="14"></div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">The magic of flight lies in the interaction between the wings of a plane and the air.</span> <span class="sent" id="s1_1">If the shape of the wing – the aerofoil – is right and the plane is moving fast enough, the wing is pushed into the air as it slices through it.</span> <span class="sent" id="s1_2">It seems like magic because our all-too-literal brains tell us that because air is invisible it must be insubstantial too.</span> <span class="sent" id="s1_3">But air is not nothing; air is a substance completely comprised of gases.</span> <span class="sent" id="s1_4">If you think of a wing slicing through water rather than air, you can begin to imagine how air might provide the upward push that aeronautical scientists call lift.</span> <span class="sent" id="s1_5">The key to the aerofoil&#x27;s lift is the flow of air around it.</span> <span class="sent" id="s1_6">Air flows around an aerofoil because the aerofoil is moving, just as the bow of a boat creates a flow in still water.</span> <span class="sent" id="s1_7">What matters is the way the curved shape of the aerofoil diverts the flow around it.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="15"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_8">To really see why, it is worth carrying out an experiment with knives and spoons under a running tap.</span> <span class="sent" id="s1_9">Hold the blade of a knife vertically in a stream of water and the water flows straight and undisturbed past the blade.</span> <span class="sent" id="s1_10">Twist the blade slightly at an angle to the stream and you can see how it begins to block and split the flow, breaking it into turbulent eddies – and you may see the turbulence increase as you increase the angle of the knife.</span> <span class="sent" id="s1_11">Hold the convex side of a spoon under the stream instead, however, and something different happens.</span> <span class="sent" id="s1_12">The spoon diverts the water but does not disrupt it.</span> <span class="sent" id="s1_13">You have to twist the spoon at a much steeper angle before it disrupts the flow.</span> <span class="sent" id="s1_14">Like the curvature of the spoon, the curvature of the aerofoil ensures the flow of the air around it is diverted but not broken up.</span></p><div class="para-dropzone dz-empty" data-letter="C" data-qnum="16"></div><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_15">The curvature of the spoon, like that of the aerofoil, is crucial.</span> <span class="sent" id="s1_16">Far above or below the aerofoil, the airflow is undisturbed, but the closer the air is to the aerofoil the more the flow is bent to follow the aerofoil&#x27;s shape.</span> <span class="sent" id="s1_17">As the airflow changes direction, it begins to push in a different direction too, and the more it bends, the greater the change.</span> <span class="sent" id="s1_18">Right on top and underneath the aerofoil, the airflow is turned effectively at right angles, pushing the aerofoil upwards and creating lift.</span> <span class="sent" id="s1_19">Since it is the way that the airflow is distorted that creates lift, it is evident that the pattern of the airflow distortion is critical.</span> <span class="sent" id="s1_20">This depends on the angle that the aerofoil moves through the air – its angle of attack – the steeper the angle, the greater the lift.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="17"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_21">The overall shape of the aerofoil is also crucial.</span> <span class="sent" id="s1_22">A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.</span> <span class="sent" id="s1_23">But it is hard to make a large wing strong enough in this shape.</span> <span class="sent" id="s1_24">So, the wings of most large aircraft are, in profile, the shape of a narrow teardrop.</span> <span class="sent" id="s1_25">This shape does not give us much lift, which is why the wings have to be huge.</span> <span class="sent" id="s1_26">They are hollow inside, which provides room for fuel storage.</span> <span class="sent" id="s1_27">There are also flaps on the rear of the wings that can be swung up or down to alter the aerofoil curvature and its effective angle of attack and so allow the pilot to climb or descend.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="18"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_28">Of course the wings of birds were the original inspiration for the aerofoil.</span> <span class="sent" id="s1_29">Countless thinkers in the distant past must have marvelled at birds gliding through the sky and guessed that they were held aloft by their outstretched wings.</span> <span class="sent" id="s1_30">And perhaps some guessed it was the shape of the wings that mattered, such as the 5th-century Greek philosopher Archytas, who is said to have built a mechanical bird that flew.</span> <span class="sent" id="s1_31">Brave pioneers like the 9th-century Cordoban inventor Abbas Ibn-Firnas were even bold enough to strap artificial wings to their arms and leap from high places.</span> <span class="sent" id="s1_32">Ibn-Firnas was lucky enough to glide through the air for ten minutes before crash-landing and almost breaking his neck.</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="19"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_33">Yet the first person who really began to explore the shape of wings methodically was the British engineer Sir George Cayley (1773–1857), and it is to Cayley that we owe the idea of the curved aerofoil.</span> <span class="sent" id="s1_34">Cayley was an extraordinary and inventive man, and he is credited with developing self-righting lifeboats, wire-spoked wheels, seatbelts and even an internal combustion engine.</span> <span class="sent" id="s1_35">But it is mostly as the father of aviation that he is remembered, and it is he who pioneered much of the theory of flight.</span> <span class="sent" id="s1_36">He carried out experiments to establish what shapes and angles produced the greatest lift.</span> <span class="sent" id="s1_37">In his analyses, he developed the names of the key forces involved in flight – lift, drag, weight and thrust – which still play an important role today.</span> <span class="sent" id="s1_38">Flight involves a balance between these four forces, but for a successful aeroplane you need both power and control, which is why it took another half-century before Orville and Wilbur Wright made their historic flight at Kitty Hawk in the USA on 17th December 1903.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,19" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;19</div><button type="button" class="flag-toggle" data-flagrange="14,19" title="Flag for review" aria-label="Flag questions 14-19">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has six paragraphs, A–F.</p><p>Choose the correct heading for each paragraph from the list of headings below.</p><p>Write the correct number, i–vii, in boxes 14–19 on your answer sheet.</p></div><div class="info-chip-pool" id="pool-p1g0" data-gid="p1g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>The earliest attempts to achieve human flight</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>Public reaction to the pioneers of flight</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>A practical demonstration of an aeronautical principle</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>The importance of angles in achieving lift</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>A misunderstanding about the nature of air</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>The discovery of several key factors affecting wing design</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>Additional wing features that help control flight</span></div></div><p class="hint-small">Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="20,24" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 20&ndash;24</div><button type="button" class="flag-toggle" data-flagrange="20,24" title="Flag for review" aria-label="Flag questions 20-24">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 20–24 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Designing aeroplane wings</div><div style="margin-bottom:.5rem">Hang-gliders, microlights, small planes and birds share the same wing shape – a curve which provides the maximum amount of <span class="q-num">20</span> <input type="text" class="q-text" name="q20" autocomplete="off" spellcheck="false">. But while these wings can support an individual person, they cannot support the weight of a huge aircraft. In fact, the enormous wings of a modern plane look like a thin <span class="q-num">21</span> <input type="text" class="q-text" name="q21" autocomplete="off" spellcheck="false"> when viewed from the side. Space is not wasted because the <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"> needed to power a flight is kept inside each wing. The pilot can adjust the <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false">, which are located at the <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false"> of the wings. This changes the aerofoil&#x27;s curvature as well as the angle of attack and causes the plane to rise or descend.</div></div></div><div class="q-group" data-flagrange="25,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 25&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="25,26" title="Flag for review" aria-label="Flag questions 25-26">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>TWO</b> letters, A–E.</p><p>Write the correct letters in boxes 25 and 26 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>TWO</b> things does the writer state about George Cayley?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="A"><span class="opt-letter">A</span><span>He made a lot of money from his inventions.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="B"><span class="opt-letter">B</span><span>He understood how to design aeroplane engines 50 years before Orville and Wilbur Wright.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="C"><span class="opt-letter">C</span><span>His studies included how to achieve the maximum lift.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="D"><span class="opt-letter">D</span><span>He worked closely with other scientists.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="E"><span class="opt-letter">E</span><span>He reached his conclusions by conducting a series of tests.</span></label></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Looking for inspiration</div><div class="passage-subtitle">Helen Phillips asks what makes one person more creative than another</div><p data-para="1"><span class="sent" id="s2_0">People have speculated about their own creativity for centuries – perhaps ever since we became able to think about thinking.</span> <span class="sent" id="s2_1">Whatever creativity is, it is thinking that results in new ideas and new ways of doing things.</span> <span class="sent" id="s2_2">The only bit of the creative process we actually know about is the moment of insight, yet creative ideas and projects may incubate beyond our awareness for months.</span> <span class="sent" id="s2_3">Not surprising, then, that creativity has long eluded scientific study.</span></p><p data-para="2"><span class="sent" id="s2_4">In the early 1970s, it was still seen as a type of intelligence.</span> <span class="sent" id="s2_5">But when more subtle tests of IQ and creative skills were developed in the 1970s, particularly by the father of creativity testing, Paul Torrance, it became clear that the link was not so simple.</span> <span class="sent" id="s2_6">Creative people are intelligent, in terms of IQ tests at least, but only averagely or just above.</span> <span class="sent" id="s2_7">While it depends on the discipline, in general, having an IQ beyond a certain level does not help boost creativity.</span></p><p data-para="3"><span class="sent" id="s2_8">Because of the difficulty of studying the actual process, most early attempts to study creativity concentrated on personality.</span> <span class="sent" id="s2_9">According to creativity specialist Mark Runco of California State University, the creative personality tends to place a high value on aesthetic qualities and have broad interests, providing lots of resources to draw on and knowledge to recombine into novel solutions.</span> <span class="sent" id="s2_10">&#x27;Creatives&#x27; have an attraction to complexity and an ability to handle conflict.</span> <span class="sent" id="s2_11">They are also highly self-motivated, perhaps even a little obsessive, when it comes to realising their ambitions.</span></p><p data-para="4"><span class="sent" id="s2_12">But there may be a price to pay for having a creative personality.</span> <span class="sent" id="s2_13">For centuries, a link has been made between creativity and mental illness.</span> <span class="sent" id="s2_14">Psychiatrist and author Kay Redfield Jamison of Johns Hopkins University, who herself has bipolar disorder, found that established artists are significantly more likely to have mood disorders.</span> <span class="sent" id="s2_15">But she also suggests that a switch of mood state might be the key to triggering a creative event, rather than the negative mood itself.</span></p><p data-para="5"><span class="sent" id="s2_16">Jordan Peterson, a psychologist at the University of Toronto, has carried out work that suggests that the brains of creative people are more open to incoming stimuli than less creative types.</span> <span class="sent" id="s2_17">Our senses are continuously feeding a mass of data into our brains, which have to block most of it to save us from being snowed under.</span> <span class="sent" id="s2_18">Peterson calls this process latent inhibition and argues that people who have less of it, and who have a reasonably high IQ, can juggle more of the data, and so may be open to more ideas.</span></p><p data-para="6"><span class="sent" id="s2_19">But what of the creative act itself?</span> <span class="sent" id="s2_20">One of the first studies of the creative brain at work was by Colin Martindale, a psychologist from the University of Maine.</span> <span class="sent" id="s2_21">Back in 1978, he used a network of scalp electrodes to record the pattern of brain waves as people made up stories.</span> <span class="sent" id="s2_22">Creativity, he showed, has two stages: inspiration and elaboration, each characterised by very different states of mind.</span> <span class="sent" id="s2_23">While people were dreaming up their stories, he found their brains were surprisingly quiet.</span> <span class="sent" id="s2_24">The dominant activity was alpha waves, which is the same sort of brain activity as in some stages of dreaming or rest.</span> <span class="sent" id="s2_25">This could explain why sleep and relaxation can help people be creative.</span></p><p data-para="7"><span class="sent" id="s2_26">However, when these quiet-minded people were asked to work on their stories, the alpha wave activity dropped off and the brain became busier, revealing increased cortical arousal, and more organised thinking.</span> <span class="sent" id="s2_27">Strikingly, it was the people who showed the biggest difference in brain activity between the two stages who produced the most creative storylines.</span> <span class="sent" id="s2_28">Nothing in their background brain activity marked them as creative or uncreative.</span> <span class="sent" id="s2_29">&#x27;It&#x27;s as if the less creative person can&#x27;t move up a gear,&#x27; says Guy Claxton, a psychologist at the University of Bristol.</span> <span class="sent" id="s2_30">&#x27;Creativity requires different kinds of thinking.</span> <span class="sent" id="s2_31">Very creative people move between these states intuitively.&#x27;</span></p><p data-para="8"><span class="sent" id="s2_32">Researchers are now trying to identify some of the specific anatomy of creativity.</span> <span class="sent" id="s2_33">Brain studies of people with particular types of creativity show, perhaps not surprisingly, that active areas are determined by the specialist knowledge being used.</span> <span class="sent" id="s2_34">Imagery, spatial awareness, language and so on – whatever the skill, it is localised to some extent to a particular brain part or parts.</span> <span class="sent" id="s2_35">But it&#x27;s not just these speciality areas that are active.</span> <span class="sent" id="s2_36">Using information creatively needs coordination.</span> <span class="sent" id="s2_37">&#x27;Creative synthesis requires a new pattern, to put the brain in a state where many areas are simultaneously active,&#x27; says Claxton.</span> <span class="sent" id="s2_38">When we concentrate in a less creative way, such as when reading the gas bill, there are fewer active centres and less synthesis.</span></p><p data-para="9"><span class="sent" id="s2_39">But to be truly creative needs more than just the right personality and the right brain areas and networks.</span> <span class="sent" id="s2_40">It&#x27;s about using them effectively.</span> <span class="sent" id="s2_41">Skills, situations and our social setting can shape our creativity just as dramatically as the brain resources we are born with.</span> <span class="sent" id="s2_42">The most creative people also use the different rhythms of the day, the weekends and the holidays to help alter focus and brain state.</span> <span class="sent" id="s2_43">They may spend two hours at their desk, then go for a walk, because they know that pattern works for them.</span></p><p data-para="10"><span class="sent" id="s2_44">Another often forgotten aspect of creativity is social.</span> <span class="sent" id="s2_45">Vera John-Steiner of the University of New Mexico says that to be really creative you need strong social networks and trusting relationships, not just active neural networks.</span> <span class="sent" id="s2_46">One vital characteristic of a &#x27;creative&#x27;, she says, is that they have at least one other person in their life who doesn&#x27;t think they are completely mad!</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,32" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;32</div><button type="button" class="flag-toggle" data-flagrange="27,32" title="Flag for review" aria-label="Flag questions 27-32">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements (Questions 27–32) and the list of people below.</p><p>Match each statement with the correct person, A–G.</p><p>Write the correct letter, A–G, in boxes 27–32 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of People</div><span class="wb-item"><span class="wb-letter">A</span> Paul Torrance</span><span class="wb-item"><span class="wb-letter">B</span> Mark Runco</span><span class="wb-item"><span class="wb-letter">C</span> Kay Redfield Jamison</span><span class="wb-item"><span class="wb-letter">D</span> Jordan Peterson</span><span class="wb-item"><span class="wb-letter">E</span> Colin Martindale</span><span class="wb-item"><span class="wb-letter">F</span> Guy Claxton</span><span class="wb-item"><span class="wb-letter">G</span> Vera John-Steiner</span></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">Creative people are receptive to the immense amounts of information that the brain has to deal with.</span><select class="q-select" name="q27"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">Creativity requires numerous parts of the brain to be active at the same time.</span><select class="q-select" name="q28"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">Creative people engage in, and are well informed about, a wide range of subjects.</span><select class="q-select" name="q29"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">Creative people may have unstable personalities.</span><select class="q-select" name="q30"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">Creative people are driven to achieve the goals they set themselves.</span><select class="q-select" name="q31"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">Creative people need support from others.</span><select class="q-select" name="q32"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div><div class="q-group" data-flagrange="33,36" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 33&ndash;36</div><button type="button" class="flag-toggle" data-flagrange="33,36" title="Flag for review" aria-label="Flag questions 33-36">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 33–36 on your answer sheet.</p></div><div class="notes-box"><div style="margin-bottom:.5rem">Colin Martindale carried out research into the creative brain at work. For his study, volunteers had a series of <span class="q-num">33</span> <input type="text" class="q-text" name="q33" autocomplete="off" spellcheck="false"> placed on their heads which were used to monitor brain activity while they made up stories. Martindale demonstrated that creativity consisted of <span class="q-num">34</span> <input type="text" class="q-text" name="q34" autocomplete="off" spellcheck="false"> and elaboration phases. In the first of these, the brain was mostly inactive except for <span class="q-num">35</span> <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false"> and this corresponds to what takes place during dreaming or relaxation. In the second phase, when the volunteers worked on their stories, however, their brains became a lot busier. Interestingly, the most creative stories were produced by those volunteers with the greatest <span class="q-num">36</span> <input type="text" class="q-text" name="q36" autocomplete="off" spellcheck="false"> in brain activity between the two phases.</div></div></div><div class="q-group" data-flagrange="37,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 37&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="37,40" title="Flag for review" aria-label="Flag questions 37-40">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 3?</p><p>In boxes 37–40 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">People with very high IQs are more likely to be creative than those with average IQs.</span><select class="q-select" name="q37"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">38</span><span class="q-stem">Society tends to value aesthetic skills highly.</span><select class="q-select" name="q38"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">39</span><span class="q-stem">There can be disadvantages to having a creative personality.</span><select class="q-select" name="q39"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">40</span><span class="q-stem">Language skills are more important than spatial awareness in any form of creativity.</span><select class="q-select" name="q40"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 3, "minutes": 60, "parts": [{"title": "The growth of agriculture", "short": "The growth", "qstart": 1, "qend": 13}, {"title": "The aerofoil", "short": "The aerofoil", "qstart": 14, "qend": 26}, {"title": "Looking for inspiration", "short": "Looking for", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "text", "ans": ["hunted", "hunting"], "group": "p0g0", "part": 1}, {"n": 2, "kind": "text", "ans": ["cereals"], "group": "p0g0", "part": 1}, {"n": 3, "kind": "text", "ans": ["surplus"], "group": "p0g0", "part": 1}, {"n": 4, "kind": "text", "ans": ["civilisations"], "group": "p0g0", "part": 1}, {"n": 5, "kind": "text", "ans": ["tools"], "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["water"], "group": "p0g0", "part": 1}, {"n": 7, "kind": "text", "ans": ["2,000"], "group": "p0g0", "part": 1}, {"n": 8, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 9, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 10, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 11, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 12, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 13, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 14, "kind": "heading", "ans": "v", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 15, "kind": "heading", "ans": "iii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 16, "kind": "heading", "ans": "iv", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 17, "kind": "heading", "ans": "vii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 18, "kind": "heading", "ans": "i", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 19, "kind": "heading", "ans": "vi", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 20, "kind": "text", "ans": ["lift"], "group": "p1g1", "part": 2}, {"n": 21, "kind": "text", "ans": ["teardrop"], "group": "p1g1", "part": 2}, {"n": 22, "kind": "text", "ans": ["fuel"], "group": "p1g1", "part": 2}, {"n": 23, "kind": "text", "ans": ["flaps"], "group": "p1g1", "part": 2}, {"n": 24, "kind": "text", "ans": ["rear"], "group": "p1g1", "part": 2}, {"n": 25, "kind": "multi", "ans": null, "group": "p1g2", "part": 2, "idx": 0, "groupAns": ["C", "E"]}, {"n": 26, "kind": "multi", "ans": null, "group": "p1g2", "part": 2, "idx": 1, "groupAns": ["C", "E"]}, {"n": 27, "kind": "select", "ans": "D", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "F", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "C", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 32, "kind": "select", "ans": "G", "group": "p2g0", "part": 3}, {"n": 33, "kind": "text", "ans": ["electrodes"], "group": "p2g1", "part": 3}, {"n": 34, "kind": "text", "ans": ["inspiration"], "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["alpha waves"], "group": "p2g1", "part": 3}, {"n": 36, "kind": "text", "ans": ["difference"], "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "FALSE", "group": "p2g2", "part": 3}, {"n": 38, "kind": "select", "ans": "NOT GIVEN", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "TRUE", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "NOT GIVEN", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {"p1g0": {"i": "The earliest attempts to achieve human flight", "ii": "Public reaction to the pioneers of flight", "iii": "A practical demonstration of an aeronautical principle", "iv": "The importance of angles in achieving lift", "v": "A misunderstanding about the nature of air", "vi": "The discovery of several key factors affecting wing design", "vii": "Additional wing features that help control flight"}};
+const LOC = {"1": "s0_2", "2": "s0_3", "3": "s0_9", "4": "s0_12", "5": "s0_16", "6": "s0_18", "7": "s0_22", "8": "s0_20", "9": "s0_23", "10": "s0_25", "11": "s0_31", "12": "s0_33", "13": "s0_38", "14": "s1_2", "15": "s1_8", "16": "s1_20", "17": "s1_27", "18": "s1_31", "19": "s1_36", "20": "s1_22", "21": "s1_24", "22": "s1_26", "23": "s1_27", "24": "s1_27", "25": "s1_36", "26": "s1_36", "27": "s2_16", "28": "s2_37", "29": "s2_9", "30": "s2_14", "31": "s2_11", "32": "s2_45", "33": "s2_21", "34": "s2_22", "35": "s2_24", "36": "s2_27", "37": "s2_7", "38": "s2_9", "39": "s2_12", "40": "s2_34"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "prehistoric times – people collected wild plants, and <b>.........<\/b>", "options": [{"t": "Before agriculture became widespread, prehistoric people spent most of their lives hunting animals and gathering wild plants.", "ok": true}, {"t": "Eventually, people started keeping animals such as oxen for ploughing and transportation.", "ok": false}, {"t": "Then, about 11,500 years ago, people gradually learned how to cultivate plants for food use and settled down to a life based on farming.", "ok": false}, {"t": "At around the same time, people also began herding and breeding animals.", "ok": false}], "pairs": ["people collected wild plants, and ___ animals = hunting animals and gathering wild plants"], "kind": "Completion", "answer": "hunted", "accept": ["hunted", "hunting"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 2, "question": "<b>.........<\/b>, e.g. rice or corn; people also started to domesticate", "options": [{"t": "Then, about 11,500 years ago, people gradually learned how to cultivate plants for food use and settled down to a life based on farming.", "ok": true}, {"t": "The earliest crop was most likely to have been rice, corn, or similar types of cereals.", "ok": false}, {"t": "Eventually, people started keeping animals such as oxen for ploughing and transportation.", "ok": false}, {"t": "At around the same time, people also began herding and breeding animals.", "ok": false}], "pairs": ["began growing crops = people gradually learned how to cultivate plants", "probably ___, e.g. rice or corn = The earliest crop was most likely to have been rice, corn, or similar types of cereals"], "kind": "Completion", "answer": "cereals", "accept": ["cereals"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 3, "question": "creation of a food <b>.........<\/b>", "options": [{"t": "Agriculture enabled people to produce a surplus of food which could be eaten when crops failed or swapped for other goods.", "ok": true}, {"t": "This development was so successful in some areas that cities emerged, and eventually entire civilisations arose.", "ok": false}, {"t": "They even wrote manuals about the farming techniques they observed in Africa, Asia, and Europe.", "ok": false}, {"t": "Agriculture also kept formerly nomadic people near their fields and led to the establishment of permanent villages which became linked through trade.", "ok": false}], "pairs": ["creation of a food ___ = produce a surplus of food"], "kind": "Completion", "answer": "surplus", "accept": ["surplus"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 4, "question": "the emergence of cities and the growth of <b>.........<\/b>", "options": [{"t": "This development was so successful in some areas that cities emerged, and eventually entire civilisations arose.", "ok": true}, {"t": "Agriculture enabled people to produce a surplus of food which could be eaten when crops failed or swapped for other goods.", "ok": false}, {"t": "In Mesopotamia and later in Egypt, people organized themselves and worked together to build and maintain larger irrigation systems.", "ok": false}, {"t": "By 2,000 years ago much of the Earth's population was reliant on agriculture.", "ok": false}], "pairs": ["resulted in the emergence of cities and the growth of ___ = some areas that cities emerged, and eventually entire civilisations arose"], "kind": "Completion", "answer": "civilisations", "accept": ["civilisations"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 5, "question": "farmers gradually began using better <b>.........<\/b> made from", "options": [{"t": "However, over time, improved farming tools of bone, stone, bronze, and iron were developed.", "ok": true}, {"t": "Farmers cultivated small plots of land by hand, using axes to clear away trees and sticks to break up and till the soil.", "ok": false}, {"t": "For thousands of years, farmers had relied on natural fertiliser – materials such as animal or bird waste, wood ash, or ground bones to replenish or increase nutrients in the soil.", "ok": false}, {"t": "By channelling water from streams onto their fields, farmers were able to settle in areas once thought to be unsuited to agriculture.", "ok": false}], "pairs": ["better ___ made from different materials = improved farming tools of bone, stone, bronze, and iron"], "kind": "Completion", "answer": "tools", "accept": ["tools"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 6, "question": "systems of providing fields with a supply of <b>.........<\/b> were", "options": [{"t": "By channelling water from streams onto their fields, farmers were able to settle in areas once thought to be unsuited to agriculture.", "ok": true}, {"t": "In Mesopotamia and later in Egypt, people organized themselves and worked together to build and maintain larger irrigation systems.", "ok": false}, {"t": "Agriculture also kept formerly nomadic people near their fields and led to the establishment of permanent villages which became linked through trade.", "ok": false}, {"t": "Around 7,500 years ago, farmers in Mesopotamia developed simple irrigation systems.", "ok": false}], "pairs": ["providing fields with a supply of ___ = channelling water from streams onto their fields"], "kind": "Completion", "answer": "water", "accept": ["water"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 7, "question": "<b>.........<\/b> years ago – a large proportion of people worldwide", "options": [{"t": "Then, about 11,500 years ago, people gradually learned how to cultivate plants for food use and settled down to a life based on farming.", "ok": false}, {"t": "By 2,000 years ago much of the Earth's population was reliant on agriculture.", "ok": true}, {"t": "This exchange of goods was how trade began, and this in turn allowed people to work at other tasks unrelated to farming.", "ok": false}, {"t": "Around 7,500 years ago, farmers in Mesopotamia developed simple irrigation systems.", "ok": false}], "pairs": ["a large proportion of people worldwide had become dependent on farming = much of the Earth's population was reliant on agriculture"], "kind": "Completion", "answer": "2,000", "accept": ["2,000"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 8, "question": "The Romans adapted their own farming methods for use in Africa and Asia.", "options": [{"t": "The earliest of these developed near the Tigris and Euphrates rivers in Mesopotamia – now Iraq – and along the River Nile in Egypt, eventually spreading to Europe, Asia and beyond.", "ok": false}, {"t": "However, over time, improved farming tools of bone, stone, bronze, and iron were developed.", "ok": false}, {"t": "They even wrote manuals about the farming techniques they observed in Africa, Asia, and Europe.", "ok": false}, {"t": "Then, as the Roman empire expanded, the Romans adapted the best agricultural methods of the people they conquered.", "ok": true}], "pairs": ["The Romans adapted their own farming methods ≠ the Romans adapted the best agricultural methods of the people they conquered"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 9, "question": "The medieval open-field system increased food production by allowing European farmers to have crops growing continuously in all their fields.", "options": [{"t": "Agriculture enabled people to produce a surplus of food which could be eaten when crops failed or swapped for other goods.", "ok": false}, {"t": "This system preserved nutrients in the soil, thus increasing crop production.", "ok": false}, {"t": "From the Americas, for example, they brought back agricultural products such as potatoes, tomatoes, maize and beans, which eventually became staple crops and an integral part of the European diet.", "ok": false}, {"t": "In medieval times, European farmers adopted an open-field system of planting in which one field would be planted in spring, another in autumn, and one would be left unplanted, or fallow.", "ok": true}], "pairs": ["crops growing continuously in all their fields ≠ one would be left unplanted, or fallow", "increased food production = thus increasing crop production"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 10, "question": "European eating habits changed as a result of international exploration in the 15th and 16th centuries.", "options": [{"t": "This system preserved nutrients in the soil, thus increasing crop production.", "ok": false}, {"t": "In medieval times, European farmers adopted an open-field system of planting in which one field would be planted in spring, another in autumn, and one would be left unplanted, or fallow.", "ok": false}, {"t": "Later, in the 15th and 16th centuries, explorers travelling to Africa, Asia and the Americas began to introduce new varieties of plants into Europe.", "ok": true}, {"t": "From the Americas, for example, they brought back agricultural products such as potatoes, tomatoes, maize and beans, which eventually became staple crops and an integral part of the European diet.", "ok": false}], "pairs": ["European eating habits changed = became staple crops and an integral part of the European diet", "international exploration in the 15th and 16th centuries = explorers travelling to Africa, Asia and the Americas"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 11, "question": "During the 18th century many European countries created their own versions of the seed drill.", "options": [{"t": "One of the most important of these developments was the horse-drawn seed drill, invented in England by Jethro Tull.", "ok": false}, {"t": "With the population of Europe doubling during the 1800s – from around 200 million at the beginning of the century to around 400 million mouths to feed at its end – farming had finally become big business.", "ok": false}, {"t": "By the end of the 18th century, seed drilling was widely practised in many countries across Europe.", "ok": true}, {"t": "A period of major agricultural development began in the early 1700s for Great Britain and northern Europe.", "ok": false}], "pairs": ["many European countries created their own versions of the seed drill ? seed drilling was widely practised in many countries across Europe"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 12, "question": "Selective breeding methods helped European farmers to produce more animals.", "options": [{"t": "At around the same time, people also began herding and breeding animals.", "ok": false}, {"t": "Mendel is widely recognised as the founder of the science of genetics, and his experiments paved the way for the selective breeding of plants and the improvement of crops through genetics.", "ok": false}, {"t": "Along with new machines, there were several other important advances in farming methods.", "ok": false}, {"t": "By selectively breeding their livestock – deliberately breeding animals with a certain combination of desirable qualities from chosen parent animals – farmers increased both the size of their herds and the productivity of their livestock.", "ok": true}], "pairs": ["Selective breeding methods = By selectively breeding their livestock", "helped farmers to produce more animals = increased both the size of their herds"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 13, "question": "Many farmers continued to use natural methods of fertilising their land, even after the development of chemical fertilisers.", "options": [{"t": "For thousands of years, farmers had relied on natural fertiliser – materials such as animal or bird waste, wood ash, or ground bones to replenish or increase nutrients in the soil.", "ok": true}, {"t": "Around 7,500 years ago, farmers in Mesopotamia developed simple irrigation systems.", "ok": false}, {"t": "Farmers cultivated small plots of land by hand, using axes to clear away trees and sticks to break up and till the soil.", "ok": false}, {"t": "This led to the manufacture of chemical fertilisers based on nitrates and phosphates, which greatly increased crop yields.", "ok": false}], "pairs": ["continued to use natural methods even after chemical fertilisers were developed ? farmers had relied on natural fertiliser"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}], "paraphrase": [{"q": "people collected wild plants, and ___ animals", "p": "hunting animals and gathering wild plants", "rel": "=", "note": "", "n": "1"}, {"q": "began growing crops", "p": "people gradually learned how to cultivate plants", "rel": "=", "note": "", "n": "2"}, {"q": "probably ___, e.g. rice or corn", "p": "The earliest crop was most likely to have been rice, corn, or similar types of cereals", "rel": "=", "note": "", "n": "2"}, {"q": "creation of a food ___", "p": "produce a surplus of food", "rel": "=", "note": "", "n": "3"}, {"q": "resulted in the emergence of cities and the growth of ___", "p": "some areas that cities emerged, and eventually entire civilisations arose", "rel": "=", "note": "", "n": "4"}, {"q": "better ___ made from different materials", "p": "improved farming tools of bone, stone, bronze, and iron", "rel": "=", "note": "", "n": "5"}, {"q": "providing fields with a supply of ___", "p": "channelling water from streams onto their fields", "rel": "=", "note": "", "n": "6"}, {"q": "a large proportion of people worldwide had become dependent on farming", "p": "much of the Earth's population was reliant on agriculture", "rel": "=", "note": "", "n": "7"}, {"q": "The Romans adapted their own farming methods", "p": "the Romans adapted the best agricultural methods of the people they conquered", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "8"}, {"q": "crops growing continuously in all their fields", "p": "one would be left unplanted, or fallow", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "9"}, {"q": "increased food production", "p": "thus increasing crop production", "rel": "=", "note": "", "n": "9"}, {"q": "European eating habits changed", "p": "became staple crops and an integral part of the European diet", "rel": "=", "note": "", "n": "10"}, {"q": "international exploration in the 15th and 16th centuries", "p": "explorers travelling to Africa, Asia and the Americas", "rel": "=", "note": "", "n": "10"}, {"q": "many European countries created their own versions of the seed drill", "p": "seed drilling was widely practised in many countries across Europe", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "11"}, {"q": "Selective breeding methods", "p": "By selectively breeding their livestock", "rel": "=", "note": "", "n": "12"}, {"q": "helped farmers to produce more animals", "p": "increased both the size of their herds", "rel": "=", "note": "", "n": "12"}, {"q": "continued to use natural methods even after chemical fertilisers were developed", "p": "farmers had relied on natural fertiliser", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "13"}], "vocab": [{"w": "cultivating", "pos": "verb", "loc": "¶1", "d": "preparing land and growing crops on it", "uz": "ekin ekish, yetishtirish", "ex": "Families have been cultivating this fertile valley for many generations.", "form": "cultivating"}, {"w": "livestock", "pos": "noun", "loc": "¶1, ¶6", "d": "animals such as cows and sheep kept on a farm", "uz": "chorva mollari, chorva", "ex": "Heavy snow forced the farmers to bring their livestock indoors.", "form": "livestock"}, {"w": "settled down", "pos": "phrasal verb", "loc": "¶2", "d": "began living in one place permanently", "uz": "o'rnashib qolmoq, joylashmoq", "ex": "After years of travelling, she finally settled down in a small town.", "form": "settled down"}, {"w": "domesticated", "pos": "verb", "loc": "¶2", "d": "tamed and kept by people for work or food", "uz": "xonakilashtirilgan, ko'nikdirilgan", "ex": "Dogs were probably the first animals to be domesticated by humans.", "form": "domesticated"}, {"w": "surplus", "pos": "noun", "loc": "¶3", "d": "an amount that is more than what is needed", "uz": "ortiqcha mahsulot, ortiqcha", "ex": "The country exports its grain surplus to neighbouring states each autumn.", "form": "surplus"}, {"w": "nomadic", "pos": "adjective", "loc": "¶3", "d": "moving from place to place instead of living in one home", "uz": "ko'chmanchi, ko'chib yuruvchi", "ex": "Nomadic herders still cross these plains with their camels every spring.", "form": "Nomadic"}, {"w": "irrigation systems", "pos": "collocation", "loc": "¶3", "d": "networks that bring water to dry farmland", "uz": "sug'orish tizimlari", "ex": "Modern irrigation systems have turned the desert into productive farmland.", "form": "irrigation systems"}, {"w": "reliant on", "pos": "phrase", "loc": "¶3", "d": "needing something in order to survive or work", "uz": "...ga tayanuvchi, qaram", "ex": "Many island communities remain heavily reliant on imported fuel and food.", "form": "reliant on"}, {"w": "fallow", "pos": "adjective", "loc": "¶4", "d": "left without crops so the soil can recover", "uz": "shudgor, ekilmagan", "ex": "Farmers let the northern field lie fallow for one whole year.", "form": "fallow"}, {"w": "staple crops", "pos": "collocation", "loc": "¶4", "d": "basic foods that people eat regularly in large amounts", "uz": "asosiy oziq-ovqat ekinlari", "ex": "Rice and wheat are the staple crops of many Asian nations.", "form": "staple crops"}, {"w": "an integral part of", "pos": "phrase", "loc": "¶4", "d": "an essential part that cannot be removed", "uz": "ajralmas qismi", "ex": "Music is an integral part of every wedding celebration in the region.", "form": "an integral part of"}, {"w": "heredity", "pos": "noun", "loc": "¶6", "d": "the passing of physical features from parents to children", "uz": "irsiyat, nasl", "ex": "Eye colour is determined by heredity rather than by environment.", "form": "heredity"}, {"w": "paved the way for", "pos": "idiom", "loc": "¶6", "d": "made it possible for something to develop later", "uz": "...ga yo'l ochib bermoq", "ex": "Her early research paved the way for a new cancer treatment.", "form": "paved the way for"}, {"w": "replenish", "pos": "verb", "loc": "¶7", "d": "to fill something up again after it has been used", "uz": "to'ldirmoq, qayta tiklamoq", "ex": "Farmers rotate their crops to replenish the nutrients in the soil.", "form": "replenish"}, {"w": "yields", "pos": "noun", "loc": "¶7", "d": "the amounts of crops produced on an area of land", "uz": "hosildorlik, hosil miqdori", "ex": "Better seeds and more rainfall led to higher yields this season.", "form": "yields"}, {"w": "mouths to feed", "pos": "idiom", "loc": "¶7", "d": "people who need to be provided with food", "uz": "boqilishi kerak bo'lgan odamlar", "ex": "With five children, the family had many mouths to feed.", "form": "mouths to feed"}, {"w": "big business", "pos": "idiom", "loc": "¶7", "d": "an activity that makes a very large amount of money", "uz": "yirik biznes, katta tijorat", "ex": "Organic food has become big business in many European supermarkets.", "form": "big business"}]}, {"evidence": [{"q": 14, "question": "Which heading fits paragraph A?", "options": [{"t": "It seems like magic because our all-too-literal brains tell us that because air is invisible it must be insubstantial too.", "ok": true}, {"t": "If the shape of the wing – the aerofoil – is right and the plane is moving fast enough, the wing is pushed into the air as it slices through it.", "ok": false}, {"t": "But air is not nothing; air is a substance completely comprised of gases.", "ok": false}, {"t": "Air flows around an aerofoil because the aerofoil is moving, just as the bow of a boat creates a flow in still water.", "ok": false}], "pairs": ["A misunderstanding about = our all-too-literal brains tell us that because air is invisible it must be insubstantial too", "the nature of air = air is a substance completely comprised of gases"], "kind": "Matching headings", "answer": "v", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "The earliest attempts to achieve human flight"}, {"k": "ii", "t": "Public reaction to the pioneers of flight"}, {"k": "iii", "t": "A practical demonstration of an aeronautical principle"}, {"k": "iv", "t": "The importance of angles in achieving lift"}, {"k": "v", "t": "A misunderstanding about the nature of air"}], "ans": "v"}, "why": ""}, {"q": 15, "question": "Which heading fits paragraph B?", "options": [{"t": "Like the curvature of the spoon, the curvature of the aerofoil ensures the flow of the air around it is diverted but not broken up.", "ok": false}, {"t": "Hold the blade of a knife vertically in a stream of water and the water flows straight and undisturbed past the blade.", "ok": false}, {"t": "To really see why, it is worth carrying out an experiment with knives and spoons under a running tap.", "ok": true}, {"t": "Twist the blade slightly at an angle to the stream and you can see how it begins to block and split the flow, breaking it into turbulent eddies – and you may see the turbulence increase as you increase the angle of the knife.", "ok": false}], "pairs": ["A practical demonstration = it is worth carrying out an experiment with knives and spoons under a running tap"], "kind": "Matching headings", "answer": "iii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "The earliest attempts to achieve human flight"}, {"k": "ii", "t": "Public reaction to the pioneers of flight"}, {"k": "iii", "t": "A practical demonstration of an aeronautical principle"}, {"k": "v", "t": "A misunderstanding about the nature of air"}, {"k": "vi", "t": "The discovery of several key factors affecting wing design"}], "ans": "iii"}, "why": ""}, {"q": 16, "question": "Which heading fits paragraph C?", "options": [{"t": "Since it is the way that the airflow is distorted that creates lift, it is evident that the pattern of the airflow distortion is critical.", "ok": false}, {"t": "He carried out experiments to establish what shapes and angles produced the greatest lift.", "ok": false}, {"t": "This depends on the angle that the aerofoil moves through the air – its angle of attack – the steeper the angle, the greater the lift.", "ok": true}, {"t": "Right on top and underneath the aerofoil, the airflow is turned effectively at right angles, pushing the aerofoil upwards and creating lift.", "ok": false}], "pairs": ["The importance of angles = This depends on the angle that the aerofoil moves through the air", "in achieving lift = the steeper the angle, the greater the lift"], "kind": "Matching headings", "answer": "iv", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Public reaction to the pioneers of flight"}, {"k": "iii", "t": "A practical demonstration of an aeronautical principle"}, {"k": "iv", "t": "The importance of angles in achieving lift"}, {"k": "v", "t": "A misunderstanding about the nature of air"}, {"k": "vii", "t": "Additional wing features that help control flight"}], "ans": "iv"}, "why": ""}, {"q": 17, "question": "Which heading fits paragraph D?", "options": [{"t": "But it is hard to make a large wing strong enough in this shape.", "ok": false}, {"t": "There are also flaps on the rear of the wings that can be swung up or down to alter the aerofoil curvature and its effective angle of attack and so allow the pilot to climb or descend.", "ok": true}, {"t": "Flight involves a balance between these four forces, but for a successful aeroplane you need both power and control, which is why it took another half-century before Orville and Wilbur Wright made their historic flight at Kitty Hawk in the USA on 17th December 1903.", "ok": false}, {"t": "A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.", "ok": false}], "pairs": ["Additional wing features = There are also flaps on the rear of the wings", "that help control flight = allow the pilot to climb or descend"], "kind": "Matching headings", "answer": "vii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Public reaction to the pioneers of flight"}, {"k": "iii", "t": "A practical demonstration of an aeronautical principle"}, {"k": "iv", "t": "The importance of angles in achieving lift"}, {"k": "v", "t": "A misunderstanding about the nature of air"}, {"k": "vii", "t": "Additional wing features that help control flight"}], "ans": "vii"}, "why": ""}, {"q": 18, "question": "Which heading fits paragraph E?", "options": [{"t": "Ibn-Firnas was lucky enough to glide through the air for ten minutes before crash-landing and almost breaking his neck.", "ok": false}, {"t": "Of course the wings of birds were the original inspiration for the aerofoil.", "ok": false}, {"t": "Brave pioneers like the 9th-century Cordoban inventor Abbas Ibn-Firnas were even bold enough to strap artificial wings to their arms and leap from high places.", "ok": true}, {"t": "Countless thinkers in the distant past must have marvelled at birds gliding through the sky and guessed that they were held aloft by their outstretched wings.", "ok": false}], "pairs": ["The earliest attempts to achieve human flight = Brave pioneers like the 9th-century Cordoban inventor Abbas Ibn-Firnas were even bold enough to strap artificial wings to their arms"], "kind": "Matching headings", "answer": "i", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "The earliest attempts to achieve human flight"}, {"k": "ii", "t": "Public reaction to the pioneers of flight"}, {"k": "v", "t": "A misunderstanding about the nature of air"}, {"k": "vi", "t": "The discovery of several key factors affecting wing design"}, {"k": "vii", "t": "Additional wing features that help control flight"}], "ans": "i"}, "why": ""}, {"q": 19, "question": "Which heading fits paragraph F?", "options": [{"t": "Cayley was an extraordinary and inventive man, and he is credited with developing self-righting lifeboats, wire-spoked wheels, seatbelts and even an internal combustion engine.", "ok": false}, {"t": "In his analyses, he developed the names of the key forces involved in flight – lift, drag, weight and thrust – which still play an important role today.", "ok": false}, {"t": "Flight involves a balance between these four forces, but for a successful aeroplane you need both power and control, which is why it took another half-century before Orville and Wilbur Wright made their historic flight at Kitty Hawk in the USA on 17th December 1903.", "ok": false}, {"t": "He carried out experiments to establish what shapes and angles produced the greatest lift.", "ok": true}], "pairs": ["The discovery of several key factors affecting wing design = He carried out experiments to establish what shapes and angles produced the greatest lift", "key factors = he developed the names of the key forces involved in flight"], "kind": "Matching headings", "answer": "vi", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "The earliest attempts to achieve human flight"}, {"k": "iii", "t": "A practical demonstration of an aeronautical principle"}, {"k": "v", "t": "A misunderstanding about the nature of air"}, {"k": "vi", "t": "The discovery of several key factors affecting wing design"}, {"k": "vii", "t": "Additional wing features that help control flight"}], "ans": "vi"}, "why": ""}, {"q": 20, "question": "Hang-gliders, microlights, small planes and birds share the same wing shape – a curve which provides the maximum amount of <b>.........<\/b>.", "options": [{"t": "A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.", "ok": true}, {"t": "The overall shape of the aerofoil is also crucial.", "ok": false}, {"t": "But it is hard to make a large wing strong enough in this shape.", "ok": false}, {"t": "They are hollow inside, which provides room for fuel storage.", "ok": false}], "pairs": ["the maximum amount of ___ = A gentle, thin curve provides the best lift"], "kind": "Completion", "answer": "lift", "accept": ["lift"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 21, "question": "In fact, the enormous wings of a modern plane look like a thin <b>.........<\/b> when viewed from the side.", "options": [{"t": "So, the wings of most large aircraft are, in profile, the shape of a narrow teardrop.", "ok": true}, {"t": "There are also flaps on the rear of the wings that can be swung up or down to alter the aerofoil curvature and its effective angle of attack and so allow the pilot to climb or descend.", "ok": false}, {"t": "A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.", "ok": false}, {"t": "This shape does not give us much lift, which is why the wings have to be huge.", "ok": false}], "pairs": ["look like a thin ___ when viewed from the side = in profile, the shape of a narrow teardrop"], "kind": "Completion", "answer": "teardrop", "accept": ["teardrop"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 22, "question": "Space is not wasted because the <b>.........<\/b> needed to power a flight is kept inside each wing.", "options": [{"t": "But it is hard to make a large wing strong enough in this shape.", "ok": false}, {"t": "This shape does not give us much lift, which is why the wings have to be huge.", "ok": false}, {"t": "They are hollow inside, which provides room for fuel storage.", "ok": true}, {"t": "Flight involves a balance between these four forces, but for a successful aeroplane you need both power and control, which is why it took another half-century before Orville and Wilbur Wright made their historic flight at Kitty Hawk in the USA on 17th December 1903.", "ok": false}], "pairs": ["the ___ needed to power a flight is kept inside each wing = They are hollow inside, which provides room for fuel storage"], "kind": "Completion", "answer": "fuel", "accept": ["fuel"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 23, "question": "The pilot can adjust the <b>.........<\/b>, which are located at the ...... of the wings.", "options": [{"t": "A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.", "ok": false}, {"t": "There are also flaps on the rear of the wings that can be swung up or down to alter the aerofoil curvature and its effective angle of attack and so allow the pilot to climb or descend.", "ok": true}, {"t": "So, the wings of most large aircraft are, in profile, the shape of a narrow teardrop.", "ok": false}, {"t": "This shape does not give us much lift, which is why the wings have to be huge.", "ok": false}], "pairs": ["causes the plane to rise or descend = allow the pilot to climb or descend", "adjust the ___ = flaps on the rear of the wings that can be swung up or down"], "kind": "Completion", "answer": "flaps", "accept": ["flaps"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "The pilot can adjust the ......, which are located at the <b>.........<\/b> of the wings.", "options": [{"t": "This shape does not give us much lift, which is why the wings have to be huge.", "ok": false}, {"t": "There are also flaps on the rear of the wings that can be swung up or down to alter the aerofoil curvature and its effective angle of attack and so allow the pilot to climb or descend.", "ok": true}, {"t": "A gentle, thin curve provides the best lift, and this is the shape of the wings of birds as well as the shape that the flexible wings of hang-gliders and microlights bend into.", "ok": false}, {"t": "So, the wings of most large aircraft are, in profile, the shape of a narrow teardrop.", "ok": false}], "pairs": ["located at the ___ of the wings = on the rear of the wings"], "kind": "Completion", "answer": "rear", "accept": ["rear"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "Which TWO things does the writer state about George Cayley?", "options": [{"t": "He carried out experiments to establish what shapes and angles produced the greatest lift.", "ok": true}, {"t": "Cayley was an extraordinary and inventive man, and he is credited with developing self-righting lifeboats, wire-spoked wheels, seatbelts and even an internal combustion engine.", "ok": false}, {"t": "In his analyses, he developed the names of the key forces involved in flight – lift, drag, weight and thrust – which still play an important role today.", "ok": false}, {"t": "Yet the first person who really began to explore the shape of wings methodically was the British engineer Sir George Cayley (1773–1857), and it is to Cayley that we owe the idea of the curved aerofoil.", "ok": false}], "pairs": ["His studies included how to achieve the maximum lift = what shapes and angles produced the greatest lift"], "kind": "Choose the correct answers", "answer": "C, E (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 26, "question": "Which TWO things does the writer state about George Cayley?", "options": [{"t": "In his analyses, he developed the names of the key forces involved in flight – lift, drag, weight and thrust – which still play an important role today.", "ok": false}, {"t": "Yet the first person who really began to explore the shape of wings methodically was the British engineer Sir George Cayley (1773–1857), and it is to Cayley that we owe the idea of the curved aerofoil.", "ok": false}, {"t": "Cayley was an extraordinary and inventive man, and he is credited with developing self-righting lifeboats, wire-spoked wheels, seatbelts and even an internal combustion engine.", "ok": false}, {"t": "He carried out experiments to establish what shapes and angles produced the greatest lift.", "ok": true}], "pairs": ["He reached his conclusions by conducting a series of tests = He carried out experiments"], "kind": "Choose the correct answers", "answer": "C, E (any order)", "why": "Each correct option is supported by a different sentence."}], "paraphrase": [{"q": "A misunderstanding about", "p": "our all-too-literal brains tell us that because air is invisible it must be insubstantial too", "rel": "=", "note": "", "n": "14"}, {"q": "the nature of air", "p": "air is a substance completely comprised of gases", "rel": "=", "note": "", "n": "14"}, {"q": "A practical demonstration", "p": "it is worth carrying out an experiment with knives and spoons under a running tap", "rel": "=", "note": "", "n": "15"}, {"q": "The importance of angles", "p": "This depends on the angle that the aerofoil moves through the air", "rel": "=", "note": "", "n": "16"}, {"q": "in achieving lift", "p": "the steeper the angle, the greater the lift", "rel": "=", "note": "", "n": "16"}, {"q": "Additional wing features", "p": "There are also flaps on the rear of the wings", "rel": "=", "note": "", "n": "17"}, {"q": "that help control flight", "p": "allow the pilot to climb or descend", "rel": "=", "note": "", "n": "17"}, {"q": "The earliest attempts to achieve human flight", "p": "Brave pioneers like the 9th-century Cordoban inventor Abbas Ibn-Firnas were even bold enough to strap artificial wings to their arms", "rel": "=", "note": "", "n": "18"}, {"q": "The discovery of several key factors affecting wing design", "p": "He carried out experiments to establish what shapes and angles produced the greatest lift", "rel": "=", "note": "", "n": "19"}, {"q": "key factors", "p": "he developed the names of the key forces involved in flight", "rel": "=", "note": "", "n": "19"}, {"q": "the maximum amount of ___", "p": "A gentle, thin curve provides the best lift", "rel": "=", "note": "", "n": "20"}, {"q": "look like a thin ___ when viewed from the side", "p": "in profile, the shape of a narrow teardrop", "rel": "=", "note": "", "n": "21"}, {"q": "the ___ needed to power a flight is kept inside each wing", "p": "They are hollow inside, which provides room for fuel storage", "rel": "=", "note": "", "n": "22"}, {"q": "causes the plane to rise or descend", "p": "allow the pilot to climb or descend", "rel": "=", "note": "", "n": "23"}, {"q": "adjust the ___", "p": "flaps on the rear of the wings that can be swung up or down", "rel": "=", "note": "", "n": "23"}, {"q": "located at the ___ of the wings", "p": "on the rear of the wings", "rel": "=", "note": "", "n": "24"}, {"q": "His studies included how to achieve the maximum lift", "p": "what shapes and angles produced the greatest lift", "rel": "=", "note": "", "n": "25"}, {"q": "He reached his conclusions by conducting a series of tests", "p": "He carried out experiments", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "insubstantial", "pos": "adjective", "loc": "A", "d": "not solid or real; lacking material substance", "uz": "yengil, moddiy bo'lmagan", "ex": "The fog looked insubstantial, yet it completely hid the road.", "form": "insubstantial"}, {"w": "slices through", "pos": "phrasal verb", "loc": "A", "d": "cuts easily and smoothly through something", "uz": "kesib o'tmoq, yorib o'tmoq", "ex": "The speedboat slices through the waves at remarkable speed.", "form": "slices through"}, {"w": "diverts", "pos": "verb", "loc": "A", "d": "changes the direction of something", "uz": "yo'nalishini o'zgartirmoq, burib yubormoq", "ex": "A new canal diverts the river away from the village.", "form": "diverts"}, {"w": "turbulent eddies", "pos": "collocation", "loc": "B", "d": "small, violent whirling movements in water or air", "uz": "tartibsiz girdoblar", "ex": "Turbulent eddies formed behind the rocks in the fast river.", "form": "Turbulent eddies"}, {"w": "convex", "pos": "adjective", "loc": "B", "d": "curving outwards, like the outside of a ball", "uz": "qabariq, do'ng", "ex": "A convex mirror gives drivers a wider view of the road.", "form": "convex"}, {"w": "disrupt", "pos": "verb", "loc": "B", "d": "to interrupt or break the normal course of something", "uz": "buzmoq, izdan chiqarmoq", "ex": "Heavy snow can disrupt flights across the whole region.", "form": "disrupt"}, {"w": "curvature", "pos": "noun", "loc": "B", "d": "the degree to which something is curved", "uz": "egrilik, qayrilish", "ex": "Scientists measured the curvature of the lens with great precision.", "form": "curvature"}, {"w": "distorted", "pos": "verb", "loc": "C", "d": "changed from the normal shape or condition", "uz": "buzilgan, egilgan", "ex": "The old glass distorted the view of the garden outside.", "form": "distorted"}, {"w": "angle of attack", "pos": "collocation", "loc": "C", "d": "the angle between a wing and the oncoming air", "uz": "hujum burchagi", "ex": "Pilots increase the angle of attack to gain extra height.", "form": "angle of attack"}, {"w": "hollow", "pos": "adjective", "loc": "D", "d": "empty inside, with nothing filling the space", "uz": "kovak, ichi bo'sh", "ex": "The tree trunk was hollow, so small birds nested inside it.", "form": "hollow"}, {"w": "teardrop", "pos": "noun", "loc": "D", "d": "a shape that is round at one end and pointed at the other", "uz": "tomchi shakli", "ex": "The car's teardrop design reduces the drag of the wind.", "form": "teardrop"}, {"w": "marvelled at", "pos": "phrasal verb", "loc": "E", "d": "looked at something with great wonder and admiration", "uz": "lol qolmoq, hayratlanmoq", "ex": "Tourists marvelled at the enormous waterfall as it thundered down.", "form": "marvelled at"}, {"w": "held aloft", "pos": "collocation", "loc": "E", "d": "kept up in the air or raised high", "uz": "havoda tutib turilgan", "ex": "The balloon was held aloft by warm air from the burners.", "form": "held aloft"}, {"w": "methodically", "pos": "adverb", "loc": "F", "d": "in a careful, ordered and systematic way", "uz": "tizimli ravishda, izchillik bilan", "ex": "She methodically tested each idea before drawing any conclusion.", "form": "methodically"}, {"w": "we owe", "pos": "phrase", "loc": "F", "d": "we have received something good because of someone", "uz": "...ga qarzdormiz, ...ning hisobiga", "ex": "To these early doctors we owe much of our medical knowledge.", "form": "we owe"}, {"w": "is credited with", "pos": "phrase", "loc": "F", "d": "is officially recognised as having done something", "uz": "...ning ixtirochisi deb tan olinadi", "ex": "The engineer is credited with designing the country's first bridge.", "form": "is credited with"}, {"w": "pioneered", "pos": "verb", "loc": "F", "d": "was among the first to develop a new idea or method", "uz": "kashshof bo'lmoq, yo'l ochmoq", "ex": "She pioneered new techniques in the treatment of heart disease.", "form": "pioneered"}]}, {"evidence": [{"q": 27, "question": "Creative people are receptive to the immense amounts of information that the brain has to deal with.", "options": [{"t": "Strikingly, it was the people who showed the biggest difference in brain activity between the two stages who produced the most creative storylines.", "ok": false}, {"t": "Peterson calls this process latent inhibition and argues that people who have less of it, and who have a reasonably high IQ, can juggle more of the data, and so may be open to more ideas.", "ok": false}, {"t": "Jordan Peterson, a psychologist at the University of Toronto, has carried out work that suggests that the brains of creative people are more open to incoming stimuli than less creative types.", "ok": true}, {"t": "The most creative people also use the different rhythms of the day, the weekends and the holidays to help alter focus and brain state.", "ok": false}], "pairs": ["receptive to = more open to incoming stimuli", "the immense amounts of information that the brain has to deal with = a mass of data into our brains"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Torrance"}, {"k": "C", "t": "Kay Redfield Jamison"}, {"k": "D", "t": "Jordan Peterson"}, {"k": "E", "t": "Colin Martindale"}, {"k": "G", "t": "Vera John-Steiner"}], "ans": "D"}, "why": ""}, {"q": 28, "question": "Creativity requires numerous parts of the brain to be active at the same time.", "options": [{"t": "'Creative synthesis requires a new pattern, to put the brain in a state where many areas are simultaneously active,' says Claxton.", "ok": true}, {"t": "Imagery, spatial awareness, language and so on – whatever the skill, it is localised to some extent to a particular brain part or parts.", "ok": false}, {"t": "Brain studies of people with particular types of creativity show, perhaps not surprisingly, that active areas are determined by the specialist knowledge being used.", "ok": false}, {"t": "But it's not just these speciality areas that are active.", "ok": false}], "pairs": ["numerous parts of the brain to be active at the same time = many areas are simultaneously active"], "kind": "Matching", "answer": "F", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Torrance"}, {"k": "D", "t": "Jordan Peterson"}, {"k": "E", "t": "Colin Martindale"}, {"k": "F", "t": "Guy Claxton"}, {"k": "G", "t": "Vera John-Steiner"}], "ans": "F"}, "why": ""}, {"q": 29, "question": "Creative people engage in, and are well informed about, a wide range of subjects.", "options": [{"t": "Creative people are intelligent, in terms of IQ tests at least, but only averagely or just above.", "ok": false}, {"t": "The most creative people also use the different rhythms of the day, the weekends and the holidays to help alter focus and brain state.", "ok": false}, {"t": "Strikingly, it was the people who showed the biggest difference in brain activity between the two stages who produced the most creative storylines.", "ok": false}, {"t": "According to creativity specialist Mark Runco of California State University, the creative personality tends to place a high value on aesthetic qualities and have broad interests, providing lots of resources to draw on and knowledge to recombine into novel solutions.", "ok": true}], "pairs": ["engage in a wide range of subjects = have broad interests"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Torrance"}, {"k": "B", "t": "Mark Runco"}, {"k": "C", "t": "Kay Redfield Jamison"}, {"k": "D", "t": "Jordan Peterson"}, {"k": "F", "t": "Guy Claxton"}], "ans": "B"}, "why": ""}, {"q": 30, "question": "Creative people may have unstable personalities.", "options": [{"t": "But there may be a price to pay for having a creative personality.", "ok": false}, {"t": "But she also suggests that a switch of mood state might be the key to triggering a creative event, rather than the negative mood itself.", "ok": false}, {"t": "Strikingly, it was the people who showed the biggest difference in brain activity between the two stages who produced the most creative storylines.", "ok": false}, {"t": "Psychiatrist and author Kay Redfield Jamison of Johns Hopkins University, who herself has bipolar disorder, found that established artists are significantly more likely to have mood disorders.", "ok": true}], "pairs": ["may have unstable personalities = established artists are significantly more likely to have mood disorders"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Torrance"}, {"k": "B", "t": "Mark Runco"}, {"k": "C", "t": "Kay Redfield Jamison"}, {"k": "E", "t": "Colin Martindale"}, {"k": "F", "t": "Guy Claxton"}], "ans": "C"}, "why": ""}, {"q": 31, "question": "Creative people are driven to achieve the goals they set themselves.", "options": [{"t": "This could explain why sleep and relaxation can help people be creative.", "ok": false}, {"t": "Jordan Peterson, a psychologist at the University of Toronto, has carried out work that suggests that the brains of creative people are more open to incoming stimuli than less creative types.", "ok": false}, {"t": "According to creativity specialist Mark Runco of California State University, the creative personality tends to place a high value on aesthetic qualities and have broad interests, providing lots of resources to draw on and knowledge to recombine into novel solutions.", "ok": false}, {"t": "They are also highly self-motivated, perhaps even a little obsessive, when it comes to realising their ambitions.", "ok": true}], "pairs": ["driven to achieve the goals they set themselves = highly self-motivated…when it comes to realising their ambitions"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Torrance"}, {"k": "B", "t": "Mark Runco"}, {"k": "D", "t": "Jordan Peterson"}, {"k": "E", "t": "Colin Martindale"}, {"k": "F", "t": "Guy Claxton"}], "ans": "B"}, "why": ""}, {"q": 32, "question": "Creative people need support from others.", "options": [{"t": "Vera John-Steiner of the University of New Mexico says that to be really creative you need strong social networks and trusting relationships, not just active neural networks.", "ok": true}, {"t": "The most creative people also use the different rhythms of the day, the weekends and the holidays to help alter focus and brain state.", "ok": false}, {"t": "Very creative people move between these states intuitively.'", "ok": false}, {"t": "Jordan Peterson, a psychologist at the University of Toronto, has carried out work that suggests that the brains of creative people are more open to incoming stimuli than less creative types.", "ok": false}], "pairs": ["need support from others = you need strong social networks and trusting relationships"], "kind": "Matching", "answer": "G", "choice": {"prompt": "Which option matches?", "opts": [{"k": "C", "t": "Kay Redfield Jamison"}, {"k": "D", "t": "Jordan Peterson"}, {"k": "E", "t": "Colin Martindale"}, {"k": "F", "t": "Guy Claxton"}, {"k": "G", "t": "Vera John-Steiner"}], "ans": "G"}, "why": ""}, {"q": 33, "question": "For his study, volunteers had a series of <b>.........<\/b> placed on their heads which were used to monitor brain activity while they made up stories.", "options": [{"t": "Back in 1978, he used a network of scalp electrodes to record the pattern of brain waves as people made up stories.", "ok": true}, {"t": "While people were dreaming up their stories, he found their brains were surprisingly quiet.", "ok": false}, {"t": "However, when these quiet-minded people were asked to work on their stories, the alpha wave activity dropped off and the brain became busier, revealing increased cortical arousal, and more organised thinking.", "ok": false}, {"t": "The dominant activity was alpha waves, which is the same sort of brain activity as in some stages of dreaming or rest.", "ok": false}], "pairs": ["a series of ___ placed on their heads = a network of scalp electrodes"], "kind": "Completion", "answer": "electrodes", "accept": ["electrodes"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 34, "question": "Martindale demonstrated that creativity consisted of <b>.........<\/b> and elaboration phases.", "options": [{"t": "One of the first studies of the creative brain at work was by Colin Martindale, a psychologist from the University of Maine.", "ok": false}, {"t": "While people were dreaming up their stories, he found their brains were surprisingly quiet.", "ok": false}, {"t": "This could explain why sleep and relaxation can help people be creative.", "ok": false}, {"t": "Creativity, he showed, has two stages: inspiration and elaboration, each characterised by very different states of mind.", "ok": true}], "pairs": ["creativity consisted of ___ and elaboration phases = Creativity, he showed, has two stages: inspiration and elaboration"], "kind": "Completion", "answer": "inspiration", "accept": ["inspiration"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 35, "question": "In the first of these, the brain was mostly inactive except for <b>.........<\/b> and this corresponds to what takes place during dreaming or relaxation.", "options": [{"t": "The dominant activity was alpha waves, which is the same sort of brain activity as in some stages of dreaming or rest.", "ok": true}, {"t": "One of the first studies of the creative brain at work was by Colin Martindale, a psychologist from the University of Maine.", "ok": false}, {"t": "Back in 1978, he used a network of scalp electrodes to record the pattern of brain waves as people made up stories.", "ok": false}, {"t": "This could explain why sleep and relaxation can help people be creative.", "ok": false}], "pairs": ["the brain was mostly inactive except for ___ = their brains were surprisingly quiet. The dominant activity was alpha waves"], "kind": "Completion", "answer": "alpha waves", "accept": ["alpha waves"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 36, "question": "Interestingly, the most creative stories were produced by those volunteers with the greatest <b>.........<\/b> in brain activity between the two phases.", "options": [{"t": "Strikingly, it was the people who showed the biggest difference in brain activity between the two stages who produced the most creative storylines.", "ok": true}, {"t": "However, when these quiet-minded people were asked to work on their stories, the alpha wave activity dropped off and the brain became busier, revealing increased cortical arousal, and more organised thinking.", "ok": false}, {"t": "Very creative people move between these states intuitively.'", "ok": false}, {"t": "Nothing in their background brain activity marked them as creative or uncreative.", "ok": false}], "pairs": ["the greatest ___ in brain activity between the two phases = the biggest difference in brain activity between the two stages", "the most creative stories were produced by = who produced the most creative storylines"], "kind": "Completion", "answer": "difference", "accept": ["difference"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 37, "question": "People with very high IQs are more likely to be creative than those with average IQs.", "options": [{"t": "According to creativity specialist Mark Runco of California State University, the creative personality tends to place a high value on aesthetic qualities and have broad interests, providing lots of resources to draw on and knowledge to recombine into novel solutions.", "ok": false}, {"t": "While it depends on the discipline, in general, having an IQ beyond a certain level does not help boost creativity.", "ok": true}, {"t": "Creative people are intelligent, in terms of IQ tests at least, but only averagely or just above.", "ok": false}, {"t": "But when more subtle tests of IQ and creative skills were developed in the 1970s, particularly by the father of creativity testing, Paul Torrance, it became clear that the link was not so simple.", "ok": false}], "pairs": ["People with very high IQs are more likely to be creative ≠ having an IQ beyond a certain level does not help boost creativity"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 38, "question": "Society tends to value aesthetic skills highly.", "options": [{"t": "'Creatives' have an attraction to complexity and an ability to handle conflict.", "ok": false}, {"t": "According to creativity specialist Mark Runco of California State University, the creative personality tends to place a high value on aesthetic qualities and have broad interests, providing lots of resources to draw on and knowledge to recombine into novel solutions.", "ok": true}, {"t": "Because of the difficulty of studying the actual process, most early attempts to study creativity concentrated on personality.", "ok": false}, {"t": "They are also highly self-motivated, perhaps even a little obsessive, when it comes to realising their ambitions.", "ok": false}], "pairs": ["Society tends to value aesthetic skills highly ? the creative personality tends to place a high value on aesthetic qualities"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 39, "question": "There can be disadvantages to having a creative personality.", "options": [{"t": "But she also suggests that a switch of mood state might be the key to triggering a creative event, rather than the negative mood itself.", "ok": false}, {"t": "For centuries, a link has been made between creativity and mental illness.", "ok": false}, {"t": "But there may be a price to pay for having a creative personality.", "ok": true}, {"t": "But to be truly creative needs more than just the right personality and the right brain areas and networks.", "ok": false}], "pairs": ["There can be disadvantages to having a creative personality = there may be a price to pay for having a creative personality"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 40, "question": "Language skills are more important than spatial awareness in any form of creativity.", "options": [{"t": "Imagery, spatial awareness, language and so on – whatever the skill, it is localised to some extent to a particular brain part or parts.", "ok": true}, {"t": "Researchers are now trying to identify some of the specific anatomy of creativity.", "ok": false}, {"t": "Skills, situations and our social setting can shape our creativity just as dramatically as the brain resources we are born with.", "ok": false}, {"t": "Brain studies of people with particular types of creativity show, perhaps not surprisingly, that active areas are determined by the specialist knowledge being used.", "ok": false}], "pairs": ["Language skills are more important than spatial awareness ? Imagery, spatial awareness, language and so on"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}], "paraphrase": [{"q": "receptive to", "p": "more open to incoming stimuli", "rel": "=", "note": "", "n": "27"}, {"q": "the immense amounts of information that the brain has to deal with", "p": "a mass of data into our brains", "rel": "=", "note": "", "n": "27"}, {"q": "numerous parts of the brain to be active at the same time", "p": "many areas are simultaneously active", "rel": "=", "note": "", "n": "28"}, {"q": "engage in a wide range of subjects", "p": "have broad interests", "rel": "=", "note": "", "n": "29"}, {"q": "may have unstable personalities", "p": "established artists are significantly more likely to have mood disorders", "rel": "=", "note": "", "n": "30"}, {"q": "driven to achieve the goals they set themselves", "p": "highly self-motivated…when it comes to realising their ambitions", "rel": "=", "note": "", "n": "31"}, {"q": "need support from others", "p": "you need strong social networks and trusting relationships", "rel": "=", "note": "", "n": "32"}, {"q": "a series of ___ placed on their heads", "p": "a network of scalp electrodes", "rel": "=", "note": "", "n": "33"}, {"q": "creativity consisted of ___ and elaboration phases", "p": "Creativity, he showed, has two stages: inspiration and elaboration", "rel": "=", "note": "", "n": "34"}, {"q": "the brain was mostly inactive except for ___", "p": "their brains were surprisingly quiet. The dominant activity was alpha waves", "rel": "=", "note": "", "n": "35"}, {"q": "the greatest ___ in brain activity between the two phases", "p": "the biggest difference in brain activity between the two stages", "rel": "=", "note": "", "n": "36"}, {"q": "the most creative stories were produced by", "p": "who produced the most creative storylines", "rel": "=", "note": "", "n": "36"}, {"q": "People with very high IQs are more likely to be creative", "p": "having an IQ beyond a certain level does not help boost creativity", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "37"}, {"q": "Society tends to value aesthetic skills highly", "p": "the creative personality tends to place a high value on aesthetic qualities", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "38"}, {"q": "There can be disadvantages to having a creative personality", "p": "there may be a price to pay for having a creative personality", "rel": "=", "note": "", "n": "39"}, {"q": "Language skills are more important than spatial awareness", "p": "Imagery, spatial awareness, language and so on", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "40"}], "vocab": [{"w": "speculated", "pos": "verb", "loc": "¶1", "d": "formed ideas about something without having definite proof", "uz": "taxmin qilmoq, o'ylab ko'rmoq", "ex": "Journalists speculated about the reasons for the minister's sudden resignation.", "form": "speculated"}, {"w": "incubate", "pos": "verb", "loc": "¶1", "d": "to develop slowly and quietly before becoming visible", "uz": "pishib yetilmoq, sekin shakllanmoq", "ex": "Great ideas often incubate in the mind for a long time.", "form": "incubate"}, {"w": "eluded", "pos": "verb", "loc": "¶1", "d": "escaped understanding or capture", "uz": "qo'lga tushmaslik, tushunishdan chetda qolmoq", "ex": "The cause of the disease has eluded doctors for decades.", "form": "eluded"}, {"w": "subtle", "pos": "adjective", "loc": "¶2", "d": "small and delicate; not obvious or easy to notice", "uz": "nozik, sezilarsiz", "ex": "There was a subtle difference between the two versions of the report.", "form": "subtle"}, {"w": "aesthetic qualities", "pos": "collocation", "loc": "¶3", "d": "features connected with beauty and artistic taste", "uz": "estetik xususiyatlar, go'zallik sifatlari", "ex": "Buyers admired the aesthetic qualities of the handmade furniture.", "form": "aesthetic qualities"}, {"w": "obsessive", "pos": "adjective", "loc": "¶3", "d": "unable to stop thinking about or doing something", "uz": "haddan tashqari berilgan, bir narsaga yopishib olgan", "ex": "He is obsessive about keeping his desk perfectly tidy.", "form": "obsessive"}, {"w": "triggering", "pos": "verb", "loc": "¶4", "d": "causing something to start suddenly", "uz": "ishga tushirmoq, qo'zg'atmoq", "ex": "Certain smells are capable of triggering memories from our early childhood.", "form": "triggering"}, {"w": "snowed under", "pos": "idiom", "loc": "¶5", "d": "having far too much work or too many things to deal with", "uz": "ish bosib ketgan, ishga ko'milgan", "ex": "I am completely snowed under with exam papers this week.", "form": "snowed under"}, {"w": "juggle", "pos": "verb", "loc": "¶5", "d": "to manage several tasks or ideas at the same time", "uz": "bir vaqtda uddalamoq, uyg'unlashtirmoq", "ex": "Many parents juggle full-time jobs with caring for young children.", "form": "juggle"}, {"w": "elaboration", "pos": "noun", "loc": "¶6", "d": "the process of adding detail and developing an idea further", "uz": "ishlab chiqish, batafsil rivojlantirish", "ex": "The plan needs further elaboration before the board can approve it.", "form": "elaboration"}, {"w": "dominant", "pos": "adjective", "loc": "¶6", "d": "most important, strong or noticeable", "uz": "ustun, hukmron", "ex": "Tourism is the dominant industry on the island.", "form": "dominant"}, {"w": "move up a gear", "pos": "idiom", "loc": "¶7", "d": "to start working or performing at a higher level", "uz": "tezlikni oshirmoq, yuqori darajaga ko'tarilmoq", "ex": "The team had to move up a gear in the second half.", "form": "move up a gear"}, {"w": "intuitively", "pos": "adverb", "loc": "¶7", "d": "by feeling or instinct rather than by conscious reasoning", "uz": "sezgi bilan, ichki tuyg'u orqali", "ex": "She intuitively knew that something was wrong with the plan.", "form": "intuitively"}, {"w": "localised", "pos": "adjective", "loc": "¶8", "d": "limited to a particular place or area", "uz": "ma'lum joyga cheklangan, lokallashgan", "ex": "The pain was localised in his lower back.", "form": "localised"}, {"w": "synthesis", "pos": "noun", "loc": "¶8", "d": "the combining of separate ideas or parts into a whole", "uz": "sintez, birlashtirish", "ex": "The essay offers a clever synthesis of two rival theories.", "form": "synthesis"}, {"w": "trusting relationships", "pos": "collocation", "loc": "¶10", "d": "close connections based on belief in another person's honesty", "uz": "ishonchli munosabatlar", "ex": "Trusting relationships help teams to share ideas without fear.", "form": "Trusting relationships"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 12 / A survivor's / Ideal Homes / Conformity</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 12 / A survivor's / Ideal Homes / Conformity</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">A survivor&#x27;s story</div><div class="passage-subtitle">One native bird in New Zealand that has managed to survive the introduction of non-native species</div><p data-para="1"><span class="sent" id="s0_0">As an island country with a fauna dominated by birds, New Zealand was once home to an owl species which is now extinct, the laughing owl.</span> <span class="sent" id="s0_1">It was named for its distinctive cry.</span> <span class="sent" id="s0_2">This bird was widespread throughout the islands when European settlers arrived in the middle of the 19th century and it remained in good numbers for some years thereafter.</span> <span class="sent" id="s0_3">Where other native birds suffered from predation by the Polynesian rat, the laughing owl turned the tables and adapted its diet to include the rodent.</span> <span class="sent" id="s0_4">It was also capable of catching and killing the other New Zealand owl, the morepork, and even larger birds, such as the weka.</span> <span class="sent" id="s0_5">However, the laughing owl was wiped out around the beginning of the 20th century.</span> <span class="sent" id="s0_6">Its demise was caused by specimen collectors, habitat changes, and non-native predators including cats and stoats.</span> <span class="sent" id="s0_7">Surprisingly, it is the smaller owl, the morepork, that has managed to survive until this day.</span></p><p data-para="2"><span class="sent" id="s0_8">Speckled dark brown, with yellow eyes and long tails, they are around 29 centimetres long from head to tail and 175 grams in weight.</span> <span class="sent" id="s0_9">Moreporks have fringes on the edge of their feathers, so they can fly almost silently and not alert potential prey.</span> <span class="sent" id="s0_10">They have acute hearing and their large eyes are very sensitive to light.</span></p><p data-para="3"><span class="sent" id="s0_11">Moreporks nest in tree hollows, in clumps of plants, or in cavities among rocks and roots.</span> <span class="sent" id="s0_12">In the wild, moreporks usually start nesting in October, although zoo specimens have been recorded nesting in midwinter, possibly stimulated by an ample food supply.</span> <span class="sent" id="s0_13">The female lays up to three white eggs, which she incubates for 20 to 30 days.</span> <span class="sent" id="s0_14">During this time, she rarely hunts, and the male brings food to her.</span> <span class="sent" id="s0_15">Once the chicks hatch, she stays mainly on the nest until the young owls are fully feathered.</span> <span class="sent" id="s0_16">When hatched, chicks are covered in light grey down, and have their eyes closed.</span> <span class="sent" id="s0_17">The eyes do not open until the eighth day after hatching.</span> <span class="sent" id="s0_18">They can fly at around 35 days.</span></p><p data-para="4"><span class="sent" id="s0_19">By day, moreporks sleep in roosts.</span> <span class="sent" id="s0_20">By night, they hunt a variety of animals – mainly large invertebrates including scarab and huhu beetles, moths, caterpillars and spiders.</span> <span class="sent" id="s0_21">They also take small birds and mice.</span> <span class="sent" id="s0_22">They can find suitable food in pine forests as well as native forest.</span> <span class="sent" id="s0_23">A morepork uses its sharp talons to catch or stun its prey, which it then carries away in its bill.</span> <span class="sent" id="s0_24">Moreporks are clever hunters, and birds such as robins, grey warblers and fantails can end up as their prey.</span> <span class="sent" id="s0_25">In the day, these small birds sometimes mob drowsy moreporks and chase them away from their roosts.</span> <span class="sent" id="s0_26">They force the sleepy predators to search for a more peaceful spot.</span></p><p data-para="5"><span class="sent" id="s0_27">Moreporks have proved to be ungracious hosts.</span> <span class="sent" id="s0_28">Scientists trying to establish a population of plovers on Motuora island in New Zealand&#x27;s Hauraki Gulf were mystified as to why only two birds survived out of 75 placed there.</span> <span class="sent" id="s0_29">The culprits turned out to be five pairs of moreporks that ate or chased away the new arrivals.</span></p><p data-para="6"><span class="sent" id="s0_30">Although moreporks are still considered to be relatively common, it is likely that numbers are in gradual decline due to predation and loss of habitat.</span> <span class="sent" id="s0_31">As the female is a hole-nester, she is vulnerable to predators such as stoats and possums during the breeding season, and eggs and chicks will also be at risk from rats.</span> <span class="sent" id="s0_32">The use of pesticides is another possible threat to the owls, though not a direct one.</span> <span class="sent" id="s0_33">As moreporks are at the top of the food chain, they could be affected by an accumulative poison by consuming prey that has ingested poison.</span></p><p data-para="7"><span class="sent" id="s0_34">The New Zealand Department of Conservation is taking steps to ensure the preservation of New Zealand&#x27;s only native owl.</span> <span class="sent" id="s0_35">The department is involved in measuring the population of moreporks and has put transmitters on a number of birds to determine survival and mortality.</span> <span class="sent" id="s0_36">As well as being New Zealand&#x27;s only native owl, the morepork has symbolic and spiritual importance, so in monitoring the birds it is hoped that the morepork will continue to survive and thrive.</span></p><p data-para="8"><span class="sent" id="s0_37">At dusk, the melancholy sound of the morepork can be heard in forests and parks as it calls to other moreporks and claims territory.</span> <span class="sent" id="s0_38">Its Māori name (ruru) echoes its two-part cry.</span> <span class="sent" id="s0_39">In the tradition of the Māori people of New Zealand, the morepork, or ruru, was often seen as a careful guardian.</span> <span class="sent" id="s0_40">A number of sayings referred to the bird&#x27;s alertness.</span> <span class="sent" id="s0_41">As a bird of the night, it was associated with the spirit world.</span> <span class="sent" id="s0_42">Moreporks were believed to act as messengers to the gods in the heavens, flying along spiritual paths in the sky.</span> <span class="sent" id="s0_43">They were the mediums used to communicate with the gods.</span> <span class="sent" id="s0_44">The occasional high, piercing call of the morepork signified bad news, but the lower-pitched and more common &#x27;ruru&#x27; call heralded good news.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,7" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;7</div><button type="button" class="flag-toggle" data-flagrange="1,7" title="Flag for review" aria-label="Flag questions 1-7">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–7 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Early European settlers made detailed studies of the morepork.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">The Polynesian rat had a negative effect on the number of laughing owls.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">The laughing owl was larger than the morepork.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">Rats pose a risk to young moreporks.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">The New Zealand Department of Conservation is hoping to limit the population of moreporks.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">6</span><span class="q-stem">Other bird species are frightened away when they hear the morepork&#x27;s cry.</span><select class="q-select" name="q6"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">7</span><span class="q-stem">In Māori tradition, the low call of the morepork had negative associations.</span><select class="q-select" name="q7"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="8,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 8&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="8,13" title="Flag for review" aria-label="Flag questions 8-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD AND</b>/<b>OR A NUMBER</b> from the passage for each answer.</p><p>Write your answers in boxes 8–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">The Morepork</div><div class="notes-sub"><b>Appearance</b></div><ul><li>approximately <span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> in length</li><li>large yellow eyes</li><li>feathers with fringes to enable quiet flight</li></ul><div class="notes-sub"><b>Nesting</b></div><ul><li>nests in trees, plants or spaces in roots and <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"></li><li>after about 35 days, baby moreporks are capable of leaving the nest</li></ul><div class="notes-sub"><b>Hunting</b></div><ul><li>transports its prey using its <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"></li><li>can be chased away by other birds during the <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"></li><li>attacked <span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"> that had been introduced to Motuora island</li></ul><div class="notes-sub"><b>Threats</b></div><ul><li>may be exposed to <span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"> in their prey</li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">Ideal Homes</div><div class="passage-subtitle">New ideas and some old ones</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">The traditional kampung houses of Malaysia do not need air-conditioning.</span> <span class="sent" id="s1_1">Built on stilts and with steep roofs, they have year-round ventilation.</span> <span class="sent" id="s1_2">The raised structure ensures a cooling breeze comes up through the floorboards, while the high roof acts as a chimney to release hot air.</span> <span class="sent" id="s1_3">The airtight, concrete boxes of modern city construction, in contrast, are heat traps, says Muhammad Peter Davis of University Putra Malaysia.</span> <span class="sent" id="s1_4">He has calculated that typical modern Malaysian houses are 5°C hotter than the air outside.</span> <span class="sent" id="s1_5">The builders of kampung houses &#x27;had no knowledge of modern science or engineering but they came up with the perfect design,&#x27; says Davis.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_6">This story of ancient architectural sophistication and modern insanity is repeated around the world.</span> <span class="sent" id="s1_7">In the name of modernism, people have thrown away architecture designed to cope with the environment in which they live, and adopted house designs originating from cold, northern environments, where the idea is to keep heat in.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_8">Once, the aim of architectural modernists was to build structures that kept nature out and to replace it with air-conditioning.</span> <span class="sent" id="s1_9">Now they are learning that they cannot do that effectively.</span> <span class="sent" id="s1_10">Slowly, they are seeing the benefit of working with nature, rather than against it.</span> <span class="sent" id="s1_11">In California, they probably use more power for air-conditioning than anywhere else on Earth.</span> <span class="sent" id="s1_12">According to Arthur Rosenfeld from the University of California, what California needs is white paint.</span> <span class="sent" id="s1_13">If Los Angeles painted its roofs white, planted trees to shade buildings, and chose lighter-coloured paving, it could reduce city temperatures by 3°C and cut the annual air-conditioning bill by US$170 million a year.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_14">Modern buildings are greedy in their use of energy.</span> <span class="sent" id="s1_15">Much is made of the contribution of transportation to global warming, through its emissions of greenhouse gases.</span> <span class="sent" id="s1_16">But, globally, transportation is responsible for just 22 per cent of carbon dioxide emissions.</span> <span class="sent" id="s1_17">The building sector is responsible for 31 per cent, mostly the result of heating and air-conditioning systems.</span> <span class="sent" id="s1_18">In developing countries, where demand for electricity for buildings is rising by 5 per cent a year, the biggest demand is for air-conditioning in modern buildings which are often designed to cope with every different climatic condition.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_19">Before air-conditioning, much of the Arab world kept cool through thoughtful building design.</span> <span class="sent" id="s1_20">Many buildings were built according to the principles of the wind tower, a tall structure with vertical vents at the top that open in all directions to catch any passing breeze.</span> <span class="sent" id="s1_21">Typically, these wind-tower buildings were made of local materials such as stone, mud brick, wood and palm-tree fronds.</span> <span class="sent" id="s1_22">The buildings were inward-looking, which served the dual function of focusing attention on the courtyard, where family members spend time together, and protecting living areas from the rays of the sun.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_23">Throughout the Middle East today, wind towers are often little more than museum pieces.</span> <span class="sent" id="s1_24">But there are exceptions.</span> <span class="sent" id="s1_25">Jordan has won awards for the architecture of a village on the shores of the Red Sea, which is designed to conserve energy.</span> <span class="sent" id="s1_26">Made of rough, local stone in a traditional style, it combines the ventilation system of the wind towers for summer coolness with up-to-date heating and floor insulation to protect against the desert cold in winter.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_27">Traditional building materials, like traditional building designs, are being rediscovered by those looking for low-energy solutions to the current construction needs.</span> <span class="sent" id="s1_28">Clay is one such material.</span> <span class="sent" id="s1_29">As the Dutch housing contractor R van der Ley has argued in promoting a series of clay housing projects in developing countries, clay has many benefits over its industrialised version, brick.</span> <span class="sent" id="s1_30">Clay blocks cost only half as much as ordinary bricks.</span> <span class="sent" id="s1_31">Clay also generates work because people can find it, mould it, bake it and work it themselves.</span> <span class="sent" id="s1_32">Two hundred clay bricks can be made with the fuel oil that makes just one ordinary brick.</span> <span class="sent" id="s1_33">Moreover, clay is an excellent insulator against both cold and heat outside, and can easily be recycled.</span></p><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s1_34">But although traditional methods and materials can be revived in appropriate settings, new green, low-energy technologies are needed, especially in urban environments.</span> <span class="sent" id="s1_35">The thermal insulation of homes in cold countries is an example.</span> <span class="sent" id="s1_36">In 1983, Sweden adopted a national standard, requiring the country&#x27;s homes to lose no more than 60 kilowatt-hours per square metre over the year.</span> <span class="sent" id="s1_37">To meet that standard, windows were double-glazed, and walls and roofs insulated.</span> <span class="sent" id="s1_38">Every home became a fortress against the cold air outside.</span> <span class="sent" id="s1_39">Unfortunately, the rest of Europe has not followed the lead.</span></p><p data-para="I"><span class="para-letter">I</span><span class="sent" id="s1_40">In the United States, Amory Lovins has promoted a range of low-energy technologies: &#x27;superwindows&#x27;, for example, which let in invisible light but can be &#x27;tuned&#x27; to either allow in, or reflect away, infrared solar radiation – the stuff that heats.</span> <span class="sent" id="s1_41">Buildings with large expanses of window (and big energy bills) can be designed to achieve optimum temperatures.</span></p><p data-para="J"><span class="para-letter">J</span><span class="sent" id="s1_42">As well as more efficient use of energy, the world also needs new sources of renewable power.</span> <span class="sent" id="s1_43">Solar energy is being tried out in the developing world, in villages often far from electricity grids.</span> <span class="sent" id="s1_44">The world&#x27;s biggest solar power installation got underway in the Philippines in 2001, where a project commenced to install solar panels for 400,000 people in 150 villages.</span> <span class="sent" id="s1_45">Such projects are demonstrating that countries, whether developing or developed, no longer need huge national grids to supply electricity.</span> <span class="sent" id="s1_46">Every home can do its own thing with the help of a solar panel and a storage battery.</span></p><p data-para="K"><span class="para-letter">K</span><span class="sent" id="s1_47">Houses, of course, are more than machines for living in.</span> <span class="sent" id="s1_48">They are social and psychological spaces, too.</span> <span class="sent" id="s1_49">Future houses may not look exactly like kampungs or wind towers or any other traditional models.</span> <span class="sent" id="s1_50">But to work for us and for our environment, they will have to suit us as well as these traditional forms did.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,18" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;18</div><button type="button" class="flag-toggle" data-flagrange="14,18" title="Flag for review" aria-label="Flag questions 14-18">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has eleven paragraphs, A–K.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–K, in boxes 14–18 on your answer sheet.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">reasons why a particular construction material is advantageous</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">an example of a construction design which benefits domestic interaction</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">a description of a house that is ventilated from below</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">an example of self-sufficient energy supply</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option></select></div><div class="q-row"><span class="q-num">18</span><span class="q-stem">suggested methods of reducing temperatures in a city</span><select class="q-select" name="q18"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option></select></div></div><div class="q-group" data-flagrange="19,22" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 19&ndash;22</div><button type="button" class="flag-toggle" data-flagrange="19,22" title="Flag for review" aria-label="Flag questions 19-22">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following people (Questions 19–22) and the list of ideas below.</p><p>Match each person with the correct idea, A–G.</p><p>Write the correct letter, A–G, in boxes 19–22 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of Ideas</div><span class="wb-item"><span class="wb-letter">A</span> The choice of a certain construction material can have a socio-economic impact.</span><span class="wb-item"><span class="wb-letter">B</span> Throughout the world, people are rejecting traditional housing design in order to appear modern.</span><span class="wb-item"><span class="wb-letter">C</span> Houses should not only meet people&#x27;s physical needs but also their social and psychological needs.</span><span class="wb-item"><span class="wb-letter">D</span> Traditional knowledge can be superior to modern knowledge.</span><span class="wb-item"><span class="wb-letter">E</span> There is an innovation that can save costs on both air-conditioning and heating.</span><span class="wb-item"><span class="wb-letter">F</span> Solar energy can meet the energy needs of people living in villages in developing countries.</span><span class="wb-item"><span class="wb-letter">G</span> There is a very simple solution that can save on the cost of air-conditioning.</span></div><div class="q-row"><span class="q-num">19</span><span class="q-stem">Muhammad Peter Davis</span><select class="q-select" name="q19"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">20</span><span class="q-stem">Arthur Rosenfeld</span><select class="q-select" name="q20"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">21</span><span class="q-stem">R van der Ley</span><select class="q-select" name="q21"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">22</span><span class="q-stem">Amory Lovins</span><select class="q-select" name="q22"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div><div class="q-group" data-flagrange="23,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 23&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="23,26" title="Flag for review" aria-label="Flag questions 23-26">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 2?</p><p>In boxes 23–26 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">23</span><span class="q-stem">The air temperature in modern Malaysian houses is lower than the air temperature outside.</span><select class="q-select" name="q23"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">24</span><span class="q-stem">The construction industry is more to blame than transport for global warming.</span><select class="q-select" name="q24"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">25</span><span class="q-stem">The use of wind towers for cooling is widespread in the Middle East today.</span><select class="q-select" name="q25"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">26</span><span class="q-stem">The &#x27;superwindows&#x27; promoted by Amory Lovins can be installed at low cost.</span><select class="q-select" name="q26"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Conformity</div><div class="passage-subtitle">A review of conformity and some of the studies that have been done on it</div><p data-para="1"><span class="sent" id="s2_0">During your childhood, there will have been some kind of craze which affected all the people in your school.</span> <span class="sent" id="s2_1">It may have been to do with a particular toy or possibly a must-have item of clothing.</span> <span class="sent" id="s2_2">It may have been something as simple as a type of pen or as expensive as an electronic games console.</span> <span class="sent" id="s2_3">Fashion designers, toy manufacturers and anyone else involved in the retail trade love conformity.</span> <span class="sent" id="s2_4">Set up a craze, especially in the young, and everyone will go for it.</span> <span class="sent" id="s2_5">In fact, it&#x27;s an ideal way to sell huge quantities of merchandise.</span> <span class="sent" id="s2_6">The levels of conformity in consumerism are phenomenal.</span> <span class="sent" id="s2_7">When you actually stand back and consider how easily we are persuaded that having certain items is the only way we can ensure peace of mind, you see what an important concept conformity is.</span></p><p data-para="2"><span class="sent" id="s2_8">Conformity has been described as &#x27;yielding to group pressure&#x27; (Crutchfield 1962).</span> <span class="sent" id="s2_9">However, this implies that other people put pressure on us to make us conform and this is not always the case.</span> <span class="sent" id="s2_10">A better definition is given by Aronson (1976) who said it was a &#x27;change in a person&#x27;s behaviour or opinions as a result of real or imagined pressure from a person or group of people&#x27;.</span> <span class="sent" id="s2_11">This would make more sense, as often the pressure we feel is imagined.</span> <span class="sent" id="s2_12">The person or group he refers to would have to be important to us at the time, regardless of their status.</span></p><p data-para="3"><span class="sent" id="s2_13">There has been considerable research on conformity.</span> <span class="sent" id="s2_14">One of the first studies looked at the answers people gave when asked to estimate the number of beans in a bottle (Jenness, 1932).</span> <span class="sent" id="s2_15">If you have ever entered a &#x27;guess the number&#x27; competition, you probably looked at the previous estimates made and based your judgment on what other people had guessed.</span> <span class="sent" id="s2_16">This is more or less what happened in the Jenness study.</span> <span class="sent" id="s2_17">First of all, he asked the respondents to give their own estimates, and then he asked them to decide a group estimate.</span> <span class="sent" id="s2_18">Finally, he asked them alone again and discovered that they had stayed with the group answer.</span></p><p data-para="4"><span class="sent" id="s2_19">Probably the most famous study on conformity was undertaken by Asch (1951) when he created a situation where many of his subjects gave answers which were blatantly untrue, rather than contradict the people they were with.</span> <span class="sent" id="s2_20">He did this by getting his subject to sit round a table with six stooges (colleagues of the experimenter) so that the subject was second to last.</span> <span class="sent" id="s2_21">He showed them all a large card which had three lines of different lengths drawn on it, labelled A, B and C. He then gave them a card with a single line and asked them to match this in terms of length to one of the lines A, B or C.</span></p><p data-para="5"><span class="sent" id="s2_22">The stooges gave untrue responses in a number of the trials and the subjects were left in the situation where they either reported what they saw with their own eyes or conformed to the norm of the group.</span> <span class="sent" id="s2_23">When the results were assessed, Asch found that in one out of every three trials where the wrong answer was given, the subject gave the same wrong answer as the stooges.</span> <span class="sent" id="s2_24">This led to an average level of conformity of 32 per cent.</span> <span class="sent" id="s2_25">Asch interviewed his subjects after the trials to try to find out why they conformed to an answer which was so obviously wrong.</span> <span class="sent" id="s2_26">Most of them said that they did not want to cause problems within the group, although they admitted that when they did give wrong answers it made them anxious.</span> <span class="sent" id="s2_27">(Asch found that when there was just one other person present who did not go along with the majority, no matter how many others there were, it was sufficient to make the subject give the right answer.)</span></p><p data-para="6"><span class="sent" id="s2_28">Kelman (1953) outlined three processes which can explain social conformity.</span> <span class="sent" id="s2_29">The first is compliance, where subjects go along with the crowd to prevent any in-group hostility or bad feeling and to maintain group harmony.</span> <span class="sent" id="s2_30">However, they do not change their own private belief.</span> <span class="sent" id="s2_31">If we look back to the Asch study, we can see that the subjects were simply complying with the demands of the experimental situation but hadn&#x27;t actually internalised the group&#x27;s norms.</span> <span class="sent" id="s2_32">They agreed in public, but dissented in private.</span> <span class="sent" id="s2_33">In a process known as internalisation, however, subjects do actually see the view of the group as the more valid one.</span> <span class="sent" id="s2_34">They may be able to do this, for example, by convincing themselves that their eyesight is poor.</span> <span class="sent" id="s2_35">Sometimes, however, subjects actually seem to change their beliefs because they want to become more like their heroes.</span> <span class="sent" id="s2_36">If they really want to become part of an in-group, they will start to identify with that group and take on the group&#x27;s values and beliefs, even if they are different to their own.</span> <span class="sent" id="s2_37">Kelman calls this identification.</span> <span class="sent" id="s2_38">It frequently happens with teenagers who want to become more like a peer group in order to be accepted, and suddenly seem to go against all the values and beliefs of their parents.</span></p><p data-para="7"><span class="sent" id="s2_39">So why is it that we have to conform?</span> <span class="sent" id="s2_40">Some people feel confident most of the time, have high self-esteem and do not have to go along with the majority.</span> <span class="sent" id="s2_41">For most of us, though, how confident we feel varies from day to day, depending on the situation we are in, and this can influence behaviour.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,30" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;30</div><button type="button" class="flag-toggle" data-flagrange="27,30" title="Flag for review" aria-label="Flag questions 27-30">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the claims of the writer in Reading Passage 3?</p><p>In boxes 27–30 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">Childhood crazes can centre on items of any value.</span><select class="q-select" name="q27"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">Children are more vulnerable to crazes now than they used to be.</span><select class="q-select" name="q28"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">Consumers make too many quick decisions in shops.</span><select class="q-select" name="q29"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">Crutchfield&#x27;s definition of conformity is the most reliable.</span><select class="q-select" name="q30"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="31,35" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 31&ndash;35</div><button type="button" class="flag-toggle" data-flagrange="31,35" title="Flag for review" aria-label="Flag questions 31-35">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 31–35 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Studies on conformity</div><div style="margin-bottom:.5rem">In the Jenness study, people had to guess how many <span class="q-num">31</span> <input type="text" class="q-text" name="q31" autocomplete="off" spellcheck="false"> were in a container. Jenness found that, in most cases, people opted for an estimate given by a <span class="q-num">32</span> <input type="text" class="q-text" name="q32" autocomplete="off" spellcheck="false">. Asch asked his subjects to <span class="q-num">33</span> <input type="text" class="q-text" name="q33" autocomplete="off" spellcheck="false"> line lengths. To test the extent to which people would conform, he placed his subjects with colleagues who gave <span class="q-num">34</span> <input type="text" class="q-text" name="q34" autocomplete="off" spellcheck="false"> responses. He found that his subjects agreed with his colleagues 32% of the time, although they admitted to feeling <span class="q-num">35</span> <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false"> about giving their answer.</div></div></div><div class="q-group" data-flagrange="36,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 36&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="36,40" title="Flag for review" aria-label="Flag questions 36-40">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 36–40 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Kelman&#x27;s processes of social conformity</div><div class="notes-sub"><b>Compliance</b></div><ul><li>people support the majority view despite their own ideas</li><li>social harmony is maintained</li><li>illustrated by the results of the research conducted by</li><li style="list-style:none"><span class="q-num">36</span> <input type="text" class="q-text" name="q36" autocomplete="off" spellcheck="false"></li><li style="list-style:none"><span class="q-num">37</span> <input type="text" class="q-text" name="q37" autocomplete="off" spellcheck="false"></li><li>majority view is considered most <span class="q-num">38</span> <input type="text" class="q-text" name="q38" autocomplete="off" spellcheck="false"> view</li><li>people persuade themselves despite their own ideas</li><li style="list-style:none"><span class="q-num">39</span> <input type="text" class="q-text" name="q39" autocomplete="off" spellcheck="false"></li><li>people change their ideas to those of the majority</li><li>typical of <span class="q-num">40</span> <input type="text" class="q-text" name="q40" autocomplete="off" spellcheck="false"></li></ul></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 12, "minutes": 60, "parts": [{"title": "A survivor's story", "short": "A survivor's", "qstart": 1, "qend": 13}, {"title": "Ideal Homes", "short": "Ideal Homes", "qstart": 14, "qend": 26}, {"title": "Conformity", "short": "Conformity", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 6, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 7, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 8, "kind": "text", "ans": ["29 centimetres"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["rocks"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["bill"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["day"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["plovers"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["poison"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "select", "ans": "G", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "E", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "A", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "J", "group": "p1g0", "part": 2}, {"n": 18, "kind": "select", "ans": "C", "group": "p1g0", "part": 2}, {"n": 19, "kind": "select", "ans": "D", "group": "p1g1", "part": 2}, {"n": 20, "kind": "select", "ans": "G", "group": "p1g1", "part": 2}, {"n": 21, "kind": "select", "ans": "A", "group": "p1g1", "part": 2}, {"n": 22, "kind": "select", "ans": "E", "group": "p1g1", "part": 2}, {"n": 23, "kind": "select", "ans": "FALSE", "group": "p1g2", "part": 2}, {"n": 24, "kind": "select", "ans": "TRUE", "group": "p1g2", "part": 2}, {"n": 25, "kind": "select", "ans": "FALSE", "group": "p1g2", "part": 2}, {"n": 26, "kind": "select", "ans": "NOT GIVEN", "group": "p1g2", "part": 2}, {"n": 27, "kind": "select", "ans": "YES", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "NOT GIVEN", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "NOT GIVEN", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "NO", "group": "p2g0", "part": 3}, {"n": 31, "kind": "text", "ans": ["beans"], "group": "p2g1", "part": 3}, {"n": 32, "kind": "text", "ans": ["group"], "group": "p2g1", "part": 3}, {"n": 33, "kind": "text", "ans": ["match"], "group": "p2g1", "part": 3}, {"n": 34, "kind": "text", "ans": ["untrue"], "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["anxious"], "group": "p2g1", "part": 3}, {"n": 36, "kind": "text", "ans": ["Asch"], "group": "p2g2", "part": 3}, {"n": 37, "kind": "text", "ans": ["Internalisation"], "group": "p2g2", "part": 3}, {"n": 38, "kind": "text", "ans": ["valid"], "group": "p2g2", "part": 3}, {"n": 39, "kind": "text", "ans": ["Identification"], "group": "p2g2", "part": 3}, {"n": 40, "kind": "text", "ans": ["teenagers"], "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_2", "2": "s0_3", "3": "s0_4", "4": "s0_31", "5": "s0_34", "6": "s0_37", "7": "s0_44", "8": "s0_8", "9": "s0_11", "10": "s0_23", "11": "s0_25", "12": "s0_28", "13": "s0_33", "14": "s1_29", "15": "s1_22", "16": "s1_2", "17": "s1_45", "18": "s1_12", "19": "s1_5", "20": "s1_12", "21": "s1_31", "22": "s1_40", "23": "s1_3", "24": "s1_16", "25": "s1_23", "26": "s1_40", "27": "s2_0", "28": "s2_4", "29": "s2_7", "30": "s2_10", "31": "s2_14", "32": "s2_18", "33": "s2_21", "34": "s2_20", "35": "s2_24", "36": "s2_31", "37": "s2_33", "38": "s2_33", "39": "s2_36", "40": "s2_38"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Early European settlers made detailed studies of the morepork.", "options": [{"t": "It was also capable of catching and killing the other New Zealand owl, the morepork, and even larger birds, such as the weka.", "ok": false}, {"t": "This bird was widespread throughout the islands when European settlers arrived in the middle of the 19th century and it remained in good numbers for some years thereafter.", "ok": true}, {"t": "Surprisingly, it is the smaller owl, the morepork, that has managed to survive until this day.", "ok": false}, {"t": "However, the laughing owl was wiped out around the beginning of the 20th century.", "ok": false}], "pairs": ["Early European settlers made detailed studies of the morepork ? when European settlers arrived in the middle of the 19th century"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 2, "question": "The Polynesian rat had a negative effect on the number of laughing owls.", "options": [{"t": "Where other native birds suffered from predation by the Polynesian rat, the laughing owl turned the tables and adapted its diet to include the rodent.", "ok": true}, {"t": "As an island country with a fauna dominated by birds, New Zealand was once home to an owl species which is now extinct, the laughing owl.", "ok": false}, {"t": "However, the laughing owl was wiped out around the beginning of the 20th century.", "ok": false}, {"t": "Surprisingly, it is the smaller owl, the morepork, that has managed to survive until this day.", "ok": false}], "pairs": ["had a negative effect on the number of laughing owls ≠ Where other native birds suffered from predation by the Polynesian rat, the laughing owl turned the tables", "negative effect ≠ adapted its diet to include the rodent"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 3, "question": "The laughing owl was larger than the morepork.", "options": [{"t": "It was also capable of catching and killing the other New Zealand owl, the morepork, and even larger birds, such as the weka.", "ok": true}, {"t": "However, the laughing owl was wiped out around the beginning of the 20th century.", "ok": false}, {"t": "As an island country with a fauna dominated by birds, New Zealand was once home to an owl species which is now extinct, the laughing owl.", "ok": false}, {"t": "Surprisingly, it is the smaller owl, the morepork, that has managed to survive until this day.", "ok": false}], "pairs": ["The laughing owl was larger than the morepork = the smaller owl, the morepork", "larger = capable of catching and killing the other New Zealand owl, the morepork"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 4, "question": "Rats pose a risk to young moreporks.", "options": [{"t": "Although moreporks are still considered to be relatively common, it is likely that numbers are in gradual decline due to predation and loss of habitat.", "ok": false}, {"t": "As the female is a hole-nester, she is vulnerable to predators such as stoats and possums during the breeding season, and eggs and chicks will also be at risk from rats.", "ok": true}, {"t": "As moreporks are at the top of the food chain, they could be affected by an accumulative poison by consuming prey that has ingested poison.", "ok": false}, {"t": "The use of pesticides is another possible threat to the owls, though not a direct one.", "ok": false}], "pairs": ["Rats pose a risk = will also be at risk from rats", "young moreporks = eggs and chicks"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 5, "question": "The New Zealand Department of Conservation is hoping to limit the population of moreporks.", "options": [{"t": "Scientists trying to establish a population of plovers on Motuora island in New Zealand's Hauraki Gulf were mystified as to why only two birds survived out of 75 placed there.", "ok": false}, {"t": "The New Zealand Department of Conservation is taking steps to ensure the preservation of New Zealand's only native owl.", "ok": true}, {"t": "As well as being New Zealand's only native owl, the morepork has symbolic and spiritual importance, so in monitoring the birds it is hoped that the morepork will continue to survive and thrive.", "ok": false}, {"t": "The department is involved in measuring the population of moreporks and has put transmitters on a number of birds to determine survival and mortality.", "ok": false}], "pairs": ["hoping to limit the population of moreporks ≠ taking steps to ensure the preservation of New Zealand's only native owl", "limit the population ≠ it is hoped that the morepork will continue to survive and thrive"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 6, "question": "Other bird species are frightened away when they hear the morepork&#x27;s cry.", "options": [{"t": "Its Māori name (ruru) echoes its two-part cry.", "ok": false}, {"t": "At dusk, the melancholy sound of the morepork can be heard in forests and parks as it calls to other moreporks and claims territory.", "ok": true}, {"t": "As a bird of the night, it was associated with the spirit world.", "ok": false}, {"t": "The occasional high, piercing call of the morepork signified bad news, but the lower-pitched and more common 'ruru' call heralded good news.", "ok": false}], "pairs": ["Other bird species are frightened away when they hear the cry ? as it calls to other moreporks and claims territory"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 7, "question": "In Māori tradition, the low call of the morepork had negative associations.", "options": [{"t": "In the tradition of the Māori people of New Zealand, the morepork, or ruru, was often seen as a careful guardian.", "ok": false}, {"t": "Its Māori name (ruru) echoes its two-part cry.", "ok": false}, {"t": "At dusk, the melancholy sound of the morepork can be heard in forests and parks as it calls to other moreporks and claims territory.", "ok": false}, {"t": "The occasional high, piercing call of the morepork signified bad news, but the lower-pitched and more common 'ruru' call heralded good news.", "ok": true}], "pairs": ["the low call had negative associations ≠ heralded good news", "the low call = lower-pitched"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 8, "question": "approximately <b>.........<\/b> in length", "options": [{"t": "As a bird of the night, it was associated with the spirit world.", "ok": false}, {"t": "Moreporks have fringes on the edge of their feathers, so they can fly almost silently and not alert potential prey.", "ok": false}, {"t": "Speckled dark brown, with yellow eyes and long tails, they are around 29 centimetres long from head to tail and 175 grams in weight.", "ok": true}, {"t": "They have acute hearing and their large eyes are very sensitive to light.", "ok": false}], "pairs": ["approximately ___ in length = around 29 centimetres long"], "kind": "Completion", "answer": "29 centimetres", "accept": ["29 centimetres"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 9, "question": "nests in trees, plants or spaces in roots and <b>.........<\/b>", "options": [{"t": "The eyes do not open until the eighth day after hatching.", "ok": false}, {"t": "They can fly at around 35 days.", "ok": false}, {"t": "Once the chicks hatch, she stays mainly on the nest until the young owls are fully feathered.", "ok": false}, {"t": "Moreporks nest in tree hollows, in clumps of plants, or in cavities among rocks and roots.", "ok": true}], "pairs": ["nests in trees, plants or spaces in roots and ___ = tree hollows, in clumps of plants, or in cavities among rocks and roots"], "kind": "Completion", "answer": "rocks", "accept": ["rocks"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 10, "question": "transports its prey using its <b>.........<\/b>", "options": [{"t": "A morepork uses its sharp talons to catch or stun its prey, which it then carries away in its bill.", "ok": true}, {"t": "Moreporks are clever hunters, and birds such as robins, grey warblers and fantails can end up as their prey.", "ok": false}, {"t": "They can find suitable food in pine forests as well as native forest.", "ok": false}, {"t": "They force the sleepy predators to search for a more peaceful spot.", "ok": false}], "pairs": ["transports its prey using its ___ = carries away in its bill"], "kind": "Completion", "answer": "bill", "accept": ["bill"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 11, "question": "can be chased away by other birds during the <b>.........<\/b>", "options": [{"t": "Moreporks are clever hunters, and birds such as robins, grey warblers and fantails can end up as their prey.", "ok": false}, {"t": "They also take small birds and mice.", "ok": false}, {"t": "A morepork uses its sharp talons to catch or stun its prey, which it then carries away in its bill.", "ok": false}, {"t": "In the day, these small birds sometimes mob drowsy moreporks and chase them away from their roosts.", "ok": true}], "pairs": ["can be chased away by other birds = small birds sometimes mob drowsy moreporks and chase them away", "during the ___ = In the day"], "kind": "Completion", "answer": "day", "accept": ["day"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 12, "question": "attacked <b>.........<\/b> that had been introduced to Motuora island", "options": [{"t": "Moreporks have proved to be ungracious hosts.", "ok": false}, {"t": "As an island country with a fauna dominated by birds, New Zealand was once home to an owl species which is now extinct, the laughing owl.", "ok": false}, {"t": "The culprits turned out to be five pairs of moreporks that ate or chased away the new arrivals.", "ok": false}, {"t": "Scientists trying to establish a population of plovers on Motuora island in New Zealand's Hauraki Gulf were mystified as to why only two birds survived out of 75 placed there.", "ok": true}], "pairs": ["attacked ___ that had been introduced to Motuora island = ate or chased away the new arrivals", "introduced = trying to establish a population of plovers"], "kind": "Completion", "answer": "plovers", "accept": ["plovers"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}, {"q": 13, "question": "may be exposed to <b>.........<\/b> in their prey", "options": [{"t": "As moreporks are at the top of the food chain, they could be affected by an accumulative poison by consuming prey that has ingested poison.", "ok": true}, {"t": "The use of pesticides is another possible threat to the owls, though not a direct one.", "ok": false}, {"t": "Moreporks have fringes on the edge of their feathers, so they can fly almost silently and not alert potential prey.", "ok": false}, {"t": "As the female is a hole-nester, she is vulnerable to predators such as stoats and possums during the breeding season, and eggs and chicks will also be at risk from rats.", "ok": false}], "pairs": ["may be exposed to ___ in their prey = consuming prey that has ingested poison", "may be exposed = could be affected by"], "kind": "Completion", "answer": "poison", "accept": ["poison"], "limit": " ONE WORD AND/OR A NUMBER", "why": ""}], "paraphrase": [{"q": "Early European settlers made detailed studies of the morepork", "p": "when European settlers arrived in the middle of the 19th century", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "1"}, {"q": "had a negative effect on the number of laughing owls", "p": "Where other native birds suffered from predation by the Polynesian rat, the laughing owl turned the tables", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "2"}, {"q": "negative effect", "p": "adapted its diet to include the rodent", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "2"}, {"q": "The laughing owl was larger than the morepork", "p": "the smaller owl, the morepork", "rel": "=", "note": "", "n": "3"}, {"q": "larger", "p": "capable of catching and killing the other New Zealand owl, the morepork", "rel": "=", "note": "", "n": "3"}, {"q": "Rats pose a risk", "p": "will also be at risk from rats", "rel": "=", "note": "", "n": "4"}, {"q": "young moreporks", "p": "eggs and chicks", "rel": "=", "note": "", "n": "4"}, {"q": "hoping to limit the population of moreporks", "p": "taking steps to ensure the preservation of New Zealand's only native owl", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "5"}, {"q": "limit the population", "p": "it is hoped that the morepork will continue to survive and thrive", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "5"}, {"q": "Other bird species are frightened away when they hear the cry", "p": "as it calls to other moreporks and claims territory", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "6"}, {"q": "the low call had negative associations", "p": "heralded good news", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "7"}, {"q": "the low call", "p": "lower-pitched", "rel": "=", "note": "", "n": "7"}, {"q": "approximately ___ in length", "p": "around 29 centimetres long", "rel": "=", "note": "", "n": "8"}, {"q": "nests in trees, plants or spaces in roots and ___", "p": "tree hollows, in clumps of plants, or in cavities among rocks and roots", "rel": "=", "note": "", "n": "9"}, {"q": "transports its prey using its ___", "p": "carries away in its bill", "rel": "=", "note": "", "n": "10"}, {"q": "can be chased away by other birds", "p": "small birds sometimes mob drowsy moreporks and chase them away", "rel": "=", "note": "", "n": "11"}, {"q": "during the ___", "p": "In the day", "rel": "=", "note": "", "n": "11"}, {"q": "attacked ___ that had been introduced to Motuora island", "p": "ate or chased away the new arrivals", "rel": "=", "note": "", "n": "12"}, {"q": "introduced", "p": "trying to establish a population of plovers", "rel": "=", "note": "", "n": "12"}, {"q": "may be exposed to ___ in their prey", "p": "consuming prey that has ingested poison", "rel": "=", "note": "", "n": "13"}, {"q": "may be exposed", "p": "could be affected by", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "predation", "pos": "noun", "loc": "¶1, ¶6", "d": "the hunting and killing of animals by other animals", "uz": "yirtqichlik, ovlanish", "ex": "Predation by foxes has reduced the number of ground-nesting birds.", "form": "Predation"}, {"w": "turned the tables", "pos": "idiom", "loc": "¶1", "d": "reversed a situation so that the weaker side gains the advantage", "uz": "vaziyatni teskari aylantirmoq", "ex": "The underdog team turned the tables with a goal in the final minute.", "form": "turned the tables"}, {"w": "wiped out", "pos": "phrasal verb", "loc": "¶1", "d": "completely destroyed or killed off", "uz": "butunlay yo'q qilingan", "ex": "A deadly disease wiped out most of the island's native frogs.", "form": "wiped out"}, {"w": "demise", "pos": "noun", "loc": "¶1", "d": "the end or death of something that once existed", "uz": "halokat, tugash", "ex": "Cheap online shopping led to the demise of many small bookshops.", "form": "demise"}, {"w": "potential prey", "pos": "collocation", "loc": "¶2", "d": "animals that a hunter might catch and eat", "uz": "ehtimoliy o'lja", "ex": "Cats creep silently towards their potential prey before attacking.", "form": "potential prey"}, {"w": "acute hearing", "pos": "collocation", "loc": "¶2", "d": "a very sharp and sensitive ability to hear", "uz": "o'tkir eshitish qobiliyati", "ex": "Bats have acute hearing, which helps them navigate in the dark.", "form": "acute hearing"}, {"w": "incubates", "pos": "verb", "loc": "¶3", "d": "keeps eggs warm until the young animals are ready to hatch", "uz": "bosib chiqarmoq, ustida yotmoq", "ex": "The penguin incubates a single egg on her feet for weeks.", "form": "incubates"}, {"w": "roosts", "pos": "noun", "loc": "¶4", "d": "places where birds rest or sleep", "uz": "qushlarning tunash joyi", "ex": "Thousands of starlings fly to their roosts in the trees at dusk.", "form": "roosts"}, {"w": "talons", "pos": "noun", "loc": "¶4", "d": "the sharp curved claws of a bird that hunts", "uz": "yirtqich qush changallari", "ex": "The eagle seized the fish with its powerful talons.", "form": "talons"}, {"w": "drowsy", "pos": "adjective", "loc": "¶4", "d": "feeling sleepy and not fully awake", "uz": "mudroq, uyqusirab turgan", "ex": "The warm room made the students drowsy after lunch.", "form": "drowsy"}, {"w": "ungracious hosts", "pos": "collocation", "loc": "¶5", "d": "hosts who behave rudely or unkindly to their visitors", "uz": "mehmonni yoqtirmaydigan mezbonlar", "ex": "The villagers were ungracious hosts and refused to share their food.", "form": "ungracious hosts"}, {"w": "mystified", "pos": "adjective", "loc": "¶5", "d": "completely confused because something cannot be explained", "uz": "hayratda qolgan, boshi qotgan", "ex": "Doctors were mystified by the patient's sudden and complete recovery.", "form": "mystified"}, {"w": "in gradual decline", "pos": "phrase", "loc": "¶6", "d": "slowly becoming smaller, weaker or less in number", "uz": "asta-sekin kamayib borayotgan", "ex": "Sales of printed maps have been in gradual decline for years.", "form": "in gradual decline"}, {"w": "vulnerable to", "pos": "adjective", "loc": "¶6", "d": "easily harmed or attacked by something", "uz": "zaif, himoyasiz", "ex": "Young plants are especially vulnerable to frost and strong winds.", "form": "vulnerable to"}, {"w": "accumulative", "pos": "adjective", "loc": "¶6", "d": "increasing gradually as more is added over time", "uz": "to'planib boradigan", "ex": "Lead is an accumulative poison that builds up inside the body.", "form": "accumulative"}, {"w": "ingested", "pos": "verb", "loc": "¶6", "d": "taken food, drink or a substance into the body", "uz": "yutgan, tanaga qabul qilgan", "ex": "The turtle had ingested plastic bags that looked like jellyfish.", "form": "ingested"}, {"w": "melancholy", "pos": "adjective", "loc": "¶8", "d": "feeling or expressing deep, thoughtful sadness", "uz": "g'amgin, mungli", "ex": "The melancholy song reminded her of the home she had left.", "form": "melancholy"}, {"w": "heralded", "pos": "verb", "loc": "¶8", "d": "announced or showed that something is about to happen", "uz": "xabar bermoq, darak bermoq", "ex": "The first swallows heralded the arrival of spring in the valley.", "form": "heralded"}]}, {"evidence": [{"q": 14, "question": "reasons why a particular construction material is advantageous", "options": [{"t": "Two hundred clay bricks can be made with the fuel oil that makes just one ordinary brick.", "ok": false}, {"t": "Clay is one such material.", "ok": false}, {"t": "As the Dutch housing contractor R van der Ley has argued in promoting a series of clay housing projects in developing countries, clay has many benefits over its industrialised version, brick.", "ok": true}, {"t": "Traditional building materials, like traditional building designs, are being rediscovered by those looking for low-energy solutions to the current construction needs.", "ok": false}], "pairs": ["reasons why a particular construction material is advantageous = clay has many benefits over its industrialised version, brick", "advantageous = Clay blocks cost only half as much as ordinary bricks"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}, {"k": "J", "t": "Paragraph J"}, {"k": "K", "t": "Paragraph K"}], "ans": "G", "pill": true}}, {"q": 15, "question": "an example of a construction design which benefits domestic interaction", "options": [{"t": "Before air-conditioning, much of the Arab world kept cool through thoughtful building design.", "ok": false}, {"t": "The buildings were inward-looking, which served the dual function of focusing attention on the courtyard, where family members spend time together, and protecting living areas from the rays of the sun.", "ok": true}, {"t": "Many buildings were built according to the principles of the wind tower, a tall structure with vertical vents at the top that open in all directions to catch any passing breeze.", "ok": false}, {"t": "Typically, these wind-tower buildings were made of local materials such as stone, mud brick, wood and palm-tree fronds.", "ok": false}], "pairs": ["a construction design which benefits domestic interaction = focusing attention on the courtyard, where family members spend time together", "construction design = The buildings were inward-looking"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}, {"k": "J", "t": "Paragraph J"}, {"k": "K", "t": "Paragraph K"}], "ans": "E", "pill": true}}, {"q": 16, "question": "a description of a house that is ventilated from below", "options": [{"t": "Built on stilts and with steep roofs, they have year-round ventilation.", "ok": false}, {"t": "He has calculated that typical modern Malaysian houses are 5°C hotter than the air outside.", "ok": false}, {"t": "The raised structure ensures a cooling breeze comes up through the floorboards, while the high roof acts as a chimney to release hot air.", "ok": true}, {"t": "The traditional kampung houses of Malaysia do not need air-conditioning.", "ok": false}], "pairs": ["a house that is ventilated from below = a cooling breeze comes up through the floorboards"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}, {"k": "J", "t": "Paragraph J"}, {"k": "K", "t": "Paragraph K"}], "ans": "A", "pill": true}}, {"q": 17, "question": "an example of self-sufficient energy supply", "options": [{"t": "As well as more efficient use of energy, the world also needs new sources of renewable power.", "ok": false}, {"t": "In the United States, Amory Lovins has promoted a range of low-energy technologies: 'superwindows', for example, which let in invisible light but can be 'tuned' to either allow in, or reflect away, infrared solar radiation – the stuff that heats.", "ok": false}, {"t": "Such projects are demonstrating that countries, whether developing or developed, no longer need huge national grids to supply electricity.", "ok": true}, {"t": "Solar energy is being tried out in the developing world, in villages often far from electricity grids.", "ok": false}], "pairs": ["self-sufficient energy supply = Every home can do its own thing with the help of a solar panel and a storage battery", "self-sufficient = no longer need huge national grids to supply electricity"], "kind": "Which paragraph?", "answer": "J", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}, {"k": "J", "t": "Paragraph J"}, {"k": "K", "t": "Paragraph K"}], "ans": "J", "pill": true}}, {"q": 18, "question": "suggested methods of reducing temperatures in a city", "options": [{"t": "Now they are learning that they cannot do that effectively.", "ok": false}, {"t": "According to Arthur Rosenfeld from the University of California, what California needs is white paint.", "ok": true}, {"t": "Once, the aim of architectural modernists was to build structures that kept nature out and to replace it with air-conditioning.", "ok": false}, {"t": "If Los Angeles painted its roofs white, planted trees to shade buildings, and chose lighter-coloured paving, it could reduce city temperatures by 3°C and cut the annual air-conditioning bill by US$170 million a year.", "ok": false}], "pairs": ["methods of reducing temperatures in a city = painted its roofs white, planted trees to shade buildings", "suggested methods = what California needs is white paint"], "kind": "Which paragraph?", "answer": "C", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}, {"k": "J", "t": "Paragraph J"}, {"k": "K", "t": "Paragraph K"}], "ans": "C", "pill": true}}, {"q": 19, "question": "Muhammad Peter Davis", "options": [{"t": "He has calculated that typical modern Malaysian houses are 5°C hotter than the air outside.", "ok": false}, {"t": "The airtight, concrete boxes of modern city construction, in contrast, are heat traps, says Muhammad Peter Davis of University Putra Malaysia.", "ok": false}, {"t": "The traditional kampung houses of Malaysia do not need air-conditioning.", "ok": false}, {"t": "The builders of kampung houses 'had no knowledge of modern science or engineering but they came up with the perfect design,' says Davis.", "ok": true}], "pairs": ["Traditional knowledge can be superior to modern knowledge = had no knowledge of modern science or engineering but they came up with the perfect design", "superior = the perfect design"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "The choice of a certain construction material can have a socio-economic impact."}, {"k": "B", "t": "Throughout the world, people are rejecting traditional housing design in order to appear modern."}, {"k": "D", "t": "Traditional knowledge can be superior to modern knowledge."}, {"k": "E", "t": "There is an innovation that can save costs on both air-conditioning and heating."}, {"k": "G", "t": "There is a very simple solution that can save on the cost of air-conditioning."}], "ans": "D"}, "why": ""}, {"q": 20, "question": "Arthur Rosenfeld", "options": [{"t": "If Los Angeles painted its roofs white, planted trees to shade buildings, and chose lighter-coloured paving, it could reduce city temperatures by 3°C and cut the annual air-conditioning bill by US$170 million a year.", "ok": false}, {"t": "According to Arthur Rosenfeld from the University of California, what California needs is white paint.", "ok": true}, {"t": "In California, they probably use more power for air-conditioning than anywhere else on Earth.", "ok": false}, {"t": "Once, the aim of architectural modernists was to build structures that kept nature out and to replace it with air-conditioning.", "ok": false}], "pairs": ["a very simple solution = what California needs is white paint", "save on the cost of air-conditioning = cut the annual air-conditioning bill"], "kind": "Matching", "answer": "G", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "Throughout the world, people are rejecting traditional housing design in order to appear modern."}, {"k": "C", "t": "Houses should not only meet people's physical needs but also their social and psychological needs."}, {"k": "D", "t": "Traditional knowledge can be superior to modern knowledge."}, {"k": "F", "t": "Solar energy can meet the energy needs of people living in villages in developing countries."}, {"k": "G", "t": "There is a very simple solution that can save on the cost of air-conditioning."}], "ans": "G"}, "why": ""}, {"q": 21, "question": "R van der Ley", "options": [{"t": "As the Dutch housing contractor R van der Ley has argued in promoting a series of clay housing projects in developing countries, clay has many benefits over its industrialised version, brick.", "ok": false}, {"t": "Traditional building materials, like traditional building designs, are being rediscovered by those looking for low-energy solutions to the current construction needs.", "ok": false}, {"t": "Clay is one such material.", "ok": false}, {"t": "Clay also generates work because people can find it, mould it, bake it and work it themselves.", "ok": true}], "pairs": ["a certain construction material = Clay is one such material", "a socio-economic impact = Clay also generates work because people can find it, mould it, bake it and work it themselves"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "The choice of a certain construction material can have a socio-economic impact."}, {"k": "C", "t": "Houses should not only meet people's physical needs but also their social and psychological needs."}, {"k": "D", "t": "Traditional knowledge can be superior to modern knowledge."}, {"k": "F", "t": "Solar energy can meet the energy needs of people living in villages in developing countries."}, {"k": "G", "t": "There is a very simple solution that can save on the cost of air-conditioning."}], "ans": "A"}, "why": ""}, {"q": 22, "question": "Amory Lovins", "options": [{"t": "Once, the aim of architectural modernists was to build structures that kept nature out and to replace it with air-conditioning.", "ok": false}, {"t": "The building sector is responsible for 31 per cent, mostly the result of heating and air-conditioning systems.", "ok": false}, {"t": "In the United States, Amory Lovins has promoted a range of low-energy technologies: 'superwindows', for example, which let in invisible light but can be 'tuned' to either allow in, or reflect away, infrared solar radiation – the stuff that heats.", "ok": true}, {"t": "The traditional kampung houses of Malaysia do not need air-conditioning.", "ok": false}], "pairs": ["an innovation = can be 'tuned' to either allow in, or reflect away, infrared solar radiation", "save costs on both air-conditioning and heating = Buildings with large expanses of window (and big energy bills) can be designed to achieve optimum temperatures"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "The choice of a certain construction material can have a socio-economic impact."}, {"k": "C", "t": "Houses should not only meet people's physical needs but also their social and psychological needs."}, {"k": "D", "t": "Traditional knowledge can be superior to modern knowledge."}, {"k": "E", "t": "There is an innovation that can save costs on both air-conditioning and heating."}, {"k": "G", "t": "There is a very simple solution that can save on the cost of air-conditioning."}], "ans": "E"}, "why": ""}, {"q": 23, "question": "The air temperature in modern Malaysian houses is lower than the air temperature outside.", "options": [{"t": "The builders of kampung houses 'had no knowledge of modern science or engineering but they came up with the perfect design,' says Davis.", "ok": false}, {"t": "He has calculated that typical modern Malaysian houses are 5°C hotter than the air outside.", "ok": false}, {"t": "The traditional kampung houses of Malaysia do not need air-conditioning.", "ok": false}, {"t": "The airtight, concrete boxes of modern city construction, in contrast, are heat traps, says Muhammad Peter Davis of University Putra Malaysia.", "ok": true}], "pairs": ["The air temperature in modern Malaysian houses is lower ≠ concrete boxes of modern city construction, in contrast, are heat traps", "lower than the air temperature outside ≠ hotter than the air outside"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 24, "question": "The construction industry is more to blame than transport for global warming.", "options": [{"t": "The building sector is responsible for 31 per cent, mostly the result of heating and air-conditioning systems.", "ok": false}, {"t": "But, globally, transportation is responsible for just 22 per cent of carbon dioxide emissions.", "ok": true}, {"t": "Modern buildings are greedy in their use of energy.", "ok": false}, {"t": "Much is made of the contribution of transportation to global warming, through its emissions of greenhouse gases.", "ok": false}], "pairs": ["The construction industry is more to blame = The building sector is responsible for 31 per cent", "than transport = transportation is responsible for just 22 per cent of carbon dioxide emissions"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 25, "question": "The use of wind towers for cooling is widespread in the Middle East today.", "options": [{"t": "Many buildings were built according to the principles of the wind tower, a tall structure with vertical vents at the top that open in all directions to catch any passing breeze.", "ok": false}, {"t": "Throughout the Middle East today, wind towers are often little more than museum pieces.", "ok": true}, {"t": "Future houses may not look exactly like kampungs or wind towers or any other traditional models.", "ok": false}, {"t": "Made of rough, local stone in a traditional style, it combines the ventilation system of the wind towers for summer coolness with up-to-date heating and floor insulation to protect against the desert cold in winter.", "ok": false}], "pairs": ["The use of wind towers for cooling is widespread today ≠ wind towers are often little more than museum pieces"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 26, "question": "The &#x27;superwindows&#x27; promoted by Amory Lovins can be installed at low cost.", "options": [{"t": "Buildings with large expanses of window (and big energy bills) can be designed to achieve optimum temperatures.", "ok": false}, {"t": "But although traditional methods and materials can be revived in appropriate settings, new green, low-energy technologies are needed, especially in urban environments.", "ok": false}, {"t": "In the United States, Amory Lovins has promoted a range of low-energy technologies: 'superwindows', for example, which let in invisible light but can be 'tuned' to either allow in, or reflect away, infrared solar radiation – the stuff that heats.", "ok": true}, {"t": "Clay blocks cost only half as much as ordinary bricks.", "ok": false}], "pairs": ["The 'superwindows' can be installed at low cost ? which let in invisible light but can be 'tuned'"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}], "paraphrase": [{"q": "reasons why a particular construction material is advantageous", "p": "clay has many benefits over its industrialised version, brick", "rel": "=", "note": "", "n": "14"}, {"q": "advantageous", "p": "Clay blocks cost only half as much as ordinary bricks", "rel": "=", "note": "", "n": "14"}, {"q": "a construction design which benefits domestic interaction", "p": "focusing attention on the courtyard, where family members spend time together", "rel": "=", "note": "", "n": "15"}, {"q": "construction design", "p": "The buildings were inward-looking", "rel": "=", "note": "", "n": "15"}, {"q": "a house that is ventilated from below", "p": "a cooling breeze comes up through the floorboards", "rel": "=", "note": "", "n": "16"}, {"q": "self-sufficient energy supply", "p": "Every home can do its own thing with the help of a solar panel and a storage battery", "rel": "=", "note": "", "n": "17"}, {"q": "self-sufficient", "p": "no longer need huge national grids to supply electricity", "rel": "=", "note": "", "n": "17"}, {"q": "methods of reducing temperatures in a city", "p": "painted its roofs white, planted trees to shade buildings", "rel": "=", "note": "", "n": "18"}, {"q": "suggested methods", "p": "what California needs is white paint", "rel": "=", "note": "", "n": "18"}, {"q": "Traditional knowledge can be superior to modern knowledge", "p": "had no knowledge of modern science or engineering but they came up with the perfect design", "rel": "=", "note": "", "n": "19"}, {"q": "superior", "p": "the perfect design", "rel": "=", "note": "", "n": "19"}, {"q": "a very simple solution", "p": "what California needs is white paint", "rel": "=", "note": "", "n": "20"}, {"q": "save on the cost of air-conditioning", "p": "cut the annual air-conditioning bill", "rel": "=", "note": "", "n": "20"}, {"q": "a certain construction material", "p": "Clay is one such material", "rel": "=", "note": "", "n": "21"}, {"q": "a socio-economic impact", "p": "Clay also generates work because people can find it, mould it, bake it and work it themselves", "rel": "=", "note": "", "n": "21"}, {"q": "an innovation", "p": "can be 'tuned' to either allow in, or reflect away, infrared solar radiation", "rel": "=", "note": "", "n": "22"}, {"q": "save costs on both air-conditioning and heating", "p": "Buildings with large expanses of window (and big energy bills) can be designed to achieve optimum temperatures", "rel": "=", "note": "", "n": "22"}, {"q": "The air temperature in modern Malaysian houses is lower", "p": "concrete boxes of modern city construction, in contrast, are heat traps", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "23"}, {"q": "lower than the air temperature outside", "p": "hotter than the air outside", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "23"}, {"q": "The construction industry is more to blame", "p": "The building sector is responsible for 31 per cent", "rel": "=", "note": "", "n": "24"}, {"q": "than transport", "p": "transportation is responsible for just 22 per cent of carbon dioxide emissions", "rel": "=", "note": "", "n": "24"}, {"q": "The use of wind towers for cooling is widespread today", "p": "wind towers are often little more than museum pieces", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "25"}, {"q": "The 'superwindows' can be installed at low cost", "p": "which let in invisible light but can be 'tuned'", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "26"}], "vocab": [{"w": "year-round ventilation", "pos": "collocation", "loc": "A", "d": "fresh air moving through a building in every season", "uz": "yil bo'yi havo almashinuvi", "ex": "The greenhouse has year-round ventilation to protect the delicate plants.", "form": "year-round ventilation"}, {"w": "on stilts", "pos": "phrase", "loc": "A", "d": "raised above the ground on tall wooden or metal supports", "uz": "ustunlar ustida", "ex": "Many fishermen's huts along the river are built on stilts.", "form": "on stilts"}, {"w": "heat traps", "pos": "collocation", "loc": "A", "d": "places or buildings that hold heat and cannot lose it", "uz": "issiqlikni ushlab qoladigan joylar", "ex": "Glass offices without shade can become heat traps in summer.", "form": "heat traps"}, {"w": "came up with", "pos": "phrasal verb", "loc": "A", "d": "thought of an idea, plan or solution", "uz": "o'ylab topmoq", "ex": "The engineers came up with an ingenious way to save water.", "form": "came up with"}, {"w": "insanity", "pos": "noun", "loc": "B", "d": "extremely foolish behaviour that makes no sense", "uz": "aqldan ozish, bema'nilik", "ex": "Building glass towers in a desert is sheer insanity to many experts.", "form": "insanity"}, {"w": "cope with", "pos": "phrasal verb", "loc": "B", "d": "deal successfully with a difficult situation", "uz": "uddalamoq, bardosh bermoq", "ex": "Older houses were designed to cope with heavy rain and flooding.", "form": "cope with"}, {"w": "paving", "pos": "noun", "loc": "C", "d": "a hard surface of stones or concrete on a road or path", "uz": "yo'lka qoplamasi, tosh yotqizish", "ex": "The council replaced the cracked paving in front of the library.", "form": "paving"}, {"w": "emissions", "pos": "noun", "loc": "D", "d": "gases or other substances sent out into the air", "uz": "chiqindi gazlar, zararli chiqindilar", "ex": "Factories must reduce their emissions to meet the new environmental standards.", "form": "emissions"}, {"w": "inward-looking", "pos": "adjective", "loc": "E", "d": "focused on what is inside rather than on the outside", "uz": "ichkariga qaragan", "ex": "The inward-looking design gave the courtyard a quiet, private atmosphere.", "form": "inward-looking"}, {"w": "fronds", "pos": "noun", "loc": "E", "d": "the long leaves of palm trees or ferns", "uz": "palma barglari", "ex": "The roof of the beach hut was covered with dry palm fronds.", "form": "fronds"}, {"w": "conserve energy", "pos": "collocation", "loc": "F", "d": "use less power so that it is not wasted", "uz": "energiyani tejamoq", "ex": "Turning off unused lights is a simple way to conserve energy.", "form": "conserve energy"}, {"w": "insulator", "pos": "noun", "loc": "G", "d": "a material that stops heat, cold or electricity from passing through", "uz": "izolyator, issiqlik o'tkazmaydigan material", "ex": "Wool is an excellent natural insulator against the winter cold.", "form": "insulator"}, {"w": "mould", "pos": "verb", "loc": "G", "d": "shape a soft material into a particular form", "uz": "shakl bermoq, qolipga solmoq", "ex": "Villagers mould the wet clay into bowls before drying them.", "form": "mould"}, {"w": "double-glazed", "pos": "adjective", "loc": "H", "d": "having two layers of glass to keep heat or noise out", "uz": "ikki qavatli oynali", "ex": "Our double-glazed windows keep the flat warm and remarkably quiet.", "form": "double-glazed"}, {"w": "expanses", "pos": "noun", "loc": "I", "d": "wide, open areas of land, sea or other surface", "uz": "keng maydonlar, bepoyon joylar", "ex": "The building is famous for its vast expanses of glass.", "form": "expanses"}, {"w": "optimum", "pos": "adjective", "loc": "I", "d": "best or most suitable for a particular situation", "uz": "eng maqbul, optimal", "ex": "Tomatoes grow best at an optimum temperature of around twenty-five degrees.", "form": "optimum"}, {"w": "got underway", "pos": "phrase", "loc": "J", "d": "began and started to make progress", "uz": "boshlanib ketdi", "ex": "Construction of the new bridge got underway in early spring.", "form": "got underway"}, {"w": "do its own thing", "pos": "idiom", "loc": "J", "d": "act independently without depending on others", "uz": "o'z yo'lidan bormoq, mustaqil ish tutmoq", "ex": "Teenagers often want the freedom to do their own thing.", "form": ""}]}, {"evidence": [{"q": 27, "question": "Childhood crazes can centre on items of any value.", "options": [{"t": "During your childhood, there will have been some kind of craze which affected all the people in your school.", "ok": true}, {"t": "The levels of conformity in consumerism are phenomenal.", "ok": false}, {"t": "Fashion designers, toy manufacturers and anyone else involved in the retail trade love conformity.", "ok": false}, {"t": "When you actually stand back and consider how easily we are persuaded that having certain items is the only way we can ensure peace of mind, you see what an important concept conformity is.", "ok": false}], "pairs": ["Childhood crazes can centre on items of any value = as simple as a type of pen or as expensive as an electronic games console", "Childhood crazes = some kind of craze which affected all the people in your school"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 28, "question": "Children are more vulnerable to crazes now than they used to be.", "options": [{"t": "In fact, it's an ideal way to sell huge quantities of merchandise.", "ok": false}, {"t": "It may have been something as simple as a type of pen or as expensive as an electronic games console.", "ok": false}, {"t": "It may have been to do with a particular toy or possibly a must-have item of clothing.", "ok": false}, {"t": "Set up a craze, especially in the young, and everyone will go for it.", "ok": true}], "pairs": ["Children are more vulnerable to crazes now than they used to be ? Set up a craze, especially in the young, and everyone will go for it"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 29, "question": "Consumers make too many quick decisions in shops.", "options": [{"t": "(Asch found that when there was just one other person present who did not go along with the majority, no matter how many others there were, it was sufficient to make the subject give the right answer.)", "ok": false}, {"t": "It may have been something as simple as a type of pen or as expensive as an electronic games console.", "ok": false}, {"t": "During your childhood, there will have been some kind of craze which affected all the people in your school.", "ok": false}, {"t": "When you actually stand back and consider how easily we are persuaded that having certain items is the only way we can ensure peace of mind, you see what an important concept conformity is.", "ok": true}], "pairs": ["Consumers make too many quick decisions in shops ? how easily we are persuaded that having certain items is the only way we can ensure peace of mind"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 30, "question": "Crutchfield&#x27;s definition of conformity is the most reliable.", "options": [{"t": "The person or group he refers to would have to be important to us at the time, regardless of their status.", "ok": false}, {"t": "A better definition is given by Aronson (1976) who said it was a 'change in a person's behaviour or opinions as a result of real or imagined pressure from a person or group of people'.", "ok": true}, {"t": "However, this implies that other people put pressure on us to make us conform and this is not always the case.", "ok": false}, {"t": "Conformity has been described as 'yielding to group pressure' (Crutchfield 1962).", "ok": false}], "pairs": ["Crutchfield's definition of conformity is the most reliable ≠ A better definition is given by Aronson", "Crutchfield's definition = yielding to group pressure"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 31, "question": "In the Jenness study, people had to guess how many <b>.........<\/b> were in a container.", "options": [{"t": "This is more or less what happened in the Jenness study.", "ok": false}, {"t": "Probably the most famous study on conformity was undertaken by Asch (1951) when he created a situation where many of his subjects gave answers which were blatantly untrue, rather than contradict the people they were with.", "ok": false}, {"t": "One of the first studies looked at the answers people gave when asked to estimate the number of beans in a bottle (Jenness, 1932).", "ok": true}, {"t": "If you have ever entered a 'guess the number' competition, you probably looked at the previous estimates made and based your judgment on what other people had guessed.", "ok": false}], "pairs": ["guess how many ___ were in a container = estimate the number of beans in a bottle", "guess = give their own estimates"], "kind": "Completion", "answer": "beans", "accept": ["beans"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 32, "question": "Jenness found that, in most cases, people opted for an estimate given by a <b>.........<\/b>.", "options": [{"t": "Finally, he asked them alone again and discovered that they had stayed with the group answer.", "ok": true}, {"t": "First of all, he asked the respondents to give their own estimates, and then he asked them to decide a group estimate.", "ok": false}, {"t": "One of the first studies looked at the answers people gave when asked to estimate the number of beans in a bottle (Jenness, 1932).", "ok": false}, {"t": "This is more or less what happened in the Jenness study.", "ok": false}], "pairs": ["opted for an estimate given by a ___ = they had stayed with the group answer"], "kind": "Completion", "answer": "group", "accept": ["group"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 33, "question": "Asch asked his subjects to <b>.........<\/b> line lengths.", "options": [{"t": "Asch interviewed his subjects after the trials to try to find out why they conformed to an answer which was so obviously wrong.", "ok": false}, {"t": "He showed them all a large card which had three lines of different lengths drawn on it, labelled A, B and C. He then gave them a card with a single line and asked them to match this in terms of length to one of the lines A, B or C.", "ok": true}, {"t": "Probably the most famous study on conformity was undertaken by Asch (1951) when he created a situation where many of his subjects gave answers which were blatantly untrue, rather than contradict the people they were with.", "ok": false}, {"t": "If we look back to the Asch study, we can see that the subjects were simply complying with the demands of the experimental situation but hadn't actually internalised the group's norms.", "ok": false}], "pairs": ["___ line lengths = match this in terms of length"], "kind": "Completion", "answer": "match", "accept": ["match"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 34, "question": "To test the extent to which people would conform, he placed his subjects with colleagues who gave <b>.........<\/b> responses.", "options": [{"t": "Probably the most famous study on conformity was undertaken by Asch (1951) when he created a situation where many of his subjects gave answers which were blatantly untrue, rather than contradict the people they were with.", "ok": false}, {"t": "One of the first studies looked at the answers people gave when asked to estimate the number of beans in a bottle (Jenness, 1932).", "ok": false}, {"t": "The stooges gave untrue responses in a number of the trials and the subjects were left in the situation where they either reported what they saw with their own eyes or conformed to the norm of the group.", "ok": false}, {"t": "He did this by getting his subject to sit round a table with six stooges (colleagues of the experimenter) so that the subject was second to last.", "ok": true}], "pairs": ["colleagues = six stooges (colleagues of the experimenter)", "gave ___ responses = gave untrue responses"], "kind": "Completion", "answer": "untrue", "accept": ["untrue"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 35, "question": "He found that his subjects agreed with his colleagues 32% of the time, although they admitted to feeling <b>.........<\/b> about giving their answer.", "options": [{"t": "Most of them said that they did not want to cause problems within the group, although they admitted that when they did give wrong answers it made them anxious.", "ok": false}, {"t": "This led to an average level of conformity of 32 per cent.", "ok": true}, {"t": "(Asch found that when there was just one other person present who did not go along with the majority, no matter how many others there were, it was sufficient to make the subject give the right answer.)", "ok": false}, {"t": "When the results were assessed, Asch found that in one out of every three trials where the wrong answer was given, the subject gave the same wrong answer as the stooges.", "ok": false}], "pairs": ["feeling ___ about giving their answer = when they did give wrong answers it made them anxious", "agreed with his colleagues 32% of the time = an average level of conformity of 32 per cent"], "kind": "Completion", "answer": "anxious", "accept": ["anxious"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 36, "question": "<b>.........<\/b>", "options": [{"t": "They agreed in public, but dissented in private.", "ok": false}, {"t": "If they really want to become part of an in-group, they will start to identify with that group and take on the group's values and beliefs, even if they are different to their own.", "ok": false}, {"t": "If we look back to the Asch study, we can see that the subjects were simply complying with the demands of the experimental situation but hadn't actually internalised the group's norms.", "ok": true}, {"t": "However, they do not change their own private belief.", "ok": false}], "pairs": ["illustrated by the results of the research conducted by ___ = the subjects were simply complying with the demands of the experimental situation"], "kind": "Completion", "answer": "Asch", "accept": ["Asch"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 37, "question": "<b>.........<\/b>", "options": [{"t": "If they really want to become part of an in-group, they will start to identify with that group and take on the group's values and beliefs, even if they are different to their own.", "ok": false}, {"t": "In a process known as internalisation, however, subjects do actually see the view of the group as the more valid one.", "ok": true}, {"t": "However, they do not change their own private belief.", "ok": false}, {"t": "They may be able to do this, for example, by convincing themselves that their eyesight is poor.", "ok": false}], "pairs": ["___ : people persuade themselves despite their own ideas = In a process known as internalisation"], "kind": "Completion", "answer": "Internalisation", "accept": ["Internalisation"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 38, "question": "majority view is considered most <b>.........<\/b> view", "options": [{"t": "In a process known as internalisation, however, subjects do actually see the view of the group as the more valid one.", "ok": true}, {"t": "If we look back to the Asch study, we can see that the subjects were simply complying with the demands of the experimental situation but hadn't actually internalised the group's norms.", "ok": false}, {"t": "Kelman (1953) outlined three processes which can explain social conformity.", "ok": false}, {"t": "It frequently happens with teenagers who want to become more like a peer group in order to be accepted, and suddenly seem to go against all the values and beliefs of their parents.", "ok": false}], "pairs": ["majority view is considered most ___ view = see the view of the group as the more valid one"], "kind": "Completion", "answer": "valid", "accept": ["valid"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 39, "question": "<b>.........<\/b>", "options": [{"t": "Sometimes, however, subjects actually seem to change their beliefs because they want to become more like their heroes.", "ok": false}, {"t": "However, they do not change their own private belief.", "ok": false}, {"t": "Some people feel confident most of the time, have high self-esteem and do not have to go along with the majority.", "ok": false}, {"t": "If they really want to become part of an in-group, they will start to identify with that group and take on the group's values and beliefs, even if they are different to their own.", "ok": true}], "pairs": ["people change their ideas to those of the majority = take on the group's values and beliefs", "___ (the process) = Kelman calls this identification"], "kind": "Completion", "answer": "Identification", "accept": ["Identification"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 40, "question": "typical of <b>.........<\/b>", "options": [{"t": "It frequently happens with teenagers who want to become more like a peer group in order to be accepted, and suddenly seem to go against all the values and beliefs of their parents.", "ok": true}, {"t": "If they really want to become part of an in-group, they will start to identify with that group and take on the group's values and beliefs, even if they are different to their own.", "ok": false}, {"t": "In a process known as internalisation, however, subjects do actually see the view of the group as the more valid one.", "ok": false}, {"t": "Sometimes, however, subjects actually seem to change their beliefs because they want to become more like their heroes.", "ok": false}], "pairs": ["typical of ___ = It frequently happens with teenagers"], "kind": "Completion", "answer": "teenagers", "accept": ["teenagers"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "Childhood crazes can centre on items of any value", "p": "as simple as a type of pen or as expensive as an electronic games console", "rel": "=", "note": "", "n": "27"}, {"q": "Childhood crazes", "p": "some kind of craze which affected all the people in your school", "rel": "=", "note": "", "n": "27"}, {"q": "Children are more vulnerable to crazes now than they used to be", "p": "Set up a craze, especially in the young, and everyone will go for it", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "28"}, {"q": "Consumers make too many quick decisions in shops", "p": "how easily we are persuaded that having certain items is the only way we can ensure peace of mind", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "29"}, {"q": "Crutchfield's definition of conformity is the most reliable", "p": "A better definition is given by Aronson", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "30"}, {"q": "Crutchfield's definition", "p": "yielding to group pressure", "rel": "=", "note": "", "n": "30"}, {"q": "guess how many ___ were in a container", "p": "estimate the number of beans in a bottle", "rel": "=", "note": "", "n": "31"}, {"q": "guess", "p": "give their own estimates", "rel": "=", "note": "", "n": "31"}, {"q": "opted for an estimate given by a ___", "p": "they had stayed with the group answer", "rel": "=", "note": "", "n": "32"}, {"q": "___ line lengths", "p": "match this in terms of length", "rel": "=", "note": "", "n": "33"}, {"q": "colleagues", "p": "six stooges (colleagues of the experimenter)", "rel": "=", "note": "", "n": "34"}, {"q": "gave ___ responses", "p": "gave untrue responses", "rel": "=", "note": "", "n": "34"}, {"q": "feeling ___ about giving their answer", "p": "when they did give wrong answers it made them anxious", "rel": "=", "note": "", "n": "35"}, {"q": "agreed with his colleagues 32% of the time", "p": "an average level of conformity of 32 per cent", "rel": "=", "note": "", "n": "35"}, {"q": "illustrated by the results of the research conducted by ___", "p": "the subjects were simply complying with the demands of the experimental situation", "rel": "=", "note": "", "n": "36"}, {"q": "___ : people persuade themselves despite their own ideas", "p": "In a process known as internalisation", "rel": "=", "note": "", "n": "37"}, {"q": "majority view is considered most ___ view", "p": "see the view of the group as the more valid one", "rel": "=", "note": "", "n": "38"}, {"q": "people change their ideas to those of the majority", "p": "take on the group's values and beliefs", "rel": "=", "note": "", "n": "39"}, {"q": "___ (the process)", "p": "Kelman calls this identification", "rel": "=", "note": "", "n": "39"}, {"q": "typical of ___", "p": "It frequently happens with teenagers", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "craze", "pos": "noun", "loc": "¶1", "d": "something that suddenly becomes very popular for a short time", "uz": "vaqtinchalik ommabop moda, havas", "ex": "Fidget spinners were a craze that disappeared within one year.", "form": "craze"}, {"w": "go for it", "pos": "idiom", "loc": "¶1", "d": "choose or buy something eagerly; try to get it", "uz": "ortidan ketmoq, ishtiyoq bilan olmoq", "ex": "When the sale was announced, everyone wanted to go for it.", "form": "go for it"}, {"w": "merchandise", "pos": "noun", "loc": "¶1", "d": "goods that are bought and sold", "uz": "tovarlar, savdo mollari", "ex": "The football club sells official merchandise at the stadium shop.", "form": "merchandise"}, {"w": "phenomenal", "pos": "adjective", "loc": "¶1", "d": "extremely great or impressive", "uz": "favqulodda, ajoyib", "ex": "The new phone achieved phenomenal sales in its first week.", "form": "phenomenal"}, {"w": "stand back and consider", "pos": "phrase", "loc": "¶1", "d": "step away from a situation to think about it carefully", "uz": "chetga chiqib o'ylab ko'rmoq", "ex": "Before choosing a course, stand back and consider your long-term goals.", "form": "stand back and consider"}, {"w": "peace of mind", "pos": "idiom", "loc": "¶1", "d": "a calm feeling because you are not worried", "uz": "ko'ngil xotirjamligi", "ex": "Good insurance gives families real peace of mind when travelling abroad.", "form": "peace of mind"}, {"w": "yielding to", "pos": "verb", "loc": "¶2", "d": "giving way to pressure or force from others", "uz": "bo'ysunmoq, berilmoq", "ex": "He avoided yielding to pressure from friends to quit his studies.", "form": "yielding to"}, {"w": "regardless of", "pos": "phrase", "loc": "¶2", "d": "without being affected by or considering something", "uz": "e'tiborsiz, qaramasdan", "ex": "The club accepts all members, regardless of their age or experience.", "form": "regardless of"}, {"w": "respondents", "pos": "noun", "loc": "¶3", "d": "people who answer questions in a survey or study", "uz": "so'rovnoma qatnashchilari, javob beruvchilar", "ex": "Most respondents said they preferred to shop online.", "form": "respondents"}, {"w": "blatantly", "pos": "adverb", "loc": "¶4", "d": "in an obvious and shameless way", "uz": "ochiq-oydin, yuzsizlarcha", "ex": "The politician blatantly ignored the questions of the reporters.", "form": "blatantly"}, {"w": "contradict", "pos": "verb", "loc": "¶4", "d": "say that what someone else has said is wrong", "uz": "inkor qilmoq, e'tiroz bildirmoq", "ex": "Students rarely dare to contradict their teachers in some cultures.", "form": "contradict"}, {"w": "stooges", "pos": "noun", "loc": "¶4", "d": "people who secretly help someone and pretend to be ordinary participants", "uz": "yashirin yordamchilar, qo'g'irchoqlar", "ex": "The magician used two stooges planted in the audience.", "form": "stooges"}, {"w": "go along with", "pos": "phrasal verb", "loc": "¶5, ¶6", "d": "agree to or accept an idea or plan", "uz": "ko'nmoq, qo'shilmoq", "ex": "Most employees went along with the manager's plan without complaint.", "form": ""}, {"w": "hostility", "pos": "noun", "loc": "¶6", "d": "unfriendly or angry feelings towards someone", "uz": "dushmanlik, adovat", "ex": "The new manager faced open hostility from the older staff.", "form": "hostility"}, {"w": "internalised", "pos": "verb", "loc": "¶6", "d": "made an idea or belief part of your own way of thinking", "uz": "o'ziniki qilib qabul qilgan", "ex": "Children often internalised the values they learned from their parents.", "form": "internalised"}, {"w": "dissented", "pos": "verb", "loc": "¶6", "d": "publicly disagreed with an official or majority opinion", "uz": "rozi bo'lmadi, qarshi fikr bildirdi", "ex": "Only one judge dissented from the court's final decision.", "form": "dissented"}, {"w": "self-esteem", "pos": "noun", "loc": "¶7", "d": "confidence and satisfaction in yourself", "uz": "o'zini hurmat qilish, o'ziga baho", "ex": "Praise from teachers can greatly improve a child's self-esteem.", "form": "self-esteem"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

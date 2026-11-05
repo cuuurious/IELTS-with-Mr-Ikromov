@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 38 / The life / The Purpose / Let's all</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 38 / The life / The Purpose / Let's all</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The life of Beatrix Potter</div><div class="passage-subtitle">The children&#x27;s author and illustrator who created Peter Rabbit</div><p data-para="1"><span class="sent" id="s0_0">Beatrix Potter is one of the best-selling children&#x27;s authors of all time.</span> <span class="sent" id="s0_1">Her popular series of books that includes The Tale of Peter Rabbit was first published over one hundred years ago and has never been out of print.</span> <span class="sent" id="s0_2">Generations of children have enjoyed her many stories and illustrations, all of which celebrate the English way of life and rural landscape through the adventures of animals.</span> <span class="sent" id="s0_3">Born into a comfortable middle-class family in London in 1866, Potter spent much of her early life in her own company.</span> <span class="sent" id="s0_4">She was educated at home by a governess and rarely saw her brother, Bertram, who was sent to boarding school.</span> <span class="sent" id="s0_5">Having little social contact with children of her own age, Potter was drawn into a private world of writing.</span> <span class="sent" id="s0_6">When she was 15, she began to keep a diary written in a secret code of her own invention.</span> <span class="sent" id="s0_7">Even Beatrix herself, when she read back over it in later life, found it difficult to understand.</span> <span class="sent" id="s0_8">It was not until 15 years after her death that the code was cracked.</span> <span class="sent" id="s0_9">To the outside world Beatrix seemed shy and reserved, but in her diary, she expressed herself freely and was critical of the work of several contemporary artists.</span></p><p data-para="2"><span class="sent" id="s0_10">Potter was a naturally gifted artist, and with the aid of some art lessons she also learned the technical side of drawing.</span> <span class="sent" id="s0_11">Throughout her childhood she looked after many animals – rabbits, frogs and even bats – and sketched them constantly, gradually improving her work by sketching in museums.</span> <span class="sent" id="s0_12">She was also interested in natural history.</span> <span class="sent" id="s0_13">She would spend many hours drawing wildlife such as fungi and flowers, and at one time she had an ambition to develop this scientific interest.</span> <span class="sent" id="s0_14">An uncle tried to help her enrol at the Royal Botanic Gardens at Kew in London, but she was rejected because of her gender.</span> <span class="sent" id="s0_15">Nevertheless, she won respect from the scientific establishment for her illustrations and her contribution to mycology, the study of fungi.</span></p><p data-para="3"><span class="sent" id="s0_16">When Potter was in her early twenties, her parents tried to arrange a husband for her.</span> <span class="sent" id="s0_17">Many suitable suitors were found; however, Potter turned them all down.</span> <span class="sent" id="s0_18">Fiercely independent, she disliked the idea of being tied to a domestic life that, at that time, consisted mostly of staying at home and raising children.</span> <span class="sent" id="s0_19">Thus – unusually for British women of the period – she remained single and lived in her parents&#x27; home.</span></p><p data-para="4"><span class="sent" id="s0_20">For several years Potter tried to get her first children&#x27;s book, The Tale of Peter Rabbit, published.</span> <span class="sent" id="s0_21">Her initial attempts were unsuccessful, but she persevered, and eventually Frederick Warne &amp; Co. accepted the book.</span> <span class="sent" id="s0_22">It was finally published in 1902, when Potter was 36, though the publishers did not expect it to sell many copies.</span> <span class="sent" id="s0_23">The project was given to the youngest brother in the firm, Norman Warne, as his first assignment – essentially a test.</span> <span class="sent" id="s0_24">Luckily, he warmed to both the book and its author.</span> <span class="sent" id="s0_25">Determined to make it a success, he worked closely with Potter, poring over every detail.</span> <span class="sent" id="s0_26">It was Norman who insisted that each illustration should be in colour, while Potter insisted the book remain small enough for children to hold easily.</span> <span class="sent" id="s0_27">By the end of the year, 28,000 copies were in print.</span></p><p data-para="5"><span class="sent" id="s0_28">The relationship between Warne and Potter blossomed, and they eventually became engaged.</span> <span class="sent" id="s0_29">However, Potter&#x27;s parents disapproved because of his occupation.</span> <span class="sent" id="s0_30">They relented only on condition that the couple live apart for six months to give Potter time to reconsider.</span> <span class="sent" id="s0_31">Tragically, before the wedding could take place, Warne developed pernicious anaemia, a blood disease, and passed away.</span> <span class="sent" id="s0_32">Potter was devastated and wrote to his sister, Millie, &quot;He did not live long, but he fulfilled a useful, happy life.</span> <span class="sent" id="s0_33">I must try to make a fresh beginning next year.&quot;</span></p><p data-para="6"><span class="sent" id="s0_34">After Warne&#x27;s death, Potter moved to the Lake District in northern England.</span> <span class="sent" id="s0_35">In 1905 she bought a small farm there, and for the next eight years she busied herself writing more books, some set in or around the area.</span> <span class="sent" id="s0_36">She remained there for the rest of her life, but failing eyesight eventually forced her to stop writing children&#x27;s books.</span> <span class="sent" id="s0_37">Instead, she devoted herself to breeding sheep and helping to conserve farms in the district.</span> <span class="sent" id="s0_38">Thanks to the proceeds from her successful books and a later inheritance, Potter was able to buy many working farms.</span> <span class="sent" id="s0_39">On her death she left more than 4,000 acres to the National Trust, an organisation that protects historic buildings and countryside in England.</span> <span class="sent" id="s0_40">As a result, her beloved landscape is now accessible to countless visitors.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,6" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;6</div><button type="button" class="flag-toggle" data-flagrange="1,6" title="Flag for review" aria-label="Flag questions 1-6">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 1–6 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Beatrix Potter</div><div class="notes-sub"><b>Success as an author</b></div><ul><li>Her books have been in print for more than 100 years.</li></ul><div class="notes-sub"><b>Childhood</b></div><ul><li>She received lessons at home from a <span class="q-num">1</span> <input type="text" class="q-text" name="q1" autocomplete="off" spellcheck="false"></li><li>She wrote in her <span class="q-num">2</span> <input type="text" class="q-text" name="q2" autocomplete="off" spellcheck="false"> in code.</li><li>She disliked the work of some <span class="q-num">3</span> <input type="text" class="q-text" name="q3" autocomplete="off" spellcheck="false"> of the time.</li><li>She took lessons in drawing.</li><li>She practised drawing things she saw when she visited</li><li style="list-style:none"><span class="q-num">4</span> <input type="text" class="q-text" name="q4" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>Life as a young adult</b></div><ul><li>Her <span class="q-num">5</span> <input type="text" class="q-text" name="q5" autocomplete="off" spellcheck="false"> to have a career in natural history was not realised.</li><li>Her illustrations were recognised as assisting research into</li><li style="list-style:none"><span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"></li></ul></div></div><div class="q-group" data-flagrange="7,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 7&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="7,13" title="Flag for review" aria-label="Flag questions 7-13">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 7–13 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">7</span><span class="q-stem">The life of a typical married woman at that time appealed to Potter.</span><select class="q-select" name="q7"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">8</span><span class="q-stem">Potter&#x27;s publishers insisted on changing the title of her first book.</span><select class="q-select" name="q8"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">9</span><span class="q-stem">The publishers doubted whether Potter&#x27;s first book would be successful.</span><select class="q-select" name="q9"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">10</span><span class="q-stem">Norman Warne suggested Potter include black-and-white illustrations in her first book.</span><select class="q-select" name="q10"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">11</span><span class="q-stem">At first, Potter&#x27;s parents disapproved of Norman Warne as a potential husband.</span><select class="q-select" name="q11"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">12</span><span class="q-stem">Potter continued writing children&#x27;s books until her death.</span><select class="q-select" name="q12"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">13</span><span class="q-stem">Potter&#x27;s gift to the National Trust was the largest in recent times.</span><select class="q-select" name="q13"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">The Purpose of Facial Expressions</div><div class="passage-subtitle">Do facial expressions reflect inner feelings? Or are they social devices for influencing others?</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">The use of facial expressions for measuring people&#x27;s emotions has dominated psychology since the late 1960s.</span> <span class="sent" id="s1_1">This was when Paul Ekman of the University of California pioneered the idea that, by carefully measuring facial expression, he could evaluate people&#x27;s true emotions.</span> <span class="sent" id="s1_2">Ekman carried out experiments in which people were asked to label photos of basic facial expressions – such as a smile, frown or scowl – with words for emotions.</span> <span class="sent" id="s1_3">He found, for example, that a smile represented joy and a scowl represented anger.</span> <span class="sent" id="s1_4">In fact, since the 1970s Ekman has dominated the field of emotion research with his theory that when an emotion occurs, a large number of electrical impulses also occur, creating specific facial expressions and other physiological changes, such as increased or decreased heart rate or heightened blood pressure.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_5">Many took Ekman&#x27;s work to imply that facial expressions precisely indicated people&#x27;s feelings.</span> <span class="sent" id="s1_6">However, this theory has been attacked by a number of psychologists, such as Alan Fridlund of the University of California, who claim that there is no one-to-one correspondence between facial expressions and emotions.</span> <span class="sent" id="s1_7">Expressions evolved to set off certain behaviors in other people, says Fridlund.</span> <span class="sent" id="s1_8">So, a smile may prompt people to approach, a scowl may warn them to stay away, and a look of sadness may elicit words of sympathy and reassurance.</span> <span class="sent" id="s1_9">In other words, in Fridlund&#x27;s view, facial expressions are inherently social – they involve not one, but two or more people.</span> <span class="sent" id="s1_10">Even when people are alone, they are holding a dialog with another person internally, or imagining themselves in a social situation.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_11">Thus, Fridlund thinks of facial expressions as tools for influencing social interactions, a view which, he claims, enables us to begin predicting when certain facial expressions will occur.</span> <span class="sent" id="s1_12">This in turn will allow more precise theories about social interactions.</span> <span class="sent" id="s1_13">His studies find that expressions occur most often during pivotal points, the turning points in social interactions – during greetings, social crises, or times of appeasement, for example.</span> <span class="sent" id="s1_14">At these pivotal points there is an approach, or closeness, or more intimacy, and facial expressions, as well as gestures, open up the possibilities of various social interactions.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_15">Although much work on the emotions relies on a link between facial expression and emotions, psychologist James Russell, of the University of British Columbia, says there is very little evidence supporting such a connection.</span> <span class="sent" id="s1_16">&#x27;There&#x27;s some sense in which faces express emotion, but only in the sense that everything expresses emotion,&#x27; says Russell, a long-time critic of the expression-emotion link.</span> <span class="sent" id="s1_17">&#x27;Music does, posture does, words do, tone of voice does, your behavior does.</span> <span class="sent" id="s1_18">The real question is, &quot;Is there anything special about faces?</span> <span class="sent" id="s1_19">And there we really do not know much.</span> <span class="sent" id="s1_20">What is more likely, argues Russell, is that facial expressions tell others something about a person&#x27;s overall mood and context, rather than provide details about specific emotions.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_21">Others, including Ekman, argue that the face can display information about emotions, but they admit that it is not reliable one hundred percent of the time.</span> <span class="sent" id="s1_22">And those who only examine faces to study emotion will jump to false conclusions.</span> <span class="sent" id="s1_23">But according to Ekman, to say, as Fridlund does, that there is no connection at all between facial expressions and emotions is simply wrong.</span> <span class="sent" id="s1_24">&#x27;There is a link between facial expression and emotion,&#x27; agrees developmental psychologist Linda Camras of DePaul University, &#x27;but it&#x27;s not a one-to-one kind of relationship as many once thought.</span> <span class="sent" id="s1_25">She believes there are many situations where emotion is experienced, yet no basic facial expression is displayed.</span> <span class="sent" id="s1_26">And there are times when a facial expression appears with no corresponding emotion.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_27">Ekman&#x27;s theory states that if the emotion comes on slowly or is rather weak, the feeling might not be strong enough to trigger the expression.</span> <span class="sent" id="s1_28">This would explain why there can sometimes be emotion without expression, he argues.</span> <span class="sent" id="s1_29">In addition, cultural rules – which determine when and whether people of certain cultures display emotional expressions – can prevent this otherwise automatic process from being completed.</span> <span class="sent" id="s1_30">Facial expressions evolved in humans as signals to others about how they feel, says Ekman.</span> <span class="sent" id="s1_31">At times, though, it may be uncomfortable or inconvenient for us to let others know our emotions.</span> <span class="sent" id="s1_32">But in the long run, over the course of evolution, it was useful to us as signalers: an angry look on someone&#x27;s face may be a warning that they are preparing to behave in an angry fashion.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_33">Although Fridlund disagrees with Ekman on certain matters, the two basically share the opinion that facial expressions indicate people&#x27;s future actions.</span> <span class="sent" id="s1_34">The area of dispute between Fridlund and Ekman draws attention away from their major areas of agreement, says Joseph Campos of the University of California.</span> <span class="sent" id="s1_35">Indeed, he says, &#x27;there is profound agreement that the face, along with the voice, body posture and hand gestures, forecasts to outside observers what people will do next.</span> <span class="sent" id="s1_36">He goes on to say, &#x27;The face is a component [of emotion], but to make it the center of study of the human being experiencing an emotion is like saying the only thing you need to study in a car is the transmission.</span> <span class="sent" id="s1_37">Not that the transmission is unimportant, but it&#x27;s only part of an entire system.&#x27;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,18" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;18</div><button type="button" class="flag-toggle" data-flagrange="14,18" title="Flag for review" aria-label="Flag questions 14-18">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has seven paragraphs, A–G.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–G, in boxes 14–18 on your answer sheet.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">a recognition that facial expressions do not always provide a true guide to feelings</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">examples of ways that a person&#x27;s facial expression can affect someone else&#x27;s actions</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">a reference to reasons for hiding emotions</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">examples of times when facial expressions are used especially frequently</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">18</span><span class="q-stem">examples of changes inside the body when an emotion is felt</span><select class="q-select" name="q18"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div><div class="q-group" data-flagrange="19,23" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 19&ndash;23</div><button type="button" class="flag-toggle" data-flagrange="19,23" title="Flag for review" aria-label="Flag questions 19-23">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements and the list of researchers below.</p><p>Match each statement with the correct researcher, A–E.</p><p>Write the correct letter, A–E, in boxes 19–23 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of Researchers</div><span class="wb-item"><span class="wb-letter">A</span> Paul Ekman</span><span class="wb-item"><span class="wb-letter">B</span> Alan Fridlund</span><span class="wb-item"><span class="wb-letter">C</span> James Russell</span><span class="wb-item"><span class="wb-letter">D</span> Linda Camras</span><span class="wb-item"><span class="wb-letter">E</span> Joseph Campos</span></div><div class="q-row"><span class="q-num">19</span><span class="q-stem">Focusing on the face in researching emotions is similar to researching a large structure by looking at just one small unit of it.</span><select class="q-select" name="q19"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">20</span><span class="q-stem">Facial expressions developed in order to encourage other people to react in particular ways.</span><select class="q-select" name="q20"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">21</span><span class="q-stem">Although certain researchers have different opinions about various points, they share some important ideas.</span><select class="q-select" name="q21"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">22</span><span class="q-stem">Both emotion and expression can exist independently of each other in certain circumstances.</span><select class="q-select" name="q22"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">23</span><span class="q-stem">It cannot be proved that there is a connection between facial expression and real emotion.</span><select class="q-select" name="q23"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div></div><div class="q-group" data-flagrange="24,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 24&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="24,26" title="Flag for review" aria-label="Flag questions 24-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 24–26 on your answer sheet.</p></div><div class="q-row"><span class="q-num">24</span><span>In Fridlund&#x27;s view, a <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false"> on someone&#x27;s face may be intended as an invitation to come nearer.</span></div><div class="q-row"><span class="q-num">25</span><span>According to Fridlund, when we are by ourselves we still use facial expressions because we are having a <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false"> with someone in our minds.</span></div><div class="q-row"><span class="q-num">26</span><span>Fridlund considers facial expressions to be <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"> that can affect our contact with other people.</span></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Let&#x27;s all be friends</div><div class="passage-subtitle">New research shows how the people we are in social contact with can influence us for better – and worse. Governments should take heed.</div><p data-para="1"><span class="sent" id="s2_0">From healthcare to climate change, governments today face a range of problems in which they must persuade people to change their behaviour.</span> <span class="sent" id="s2_1">But maybe instead of relying on their powers of persuasion, governments should consider using the science of social networks as a tool to do this.</span> <span class="sent" id="s2_2">True, many claims for the power of these are based on the hype surrounding major social networking websites.</span> <span class="sent" id="s2_3">But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave.</span> <span class="sent" id="s2_4">The shape of these networks has surprising effects.</span> <span class="sent" id="s2_5">Take an unlikely example: stage musicals.</span> <span class="sent" id="s2_6">Brian Uzzi is a sociologist at Northwestern University in Chicago.</span> <span class="sent" id="s2_7">He is also a big fan of musicals.</span> <span class="sent" id="s2_8">Musicals have been big business for decades, but investors have to guess which shows will be a hit.</span> <span class="sent" id="s2_9">Bye Bye Birdie, a profitable 1960 production, ran for 607 nights.</span> <span class="sent" id="s2_10">Bring Back Birdie, its 1981 sequel, closed after just four.</span> <span class="sent" id="s2_11">Intrigued, Uzzi used network science to find out why.</span></p><p data-para="2"><span class="sent" id="s2_12">He investigated 321 American musicals that were launched between 1945 and 1989, paying particular attention to whether the team of director, producers, choreographers and writers had worked together before.</span> <span class="sent" id="s2_13">After crunching the statistics, he discovered something remarkable.</span> <span class="sent" id="s2_14">Teams who had never worked together, perhaps unsurprisingly, fared poorly: their weak networks meant a lack of creative vision, and lots of failures.</span> <span class="sent" id="s2_15">And at the other extreme, teams that had worked together successfully also tended to produce flops.</span> <span class="sent" id="s2_16">Sometimes, lacking outside creative input, the team just rehashed the same ideas that worked last time; sometimes, lacking newcomers, they developed their vision in unwise ways.</span> <span class="sent" id="s2_17">Either way, lightning rarely struck twice.</span> <span class="sent" id="s2_18">But, in between, Uzzi found a point of balance.</span> <span class="sent" id="s2_19">Groups with exactly the right mix of new and old participants reliably produced hits.</span> <span class="sent" id="s2_20">This variation in the &#x27;density&#x27; of the ties allowed easy communication and fostered greater creativity – new ideas from the outsiders meshed with the experience of the insiders.</span> <span class="sent" id="s2_21">It made no difference whether a musical was about cats or rollerskating, or who starred in it – what mattered was the network binding its team together.</span></p><p data-para="3"><span class="sent" id="s2_22">All this has some intriguing implications for policy.</span> <span class="sent" id="s2_23">Take health.</span> <span class="sent" id="s2_24">Network science shows that teenagers are more likely to eat junk food if friends of their friends (whom they don&#x27;t know) eat it too.</span> <span class="sent" id="s2_25">That said, teenagers may change to a better diet if their friends eat healthily.</span> <span class="sent" id="s2_26">Here, governments could make budget savings.</span> <span class="sent" id="s2_27">Let&#x27;s say a health authority has £100, and wants to get ten people to improve their diets.</span> <span class="sent" id="s2_28">If it spends £10 on each person, one at a time, perhaps one might do so.</span> <span class="sent" id="s2_29">But imagine if instead it brought them together in a new network.</span> <span class="sent" id="s2_30">Spend £100 on this new group, and three out of the ten people might change their eating habits.</span></p><p data-para="4"><span class="sent" id="s2_31">If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.</span> <span class="sent" id="s2_32">More generally, if creating the right type of social networks helps people get on in life, shouldn&#x27;t the state seek to help people build such links?</span> <span class="sent" id="s2_33">Experts in &#x27;social capital&#x27; theory have pushed this for years, to little practical effect.</span> <span class="sent" id="s2_34">But they do have a point: governments should try to build new social systems that support social ties, and design policies to take them into account.</span></p><p data-para="5"><span class="sent" id="s2_35">How might this work?</span> <span class="sent" id="s2_36">If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.</span> <span class="sent" id="s2_37">Why then should schools not try to introduce more parents to each other?</span> <span class="sent" id="s2_38">Elsewhere, we know that prisoners who keep good social links to the outside world find it easier to rehabilitate.</span> <span class="sent" id="s2_39">So helping them keep in touch with people outside should be a specific aim.</span> <span class="sent" id="s2_40">Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.</span></p><p data-para="6"><span class="sent" id="s2_41">And social networks could bring even greater benefits to society.</span> <span class="sent" id="s2_42">Innovation in business is strongly influenced by the network structure of project teams, and by communication between trading partners or scientists.</span> <span class="sent" id="s2_43">Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.</span></p><p data-para="7"><span class="sent" id="s2_44">Perhaps the most exciting prospect is helping people who feel cut off from the rest of society.</span> <span class="sent" id="s2_45">In the USA, researchers have asked people whom they like to spend free time with, or discuss personal matters with.</span> <span class="sent" id="s2_46">It turns out that the average US citizen has 4.3 such social contacts (including spouses, siblings and friends), but over 4 per cent of adults – or perhaps as many as 10 million people – report having not one such person.</span></p><p data-para="8"><span class="sent" id="s2_47">All of this suggests that new, network-infused policies can help governments unpick pressing problems without too much financial outlay.</span> <span class="sent" id="s2_48">They might even help to bridge the divide between parties such as conservatives, who have traditionally concerned themselves with individual freedoms, and social democrats, who have worried about the wellbeing of social groups.</span> <span class="sent" id="s2_49">Network science shows such a distinction to be overly simplistic.</span> <span class="sent" id="s2_50">Shine a light on how people assemble into groups and you&#x27;ll also see how group membership affects each person in that group.</span> <span class="sent" id="s2_51">Taken together, this could improve policy and help politicians to be more persuasive – in the right sort of way.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,30" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;30</div><button type="button" class="flag-toggle" data-flagrange="27,30" title="Flag for review" aria-label="Flag questions 27-30">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in boxes 27–30 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">27</span><span>What does the writer feel about major internet social networking sites?</span></div><label class="mcq-option"><input type="radio" name="q27" value="A"><span class="opt-letter">A</span><span>They could fulfil a useful function in society.</span></label><label class="mcq-option"><input type="radio" name="q27" value="B"><span class="opt-letter">B</span><span>They need to be carefully controlled.</span></label><label class="mcq-option"><input type="radio" name="q27" value="C"><span class="opt-letter">C</span><span>They should not be used for political purposes.</span></label><label class="mcq-option"><input type="radio" name="q27" value="D"><span class="opt-letter">D</span><span>Their potential dangers have been exaggerated.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">28</span><span>What does the writer say about musicals in the first paragraph?</span></div><label class="mcq-option"><input type="radio" name="q28" value="A"><span class="opt-letter">A</span><span>Sequels receive less publicity than the original musicals.</span></label><label class="mcq-option"><input type="radio" name="q28" value="B"><span class="opt-letter">B</span><span>Musicals can be a risky investment in financial terms.</span></label><label class="mcq-option"><input type="radio" name="q28" value="C"><span class="opt-letter">C</span><span>Musicals tended to decline in popularity after the 1960s.</span></label><label class="mcq-option"><input type="radio" name="q28" value="D"><span class="opt-letter">D</span><span>Sociological research methods are rarely applied to musicals.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">29</span><span>Uzzi concluded that successful stage musicals illustrate</span></div><label class="mcq-option"><input type="radio" name="q29" value="A"><span class="opt-letter">A</span><span>the importance of having team members who understand statistics.</span></label><label class="mcq-option"><input type="radio" name="q29" value="B"><span class="opt-letter">B</span><span>the influence of the team on the musical&#x27;s performers.</span></label><label class="mcq-option"><input type="radio" name="q29" value="C"><span class="opt-letter">C</span><span>the positive effect of having a particular team structure.</span></label><label class="mcq-option"><input type="radio" name="q29" value="D"><span class="opt-letter">D</span><span>the need for team members to be familiar with the musical&#x27;s subject matter.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">30</span><span>When discussing teenagers with dietary problems, the writer recommends</span></div><label class="mcq-option"><input type="radio" name="q30" value="A"><span class="opt-letter">A</span><span>helping these teenagers to get in touch with one another.</span></label><label class="mcq-option"><input type="radio" name="q30" value="B"><span class="opt-letter">B</span><span>increasing the amount of money spent on these teenagers.</span></label><label class="mcq-option"><input type="radio" name="q30" value="C"><span class="opt-letter">C</span><span>providing classes in healthy eating habits for these teenagers.</span></label><label class="mcq-option"><input type="radio" name="q30" value="D"><span class="opt-letter">D</span><span>encouraging these teenagers to be less influenced by their friends.</span></label></div><div class="q-group" data-flagrange="31,35" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 31&ndash;35</div><button type="button" class="flag-toggle" data-flagrange="31,35" title="Flag for review" aria-label="Flag questions 31-35">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the claims of the writer in Reading Passage 3?</p><p>In boxes 31–35 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">Policies involving social networking may be successful in tackling problems connected with business, health and other issues.</span><select class="q-select" name="q31"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">&#x27;Social capital&#x27; theorists oppose the involvement of the state in helping people build social networks.</span><select class="q-select" name="q32"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">Social networks could allow parents of young children to share child care arrangements.</span><select class="q-select" name="q33"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">School social networking sites have a positive effect on the relationships between teaching staff and parents of young children.</span><select class="q-select" name="q34"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">Allowing prisoners to use social networking sites is a dangerous development that should be stopped.</span><select class="q-select" name="q35"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="36,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 36&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="36,40" title="Flag for review" aria-label="Flag questions 36-40">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary using the list of words and phrases, A–H, below.</p><p>Write the correct letter, A–H, in boxes 36–40 on your answer sheet.</p><p>Further advantages that social networks could bring to society</p></div><div class="word-bank"><div class="wb-title">List of Words</div><span class="wb-item"><span class="wb-letter">A</span> different individuals</span><span class="wb-item"><span class="wb-letter">B</span> social conflict</span><span class="wb-item"><span class="wb-letter">C</span> social isolation</span><span class="wb-item"><span class="wb-letter">D</span> opposing concept</span><span class="wb-item"><span class="wb-letter">E</span> large budget</span><span class="wb-item"><span class="wb-letter">F</span> new ideas</span><span class="wb-item"><span class="wb-letter">G</span> personal growth</span><span class="wb-item"><span class="wb-letter">H</span> natural resources</span></div><div class="notes-box"><div style="margin-bottom:.5rem">In business, building social networks between different companies could result in <span class="q-num">36</span> <select class="q-select" name="q36"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select>, while similar policies in relation to the general public could lead to changes in the use of <span class="q-num">37</span> <select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select>. It might also be possible to use such policies to reduce <span class="q-num">38</span> <select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select>. At a national level these policies do not require a <span class="q-num">39</span> <select class="q-select" name="q39"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select>, and the writer claims that social networks may bring political groups closer together, and could also provide more insight into the influence of groups on <span class="q-num">40</span> <select class="q-select" name="q40"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select>.</div></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 38, "minutes": 60, "parts": [{"title": "The life of Beatrix Potter", "short": "The life", "qstart": 1, "qend": 13}, {"title": "The Purpose of Facial Expressions", "short": "The Purpose", "qstart": 14, "qend": 26}, {"title": "Let's all be friends", "short": "Let's all", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "text", "ans": ["governess"], "group": "p0g0", "part": 1}, {"n": 2, "kind": "text", "ans": ["diary"], "group": "p0g0", "part": 1}, {"n": 3, "kind": "text", "ans": ["artists"], "group": "p0g0", "part": 1}, {"n": 4, "kind": "text", "ans": ["museums"], "group": "p0g0", "part": 1}, {"n": 5, "kind": "text", "ans": ["ambition"], "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["mycology", "fungi"], "group": "p0g0", "part": 1}, {"n": 7, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 8, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 9, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 10, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 11, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 12, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 13, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 14, "kind": "select", "ans": "E", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "F", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "C", "group": "p1g0", "part": 2}, {"n": 18, "kind": "select", "ans": "A", "group": "p1g0", "part": 2}, {"n": 19, "kind": "select", "ans": "E", "group": "p1g1", "part": 2}, {"n": 20, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 21, "kind": "select", "ans": "E", "group": "p1g1", "part": 2}, {"n": 22, "kind": "select", "ans": "D", "group": "p1g1", "part": 2}, {"n": 23, "kind": "select", "ans": "C", "group": "p1g1", "part": 2}, {"n": 24, "kind": "text", "ans": ["smile"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["dialog", "dialogue"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["tools", "tool"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "radio", "ans": "A", "group": "p2g0", "part": 3}, {"n": 28, "kind": "radio", "ans": "B", "group": "p2g0", "part": 3}, {"n": 29, "kind": "radio", "ans": "C", "group": "p2g0", "part": 3}, {"n": 30, "kind": "radio", "ans": "A", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 32, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 33, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "NOT GIVEN", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "F", "group": "p2g2", "part": 3}, {"n": 37, "kind": "select", "ans": "H", "group": "p2g2", "part": 3}, {"n": 38, "kind": "select", "ans": "C", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "E", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "A", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_4", "2": "s0_6", "3": "s0_9", "4": "s0_11", "5": "s0_13", "6": "s0_15", "7": "s0_18", "8": "s0_21", "9": "s0_22", "10": "s0_26", "11": "s0_29", "12": "s0_36", "13": "s0_39", "14": "s1_21", "15": "s1_8", "16": "s1_29", "17": "s1_13", "18": "s1_4", "19": "s1_36", "20": "s1_7", "21": "s1_34", "22": "s1_25", "23": "s1_15", "24": "s1_8", "25": "s1_10", "26": "s1_11", "27": "s2_2", "28": "s2_8", "29": "s2_19", "30": "s2_29", "31": "s2_31", "32": "s2_33", "33": "s2_36", "34": "s2_37", "35": "s2_40", "36": "s2_42", "37": "s2_43", "38": "s2_44", "39": "s2_47", "40": "s2_50"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "She received lessons at home from a <b>.........<\/b>", "options": [{"t": "Born into a comfortable middle-class family in London in 1866, Potter spent much of her early life in her own company.", "ok": false}, {"t": "When she was 15, she began to keep a diary written in a secret code of her own invention.", "ok": false}, {"t": "Generations of children have enjoyed her many stories and illustrations, all of which celebrate the English way of life and rural landscape through the adventures of animals.", "ok": false}, {"t": "She was educated at home by a governess and rarely saw her brother, Bertram, who was sent to boarding school.", "ok": true}], "pairs": ["received lessons at home from a ___ = educated at home by a governess"], "kind": "Completion", "answer": "governess", "accept": ["governess"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 2, "question": "She wrote in her <b>.........<\/b> in code.", "options": [{"t": "It was not until 15 years after her death that the code was cracked.", "ok": false}, {"t": "To the outside world Beatrix seemed shy and reserved, but in her diary, she expressed herself freely and was critical of the work of several contemporary artists.", "ok": false}, {"t": "Even Beatrix herself, when she read back over it in later life, found it difficult to understand.", "ok": false}, {"t": "When she was 15, she began to keep a diary written in a secret code of her own invention.", "ok": true}], "pairs": ["wrote in her ___ in code = keep a diary written in a secret code of her own invention"], "kind": "Completion", "answer": "diary", "accept": ["diary"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 3, "question": "She disliked the work of some <b>.........<\/b> of the time.", "options": [{"t": "Beatrix Potter is one of the best-selling children's authors of all time.", "ok": false}, {"t": "Fiercely independent, she disliked the idea of being tied to a domestic life that, at that time, consisted mostly of staying at home and raising children.", "ok": false}, {"t": "To the outside world Beatrix seemed shy and reserved, but in her diary, she expressed herself freely and was critical of the work of several contemporary artists.", "ok": true}, {"t": "She was educated at home by a governess and rarely saw her brother, Bertram, who was sent to boarding school.", "ok": false}], "pairs": ["disliked the work of some ___ of the time = was critical of the work of several contemporary artists"], "kind": "Completion", "answer": "artists", "accept": ["artists"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 4, "question": "<b>.........<\/b>", "options": [{"t": "She would spend many hours drawing wildlife such as fungi and flowers, and at one time she had an ambition to develop this scientific interest.", "ok": false}, {"t": "Nevertheless, she won respect from the scientific establishment for her illustrations and her contribution to mycology, the study of fungi.", "ok": false}, {"t": "Throughout her childhood she looked after many animals – rabbits, frogs and even bats – and sketched them constantly, gradually improving her work by sketching in museums.", "ok": true}, {"t": "Potter was a naturally gifted artist, and with the aid of some art lessons she also learned the technical side of drawing.", "ok": false}], "pairs": ["practised drawing things she saw when she visited ___ = sketched them constantly, gradually improving her work by sketching in museums"], "kind": "Completion", "answer": "museums", "accept": ["museums"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 5, "question": "Her <b>.........<\/b> to have a career in natural history was not", "options": [{"t": "Throughout her childhood she looked after many animals – rabbits, frogs and even bats – and sketched them constantly, gradually improving her work by sketching in museums.", "ok": false}, {"t": "An uncle tried to help her enrol at the Royal Botanic Gardens at Kew in London, but she was rejected because of her gender.", "ok": false}, {"t": "She was also interested in natural history.", "ok": false}, {"t": "She would spend many hours drawing wildlife such as fungi and flowers, and at one time she had an ambition to develop this scientific interest.", "ok": true}], "pairs": ["Her ___ to have a career in natural history = she had an ambition to develop this scientific interest", "was not realised = she was rejected because of her gender"], "kind": "Completion", "answer": "ambition", "accept": ["ambition"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 6, "question": "<b>.........<\/b>", "options": [{"t": "An uncle tried to help her enrol at the Royal Botanic Gardens at Kew in London, but she was rejected because of her gender.", "ok": false}, {"t": "Throughout her childhood she looked after many animals – rabbits, frogs and even bats – and sketched them constantly, gradually improving her work by sketching in museums.", "ok": false}, {"t": "Nevertheless, she won respect from the scientific establishment for her illustrations and her contribution to mycology, the study of fungi.", "ok": true}, {"t": "Potter was a naturally gifted artist, and with the aid of some art lessons she also learned the technical side of drawing.", "ok": false}], "pairs": ["recognised as assisting research into ___ = she won respect from the scientific establishment for her illustrations and her contribution to mycology"], "kind": "Completion", "answer": "mycology", "accept": ["mycology", "fungi"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 7, "question": "The life of a typical married woman at that time appealed to Potter.", "options": [{"t": "Many suitable suitors were found; however, Potter turned them all down.", "ok": false}, {"t": "Fiercely independent, she disliked the idea of being tied to a domestic life that, at that time, consisted mostly of staying at home and raising children.", "ok": true}, {"t": "When Potter was in her early twenties, her parents tried to arrange a husband for her.", "ok": false}, {"t": "Potter was devastated and wrote to his sister, Millie, \"He did not live long, but he fulfilled a useful, happy life.", "ok": false}], "pairs": ["The life of a typical married woman appealed to Potter ≠ she disliked the idea of being tied to a domestic life"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 8, "question": "Potter&#x27;s publishers insisted on changing the title of her first book.", "options": [{"t": "It was Norman who insisted that each illustration should be in colour, while Potter insisted the book remain small enough for children to hold easily.", "ok": false}, {"t": "Her initial attempts were unsuccessful, but she persevered, and eventually Frederick Warne & Co. accepted the book.", "ok": true}, {"t": "It was finally published in 1902, when Potter was 36, though the publishers did not expect it to sell many copies.", "ok": false}, {"t": "For several years Potter tried to get her first children's book, The Tale of Peter Rabbit, published.", "ok": false}], "pairs": ["publishers insisted on changing the title ? Frederick Warne & Co. accepted the book"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 9, "question": "The publishers doubted whether Potter&#x27;s first book would be successful.", "options": [{"t": "For several years Potter tried to get her first children's book, The Tale of Peter Rabbit, published.", "ok": false}, {"t": "It was finally published in 1902, when Potter was 36, though the publishers did not expect it to sell many copies.", "ok": true}, {"t": "Her initial attempts were unsuccessful, but she persevered, and eventually Frederick Warne & Co. accepted the book.", "ok": false}, {"t": "It was Norman who insisted that each illustration should be in colour, while Potter insisted the book remain small enough for children to hold easily.", "ok": false}], "pairs": ["The publishers doubted whether it would be successful = the publishers did not expect it to sell many copies"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 10, "question": "Norman Warne suggested Potter include black-and-white illustrations in her first book.", "options": [{"t": "The project was given to the youngest brother in the firm, Norman Warne, as his first assignment – essentially a test.", "ok": false}, {"t": "For several years Potter tried to get her first children's book, The Tale of Peter Rabbit, published.", "ok": false}, {"t": "It was Norman who insisted that each illustration should be in colour, while Potter insisted the book remain small enough for children to hold easily.", "ok": true}, {"t": "Her initial attempts were unsuccessful, but she persevered, and eventually Frederick Warne & Co. accepted the book.", "ok": false}], "pairs": ["suggested black-and-white illustrations ≠ It was Norman who insisted that each illustration should be in colour"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 11, "question": "At first, Potter&#x27;s parents disapproved of Norman Warne as a potential husband.", "options": [{"t": "The project was given to the youngest brother in the firm, Norman Warne, as his first assignment – essentially a test.", "ok": false}, {"t": "When Potter was in her early twenties, her parents tried to arrange a husband for her.", "ok": false}, {"t": "The relationship between Warne and Potter blossomed, and they eventually became engaged.", "ok": false}, {"t": "However, Potter's parents disapproved because of his occupation.", "ok": true}], "pairs": ["parents disapproved of Norman Warne as a potential husband = Potter's parents disapproved because of his occupation", "At first = They relented only on condition"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 12, "question": "Potter continued writing children&#x27;s books until her death.", "options": [{"t": "After Warne's death, Potter moved to the Lake District in northern England.", "ok": false}, {"t": "Thanks to the proceeds from her successful books and a later inheritance, Potter was able to buy many working farms.", "ok": false}, {"t": "In 1905 she bought a small farm there, and for the next eight years she busied herself writing more books, some set in or around the area.", "ok": false}, {"t": "She remained there for the rest of her life, but failing eyesight eventually forced her to stop writing children's books.", "ok": true}], "pairs": ["continued writing children's books until her death ≠ failing eyesight eventually forced her to stop writing children's books"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 13, "question": "Potter&#x27;s gift to the National Trust was the largest in recent times.", "options": [{"t": "In 1905 she bought a small farm there, and for the next eight years she busied herself writing more books, some set in or around the area.", "ok": false}, {"t": "Thanks to the proceeds from her successful books and a later inheritance, Potter was able to buy many working farms.", "ok": false}, {"t": "On her death she left more than 4,000 acres to the National Trust, an organisation that protects historic buildings and countryside in England.", "ok": true}, {"t": "After Warne's death, Potter moved to the Lake District in northern England.", "ok": false}], "pairs": ["the largest gift in recent times ? she left more than 4,000 acres to the National Trust"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}], "paraphrase": [{"q": "received lessons at home from a ___", "p": "educated at home by a governess", "rel": "=", "note": "", "n": "1"}, {"q": "wrote in her ___ in code", "p": "keep a diary written in a secret code of her own invention", "rel": "=", "note": "", "n": "2"}, {"q": "disliked the work of some ___ of the time", "p": "was critical of the work of several contemporary artists", "rel": "=", "note": "", "n": "3"}, {"q": "practised drawing things she saw when she visited ___", "p": "sketched them constantly, gradually improving her work by sketching in museums", "rel": "=", "note": "", "n": "4"}, {"q": "Her ___ to have a career in natural history", "p": "she had an ambition to develop this scientific interest", "rel": "=", "note": "", "n": "5"}, {"q": "was not realised", "p": "she was rejected because of her gender", "rel": "=", "note": "", "n": "5"}, {"q": "recognised as assisting research into ___", "p": "she won respect from the scientific establishment for her illustrations and her contribution to mycology", "rel": "=", "note": "", "n": "6"}, {"q": "The life of a typical married woman appealed to Potter", "p": "she disliked the idea of being tied to a domestic life", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "7"}, {"q": "publishers insisted on changing the title", "p": "Frederick Warne & Co. accepted the book", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "8"}, {"q": "The publishers doubted whether it would be successful", "p": "the publishers did not expect it to sell many copies", "rel": "=", "note": "", "n": "9"}, {"q": "suggested black-and-white illustrations", "p": "It was Norman who insisted that each illustration should be in colour", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "10"}, {"q": "parents disapproved of Norman Warne as a potential husband", "p": "Potter's parents disapproved because of his occupation", "rel": "=", "note": "", "n": "11"}, {"q": "At first", "p": "They relented only on condition", "rel": "=", "note": "", "n": "11"}, {"q": "continued writing children's books until her death", "p": "failing eyesight eventually forced her to stop writing children's books", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "12"}, {"q": "the largest gift in recent times", "p": "she left more than 4,000 acres to the National Trust", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "13"}], "vocab": [{"w": "drawn into", "pos": "phrasal verb", "loc": "¶1", "d": "became involved in something, often without planning it", "uz": "tortilmoq, jalb etilmoq", "ex": "He was drawn into the debate against his better judgement.", "form": "drawn into"}, {"w": "reserved", "pos": "adjective", "loc": "¶1", "d": "quiet and not willing to show your feelings", "uz": "kamgap, o'ziga yopiq", "ex": "The reserved student rarely spoke during group discussions.", "form": "reserved"}, {"w": "cracked", "pos": "verb", "loc": "¶1", "d": "solved or understood a difficult code or problem", "uz": "yechilgan, ochilgan", "ex": "Experts finally cracked the ancient code after years of study.", "form": "cracked"}, {"w": "contemporary", "pos": "adjective", "loc": "¶1", "d": "living or happening in the same period of time", "uz": "zamondosh, zamonaviy", "ex": "She compared the novel with works by contemporary writers.", "form": "contemporary"}, {"w": "gifted", "pos": "adjective", "loc": "¶2", "d": "having a natural talent or ability for something", "uz": "iqtidorli, qobiliyatli", "ex": "The gifted pianist gave her first concert at ten.", "form": "gifted"}, {"w": "enrol", "pos": "verb", "loc": "¶2", "d": "to officially join a course, school or programme", "uz": "ro'yxatdan o'tmoq, qabul qilinmoq", "ex": "You must enrol before the first day of the course.", "form": "enrol"}, {"w": "establishment", "pos": "noun", "loc": "¶2", "d": "the group of powerful people or institutions that control a field", "uz": "(rasmiy) muassasa, hukmron doira", "ex": "The new theory was rejected by the scientific establishment.", "form": "establishment"}, {"w": "turned them all down", "pos": "phrasal verb", "loc": "¶3", "d": "refused all offers or requests", "uz": "hammasini rad etmoq", "ex": "She had three job offers but turned them all down.", "form": "turned them all down"}, {"w": "fiercely independent", "pos": "collocation", "loc": "¶3", "d": "strongly wanting to make your own decisions without help", "uz": "o'ta mustaqil", "ex": "My grandmother is fiercely independent and refuses all assistance.", "form": "fiercely independent"}, {"w": "persevered", "pos": "verb", "loc": "¶4", "d": "continued trying to do something despite difficulties", "uz": "qat'iyat ko'rsatdi, matonat bilan davom etdi", "ex": "He persevered with his studies despite many setbacks.", "form": "persevered"}, {"w": "warmed to", "pos": "phrasal verb", "loc": "¶4", "d": "began to like someone or something more", "uz": "yoqtira boshlamoq, iliqroq munosabatda bo'la boshlamoq", "ex": "The audience slowly warmed to the nervous young speaker.", "form": "warmed to"}, {"w": "poring over", "pos": "phrasal verb", "loc": "¶4", "d": "studying something very carefully for a long time", "uz": "sinchiklab o'rganmoq", "ex": "The students spent the night poring over their notes.", "form": "poring over"}, {"w": "blossomed", "pos": "verb", "loc": "¶5", "d": "developed in a healthy and successful way", "uz": "gullab-yashnadi, rivojlandi", "ex": "Their friendship blossomed into a lifelong partnership.", "form": "blossomed"}, {"w": "relented", "pos": "verb", "loc": "¶5", "d": "finally agreed to something after first refusing", "uz": "yon bosdi, rozi bo'ldi", "ex": "Her father relented and allowed her to study abroad.", "form": "relented"}, {"w": "passed away", "pos": "phrasal verb", "loc": "¶5", "d": "died (a polite way of saying this)", "uz": "vafot etdi", "ex": "Her grandfather passed away peacefully in his sleep.", "form": "passed away"}, {"w": "proceeds", "pos": "noun", "loc": "¶6", "d": "money gained from selling something or holding an event", "uz": "tushum, daromad", "ex": "All proceeds from the sale will go to the hospital.", "form": "proceeds"}, {"w": "conserve", "pos": "verb", "loc": "¶6", "d": "to protect something from damage, loss or destruction", "uz": "asramoq, muhofaza qilmoq", "ex": "Volunteers work to conserve the wetlands near our town.", "form": "conserve"}, {"w": "devoted herself to", "pos": "phrase", "loc": "¶6", "d": "gave all her time and energy to a person or activity", "uz": "o'zini bag'ishladi", "ex": "She devoted herself to teaching village children to read.", "form": "devoted herself to"}]}, {"evidence": [{"q": 14, "question": "a recognition that facial expressions do not always provide a true guide to feelings", "options": [{"t": "What is more likely, argues Russell, is that facial expressions tell others something about a person's overall mood and context, rather than provide details about specific emotions.", "ok": false}, {"t": "Many took Ekman's work to imply that facial expressions precisely indicated people's feelings.", "ok": false}, {"t": "But according to Ekman, to say, as Fridlund does, that there is no connection at all between facial expressions and emotions is simply wrong.", "ok": false}, {"t": "Others, including Ekman, argue that the face can display information about emotions, but they admit that it is not reliable one hundred percent of the time.", "ok": true}], "pairs": ["do not always provide a true guide to feelings = it is not reliable one hundred percent of the time"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "E", "pill": true}}, {"q": 15, "question": "examples of ways that a person&#x27;s facial expression can affect someone else&#x27;s actions", "options": [{"t": "In other words, in Fridlund's view, facial expressions are inherently social – they involve not one, but two or more people.", "ok": false}, {"t": "Many took Ekman's work to imply that facial expressions precisely indicated people's feelings.", "ok": false}, {"t": "And there are times when a facial expression appears with no corresponding emotion.", "ok": false}, {"t": "So, a smile may prompt people to approach, a scowl may warn them to stay away, and a look of sadness may elicit words of sympathy and reassurance.", "ok": true}], "pairs": ["ways a facial expression can affect someone else's actions = a smile may prompt people to approach, a scowl may warn them to stay away"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "B", "pill": true}}, {"q": 16, "question": "a reference to reasons for hiding emotions", "options": [{"t": "At times, though, it may be uncomfortable or inconvenient for us to let others know our emotions.", "ok": false}, {"t": "But in the long run, over the course of evolution, it was useful to us as signalers: an angry look on someone's face may be a warning that they are preparing to behave in an angry fashion.", "ok": false}, {"t": "Facial expressions evolved in humans as signals to others about how they feel, says Ekman.", "ok": false}, {"t": "In addition, cultural rules – which determine when and whether people of certain cultures display emotional expressions – can prevent this otherwise automatic process from being completed.", "ok": true}], "pairs": ["reasons for hiding emotions = it may be uncomfortable or inconvenient for us to let others know our emotions", "hiding emotions = can prevent this otherwise automatic process from being completed"], "kind": "Which paragraph?", "answer": "F", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "F", "pill": true}}, {"q": 17, "question": "examples of times when facial expressions are used especially frequently", "options": [{"t": "At these pivotal points there is an approach, or closeness, or more intimacy, and facial expressions, as well as gestures, open up the possibilities of various social interactions.", "ok": false}, {"t": "But according to Ekman, to say, as Fridlund does, that there is no connection at all between facial expressions and emotions is simply wrong.", "ok": false}, {"t": "Thus, Fridlund thinks of facial expressions as tools for influencing social interactions, a view which, he claims, enables us to begin predicting when certain facial expressions will occur.", "ok": false}, {"t": "His studies find that expressions occur most often during pivotal points, the turning points in social interactions – during greetings, social crises, or times of appeasement, for example.", "ok": true}], "pairs": ["times when expressions are used especially frequently = expressions occur most often during pivotal points", "examples of times = during greetings, social crises, or times of appeasement"], "kind": "Which paragraph?", "answer": "C", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "C", "pill": true}}, {"q": 18, "question": "examples of changes inside the body when an emotion is felt", "options": [{"t": "In fact, since the 1970s Ekman has dominated the field of emotion research with his theory that when an emotion occurs, a large number of electrical impulses also occur, creating specific facial expressions and other physiological changes, such as increased or decreased heart rate or heightened blood pressure.", "ok": true}, {"t": "Ekman carried out experiments in which people were asked to label photos of basic facial expressions – such as a smile, frown or scowl – with words for emotions.", "ok": false}, {"t": "This was when Paul Ekman of the University of California pioneered the idea that, by carefully measuring facial expression, he could evaluate people's true emotions.", "ok": false}, {"t": "He found, for example, that a smile represented joy and a scowl represented anger.", "ok": false}], "pairs": ["changes inside the body when an emotion is felt = other physiological changes, such as increased or decreased heart rate or heightened blood pressure"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "A", "pill": true}}, {"q": 19, "question": "Focusing on the face in researching emotions is similar to researching a large structure by looking at just one small unit of it.", "options": [{"t": "He goes on to say, 'The face is a component [of emotion], but to make it the center of study of the human being experiencing an emotion is like saying the only thing you need to study in a car is the transmission.", "ok": true}, {"t": "Not that the transmission is unimportant, but it's only part of an entire system.'", "ok": false}, {"t": "Others, including Ekman, argue that the face can display information about emotions, but they admit that it is not reliable one hundred percent of the time.", "ok": false}, {"t": "Indeed, he says, 'there is profound agreement that the face, along with the voice, body posture and hand gestures, forecasts to outside observers what people will do next.", "ok": false}], "pairs": ["researching a large structure by looking at one small unit = only part of an entire system", "Focusing on the face in researching emotions = to make it the center of study of the human being experiencing an emotion"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Ekman"}, {"k": "B", "t": "Alan Fridlund"}, {"k": "C", "t": "James Russell"}, {"k": "D", "t": "Linda Camras"}, {"k": "E", "t": "Joseph Campos"}], "ans": "E"}, "why": ""}, {"q": 20, "question": "Facial expressions developed in order to encourage other people to react in particular ways.", "options": [{"t": "Many took Ekman's work to imply that facial expressions precisely indicated people's feelings.", "ok": false}, {"t": "Expressions evolved to set off certain behaviors in other people, says Fridlund.", "ok": true}, {"t": "In other words, in Fridlund's view, facial expressions are inherently social – they involve not one, but two or more people.", "ok": false}, {"t": "However, this theory has been attacked by a number of psychologists, such as Alan Fridlund of the University of California, who claim that there is no one-to-one correspondence between facial expressions and emotions.", "ok": false}], "pairs": ["developed in order to encourage others to react = Expressions evolved to set off certain behaviors in other people"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Ekman"}, {"k": "B", "t": "Alan Fridlund"}, {"k": "C", "t": "James Russell"}, {"k": "D", "t": "Linda Camras"}, {"k": "E", "t": "Joseph Campos"}], "ans": "B"}, "why": ""}, {"q": 21, "question": "Although certain researchers have different opinions about various points, they share some important ideas.", "options": [{"t": "The area of dispute between Fridlund and Ekman draws attention away from their major areas of agreement, says Joseph Campos of the University of California.", "ok": true}, {"t": "He goes on to say, 'The face is a component [of emotion], but to make it the center of study of the human being experiencing an emotion is like saying the only thing you need to study in a car is the transmission.", "ok": false}, {"t": "At these pivotal points there is an approach, or closeness, or more intimacy, and facial expressions, as well as gestures, open up the possibilities of various social interactions.", "ok": false}, {"t": "Although Fridlund disagrees with Ekman on certain matters, the two basically share the opinion that facial expressions indicate people's future actions.", "ok": false}], "pairs": ["have different opinions about various points, but share important ideas = there is profound agreement", "different opinions = The area of dispute between Fridlund and Ekman draws attention away from their major areas of agreement"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Ekman"}, {"k": "B", "t": "Alan Fridlund"}, {"k": "C", "t": "James Russell"}, {"k": "D", "t": "Linda Camras"}, {"k": "E", "t": "Joseph Campos"}], "ans": "E"}, "why": ""}, {"q": 22, "question": "Both emotion and expression can exist independently of each other in certain circumstances.", "options": [{"t": "'There is a link between facial expression and emotion,' agrees developmental psychologist Linda Camras of DePaul University, 'but it's not a one-to-one kind of relationship as many once thought.", "ok": false}, {"t": "And those who only examine faces to study emotion will jump to false conclusions.", "ok": false}, {"t": "And there are times when a facial expression appears with no corresponding emotion.", "ok": false}, {"t": "She believes there are many situations where emotion is experienced, yet no basic facial expression is displayed.", "ok": true}], "pairs": ["emotion and expression can exist independently = many situations where emotion is experienced, yet no basic facial expression is displayed", "in certain circumstances = there are times when a facial expression appears with no corresponding emotion"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Ekman"}, {"k": "B", "t": "Alan Fridlund"}, {"k": "C", "t": "James Russell"}, {"k": "D", "t": "Linda Camras"}, {"k": "E", "t": "Joseph Campos"}], "ans": "D"}, "why": ""}, {"q": 23, "question": "It cannot be proved that there is a connection between facial expression and real emotion.", "options": [{"t": "Although much work on the emotions relies on a link between facial expression and emotions, psychologist James Russell, of the University of British Columbia, says there is very little evidence supporting such a connection.", "ok": true}, {"t": "She believes there are many situations where emotion is experienced, yet no basic facial expression is displayed.", "ok": false}, {"t": "'There's some sense in which faces express emotion, but only in the sense that everything expresses emotion,' says Russell, a long-time critic of the expression-emotion link.", "ok": false}, {"t": "'There is a link between facial expression and emotion,' agrees developmental psychologist Linda Camras of DePaul University, 'but it's not a one-to-one kind of relationship as many once thought.", "ok": false}], "pairs": ["It cannot be proved that there is a connection = very little evidence supporting such a connection"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Paul Ekman"}, {"k": "B", "t": "Alan Fridlund"}, {"k": "C", "t": "James Russell"}, {"k": "D", "t": "Linda Camras"}, {"k": "E", "t": "Joseph Campos"}], "ans": "C"}, "why": ""}, {"q": 24, "question": "In Fridlund&#x27;s view, a <b>.........<\/b> on someone&#x27;s face may be intended as an invitation to come nearer.", "options": [{"t": "So, a smile may prompt people to approach, a scowl may warn them to stay away, and a look of sadness may elicit words of sympathy and reassurance.", "ok": true}, {"t": "In other words, in Fridlund's view, facial expressions are inherently social – they involve not one, but two or more people.", "ok": false}, {"t": "However, this theory has been attacked by a number of psychologists, such as Alan Fridlund of the University of California, who claim that there is no one-to-one correspondence between facial expressions and emotions.", "ok": false}, {"t": "Expressions evolved to set off certain behaviors in other people, says Fridlund.", "ok": false}], "pairs": ["an invitation to come nearer = a smile may prompt people to approach"], "kind": "Completion", "answer": "smile", "accept": ["smile"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "According to Fridlund, when we are by ourselves we still use facial expressions because we are having a <b>.........<\/b> with someone in our minds.", "options": [{"t": "But according to Ekman, to say, as Fridlund does, that there is no connection at all between facial expressions and emotions is simply wrong.", "ok": false}, {"t": "Even when people are alone, they are holding a dialog with another person internally, or imagining themselves in a social situation.", "ok": true}, {"t": "However, this theory has been attacked by a number of psychologists, such as Alan Fridlund of the University of California, who claim that there is no one-to-one correspondence between facial expressions and emotions.", "ok": false}, {"t": "Many took Ekman's work to imply that facial expressions precisely indicated people's feelings.", "ok": false}], "pairs": ["when we are by ourselves = Even when people are alone", "having a ___ with someone in our minds = they are holding a dialog with another person internally"], "kind": "Completion", "answer": "dialog", "accept": ["dialog", "dialogue"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 26, "question": "Fridlund considers facial expressions to be <b>.........<\/b> that can affect our contact with other people.", "options": [{"t": "Thus, Fridlund thinks of facial expressions as tools for influencing social interactions, a view which, he claims, enables us to begin predicting when certain facial expressions will occur.", "ok": true}, {"t": "Although Fridlund disagrees with Ekman on certain matters, the two basically share the opinion that facial expressions indicate people's future actions.", "ok": false}, {"t": "But according to Ekman, to say, as Fridlund does, that there is no connection at all between facial expressions and emotions is simply wrong.", "ok": false}, {"t": "At these pivotal points there is an approach, or closeness, or more intimacy, and facial expressions, as well as gestures, open up the possibilities of various social interactions.", "ok": false}], "pairs": ["can affect our contact with other people = tools for influencing social interactions"], "kind": "Completion", "answer": "tools", "accept": ["tools", "tool"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "do not always provide a true guide to feelings", "p": "it is not reliable one hundred percent of the time", "rel": "=", "note": "", "n": "14"}, {"q": "ways a facial expression can affect someone else's actions", "p": "a smile may prompt people to approach, a scowl may warn them to stay away", "rel": "=", "note": "", "n": "15"}, {"q": "reasons for hiding emotions", "p": "it may be uncomfortable or inconvenient for us to let others know our emotions", "rel": "=", "note": "", "n": "16"}, {"q": "hiding emotions", "p": "can prevent this otherwise automatic process from being completed", "rel": "=", "note": "", "n": "16"}, {"q": "times when expressions are used especially frequently", "p": "expressions occur most often during pivotal points", "rel": "=", "note": "", "n": "17"}, {"q": "examples of times", "p": "during greetings, social crises, or times of appeasement", "rel": "=", "note": "", "n": "17"}, {"q": "changes inside the body when an emotion is felt", "p": "other physiological changes, such as increased or decreased heart rate or heightened blood pressure", "rel": "=", "note": "", "n": "18"}, {"q": "researching a large structure by looking at one small unit", "p": "only part of an entire system", "rel": "=", "note": "", "n": "19"}, {"q": "Focusing on the face in researching emotions", "p": "to make it the center of study of the human being experiencing an emotion", "rel": "=", "note": "", "n": "19"}, {"q": "developed in order to encourage others to react", "p": "Expressions evolved to set off certain behaviors in other people", "rel": "=", "note": "", "n": "20"}, {"q": "have different opinions about various points, but share important ideas", "p": "there is profound agreement", "rel": "=", "note": "", "n": "21"}, {"q": "different opinions", "p": "The area of dispute between Fridlund and Ekman draws attention away from their major areas of agreement", "rel": "=", "note": "", "n": "21"}, {"q": "emotion and expression can exist independently", "p": "many situations where emotion is experienced, yet no basic facial expression is displayed", "rel": "=", "note": "", "n": "22"}, {"q": "in certain circumstances", "p": "there are times when a facial expression appears with no corresponding emotion", "rel": "=", "note": "", "n": "22"}, {"q": "It cannot be proved that there is a connection", "p": "very little evidence supporting such a connection", "rel": "=", "note": "", "n": "23"}, {"q": "an invitation to come nearer", "p": "a smile may prompt people to approach", "rel": "=", "note": "", "n": "24"}, {"q": "when we are by ourselves", "p": "Even when people are alone", "rel": "=", "note": "", "n": "25"}, {"q": "having a ___ with someone in our minds", "p": "they are holding a dialog with another person internally", "rel": "=", "note": "", "n": "25"}, {"q": "can affect our contact with other people", "p": "tools for influencing social interactions", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "dominated", "pos": "verb", "loc": "A", "d": "had the most influence or control over something", "uz": "hukmronlik qilgan, ustunlik qilgan", "ex": "One theory has dominated economics for more than fifty years.", "form": "dominated"}, {"w": "pioneered", "pos": "verb", "loc": "A", "d": "was the first to develop or use a new idea", "uz": "kashshof bo'ldi, birinchi bo'lib joriy qildi", "ex": "She pioneered a new method of teaching reading skills.", "form": "pioneered"}, {"w": "scowl", "pos": "noun", "loc": "A", "d": "an angry expression made by lowering the eyebrows", "uz": "qovoq solish, jahldor nigoh", "ex": "He answered the question with a scowl and said nothing.", "form": "scowl"}, {"w": "heightened", "pos": "adjective", "loc": "A", "d": "higher or stronger than normal", "uz": "kuchaygan, oshgan", "ex": "Security was heightened before the president's visit.", "form": "heightened"}, {"w": "set off", "pos": "phrasal verb", "loc": "B", "d": "to cause something to start or happen", "uz": "qo'zg'atmoq, boshlab bermoq", "ex": "A small joke set off a wave of laughter in class.", "form": "set off"}, {"w": "elicit", "pos": "verb", "loc": "B", "d": "to get a reaction or answer from someone", "uz": "keltirib chiqarmoq, qo'zg'atmoq", "ex": "The teacher's question failed to elicit any response.", "form": "elicit"}, {"w": "inherently", "pos": "adverb", "loc": "B", "d": "as a natural and permanent part of something", "uz": "tabiatan, o'z mohiyatiga ko'ra", "ex": "Some sports are inherently dangerous, however careful players are.", "form": "inherently"}, {"w": "pivotal", "pos": "adjective", "loc": "C", "d": "extremely important because other things depend on it", "uz": "hal qiluvchi, muhim", "ex": "The meeting played a pivotal role in the company's recovery.", "form": "pivotal"}, {"w": "appeasement", "pos": "noun", "loc": "C", "d": "giving in to someone's demands to avoid conflict", "uz": "yon berish, tinchlantirish", "ex": "Critics called the compromise a policy of appeasement.", "form": "appeasement"}, {"w": "long-time critic", "pos": "collocation", "loc": "D", "d": "a person who has disagreed with something for many years", "uz": "uzoq yillik tanqidchi", "ex": "He is a long-time critic of the city's transport policy.", "form": "long-time critic"}, {"w": "jump to false conclusions", "pos": "idiom", "loc": "E", "d": "to decide something too quickly without enough evidence", "uz": "shoshilib noto'g'ri xulosa chiqarmoq", "ex": "Do not jump to false conclusions before you read the whole text.", "form": "jump to false conclusions"}, {"w": "comes on", "pos": "phrasal verb", "loc": "F", "d": "begins to be felt or to happen", "uz": "boshlanmoq, paydo bo'lmoq", "ex": "A headache usually comes on when I study without a break.", "form": "comes on"}, {"w": "trigger", "pos": "verb", "loc": "F", "d": "to cause something to start suddenly", "uz": "qo'zg'atmoq, ishga tushirmoq", "ex": "Certain smells can trigger strong childhood memories.", "form": "trigger"}, {"w": "in the long run", "pos": "idiom", "loc": "F", "d": "over a long period of time; eventually", "uz": "uzoq muddatda, oxir-oqibat", "ex": "Hard work pays off in the long run.", "form": "in the long run"}, {"w": "dispute", "pos": "noun", "loc": "G", "d": "a serious disagreement or argument", "uz": "nizo, bahs", "ex": "The dispute over the budget lasted several months.", "form": "dispute"}, {"w": "profound", "pos": "adjective", "loc": "G", "d": "very great or deep; showing serious understanding", "uz": "chuqur, teran", "ex": "The film had a profound effect on young viewers.", "form": "profound"}, {"w": "forecasts", "pos": "verb", "loc": "G", "d": "says what is likely to happen in the future", "uz": "bashorat qiladi", "ex": "The report forecasts a rise in house prices next year.", "form": "forecasts"}]}, {"evidence": [{"q": 27, "question": "What does the writer feel about major internet social networking sites?", "options": [{"t": "Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.", "ok": false}, {"t": "But maybe instead of relying on their powers of persuasion, governments should consider using the science of social networks as a tool to do this.", "ok": false}, {"t": "True, many claims for the power of these are based on the hype surrounding major social networking websites.", "ok": true}, {"t": "But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave.", "ok": false}], "pairs": ["major internet social networking sites = major social networking websites", "could fulfil a useful function in society = social networks could bring even greater benefits to society"], "kind": "Multiple choice", "answer": "A", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "They could fulfil a useful function in society."}, {"k": "B", "t": "They need to be carefully controlled."}, {"k": "C", "t": "They should not be used for political purposes."}, {"k": "D", "t": "Their potential dangers have been exaggerated."}], "ans": "A"}, "why": ""}, {"q": 28, "question": "What does the writer say about musicals in the first paragraph?", "options": [{"t": "He is also a big fan of musicals.", "ok": false}, {"t": "Take an unlikely example: stage musicals.", "ok": false}, {"t": "From healthcare to climate change, governments today face a range of problems in which they must persuade people to change their behaviour.", "ok": false}, {"t": "Musicals have been big business for decades, but investors have to guess which shows will be a hit.", "ok": true}], "pairs": ["a risky investment in financial terms = investors have to guess which shows will be a hit"], "kind": "Multiple choice", "answer": "B", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "Sequels receive less publicity than the original musicals."}, {"k": "B", "t": "Musicals can be a risky investment in financial terms."}, {"k": "C", "t": "Musicals tended to decline in popularity after the 1960s."}, {"k": "D", "t": "Sociological research methods are rarely applied to musicals."}], "ans": "B"}, "why": ""}, {"q": 29, "question": "Uzzi concluded that successful stage musicals illustrate", "options": [{"t": "Sometimes, lacking outside creative input, the team just rehashed the same ideas that worked last time; sometimes, lacking newcomers, they developed their vision in unwise ways.", "ok": false}, {"t": "It made no difference whether a musical was about cats or rollerskating, or who starred in it – what mattered was the network binding its team together.", "ok": false}, {"t": "He investigated 321 American musicals that were launched between 1945 and 1989, paying particular attention to whether the team of director, producers, choreographers and writers had worked together before.", "ok": false}, {"t": "Groups with exactly the right mix of new and old participants reliably produced hits.", "ok": true}], "pairs": ["the positive effect of having a particular team structure = Groups with exactly the right mix of new and old participants reliably produced hits"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "the importance of having team members who understand statistics."}, {"k": "B", "t": "the influence of the team on the musical's performers."}, {"k": "C", "t": "the positive effect of having a particular team structure."}, {"k": "D", "t": "the need for team members to be familiar with the musical's subject matter."}], "ans": "C"}, "why": ""}, {"q": 30, "question": "When discussing teenagers with dietary problems, the writer recommends", "options": [{"t": "Let's say a health authority has £100, and wants to get ten people to improve their diets.", "ok": false}, {"t": "But imagine if instead it brought them together in a new network.", "ok": true}, {"t": "That said, teenagers may change to a better diet if their friends eat healthily.", "ok": false}, {"t": "Network science shows that teenagers are more likely to eat junk food if friends of their friends (whom they don't know) eat it too.", "ok": false}], "pairs": ["helping these teenagers to get in touch with one another = brought them together in a new network"], "kind": "Multiple choice", "answer": "A", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "helping these teenagers to get in touch with one another."}, {"k": "B", "t": "increasing the amount of money spent on these teenagers."}, {"k": "C", "t": "providing classes in healthy eating habits for these teenagers."}, {"k": "D", "t": "encouraging these teenagers to be less influenced by their friends."}], "ans": "A"}, "why": ""}, {"q": 31, "question": "Policies involving social networking may be successful in tackling problems connected with business, health and other issues.", "options": [{"t": "But they do have a point: governments should try to build new social systems that support social ties, and design policies to take them into account.", "ok": false}, {"t": "Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.", "ok": false}, {"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": true}, {"t": "More generally, if creating the right type of social networks helps people get on in life, shouldn't the state seek to help people build such links?", "ok": false}], "pairs": ["tackling problems = the same techniques could not be used to tackle other problems", "connected with business = Innovation in business is strongly influenced by the network structure"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 32, "question": "&#x27;Social capital&#x27; theorists oppose the involvement of the state in helping people build social networks.", "options": [{"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}, {"t": "But they do have a point: governments should try to build new social systems that support social ties, and design policies to take them into account.", "ok": false}, {"t": "Experts in 'social capital' theory have pushed this for years, to little practical effect.", "ok": true}, {"t": "More generally, if creating the right type of social networks helps people get on in life, shouldn't the state seek to help people build such links?", "ok": false}], "pairs": ["'Social capital' theorists oppose the involvement of the state ≠ Experts in 'social capital' theory have pushed this for years"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 33, "question": "Social networks could allow parents of young children to share child care arrangements.", "options": [{"t": "If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.", "ok": true}, {"t": "Elsewhere, we know that prisoners who keep good social links to the outside world find it easier to rehabilitate.", "ok": false}, {"t": "Why then should schools not try to introduce more parents to each other?", "ok": false}, {"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}], "pairs": ["parents of young children = working parents with young children had better social links", "share child care arrangements = setting up their own childcare systems"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 34, "question": "School social networking sites have a positive effect on the relationships between teaching staff and parents of young children.", "options": [{"t": "Elsewhere, we know that prisoners who keep good social links to the outside world find it easier to rehabilitate.", "ok": false}, {"t": "If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.", "ok": false}, {"t": "Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.", "ok": false}, {"t": "Why then should schools not try to introduce more parents to each other?", "ok": true}], "pairs": ["School social networking sites have a positive effect on relationships between staff and parents ? Why then should schools not try to introduce more parents to each other?"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 35, "question": "Allowing prisoners to use social networking sites is a dangerous development that should be stopped.", "options": [{"t": "If working parents with young children had better social links, they could save money on childcare by relying on friends, or even setting up their own childcare systems.", "ok": false}, {"t": "True, many claims for the power of these are based on the hype surrounding major social networking websites.", "ok": false}, {"t": "Elsewhere, we know that prisoners who keep good social links to the outside world find it easier to rehabilitate.", "ok": false}, {"t": "Even if prisoners occasionally use social networking sites to misbehave, the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction.", "ok": true}], "pairs": ["a dangerous development that should be stopped ≠ the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 36, "question": "In business, building social networks between different companies could result in <b>.........<\/b>, while similar policies in relation to the general public could lead to changes in the use of .......", "options": [{"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}, {"t": "And social networks could bring even greater benefits to society.", "ok": false}, {"t": "Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.", "ok": false}, {"t": "Innovation in business is strongly influenced by the network structure of project teams, and by communication between trading partners or scientists.", "ok": true}], "pairs": ["networks between different companies could result in new ideas = Innovation in business is strongly influenced by the network structure of project teams"], "kind": "Summary (word list)", "answer": "F", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "different individuals"}, {"k": "D", "t": "opposing concept"}, {"k": "E", "t": "large budget"}, {"k": "F", "t": "new ideas"}, {"k": "H", "t": "natural resources"}], "ans": "F"}, "why": ""}, {"q": 37, "question": "In business, building social networks between different companies could result in ......, while similar policies in relation to the general public could lead to changes in the use of <b>.........<\/b>.", "options": [{"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}, {"t": "And social networks could bring even greater benefits to society.", "ok": false}, {"t": "Innovation in business is strongly influenced by the network structure of project teams, and by communication between trading partners or scientists.", "ok": false}, {"t": "Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.", "ok": true}], "pairs": ["changes in the use of natural resources = domestic energy conservation"], "kind": "Summary (word list)", "answer": "H", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "C", "t": "social isolation"}, {"k": "D", "t": "opposing concept"}, {"k": "E", "t": "large budget"}, {"k": "F", "t": "new ideas"}, {"k": "H", "t": "natural resources"}], "ans": "H"}, "why": ""}, {"q": 38, "question": "It might also be possible to use such policies to reduce <b>.........<\/b>.", "options": [{"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}, {"t": "Perhaps the most exciting prospect is helping people who feel cut off from the rest of society.", "ok": true}, {"t": "It turns out that the average US citizen has 4.3 such social contacts (including spouses, siblings and friends), but over 4 per cent of adults – or perhaps as many as 10 million people – report having not one such person.", "ok": false}, {"t": "Policies could tap into this, just as they could try to set up new social norms in, for example, domestic energy conservation.", "ok": false}], "pairs": ["reduce social isolation = helping people who feel cut off from the rest of society"], "kind": "Summary (word list)", "answer": "C", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "B", "t": "social conflict"}, {"k": "C", "t": "social isolation"}, {"k": "D", "t": "opposing concept"}, {"k": "E", "t": "large budget"}, {"k": "F", "t": "new ideas"}], "ans": "C"}, "why": ""}, {"q": 39, "question": "At a national level these policies do not require a <b>.........<\/b>, and the writer claims that social networks may bring political groups closer together, and could also provide more insight into the influence of groups on .......", "options": [{"t": "And social networks could bring even greater benefits to society.", "ok": false}, {"t": "If policies which involve the use of social networks could make musicals profitable and help teenagers eat sensibly, there is no obvious reason why the same techniques could not be used to tackle other problems.", "ok": false}, {"t": "All of this suggests that new, network-infused policies can help governments unpick pressing problems without too much financial outlay.", "ok": true}, {"t": "They might even help to bridge the divide between parties such as conservatives, who have traditionally concerned themselves with individual freedoms, and social democrats, who have worried about the wellbeing of social groups.", "ok": false}], "pairs": ["do not require a large budget = without too much financial outlay"], "kind": "Summary (word list)", "answer": "E", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "different individuals"}, {"k": "B", "t": "social conflict"}, {"k": "E", "t": "large budget"}, {"k": "F", "t": "new ideas"}, {"k": "H", "t": "natural resources"}], "ans": "E"}, "why": ""}, {"q": 40, "question": "At a national level these policies do not require a ......, and the writer claims that social networks may bring political groups closer together, and could also provide more insight into the influence of groups on <b>.........<\/b>.", "options": [{"t": "They might even help to bridge the divide between parties such as conservatives, who have traditionally concerned themselves with individual freedoms, and social democrats, who have worried about the wellbeing of social groups.", "ok": false}, {"t": "And social networks could bring even greater benefits to society.", "ok": false}, {"t": "But the basic idea is simple: people can join together in groups with particular patterns of social links, and these patterns then have important effects on the way they behave.", "ok": false}, {"t": "Shine a light on how people assemble into groups and you'll also see how group membership affects each person in that group.", "ok": true}], "pairs": ["the influence of groups on different individuals = group membership affects each person in that group"], "kind": "Summary (word list)", "answer": "A", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "different individuals"}, {"k": "C", "t": "social isolation"}, {"k": "D", "t": "opposing concept"}, {"k": "F", "t": "new ideas"}, {"k": "H", "t": "natural resources"}], "ans": "A"}, "why": ""}], "paraphrase": [{"q": "major internet social networking sites", "p": "major social networking websites", "rel": "=", "note": "", "n": "27"}, {"q": "could fulfil a useful function in society", "p": "social networks could bring even greater benefits to society", "rel": "=", "note": "", "n": "27"}, {"q": "a risky investment in financial terms", "p": "investors have to guess which shows will be a hit", "rel": "=", "note": "", "n": "28"}, {"q": "the positive effect of having a particular team structure", "p": "Groups with exactly the right mix of new and old participants reliably produced hits", "rel": "=", "note": "", "n": "29"}, {"q": "helping these teenagers to get in touch with one another", "p": "brought them together in a new network", "rel": "=", "note": "", "n": "30"}, {"q": "tackling problems", "p": "the same techniques could not be used to tackle other problems", "rel": "=", "note": "", "n": "31"}, {"q": "connected with business", "p": "Innovation in business is strongly influenced by the network structure", "rel": "=", "note": "", "n": "31"}, {"q": "'Social capital' theorists oppose the involvement of the state", "p": "Experts in 'social capital' theory have pushed this for years", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "32"}, {"q": "parents of young children", "p": "working parents with young children had better social links", "rel": "=", "note": "", "n": "33"}, {"q": "share child care arrangements", "p": "setting up their own childcare systems", "rel": "=", "note": "", "n": "33"}, {"q": "School social networking sites have a positive effect on relationships between staff and parents", "p": "Why then should schools not try to introduce more parents to each other?", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "34"}, {"q": "a dangerous development that should be stopped", "p": "the recent decision to ban some prisoners in the UK from using the sites was probably a move in the wrong direction", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "35"}, {"q": "networks between different companies could result in new ideas", "p": "Innovation in business is strongly influenced by the network structure of project teams", "rel": "=", "note": "", "n": "36"}, {"q": "changes in the use of natural resources", "p": "domestic energy conservation", "rel": "=", "note": "", "n": "37"}, {"q": "reduce social isolation", "p": "helping people who feel cut off from the rest of society", "rel": "=", "note": "", "n": "38"}, {"q": "do not require a large budget", "p": "without too much financial outlay", "rel": "=", "note": "", "n": "39"}, {"q": "the influence of groups on different individuals", "p": "group membership affects each person in that group", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "hype", "pos": "noun", "loc": "¶1", "d": "exaggerated publicity that makes something seem better than it is", "uz": "bo'rttirilgan reklama, shov-shuv", "ex": "The film did not live up to all the hype.", "form": "hype"}, {"w": "intrigued", "pos": "adjective", "loc": "¶1", "d": "very interested because something is strange or unusual", "uz": "qiziqib qolgan", "ex": "The students were intrigued by the mysterious experiment.", "form": "intrigued"}, {"w": "crunching the statistics", "pos": "collocation", "loc": "¶2", "d": "analysing a large amount of numerical data quickly", "uz": "statistikani tahlil qilish", "ex": "After crunching the statistics, the team found a clear trend.", "form": "crunching the statistics"}, {"w": "fared poorly", "pos": "phrase", "loc": "¶2", "d": "did badly in a particular situation", "uz": "yomon natija ko'rsatdi", "ex": "Several small shops fared poorly during the economic crisis.", "form": "fared poorly"}, {"w": "rehashed", "pos": "verb", "loc": "¶2", "d": "used old ideas again in a new form with little change", "uz": "eskini qayta ishlatdi", "ex": "The speech simply rehashed arguments we had heard before.", "form": "rehashed"}, {"w": "fostered", "pos": "verb", "loc": "¶2", "d": "helped something to develop over time", "uz": "rivojlantirdi, qo'llab-quvvatladi", "ex": "The programme fostered a strong sense of community among members.", "form": "fostered"}, {"w": "meshed with", "pos": "phrasal verb", "loc": "¶2", "d": "fitted together well with something else", "uz": "uyg'unlashdi, mos tushdi", "ex": "Her fresh ideas meshed well with the team's experience.", "form": ""}, {"w": "implications", "pos": "noun", "loc": "¶3", "d": "possible effects or results of an action or decision", "uz": "oqibatlar, ta'sirlar", "ex": "The study has serious implications for public health policy.", "form": "implications"}, {"w": "get on in life", "pos": "idiom", "loc": "¶4", "d": "to be successful and make progress in your life", "uz": "hayotda muvaffaqiyatga erishmoq", "ex": "Good friends and a solid education help you get on in life.", "form": "get on in life"}, {"w": "rehabilitate", "pos": "verb", "loc": "¶5", "d": "to help someone return to a normal, useful life", "uz": "qayta moslashtirmoq, tiklamoq", "ex": "The programme aims to rehabilitate young offenders through training.", "form": "rehabilitate"}, {"w": "tap into", "pos": "phrasal verb", "loc": "¶6", "d": "to make use of an available source of energy or knowledge", "uz": "foydalanmoq, manbadan olmoq", "ex": "Companies try to tap into the creativity of young graduates.", "form": "tap into"}, {"w": "cut off from", "pos": "phrasal verb", "loc": "¶7", "d": "separated from other people or places", "uz": "ajralib qolgan", "ex": "After the storm, the village was cut off from the town.", "form": "cut off from"}, {"w": "unpick", "pos": "verb", "loc": "¶8", "d": "to examine something carefully in order to understand or solve it", "uz": "yechmoq, sinchiklab tahlil qilmoq", "ex": "Researchers are trying to unpick the causes of the problem.", "form": "unpick"}, {"w": "pressing problems", "pos": "collocation", "loc": "¶8", "d": "difficulties that need urgent attention", "uz": "dolzarb muammolar", "ex": "Water shortages are among the most pressing problems in the region.", "form": "pressing problems"}, {"w": "financial outlay", "pos": "collocation", "loc": "¶8", "d": "money that has to be spent on something", "uz": "moliyaviy xarajat", "ex": "Opening the clinic required a large financial outlay.", "form": "financial outlay"}, {"w": "bridge the divide", "pos": "idiom", "loc": "¶8", "d": "to bring together two groups with very different views", "uz": "tafovutni bartaraf etmoq", "ex": "The new law helped to bridge the divide between the two parties.", "form": "bridge the divide"}, {"w": "overly simplistic", "pos": "collocation", "loc": "¶8", "d": "too simple and ignoring important details or complexity", "uz": "haddan tashqari sodda", "ex": "Blaming one factor alone is an overly simplistic explanation.", "form": "overly simplistic"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

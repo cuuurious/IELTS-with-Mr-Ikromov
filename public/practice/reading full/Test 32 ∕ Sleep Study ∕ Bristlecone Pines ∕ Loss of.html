@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 32 / Sleep Study / Bristlecone Pines / Loss of</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 32 / Sleep Study / Bristlecone Pines / Loss of</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">Sleep Study on Modern-Day Hunter-Gatherers Dispels Popular Notions</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s0_0">The sleep troubles common in modern life have long been blamed on our industrial society, from the city lights, long work hours and commutes, to caffeine and the Internet.</span> <span class="sent" id="s0_1">Sleep researchers often look back on a time when humans were able to get more rest by sleeping and waking to the rhythms of the sun.</span> <span class="sent" id="s0_2">It turns out that this may not be quite right.</span> <span class="sent" id="s0_3">In fact, our ancestors may not have been getting the recommended eight hours of sleep, either.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s0_4">In a recent study, researchers traveled all over the world to examine sleep in some of the world&#x27;s last remaining hunter-gatherer societies – the Hadza of Tanzania, the San of Namibia, and the Tsimane of Bolivia.</span> <span class="sent" id="s0_5">Cut off from media, electricity and other distractions, these preindustrial societies are thought to sleep the way humans did more than 10,000 years ago.</span> <span class="sent" id="s0_6">Traveling to where they lived, often in humid, remote locations, researchers used medical devices to record the sleeping habits of 94 of these tribespeople and ended up collecting data representing 1,165 days.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s0_7">They found very similar sleep patterns despite their geographic isolation.</span> <span class="sent" id="s0_8">On average, all three groups sleep a little less than 6.5 hours a night, do not take naps, and don&#x27;t go to sleep when it gets dark.</span> <span class="sent" id="s0_9">Like many of us, the Hadza, San, and Tsimane spend more time in bed – from 6.9 to 8.5 hours – than they do actually sleeping.</span> <span class="sent" id="s0_10">This adds up to a sleep efficiency that is very similar to today&#x27;s industrial populations.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s0_11">According to Jerome Siegel, director of the University of California&#x27;s Center for Sleep Research, evidence suggests sleep habits may not be environmental or cultural, but central to the physical makeup of humans.</span> <span class="sent" id="s0_12">These findings question the millions of dollars that have been spent on research that tries to explain why some sleepers get only about six hours of sleep a night.</span> <span class="sent" id="s0_13">Also, such findings question whether lack of sleep is a cause of obesity, mood disorders, and other physical and mental illnesses which have become so common in recent decades.</span> <span class="sent" id="s0_14">Scientists have documented that people&#x27;s energy often falls in the mid-afternoon.</span> <span class="sent" id="s0_15">Some have suggested that it&#x27;s because we&#x27;ve managed to suppress a natural desire for a nap.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s0_16">However, the new study provides evidence that this is unlikely, and that napping was actually rare in hunter-gatherer societies.</span> <span class="sent" id="s0_17">The researchers estimated that naps may have occurred on up to 7 percent of winter days and 22 percent of summer days.</span> <span class="sent" id="s0_18">They noted that their devices were only good at detecting longer naps, so it is possible that some of the study subjects took naps that were short, perhaps 15 minutes or less.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s0_19">Another fascinating finding from the study had to do with the circadian rhythms, our daily activity cycles related to sunlight.</span> <span class="sent" id="s0_20">Instead of going to sleep right at dusk, tribespeople were staying awake an average of between 2.5 and 4.4 hours after sunset.</span> <span class="sent" id="s0_21">All three tribes had fires going, but the light itself was much lower than you might get from a light bulb.</span> <span class="sent" id="s0_22">They did, however, have a tendency to wake up anywhere between an hour before and an hour after sunrise.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s0_23">Siegel and his co-authors investigated this further by looking into the significance of temperature.</span> <span class="sent" id="s0_24">They found that it also played a big role, though it was somewhat less important than light in influencing sleep patterns.</span> <span class="sent" id="s0_25">They wrote that &quot;sleep in both the winter and summer usually occurred during the period of cooling and that waking times usually occurred near the height of the daily warming trend.&quot;</span></p><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s0_26">The tribespeople that were studied are different from people living in modern conditions in a number of respects.</span> <span class="sent" id="s0_27">Importantly, almost none of them were troubled by sleeplessness.</span> <span class="sent" id="s0_28">In interviews with the researchers conducted through interpreters, only 1.5 to 2.5 percent of the study subjects said they had severe difficulties sleeping more than once a year.</span> <span class="sent" id="s0_29">This figure is far lower than the 10 to 30 percent recorded in many industrialized countries today.</span> <span class="sent" id="s0_30">Siegel suggested that &quot;mimicking aspects of the natural environment&quot; may therefore help treat some sleep disorders.</span></p><p data-para="I"><span class="para-letter">I</span><span class="sent" id="s0_31">The tribespeople are also much healthier.</span> <span class="sent" id="s0_32">Not a single one is overweight, indicating their overall higher levels of physical fitness.</span> <span class="sent" id="s0_33">They also tended to have healthier hearts.</span> <span class="sent" id="s0_34">Thus comes a critical question.</span> <span class="sent" id="s0_35">If we can&#x27;t blame our health problems on our lack of sleep, could it be that the reason we feel so unrested is because of poor health?</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,4" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;4</div><button type="button" class="flag-toggle" data-flagrange="1,4" title="Flag for review" aria-label="Flag questions 1-4">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–4 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Scientists studied hunter-gatherer societies because their sleep patterns are assumed to be similar to those of humans more than 10,000 years ago.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">The medical devices used in the research were specially designed for humid conditions.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">Researchers found that the tribespeople stayed in bed for longer than inhabitants of industrialised regions.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">Jerome Siegel believes that environment and culture have little effect on sleep patterns.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="5,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 5&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="5,13" title="Flag for review" aria-label="Flag questions 5-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 5–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">New evidence on sleep patterns</div><div class="notes-sub"><b>New ideas about napping</b></div><ul><li>scientists have recorded an afternoon drop in <span class="q-num">5</span> <input type="text" class="q-text" name="q5" autocomplete="off" spellcheck="false"></li><li>studies of hunter-gatherer societies show that napping was rare and occurred more often during the <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"></li><li>the devices may not have detected <span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> naps</li></ul><div class="notes-sub"><b>Daily activity cycles</b></div><ul><li>the tribespeople went to sleep several hours after sunset, with</li><li style="list-style:none"><span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> going</li><li>there was little light</li><li>tribespeople usually woke up around <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"></li><li>scientists found that <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"> had almost as much influence on sleep patterns as light</li></ul><div class="notes-sub"><b>Differences between tribespeople and people in industrialised regions</b></div><ul><li><span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"> is something that very few of the tribespeople suffered from</li><li>the environment of the tribespeople may have been more suitable for sleep</li><li>the tribespeople were fitter than industrialised populations and were not</li><li style="list-style:none"><span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"></li><li>the tribespeople also had healthier <span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"></li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">Bristlecone Pines</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">On the dry, windswept mountain tops of the Great Basin in the western United States, at altitudes of over 3,000 m, grow the bristlecone pines (Pinus longaeva, Pinus aristata).</span> <span class="sent" id="s1_1">The bristlecone has adjusted to places on earth that no other tree wants to inhabit, and in these harsh environments has flourished.</span> <span class="sent" id="s1_2">Bristlecones don&#x27;t grow very tall, 18.3 m at the most, but usually much less, while the girth of the largest one has been measured at 11.2 m.</span> <span class="sent" id="s1_3">What makes bristlecone pines truly remarkable is their longevity: their average age is over 1,000 years, with the oldest specimen – an individual known as Methuselah – dated at 4,723 years.</span> <span class="sent" id="s1_4">This makes it not only the world&#x27;s oldest living tree; it is also the earth&#x27;s oldest living inhabitant.</span> <span class="sent" id="s1_5">The extreme age of bristlecone pines was not known about until the 1950s, and was only discovered then thanks to the efforts of Edmund Schulman.</span> <span class="sent" id="s1_6">In 1932, Schulman had begun his career in dendrochronology as an assistant to A. E. Douglass of the Laboratory of Tree-ring Research at the University of Arizona.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_7">Douglass had noted that the wide rings of certain species of trees were produced during wet years and, inversely, narrow rings during dry seasons.</span> <span class="sent" id="s1_8">The more a tree&#x27;s rate of growth has been affected by such environmental factors, the more variation in ring-to-ring growth will be present.</span> <span class="sent" id="s1_9">This variation is referred to as sensitivity and the lack of ring variability is called complacency.</span> <span class="sent" id="s1_10">Patterns of ring variability are important for establishing chronologies, which allow precise dating of climatic conditions in the past.</span> <span class="sent" id="s1_11">Samples taken from trees of unknown age can be studied for matches with samples from trees of a known age with known sequences of growth.</span> <span class="sent" id="s1_12">Using this process, when the rings match or are found to have overlapping patterns, the chronology can be extended further back in time.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_13">In his search for older trees that would provide more extensive chronologies, Schulman learned that certain species of trees in the upper-forest zones, growing under stressful conditions, showed sensitive records of drought in their growth-ring sequences.</span> <span class="sent" id="s1_14">The short, distorted, and dwarfed trees of the upper tree lines were now his focus.</span> <span class="sent" id="s1_15">During 1954 and 1955, an extensive survey of bristlecone stands from California to Colorado was carried out by Schulman and his assistant, C. W. Ferguson.</span> <span class="sent" id="s1_16">They found the oldest trees at elevations of 3,048 to 3,354 m, often in seemingly impossible locations, on dolomite soils where no other plant life could survive.</span> <span class="sent" id="s1_17">These trees showed large areas of deadwood and thin strips of living bark.</span> <span class="sent" id="s1_18">The trees growing in the most extreme conditions, with scant soil and moisture, seemed to be the oldest.</span> <span class="sent" id="s1_19">This prompted Schulman to write: &#x27;The capacity of these trees to live so fantastically long may, when we come to understand it fully, perhaps serve as a guidepost on the road to the understanding of longevity in general.&#x27;</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_20">So what factors do account for the longevity of bristlecone pines?</span> <span class="sent" id="s1_21">Spring comes to the bristlecone pines in early May with the melting of snow and rising temperatures.</span> <span class="sent" id="s1_22">In this subalpine zone there are only three warm summer months, often only six weeks, to produce growth and reserves for overwintering.</span> <span class="sent" id="s1_23">All of this must be accomplished on a mere 25.4 cm of rainfall.</span> <span class="sent" id="s1_24">To live so long under such conditions, the bristlecone has established several strategies.</span> <span class="sent" id="s1_25">Firstly, bristlecone needles can live twenty to thirty years; thus, adding new foliage to that already on the tree takes little energy.</span> <span class="sent" id="s1_26">The long-lived needles provide a stable photosynthetic capacity to sustain the tree over years of severe stress.</span> <span class="sent" id="s1_27">Another strategy for surviving is the gradual dieback of living bark when the tree is damaged because of fire, lightning, drought, or storms.</span> <span class="sent" id="s1_28">This reduction of tissue that the crown of the tree has to supply with nutrients balances the effect of any damage sustained.</span> <span class="sent" id="s1_29">The surviving parts remain quite healthy.</span> <span class="sent" id="s1_30">As an example, Pine Alpha, at over 4,000 years old, is over a metre in diameter, yet has only a 25 cm strip of living bark to support it.</span> <span class="sent" id="s1_31">Finally, invasions from bacteria, fungi, or insects that prey upon most plants are unknown to the bristlecones due to their highly resinous wood.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_32">Environmental factors also play their part.</span> <span class="sent" id="s1_33">The dry air common in the subalpine region helps preserve the trees from rotting.</span> <span class="sent" id="s1_34">The oldest bristlecones live in the most exposed sites, with considerable space between each tree.</span> <span class="sent" id="s1_35">The longevity of the bristlecone needles and the inability of other plants to grow in the dolomite soil preferred by the bristlecones make for little leaf litter.</span> <span class="sent" id="s1_36">This distance in between, combined with the lack of ground cover, ensures that if a tree sustains a lightning strike and catches fire, the fire does not spread to surrounding trees.</span> <span class="sent" id="s1_37">Thus, the bristlecone pines have survived for unknown centuries.</span> <span class="sent" id="s1_38">The current threat is from all the people who come to visit them.</span> <span class="sent" id="s1_39">As a result, Methuselah, the oldest tree, is not marked or identified with a plaque due to the threat of vandalism.</span> <span class="sent" id="s1_40">The recording of past events provided by these trees, along with their great beauty, is too valuable for us to lose.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,17" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;17</div><button type="button" class="flag-toggle" data-flagrange="14,17" title="Flag for review" aria-label="Flag questions 14-17">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has five paragraphs, A–E.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–E, in boxes 14–17 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">an explanation of differences in ring patterns</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">a mention of a human danger to bristlecone pines</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">an account of research conducted on bristlecone pines</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">an advantage of the bristlecone pines&#x27; habitat</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div></div><div class="q-group" data-flagrange="18,20" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 18&ndash;20</div><button type="button" class="flag-toggle" data-flagrange="18,20" title="Flag for review" aria-label="Flag questions 18-20">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in boxes 18–20 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">18</span><span>According to the writer, the most interesting fact about bristlecone pines is their</span></div><label class="mcq-option"><input type="radio" name="q18" value="A"><span class="opt-letter">A</span><span>habitat.</span></label><label class="mcq-option"><input type="radio" name="q18" value="B"><span class="opt-letter">B</span><span>height.</span></label><label class="mcq-option"><input type="radio" name="q18" value="C"><span class="opt-letter">C</span><span>width.</span></label><label class="mcq-option"><input type="radio" name="q18" value="D"><span class="opt-letter">D</span><span>age.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">19</span><span>A pattern of narrow rings is caused by</span></div><label class="mcq-option"><input type="radio" name="q19" value="A"><span class="opt-letter">A</span><span>alternating rainy and dry seasons.</span></label><label class="mcq-option"><input type="radio" name="q19" value="B"><span class="opt-letter">B</span><span>a lack of rain.</span></label><label class="mcq-option"><input type="radio" name="q19" value="C"><span class="opt-letter">C</span><span>restricted growth in some trees.</span></label><label class="mcq-option"><input type="radio" name="q19" value="D"><span class="opt-letter">D</span><span>high altitude.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">20</span><span>Schulman chose to study trees growing at high levels because they were</span></div><label class="mcq-option"><input type="radio" name="q20" value="A"><span class="opt-letter">A</span><span>shorter than similar trees.</span></label><label class="mcq-option"><input type="radio" name="q20" value="B"><span class="opt-letter">B</span><span>growing in unusual shapes.</span></label><label class="mcq-option"><input type="radio" name="q20" value="C"><span class="opt-letter">C</span><span>much older than other trees.</span></label><label class="mcq-option"><input type="radio" name="q20" value="D"><span class="opt-letter">D</span><span>the only surviving plants.</span></label></div><div class="q-group" data-flagrange="21,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 21&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="21,26" title="Flag for review" aria-label="Flag questions 21-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 21–26 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Factors in the survival of bristlecone pines</div><div class="notes-sub"><b>Features of bristlecone pines</b></div><ul><li>making new needles requires <span class="q-num">21</span> <input type="text" class="q-text" name="q21" autocomplete="off" spellcheck="false"></li><li>trees damaged by weather or fire can exist with only small areas of</li><li style="list-style:none"><span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"></li><li>bristlecone wood is very <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>Features of the environment</b></div><ul><li>trees don&#x27;t decay because of the <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false"></li><li>fires don&#x27;t spread easily because of the <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false"> between trees and the absence of <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"></li></ul></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Loss of Rare Languages</div><div class="passage-subtitle">&quot;Obviously we must do some serious rethinking of our priorities, lest linguistics go down in history as the only science that presided obviously over the disappearance of 90 percent of the very field to which it is dedicated.&quot; – Michael Krauss, &quot;The World&#x27;s Languages in Crisis&quot;</div><div class="para-dropzone dz-empty" data-letter="A" data-qnum="27"></div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s2_0">Ten years ago, Michael Krauss sent a shudder through the discipline of linguistics with his prediction that half the 6,000 or so languages spoken in the world would cease to be uttered within a century.</span> <span class="sent" id="s2_1">Unless scientists and community leaders directed a worldwide effort to stabilize the decline of local languages, he warned, nine tenths of the linguistic diversity of humankind would probably be doomed to extinction.</span> <span class="sent" id="s2_2">Krauss&#x27;s prediction was little more than an educated guess, but other respected linguists had been clanging out similar alarms.</span> <span class="sent" id="s2_3">Kenneth L. Hale of the Massachusetts Institute of Technology noted in the same journal issue that eight languages on which he had done fieldwork had since passed into extinction.</span> <span class="sent" id="s2_4">A 1990 survey in Australia found that 70 of the 90 surviving Aboriginal languages were no longer used regularly by all age groups.</span> <span class="sent" id="s2_5">The same was true for all but 20 of the 175 Native American languages spoken or remembered in the US, Krauss told a congressional panel in 1992.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="28"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s2_6">Many experts in the field mourn the loss of rare languages, for several reasons.</span> <span class="sent" id="s2_7">To start, there is scientific self-interest; some of the most basic questions in linguistics have to do with the limits of human speech, which are far from fully explored.</span> <span class="sent" id="s2_8">Many researchers would like to know which structural elements of grammar and vocabulary—if any—are truly universal and probably therefore hardwired into the human brain.</span> <span class="sent" id="s2_9">Other scientists try to reconstruct ancient migration patterns by comparing borrowed words that appear in otherwise unrelated languages.</span> <span class="sent" id="s2_10">In each of these cases, the wider the portfolio of languages you study, the more likely you are to get the right answers.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s2_11">Despite the near constant buzz in linguistics about endangered languages over the past 10 years, the field has accomplished depressingly little.</span> <span class="sent" id="s2_12">&quot;You would think that there would be some organized response to this dire situation—some attempt to determine which languages can be saved and which should be documented before they disappear,&quot; says Sarah G. Thomason, a linguist at the University of Michigan at Ann Arbor.</span> <span class="sent" id="s2_13">&quot;But there isn&#x27;t any such effort organized in the profession.</span> <span class="sent" id="s2_14">It is only recently that it has become fashionable enough to work on endangered languages.</span> <span class="sent" id="s2_15">&quot;Six years ago,&quot; recalls Douglas H. Whalen of Yale University, &quot;when I asked linguists who was raising money to deal with these problems, I mostly got blank stares.</span> <span class="sent" id="s2_16">So, Whalen and a few other linguists founded the Endangered Languages Fund.</span> <span class="sent" id="s2_17">In the five years to 2001 they were able to collect only $80,000 for research grants.</span> <span class="sent" id="s2_18">A similar foundation in England, directed by Nicholas Ostler, has raised just $8,000 since 1995.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="29"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s2_19">But there are encouraging signs that the field has turned a corner.</span> <span class="sent" id="s2_20">The Volkswagen Foundation, a German charity, just issued its second round of grants totaling more than $2 million.</span> <span class="sent" id="s2_21">It has created a multimedia archive at the Max Planck Institute for Psycholinguistics in the Netherlands that can house recordings, grammars, dictionaries and other data on endangered languages.</span> <span class="sent" id="s2_22">To fill the archive, the foundation has dispatched field linguists to document Aweti (100 or so speakers in Brazil), Ega (about 300 speakers in Ivory Coast), Waima&#x27;a (a few hundred speakers in East Timor), and a dozen or so other languages unlikely to survive the century.</span> <span class="sent" id="s2_23">The Ford Foundation has also edged into the arena.</span> <span class="sent" id="s2_24">Its contributions helped to reinvigorate a master-apprentice program created in 1992 by Leanne Hinton of Berkeley and Native Americans worried about the imminent demise of about 50 indigenous languages in California.</span> <span class="sent" id="s2_25">Fluent speakers receive $3,000 to teach a younger relative (who is also paid) their native tongue through 360 hours of shared activities, spread over six months.</span> <span class="sent" id="s2_26">So far about 5 teams have completed the program, Hinton says, transmitting at least some knowledge of 25 languages.</span> <span class="sent" id="s2_27">&quot;It&#x27;s too early to call this language revitalization,&quot; Hinton admits.</span> <span class="sent" id="s2_28">&quot;In California the death rate of elderly speakers will always be greater than the recruitment rate of young speakers.</span> <span class="sent" id="s2_29">But at least we prolong the survival of the language.</span> <span class="sent" id="s2_30">That will give linguists more time to record these tongues before they vanish.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="30"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s2_31">But the master-apprentice approach hasn&#x27;t caught on outside the U.S., and Hinton&#x27;s effort is a drop in the sea.</span> <span class="sent" id="s2_32">At least 440 languages have been reduced to a mere handful of elders, according to the Ethnologue, a catalogue of languages produced by the Dallas-based group SIL International that comes closest to global coverage.</span> <span class="sent" id="s2_33">For the vast majority of these languages, there is little or no record of their grammar, vocabulary, pronunciation or use in daily life.</span> <span class="sent" id="s2_34">Even if a language has been fully documented, all that remains once it vanishes from active use is a fossil skeleton, a scattering of features that the scientist was lucky and astute enough to capture.</span> <span class="sent" id="s2_35">Linguists may be able to sketch an outline of the forgotten language and fit its place on the evolutionary tree, but little more.</span> <span class="sent" id="s2_36">&quot;How did people start conversations and talk to babies?</span> <span class="sent" id="s2_37">How did husbands and wives converse?</span> <span class="sent" id="s2_38">Hinton asks.</span> <span class="sent" id="s2_39">&quot;Those are the first things you want to learn when you want to revitalize the language.&quot;</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="31"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s2_40">But there is as yet no discipline of &quot;conservation linguistics,&quot; as there is for biology.</span> <span class="sent" id="s2_41">Almost every strategy tried so far has succeeded in some places but failed in others, and there seems to be no way to predict with certainty what will work where.</span> <span class="sent" id="s2_42">Twenty years ago in New Zealand, Maori speakers set up &quot;language nests,&quot; in which preschoolers were immersed in the native language.</span> <span class="sent" id="s2_43">Additional Maori-only classes were added as the children progressed through elementary and secondary school.</span> <span class="sent" id="s2_44">A similar approach was tried in Hawaii, with some success – the number of native speakers has stabilised at 1,000 or so, reports Joseph E. Grimes of SIL International, who is working on Oahu.</span> <span class="sent" id="s2_45">Students can now get instruction in Hawaiian all the way through university.</span></p><div class="para-dropzone dz-empty" data-letter="G" data-qnum="32"></div><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s2_46">One factor that always seems to occur in the demise of a language is that the speakers begin to have collective doubts about the usefulness of language loyalty.</span> <span class="sent" id="s2_47">Once they start regarding their own language as inferior to the majority language, people stop using it for all situations.</span> <span class="sent" id="s2_48">Kids pick up on the attitude and prefer the dominant language.</span> <span class="sent" id="s2_49">In many cases, people don&#x27;t notice until they suddenly realize that their kids never speak the language, even at home.</span> <span class="sent" id="s2_50">This is how Cornish and some dialects of Scottish Gaelic disappeared, and Irish is still only rarely used for daily home life in Ireland, 80 years after the republic was founded with Irish as its first official language.</span></p><div class="para-dropzone dz-empty" data-letter="H" data-qnum="33"></div><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s2_51">Linguists agree that ultimately, the answer to the problem of language extinction is multilingualism.</span> <span class="sent" id="s2_52">Even uneducated people can learn several languages, as long as they start as children.</span> <span class="sent" id="s2_53">Indeed, most people in the world speak more than one tongue, and in places such as Cameroon (279 languages), Papua New Guinea (823) and India (387) it is common to speak three or four distinct languages and a dialect or two as well.</span> <span class="sent" id="s2_54">Most Americans and Canadians, to the west of Quebec, have a gut reaction that anyone speaking another language in front of them is committing an immoral act.</span> <span class="sent" id="s2_55">You get the same reaction in Australia and Russia.</span> <span class="sent" id="s2_56">It is no coincidence that these are the areas where languages are disappearing the fastest.</span> <span class="sent" id="s2_57">The first step in saving dying languages is to persuade the world&#x27;s majorities to allow the minorities among them to speak with their own voices.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,33" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;33</div><button type="button" class="flag-toggle" data-flagrange="27,33" title="Flag for review" aria-label="Flag questions 27-33">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 3 has eight paragraphs, A–H.</p><p>Choose the correct heading for paragraphs A, B and D–H from the list of headings</p><p>below.</p><p>Write the correct number, i–xi, in boxes 27–33 on your answer sheet.</p><p>Example Paragraph C vi</p></div><div class="info-chip-pool" id="pool-p2g0" data-gid="p2g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>Inadequate data</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>Consensus on an initial recommendation for saving endangered languages</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>Positive gains in protection efforts</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>Minimum requirement for saving a language</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>Potential threat to minority languages</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>A period when no real efforts were made</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>Uncertainty about the success of native language programs</span></div><div class="info-chip" data-heading="viii" draggable="true"><span class="ic-num">viii</span><span>Lack of confidence among speakers as a negative factor</span></div><div class="info-chip" data-heading="ix" draggable="true"><span class="ic-num">ix</span><span>Practice in several developing countries</span></div><div class="info-chip" data-heading="x" draggable="true"><span class="ic-num">x</span><span>Value of minority languages to linguists</span></div><div class="info-chip" data-heading="xi" draggable="true"><span class="ic-num">xi</span><span>Government involvement in language protection</span></div></div><p class="hint-small">Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="34,38" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 34&ndash;38</div><button type="button" class="flag-toggle" data-flagrange="34,38" title="Flag for review" aria-label="Flag questions 34-38">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements (Questions 34–38) and the list of people below.</p><p>Match each statement with the correct person, A–F.</p><p>Write the correct letter, A–F, in boxes 34–38 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of People</div><span class="wb-item"><span class="wb-letter">A</span> Nicholas Ostler</span><span class="wb-item"><span class="wb-letter">B</span> Michael Krauss</span><span class="wb-item"><span class="wb-letter">C</span> Joseph E. Grimes</span><span class="wb-item"><span class="wb-letter">D</span> Sarah G. Thomason</span><span class="wb-item"><span class="wb-letter">E</span> Kenneth L. Hale</span><span class="wb-item"><span class="wb-letter">F</span> Douglas H. Whalen</span></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">Reported on the success of a language conservation practice in Hawaii</span><select class="q-select" name="q34"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">Predicted that many languages would disappear soon</span><select class="q-select" name="q35"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">Experienced the loss of languages he had worked on personally</span><select class="q-select" name="q36"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">Raised funds for language research in England</span><select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">38</span><span class="q-stem">Pointed out that not enough had been done to save languages until recently</span><select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div></div><div class="q-group" data-flagrange="39,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 39&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="39,40" title="Flag for review" aria-label="Flag questions 39-40">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in boxes 39–40 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">39</span><span>What is the real result of the master-apprentice program sponsored by the Ford Foundation?</span></div><label class="mcq-option"><input type="radio" name="q39" value="A"><span class="opt-letter">A</span><span>Children are taught how to speak native languages.</span></label><label class="mcq-option"><input type="radio" name="q39" value="B"><span class="opt-letter">B</span><span>Some endangered languages in California are revived.</span></label><label class="mcq-option"><input type="radio" name="q39" value="C"><span class="opt-letter">C</span><span>The date on which some endangered languages will die out is postponed.</span></label><label class="mcq-option"><input type="radio" name="q39" value="D"><span class="opt-letter">D</span><span>Communication between students increases.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">40</span><span>What should speakers of majority languages do, according to the last paragraph?</span></div><label class="mcq-option"><input type="radio" name="q40" value="A"><span class="opt-letter">A</span><span>They should teach their children endangered languages.</span></label><label class="mcq-option"><input type="radio" name="q40" value="B"><span class="opt-letter">B</span><span>They should learn at least four languages.</span></label><label class="mcq-option"><input type="radio" name="q40" value="C"><span class="opt-letter">C</span><span>They should show loyalty to a dying language.</span></label><label class="mcq-option"><input type="radio" name="q40" value="D"><span class="opt-letter">D</span><span>They should be more tolerant of speakers of minority languages.</span></label></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 32, "minutes": 60, "parts": [{"title": "Sleep Study on Modern-Day Hunter-Gatherers Dispels Popular Notions", "short": "Sleep Study", "qstart": 1, "qend": 13}, {"title": "Bristlecone Pines", "short": "Bristlecone Pines", "qstart": 14, "qend": 26}, {"title": "Loss of Rare Languages", "short": "Loss of", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "text", "ans": ["energy"], "group": "p0g1", "part": 1}, {"n": 6, "kind": "text", "ans": ["summer"], "group": "p0g1", "part": 1}, {"n": 7, "kind": "text", "ans": ["short"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["fires"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["sunrise"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["temperature"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["sleeplessness"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["overweight"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["hearts"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "E", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "C", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "E", "group": "p1g0", "part": 2}, {"n": 18, "kind": "radio", "ans": "D", "group": "p1g1", "part": 2}, {"n": 19, "kind": "radio", "ans": "B", "group": "p1g1", "part": 2}, {"n": 20, "kind": "radio", "ans": "C", "group": "p1g1", "part": 2}, {"n": 21, "kind": "text", "ans": ["little energy"], "group": "p1g2", "part": 2}, {"n": 22, "kind": "text", "ans": ["living bark"], "group": "p1g2", "part": 2}, {"n": 23, "kind": "text", "ans": ["resinous"], "group": "p1g2", "part": 2}, {"n": 24, "kind": "text", "ans": ["dry air"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["distance"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["ground cover"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "heading", "ans": "v", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 28, "kind": "heading", "ans": "x", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 29, "kind": "heading", "ans": "iii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 30, "kind": "heading", "ans": "i", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 31, "kind": "heading", "ans": "vii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 32, "kind": "heading", "ans": "viii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 33, "kind": "heading", "ans": "ii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 34, "kind": "select", "ans": "C", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "B", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "E", "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "A", "group": "p2g1", "part": 3}, {"n": 38, "kind": "select", "ans": "D", "group": "p2g1", "part": 3}, {"n": 39, "kind": "radio", "ans": "C", "group": "p2g2", "part": 3}, {"n": 40, "kind": "radio", "ans": "D", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {"p2g0": {"i": "Inadequate data", "ii": "Consensus on an initial recommendation for saving endangered languages", "iii": "Positive gains in protection efforts", "iv": "Minimum requirement for saving a language", "v": "Potential threat to minority languages", "vi": "A period when no real efforts were made", "vii": "Uncertainty about the success of native language programs", "viii": "Lack of confidence among speakers as a negative factor", "ix": "Practice in several developing countries", "x": "Value of minority languages to linguists", "xi": "Government involvement in language protection"}};
+const LOC = {"1": "s0_5", "2": "s0_6", "3": "s0_10", "4": "s0_11", "5": "s0_14", "6": "s0_16", "7": "s0_18", "8": "s0_20", "9": "s0_22", "10": "s0_24", "11": "s0_27", "12": "s0_32", "13": "s0_33", "14": "s1_8", "15": "s1_38", "16": "s1_15", "17": "s1_33", "18": "s1_3", "19": "s1_7", "20": "s1_13", "21": "s1_25", "22": "s1_27", "23": "s1_31", "24": "s1_33", "25": "s1_34", "26": "s1_36", "27": "s2_1", "28": "s2_7", "29": "s2_19", "30": "s2_33", "31": "s2_41", "32": "s2_46", "33": "s2_51", "34": "s2_44", "35": "s2_0", "36": "s2_3", "37": "s2_18", "38": "s2_11", "39": "s2_29", "40": "s2_57"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Scientists studied hunter-gatherer societies because their sleep patterns are assumed to be similar to those of humans more than 10,000 years ago.", "options": [{"t": "However, the new study provides evidence that this is unlikely, and that napping was actually rare in hunter-gatherer societies.", "ok": false}, {"t": "In a recent study, researchers traveled all over the world to examine sleep in some of the world's last remaining hunter-gatherer societies – the Hadza of Tanzania, the San of Namibia, and the Tsimane of Bolivia.", "ok": false}, {"t": "Cut off from media, electricity and other distractions, these preindustrial societies are thought to sleep the way humans did more than 10,000 years ago.", "ok": true}, {"t": "They found very similar sleep patterns despite their geographic isolation.", "ok": false}], "pairs": ["assumed to be similar to = are thought to sleep the way humans did", "more than 10,000 years ago = more than 10,000 years ago"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 2, "question": "The medical devices used in the research were specially designed for humid conditions.", "options": [{"t": "According to Jerome Siegel, director of the University of California's Center for Sleep Research, evidence suggests sleep habits may not be environmental or cultural, but central to the physical makeup of humans.", "ok": false}, {"t": "In a recent study, researchers traveled all over the world to examine sleep in some of the world's last remaining hunter-gatherer societies – the Hadza of Tanzania, the San of Namibia, and the Tsimane of Bolivia.", "ok": false}, {"t": "Cut off from media, electricity and other distractions, these preindustrial societies are thought to sleep the way humans did more than 10,000 years ago.", "ok": false}, {"t": "Traveling to where they lived, often in humid, remote locations, researchers used medical devices to record the sleeping habits of 94 of these tribespeople and ended up collecting data representing 1,165 days.", "ok": true}], "pairs": ["specially designed for humid conditions ? often in humid, remote locations, researchers used medical devices"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 3, "question": "Researchers found that the tribespeople stayed in bed for longer than inhabitants of industrialised regions.", "options": [{"t": "Like many of us, the Hadza, San, and Tsimane spend more time in bed – from 6.9 to 8.5 hours – than they do actually sleeping.", "ok": false}, {"t": "This adds up to a sleep efficiency that is very similar to today's industrial populations.", "ok": true}, {"t": "Traveling to where they lived, often in humid, remote locations, researchers used medical devices to record the sleeping habits of 94 of these tribespeople and ended up collecting data representing 1,165 days.", "ok": false}, {"t": "They found very similar sleep patterns despite their geographic isolation.", "ok": false}], "pairs": ["stayed in bed for longer than inhabitants of industrialised regions ≠ a sleep efficiency that is very similar to today's industrial populations"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 4, "question": "Jerome Siegel believes that environment and culture have little effect on sleep patterns.", "options": [{"t": "According to Jerome Siegel, director of the University of California's Center for Sleep Research, evidence suggests sleep habits may not be environmental or cultural, but central to the physical makeup of humans.", "ok": true}, {"t": "These findings question the millions of dollars that have been spent on research that tries to explain why some sleepers get only about six hours of sleep a night.", "ok": false}, {"t": "Siegel suggested that \"mimicking aspects of the natural environment\" may therefore help treat some sleep disorders.", "ok": false}, {"t": "Also, such findings question whether lack of sleep is a cause of obesity, mood disorders, and other physical and mental illnesses which have become so common in recent decades.", "ok": false}], "pairs": ["environment and culture have little effect = sleep habits may not be environmental or cultural"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 5, "question": "scientists have recorded an afternoon drop in <b>.........<\/b>", "options": [{"t": "These findings question the millions of dollars that have been spent on research that tries to explain why some sleepers get only about six hours of sleep a night.", "ok": false}, {"t": "Scientists have documented that people's energy often falls in the mid-afternoon.", "ok": true}, {"t": "Also, such findings question whether lack of sleep is a cause of obesity, mood disorders, and other physical and mental illnesses which have become so common in recent decades.", "ok": false}, {"t": "Some have suggested that it's because we've managed to suppress a natural desire for a nap.", "ok": false}], "pairs": ["recorded an afternoon drop in = energy often falls in the mid-afternoon"], "kind": "Completion", "answer": "energy", "accept": ["energy"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 6, "question": "more often during the <b>.........<\/b>", "options": [{"t": "However, the new study provides evidence that this is unlikely, and that napping was actually rare in hunter-gatherer societies.", "ok": true}, {"t": "They noted that their devices were only good at detecting longer naps, so it is possible that some of the study subjects took naps that were short, perhaps 15 minutes or less.", "ok": false}, {"t": "The researchers estimated that naps may have occurred on up to 7 percent of winter days and 22 percent of summer days.", "ok": false}, {"t": "They wrote that \"sleep in both the winter and summer usually occurred during the period of cooling and that waking times usually occurred near the height of the daily warming trend.\"", "ok": false}], "pairs": ["napping was rare = napping was actually rare", "occurred more often during the ___ = 22 percent of summer days"], "kind": "Completion", "answer": "summer", "accept": ["summer"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 7, "question": "the devices may not have detected <b>.........<\/b> naps", "options": [{"t": "However, the new study provides evidence that this is unlikely, and that napping was actually rare in hunter-gatherer societies.", "ok": false}, {"t": "The researchers estimated that naps may have occurred on up to 7 percent of winter days and 22 percent of summer days.", "ok": false}, {"t": "On average, all three groups sleep a little less than 6.5 hours a night, do not take naps, and don't go to sleep when it gets dark.", "ok": false}, {"t": "They noted that their devices were only good at detecting longer naps, so it is possible that some of the study subjects took naps that were short, perhaps 15 minutes or less.", "ok": true}], "pairs": ["may not have detected ___ naps = some of the study subjects took naps that were short"], "kind": "Completion", "answer": "short", "accept": ["short"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 8, "question": "<b>.........<\/b> going", "options": [{"t": "All three tribes had fires going, but the light itself was much lower than you might get from a light bulb.", "ok": false}, {"t": "On average, all three groups sleep a little less than 6.5 hours a night, do not take naps, and don't go to sleep when it gets dark.", "ok": false}, {"t": "In fact, our ancestors may not have been getting the recommended eight hours of sleep, either.", "ok": false}, {"t": "Instead of going to sleep right at dusk, tribespeople were staying awake an average of between 2.5 and 4.4 hours after sunset.", "ok": true}], "pairs": ["went to sleep several hours after sunset = staying awake an average of between 2.5 and 4.4 hours after sunset", "with ___ going = All three tribes had fires going"], "kind": "Completion", "answer": "fires", "accept": ["fires"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 9, "question": "tribespeople usually woke up around <b>.........<\/b>", "options": [{"t": "All three tribes had fires going, but the light itself was much lower than you might get from a light bulb.", "ok": false}, {"t": "Another fascinating finding from the study had to do with the circadian rhythms, our daily activity cycles related to sunlight.", "ok": false}, {"t": "They did, however, have a tendency to wake up anywhere between an hour before and an hour after sunrise.", "ok": true}, {"t": "Instead of going to sleep right at dusk, tribespeople were staying awake an average of between 2.5 and 4.4 hours after sunset.", "ok": false}], "pairs": ["usually woke up around ___ = wake up anywhere between an hour before and an hour after sunrise"], "kind": "Completion", "answer": "sunrise", "accept": ["sunrise"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 10, "question": "scientists found that <b>.........<\/b> had almost as much influence", "options": [{"t": "All three tribes had fires going, but the light itself was much lower than you might get from a light bulb.", "ok": false}, {"t": "They found very similar sleep patterns despite their geographic isolation.", "ok": false}, {"t": "They wrote that \"sleep in both the winter and summer usually occurred during the period of cooling and that waking times usually occurred near the height of the daily warming trend.\"", "ok": false}, {"t": "They found that it also played a big role, though it was somewhat less important than light in influencing sleep patterns.", "ok": true}], "pairs": ["almost as much influence on sleep patterns as light = somewhat less important than light in influencing sleep patterns"], "kind": "Completion", "answer": "temperature", "accept": ["temperature"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 11, "question": "<b>.........<\/b> is something that very few of the tribespeople", "options": [{"t": "The tribespeople that were studied are different from people living in modern conditions in a number of respects.", "ok": false}, {"t": "This figure is far lower than the 10 to 30 percent recorded in many industrialized countries today.", "ok": false}, {"t": "In interviews with the researchers conducted through interpreters, only 1.5 to 2.5 percent of the study subjects said they had severe difficulties sleeping more than once a year.", "ok": false}, {"t": "Importantly, almost none of them were troubled by sleeplessness.", "ok": true}], "pairs": ["very few of the tribespeople suffered from = almost none of them were troubled by sleeplessness"], "kind": "Completion", "answer": "sleeplessness", "accept": ["sleeplessness"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "<b>.........<\/b>", "options": [{"t": "They also tended to have healthier hearts.", "ok": false}, {"t": "The tribespeople are also much healthier.", "ok": false}, {"t": "Thus comes a critical question.", "ok": false}, {"t": "Not a single one is overweight, indicating their overall higher levels of physical fitness.", "ok": true}], "pairs": ["fitter than industrialised populations = indicating their overall higher levels of physical fitness", "were not ___ = Not a single one is overweight"], "kind": "Completion", "answer": "overweight", "accept": ["overweight"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "the tribespeople also had healthier <b>.........<\/b>", "options": [{"t": "Not a single one is overweight, indicating their overall higher levels of physical fitness.", "ok": false}, {"t": "The tribespeople are also much healthier.", "ok": false}, {"t": "They also tended to have healthier hearts.", "ok": true}, {"t": "Instead of going to sleep right at dusk, tribespeople were staying awake an average of between 2.5 and 4.4 hours after sunset.", "ok": false}], "pairs": ["also had healthier ___ = They also tended to have healthier hearts"], "kind": "Completion", "answer": "hearts", "accept": ["hearts"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "assumed to be similar to", "p": "are thought to sleep the way humans did", "rel": "=", "note": "", "n": "1"}, {"q": "more than 10,000 years ago", "p": "more than 10,000 years ago", "rel": "=", "note": "", "n": "1"}, {"q": "specially designed for humid conditions", "p": "often in humid, remote locations, researchers used medical devices", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "2"}, {"q": "stayed in bed for longer than inhabitants of industrialised regions", "p": "a sleep efficiency that is very similar to today's industrial populations", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "3"}, {"q": "environment and culture have little effect", "p": "sleep habits may not be environmental or cultural", "rel": "=", "note": "", "n": "4"}, {"q": "recorded an afternoon drop in", "p": "energy often falls in the mid-afternoon", "rel": "=", "note": "", "n": "5"}, {"q": "napping was rare", "p": "napping was actually rare", "rel": "=", "note": "", "n": "6"}, {"q": "occurred more often during the ___", "p": "22 percent of summer days", "rel": "=", "note": "", "n": "6"}, {"q": "may not have detected ___ naps", "p": "some of the study subjects took naps that were short", "rel": "=", "note": "", "n": "7"}, {"q": "went to sleep several hours after sunset", "p": "staying awake an average of between 2.5 and 4.4 hours after sunset", "rel": "=", "note": "", "n": "8"}, {"q": "with ___ going", "p": "All three tribes had fires going", "rel": "=", "note": "", "n": "8"}, {"q": "usually woke up around ___", "p": "wake up anywhere between an hour before and an hour after sunrise", "rel": "=", "note": "", "n": "9"}, {"q": "almost as much influence on sleep patterns as light", "p": "somewhat less important than light in influencing sleep patterns", "rel": "=", "note": "", "n": "10"}, {"q": "very few of the tribespeople suffered from", "p": "almost none of them were troubled by sleeplessness", "rel": "=", "note": "", "n": "11"}, {"q": "fitter than industrialised populations", "p": "indicating their overall higher levels of physical fitness", "rel": "=", "note": "", "n": "12"}, {"q": "were not ___", "p": "Not a single one is overweight", "rel": "=", "note": "", "n": "12"}, {"q": "also had healthier ___", "p": "They also tended to have healthier hearts", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "preindustrial", "pos": "adjective", "loc": "B", "d": "existing before the development of factories and machines", "uz": "sanoatdan oldingi", "ex": "Preindustrial villages relied on farming and handmade tools.", "form": "Preindustrial"}, {"w": "Cut off from", "pos": "phrasal verb", "loc": "B", "d": "separated from and unable to contact or reach", "uz": "...dan uzilgan, ajralib qolgan", "ex": "The village was cut off from the town by floods.", "form": "cut off from"}, {"w": "geographic isolation", "pos": "collocation", "loc": "C", "d": "being far away from other places and people", "uz": "geografik yakkalanish", "ex": "Geographic isolation has helped the island keep its unique customs.", "form": "Geographic isolation"}, {"w": "adds up to", "pos": "phrasal verb", "loc": "C", "d": "makes a total of; results in", "uz": "jami ... ni tashkil qiladi", "ex": "Small savings every month add up to a large sum.", "form": "add up to"}, {"w": "physical makeup", "pos": "collocation", "loc": "D", "d": "the natural structure and qualities of a body", "uz": "jismoniy tuzilish", "ex": "Height depends partly on a person's physical makeup.", "form": "physical makeup"}, {"w": "mood disorders", "pos": "collocation", "loc": "D", "d": "mental health conditions that seriously affect a person's emotions", "uz": "kayfiyat buzilishlari", "ex": "Doctors are studying links between diet and mood disorders.", "form": "mood disorders"}, {"w": "documented", "pos": "verb", "loc": "D", "d": "recorded in detail, usually in writing", "uz": "hujjatlashtirgan, qayd etgan", "ex": "Historians have documented the town's growth over three centuries.", "form": "documented"}, {"w": "suppress", "pos": "verb", "loc": "D", "d": "to stop a feeling or action from showing or happening", "uz": "bostirmoq, jilovlamoq", "ex": "She tried to suppress a laugh during the speech.", "form": "suppress"}, {"w": "detecting", "pos": "verb", "loc": "E", "d": "noticing or finding something that is hard to see", "uz": "aniqlash, topish", "ex": "The new sensor is good at detecting tiny changes in heat.", "form": "detecting"}, {"w": "circadian rhythms", "pos": "collocation", "loc": "F", "d": "the body's natural 24-hour cycle of sleep and activity", "uz": "sirkad ritmlar, sutkalik biologik ritm", "ex": "Night shifts can seriously disturb your circadian rhythms.", "form": "circadian rhythms"}, {"w": "dusk", "pos": "noun", "loc": "F", "d": "the time in the evening when the light is fading", "uz": "g'ira-shira, shom payti", "ex": "We reached the camp just before dusk.", "form": "dusk"}, {"w": "tendency", "pos": "noun", "loc": "F", "d": "a habit or likelihood of behaving in a certain way", "uz": "moyillik, odat", "ex": "He has a tendency to forget names easily.", "form": "tendency"}, {"w": "significance", "pos": "noun", "loc": "G", "d": "the importance or meaning of something", "uz": "ahamiyat, muhimlik", "ex": "Experts debated the significance of the new discovery.", "form": "significance"}, {"w": "sleeplessness", "pos": "noun", "loc": "H", "d": "the condition of being unable to sleep", "uz": "uyqusizlik", "ex": "Stress often leads to weeks of sleeplessness.", "form": "sleeplessness"}, {"w": "mimicking", "pos": "verb", "loc": "H", "d": "copying the way something looks, sounds or works", "uz": "taqlid qilish, nusxa ko'chirish", "ex": "The parrot kept mimicking the sound of the phone.", "form": "mimicking"}, {"w": "unrested", "pos": "adjective", "loc": "I", "d": "not feeling refreshed after sleep", "uz": "dam olmagan, charchoq", "ex": "He woke up feeling unrested despite sleeping for nine hours.", "form": "unrested"}]}, {"evidence": [{"q": 14, "question": "an explanation of differences in ring patterns", "options": [{"t": "Using this process, when the rings match or are found to have overlapping patterns, the chronology can be extended further back in time.", "ok": false}, {"t": "Patterns of ring variability are important for establishing chronologies, which allow precise dating of climatic conditions in the past.", "ok": false}, {"t": "The more a tree's rate of growth has been affected by such environmental factors, the more variation in ring-to-ring growth will be present.", "ok": true}, {"t": "This variation is referred to as sensitivity and the lack of ring variability is called complacency.", "ok": false}], "pairs": ["differences in ring patterns = variation in ring-to-ring growth"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "B", "pill": true}}, {"q": 15, "question": "a mention of a human danger to bristlecone pines", "options": [{"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "The current threat is from all the people who come to visit them.", "ok": true}, {"t": "Thus, the bristlecone pines have survived for unknown centuries.", "ok": false}, {"t": "Spring comes to the bristlecone pines in early May with the melting of snow and rising temperatures.", "ok": false}], "pairs": ["a human danger to bristlecone pines = The current threat is from all the people who come to visit them"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "E", "pill": true}}, {"q": 16, "question": "an account of research conducted on bristlecone pines", "options": [{"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "The extreme age of bristlecone pines was not known about until the 1950s, and was only discovered then thanks to the efforts of Edmund Schulman.", "ok": false}, {"t": "During 1954 and 1955, an extensive survey of bristlecone stands from California to Colorado was carried out by Schulman and his assistant, C. W. Ferguson.", "ok": true}, {"t": "What makes bristlecone pines truly remarkable is their longevity: their average age is over 1,000 years, with the oldest specimen – an individual known as Methuselah – dated at 4,723 years.", "ok": false}], "pairs": ["research conducted on bristlecone pines = an extensive survey of bristlecone stands"], "kind": "Which paragraph?", "answer": "C", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "C", "pill": true}}, {"q": 17, "question": "an advantage of the bristlecone pines&#x27; habitat", "options": [{"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "The longevity of the bristlecone needles and the inability of other plants to grow in the dolomite soil preferred by the bristlecones make for little leaf litter.", "ok": false}, {"t": "Thus, the bristlecone pines have survived for unknown centuries.", "ok": false}, {"t": "The dry air common in the subalpine region helps preserve the trees from rotting.", "ok": true}], "pairs": ["an advantage of the habitat = The dry air common in the subalpine region helps preserve the trees"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "E", "pill": true}}, {"q": 18, "question": "According to the writer, the most interesting fact about bristlecone pines is their", "options": [{"t": "On the dry, windswept mountain tops of the Great Basin in the western United States, at altitudes of over 3,000 m, grow the bristlecone pines (Pinus longaeva, Pinus aristata).", "ok": false}, {"t": "What makes bristlecone pines truly remarkable is their longevity: their average age is over 1,000 years, with the oldest specimen – an individual known as Methuselah – dated at 4,723 years.", "ok": true}, {"t": "The bristlecone has adjusted to places on earth that no other tree wants to inhabit, and in these harsh environments has flourished.", "ok": false}, {"t": "The extreme age of bristlecone pines was not known about until the 1950s, and was only discovered then thanks to the efforts of Edmund Schulman.", "ok": false}], "pairs": ["the most interesting fact = What makes bristlecone pines truly remarkable", "age = their longevity"], "kind": "Multiple choice", "answer": "D", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "habitat."}, {"k": "B", "t": "height."}, {"k": "C", "t": "width."}, {"k": "D", "t": "age."}], "ans": "D"}, "why": ""}, {"q": 19, "question": "A pattern of narrow rings is caused by", "options": [{"t": "Douglass had noted that the wide rings of certain species of trees were produced during wet years and, inversely, narrow rings during dry seasons.", "ok": true}, {"t": "This variation is referred to as sensitivity and the lack of ring variability is called complacency.", "ok": false}, {"t": "Samples taken from trees of unknown age can be studied for matches with samples from trees of a known age with known sequences of growth.", "ok": false}, {"t": "Using this process, when the rings match or are found to have overlapping patterns, the chronology can be extended further back in time.", "ok": false}], "pairs": ["a lack of rain = narrow rings during dry seasons"], "kind": "Multiple choice", "answer": "B", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "alternating rainy and dry seasons."}, {"k": "B", "t": "a lack of rain."}, {"k": "C", "t": "restricted growth in some trees."}, {"k": "D", "t": "high altitude."}], "ans": "B"}, "why": ""}, {"q": 20, "question": "Schulman chose to study trees growing at high levels because they were", "options": [{"t": "This prompted Schulman to write: 'The capacity of these trees to live so fantastically long may, when we come to understand it fully, perhaps serve as a guidepost on the road to the understanding of longevity in general.'", "ok": false}, {"t": "The trees growing in the most extreme conditions, with scant soil and moisture, seemed to be the oldest.", "ok": false}, {"t": "During 1954 and 1955, an extensive survey of bristlecone stands from California to Colorado was carried out by Schulman and his assistant, C. W. Ferguson.", "ok": false}, {"t": "In his search for older trees that would provide more extensive chronologies, Schulman learned that certain species of trees in the upper-forest zones, growing under stressful conditions, showed sensitive records of drought in their growth-ring sequences.", "ok": true}], "pairs": ["chose to study trees growing at high levels = In his search for older trees", "much older than other trees = They found the oldest trees at elevations of 3,048 to 3,354 m"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "shorter than similar trees."}, {"k": "B", "t": "growing in unusual shapes."}, {"k": "C", "t": "much older than other trees."}, {"k": "D", "t": "the only surviving plants."}], "ans": "C"}, "why": ""}, {"q": 21, "question": "making new needles requires <b>.........<\/b>", "options": [{"t": "Firstly, bristlecone needles can live twenty to thirty years; thus, adding new foliage to that already on the tree takes little energy.", "ok": true}, {"t": "Another strategy for surviving is the gradual dieback of living bark when the tree is damaged because of fire, lightning, drought, or storms.", "ok": false}, {"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "The long-lived needles provide a stable photosynthetic capacity to sustain the tree over years of severe stress.", "ok": false}], "pairs": ["making new needles requires ___ = adding new foliage to that already on the tree takes little energy"], "kind": "Completion", "answer": "little energy", "accept": ["little energy"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 22, "question": "<b>.........<\/b>", "options": [{"t": "These trees showed large areas of deadwood and thin strips of living bark.", "ok": false}, {"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "This distance in between, combined with the lack of ground cover, ensures that if a tree sustains a lightning strike and catches fire, the fire does not spread to surrounding trees.", "ok": false}, {"t": "Another strategy for surviving is the gradual dieback of living bark when the tree is damaged because of fire, lightning, drought, or storms.", "ok": true}], "pairs": ["trees damaged by weather or fire = when the tree is damaged because of fire, lightning, drought, or storms", "small areas of ___ = only a 25 cm strip of living bark"], "kind": "Completion", "answer": "living bark", "accept": ["living bark"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 23, "question": "bristlecone wood is very <b>.........<\/b>", "options": [{"t": "Firstly, bristlecone needles can live twenty to thirty years; thus, adding new foliage to that already on the tree takes little energy.", "ok": false}, {"t": "So what factors do account for the longevity of bristlecone pines?", "ok": false}, {"t": "To live so long under such conditions, the bristlecone has established several strategies.", "ok": false}, {"t": "Finally, invasions from bacteria, fungi, or insects that prey upon most plants are unknown to the bristlecones due to their highly resinous wood.", "ok": true}], "pairs": ["very ___ wood = highly resinous wood"], "kind": "Completion", "answer": "resinous", "accept": ["resinous"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 24, "question": "trees don&#x27;t decay because of the <b>.........<\/b>", "options": [{"t": "The dry air common in the subalpine region helps preserve the trees from rotting.", "ok": true}, {"t": "The recording of past events provided by these trees, along with their great beauty, is too valuable for us to lose.", "ok": false}, {"t": "Environmental factors also play their part.", "ok": false}, {"t": "This distance in between, combined with the lack of ground cover, ensures that if a tree sustains a lightning strike and catches fire, the fire does not spread to surrounding trees.", "ok": false}], "pairs": ["trees don't decay = helps preserve the trees from rotting"], "kind": "Completion", "answer": "dry air", "accept": ["dry air"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 25, "question": "fires don&#x27;t spread easily because of the <b>.........<\/b> between trees", "options": [{"t": "The recording of past events provided by these trees, along with their great beauty, is too valuable for us to lose.", "ok": false}, {"t": "This distance in between, combined with the lack of ground cover, ensures that if a tree sustains a lightning strike and catches fire, the fire does not spread to surrounding trees.", "ok": false}, {"t": "The oldest bristlecones live in the most exposed sites, with considerable space between each tree.", "ok": true}, {"t": "The dry air common in the subalpine region helps preserve the trees from rotting.", "ok": false}], "pairs": ["between trees = considerable space between each tree", "fires don't spread easily = the fire does not spread to surrounding trees"], "kind": "Completion", "answer": "distance", "accept": ["distance"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 26, "question": "and the absence of <b>.........<\/b>", "options": [{"t": "The oldest bristlecones live in the most exposed sites, with considerable space between each tree.", "ok": false}, {"t": "As a result, Methuselah, the oldest tree, is not marked or identified with a plaque due to the threat of vandalism.", "ok": false}, {"t": "This distance in between, combined with the lack of ground cover, ensures that if a tree sustains a lightning strike and catches fire, the fire does not spread to surrounding trees.", "ok": true}, {"t": "Environmental factors also play their part.", "ok": false}], "pairs": ["the absence of ___ = the lack of ground cover"], "kind": "Completion", "answer": "ground cover", "accept": ["ground cover"], "limit": "NO MORE THAN TWO WORDS", "why": ""}], "paraphrase": [{"q": "differences in ring patterns", "p": "variation in ring-to-ring growth", "rel": "=", "note": "", "n": "14"}, {"q": "a human danger to bristlecone pines", "p": "The current threat is from all the people who come to visit them", "rel": "=", "note": "", "n": "15"}, {"q": "research conducted on bristlecone pines", "p": "an extensive survey of bristlecone stands", "rel": "=", "note": "", "n": "16"}, {"q": "an advantage of the habitat", "p": "The dry air common in the subalpine region helps preserve the trees", "rel": "=", "note": "", "n": "17"}, {"q": "the most interesting fact", "p": "What makes bristlecone pines truly remarkable", "rel": "=", "note": "", "n": "18"}, {"q": "age", "p": "their longevity", "rel": "=", "note": "", "n": "18"}, {"q": "a lack of rain", "p": "narrow rings during dry seasons", "rel": "=", "note": "", "n": "19"}, {"q": "chose to study trees growing at high levels", "p": "In his search for older trees", "rel": "=", "note": "", "n": "20"}, {"q": "much older than other trees", "p": "They found the oldest trees at elevations of 3,048 to 3,354 m", "rel": "=", "note": "", "n": "20"}, {"q": "making new needles requires ___", "p": "adding new foliage to that already on the tree takes little energy", "rel": "=", "note": "", "n": "21"}, {"q": "trees damaged by weather or fire", "p": "when the tree is damaged because of fire, lightning, drought, or storms", "rel": "=", "note": "", "n": "22"}, {"q": "small areas of ___", "p": "only a 25 cm strip of living bark", "rel": "=", "note": "", "n": "22"}, {"q": "very ___ wood", "p": "highly resinous wood", "rel": "=", "note": "", "n": "23"}, {"q": "trees don't decay", "p": "helps preserve the trees from rotting", "rel": "=", "note": "", "n": "24"}, {"q": "between trees", "p": "considerable space between each tree", "rel": "=", "note": "", "n": "25"}, {"q": "fires don't spread easily", "p": "the fire does not spread to surrounding trees", "rel": "=", "note": "", "n": "25"}, {"q": "the absence of ___", "p": "the lack of ground cover", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "windswept", "pos": "adjective", "loc": "A", "d": "exposed to strong winds", "uz": "shamol esadigan, shamolli", "ex": "The windswept coast has few trees or buildings.", "form": "windswept"}, {"w": "flourished", "pos": "verb", "loc": "A", "d": "grew or developed in a healthy, successful way", "uz": "gullab-yashnadi, avj oldi", "ex": "Trade flourished along the ancient river routes.", "form": "flourished"}, {"w": "girth", "pos": "noun", "loc": "A", "d": "the distance around the middle of something", "uz": "aylana, yo'g'onlik", "ex": "The girth of the old oak was over six metres.", "form": "girth"}, {"w": "longevity", "pos": "noun", "loc": "A", "d": "a very long life or existence", "uz": "uzoq umr ko'rish", "ex": "Scientists study the longevity of people in mountain villages.", "form": "longevity"}, {"w": "specimen", "pos": "noun", "loc": "A", "d": "an individual plant or animal used as an example", "uz": "namuna, nusxa", "ex": "The garden contains a rare specimen of the giant redwood.", "form": "specimen"}, {"w": "inversely", "pos": "adverb", "loc": "B", "d": "in the opposite way; as one increases the other decreases", "uz": "teskari tartibda", "ex": "Price and demand often move inversely to each other.", "form": "inversely"}, {"w": "chronologies", "pos": "noun", "loc": "B", "d": "records arranging events in the order they happened", "uz": "xronologiyalar, voqealar ketma-ketligi", "ex": "Archaeologists build chronologies from layers of buried remains.", "form": "chronologies"}, {"w": "overlapping", "pos": "adjective", "loc": "B", "d": "partly covering or sharing the same area or time", "uz": "bir-birini qoplaydigan, ustma-ust tushgan", "ex": "The two studies had overlapping results in several areas.", "form": "overlapping"}, {"w": "carried out", "pos": "phrasal verb", "loc": "C", "d": "done or completed, especially a task or plan", "uz": "amalga oshirilgan", "ex": "A detailed survey was carried out before building began.", "form": "carried out"}, {"w": "scant", "pos": "adjective", "loc": "C", "d": "very little; hardly enough", "uz": "kam, yetarli bo'lmagan", "ex": "The report paid scant attention to the local residents.", "form": "scant"}, {"w": "prompted", "pos": "verb", "loc": "C", "d": "caused someone to act or say something", "uz": "turtki bo'ldi, undadi", "ex": "The strange noise prompted her to check the door.", "form": "prompted"}, {"w": "account for", "pos": "phrasal verb", "loc": "D", "d": "explain the reason for something", "uz": "sababini tushuntirmoq", "ex": "Poor diet may account for his constant tiredness.", "form": "account for"}, {"w": "foliage", "pos": "noun", "loc": "D", "d": "the leaves of a plant or tree", "uz": "barglar, yaproqlar", "ex": "Thick foliage hid the path from view.", "form": "foliage"}, {"w": "dieback", "pos": "noun", "loc": "D", "d": "the gradual death of parts of a plant from the tips", "uz": "o'simlikning uchidan qurishi", "ex": "Drought caused severe dieback in the orchard's older trees.", "form": "dieback"}, {"w": "resinous", "pos": "adjective", "loc": "D", "d": "containing a sticky natural substance produced by some trees", "uz": "qatronli, smolali", "ex": "The resinous wood burned with a sweet smell.", "form": "resinous"}, {"w": "leaf litter", "pos": "collocation", "loc": "E", "d": "dead leaves lying on the ground", "uz": "to'kilgan barglar qatlami", "ex": "Beetles live in the thick leaf litter of the forest floor.", "form": "leaf litter"}, {"w": "play their part", "pos": "idiom", "loc": "E", "d": "contribute to a result along with other things", "uz": "o'z hissasini qo'shmoq", "ex": "Good teachers and supportive parents both play their part in success.", "form": "play their part"}, {"w": "vandalism", "pos": "noun", "loc": "E", "d": "deliberate damage to public or private property", "uz": "vandalizm, qasddan buzish", "ex": "The council spends thousands each year cleaning up vandalism.", "form": "vandalism"}]}, {"evidence": [{"q": 27, "question": "Which heading fits paragraph A?", "options": [{"t": "Unless scientists and community leaders directed a worldwide effort to stabilize the decline of local languages, he warned, nine tenths of the linguistic diversity of humankind would probably be doomed to extinction.", "ok": true}, {"t": "Kenneth L. Hale of the Massachusetts Institute of Technology noted in the same journal issue that eight languages on which he had done fieldwork had since passed into extinction.", "ok": false}, {"t": "Ten years ago, Michael Krauss sent a shudder through the discipline of linguistics with his prediction that half the 6,000 or so languages spoken in the world would cease to be uttered within a century.", "ok": false}, {"t": "The same was true for all but 20 of the 175 Native American languages spoken or remembered in the US, Krauss told a congressional panel in 1992.", "ok": false}], "pairs": ["Potential threat to minority languages = nine tenths of the linguistic diversity of humankind would probably be doomed to extinction"], "kind": "Matching headings", "answer": "v", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Inadequate data"}, {"k": "iv", "t": "Minimum requirement for saving a language"}, {"k": "v", "t": "Potential threat to minority languages"}, {"k": "vi", "t": "A period when no real efforts were made"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}], "ans": "v"}, "why": ""}, {"q": 28, "question": "Which heading fits paragraph B?", "options": [{"t": "In each of these cases, the wider the portfolio of languages you study, the more likely you are to get the right answers.", "ok": false}, {"t": "To start, there is scientific self-interest; some of the most basic questions in linguistics have to do with the limits of human speech, which are far from fully explored.", "ok": true}, {"t": "Many experts in the field mourn the loss of rare languages, for several reasons.", "ok": false}, {"t": "Other scientists try to reconstruct ancient migration patterns by comparing borrowed words that appear in otherwise unrelated languages.", "ok": false}], "pairs": ["Value of minority languages to linguists = there is scientific self-interest", "Value of minority languages = the wider the portfolio of languages you study, the more likely you are to get the right answers"], "kind": "Matching headings", "answer": "x", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Consensus on an initial recommendation for saving endangered languages"}, {"k": "iii", "t": "Positive gains in protection efforts"}, {"k": "vi", "t": "A period when no real efforts were made"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}, {"k": "x", "t": "Value of minority languages to linguists"}], "ans": "x"}, "why": ""}, {"q": 29, "question": "Which heading fits paragraph D?", "options": [{"t": "That will give linguists more time to record these tongues before they vanish.", "ok": false}, {"t": "But there are encouraging signs that the field has turned a corner.", "ok": true}, {"t": "Its contributions helped to reinvigorate a master-apprentice program created in 1992 by Leanne Hinton of Berkeley and Native Americans worried about the imminent demise of about 50 indigenous languages in California.", "ok": false}, {"t": "So far about 5 teams have completed the program, Hinton says, transmitting at least some knowledge of 25 languages.", "ok": false}], "pairs": ["Positive gains in protection efforts = there are encouraging signs that the field has turned a corner"], "kind": "Matching headings", "answer": "iii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Consensus on an initial recommendation for saving endangered languages"}, {"k": "iii", "t": "Positive gains in protection efforts"}, {"k": "iv", "t": "Minimum requirement for saving a language"}, {"k": "x", "t": "Value of minority languages to linguists"}, {"k": "xi", "t": "Government involvement in language protection"}], "ans": "iii"}, "why": ""}, {"q": 30, "question": "Which heading fits paragraph E?", "options": [{"t": "How did husbands and wives converse?", "ok": false}, {"t": "But the master-apprentice approach hasn't caught on outside the U.S., and Hinton's effort is a drop in the sea.", "ok": false}, {"t": "Even if a language has been fully documented, all that remains once it vanishes from active use is a fossil skeleton, a scattering of features that the scientist was lucky and astute enough to capture.", "ok": false}, {"t": "For the vast majority of these languages, there is little or no record of their grammar, vocabulary, pronunciation or use in daily life.", "ok": true}], "pairs": ["Inadequate data = there is little or no record of their grammar, vocabulary, pronunciation or use in daily life"], "kind": "Matching headings", "answer": "i", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Inadequate data"}, {"k": "iv", "t": "Minimum requirement for saving a language"}, {"k": "v", "t": "Potential threat to minority languages"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}, {"k": "x", "t": "Value of minority languages to linguists"}], "ans": "i"}, "why": ""}, {"q": 31, "question": "Which heading fits paragraph F?", "options": [{"t": "Twenty years ago in New Zealand, Maori speakers set up \"language nests,\" in which preschoolers were immersed in the native language.", "ok": false}, {"t": "But there is as yet no discipline of \"conservation linguistics,\" as there is for biology.", "ok": false}, {"t": "Almost every strategy tried so far has succeeded in some places but failed in others, and there seems to be no way to predict with certainty what will work where.", "ok": true}, {"t": "A similar approach was tried in Hawaii, with some success – the number of native speakers has stabilised at 1,000 or so, reports Joseph E. Grimes of SIL International, who is working on Oahu.", "ok": false}], "pairs": ["Uncertainty about the success of native language programs = there seems to be no way to predict with certainty what will work where"], "kind": "Matching headings", "answer": "vii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Consensus on an initial recommendation for saving endangered languages"}, {"k": "ix", "t": "Practice in several developing countries"}, {"k": "v", "t": "Potential threat to minority languages"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}, {"k": "viii", "t": "Lack of confidence among speakers as a negative factor"}], "ans": "vii"}, "why": ""}, {"q": 32, "question": "Which heading fits paragraph G?", "options": [{"t": "Kids pick up on the attitude and prefer the dominant language.", "ok": false}, {"t": "One factor that always seems to occur in the demise of a language is that the speakers begin to have collective doubts about the usefulness of language loyalty.", "ok": true}, {"t": "This is how Cornish and some dialects of Scottish Gaelic disappeared, and Irish is still only rarely used for daily home life in Ireland, 80 years after the republic was founded with Irish as its first official language.", "ok": false}, {"t": "Once they start regarding their own language as inferior to the majority language, people stop using it for all situations.", "ok": false}], "pairs": ["Lack of confidence among speakers = the speakers begin to have collective doubts about the usefulness of language loyalty"], "kind": "Matching headings", "answer": "viii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "iii", "t": "Positive gains in protection efforts"}, {"k": "iv", "t": "Minimum requirement for saving a language"}, {"k": "v", "t": "Potential threat to minority languages"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}, {"k": "viii", "t": "Lack of confidence among speakers as a negative factor"}], "ans": "viii"}, "why": ""}, {"q": 33, "question": "Which heading fits paragraph H?", "options": [{"t": "It is no coincidence that these are the areas where languages are disappearing the fastest.", "ok": false}, {"t": "You get the same reaction in Australia and Russia.", "ok": false}, {"t": "Even uneducated people can learn several languages, as long as they start as children.", "ok": false}, {"t": "Linguists agree that ultimately, the answer to the problem of language extinction is multilingualism.", "ok": true}], "pairs": ["Consensus = Linguists agree that ultimately", "an initial recommendation = The first step in saving dying languages"], "kind": "Matching headings", "answer": "ii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Inadequate data"}, {"k": "ii", "t": "Consensus on an initial recommendation for saving endangered languages"}, {"k": "ix", "t": "Practice in several developing countries"}, {"k": "vi", "t": "A period when no real efforts were made"}, {"k": "vii", "t": "Uncertainty about the success of native language programs"}], "ans": "ii"}, "why": ""}, {"q": 34, "question": "Reported on the success of a language conservation practice in Hawaii", "options": [{"t": "But there is as yet no discipline of \"conservation linguistics,\" as there is for biology.", "ok": false}, {"t": "Twenty years ago in New Zealand, Maori speakers set up \"language nests,\" in which preschoolers were immersed in the native language.", "ok": false}, {"t": "Students can now get instruction in Hawaiian all the way through university.", "ok": false}, {"t": "A similar approach was tried in Hawaii, with some success – the number of native speakers has stabilised at 1,000 or so, reports Joseph E. Grimes of SIL International, who is working on Oahu.", "ok": true}], "pairs": ["success of a language conservation practice = with some success", "Reported on = reports Joseph E. Grimes"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Nicholas Ostler"}, {"k": "B", "t": "Michael Krauss"}, {"k": "C", "t": "Joseph E. Grimes"}, {"k": "E", "t": "Kenneth L. Hale"}, {"k": "F", "t": "Douglas H. Whalen"}], "ans": "C"}, "why": ""}, {"q": 35, "question": "Predicted that many languages would disappear soon", "options": [{"t": "The same was true for all but 20 of the 175 Native American languages spoken or remembered in the US, Krauss told a congressional panel in 1992.", "ok": false}, {"t": "A 1990 survey in Australia found that 70 of the 90 surviving Aboriginal languages were no longer used regularly by all age groups.", "ok": false}, {"t": "Kenneth L. Hale of the Massachusetts Institute of Technology noted in the same journal issue that eight languages on which he had done fieldwork had since passed into extinction.", "ok": false}, {"t": "Ten years ago, Michael Krauss sent a shudder through the discipline of linguistics with his prediction that half the 6,000 or so languages spoken in the world would cease to be uttered within a century.", "ok": true}], "pairs": ["Predicted that many languages would disappear = his prediction that half the 6,000 or so languages", "soon = within a century"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Nicholas Ostler"}, {"k": "B", "t": "Michael Krauss"}, {"k": "C", "t": "Joseph E. Grimes"}, {"k": "D", "t": "Sarah G. Thomason"}, {"k": "E", "t": "Kenneth L. Hale"}], "ans": "B"}, "why": ""}, {"q": 36, "question": "Experienced the loss of languages he had worked on personally", "options": [{"t": "Kenneth L. Hale of the Massachusetts Institute of Technology noted in the same journal issue that eight languages on which he had done fieldwork had since passed into extinction.", "ok": true}, {"t": "Unless scientists and community leaders directed a worldwide effort to stabilize the decline of local languages, he warned, nine tenths of the linguistic diversity of humankind would probably be doomed to extinction.", "ok": false}, {"t": "A 1990 survey in Australia found that 70 of the 90 surviving Aboriginal languages were no longer used regularly by all age groups.", "ok": false}, {"t": "The same was true for all but 20 of the 175 Native American languages spoken or remembered in the US, Krauss told a congressional panel in 1992.", "ok": false}], "pairs": ["Experienced the loss of languages he had worked on = eight languages on which he had done fieldwork had since passed into extinction"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Nicholas Ostler"}, {"k": "B", "t": "Michael Krauss"}, {"k": "D", "t": "Sarah G. Thomason"}, {"k": "E", "t": "Kenneth L. Hale"}, {"k": "F", "t": "Douglas H. Whalen"}], "ans": "E"}, "why": ""}, {"q": 37, "question": "Raised funds for language research in England", "options": [{"t": "\"Six years ago,\" recalls Douglas H. Whalen of Yale University, \"when I asked linguists who was raising money to deal with these problems, I mostly got blank stares.", "ok": false}, {"t": "In the five years to 2001 they were able to collect only $80,000 for research grants.", "ok": false}, {"t": "\"You would think that there would be some organized response to this dire situation—some attempt to determine which languages can be saved and which should be documented before they disappear,\" says Sarah G. Thomason, a linguist at the University of Michigan at Ann Arbor.", "ok": false}, {"t": "A similar foundation in England, directed by Nicholas Ostler, has raised just $8,000 since 1995.", "ok": true}], "pairs": ["Raised funds for language research = has raised just $8,000 since 1995"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Nicholas Ostler"}, {"k": "C", "t": "Joseph E. Grimes"}, {"k": "D", "t": "Sarah G. Thomason"}, {"k": "E", "t": "Kenneth L. Hale"}, {"k": "F", "t": "Douglas H. Whalen"}], "ans": "A"}, "why": ""}, {"q": 38, "question": "Pointed out that not enough had been done to save languages until recently", "options": [{"t": "It is only recently that it has become fashionable enough to work on endangered languages.", "ok": false}, {"t": "Despite the near constant buzz in linguistics about endangered languages over the past 10 years, the field has accomplished depressingly little.", "ok": true}, {"t": "So, Whalen and a few other linguists founded the Endangered Languages Fund.", "ok": false}, {"t": "\"You would think that there would be some organized response to this dire situation—some attempt to determine which languages can be saved and which should be documented before they disappear,\" says Sarah G. Thomason, a linguist at the University of Michigan at Ann Arbor.", "ok": false}], "pairs": ["not enough had been done to save languages = the field has accomplished depressingly little", "until recently = It is only recently that it has become fashionable enough"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Nicholas Ostler"}, {"k": "B", "t": "Michael Krauss"}, {"k": "C", "t": "Joseph E. Grimes"}, {"k": "D", "t": "Sarah G. Thomason"}, {"k": "F", "t": "Douglas H. Whalen"}], "ans": "D"}, "why": ""}, {"q": 39, "question": "What is the real result of the master-apprentice program sponsored by the Ford Foundation?", "options": [{"t": "But at least we prolong the survival of the language.", "ok": true}, {"t": "Its contributions helped to reinvigorate a master-apprentice program created in 1992 by Leanne Hinton of Berkeley and Native Americans worried about the imminent demise of about 50 indigenous languages in California.", "ok": false}, {"t": "It has created a multimedia archive at the Max Planck Institute for Psycholinguistics in the Netherlands that can house recordings, grammars, dictionaries and other data on endangered languages.", "ok": false}, {"t": "So far about 5 teams have completed the program, Hinton says, transmitting at least some knowledge of 25 languages.", "ok": false}], "pairs": ["The date on which languages die out is postponed = at least we prolong the survival of the language", "Some endangered languages are revived ≠ too early to call this language revitalization"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "Children are taught how to speak native languages."}, {"k": "B", "t": "Some endangered languages in California are revived."}, {"k": "C", "t": "The date on which some endangered languages will die out is postponed."}, {"k": "D", "t": "Communication between students increases."}], "ans": "C"}, "why": ""}, {"q": 40, "question": "What should speakers of majority languages do, according to the last paragraph?", "options": [{"t": "Even uneducated people can learn several languages, as long as they start as children.", "ok": false}, {"t": "It is no coincidence that these are the areas where languages are disappearing the fastest.", "ok": false}, {"t": "The first step in saving dying languages is to persuade the world's majorities to allow the minorities among them to speak with their own voices.", "ok": true}, {"t": "To fill the archive, the foundation has dispatched field linguists to document Aweti (100 or so speakers in Brazil), Ega (about 300 speakers in Ivory Coast), Waima'a (a few hundred speakers in East Timor), and a dozen or so other languages unlikely to survive the century.", "ok": false}], "pairs": ["be more tolerant of speakers of minority languages = persuade the world's majorities to allow the minorities among them to speak with their own voices"], "kind": "Multiple choice", "answer": "D", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "They should teach their children endangered languages."}, {"k": "B", "t": "They should learn at least four languages."}, {"k": "C", "t": "They should show loyalty to a dying language."}, {"k": "D", "t": "They should be more tolerant of speakers of minority languages."}], "ans": "D"}, "why": ""}], "paraphrase": [{"q": "Potential threat to minority languages", "p": "nine tenths of the linguistic diversity of humankind would probably be doomed to extinction", "rel": "=", "note": "", "n": "27"}, {"q": "Value of minority languages to linguists", "p": "there is scientific self-interest", "rel": "=", "note": "", "n": "28"}, {"q": "Value of minority languages", "p": "the wider the portfolio of languages you study, the more likely you are to get the right answers", "rel": "=", "note": "", "n": "28"}, {"q": "Positive gains in protection efforts", "p": "there are encouraging signs that the field has turned a corner", "rel": "=", "note": "", "n": "29"}, {"q": "Inadequate data", "p": "there is little or no record of their grammar, vocabulary, pronunciation or use in daily life", "rel": "=", "note": "", "n": "30"}, {"q": "Uncertainty about the success of native language programs", "p": "there seems to be no way to predict with certainty what will work where", "rel": "=", "note": "", "n": "31"}, {"q": "Lack of confidence among speakers", "p": "the speakers begin to have collective doubts about the usefulness of language loyalty", "rel": "=", "note": "", "n": "32"}, {"q": "Consensus", "p": "Linguists agree that ultimately", "rel": "=", "note": "", "n": "33"}, {"q": "an initial recommendation", "p": "The first step in saving dying languages", "rel": "=", "note": "", "n": "33"}, {"q": "success of a language conservation practice", "p": "with some success", "rel": "=", "note": "", "n": "34"}, {"q": "Reported on", "p": "reports Joseph E. Grimes", "rel": "=", "note": "", "n": "34"}, {"q": "Predicted that many languages would disappear", "p": "his prediction that half the 6,000 or so languages", "rel": "=", "note": "", "n": "35"}, {"q": "soon", "p": "within a century", "rel": "=", "note": "", "n": "35"}, {"q": "Experienced the loss of languages he had worked on", "p": "eight languages on which he had done fieldwork had since passed into extinction", "rel": "=", "note": "", "n": "36"}, {"q": "Raised funds for language research", "p": "has raised just $8,000 since 1995", "rel": "=", "note": "", "n": "37"}, {"q": "not enough had been done to save languages", "p": "the field has accomplished depressingly little", "rel": "=", "note": "", "n": "38"}, {"q": "until recently", "p": "It is only recently that it has become fashionable enough", "rel": "=", "note": "", "n": "38"}, {"q": "The date on which languages die out is postponed", "p": "at least we prolong the survival of the language", "rel": "=", "note": "", "n": "39"}, {"q": "Some endangered languages are revived", "p": "too early to call this language revitalization", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "39"}, {"q": "be more tolerant of speakers of minority languages", "p": "persuade the world's majorities to allow the minorities among them to speak with their own voices", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "uttered", "pos": "verb", "loc": "A", "d": "spoken aloud; said", "uz": "aytilgan, talaffuz qilingan", "ex": "Not a word was uttered during the long meeting.", "form": "uttered"}, {"w": "doomed to extinction", "pos": "collocation", "loc": "A", "d": "certain to disappear completely in the future", "uz": "yo'qolib ketishga mahkum", "ex": "Many rare frogs are doomed to extinction without protection.", "form": "doomed to extinction"}, {"w": "educated guess", "pos": "collocation", "loc": "A", "d": "an estimate based on knowledge and experience", "uz": "bilimga asoslangan taxmin", "ex": "The engineer made an educated guess about the cause of failure.", "form": "educated guess"}, {"w": "fieldwork", "pos": "noun", "loc": "A", "d": "research done in the real world, not in a laboratory", "uz": "dala tadqiqoti", "ex": "Her fieldwork in the mountains lasted almost two years.", "form": "fieldwork"}, {"w": "hardwired", "pos": "adjective", "loc": "B", "d": "built into the brain as an automatic, inborn feature", "uz": "tug'ma, miyaga o'rnashgan", "ex": "Some fears seem to be hardwired in all humans.", "form": "hardwired"}, {"w": "dire", "pos": "adjective", "loc": "C", "d": "extremely serious or bad", "uz": "juda og'ir, achinarli", "ex": "The refugees were living in dire conditions.", "form": "dire"}, {"w": "blank stares", "pos": "collocation", "loc": "C", "d": "looks showing that someone does not understand or react", "uz": "tushunmagan qarashlar", "ex": "My question was met with blank stares from the class.", "form": "blank stares"}, {"w": "turned a corner", "pos": "idiom", "loc": "D", "d": "passed a difficult point and started to improve", "uz": "yaxshilanish tomon burilish yasadi", "ex": "After two bad years, the company has finally turned a corner.", "form": "turned a corner"}, {"w": "reinvigorate", "pos": "verb", "loc": "D", "d": "to give new energy or strength to something", "uz": "qayta jonlantirmoq", "ex": "The new manager hopes to reinvigorate the struggling team.", "form": "reinvigorate"}, {"w": "demise", "pos": "noun", "loc": "D", "d": "the end or failure of something that existed for a long time", "uz": "barham topish, inqiroz", "ex": "The demise of the local newspaper saddened many readers.", "form": "demise"}, {"w": "a drop in the sea", "pos": "idiom", "loc": "E", "d": "a very small amount compared with what is needed", "uz": "dengizdagi tomchi, juda kam hissa", "ex": "Her donation was a drop in the sea, but it helped.", "form": "a drop in the sea"}, {"w": "astute", "pos": "adjective", "loc": "E", "d": "clever and quick to understand situations", "uz": "zukko, sezgir", "ex": "He is an astute observer of human behaviour.", "form": "astute"}, {"w": "immersed", "pos": "verb", "loc": "F", "d": "completely involved in or surrounded by something", "uz": "to'liq g'arq bo'lgan, sho'ng'igan", "ex": "Students were immersed in English for the whole summer.", "form": "immersed"}, {"w": "stabilised", "pos": "verb", "loc": "F", "d": "stopped changing or falling and became steady", "uz": "barqarorlashdi", "ex": "After the crisis, prices slowly stabilised.", "form": "stabilised"}, {"w": "inferior", "pos": "adjective", "loc": "G", "d": "lower in quality, rank or importance than another", "uz": "past, kam darajali", "ex": "No child should be made to feel inferior to others.", "form": "inferior"}, {"w": "pick up on", "pos": "phrasal verb", "loc": "G", "d": "notice or become aware of something not stated openly", "uz": "sezib qolmoq, payqamoq", "ex": "Children quickly pick up on tension between their parents.", "form": "pick up on"}, {"w": "multilingualism", "pos": "noun", "loc": "H", "d": "the ability to use several languages", "uz": "ko'p tillilik", "ex": "Multilingualism is normal in many parts of West Africa.", "form": "Multilingualism"}, {"w": "gut reaction", "pos": "collocation", "loc": "H", "d": "an immediate emotional response without careful thought", "uz": "ichki tuyg'u, birinchi taassurot", "ex": "My gut reaction was to refuse the offer at once.", "form": "gut reaction"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

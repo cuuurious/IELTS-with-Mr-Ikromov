@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 36 / Minds of / American businesses / Literacy and</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 36 / Minds of / American businesses / Literacy and</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">Minds of their own</div><div class="passage-subtitle">Virginia Morell explains why animals are smarter than you think.</div><p data-para="1"><span class="sent" id="s0_0">In 1977, Irene Pepperberg, a recent graduate of Harvard University, brought a one-year-old African gray parrot named Alex into her laboratory to start teaching him to reproduce the sounds of the English language.</span> <span class="sent" id="s0_1">&#x27;I thought if he eventually learned to communicate, I could ask him questions about how he sees the world.&#x27;</span></p><p data-para="2"><span class="sent" id="s0_2">When Pepperberg began her dialog with Alex, many scientists believed animals were incapable of any thought.</span> <span class="sent" id="s0_3">They were simply machines, robots programmed to react to stimuli but lacking the ability to think or feel.</span> <span class="sent" id="s0_4">Although most pet owners would argue otherwise, their claims are highly controversial.</span> <span class="sent" id="s0_5">Gut instinct is not science and it is all too easy to project human thoughts and feelings onto another creature.</span> <span class="sent" id="s0_6">How, then, does a scientist prove that an animal is capable of thinking – that it is able to acquire information about the world and act on it?</span></p><p data-para="3"><span class="sent" id="s0_7">&#x27;That&#x27;s why I started my studies with Alex,&#x27; Pepperberg explained when I interviewed her.</span> <span class="sent" id="s0_8">She was seated at her desk in her laboratory at Brandeis University in Massachusetts, while Alex perched on top of his cage.</span> <span class="sent" id="s0_9">They were clearly a team and because of their work, the notion that animals can think is no longer so fanciful.</span></p><p data-para="4"><span class="sent" id="s0_10">Certain skills are considered key signs of higher mental abilities: a grasp of grammar and symbols, self-awareness, good memory, understanding others&#x27; motives, imitating others, and being creative.</span> <span class="sent" id="s0_11">Bit by bit, in ingenious experiments, researchers have documented these talents in other species, gradually chipping away at what we thought made human beings distinctive, while offering a glimpse of where our own abilities came from: sheep can recognize faces; chimpanzees use a variety of tools to probe termite mounds and even use weapons to hunt small mammals; dolphins can imitate human postures, and Alex – the parrot – turned out to be a surprisingly good talker.</span></p><p data-para="5"><span class="sent" id="s0_12">Thirty years after the Alex studies began, Pepperberg and a changing collection of assistants were still giving him English lessons.</span> <span class="sent" id="s0_13">The humans, along with two younger parrots, also served as Alex&#x27;s flock, providing the social input all parrots crave.</span> <span class="sent" id="s0_14">Like any flock, this one – as small as it was – had its share of drama.</span> <span class="sent" id="s0_15">Alex dominated his fellow parrots, acted huffy at times around Pepperberg, and barely tolerated the other humans.</span></p><p data-para="6"><span class="sent" id="s0_16">Pepperberg bought Alex in a Chicago pet store.</span> <span class="sent" id="s0_17">She let someone working in the store pick him out because she didn&#x27;t want other scientists saying later that she&#x27;d deliberately chosen a bird that was especially intelligent for her work.</span> <span class="sent" id="s0_18">Given that a parrot&#x27;s brain is the size of a walnut, most researchers thought Pepperberg&#x27;s interspecies communication study would be futile.</span> <span class="sent" id="s0_19">&#x27;Some people actually called me crazy for trying this with Alex,&#x27; she said.</span> <span class="sent" id="s0_20">&#x27;Scientists thought that chimpanzees were better subjects, although, of course, they can&#x27;t speak.&#x27;</span></p><p data-para="7"><span class="sent" id="s0_21">Under Pepperberg&#x27;s patient tutelage, Alex learned how to use his vocal tract to imitate almost one hundred English words, including the sounds for a variety of foods.</span> <span class="sent" id="s0_22">Alex could also count to six and was learning the sounds for seven and eight.</span></p><p data-para="8"><span class="sent" id="s0_23">&#x27;I&#x27;m sure he already knows both numbers,&#x27; Pepperberg said.</span> <span class="sent" id="s0_24">&#x27;But he&#x27;s still learning to say the words.</span> <span class="sent" id="s0_25">It takes far longer to teach him certain sounds than I ever imagined but I don&#x27;t have to make him practice.&#x27;</span></p><p data-para="9"><span class="sent" id="s0_26">It sounded a bit mad, the idea of a bird having lessons to practice, and willingly doing it.</span> <span class="sent" id="s0_27">But after listening to and watching Alex, it was difficult to argue with Pepperberg&#x27;s explanation for his behaviors.</span> <span class="sent" id="s0_28">She wasn&#x27;t handing him any treats to get him to say the sounds.</span></p><p data-para="10"><span class="sent" id="s0_29">&#x27;He has to hear the words over and over before he can correctly imitate them,&#x27; Pepperberg said, after pronouncing &#x27;seven&#x27; for Alex a dozen times.</span> <span class="sent" id="s0_30">&#x27;I&#x27;m not trying to see if Alex can learn a human language.</span> <span class="sent" id="s0_31">That&#x27;s never been the point.</span> <span class="sent" id="s0_32">My plan always was to use his imitative skills to get a better understanding of avian cognition.&#x27;</span></p><p data-para="11"><span class="sent" id="s0_33">In other words, because Alex was able to produce a close approximation of the sounds of some English words, Pepperberg could ask him questions about how he understood the world.</span> <span class="sent" id="s0_34">To show exactly what Alex could do, Pepperberg took him from his cage and carried him to a wooden perch in the middle of the room.</span> <span class="sent" id="s0_35">She then retrieved a green key and a small green cup from a basket.</span> <span class="sent" id="s0_36">She held up the two items to Alex.</span></p><p data-para="12"><span class="sent" id="s0_37">&#x27;What&#x27;s the same?&#x27; she asked.</span></p><p data-para="13"><span class="sent" id="s0_38">Without hesitation, Alex&#x27;s beak opened: &#x27;Color&#x27;.</span></p><p data-para="14"><span class="sent" id="s0_39">&#x27;What&#x27;s different?</span> <span class="sent" id="s0_40">Pepperberg asked.</span></p><p data-para="15"><span class="sent" id="s0_41">&#x27;Shape,&#x27; Alex said.</span></p><p data-para="16"><span class="sent" id="s0_42">For the next 20 minutes, Alex ran through his tests.</span> <span class="sent" id="s0_43">He did some simple arithmetic, such as adding up yellow blocks among a pile of mixed hues.</span> <span class="sent" id="s0_44">And then, as if to offer final proof of the mind inside his bird&#x27;s brain, Alex spoke up.</span> <span class="sent" id="s0_45">&#x27;Talk clearly!&#x27; he commanded, when one of the younger birds Pepperberg was also teaching gave the wrong pronunciation of the word &#x27;green&#x27;.</span></p><p data-para="17"><span class="sent" id="s0_46">&#x27;Don&#x27;t try to be smart,&#x27; Pepperberg said, shaking her head.</span> <span class="sent" id="s0_47">&#x27;He gets bored, so he interrupts the others.</span> <span class="sent" id="s0_48">He&#x27;s like a teenager; he&#x27;s moody.&#x27;</span></p><p data-para="18"><span class="sent" id="s0_49">Many of Alex&#x27;s cognitive skills, such as his ability to understand the concepts of same and different, are generally ascribed only to higher mammals, particularly primates.</span></p><p data-para="19"><span class="sent" id="s0_50">&#x27;But parrots, like great apes, live a long time in complex societies.</span> <span class="sent" id="s0_51">And like primates, these birds must keep track of changing relationships and environments.</span> <span class="sent" id="s0_52">They need to be able to distinguish when fruit is ripe or unripe,&#x27; Pepperberg noted.</span> <span class="sent" id="s0_53">&#x27;They also need to categorize things – what is edible, what isn&#x27;t – and to recognize predators amongst the many species they encounter.</span> <span class="sent" id="s0_54">And it helps to have a concept of numbers to keep track of your flock.</span> <span class="sent" id="s0_55">A long-lived bird can&#x27;t do all of this with instinct; cognition must be involved.&#x27;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,5" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;5</div><button type="button" class="flag-toggle" data-flagrange="1,5" title="Flag for review" aria-label="Flag questions 1-5">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–5 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Alex had a relatively wide vocabulary range at the start of Pepperberg&#x27;s experiment.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">When Pepperberg started talking to Alex, he seemed afraid of humans.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">When Pepperberg started her experiment, the cognitive skills of animals were widely acknowledged in the scientific community.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">The ability to remember things for a long time is thought to indicate a higher mental capacity.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">It has taken scientists a great deal of research to demonstrate that humans share certain abilities with other species.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="6,10" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 6&ndash;10</div><button type="button" class="flag-toggle" data-flagrange="6,10" title="Flag for review" aria-label="Flag questions 6-10">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>NO MORE THAN TWO WORDS AND</b>/<b>OR A NUMBER</b> from the</p><p>passage for each answer.</p><p>Write your answers in boxes 6–10 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">The Alex studies</div><div class="notes-sub"><b>The start of the study</b></div><ul><li>Alex was selected by a shop assistant to avoid criticism of Pepperberg for choosing a bird that was particularly <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"></li><li>scientists were doubtful because Alex&#x27;s <span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> is small</li><li>scientists thought birds were not a good subject – better to study</li><li style="list-style:none"><span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> instead</li></ul><div class="notes-sub"><b>Alex&#x27;s training</b></div><ul><li>number of words Alex can produce in English: approximately</li><li style="list-style:none"><span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"></li><li>Alex willingly practises sounds – not given treats</li><li>Pepperberg is not trying to teach Alex a human language – her aim is to learn about <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"></li></ul></div></div><div class="q-group" data-flagrange="11,13" data-gid="p0g2"><div class="q-group-header"><div class="q-group-title">Questions 11&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="11,13" title="Flag for review" aria-label="Flag questions 11-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 11–13 on your answer sheet.</p></div><div class="q-row"><span class="q-num">11</span><span>The colour of the two objects shown to Alex was <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">12</span><span>Alex recognised a <span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"> mistake in a younger bird&#x27;s speech.</span></div><div class="q-row"><span class="q-num">13</span><span>Pepperberg says Alex behaves like a <span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"></span></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">American businesses aim to support employees and their families</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">Companies of all sizes in the US recognize the importance of family-friendly policies, thanks in large part to the increasing number of people-centered entrepreneurs and company CEOs.</span> <span class="sent" id="s1_1">Many of these go into business themselves as a result of negative experiences they have had in the workplace.</span> <span class="sent" id="s1_2">So says Jennifer West, Managing Director of the Ohio-based Business Research Center, a non-profit organization dedicated to studying work-life balance.</span> <span class="sent" id="s1_3">&#x27;Taking care of employees is a key part of any recruitment and retention strategy,&#x27; says West.</span> <span class="sent" id="s1_4">&#x27;Employers who care about their employees and help them grow take into account the full range of issues and external pressures that employees have and arrange things so that people can manage their lives.</span> <span class="sent" id="s1_5">These considerations are a conscious part of how people-centered bosses organize their practices and strategies.&#x27;</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_6">One employer who exemplifies this philosophy is Stephen Harper, co-owner and CEO of Plastic Solutions in California.</span> <span class="sent" id="s1_7">His company manufactures custom plastics, mainly for medical devices, and offers engineering solutions for other plastics needs.</span> <span class="sent" id="s1_8">Harper believes in having employees who understand the business.</span> <span class="sent" id="s1_9">That&#x27;s why every two weeks, when his employees receive their salary, they also get an update about the business, including who their new customers are, what successes they&#x27;ve had, and what challenges they are facing.</span> <span class="sent" id="s1_10">Harper also includes a &#x27;coaching&#x27; section.</span> <span class="sent" id="s1_11">This addresses issues like gossip, which employees sometimes indulge in around the water cooler or the rest rooms, and which can negatively impact on the morale of staff.</span> <span class="sent" id="s1_12">He encourages people to work their way up in the company, and pays, at least partially, for educational opportunities and textbooks.</span> <span class="sent" id="s1_13">His employees line up to attend his monthly invitation-only Business Pragmatics seminar, in which communication and other vital skills are taught, along with ethics and workplace morals and philosophy.</span> <span class="sent" id="s1_14">The structure of his company is very family-friendly, and includes a regular Open House day for employees&#x27; families where, among other things, kids can experiment with the company&#x27;s machines that manufacture their products and so on.</span> <span class="sent" id="s1_15">The Harper philosophy pays off.</span> <span class="sent" id="s1_16">Attrition at the company is low, and many employees remain with the company for much of their career.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_17">In Vermont, the Margaret Mills Corporation also strives to be people-centered.</span> <span class="sent" id="s1_18">It is a third-generation, family-run business that sells children&#x27;s wooden toys internationally, and the company&#x27;s founder (Margaret Mills) understood all too well the challenges of raising a family while running a business.</span> <span class="sent" id="s1_19">Like many other like-minded companies, the Margaret Mills Corporation offers liberal leave, flexi-time, good health and retirement packages, and other benefits.</span> <span class="sent" id="s1_20">The corporation also allows workers to have their children dropped off when school is over, or to spend time with them during the vacations.</span> <span class="sent" id="s1_21">Annual Christmas and summer parties are standard, and this year, to celebrate an especially strong performance, the company took all employees and their families on a 2-day trip to Montreal, Canada.</span> <span class="sent" id="s1_22">Says Victor Davies, Human Resources Director, &#x27;We enable employees to maintain equilibrium between work and home, a policy which ultimately results in a more productive and stable workforce.</span> <span class="sent" id="s1_23">It works – this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_24">For Hazel Gibbs, CEO of Disposal System Inc. in Houston, Texas, a waste disposal and environmental cleanup and consultancy firm, the bottom line is keeping her business going.</span> <span class="sent" id="s1_25">But she realized that it takes a certain kind of mutuality to do that.</span> <span class="sent" id="s1_26">&#x27;I&#x27;m not altruistic,&#x27; she says, &#x27;but if everyone understands what it takes to be in business, that&#x27;s good for all of us.</span> <span class="sent" id="s1_27">That&#x27;s why she works hard to ensure that everyone, from managers to workers, realizes that they count.</span> <span class="sent" id="s1_28">&#x27;It&#x27;s not about &quot;us&quot; and &quot;them&quot;, we are a team,&#x27; Gibbs says.</span> <span class="sent" id="s1_29">&#x27;When our employees understand what it takes to keep business going, then it works and we can accommodate each other&#x27;s needs.</span> <span class="sent" id="s1_30">Gibbs sometimes struggles with being taken seriously, but she sees this as a long-term challenge.</span> <span class="sent" id="s1_31">&#x27;Working mothers still need to be taken more seriously, and so do mothers who are business owners.</span> <span class="sent" id="s1_32">She has two children of her own to think about.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_33">Family-friendly entrepreneurs are becoming more commonplace internationally, and they clearly influence those companies which have so far been slow to accommodate employee needs.</span> <span class="sent" id="s1_34">According to West, it is already possible to document the dwindling workforces of these latter businesses, or the migration of labor to more family-friendly ones.</span> <span class="sent" id="s1_35">What is more, parents are important consumers and investors who can change buying practices.</span> <span class="sent" id="s1_36">Further, in the public policy arena, multinational corporations and aid agencies are beginning to recognize the need to integrate social and economic policy and practice.</span> <span class="sent" id="s1_37">Family-friendly employers are creating a groundswell of awareness that can only result in changing business practices.</span> <span class="sent" id="s1_38">And as Hazel Gibbs says, when that happens, &#x27;you&#x27;ve got it working.&#x27;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,18" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;18</div><button type="button" class="flag-toggle" data-flagrange="14,18" title="Flag for review" aria-label="Flag questions 14-18">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has five paragraphs, A–E.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–E, in boxes 14–18 on your answer sheet.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">a description of a company that provides financial assistance for employees to continue their learning</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">a mention of worldwide trends in the changing attitudes of business customers</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">details about years of continuous service by employees at one company</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">a reference to the reason why many people-centred workers first start their own businesses</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">18</span><span class="q-stem">a comment about how certain groups are still fighting for respect in the business world</span><select class="q-select" name="q18"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div></div><div class="q-group" data-flagrange="19,21" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 19&ndash;21</div><button type="button" class="flag-toggle" data-flagrange="19,21" title="Flag for review" aria-label="Flag questions 19-21">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements and the list of business people below.</p><p>Match each statement with the correct business person, A–E.</p><p>Write the correct letter, A–E, in boxes 19–21 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of Business People</div><span class="wb-item"><span class="wb-letter">A</span> Jennifer West</span><span class="wb-item"><span class="wb-letter">B</span> Stephen Harper</span><span class="wb-item"><span class="wb-letter">C</span> Margaret Mills</span><span class="wb-item"><span class="wb-letter">D</span> Victor Davies</span><span class="wb-item"><span class="wb-letter">E</span> Hazel Gibbs</span></div><div class="q-row"><span class="q-num">19</span><span class="q-stem">Employees should be kept informed about business development and performance.</span><select class="q-select" name="q19"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">20</span><span class="q-stem">Work output increases when employees have a good balance between company and family responsibilities.</span><select class="q-select" name="q20"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div><div class="q-row"><span class="q-num">21</span><span class="q-stem">It is critical to business success that all company members recognise that they matter.</span><select class="q-select" name="q21"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div></div><div class="q-group" data-flagrange="22,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 22&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="22,26" title="Flag for review" aria-label="Flag questions 22-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 22–26 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Family-friendly practices at Plastic Solutions and the Margaret Mills</div><div style="margin-bottom:.5rem">Corporation At Plastic Solutions, a bi-weekly update is issued to workers at the same time as their pay. This includes a section dealing with problems such as <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"> in communal areas of the workplace. The CEO also arranges a regular <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"> for employees, which is in great demand. Finally, employees&#x27; families are invited to company open days, when they are allowed to try out the <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false">. The Margaret Mills Corporation also allows employees a great deal of flexibility with their children, who can be brought to the office once <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false"> has finished. Mills likes to reward employees for company performance with a party or even a <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"> for families. There is considerable evidence that these practices are having the desired effect.</div></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Literacy and Rural Communities in Australia</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s2_0">Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.</span> <span class="sent" id="s2_1">Social costs, of course, differ at different life stages.</span> <span class="sent" id="s2_2">For young people, inadequate literacy skills can affect their transition from school to work; for older people, lack of literacy skills can reduce their employment options as well as reducing their effectiveness or ability in the workplace.</span> <span class="sent" id="s2_3">Assuming life stage differences remain much the same in both city and country areas, it is still possible to make some general comments about differences between urban and rural areas in Australia.</span> <span class="sent" id="s2_4">It is important, however, to remind the reader of the considerable diversity of rural areas.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s2_5">It is not unusual for males in rural areas to have left school early, or to have left with inadequate literacy skills, and then to move onto farms.</span> <span class="sent" id="s2_6">This can be due to a number of causes, among which are family pressure or desire to follow the father into the family business, learning difficulties or unhappiness at school, or even peer-group pressure from other young males who have decided to work on their family farms.</span> <span class="sent" id="s2_7">There are numerous areas where literacy skills are required in farming, such as reading directions for (often dangerous) sprays, the mixing of animal feed, the mixing of fuel for machinery, care of machinery, care of animals, and understanding letters from government authorities.</span> <span class="sent" id="s2_8">In addition, there are the numerous tasks associated with running a business.</span> <span class="sent" id="s2_9">Although the responsibility for the business side of the farm may be carried by a female partner with more adequate literacy skills, there remain a number of areas where inadequate literacy skills in males can lead to difficult or dangerous situations.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s2_10">It is difficult to estimate the social costs of low literacy levels for women in non-metropolitan areas.</span> <span class="sent" id="s2_11">Some research in this area has shown that women leave school early and travel to the city to find work: women&#x27;s employment options are limited generally, but for women with low literacy skills there is often no alternative to dependence on family, partner or government benefits.</span> <span class="sent" id="s2_12">Also, according to a 1989 survey, about ten per cent of women living in rural areas were born outside Australia.</span> <span class="sent" id="s2_13">We can assume that a fair proportion of these have literacy needs.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s2_14">It is suggested that in times of hardship in farming areas, when there is the threat or actuality of banks foreclosing on mortgages, inadequate literacy skills add to the normal stresses.</span> <span class="sent" id="s2_15">Farmers and others with inadequate literacy skills affected by a rural down-turn have fewer employment alternatives, less flexibility, perhaps fewer support mechanisms, and therefore more strains both personally and with a partner.</span> <span class="sent" id="s2_16">It is not inconceivable that the additional stress contributes to marriage breakdown or suicide.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s2_17">Problems can become acute in regional towns or areas which are based on one or two major industries.</span> <span class="sent" id="s2_18">A proportion of manual and construction workers and trade assistants in such towns have low levels of literacy, but are able to find employment so long as new projects and development continue.</span> <span class="sent" id="s2_19">Shift work and relatively high wages make such work relatively attractive.</span> <span class="sent" id="s2_20">Once the development is completed, however, there are few alternative options.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s2_21">In some small communities, there is a tendency for the problem of poor literacy skills to be continued with the next generation, thereby repeating the problem.</span> <span class="sent" id="s2_22">Economic hardship, the need for children to travel (or be driven) long distances to school, and the low value placed on literacy may mean that helping with farm work is seen as more important than regular attendance at school.</span> <span class="sent" id="s2_23">More children in rural areas than urban areas tend to leave school without completing a full secondary education, despite increasing school retention rates generally, although there is considerable variation between rural areas.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s2_24">The closeness of some rural communities and country towns sometimes means that people are reluctant to admit their literacy problems.</span> <span class="sent" id="s2_25">This is generally the case in both city and country locations, although cities at least do offer some anonymity for people who make the decision to start a literacy class.</span> <span class="sent" id="s2_26">In a small country town or rural area, going to a class becomes much more public.</span> <span class="sent" id="s2_27">Tutors in country areas have reported that some students travelled long distances to another town in order to avoid having to reveal their &#x27;problem&#x27; in the local area.</span> <span class="sent" id="s2_28">Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,32" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;32</div><button type="button" class="flag-toggle" data-flagrange="27,32" title="Flag for review" aria-label="Flag questions 27-32">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the views of the writer in Reading Passage 3?</p><p>In boxes 27–32 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">There is a lack of factual information on literacy levels in rural Australia.</span><select class="q-select" name="q27"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">The rural areas of Australia are very similar to each other.</span><select class="q-select" name="q28"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">Most businesses in rural areas are family-run.</span><select class="q-select" name="q29"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">Women who can read and write have a wider choice of jobs in rural areas.</span><select class="q-select" name="q30"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">In some rural areas, industrial jobs are popular.</span><select class="q-select" name="q31"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">Children in urban areas are likely to stay on at school longer than children in rural areas.</span><select class="q-select" name="q32"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="33,37" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 33&ndash;37</div><button type="button" class="flag-toggle" data-flagrange="33,37" title="Flag for review" aria-label="Flag questions 33-37">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 3 has seven paragraphs, A–G.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–G, in boxes 33–37 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">how an economic recession may aggravate the problems caused by low levels of literacy</span><select class="q-select" name="q33"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">a reference to a measure which individuals may take to hide the fact that they have poor literacy skills</span><select class="q-select" name="q34"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">examples of things that rural workers may need to read</span><select class="q-select" name="q35"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">the ways literacy problems can affect people at different stages of their working life</span><select class="q-select" name="q36"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">a reference to youngsters encouraging each other to leave school early</span><select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div><div class="q-group" data-flagrange="38,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 38&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="38,40" title="Flag for review" aria-label="Flag questions 38-40">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>THREE</b> letters, A–G.</p><p>Write the correct letters in boxes 38–40 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>THREE</b> of the following areas are explored by the writer of this article?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="A"><span class="opt-letter">A</span><span>the effectiveness of tuition for literacy problems</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="B"><span class="opt-letter">B</span><span>how literacy problems can limit people&#x27;s career prospects</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="C"><span class="opt-letter">C</span><span>the effect of literacy problems on family mobility</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="D"><span class="opt-letter">D</span><span>factors that worsen the difficulties caused by literacy problems</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="E"><span class="opt-letter">E</span><span>how families had a low regard for literacy</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="F"><span class="opt-letter">F</span><span>how literacy levels among men compare with those of women</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="G"><span class="opt-letter">G</span><span>the probability of literacy levels rising in the future</span></label></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 36, "minutes": 60, "parts": [{"title": "Minds of their own", "short": "Minds of", "qstart": 1, "qend": 13}, {"title": "American businesses aim to support employees and their families", "short": "American businesses", "qstart": 14, "qend": 26}, {"title": "Literacy and Rural Communities in Australia", "short": "Literacy and", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["intelligent"], "group": "p0g1", "part": 1}, {"n": 7, "kind": "text", "ans": ["brain"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["chimpanzees", "chimpanzee"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["one hundred", "100"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["avian cognition"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["green"], "group": "p0g2", "part": 1}, {"n": 12, "kind": "text", "ans": ["pronunciation"], "group": "p0g2", "part": 1}, {"n": 13, "kind": "text", "ans": ["teenager", "teenagers"], "group": "p0g2", "part": 1}, {"n": 14, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "E", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "C", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "A", "group": "p1g0", "part": 2}, {"n": 18, "kind": "select", "ans": "D", "group": "p1g0", "part": 2}, {"n": 19, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 20, "kind": "select", "ans": "D", "group": "p1g1", "part": 2}, {"n": 21, "kind": "select", "ans": "E", "group": "p1g1", "part": 2}, {"n": 22, "kind": "text", "ans": ["gossip"], "group": "p1g2", "part": 2}, {"n": 23, "kind": "text", "ans": ["seminar"], "group": "p1g2", "part": 2}, {"n": 24, "kind": "text", "ans": ["machines", "machine"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["school"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["trip"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "select", "ans": "YES", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "NO", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "NOT GIVEN", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "YES", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "YES", "group": "p2g0", "part": 3}, {"n": 32, "kind": "select", "ans": "YES", "group": "p2g0", "part": 3}, {"n": 33, "kind": "select", "ans": "D", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "G", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "B", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "A", "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "B", "group": "p2g1", "part": 3}, {"n": 38, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 0, "groupAns": ["B", "D", "E"]}, {"n": 39, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 1, "groupAns": ["B", "D", "E"]}, {"n": 40, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 2, "groupAns": ["B", "D", "E"]}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_0", "2": "s0_15", "3": "s0_2", "4": "s0_10", "5": "s0_11", "6": "s0_17", "7": "s0_18", "8": "s0_20", "9": "s0_21", "10": "s0_30", "11": "s0_35", "12": "s0_45", "13": "s0_48", "14": "s1_12", "15": "s1_33", "16": "s1_23", "17": "s1_1", "18": "s1_31", "19": "s1_9", "20": "s1_22", "21": "s1_26", "22": "s1_9", "23": "s1_13", "24": "s1_14", "25": "s1_20", "26": "s1_21", "27": "s2_0", "28": "s2_4", "29": "s2_6", "30": "s2_11", "31": "s2_17", "32": "s2_23", "33": "s2_14", "34": "s2_24", "35": "s2_7", "36": "s2_1", "37": "s2_6", "38": "s2_2", "39": "s2_17", "40": "s2_22"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Alex had a relatively wide vocabulary range at the start of Pepperberg&#x27;s experiment.", "options": [{"t": "'He has to hear the words over and over before he can correctly imitate them,' Pepperberg said, after pronouncing 'seven' for Alex a dozen times.", "ok": false}, {"t": "Pepperberg bought Alex in a Chicago pet store.", "ok": false}, {"t": "In 1977, Irene Pepperberg, a recent graduate of Harvard University, brought a one-year-old African gray parrot named Alex into her laboratory to start teaching him to reproduce the sounds of the English language.", "ok": true}, {"t": "Thirty years after the Alex studies began, Pepperberg and a changing collection of assistants were still giving him English lessons.", "ok": false}], "pairs": ["a relatively wide vocabulary range at the start ? start teaching him to reproduce the sounds of the English language"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 2, "question": "When Pepperberg started talking to Alex, he seemed afraid of humans.", "options": [{"t": "The humans, along with two younger parrots, also served as Alex's flock, providing the social input all parrots crave.", "ok": false}, {"t": "Alex dominated his fellow parrots, acted huffy at times around Pepperberg, and barely tolerated the other humans.", "ok": true}, {"t": "'That's why I started my studies with Alex,' Pepperberg explained when I interviewed her.", "ok": false}, {"t": "Thirty years after the Alex studies began, Pepperberg and a changing collection of assistants were still giving him English lessons.", "ok": false}], "pairs": ["he seemed afraid of humans ? barely tolerated the other humans"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 3, "question": "When Pepperberg started her experiment, the cognitive skills of animals were widely acknowledged in the scientific community.", "options": [{"t": "Many of Alex's cognitive skills, such as his ability to understand the concepts of same and different, are generally ascribed only to higher mammals, particularly primates.", "ok": false}, {"t": "They were simply machines, robots programmed to react to stimuli but lacking the ability to think or feel.", "ok": false}, {"t": "'That's why I started my studies with Alex,' Pepperberg explained when I interviewed her.", "ok": false}, {"t": "When Pepperberg began her dialog with Alex, many scientists believed animals were incapable of any thought.", "ok": true}], "pairs": ["cognitive skills of animals were widely acknowledged ≠ many scientists believed animals were incapable of any thought", "When Pepperberg started her experiment = When Pepperberg began her dialog with Alex"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 4, "question": "The ability to remember things for a long time is thought to indicate a higher mental capacity.", "options": [{"t": "Certain skills are considered key signs of higher mental abilities: a grasp of grammar and symbols, self-awareness, good memory, understanding others' motives, imitating others, and being creative.", "ok": true}, {"t": "'But parrots, like great apes, live a long time in complex societies.", "ok": false}, {"t": "Many of Alex's cognitive skills, such as his ability to understand the concepts of same and different, are generally ascribed only to higher mammals, particularly primates.", "ok": false}, {"t": "'Scientists thought that chimpanzees were better subjects, although, of course, they can't speak.'", "ok": false}], "pairs": ["ability to remember things for a long time = good memory", "indicate a higher mental capacity = key signs of higher mental abilities"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 5, "question": "It has taken scientists a great deal of research to demonstrate that humans share certain abilities with other species.", "options": [{"t": "She let someone working in the store pick him out because she didn't want other scientists saying later that she'd deliberately chosen a bird that was especially intelligent for her work.", "ok": false}, {"t": "Certain skills are considered key signs of higher mental abilities: a grasp of grammar and symbols, self-awareness, good memory, understanding others' motives, imitating others, and being creative.", "ok": false}, {"t": "When Pepperberg began her dialog with Alex, many scientists believed animals were incapable of any thought.", "ok": false}, {"t": "Bit by bit, in ingenious experiments, researchers have documented these talents in other species, gradually chipping away at what we thought made human beings distinctive, while offering a glimpse of where our own abilities came from: sheep can recognize faces; chimpanzees use a variety of tools to probe termite mounds and even use weapons to hunt small mammals; dolphins can imitate human postures, and Alex – the parrot – turned out to be a surprisingly good talker.", "ok": true}], "pairs": ["a great deal of research = Bit by bit, in ingenious experiments, researchers have documented these talents in other species", "humans share certain abilities with other species = gradually chipping away at what we thought made human beings distinctive"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 6, "question": "choosing a bird that was particularly <b>.........<\/b>", "options": [{"t": "Pepperberg bought Alex in a Chicago pet store.", "ok": false}, {"t": "'Some people actually called me crazy for trying this with Alex,' she said.", "ok": false}, {"t": "'Scientists thought that chimpanzees were better subjects, although, of course, they can't speak.'", "ok": false}, {"t": "She let someone working in the store pick him out because she didn't want other scientists saying later that she'd deliberately chosen a bird that was especially intelligent for her work.", "ok": true}], "pairs": ["a bird that was particularly ___ = a bird that was especially intelligent", "to avoid criticism of Pepperberg = she didn't want other scientists saying later"], "kind": "Completion", "answer": "intelligent", "accept": ["intelligent"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 7, "question": "scientists were doubtful because Alex&#x27;s <b>.........<\/b> is small", "options": [{"t": "She let someone working in the store pick him out because she didn't want other scientists saying later that she'd deliberately chosen a bird that was especially intelligent for her work.", "ok": false}, {"t": "Pepperberg bought Alex in a Chicago pet store.", "ok": false}, {"t": "'Some people actually called me crazy for trying this with Alex,' she said.", "ok": false}, {"t": "Given that a parrot's brain is the size of a walnut, most researchers thought Pepperberg's interspecies communication study would be futile.", "ok": true}], "pairs": ["scientists were doubtful because Alex's ___ is small = a parrot's brain is the size of a walnut"], "kind": "Completion", "answer": "brain", "accept": ["brain"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 8, "question": "<b>.........<\/b> instead", "options": [{"t": "Given that a parrot's brain is the size of a walnut, most researchers thought Pepperberg's interspecies communication study would be futile.", "ok": false}, {"t": "'Some people actually called me crazy for trying this with Alex,' she said.", "ok": false}, {"t": "She let someone working in the store pick him out because she didn't want other scientists saying later that she'd deliberately chosen a bird that was especially intelligent for her work.", "ok": false}, {"t": "'Scientists thought that chimpanzees were better subjects, although, of course, they can't speak.'", "ok": true}], "pairs": ["better to study ___ instead = Scientists thought that chimpanzees were better subjects"], "kind": "Completion", "answer": "chimpanzees", "accept": ["chimpanzees", "chimpanzee"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 9, "question": "<b>.........<\/b>", "options": [{"t": "Under Pepperberg's patient tutelage, Alex learned how to use his vocal tract to imitate almost one hundred English words, including the sounds for a variety of foods.", "ok": true}, {"t": "Alex could also count to six and was learning the sounds for seven and eight.", "ok": false}, {"t": "My plan always was to use his imitative skills to get a better understanding of avian cognition.'", "ok": false}, {"t": "A long-lived bird can't do all of this with instinct; cognition must be involved.'", "ok": false}], "pairs": ["approximately ___ = almost one hundred English words"], "kind": "Completion", "answer": "one hundred", "accept": ["one hundred", "100"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 10, "question": "about <b>.........<\/b>", "options": [{"t": "'I'm not trying to see if Alex can learn a human language.", "ok": true}, {"t": "In 1977, Irene Pepperberg, a recent graduate of Harvard University, brought a one-year-old African gray parrot named Alex into her laboratory to start teaching him to reproduce the sounds of the English language.", "ok": false}, {"t": "'He has to hear the words over and over before he can correctly imitate them,' Pepperberg said, after pronouncing 'seven' for Alex a dozen times.", "ok": false}, {"t": "'Some people actually called me crazy for trying this with Alex,' she said.", "ok": false}], "pairs": ["her aim is to learn about ___ = get a better understanding of avian cognition", "not trying to teach Alex a human language = I'm not trying to see if Alex can learn a human language"], "kind": "Completion", "answer": "avian cognition", "accept": ["avian cognition"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 11, "question": "The colour of the two objects shown to Alex was <b>.........<\/b>", "options": [{"t": "She held up the two items to Alex.", "ok": false}, {"t": "In other words, because Alex was able to produce a close approximation of the sounds of some English words, Pepperberg could ask him questions about how he understood the world.", "ok": false}, {"t": "To show exactly what Alex could do, Pepperberg took him from his cage and carried him to a wooden perch in the middle of the room.", "ok": false}, {"t": "She then retrieved a green key and a small green cup from a basket.", "ok": true}], "pairs": ["The colour of the two objects = a green key and a small green cup"], "kind": "Completion", "answer": "green", "accept": ["green"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "Alex recognised a <b>.........<\/b> mistake in a younger bird&#x27;s speech.", "options": [{"t": "She let someone working in the store pick him out because she didn't want other scientists saying later that she'd deliberately chosen a bird that was especially intelligent for her work.", "ok": false}, {"t": "'Talk clearly!' he commanded, when one of the younger birds Pepperberg was also teaching gave the wrong pronunciation of the word 'green'.", "ok": true}, {"t": "For the next 20 minutes, Alex ran through his tests.", "ok": false}, {"t": "And then, as if to offer final proof of the mind inside his bird's brain, Alex spoke up.", "ok": false}], "pairs": ["recognised a ___ mistake = gave the wrong pronunciation of the word 'green'"], "kind": "Completion", "answer": "pronunciation", "accept": ["pronunciation"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "Pepperberg says Alex behaves like a <b>.........<\/b>", "options": [{"t": "'Don't try to be smart,' Pepperberg said, shaking her head.", "ok": false}, {"t": "'He has to hear the words over and over before he can correctly imitate them,' Pepperberg said, after pronouncing 'seven' for Alex a dozen times.", "ok": false}, {"t": "Alex dominated his fellow parrots, acted huffy at times around Pepperberg, and barely tolerated the other humans.", "ok": false}, {"t": "He's like a teenager; he's moody.'", "ok": true}], "pairs": ["behaves like a ___ = He's like a teenager; he's moody"], "kind": "Completion", "answer": "teenager", "accept": ["teenager", "teenagers"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "a relatively wide vocabulary range at the start", "p": "start teaching him to reproduce the sounds of the English language", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "1"}, {"q": "he seemed afraid of humans", "p": "barely tolerated the other humans", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "2"}, {"q": "cognitive skills of animals were widely acknowledged", "p": "many scientists believed animals were incapable of any thought", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "3"}, {"q": "When Pepperberg started her experiment", "p": "When Pepperberg began her dialog with Alex", "rel": "=", "note": "", "n": "3"}, {"q": "ability to remember things for a long time", "p": "good memory", "rel": "=", "note": "", "n": "4"}, {"q": "indicate a higher mental capacity", "p": "key signs of higher mental abilities", "rel": "=", "note": "", "n": "4"}, {"q": "a great deal of research", "p": "Bit by bit, in ingenious experiments, researchers have documented these talents in other species", "rel": "=", "note": "", "n": "5"}, {"q": "humans share certain abilities with other species", "p": "gradually chipping away at what we thought made human beings distinctive", "rel": "=", "note": "", "n": "5"}, {"q": "a bird that was particularly ___", "p": "a bird that was especially intelligent", "rel": "=", "note": "", "n": "6"}, {"q": "to avoid criticism of Pepperberg", "p": "she didn't want other scientists saying later", "rel": "=", "note": "", "n": "6"}, {"q": "scientists were doubtful because Alex's ___ is small", "p": "a parrot's brain is the size of a walnut", "rel": "=", "note": "", "n": "7"}, {"q": "better to study ___ instead", "p": "Scientists thought that chimpanzees were better subjects", "rel": "=", "note": "", "n": "8"}, {"q": "approximately ___", "p": "almost one hundred English words", "rel": "=", "note": "", "n": "9"}, {"q": "her aim is to learn about ___", "p": "get a better understanding of avian cognition", "rel": "=", "note": "", "n": "10"}, {"q": "not trying to teach Alex a human language", "p": "I'm not trying to see if Alex can learn a human language", "rel": "=", "note": "", "n": "10"}, {"q": "The colour of the two objects", "p": "a green key and a small green cup", "rel": "=", "note": "", "n": "11"}, {"q": "recognised a ___ mistake", "p": "gave the wrong pronunciation of the word 'green'", "rel": "=", "note": "", "n": "12"}, {"q": "behaves like a ___", "p": "He's like a teenager; he's moody", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "stimuli", "pos": "noun", "loc": "¶2", "d": "things that cause a reaction in a living thing", "uz": "ta'sirlovchilar, qo'zg'atuvchilar", "ex": "Plants respond to light and other stimuli in their environment.", "form": "stimuli"}, {"w": "Gut instinct", "pos": "collocation", "loc": "¶2", "d": "a strong natural feeling about something, without proof or reasoning", "uz": "ichki sezgi", "ex": "Gut instinct told her the offer was too good to be true.", "form": "Gut instinct"}, {"w": "fanciful", "pos": "adjective", "loc": "¶3", "d": "based on imagination rather than reality; unrealistic", "uz": "xayoliy, o'ylab topilgan", "ex": "His fanciful theory about ancient aliens convinced very few historians.", "form": "fanciful"}, {"w": "perched", "pos": "verb", "loc": "¶3", "d": "sat on the edge or top of something, especially a bird", "uz": "qo'nib turdi, o'tirgan", "ex": "A small owl perched silently on the garden fence.", "form": "perched"}, {"w": "a grasp of", "pos": "phrase", "loc": "¶4", "d": "a firm understanding of a subject or idea", "uz": "tushunish, egallash", "ex": "She has an impressive grasp of advanced statistics for her age.", "form": ""}, {"w": "Bit by bit", "pos": "idiom", "loc": "¶4", "d": "slowly and in small stages", "uz": "asta-sekin, bosqichma-bosqich", "ex": "Bit by bit, the old town was rebuilt after the earthquake.", "form": "Bit by bit"}, {"w": "ingenious", "pos": "adjective", "loc": "¶4", "d": "clever, original and full of imagination", "uz": "ziyrak, topqir", "ex": "The engineers found an ingenious way to cool the building.", "form": "ingenious"}, {"w": "chipping away at", "pos": "phrasal verb", "loc": "¶4", "d": "gradually weakening or reducing something over time", "uz": "asta-sekin zaiflashtirmoq", "ex": "Rising prices keep chipping away at families' monthly savings.", "form": "chipping away at"}, {"w": "glimpse", "pos": "noun", "loc": "¶4", "d": "a brief look or a small amount of insight", "uz": "bir ko'rinish, qisqa nazar", "ex": "The documentary offers a rare glimpse into life on a research ship.", "form": "glimpse"}, {"w": "crave", "pos": "verb", "loc": "¶5", "d": "to want something very strongly", "uz": "juda xohlamoq, intilmoq", "ex": "Young children often crave attention from the adults around them.", "form": "crave"}, {"w": "huffy", "pos": "adjective", "loc": "¶5", "d": "easily annoyed and showing it in a sulky way", "uz": "xafa bo'lgan, jahldor", "ex": "He gets huffy whenever someone questions his decisions in meetings.", "form": "huffy"}, {"w": "futile", "pos": "adjective", "loc": "¶6", "d": "having no chance of success; pointless", "uz": "besamar, foydasiz", "ex": "Any attempt to stop the crowd would have been futile.", "form": "futile"}, {"w": "tutelage", "pos": "noun", "loc": "¶7", "d": "guidance and teaching given by a particular person", "uz": "rahnamolik, ustozlik", "ex": "Under her tutelage, the young pianist won three national prizes.", "form": "tutelage"}, {"w": "avian", "pos": "adjective", "loc": "¶10", "d": "relating to birds", "uz": "qushlarga oid", "ex": "Avian flu forced farmers to destroy thousands of chickens.", "form": "Avian"}, {"w": "approximation", "pos": "noun", "loc": "¶11", "d": "a result or description that is close to the real one", "uz": "taxminiy o'xshashlik", "ex": "The robot's voice was only a rough approximation of human speech.", "form": "approximation"}, {"w": "hues", "pos": "noun", "loc": "¶16", "d": "shades or varieties of a colour", "uz": "tuslar, ranglar", "ex": "The sunset painted the sky in warm hues of orange.", "form": "hues"}, {"w": "ascribed", "pos": "verb", "loc": "¶18", "d": "said to belong to or be caused by someone or something", "uz": "nisbat berildi, taalluqli deb hisoblandi", "ex": "The quote is often ascribed to Einstein, but without proof.", "form": "ascribed"}, {"w": "keep track of", "pos": "phrasal verb", "loc": "¶19", "d": "to stay informed about the progress or position of something", "uz": "kuzatib bormoq, hisobini yuritmoq", "ex": "I use a notebook to keep track of my daily expenses.", "form": "keep track of"}]}, {"evidence": [{"q": 14, "question": "a description of a company that provides financial assistance for employees to continue their learning", "options": [{"t": "That's why every two weeks, when his employees receive their salary, they also get an update about the business, including who their new customers are, what successes they've had, and what challenges they are facing.", "ok": false}, {"t": "His company manufactures custom plastics, mainly for medical devices, and offers engineering solutions for other plastics needs.", "ok": false}, {"t": "He encourages people to work their way up in the company, and pays, at least partially, for educational opportunities and textbooks.", "ok": true}, {"t": "Attrition at the company is low, and many employees remain with the company for much of their career.", "ok": false}], "pairs": ["financial assistance for employees = pays, at least partially, for educational opportunities and textbooks", "continue their learning = educational opportunities and textbooks"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "B", "pill": true}}, {"q": 15, "question": "a mention of worldwide trends in the changing attitudes of business customers", "options": [{"t": "Family-friendly employers are creating a groundswell of awareness that can only result in changing business practices.", "ok": false}, {"t": "Family-friendly entrepreneurs are becoming more commonplace internationally, and they clearly influence those companies which have so far been slow to accommodate employee needs.", "ok": true}, {"t": "According to West, it is already possible to document the dwindling workforces of these latter businesses, or the migration of labor to more family-friendly ones.", "ok": false}, {"t": "That's why every two weeks, when his employees receive their salary, they also get an update about the business, including who their new customers are, what successes they've had, and what challenges they are facing.", "ok": false}], "pairs": ["worldwide trends = Family-friendly entrepreneurs are becoming more commonplace internationally", "changing attitudes of business customers = parents are important consumers and investors who can change buying practices"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "E", "pill": true}}, {"q": 16, "question": "details about years of continuous service by employees at one company", "options": [{"t": "Says Victor Davies, Human Resources Director, 'We enable employees to maintain equilibrium between work and home, a policy which ultimately results in a more productive and stable workforce.", "ok": false}, {"t": "Annual Christmas and summer parties are standard, and this year, to celebrate an especially strong performance, the company took all employees and their families on a 2-day trip to Montreal, Canada.", "ok": false}, {"t": "Attrition at the company is low, and many employees remain with the company for much of their career.", "ok": false}, {"t": "It works – this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees.", "ok": true}], "pairs": ["years of continuous service by employees = this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees"], "kind": "Which paragraph?", "answer": "C", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "C", "pill": true}}, {"q": 17, "question": "a reference to the reason why many people-centred workers first start their own businesses", "options": [{"t": "'Employers who care about their employees and help them grow take into account the full range of issues and external pressures that employees have and arrange things so that people can manage their lives.", "ok": false}, {"t": "Many of these go into business themselves as a result of negative experiences they have had in the workplace.", "ok": true}, {"t": "Companies of all sizes in the US recognize the importance of family-friendly policies, thanks in large part to the increasing number of people-centered entrepreneurs and company CEOs.", "ok": false}, {"t": "These considerations are a conscious part of how people-centered bosses organize their practices and strategies.'", "ok": false}], "pairs": ["people-centred workers first start their own businesses = Many of these go into business themselves", "the reason why = as a result of negative experiences they have had in the workplace"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "A", "pill": true}}, {"q": 18, "question": "a comment about how certain groups are still fighting for respect in the business world", "options": [{"t": "But she realized that it takes a certain kind of mutuality to do that.", "ok": false}, {"t": "For Hazel Gibbs, CEO of Disposal System Inc. in Houston, Texas, a waste disposal and environmental cleanup and consultancy firm, the bottom line is keeping her business going.", "ok": false}, {"t": "'When our employees understand what it takes to keep business going, then it works and we can accommodate each other's needs.", "ok": false}, {"t": "'Working mothers still need to be taken more seriously, and so do mothers who are business owners.", "ok": true}], "pairs": ["certain groups are still fighting for respect = Working mothers still need to be taken more seriously"], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}], "ans": "D", "pill": true}}, {"q": 19, "question": "Employees should be kept informed about business development and performance.", "options": [{"t": "That's why every two weeks, when his employees receive their salary, they also get an update about the business, including who their new customers are, what successes they've had, and what challenges they are facing.", "ok": true}, {"t": "His employees line up to attend his monthly invitation-only Business Pragmatics seminar, in which communication and other vital skills are taught, along with ethics and workplace morals and philosophy.", "ok": false}, {"t": "Harper believes in having employees who understand the business.", "ok": false}, {"t": "Attrition at the company is low, and many employees remain with the company for much of their career.", "ok": false}], "pairs": ["kept informed about business development and performance = they also get an update about the business"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jennifer West"}, {"k": "B", "t": "Stephen Harper"}, {"k": "C", "t": "Margaret Mills"}, {"k": "D", "t": "Victor Davies"}, {"k": "E", "t": "Hazel Gibbs"}], "ans": "B"}, "why": ""}, {"q": 20, "question": "Work output increases when employees have a good balance between company and family responsibilities.", "options": [{"t": "It works – this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees.", "ok": false}, {"t": "Annual Christmas and summer parties are standard, and this year, to celebrate an especially strong performance, the company took all employees and their families on a 2-day trip to Montreal, Canada.", "ok": false}, {"t": "Like many other like-minded companies, the Margaret Mills Corporation offers liberal leave, flexi-time, good health and retirement packages, and other benefits.", "ok": false}, {"t": "Says Victor Davies, Human Resources Director, 'We enable employees to maintain equilibrium between work and home, a policy which ultimately results in a more productive and stable workforce.", "ok": true}], "pairs": ["Work output increases = a more productive and stable workforce", "a good balance between company and family responsibilities = maintain equilibrium between work and home"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jennifer West"}, {"k": "B", "t": "Stephen Harper"}, {"k": "C", "t": "Margaret Mills"}, {"k": "D", "t": "Victor Davies"}, {"k": "E", "t": "Hazel Gibbs"}], "ans": "D"}, "why": ""}, {"q": 21, "question": "It is critical to business success that all company members recognise that they matter.", "options": [{"t": "'I'm not altruistic,' she says, 'but if everyone understands what it takes to be in business, that's good for all of us.", "ok": true}, {"t": "'Working mothers still need to be taken more seriously, and so do mothers who are business owners.", "ok": false}, {"t": "'When our employees understand what it takes to keep business going, then it works and we can accommodate each other's needs.", "ok": false}, {"t": "For Hazel Gibbs, CEO of Disposal System Inc. in Houston, Texas, a waste disposal and environmental cleanup and consultancy firm, the bottom line is keeping her business going.", "ok": false}], "pairs": ["all company members recognise that they matter = everyone, from managers to workers, realizes that they count", "critical to business success = if everyone understands what it takes to be in business"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jennifer West"}, {"k": "B", "t": "Stephen Harper"}, {"k": "C", "t": "Margaret Mills"}, {"k": "D", "t": "Victor Davies"}, {"k": "E", "t": "Hazel Gibbs"}], "ans": "E"}, "why": ""}, {"q": 22, "question": "This includes a section dealing with problems such as <b>.........<\/b> in communal areas of the workplace.", "options": [{"t": "His employees line up to attend his monthly invitation-only Business Pragmatics seminar, in which communication and other vital skills are taught, along with ethics and workplace morals and philosophy.", "ok": false}, {"t": "Harper also includes a 'coaching' section.", "ok": false}, {"t": "The structure of his company is very family-friendly, and includes a regular Open House day for employees' families where, among other things, kids can experiment with the company's machines that manufacture their products and so on.", "ok": false}, {"t": "That's why every two weeks, when his employees receive their salary, they also get an update about the business, including who their new customers are, what successes they've had, and what challenges they are facing.", "ok": true}], "pairs": ["a bi-weekly update = every two weeks, when his employees receive their salary", "problems such as ___ in communal areas = issues like gossip"], "kind": "Completion", "answer": "gossip", "accept": ["gossip"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 23, "question": "The CEO also arranges a regular <b>.........<\/b> for employees, which is in great demand.", "options": [{"t": "This addresses issues like gossip, which employees sometimes indulge in around the water cooler or the rest rooms, and which can negatively impact on the morale of staff.", "ok": false}, {"t": "Harper believes in having employees who understand the business.", "ok": false}, {"t": "His employees line up to attend his monthly invitation-only Business Pragmatics seminar, in which communication and other vital skills are taught, along with ethics and workplace morals and philosophy.", "ok": true}, {"t": "The structure of his company is very family-friendly, and includes a regular Open House day for employees' families where, among other things, kids can experiment with the company's machines that manufacture their products and so on.", "ok": false}], "pairs": ["a regular ___ for employees, which is in great demand = His employees line up to attend his monthly invitation-only Business Pragmatics seminar"], "kind": "Completion", "answer": "seminar", "accept": ["seminar"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "Finally, employees&#x27; families are invited to company open days, when they are allowed to try out the <b>.........<\/b>.", "options": [{"t": "Harper believes in having employees who understand the business.", "ok": false}, {"t": "The structure of his company is very family-friendly, and includes a regular Open House day for employees' families where, among other things, kids can experiment with the company's machines that manufacture their products and so on.", "ok": true}, {"t": "Annual Christmas and summer parties are standard, and this year, to celebrate an especially strong performance, the company took all employees and their families on a 2-day trip to Montreal, Canada.", "ok": false}, {"t": "Attrition at the company is low, and many employees remain with the company for much of their career.", "ok": false}], "pairs": ["try out the ___ = experiment with the company's machines"], "kind": "Completion", "answer": "machines", "accept": ["machines", "machine"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "The Margaret Mills Corporation also allows employees a great deal of flexibility with their children, who can be brought to the office once <b>.........<\/b> has finished.", "options": [{"t": "In Vermont, the Margaret Mills Corporation also strives to be people-centered.", "ok": false}, {"t": "It is a third-generation, family-run business that sells children's wooden toys internationally, and the company's founder (Margaret Mills) understood all too well the challenges of raising a family while running a business.", "ok": false}, {"t": "The corporation also allows workers to have their children dropped off when school is over, or to spend time with them during the vacations.", "ok": true}, {"t": "Like many other like-minded companies, the Margaret Mills Corporation offers liberal leave, flexi-time, good health and retirement packages, and other benefits.", "ok": false}], "pairs": ["once ___ has finished = when school is over"], "kind": "Completion", "answer": "school", "accept": ["school"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 26, "question": "Mills likes to reward employees for company performance with a party or even a <b>.........<\/b> for families.", "options": [{"t": "It works – this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees.", "ok": false}, {"t": "Annual Christmas and summer parties are standard, and this year, to celebrate an especially strong performance, the company took all employees and their families on a 2-day trip to Montreal, Canada.", "ok": true}, {"t": "It is a third-generation, family-run business that sells children's wooden toys internationally, and the company's founder (Margaret Mills) understood all too well the challenges of raising a family while running a business.", "ok": false}, {"t": "Says Victor Davies, Human Resources Director, 'We enable employees to maintain equilibrium between work and home, a policy which ultimately results in a more productive and stable workforce.", "ok": false}], "pairs": ["reward employees for company performance = to celebrate an especially strong performance", "a ___ for families = took all employees and their families on a 2-day trip to Montreal, Canada"], "kind": "Completion", "answer": "trip", "accept": ["trip"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "financial assistance for employees", "p": "pays, at least partially, for educational opportunities and textbooks", "rel": "=", "note": "", "n": "14"}, {"q": "continue their learning", "p": "educational opportunities and textbooks", "rel": "=", "note": "", "n": "14"}, {"q": "worldwide trends", "p": "Family-friendly entrepreneurs are becoming more commonplace internationally", "rel": "=", "note": "", "n": "15"}, {"q": "changing attitudes of business customers", "p": "parents are important consumers and investors who can change buying practices", "rel": "=", "note": "", "n": "15"}, {"q": "years of continuous service by employees", "p": "this year the company will celebrate six 5-year anniversaries, and one 25-year anniversary among its employees", "rel": "=", "note": "", "n": "16"}, {"q": "people-centred workers first start their own businesses", "p": "Many of these go into business themselves", "rel": "=", "note": "", "n": "17"}, {"q": "the reason why", "p": "as a result of negative experiences they have had in the workplace", "rel": "=", "note": "", "n": "17"}, {"q": "certain groups are still fighting for respect", "p": "Working mothers still need to be taken more seriously", "rel": "=", "note": "", "n": "18"}, {"q": "kept informed about business development and performance", "p": "they also get an update about the business", "rel": "=", "note": "", "n": "19"}, {"q": "Work output increases", "p": "a more productive and stable workforce", "rel": "=", "note": "", "n": "20"}, {"q": "a good balance between company and family responsibilities", "p": "maintain equilibrium between work and home", "rel": "=", "note": "", "n": "20"}, {"q": "all company members recognise that they matter", "p": "everyone, from managers to workers, realizes that they count", "rel": "=", "note": "", "n": "21"}, {"q": "critical to business success", "p": "if everyone understands what it takes to be in business", "rel": "=", "note": "", "n": "21"}, {"q": "a bi-weekly update", "p": "every two weeks, when his employees receive their salary", "rel": "=", "note": "", "n": "22"}, {"q": "problems such as ___ in communal areas", "p": "issues like gossip", "rel": "=", "note": "", "n": "22"}, {"q": "a regular ___ for employees, which is in great demand", "p": "His employees line up to attend his monthly invitation-only Business Pragmatics seminar", "rel": "=", "note": "", "n": "23"}, {"q": "try out the ___", "p": "experiment with the company's machines", "rel": "=", "note": "", "n": "24"}, {"q": "once ___ has finished", "p": "when school is over", "rel": "=", "note": "", "n": "25"}, {"q": "reward employees for company performance", "p": "to celebrate an especially strong performance", "rel": "=", "note": "", "n": "26"}, {"q": "a ___ for families", "p": "took all employees and their families on a 2-day trip to Montreal, Canada", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "external pressures", "pos": "collocation", "loc": "A", "d": "demands and stress that come from outside a person's own control", "uz": "tashqi bosimlar", "ex": "Athletes must cope with external pressures from fans and the media.", "form": "external pressures"}, {"w": "exemplifies", "pos": "verb", "loc": "B", "d": "is a typical or clear example of something", "uz": "yorqin misol bo'ladi", "ex": "Her career exemplifies what hard work and determination can achieve.", "form": "exemplifies"}, {"w": "indulge in", "pos": "phrasal verb", "loc": "B", "d": "to allow yourself to do something enjoyable, often unwise", "uz": "berilib ketmoq, ruxsat bermoq", "ex": "Staff should not indulge in personal chat during busy periods.", "form": "indulge in"}, {"w": "morale", "pos": "noun", "loc": "B", "d": "the level of confidence and enthusiasm in a group", "uz": "ruhiy holat, ruhiyat", "ex": "Low pay and long hours damaged morale across the whole department.", "form": "morale"}, {"w": "work their way up", "pos": "phrasal verb", "loc": "B", "d": "to advance to a higher position gradually through effort", "uz": "pog'onama-pog'ona ko'tarilmoq", "ex": "Many senior managers here worked their way up from the factory floor.", "form": "worked their way up"}, {"w": "line up", "pos": "phrasal verb", "loc": "B", "d": "to stand in a row while waiting for something", "uz": "saf tortmoq, navbatga turmoq", "ex": "Fans began to line up outside the stadium at dawn.", "form": "line up"}, {"w": "pays off", "pos": "phrasal verb", "loc": "B", "d": "brings good results after effort or risk", "uz": "o'zini oqlaydi, samara beradi", "ex": "Studying a little every day really pays off in the end.", "form": "pays off"}, {"w": "attrition", "pos": "noun", "loc": "B", "d": "a gradual reduction in staff as people leave and are not replaced", "uz": "kadrlar oqimi, kamayish", "ex": "High attrition among nurses has left the hospital seriously short-staffed.", "form": "attrition"}, {"w": "flexi-time", "pos": "noun", "loc": "C", "d": "a system letting workers choose when they start and finish", "uz": "moslashuvchan ish vaqti", "ex": "Flexi-time allows parents to collect their children from school each afternoon.", "form": "Flexi-time"}, {"w": "equilibrium", "pos": "noun", "loc": "C", "d": "a state of balance between different forces or demands", "uz": "muvozanat", "ex": "It took months to restore equilibrium after the company merger.", "form": "equilibrium"}, {"w": "the bottom line", "pos": "idiom", "loc": "D", "d": "the most important factor, usually the final profit or result", "uz": "asosiy maqsad, yakuniy natija", "ex": "For many investors, the bottom line matters more than company ethics.", "form": "the bottom line"}, {"w": "mutuality", "pos": "noun", "loc": "D", "d": "a relationship in which both sides share benefits and respect", "uz": "o'zaro hamkorlik, o'zaro munosabat", "ex": "A sense of mutuality between staff and managers improved cooperation.", "form": "mutuality"}, {"w": "altruistic", "pos": "adjective", "loc": "D", "d": "caring about the welfare of others more than yourself", "uz": "fidoyi, o'zgalarga g'amxo'r", "ex": "Her altruistic decision to donate half her salary surprised everyone.", "form": "altruistic"}, {"w": "accommodate", "pos": "verb", "loc": "D, E", "d": "to provide for the needs or wishes of someone", "uz": "moslashmoq, talabini qondirmoq", "ex": "The school tries to accommodate pupils with different learning needs.", "form": "accommodate"}, {"w": "commonplace", "pos": "adjective", "loc": "E", "d": "very frequent and not unusual", "uz": "keng tarqalgan, oddiy", "ex": "Remote working has become commonplace in many large companies.", "form": "commonplace"}, {"w": "dwindling", "pos": "adjective", "loc": "E", "d": "becoming steadily smaller or fewer", "uz": "kamayib borayotgan", "ex": "The village struggles with a dwindling population and closing shops.", "form": "dwindling"}, {"w": "groundswell", "pos": "noun", "loc": "E", "d": "a rapid growth of opinion or feeling among ordinary people", "uz": "ommaviy qo'llab-quvvatlash to'lqini", "ex": "There is a groundswell of support for cleaner public transport.", "form": "groundswell"}]}, {"evidence": [{"q": 27, "question": "There is a lack of factual information on literacy levels in rural Australia.", "options": [{"t": "Assuming life stage differences remain much the same in both city and country areas, it is still possible to make some general comments about differences between urban and rural areas in Australia.", "ok": false}, {"t": "It is important, however, to remind the reader of the considerable diversity of rural areas.", "ok": false}, {"t": "For young people, inadequate literacy skills can affect their transition from school to work; for older people, lack of literacy skills can reduce their employment options as well as reducing their effectiveness or ability in the workplace.", "ok": false}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": true}], "pairs": ["a lack of factual information = Little is known", "literacy levels = the incidence of literacy"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 28, "question": "The rural areas of Australia are very similar to each other.", "options": [{"t": "Assuming life stage differences remain much the same in both city and country areas, it is still possible to make some general comments about differences between urban and rural areas in Australia.", "ok": false}, {"t": "Also, according to a 1989 survey, about ten per cent of women living in rural areas were born outside Australia.", "ok": false}, {"t": "It is important, however, to remind the reader of the considerable diversity of rural areas.", "ok": true}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}], "pairs": ["very similar to each other ≠ the considerable diversity of rural areas"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 29, "question": "Most businesses in rural areas are family-run.", "options": [{"t": "This can be due to a number of causes, among which are family pressure or desire to follow the father into the family business, learning difficulties or unhappiness at school, or even peer-group pressure from other young males who have decided to work on their family farms.", "ok": true}, {"t": "There are numerous areas where literacy skills are required in farming, such as reading directions for (often dangerous) sprays, the mixing of animal feed, the mixing of fuel for machinery, care of machinery, care of animals, and understanding letters from government authorities.", "ok": false}, {"t": "Although the responsibility for the business side of the farm may be carried by a female partner with more adequate literacy skills, there remain a number of areas where inadequate literacy skills in males can lead to difficult or dangerous situations.", "ok": false}, {"t": "It is not unusual for males in rural areas to have left school early, or to have left with inadequate literacy skills, and then to move onto farms.", "ok": false}], "pairs": ["Most businesses in rural areas are family-run ? to follow the father into the family business"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 30, "question": "Women who can read and write have a wider choice of jobs in rural areas.", "options": [{"t": "Also, according to a 1989 survey, about ten per cent of women living in rural areas were born outside Australia.", "ok": false}, {"t": "Some research in this area has shown that women leave school early and travel to the city to find work: women's employment options are limited generally, but for women with low literacy skills there is often no alternative to dependence on family, partner or government benefits.", "ok": true}, {"t": "It is difficult to estimate the social costs of low literacy levels for women in non-metropolitan areas.", "ok": false}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}], "pairs": ["women who can read and write ≠ women with low literacy skills", "a wider choice of jobs ≠ there is often no alternative to dependence on family, partner or government benefits"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 31, "question": "In some rural areas, industrial jobs are popular.", "options": [{"t": "It is important, however, to remind the reader of the considerable diversity of rural areas.", "ok": false}, {"t": "Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.", "ok": false}, {"t": "Problems can become acute in regional towns or areas which are based on one or two major industries.", "ok": true}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}], "pairs": ["industrial jobs are popular = Shift work and relatively high wages make such work relatively attractive", "In some rural areas = regional towns or areas which are based on one or two major industries"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 32, "question": "Children in urban areas are likely to stay on at school longer than children in rural areas.", "options": [{"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}, {"t": "Assuming life stage differences remain much the same in both city and country areas, it is still possible to make some general comments about differences between urban and rural areas in Australia.", "ok": false}, {"t": "Economic hardship, the need for children to travel (or be driven) long distances to school, and the low value placed on literacy may mean that helping with farm work is seen as more important than regular attendance at school.", "ok": false}, {"t": "More children in rural areas than urban areas tend to leave school without completing a full secondary education, despite increasing school retention rates generally, although there is considerable variation between rural areas.", "ok": true}], "pairs": ["Children in urban areas are likely to stay on at school longer = More children in rural areas than urban areas tend to leave school without completing a full secondary education"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 33, "question": "how an economic recession may aggravate the problems caused by low levels of literacy", "options": [{"t": "It is suggested that in times of hardship in farming areas, when there is the threat or actuality of banks foreclosing on mortgages, inadequate literacy skills add to the normal stresses.", "ok": true}, {"t": "Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.", "ok": false}, {"t": "Economic hardship, the need for children to travel (or be driven) long distances to school, and the low value placed on literacy may mean that helping with farm work is seen as more important than regular attendance at school.", "ok": false}, {"t": "It is difficult to estimate the social costs of low literacy levels for women in non-metropolitan areas.", "ok": false}], "pairs": ["an economic recession = in times of hardship in farming areas", "aggravate the problems = inadequate literacy skills add to the normal stresses"], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "D", "pill": true}}, {"q": 34, "question": "a reference to a measure which individuals may take to hide the fact that they have poor literacy skills", "options": [{"t": "The closeness of some rural communities and country towns sometimes means that people are reluctant to admit their literacy problems.", "ok": true}, {"t": "In some small communities, there is a tendency for the problem of poor literacy skills to be continued with the next generation, thereby repeating the problem.", "ok": false}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}, {"t": "Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.", "ok": false}], "pairs": ["a measure individuals may take to hide the fact = travelled long distances to another town in order to avoid having to reveal their 'problem'", "hide the fact that they have poor literacy skills = reluctant to admit their literacy problems"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "G", "pill": true}}, {"q": 35, "question": "examples of things that rural workers may need to read", "options": [{"t": "In addition, there are the numerous tasks associated with running a business.", "ok": false}, {"t": "Although the responsibility for the business side of the farm may be carried by a female partner with more adequate literacy skills, there remain a number of areas where inadequate literacy skills in males can lead to difficult or dangerous situations.", "ok": false}, {"t": "There are numerous areas where literacy skills are required in farming, such as reading directions for (often dangerous) sprays, the mixing of animal feed, the mixing of fuel for machinery, care of machinery, care of animals, and understanding letters from government authorities.", "ok": true}, {"t": "It is not unusual for males in rural areas to have left school early, or to have left with inadequate literacy skills, and then to move onto farms.", "ok": false}], "pairs": ["things that rural workers may need to read = reading directions for (often dangerous) sprays", "things that rural workers may need to read = understanding letters from government authorities"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "B", "pill": true}}, {"q": 36, "question": "the ways literacy problems can affect people at different stages of their working life", "options": [{"t": "Social costs, of course, differ at different life stages.", "ok": true}, {"t": "Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.", "ok": false}, {"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}, {"t": "For young people, inadequate literacy skills can affect their transition from school to work; for older people, lack of literacy skills can reduce their employment options as well as reducing their effectiveness or ability in the workplace.", "ok": false}], "pairs": ["different stages of their working life = Social costs, of course, differ at different life stages", "affect people = inadequate literacy skills can affect their transition from school to work"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "A", "pill": true}}, {"q": 37, "question": "a reference to youngsters encouraging each other to leave school early", "options": [{"t": "It is not unusual for males in rural areas to have left school early, or to have left with inadequate literacy skills, and then to move onto farms.", "ok": false}, {"t": "More children in rural areas than urban areas tend to leave school without completing a full secondary education, despite increasing school retention rates generally, although there is considerable variation between rural areas.", "ok": false}, {"t": "Some research in this area has shown that women leave school early and travel to the city to find work: women's employment options are limited generally, but for women with low literacy skills there is often no alternative to dependence on family, partner or government benefits.", "ok": false}, {"t": "This can be due to a number of causes, among which are family pressure or desire to follow the father into the family business, learning difficulties or unhappiness at school, or even peer-group pressure from other young males who have decided to work on their family farms.", "ok": true}], "pairs": ["youngsters encouraging each other to leave school early = peer-group pressure from other young males"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "B", "pill": true}}, {"q": 38, "question": "Which THREE of the following areas are explored by the writer of this article?", "options": [{"t": "Little is known about the incidence of literacy in rural areas of Australia, but anecdotal evidence suggests that lack of literacy skills may present particular problems and have different social costs in rural areas compared to urban areas.", "ok": false}, {"t": "For young people, inadequate literacy skills can affect their transition from school to work; for older people, lack of literacy skills can reduce their employment options as well as reducing their effectiveness or ability in the workplace.", "ok": true}, {"t": "It is important, however, to remind the reader of the considerable diversity of rural areas.", "ok": false}, {"t": "Assuming life stage differences remain much the same in both city and country areas, it is still possible to make some general comments about differences between urban and rural areas in Australia.", "ok": false}], "pairs": ["limit people's career prospects = lack of literacy skills can reduce their employment options", "the effectiveness of tuition ? Tutors in country areas have reported"], "kind": "Choose the correct answers", "answer": "B, D, E (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 39, "question": "Which THREE of the following areas are explored by the writer of this article?", "options": [{"t": "A proportion of manual and construction workers and trade assistants in such towns have low levels of literacy, but are able to find employment so long as new projects and development continue.", "ok": false}, {"t": "Problems can become acute in regional towns or areas which are based on one or two major industries.", "ok": true}, {"t": "Once the development is completed, however, there are few alternative options.", "ok": false}, {"t": "More children in rural areas than urban areas tend to leave school without completing a full secondary education, despite increasing school retention rates generally, although there is considerable variation between rural areas.", "ok": false}], "pairs": ["factors that worsen the difficulties = Problems can become acute in regional towns or areas"], "kind": "Choose the correct answers", "answer": "B, D, E (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 40, "question": "Which THREE of the following areas are explored by the writer of this article?", "options": [{"t": "It is difficult to estimate the social costs of low literacy levels for women in non-metropolitan areas.", "ok": false}, {"t": "Obviously, a change in public perception of literacy problems is needed, if people with low literacy skills in rural areas are to avoid the social stigma which is attached to them in the minds of most people.", "ok": false}, {"t": "More children in rural areas than urban areas tend to leave school without completing a full secondary education, despite increasing school retention rates generally, although there is considerable variation between rural areas.", "ok": false}, {"t": "Economic hardship, the need for children to travel (or be driven) long distances to school, and the low value placed on literacy may mean that helping with farm work is seen as more important than regular attendance at school.", "ok": true}], "pairs": ["how families had a low regard for literacy = the low value placed on literacy"], "kind": "Choose the correct answers", "answer": "B, D, E (any order)", "why": "Each correct option is supported by a different sentence."}], "paraphrase": [{"q": "a lack of factual information", "p": "Little is known", "rel": "=", "note": "", "n": "27"}, {"q": "literacy levels", "p": "the incidence of literacy", "rel": "=", "note": "", "n": "27"}, {"q": "very similar to each other", "p": "the considerable diversity of rural areas", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "28"}, {"q": "Most businesses in rural areas are family-run", "p": "to follow the father into the family business", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "29"}, {"q": "women who can read and write", "p": "women with low literacy skills", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "30"}, {"q": "a wider choice of jobs", "p": "there is often no alternative to dependence on family, partner or government benefits", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "30"}, {"q": "industrial jobs are popular", "p": "Shift work and relatively high wages make such work relatively attractive", "rel": "=", "note": "", "n": "31"}, {"q": "In some rural areas", "p": "regional towns or areas which are based on one or two major industries", "rel": "=", "note": "", "n": "31"}, {"q": "Children in urban areas are likely to stay on at school longer", "p": "More children in rural areas than urban areas tend to leave school without completing a full secondary education", "rel": "=", "note": "", "n": "32"}, {"q": "an economic recession", "p": "in times of hardship in farming areas", "rel": "=", "note": "", "n": "33"}, {"q": "aggravate the problems", "p": "inadequate literacy skills add to the normal stresses", "rel": "=", "note": "", "n": "33"}, {"q": "a measure individuals may take to hide the fact", "p": "travelled long distances to another town in order to avoid having to reveal their 'problem'", "rel": "=", "note": "", "n": "34"}, {"q": "hide the fact that they have poor literacy skills", "p": "reluctant to admit their literacy problems", "rel": "=", "note": "", "n": "34"}, {"q": "things that rural workers may need to read", "p": "reading directions for (often dangerous) sprays", "rel": "=", "note": "", "n": "35"}, {"q": "things that rural workers may need to read", "p": "understanding letters from government authorities", "rel": "=", "note": "", "n": "35"}, {"q": "different stages of their working life", "p": "Social costs, of course, differ at different life stages", "rel": "=", "note": "", "n": "36"}, {"q": "affect people", "p": "inadequate literacy skills can affect their transition from school to work", "rel": "=", "note": "", "n": "36"}, {"q": "youngsters encouraging each other to leave school early", "p": "peer-group pressure from other young males", "rel": "=", "note": "", "n": "37"}, {"q": "limit people's career prospects", "p": "lack of literacy skills can reduce their employment options", "rel": "=", "note": "", "n": "38"}, {"q": "the effectiveness of tuition", "p": "Tutors in country areas have reported", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "38"}, {"q": "factors that worsen the difficulties", "p": "Problems can become acute in regional towns or areas", "rel": "=", "note": "", "n": "39"}, {"q": "how families had a low regard for literacy", "p": "the low value placed on literacy", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "incidence", "pos": "noun", "loc": "A", "d": "the extent or frequency with which something occurs", "uz": "uchrash darajasi, tarqalganlik", "ex": "The incidence of asthma has risen sharply in large cities.", "form": "incidence"}, {"w": "anecdotal evidence", "pos": "collocation", "loc": "A", "d": "information based on personal stories rather than scientific proof", "uz": "taassurotlarga asoslangan dalil", "ex": "Anecdotal evidence suggests that the new bus route is popular.", "form": "Anecdotal evidence"}, {"w": "diversity", "pos": "noun", "loc": "A", "d": "a range of many different types or kinds", "uz": "xilma-xillik", "ex": "The city is proud of the diversity of its population.", "form": "diversity"}, {"w": "left school early", "pos": "collocation", "loc": "B", "d": "stopped studying before finishing the normal years of education", "uz": "maktabni erta tark etdi", "ex": "He left school early to help support his family financially.", "form": "left school early"}, {"w": "peer-group pressure", "pos": "collocation", "loc": "B", "d": "strong influence from people of your own age to behave similarly", "uz": "tengdoshlar bosimi", "ex": "Peer-group pressure can push teenagers into risky and foolish behaviour.", "form": "Peer-group pressure"}, {"w": "dependence on", "pos": "noun", "loc": "C", "d": "a state of needing someone or something for support", "uz": "qaramlik", "ex": "The island's dependence on tourism makes its economy fragile.", "form": "dependence on"}, {"w": "hardship", "pos": "noun", "loc": "D", "d": "a situation of difficult living conditions, especially lack of money", "uz": "qiyinchilik, mashaqqat", "ex": "Many families endured great hardship during the long drought.", "form": "hardship"}, {"w": "foreclosing on", "pos": "phrasal verb", "loc": "D", "d": "taking back property because the owner cannot repay a loan", "uz": "garovdagi mulkni musodara qilmoq", "ex": "The bank began foreclosing on homes when owners stopped paying.", "form": "foreclosing on"}, {"w": "down-turn", "pos": "noun", "loc": "D", "d": "a fall in economic or business activity", "uz": "iqtisodiy pasayish", "ex": "A sudden down-turn in exports forced the firm to cut jobs.", "form": "down-turn"}, {"w": "not inconceivable", "pos": "phrase", "loc": "D", "d": "possible, even though it may seem unlikely", "uz": "ehtimoldan xoli emas", "ex": "It is not inconceivable that prices will double within five years.", "form": "not inconceivable"}, {"w": "marriage breakdown", "pos": "collocation", "loc": "D", "d": "the failure of a marriage, ending in separation or divorce", "uz": "nikohning buzilishi", "ex": "Financial stress is a common cause of marriage breakdown.", "form": "marriage breakdown"}, {"w": "acute", "pos": "adjective", "loc": "E", "d": "very serious or severe", "uz": "keskin, o'ta jiddiy", "ex": "The country faces an acute shortage of qualified science teachers.", "form": "acute"}, {"w": "retention rates", "pos": "collocation", "loc": "F", "d": "the percentages of students who stay in education or people who stay in jobs", "uz": "saqlab qolish ko'rsatkichlari", "ex": "Better teaching has improved student retention rates at the university.", "form": "retention rates"}, {"w": "reluctant to admit", "pos": "phrase", "loc": "G", "d": "unwilling to say that something unpleasant is true", "uz": "tan olishni xohlamaydigan", "ex": "Many drivers are reluctant to admit that they feel tired.", "form": "reluctant to admit"}, {"w": "anonymity", "pos": "noun", "loc": "G", "d": "the state of not being identified or known by others", "uz": "noma'lumlik, ismsizlik", "ex": "The survey guaranteed anonymity to everyone who answered the questions.", "form": "anonymity"}, {"w": "stigma", "pos": "noun", "loc": "G", "d": "a strong feeling of shame or disapproval attached to something", "uz": "sharmandalik tamg'asi, yomon nom", "ex": "There is still a stigma attached to mental illness in some communities.", "form": "stigma"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

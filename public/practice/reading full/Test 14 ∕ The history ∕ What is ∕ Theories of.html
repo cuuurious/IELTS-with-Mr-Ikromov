@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 14 / The history / What is / Theories of</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 14 / The history / What is / Theories of</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The history of the pencil</div><p data-para="1"><span class="sent" id="s0_0">The history of the pencil starts with a violent thunderstorm.</span> <span class="sent" id="s0_1">When some particularly ferocious weather struck the Lake District in North West England in the sixteenth century, locals in the village of Borrowdale discovered a large uprooted tree.</span> <span class="sent" id="s0_2">Underneath the tree lay an unknown black substance which we now know as graphite.</span> <span class="sent" id="s0_3">It could be cut easily, was slightly shiny and smooth to the touch, and it left a black smear on the hands of all who touched it.</span></p><p data-para="2"><span class="sent" id="s0_4">Initially, the local farmers used the newly discovered material as a handy way to identify their sheep.</span> <span class="sent" id="s0_5">However, others quickly realised the potential for using this intriguing substance to write on paper.</span> <span class="sent" id="s0_6">When it was untreated the material was very soft, which meant that it was messy to handle.</span> <span class="sent" id="s0_7">To make it fit for use with paper, people enclosed a thin core of the substance in stiff sheep hides or rope.</span> <span class="sent" id="s0_8">At this time chemistry was still in its infancy.</span> <span class="sent" id="s0_9">People searched for a word to describe this increasingly useful substance and came up with plumbago which, in Latin, means &#x27;acts or writes like lead&#x27;.</span> <span class="sent" id="s0_10">Later the name was changed to graphite.</span> <span class="sent" id="s0_11">But because words have remarkable staying power, we still call graphite the lead of a pencil even though it is now known that there is no trace of real lead in graphite.</span></p><p data-para="3"><span class="sent" id="s0_12">Graphite has a very high melting point at around 3,500 degrees Celsius.</span> <span class="sent" id="s0_13">This made it invaluable to the British army and navy as a secret ingredient in the manufacture of cannon balls.</span> <span class="sent" id="s0_14">The Royal Ordnance, or weaponry section of the British armed forces, used graphite as a lining inside the moulds for cannon balls, which as a result the British could turn out faster and more cheaply than their European rivals.</span> <span class="sent" id="s0_15">In addition to its value to the armed forces, the government quickly realised the commercial potential of the graphite at Borrowdale, and assumed control of all the mines there during the sixteenth century.</span> <span class="sent" id="s0_16">Armed guards accompanied the precious graphite all the way down to the metal foundries by the naval shipyards in the south of England.</span> <span class="sent" id="s0_17">The graphite was so valuable that the locals, who called it wadd, started to steal it.</span> <span class="sent" id="s0_18">As a deterrent, an act of parliament in 1752 made this offence punishable by time in prison.</span></p><p data-para="4"><span class="sent" id="s0_19">The Italians originally invented the wooden casing to hold a thin rod of plumbago firmly in place for ease of writing.</span> <span class="sent" id="s0_20">Italian craftsmen hollowed out two small sections of cedar wood, into one of which they laid the lead.</span> <span class="sent" id="s0_21">They then glued the other section over the top and left the two halves to set.</span> <span class="sent" id="s0_22">When dry, the whole apparatus formed what today we know as a pencil.</span> <span class="sent" id="s0_23">The Germans took this technique and developed it further by applying mass-production techniques to pencils.</span> <span class="sent" id="s0_24">At the same time Nicolas-Jacques Conte, a French officer in Napoleon Bonaparte&#x27;s army during the late 1700s, developed a method of mixing powdered graphite and clay together for firing in a kiln.</span> <span class="sent" id="s0_25">Adding more clay to the mixture helped make the pencil harder, sharper, and more precise in its mark.</span> <span class="sent" id="s0_26">More graphite helped make a pencil mark that was softer, thicker and darker.</span></p><p data-para="5"><span class="sent" id="s0_27">The varying quality of pencil leads eventually gave rise to a system for categorising the fineness of the pencil mark.</span> <span class="sent" id="s0_28">Pencil manufacturers all over the world still use this so-called HB grading system today.</span> <span class="sent" id="s0_29">The H stands for the Hardness of the pencil while the B stands for its Blackness.</span> <span class="sent" id="s0_30">An HB pencil is a standard pencil and a variety of letters and numbers are used to designate different types of lead.</span></p><p data-para="6"><span class="sent" id="s0_31">Significant seams of graphite exist in parts of China, which now produces most of the world&#x27;s pencils.</span> <span class="sent" id="s0_32">Interestingly, the Borrowdale mine in the Lake District remains the only significant source of graphite in its near-pure form in the world.</span> <span class="sent" id="s0_33">Nowadays the highest grade of graphite at Borrowdale is totally exhausted, although other grades can still be found, and England&#x27;s pencil industry continues to thrive in the nearby town of Keswick.</span></p><p data-para="7"><span class="sent" id="s0_34">The pencil has turned out to be a remarkably resilient and valuable tool whose use has survived well into our high-tech times, as a well-known story shows.</span> <span class="sent" id="s0_35">It is sometimes said that the American space programme spent millions of dollars to invent a pen capable of writing in the zero gravity of space.</span> <span class="sent" id="s0_36">The Russians, by contrast, simply equipped their astronauts with good old-fashioned pencils that never let them down.</span> <span class="sent" id="s0_37">It should be pointed out though, that the popular myth about Americans overlooking the practical advantages of pencils in zero gravity is merely fiction.</span> <span class="sent" id="s0_38">In actual fact, both American and Russian astronauts were equipped with pencils in their respective country&#x27;s first space flights.</span> <span class="sent" id="s0_39">A private company later developed pens for writing in zero gravity.</span> <span class="sent" id="s0_40">In fact, astronauts of every nation now use pens.</span> <span class="sent" id="s0_41">But no matter – pencils remain in use in every classroom, every planning, building and drawing office, and in every art studio in the world.</span> <span class="sent" id="s0_42">And there is nothing to suggest that we are likely to invent anything better than graphite to use in our pencils.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,6" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;6</div><button type="button" class="flag-toggle" data-flagrange="1,6" title="Flag for review" aria-label="Flag questions 1-6">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 1–6 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">The early history of graphite in Britain</div><ul><li>Graphite was first found below a <span class="q-num">1</span> <input type="text" class="q-text" name="q1" autocomplete="off" spellcheck="false"> blown down in a storm.</li><li>The first use of graphite was to make marks on <span class="q-num">2</span> <input type="text" class="q-text" name="q2" autocomplete="off" spellcheck="false">.</li><li>The characteristics of raw graphite:</li><li>dirty to use because it is so <span class="q-num">3</span> <input type="text" class="q-text" name="q3" autocomplete="off" spellcheck="false"></li><li>originally wrapped in <span class="q-num">4</span> <input type="text" class="q-text" name="q4" autocomplete="off" spellcheck="false"> or animal skin to make it useable as a pencil.</li><li>Graphite came to the notice of the government for military and commercial purposes.</li><li>The government completely took over the <span class="q-num">5</span> <input type="text" class="q-text" name="q5" autocomplete="off" spellcheck="false"> at Borrowdale.</li><li>They employed guards to protect the graphite on its journey south.</li><li>Local people began to <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"> graphite for the money involved.</li><li>The government passed a law to protect the graphite industry.</li></ul></div></div><div class="q-group" data-flagrange="7,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 7&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="7,13" title="Flag for review" aria-label="Flag questions 7-13">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 7–13 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">7</span><span class="q-stem">The Italians were the first to make pencils out of wood.</span><select class="q-select" name="q7"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">8</span><span class="q-stem">The Germans used different types of wood to produce pencils.</span><select class="q-select" name="q8"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">9</span><span class="q-stem">More clay in a pencil makes it write more darkly.</span><select class="q-select" name="q9"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">10</span><span class="q-stem">After the HB code was introduced, it very quickly became used by all manufacturers.</span><select class="q-select" name="q10"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">11</span><span class="q-stem">English pencil factories have now all closed down.</span><select class="q-select" name="q11"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">12</span><span class="q-stem">American astronauts used pencils on their early journeys into space.</span><select class="q-select" name="q12"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">13</span><span class="q-stem">The use of graphite pencils is unlikely to continue into the future.</span><select class="q-select" name="q13"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">What is an unfair advantage in sport?</div><div class="passage-subtitle">Olympic athletes increasingly depend on technology to help them win – but is that fair?</div><div class="para-dropzone dz-empty" data-letter="A" data-qnum="14"></div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">What happened to the Australian athlete Ron Clarke in the 10,000 metres at the Mexico City Olympics of 1968 is now virtually forgotten, though at the time it was headline news.</span> <span class="sent" id="s1_1">Clarke was the greatest distance runner in history – he&#x27;d broken more world records than anybody else.</span> <span class="sent" id="s1_2">But in front of 55,000 horrified spectators, the event went disastrously wrong.</span> <span class="sent" id="s1_3">In the third lap, one runner keeled over and with six laps to go, two more were carried away.</span> <span class="sent" id="s1_4">Yet the race was being conducted at a relatively leisurely speed: the halfway time was the slowest since the Paris Olympics of 1924.</span> <span class="sent" id="s1_5">With two laps to go, Clarke was in the leading pack.</span> <span class="sent" id="s1_6">&#x27;I&#x27;d never felt better in a race,&#x27; he says.</span> <span class="sent" id="s1_7">But suddenly he too began to struggle, and as the frontrunners moved up a gear, a gap opened up.</span> <span class="sent" id="s1_8">Clarke remembers nothing of his last lap, which he ran in 90 seconds.</span> <span class="sent" id="s1_9">&#x27;Normally I would run it in 64,&#x27; he explains.</span> <span class="sent" id="s1_10">He stumbled across the line in sixth place and collapsed.</span> <span class="sent" id="s1_11">He was administered oxygen and stretchered off the track.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="15"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_12">Mexico City is surrounded by mountains and is over 2,240 metres above sea level.</span> <span class="sent" id="s1_13">That the altitude would have an impact on the Games was predicted.</span> <span class="sent" id="s1_14">Clarke had raised the issue himself, but had been told by the Australian sports authorities that complaining was regarded as bad sportsmanship.</span> <span class="sent" id="s1_15">As it turned out, he had good reason to do so.</span> <span class="sent" id="s1_16">Clearly, the link between athletic performance and altitude needed further investigation.</span></p><div class="para-dropzone dz-empty" data-letter="C" data-qnum="16"></div><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_17">Although there were few standout performances in distance running at the Mexico Games, they marked a turning point: the start of an astonishing record of success by east Africans.</span> <span class="sent" id="s1_18">While Clarke lay crumpled in a heap, runners from Kenya and Ethiopia were celebrating their gold and silver medals.</span> <span class="sent" id="s1_19">The record books confirm how entrenched this pattern has become.</span> <span class="sent" id="s1_20">The names of the seven fastest men in history over 5,000 metres are Bekele, Gebrselassie, Komen, Kipchoge, Sihine, Songok and Cheruiyot.</span> <span class="sent" id="s1_21">They are all from either Kenya or Ethiopia.</span> <span class="sent" id="s1_22">Between 1997 and 2011 the 10,000 metres men&#x27;s world record was smashed five times, dropping from 26:31.32 to 26:17.53.</span> <span class="sent" id="s1_23">Each time, the record was broken by a Kenyan or an Ethiopian.</span> <span class="sent" id="s1_24">While there is a complex mix of economic, political, social and cultural explanations for the pre-eminence of east Africans, one factor is surely that many of these athletes have lived most of their lives in thin air.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="17"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_25">At high altitudes, a number of physiological alterations occur, most importantly: more red blood cells and haemoglobin are produced.</span> <span class="sent" id="s1_26">This, in turn, increases the capacity of the blood to carry oxygen, which feeds the muscles and which gives an advantage to the athletes when they return to sea level.</span> <span class="sent" id="s1_27">However, it is impossible to train with the same level of intensity in the mountains – aerobic capacity and cardio-respiratory function both suffer at altitude.</span> <span class="sent" id="s1_28">As a result, the consensus is that the optimum approach to athletic preparation is: Live High, Train Low (LHTL).</span> <span class="sent" id="s1_29">Yet that has obvious practical drawbacks.</span> <span class="sent" id="s1_30">Not many people live in the mountains and those who do would prefer not to spend several hours each day driving up and down winding, treacherous roads.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="18"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_31">That&#x27;s where the altitude tent – sometimes called the hypoxic tent – comes in.</span> <span class="sent" id="s1_32">Around two decades ago, two different scientists had the same exciting thought.</span> <span class="sent" id="s1_33">If they could artificially control the atmosphere within a confined space, they could simulate the effects of high altitude and save an athlete at sea level from the time and expense of travelling to higher ground.</span> <span class="sent" id="s1_34">Altitude tents have improved over the years: they&#x27;re not as hot or as noisy as the early prototypes, and are much cheaper too.</span> <span class="sent" id="s1_35">They are also perfectly lawful.</span> <span class="sent" id="s1_36">Five years ago when the tents were investigated by Wada (the World Anti-Doping Agency), it was ruled that they did not violate the spirit of distance running.</span> <span class="sent" id="s1_37">It is now routine for athletes to sleep in them in preparation for an event.</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="19"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_38">However, it is not the case that all new technologies gain approval.</span> <span class="sent" id="s1_39">In 2008, a staggering 105 world records were broken in swimming, the vast majority achieved by competitors wearing the new Speedo LZR Racer suit.</span> <span class="sent" id="s1_40">These suits use a high-tech fabric tested in Nasa&#x27;s wind tunnels, which reduces drag and improves buoyancy.</span> <span class="sent" id="s1_41">The LZR was initially sanctioned by Fina, the international swimming body.</span> <span class="sent" id="s1_42">But as better suits were produced by Speedo and other manufacturers, and more records were broken, they became increasingly controversial.</span> <span class="sent" id="s1_43">In a 2009 ruling, Fina changed its mind, banning all suits made with this high-tech fabric.</span></p><div class="para-dropzone dz-empty" data-letter="G" data-qnum="20"></div><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_44">Going faster, higher, stronger is integral to the logic of athletics in general, and the Olympics in particular.</span> <span class="sent" id="s1_45">Athletes believe they need records all the time.</span> <span class="sent" id="s1_46">And the only way to achieve them is through better technology and training, with success sometimes coming down to minute changes of 0.0001 of a second.</span> <span class="sent" id="s1_47">But when a new technology is invented, the relevant sports authority has to consider whether to embrace or reject it.</span> <span class="sent" id="s1_48">In some cases, athletes are granted permission to use the technology; in others, it is banned.</span> <span class="sent" id="s1_49">But whatever the outcome, rulings should not appear arbitrary: arguments have to be examined and weighed and the rules of logic ought to apply in every case.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,20" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;20</div><button type="button" class="flag-toggle" data-flagrange="14,20" title="Flag for review" aria-label="Flag questions 14-20">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has seven paragraphs, A–G.</p><p>Choose the correct heading for each paragraph from the list of headings below.</p><p>Write the correct number, i–ix, in boxes 14–20 on your answer sheet.</p></div><div class="info-chip-pool" id="pool-p1g0" data-gid="p1g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>Early research into athletes&#x27; physiology</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>A convenient method of acclimatisation</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>The need for a rational approach</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>Changes in the body</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>The athletes who break the rules</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>Well-founded concerns</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>The surprising outcome of a race</span></div><div class="info-chip" data-heading="viii" draggable="true"><span class="ic-num">viii</span><span>The reversal of a decision</span></div><div class="info-chip" data-heading="ix" draggable="true"><span class="ic-num">ix</span><span>The runners who dominate the sport</span></div></div><p class="hint-small">Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="21,22" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 21&ndash;22</div><button type="button" class="flag-toggle" data-flagrange="21,22" title="Flag for review" aria-label="Flag questions 21-22">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>TWO</b> letters, A–E.</p><p>Write the correct letters in boxes 21 and 22 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>TWO</b> of the following statements about Ron Clarke are made in the</span></div><div class="q-group-instructions"></div><div class="mcq-stem" style="margin-top:.4rem"><span>passage?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="A"><span class="opt-letter">A</span><span>Clarke was not performing well immediately prior to the Mexico Games.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="B"><span class="opt-letter">B</span><span>The worries Clarke had before the Mexico Games were not taken into account.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="C"><span class="opt-letter">C</span><span>Clarke&#x27;s experiences at the Mexico Games are widely talked about today.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="D"><span class="opt-letter">D</span><span>At one stage of the Mexico Games 10,000 metres, Clarke was near the front.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="E"><span class="opt-letter">E</span><span>Clarke was the only runner at the Mexico Games who appeared to be affected by the altitude.</span></label></div><div class="q-group" data-flagrange="23,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 23&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="23,26" title="Flag for review" aria-label="Flag questions 23-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 23–26 on your answer sheet.</p></div><div class="notes-box"><div style="margin-bottom:.5rem">Do all new technologies gain approval? Some people may be puzzled by attitudes towards performance-enhancing technologies in sport. For example, why is the altitude tent considered acceptable, but not the LZR Racer suit? For distance running, Wada concluded that the altitude tent was not contrary to the <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"> of the sport. However, the LZR swimsuit, which is made from a special fabric that aids buoyancy and cuts down <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false">, was banned. Athletes think they have to continually set fresh <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false">. This is made possible by better <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"> and training, as well as improved clothing and equipment. However, when sports authorities have to decide whether to give permission for a new performance-enhancing technology to be used, it is important that their decisions are not seen as arbitrary.</div></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Theories of planet formation questioned</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s2_0">The traditional view of astronomy has been that planets form slowly as material congeals within the disk of gas, dust and ice known to surround young stars.</span> <span class="sent" id="s2_1">First, gravity gathers together bits of dust that merge to form boulder-sized bodies, which themselves coalesce into bigger and bigger objects.</span> <span class="sent" id="s2_2">In about a million years, these form rocky planets like Earth and Mars.</span> <span class="sent" id="s2_3">Over the next few million years, gas from the disk settles around some of these solid bodies and they grow far larger, becoming giants like gaseous Saturn and Jupiter.</span> <span class="sent" id="s2_4">This theory of planet formation is known as the core-accretion model.</span> <span class="sent" id="s2_5">However, several astronomers now say that this model for making planets may not be entirely correct.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s2_6">These astronomers have devised an alternative theory in which planets as massive as Jupiter, whether orbiting our sun or a distant star, would form completely within a few hundred years, rather than millions of years as previously believed.</span> <span class="sent" id="s2_7">Both theories for planet formation start with the same reservoir of planet-making materials.</span> <span class="sent" id="s2_8">The spinning cloud of gas, dust and ice rapidly fattens into disk-like shapes known as proto-planetary disks; and, as time goes by, gravity causes material in these disks to clump into planet-sized objects.</span> <span class="sent" id="s2_9">However, it is the speed of the clustering, and the size of the initial clumps, that provide the disparity in the two models for planet formation.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s2_10">According to the core-accretion model, the making of Jupiter required the initial formation of a solid core five to ten times Earth&#x27;s mass.</span> <span class="sent" id="s2_11">It would have taken about a million years to achieve this.</span> <span class="sent" id="s2_12">Most astronomers believe that the large core then had enough gravity to attract a huge amount of gas from the proto-planetary disk to create a planet of the massive proportions of Jupiter.</span> <span class="sent" id="s2_13">In this core-accretion model, these &#x27;gas giants&#x27; may take as long as ten million years to form.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s2_14">That is several million years too long in the opinion of Lucio Mayer of Zurich University.</span> <span class="sent" id="s2_15">Direct telescope sightings suggest that the proto-planetary disks do not last more than about seven million years, and studies of the environment in which stars form suggest that many disks may evaporate in much less time.</span> <span class="sent" id="s2_16">Mayer asserts that most stars in the Milky Way form in dense clouds of gas, dust and ice.</span> <span class="sent" id="s2_17">Their temperatures are very intense and the ultraviolet light they send into space can evaporate a proto-planetary disk in less than 100,000 years.</span> <span class="sent" id="s2_18">In the core-accretion model, that is not enough time for a Jupiter-like planet to form.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s2_19">Recent computer simulations show that when individual stars form, the gravitational pull between them can result in the outer gaseous parts of the proto-planetary disks being destroyed in 100,000 years or less.</span> <span class="sent" id="s2_20">Thus, Thomas Quinn of the University of Washington concludes that if a &#x27;gas giant&#x27; planet cannot form quickly, it will probably never form.</span> <span class="sent" id="s2_21">He also asserts that if the core-accretion model is correct, gas giant planets like Jupiter should be rare.</span> <span class="sent" id="s2_22">However, since 1995, astronomers have found more than one hundred planets as large as Jupiter outside our solar system.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s2_23">Quinn and his colleagues recently analysed the standard core-accretion model of planet formation and investigated whether or not giant planets could form quickly.</span> <span class="sent" id="s2_24">They looked at the work of Gerard Kuiper who, in the 1950s, proposed that they could.</span> <span class="sent" id="s2_25">Alan P Boss of the Carnegie Institute did more extensive work on the subject in the late 1980s.</span> <span class="sent" id="s2_26">Using computer simulations, he was surprised to find that gravity could cause a proto-planetary disk, after a few orbits of its parent star, to break into clumps as big as an average-sized planet.</span> <span class="sent" id="s2_27">The clumps would continue to pull in gas, ice and dust.</span> <span class="sent" id="s2_28">This is called the gravitational-instability model of planet formation.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s2_29">Recent calculations have suggested that many of the solid bodies that might be the rocky core for Jupiter-size planets in the traditional theory would spin into the parent star before the massive planet could form.</span> <span class="sent" id="s2_30">Moreover, further analysis has shown that other effects could also cause a proto-planetary disk to become unstable and split into large fragments.</span> <span class="sent" id="s2_31">For instance, within the disk, electrically charged material might accumulate, leading to fragmentation of the disk.</span> <span class="sent" id="s2_32">Or a powerful gravitational disturbance, such as the pull of a star passing nearby, could produce instability in the proto-planetary disk.</span></p><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s2_33">Nevertheless, the gravitational-instability model has problems of its own, as it is mathematically complicated and requires sophisticated computer use.</span> <span class="sent" id="s2_34">Therefore, no one has studied the simulations long enough to establish conclusively that the model allows for the formation of massive planets.</span></p><p data-para="I"><span class="para-letter">I</span><span class="sent" id="s2_35">In response, Mayer says that he and his team have described the results of an extensive simulation based on the gravitational-instability model.</span> <span class="sent" id="s2_36">They spent two years refining calculations to track what would happen to a proto-planetary disk over one thousand years, which is more than any other simulation had done.</span> <span class="sent" id="s2_37">In addition, over a decade previously Mayer and his team had made simulations of the formation and evolution of galaxies.</span> <span class="sent" id="s2_38">In doing this, they had already developed a fast computer code that could run in parallel on machines with hundreds of processors, and this knowledge assisted them in investigating their gravitational-instability theory.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,32" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;32</div><button type="button" class="flag-toggle" data-flagrange="27,32" title="Flag for review" aria-label="Flag questions 27-32">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 3 has nine paragraphs, A–I.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–I, in boxes 27–32 on your answer sheet.</p></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">the significance of recent discoveries of a large number of massive planets</span><select class="q-select" name="q27"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">an explanation of the difference between the theories of planet creation</span><select class="q-select" name="q28"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">the difficulties of proving that the more recent theory of planet creation is correct</span><select class="q-select" name="q29"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">reasons why Mayer claims he was able to develop his theory</span><select class="q-select" name="q30"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">a detailed explanation of the long-held theory of planet creation</span><select class="q-select" name="q31"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">description of the destructive effect of heat in space</span><select class="q-select" name="q32"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select></div></div><div class="q-group" data-flagrange="33,37" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 33&ndash;37</div><button type="button" class="flag-toggle" data-flagrange="33,37" title="Flag for review" aria-label="Flag questions 33-37">&#9873;</button></div><div class="q-group-instructions"><p>Complete each sentence with the correct ending, A–G, below.</p><p>Write the correct letter, A–G, in boxes 33–37 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of Endings</div><span class="wb-item"><span class="wb-letter">A</span> gaseous planets form before smaller rocky planets.</span><span class="wb-item"><span class="wb-letter">B</span> large planets take millions of years to form.</span><span class="wb-item"><span class="wb-letter">C</span> large planets must form fast or not at all.</span><span class="wb-item"><span class="wb-letter">D</span> large planets had the potential to develop relatively fast.</span><span class="wb-item"><span class="wb-letter">E</span> gravity could cause planet-sized pieces to break off quickly.</span><span class="wb-item"><span class="wb-letter">F</span> hot clumps of gas, dust and ice were destroyed relatively quickly.</span><span class="wb-item"><span class="wb-letter">G</span> computer studies of planets are too mathematically complex.</span></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">Traditionally astronomers have believed that</span><select class="q-select" name="q33"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">Lucio Mayer physically observed that</span><select class="q-select" name="q34"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">Thomas Quinn believes that</span><select class="q-select" name="q35"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">Gerard Kuiper was the first to suggest that</span><select class="q-select" name="q36"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">Alan P Boss discovered that</span><select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div><div class="q-group" data-flagrange="38,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 38&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="38,40" title="Flag for review" aria-label="Flag questions 38-40">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary using the list of words, A–F, below.</p><p>Write the correct letter, A–F, in boxes 38–40 on your answer sheet.</p><p>The core-accretion model</p></div><div class="word-bank"><div class="wb-title">List of Words</div><span class="wb-item"><span class="wb-letter">A</span> gravitational pull</span><span class="wb-item"><span class="wb-letter">B</span> ice</span><span class="wb-item"><span class="wb-letter">C</span> solid core</span><span class="wb-item"><span class="wb-letter">D</span> ultraviolet light</span><span class="wb-item"><span class="wb-letter">E</span> Milky Way</span><span class="wb-item"><span class="wb-letter">F</span> disk</span></div><div class="notes-box"><div style="margin-bottom:.5rem">A hard centre becomes larger and this produces enough gravity to draw gas from the <span class="q-num">38</span> <select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select> around it. The gravitational-instability model Stars can break up the outer gaseous parts which surround objects in the sky because the attraction of the <span class="q-num">39</span> <select class="q-select" name="q39"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select> from stars is very powerful. Heat caused by <span class="q-num">40</span> <select class="q-select" name="q40"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select> can also destroy the material surrounding the objects in a relatively short time. Planet-sized segments may split away from the main body following several orbits of the parent star.</div></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 14, "minutes": 60, "parts": [{"title": "The history of the pencil", "short": "The history", "qstart": 1, "qend": 13}, {"title": "What is an unfair advantage in sport?", "short": "What is", "qstart": 14, "qend": 26}, {"title": "Theories of planet formation questioned", "short": "Theories of", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "text", "ans": ["tree"], "group": "p0g0", "part": 1}, {"n": 2, "kind": "text", "ans": ["sheep"], "group": "p0g0", "part": 1}, {"n": 3, "kind": "text", "ans": ["soft"], "group": "p0g0", "part": 1}, {"n": 4, "kind": "text", "ans": ["rope"], "group": "p0g0", "part": 1}, {"n": 5, "kind": "text", "ans": ["mines"], "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["steal"], "group": "p0g0", "part": 1}, {"n": 7, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 8, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 9, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 10, "kind": "select", "ans": "NOT GIVEN", "group": "p0g1", "part": 1}, {"n": 11, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 12, "kind": "select", "ans": "TRUE", "group": "p0g1", "part": 1}, {"n": 13, "kind": "select", "ans": "FALSE", "group": "p0g1", "part": 1}, {"n": 14, "kind": "heading", "ans": "vii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 15, "kind": "heading", "ans": "vi", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 16, "kind": "heading", "ans": "ix", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 17, "kind": "heading", "ans": "iv", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 18, "kind": "heading", "ans": "ii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 19, "kind": "heading", "ans": "viii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 20, "kind": "heading", "ans": "iii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 21, "kind": "multi", "ans": null, "group": "p1g1", "part": 2, "idx": 0, "groupAns": ["B", "D"]}, {"n": 22, "kind": "multi", "ans": null, "group": "p1g1", "part": 2, "idx": 1, "groupAns": ["B", "D"]}, {"n": 23, "kind": "text", "ans": ["spirit"], "group": "p1g2", "part": 2}, {"n": 24, "kind": "text", "ans": ["drag"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["records"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["technology"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "select", "ans": "E", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "H", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "I", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "A", "group": "p2g0", "part": 3}, {"n": 32, "kind": "select", "ans": "D", "group": "p2g0", "part": 3}, {"n": 33, "kind": "select", "ans": "B", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "F", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "C", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "D", "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "E", "group": "p2g1", "part": 3}, {"n": 38, "kind": "select", "ans": "F", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "A", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "D", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {"p1g0": {"i": "Early research into athletes' physiology", "ii": "A convenient method of acclimatisation", "iii": "The need for a rational approach", "iv": "Changes in the body", "v": "The athletes who break the rules", "vi": "Well-founded concerns", "vii": "The surprising outcome of a race", "viii": "The reversal of a decision", "ix": "The runners who dominate the sport"}};
+const LOC = {"1": "s0_1", "2": "s0_4", "3": "s0_6", "4": "s0_7", "5": "s0_15", "6": "s0_16", "7": "s0_19", "8": "s0_20", "9": "s0_25", "10": "s0_28", "11": "s0_33", "12": "s0_38", "13": "s0_42", "14": "s1_2", "15": "s1_13", "16": "s1_17", "17": "s1_25", "18": "s1_33", "19": "s1_41", "20": "s1_49", "21": "s1_14", "22": "s1_5", "23": "s1_36", "24": "s1_40", "25": "s1_45", "26": "s1_46", "27": "s2_21", "28": "s2_9", "29": "s2_33", "30": "s2_37", "31": "s2_0", "32": "s2_17", "33": "s2_0", "34": "s2_15", "35": "s2_20", "36": "s2_23", "37": "s2_26", "38": "s2_12", "39": "s2_19", "40": "s2_17"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Graphite was first found below a <b>.........<\/b> blown down in a", "options": [{"t": "Underneath the tree lay an unknown black substance which we now know as graphite.", "ok": false}, {"t": "When some particularly ferocious weather struck the Lake District in North West England in the sixteenth century, locals in the village of Borrowdale discovered a large uprooted tree.", "ok": true}, {"t": "Armed guards accompanied the precious graphite all the way down to the metal foundries by the naval shipyards in the south of England.", "ok": false}, {"t": "Nowadays the highest grade of graphite at Borrowdale is totally exhausted, although other grades can still be found, and England's pencil industry continues to thrive in the nearby town of Keswick.", "ok": false}], "pairs": ["found below a ___ blown down in a storm = locals in the village of Borrowdale discovered a large uprooted tree", "first found below = Underneath the tree lay an unknown black substance"], "kind": "Completion", "answer": "tree", "accept": ["tree"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 2, "question": "The first use of graphite was to make marks on <b>.........<\/b>.", "options": [{"t": "But because words have remarkable staying power, we still call graphite the lead of a pencil even though it is now known that there is no trace of real lead in graphite.", "ok": false}, {"t": "Later the name was changed to graphite.", "ok": false}, {"t": "Initially, the local farmers used the newly discovered material as a handy way to identify their sheep.", "ok": true}, {"t": "To make it fit for use with paper, people enclosed a thin core of the substance in stiff sheep hides or rope.", "ok": false}], "pairs": ["The first use of graphite = Initially, the local farmers used the newly discovered material", "to make marks on ___ = as a handy way to identify their sheep"], "kind": "Completion", "answer": "sheep", "accept": ["sheep"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 3, "question": "dirty to use because it is so <b>.........<\/b>", "options": [{"t": "At this time chemistry was still in its infancy.", "ok": false}, {"t": "But because words have remarkable staying power, we still call graphite the lead of a pencil even though it is now known that there is no trace of real lead in graphite.", "ok": false}, {"t": "When it was untreated the material was very soft, which meant that it was messy to handle.", "ok": true}, {"t": "To make it fit for use with paper, people enclosed a thin core of the substance in stiff sheep hides or rope.", "ok": false}], "pairs": ["dirty to use = it was messy to handle", "so ___ = the material was very soft"], "kind": "Completion", "answer": "soft", "accept": ["soft"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 4, "question": "originally wrapped in <b>.........<\/b> or animal skin to make it", "options": [{"t": "But because words have remarkable staying power, we still call graphite the lead of a pencil even though it is now known that there is no trace of real lead in graphite.", "ok": false}, {"t": "To make it fit for use with paper, people enclosed a thin core of the substance in stiff sheep hides or rope.", "ok": true}, {"t": "Adding more clay to the mixture helped make the pencil harder, sharper, and more precise in its mark.", "ok": false}, {"t": "More graphite helped make a pencil mark that was softer, thicker and darker.", "ok": false}], "pairs": ["wrapped in ___ or animal skin = enclosed a thin core of the substance in stiff sheep hides or rope", "to make it useable as a pencil = To make it fit for use with paper"], "kind": "Completion", "answer": "rope", "accept": ["rope"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 5, "question": "The government completely took over the <b>.........<\/b> at", "options": [{"t": "In addition to its value to the armed forces, the government quickly realised the commercial potential of the graphite at Borrowdale, and assumed control of all the mines there during the sixteenth century.", "ok": true}, {"t": "Armed guards accompanied the precious graphite all the way down to the metal foundries by the naval shipyards in the south of England.", "ok": false}, {"t": "As a deterrent, an act of parliament in 1752 made this offence punishable by time in prison.", "ok": false}, {"t": "This made it invaluable to the British army and navy as a secret ingredient in the manufacture of cannon balls.", "ok": false}], "pairs": ["completely took over the ___ = assumed control of all the mines there"], "kind": "Completion", "answer": "mines", "accept": ["mines"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 6, "question": "Local people began to <b>.........<\/b> graphite for the money", "options": [{"t": "The Royal Ordnance, or weaponry section of the British armed forces, used graphite as a lining inside the moulds for cannon balls, which as a result the British could turn out faster and more cheaply than their European rivals.", "ok": false}, {"t": "Armed guards accompanied the precious graphite all the way down to the metal foundries by the naval shipyards in the south of England.", "ok": true}, {"t": "Graphite has a very high melting point at around 3,500 degrees Celsius.", "ok": false}, {"t": "The graphite was so valuable that the locals, who called it wadd, started to steal it.", "ok": false}], "pairs": ["protect the graphite on its journey south = Armed guards accompanied the precious graphite all the way down to the metal foundries", "Local people began to ___ graphite = the locals, who called it wadd, started to steal it"], "kind": "Completion", "answer": "steal", "accept": ["steal"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 7, "question": "The Italians were the first to make pencils out of wood.", "options": [{"t": "Italian craftsmen hollowed out two small sections of cedar wood, into one of which they laid the lead.", "ok": false}, {"t": "The Italians originally invented the wooden casing to hold a thin rod of plumbago firmly in place for ease of writing.", "ok": true}, {"t": "The Germans took this technique and developed it further by applying mass-production techniques to pencils.", "ok": false}, {"t": "More graphite helped make a pencil mark that was softer, thicker and darker.", "ok": false}], "pairs": ["The Italians were the first to make pencils out of wood = The Italians originally invented the wooden casing"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 8, "question": "The Germans used different types of wood to produce pencils.", "options": [{"t": "The Germans took this technique and developed it further by applying mass-production techniques to pencils.", "ok": false}, {"t": "An HB pencil is a standard pencil and a variety of letters and numbers are used to designate different types of lead.", "ok": false}, {"t": "When dry, the whole apparatus formed what today we know as a pencil.", "ok": false}, {"t": "Italian craftsmen hollowed out two small sections of cedar wood, into one of which they laid the lead.", "ok": true}], "pairs": ["different types of wood ? two small sections of cedar wood", "The Germans used = The Germans took this technique and developed it further"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 9, "question": "More clay in a pencil makes it write more darkly.", "options": [{"t": "When dry, the whole apparatus formed what today we know as a pencil.", "ok": false}, {"t": "More graphite helped make a pencil mark that was softer, thicker and darker.", "ok": false}, {"t": "Adding more clay to the mixture helped make the pencil harder, sharper, and more precise in its mark.", "ok": true}, {"t": "At the same time Nicolas-Jacques Conte, a French officer in Napoleon Bonaparte's army during the late 1700s, developed a method of mixing powdered graphite and clay together for firing in a kiln.", "ok": false}], "pairs": ["More clay in a pencil makes it write more darkly ≠ Adding more clay to the mixture helped make the pencil harder, sharper, and more precise in its mark", "write more darkly = More graphite helped make a pencil mark that was softer, thicker and darker"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 10, "question": "After the HB code was introduced, it very quickly became used by all manufacturers.", "options": [{"t": "The varying quality of pencil leads eventually gave rise to a system for categorising the fineness of the pencil mark.", "ok": false}, {"t": "The H stands for the Hardness of the pencil while the B stands for its Blackness.", "ok": false}, {"t": "An HB pencil is a standard pencil and a variety of letters and numbers are used to designate different types of lead.", "ok": false}, {"t": "Pencil manufacturers all over the world still use this so-called HB grading system today.", "ok": true}], "pairs": ["very quickly became used by all manufacturers ? Pencil manufacturers all over the world still use this so-called HB grading system today"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 11, "question": "English pencil factories have now all closed down.", "options": [{"t": "Nowadays the highest grade of graphite at Borrowdale is totally exhausted, although other grades can still be found, and England's pencil industry continues to thrive in the nearby town of Keswick.", "ok": true}, {"t": "But because words have remarkable staying power, we still call graphite the lead of a pencil even though it is now known that there is no trace of real lead in graphite.", "ok": false}, {"t": "Significant seams of graphite exist in parts of China, which now produces most of the world's pencils.", "ok": false}, {"t": "Interestingly, the Borrowdale mine in the Lake District remains the only significant source of graphite in its near-pure form in the world.", "ok": false}], "pairs": ["English pencil factories have now all closed down ≠ England's pencil industry continues to thrive in the nearby town of Keswick"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 12, "question": "American astronauts used pencils on their early journeys into space.", "options": [{"t": "The Russians, by contrast, simply equipped their astronauts with good old-fashioned pencils that never let them down.", "ok": false}, {"t": "It should be pointed out though, that the popular myth about Americans overlooking the practical advantages of pencils in zero gravity is merely fiction.", "ok": false}, {"t": "It is sometimes said that the American space programme spent millions of dollars to invent a pen capable of writing in the zero gravity of space.", "ok": false}, {"t": "In actual fact, both American and Russian astronauts were equipped with pencils in their respective country's first space flights.", "ok": true}], "pairs": ["American astronauts used pencils on their early journeys into space = both American and Russian astronauts were equipped with pencils in their respective country's first space flights"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 13, "question": "The use of graphite pencils is unlikely to continue into the future.", "options": [{"t": "In fact, astronauts of every nation now use pens.", "ok": false}, {"t": "And there is nothing to suggest that we are likely to invent anything better than graphite to use in our pencils.", "ok": true}, {"t": "But no matter – pencils remain in use in every classroom, every planning, building and drawing office, and in every art studio in the world.", "ok": false}, {"t": "It should be pointed out though, that the popular myth about Americans overlooking the practical advantages of pencils in zero gravity is merely fiction.", "ok": false}], "pairs": ["unlikely to continue into the future ≠ there is nothing to suggest that we are likely to invent anything better than graphite", "use of graphite pencils = whose use has survived well into our high-tech times"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}], "paraphrase": [{"q": "found below a ___ blown down in a storm", "p": "locals in the village of Borrowdale discovered a large uprooted tree", "rel": "=", "note": "", "n": "1"}, {"q": "first found below", "p": "Underneath the tree lay an unknown black substance", "rel": "=", "note": "", "n": "1"}, {"q": "The first use of graphite", "p": "Initially, the local farmers used the newly discovered material", "rel": "=", "note": "", "n": "2"}, {"q": "to make marks on ___", "p": "as a handy way to identify their sheep", "rel": "=", "note": "", "n": "2"}, {"q": "dirty to use", "p": "it was messy to handle", "rel": "=", "note": "", "n": "3"}, {"q": "so ___", "p": "the material was very soft", "rel": "=", "note": "", "n": "3"}, {"q": "wrapped in ___ or animal skin", "p": "enclosed a thin core of the substance in stiff sheep hides or rope", "rel": "=", "note": "", "n": "4"}, {"q": "to make it useable as a pencil", "p": "To make it fit for use with paper", "rel": "=", "note": "", "n": "4"}, {"q": "completely took over the ___", "p": "assumed control of all the mines there", "rel": "=", "note": "", "n": "5"}, {"q": "protect the graphite on its journey south", "p": "Armed guards accompanied the precious graphite all the way down to the metal foundries", "rel": "=", "note": "", "n": "6"}, {"q": "Local people began to ___ graphite", "p": "the locals, who called it wadd, started to steal it", "rel": "=", "note": "", "n": "6"}, {"q": "The Italians were the first to make pencils out of wood", "p": "The Italians originally invented the wooden casing", "rel": "=", "note": "", "n": "7"}, {"q": "different types of wood", "p": "two small sections of cedar wood", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "8"}, {"q": "The Germans used", "p": "The Germans took this technique and developed it further", "rel": "=", "note": "", "n": "8"}, {"q": "More clay in a pencil makes it write more darkly", "p": "Adding more clay to the mixture helped make the pencil harder, sharper, and more precise in its mark", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "9"}, {"q": "write more darkly", "p": "More graphite helped make a pencil mark that was softer, thicker and darker", "rel": "=", "note": "", "n": "9"}, {"q": "very quickly became used by all manufacturers", "p": "Pencil manufacturers all over the world still use this so-called HB grading system today", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "10"}, {"q": "English pencil factories have now all closed down", "p": "England's pencil industry continues to thrive in the nearby town of Keswick", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "11"}, {"q": "American astronauts used pencils on their early journeys into space", "p": "both American and Russian astronauts were equipped with pencils in their respective country's first space flights", "rel": "=", "note": "", "n": "12"}, {"q": "unlikely to continue into the future", "p": "there is nothing to suggest that we are likely to invent anything better than graphite", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "13"}, {"q": "use of graphite pencils", "p": "whose use has survived well into our high-tech times", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "uprooted", "pos": "adjective", "loc": "¶1", "d": "pulled out of the ground with its roots", "uz": "ildizi bilan qo'porilgan", "ex": "The storm left several uprooted trees blocking the village road.", "form": "uprooted"}, {"w": "smear", "pos": "noun", "loc": "¶1", "d": "a dirty mark made by rubbing something across a surface", "uz": "dog', iz", "ex": "He left a greasy smear on the clean window.", "form": "smear"}, {"w": "handy", "pos": "adjective", "loc": "¶2", "d": "useful and convenient", "uz": "qulay, foydali", "ex": "A small torch is a handy tool on camping trips.", "form": "handy"}, {"w": "intriguing", "pos": "adjective", "loc": "¶2", "d": "very interesting because it is unusual or mysterious", "uz": "qiziqish uyg'otuvchi", "ex": "Scientists made an intriguing discovery at the bottom of the lake.", "form": "intriguing"}, {"w": "in its infancy", "pos": "idiom", "loc": "¶2", "d": "at a very early stage of development", "uz": "boshlang'ich bosqichida", "ex": "Space tourism is still in its infancy and extremely expensive.", "form": "in its infancy"}, {"w": "staying power", "pos": "collocation", "loc": "¶2", "d": "the ability to last or remain popular for a long time", "uz": "bardoshlilik, uzoq saqlanish", "ex": "Some fashion trends have surprising staying power across several decades.", "form": "staying power"}, {"w": "invaluable", "pos": "adjective", "loc": "¶3", "d": "extremely useful; worth more than can be measured", "uz": "bebaho, juda qimmatli", "ex": "Her local knowledge proved invaluable during the difficult expedition.", "form": "invaluable"}, {"w": "turn out", "pos": "phrasal verb", "loc": "¶3", "d": "to produce something in large quantities", "uz": "ishlab chiqarmoq", "ex": "The new factory can turn out a thousand bicycles a week.", "form": "turn out"}, {"w": "assumed control of", "pos": "collocation", "loc": "¶3", "d": "took charge of something, often officially", "uz": "nazoratni qo'lga olgan", "ex": "The army assumed control of the airport during the emergency.", "form": "assumed control of"}, {"w": "deterrent", "pos": "noun", "loc": "¶3", "d": "something that discourages people from doing something", "uz": "to'xtatuvchi vosita, to'siq", "ex": "Cameras in the car park act as an effective deterrent against theft.", "form": "deterrent"}, {"w": "hollowed out", "pos": "phrasal verb", "loc": "¶4", "d": "made an empty space inside something", "uz": "ichini kovlab bo'shatgan", "ex": "Villagers hollowed out a large log to make a simple boat.", "form": "hollowed out"}, {"w": "kiln", "pos": "noun", "loc": "¶4", "d": "a very hot oven for baking clay or bricks", "uz": "pishirish pechi", "ex": "The potter placed the bowls carefully inside the kiln overnight.", "form": "kiln"}, {"w": "gave rise to", "pos": "phrasal verb", "loc": "¶5", "d": "caused something to begin or develop", "uz": "sabab bo'lmoq, keltirib chiqarmoq", "ex": "The invention of printing gave rise to a new reading public.", "form": "gave rise to"}, {"w": "designate", "pos": "verb", "loc": "¶5", "d": "to mark or choose something for a particular purpose", "uz": "belgilamoq", "ex": "Councils designate certain streets as quiet zones for residents.", "form": "designate"}, {"w": "thrive", "pos": "verb", "loc": "¶6", "d": "to grow and be very successful", "uz": "gullab-yashnamoq", "ex": "Small family businesses thrive in this lively market town.", "form": "thrive"}, {"w": "resilient", "pos": "adjective", "loc": "¶7", "d": "able to recover quickly or stay strong in difficult conditions", "uz": "chidamli, bardoshli", "ex": "Local farmers are remarkably resilient after several dry summers.", "form": "resilient"}, {"w": "let them down", "pos": "phrasal verb", "loc": "¶7", "d": "failed to do what people expected or hoped", "uz": "umidini puchga chiqarmoq", "ex": "The old car never let them down on long journeys.", "form": "let them down"}, {"w": "overlooking", "pos": "verb", "loc": "¶7", "d": "failing to notice or consider something important", "uz": "e'tibordan chetda qoldirish", "ex": "Critics accused the planners of overlooking the needs of elderly residents.", "form": "overlooking"}]}, {"evidence": [{"q": 14, "question": "Which heading fits paragraph A?", "options": [{"t": "Yet the race was being conducted at a relatively leisurely speed: the halfway time was the slowest since the Paris Olympics of 1924.", "ok": false}, {"t": "He was administered oxygen and stretchered off the track.", "ok": false}, {"t": "But in front of 55,000 horrified spectators, the event went disastrously wrong.", "ok": true}, {"t": "'I'd never felt better in a race,' he says.", "ok": false}], "pairs": ["The surprising outcome of a race = the event went disastrously wrong", "outcome = He stumbled across the line in sixth place and collapsed"], "kind": "Matching headings", "answer": "vii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "iii", "t": "The need for a rational approach"}, {"k": "v", "t": "The athletes who break the rules"}, {"k": "vi", "t": "Well-founded concerns"}, {"k": "vii", "t": "The surprising outcome of a race"}, {"k": "viii", "t": "The reversal of a decision"}], "ans": "vii"}, "why": ""}, {"q": 15, "question": "Which heading fits paragraph B?", "options": [{"t": "That the altitude would have an impact on the Games was predicted.", "ok": true}, {"t": "Clearly, the link between athletic performance and altitude needed further investigation.", "ok": false}, {"t": "Mexico City is surrounded by mountains and is over 2,240 metres above sea level.", "ok": false}, {"t": "As it turned out, he had good reason to do so.", "ok": false}], "pairs": ["Well-founded concerns = he had good reason to do so", "concerns = That the altitude would have an impact on the Games was predicted"], "kind": "Matching headings", "answer": "vi", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Early research into athletes' physiology"}, {"k": "ii", "t": "A convenient method of acclimatisation"}, {"k": "iii", "t": "The need for a rational approach"}, {"k": "vi", "t": "Well-founded concerns"}, {"k": "vii", "t": "The surprising outcome of a race"}], "ans": "vi"}, "why": ""}, {"q": 16, "question": "Which heading fits paragraph C?", "options": [{"t": "Although there were few standout performances in distance running at the Mexico Games, they marked a turning point: the start of an astonishing record of success by east Africans.", "ok": true}, {"t": "The record books confirm how entrenched this pattern has become.", "ok": false}, {"t": "Each time, the record was broken by a Kenyan or an Ethiopian.", "ok": false}, {"t": "While Clarke lay crumpled in a heap, runners from Kenya and Ethiopia were celebrating their gold and silver medals.", "ok": false}], "pairs": ["The runners who dominate the sport = the start of an astonishing record of success by east Africans", "dominate = They are all from either Kenya or Ethiopia"], "kind": "Matching headings", "answer": "ix", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ix", "t": "The runners who dominate the sport"}, {"k": "v", "t": "The athletes who break the rules"}, {"k": "vi", "t": "Well-founded concerns"}, {"k": "vii", "t": "The surprising outcome of a race"}, {"k": "viii", "t": "The reversal of a decision"}], "ans": "ix"}, "why": ""}, {"q": 17, "question": "Which heading fits paragraph D?", "options": [{"t": "This, in turn, increases the capacity of the blood to carry oxygen, which feeds the muscles and which gives an advantage to the athletes when they return to sea level.", "ok": false}, {"t": "As a result, the consensus is that the optimum approach to athletic preparation is: Live High, Train Low (LHTL).", "ok": false}, {"t": "At high altitudes, a number of physiological alterations occur, most importantly: more red blood cells and haemoglobin are produced.", "ok": true}, {"t": "However, it is impossible to train with the same level of intensity in the mountains – aerobic capacity and cardio-respiratory function both suffer at altitude.", "ok": false}], "pairs": ["Changes in the body = a number of physiological alterations occur", "in the body = more red blood cells and haemoglobin are produced"], "kind": "Matching headings", "answer": "iv", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "A convenient method of acclimatisation"}, {"k": "iv", "t": "Changes in the body"}, {"k": "ix", "t": "The runners who dominate the sport"}, {"k": "v", "t": "The athletes who break the rules"}, {"k": "vi", "t": "Well-founded concerns"}], "ans": "iv"}, "why": ""}, {"q": 18, "question": "Which heading fits paragraph E?", "options": [{"t": "Five years ago when the tents were investigated by Wada (the World Anti-Doping Agency), it was ruled that they did not violate the spirit of distance running.", "ok": false}, {"t": "Altitude tents have improved over the years: they're not as hot or as noisy as the early prototypes, and are much cheaper too.", "ok": false}, {"t": "They are also perfectly lawful.", "ok": false}, {"t": "If they could artificially control the atmosphere within a confined space, they could simulate the effects of high altitude and save an athlete at sea level from the time and expense of travelling to higher ground.", "ok": true}], "pairs": ["A convenient method of acclimatisation = save an athlete at sea level from the time and expense of travelling to higher ground", "acclimatisation = simulate the effects of high altitude"], "kind": "Matching headings", "answer": "ii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Early research into athletes' physiology"}, {"k": "ii", "t": "A convenient method of acclimatisation"}, {"k": "iii", "t": "The need for a rational approach"}, {"k": "v", "t": "The athletes who break the rules"}, {"k": "vi", "t": "Well-founded concerns"}], "ans": "ii"}, "why": ""}, {"q": 19, "question": "Which heading fits paragraph F?", "options": [{"t": "In 2008, a staggering 105 world records were broken in swimming, the vast majority achieved by competitors wearing the new Speedo LZR Racer suit.", "ok": false}, {"t": "But as better suits were produced by Speedo and other manufacturers, and more records were broken, they became increasingly controversial.", "ok": false}, {"t": "However, it is not the case that all new technologies gain approval.", "ok": false}, {"t": "The LZR was initially sanctioned by Fina, the international swimming body.", "ok": true}], "pairs": ["The reversal of a decision = Fina changed its mind", "decision = The LZR was initially sanctioned by Fina"], "kind": "Matching headings", "answer": "viii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "A convenient method of acclimatisation"}, {"k": "iv", "t": "Changes in the body"}, {"k": "ix", "t": "The runners who dominate the sport"}, {"k": "v", "t": "The athletes who break the rules"}, {"k": "viii", "t": "The reversal of a decision"}], "ans": "viii"}, "why": ""}, {"q": 20, "question": "Which heading fits paragraph G?", "options": [{"t": "Athletes believe they need records all the time.", "ok": false}, {"t": "But when a new technology is invented, the relevant sports authority has to consider whether to embrace or reject it.", "ok": false}, {"t": "And the only way to achieve them is through better technology and training, with success sometimes coming down to minute changes of 0.0001 of a second.", "ok": false}, {"t": "But whatever the outcome, rulings should not appear arbitrary: arguments have to be examined and weighed and the rules of logic ought to apply in every case.", "ok": true}], "pairs": ["The need for a rational approach = the rules of logic ought to apply in every case", "rational = rulings should not appear arbitrary"], "kind": "Matching headings", "answer": "iii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "A convenient method of acclimatisation"}, {"k": "iii", "t": "The need for a rational approach"}, {"k": "ix", "t": "The runners who dominate the sport"}, {"k": "vii", "t": "The surprising outcome of a race"}, {"k": "viii", "t": "The reversal of a decision"}], "ans": "iii"}, "why": ""}, {"q": 21, "question": "passage?", "options": [{"t": "Mexico City is surrounded by mountains and is over 2,240 metres above sea level.", "ok": false}, {"t": "What happened to the Australian athlete Ron Clarke in the 10,000 metres at the Mexico City Olympics of 1968 is now virtually forgotten, though at the time it was headline news.", "ok": false}, {"t": "Clarke had raised the issue himself, but had been told by the Australian sports authorities that complaining was regarded as bad sportsmanship.", "ok": true}, {"t": "That the altitude would have an impact on the Games was predicted.", "ok": false}], "pairs": ["The worries Clarke had before the Mexico Games were not taken into account = had been told by the Australian sports authorities that complaining was regarded as bad sportsmanship", "Clarke was not performing well immediately prior to the Mexico Games ≠ I'd never felt better in a race"], "kind": "Choose the correct answers", "answer": "B, D (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 22, "question": "passage?", "options": [{"t": "Clarke remembers nothing of his last lap, which he ran in 90 seconds.", "ok": false}, {"t": "With two laps to go, Clarke was in the leading pack.", "ok": true}, {"t": "What happened to the Australian athlete Ron Clarke in the 10,000 metres at the Mexico City Olympics of 1968 is now virtually forgotten, though at the time it was headline news.", "ok": false}, {"t": "Clarke was the greatest distance runner in history – he'd broken more world records than anybody else.", "ok": false}], "pairs": ["At one stage Clarke was near the front = Clarke was in the leading pack", "widely talked about today ≠ is now virtually forgotten"], "kind": "Choose the correct answers", "answer": "B, D (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 23, "question": "For distance running, Wada concluded that the altitude tent was not contrary to the <b>.........<\/b> of the sport.", "options": [{"t": "That's where the altitude tent – sometimes called the hypoxic tent – comes in.", "ok": false}, {"t": "Altitude tents have improved over the years: they're not as hot or as noisy as the early prototypes, and are much cheaper too.", "ok": false}, {"t": "Five years ago when the tents were investigated by Wada (the World Anti-Doping Agency), it was ruled that they did not violate the spirit of distance running.", "ok": true}, {"t": "If they could artificially control the atmosphere within a confined space, they could simulate the effects of high altitude and save an athlete at sea level from the time and expense of travelling to higher ground.", "ok": false}], "pairs": ["not contrary to the ___ of the sport = they did not violate the spirit of distance running"], "kind": "Completion", "answer": "spirit", "accept": ["spirit"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "However, the LZR swimsuit, which is made from a special fabric that aids buoyancy and cuts down <b>.........<\/b>, was banned.", "options": [{"t": "In a 2009 ruling, Fina changed its mind, banning all suits made with this high-tech fabric.", "ok": false}, {"t": "The LZR was initially sanctioned by Fina, the international swimming body.", "ok": false}, {"t": "These suits use a high-tech fabric tested in Nasa's wind tunnels, which reduces drag and improves buoyancy.", "ok": true}, {"t": "In 2008, a staggering 105 world records were broken in swimming, the vast majority achieved by competitors wearing the new Speedo LZR Racer suit.", "ok": false}], "pairs": ["cuts down ___ = reduces drag and improves buoyancy"], "kind": "Completion", "answer": "drag", "accept": ["drag"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "Athletes think they have to continually set fresh <b>.........<\/b>.", "options": [{"t": "In some cases, athletes are granted permission to use the technology; in others, it is banned.", "ok": false}, {"t": "But when a new technology is invented, the relevant sports authority has to consider whether to embrace or reject it.", "ok": false}, {"t": "Athletes believe they need records all the time.", "ok": true}, {"t": "But whatever the outcome, rulings should not appear arbitrary: arguments have to be examined and weighed and the rules of logic ought to apply in every case.", "ok": false}], "pairs": ["continually set fresh ___ = Athletes believe they need records all the time"], "kind": "Completion", "answer": "records", "accept": ["records"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 26, "question": "This is made possible by better <b>.........<\/b> and training, as well as improved clothing and equipment.", "options": [{"t": "Athletes believe they need records all the time.", "ok": false}, {"t": "But when a new technology is invented, the relevant sports authority has to consider whether to embrace or reject it.", "ok": false}, {"t": "In a 2009 ruling, Fina changed its mind, banning all suits made with this high-tech fabric.", "ok": false}, {"t": "And the only way to achieve them is through better technology and training, with success sometimes coming down to minute changes of 0.0001 of a second.", "ok": true}], "pairs": ["made possible by better ___ and training = the only way to achieve them is through better technology and training"], "kind": "Completion", "answer": "technology", "accept": ["technology"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "The surprising outcome of a race", "p": "the event went disastrously wrong", "rel": "=", "note": "", "n": "14"}, {"q": "outcome", "p": "He stumbled across the line in sixth place and collapsed", "rel": "=", "note": "", "n": "14"}, {"q": "Well-founded concerns", "p": "he had good reason to do so", "rel": "=", "note": "", "n": "15"}, {"q": "concerns", "p": "That the altitude would have an impact on the Games was predicted", "rel": "=", "note": "", "n": "15"}, {"q": "The runners who dominate the sport", "p": "the start of an astonishing record of success by east Africans", "rel": "=", "note": "", "n": "16"}, {"q": "dominate", "p": "They are all from either Kenya or Ethiopia", "rel": "=", "note": "", "n": "16"}, {"q": "Changes in the body", "p": "a number of physiological alterations occur", "rel": "=", "note": "", "n": "17"}, {"q": "in the body", "p": "more red blood cells and haemoglobin are produced", "rel": "=", "note": "", "n": "17"}, {"q": "A convenient method of acclimatisation", "p": "save an athlete at sea level from the time and expense of travelling to higher ground", "rel": "=", "note": "", "n": "18"}, {"q": "acclimatisation", "p": "simulate the effects of high altitude", "rel": "=", "note": "", "n": "18"}, {"q": "The reversal of a decision", "p": "Fina changed its mind", "rel": "=", "note": "", "n": "19"}, {"q": "decision", "p": "The LZR was initially sanctioned by Fina", "rel": "=", "note": "", "n": "19"}, {"q": "The need for a rational approach", "p": "the rules of logic ought to apply in every case", "rel": "=", "note": "", "n": "20"}, {"q": "rational", "p": "rulings should not appear arbitrary", "rel": "=", "note": "", "n": "20"}, {"q": "The worries Clarke had before the Mexico Games were not taken into account", "p": "had been told by the Australian sports authorities that complaining was regarded as bad sportsmanship", "rel": "=", "note": "", "n": "21"}, {"q": "Clarke was not performing well immediately prior to the Mexico Games", "p": "I'd never felt better in a race", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "21"}, {"q": "At one stage Clarke was near the front", "p": "Clarke was in the leading pack", "rel": "=", "note": "", "n": "22"}, {"q": "widely talked about today", "p": "is now virtually forgotten", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "22"}, {"q": "not contrary to the ___ of the sport", "p": "they did not violate the spirit of distance running", "rel": "=", "note": "", "n": "23"}, {"q": "cuts down ___", "p": "reduces drag and improves buoyancy", "rel": "=", "note": "", "n": "24"}, {"q": "continually set fresh ___", "p": "Athletes believe they need records all the time", "rel": "=", "note": "", "n": "25"}, {"q": "made possible by better ___ and training", "p": "the only way to achieve them is through better technology and training", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "keeled over", "pos": "phrasal verb", "loc": "A", "d": "fell over suddenly, often because of weakness or illness", "uz": "yiqilib tushmoq", "ex": "The exhausted marathon runner keeled over just before the finish line.", "form": "keeled over"}, {"w": "leisurely", "pos": "adjective", "loc": "A", "d": "relaxed and without hurry", "uz": "shoshilmay, sekin", "ex": "We enjoyed a leisurely breakfast on the hotel terrace.", "form": "leisurely"}, {"w": "moved up a gear", "pos": "idiom", "loc": "A", "d": "started to work or run faster and with more effort", "uz": "tezlikni oshirmoq", "ex": "With ten minutes left, the home team moved up a gear.", "form": "moved up a gear"}, {"w": "stretchered off", "pos": "phrasal verb", "loc": "A", "d": "carried away on a stretcher because of injury", "uz": "zambilda olib ketilgan", "ex": "The injured player was stretchered off the pitch after the tackle.", "form": "stretchered off"}, {"w": "standout performances", "pos": "collocation", "loc": "C", "d": "results that are clearly much better than the others", "uz": "ajoyib natijalar", "ex": "There were several standout performances in the final round of the competition.", "form": "standout performances"}, {"w": "entrenched", "pos": "adjective", "loc": "C", "d": "firmly established and difficult to change", "uz": "mustahkam o'rnashgan", "ex": "Old attitudes about women in sport are deeply entrenched in some regions.", "form": "entrenched"}, {"w": "pre-eminence", "pos": "noun", "loc": "C", "d": "the position of being better or more important than others", "uz": "ustunlik, yetakchilik", "ex": "The country's pre-eminence in chess goes back more than a century.", "form": "pre-eminence"}, {"w": "physiological", "pos": "adjective", "loc": "D", "d": "relating to the normal functions of the body", "uz": "fiziologik", "ex": "Doctors measured the physiological effects of cold on the swimmers.", "form": "physiological"}, {"w": "optimum", "pos": "adjective", "loc": "D", "d": "best or most suitable in a particular situation", "uz": "eng maqbul", "ex": "Plants grow best at an optimum temperature of around twenty degrees.", "form": "optimum"}, {"w": "treacherous", "pos": "adjective", "loc": "D", "d": "dangerous, especially in a way that is hard to notice", "uz": "xavfli, aldamchi", "ex": "Ice made the mountain road treacherous for drivers last winter.", "form": "treacherous"}, {"w": "simulate", "pos": "verb", "loc": "E", "d": "to create conditions that copy a real situation", "uz": "taqlid qilmoq, modellashtirmoq", "ex": "Pilots use machines that simulate flying through severe storms.", "form": "simulate"}, {"w": "prototypes", "pos": "noun", "loc": "E", "d": "first versions of a new machine or product used for testing", "uz": "prototiplar, dastlabki namunalar", "ex": "Engineers tested three prototypes before choosing the final design.", "form": "prototypes"}, {"w": "sanctioned", "pos": "verb", "loc": "F", "d": "officially allowed or approved", "uz": "ruxsat berilgan, tasdiqlangan", "ex": "The committee sanctioned the use of the new equipment last year.", "form": "sanctioned"}, {"w": "buoyancy", "pos": "noun", "loc": "F", "d": "the ability to float or stay up in water", "uz": "suvda suzuvchanlik", "ex": "Salt water gives swimmers extra buoyancy compared with fresh water.", "form": "buoyancy"}, {"w": "integral to", "pos": "collocation", "loc": "G", "d": "forming an essential part of something", "uz": "ajralmas qism", "ex": "Teamwork is integral to success in a modern hospital.", "form": "integral to"}, {"w": "embrace", "pos": "verb", "loc": "G", "d": "to accept an idea or change with enthusiasm", "uz": "qabul qilmoq, quchoq ochmoq", "ex": "Many schools quickly embrace new technology in their classrooms.", "form": "embrace"}, {"w": "arbitrary", "pos": "adjective", "loc": "G", "d": "decided by personal choice rather than any reason or rule", "uz": "o'zboshimchalik bilan, asossiz", "ex": "Students complained that the marking seemed arbitrary and unfair.", "form": "arbitrary"}]}, {"evidence": [{"q": 27, "question": "the significance of recent discoveries of a large number of massive planets", "options": [{"t": "Recent calculations have suggested that many of the solid bodies that might be the rocky core for Jupiter-size planets in the traditional theory would spin into the parent star before the massive planet could form.", "ok": false}, {"t": "Recent computer simulations show that when individual stars form, the gravitational pull between them can result in the outer gaseous parts of the proto-planetary disks being destroyed in 100,000 years or less.", "ok": false}, {"t": "However, since 1995, astronomers have found more than one hundred planets as large as Jupiter outside our solar system.", "ok": false}, {"t": "He also asserts that if the core-accretion model is correct, gas giant planets like Jupiter should be rare.", "ok": true}], "pairs": ["recent discoveries of a large number of massive planets = astronomers have found more than one hundred planets as large as Jupiter outside our solar system", "the significance of = if the core-accretion model is correct, gas giant planets like Jupiter should be rare"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "E", "pill": true}}, {"q": 28, "question": "an explanation of the difference between the theories of planet creation", "options": [{"t": "These astronomers have devised an alternative theory in which planets as massive as Jupiter, whether orbiting our sun or a distant star, would form completely within a few hundred years, rather than millions of years as previously believed.", "ok": false}, {"t": "However, it is the speed of the clustering, and the size of the initial clumps, that provide the disparity in the two models for planet formation.", "ok": true}, {"t": "Both theories for planet formation start with the same reservoir of planet-making materials.", "ok": false}, {"t": "The spinning cloud of gas, dust and ice rapidly fattens into disk-like shapes known as proto-planetary disks; and, as time goes by, gravity causes material in these disks to clump into planet-sized objects.", "ok": false}], "pairs": ["the difference between the theories of planet creation = it is the speed of the clustering, and the size of the initial clumps, that provide the disparity in the two models for planet formation"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "B", "pill": true}}, {"q": 29, "question": "the difficulties of proving that the more recent theory of planet creation is correct", "options": [{"t": "Nevertheless, the gravitational-instability model has problems of its own, as it is mathematically complicated and requires sophisticated computer use.", "ok": true}, {"t": "Both theories for planet formation start with the same reservoir of planet-making materials.", "ok": false}, {"t": "This theory of planet formation is known as the core-accretion model.", "ok": false}, {"t": "Recent calculations have suggested that many of the solid bodies that might be the rocky core for Jupiter-size planets in the traditional theory would spin into the parent star before the massive planet could form.", "ok": false}], "pairs": ["the difficulties of proving = no one has studied the simulations long enough to establish conclusively", "the more recent theory = the gravitational-instability model has problems of its own"], "kind": "Which paragraph?", "answer": "H", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "H", "pill": true}}, {"q": 30, "question": "reasons why Mayer claims he was able to develop his theory", "options": [{"t": "In addition, over a decade previously Mayer and his team had made simulations of the formation and evolution of galaxies.", "ok": true}, {"t": "In doing this, they had already developed a fast computer code that could run in parallel on machines with hundreds of processors, and this knowledge assisted them in investigating their gravitational-instability theory.", "ok": false}, {"t": "They spent two years refining calculations to track what would happen to a proto-planetary disk over one thousand years, which is more than any other simulation had done.", "ok": false}, {"t": "In response, Mayer says that he and his team have described the results of an extensive simulation based on the gravitational-instability model.", "ok": false}], "pairs": ["reasons why Mayer was able to develop his theory = they had already developed a fast computer code that could run in parallel on machines with hundreds of processors", "earlier experience = Mayer and his team had made simulations of the formation and evolution of galaxies"], "kind": "Which paragraph?", "answer": "I", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "I", "pill": true}}, {"q": 31, "question": "a detailed explanation of the long-held theory of planet creation", "options": [{"t": "This theory of planet formation is known as the core-accretion model.", "ok": false}, {"t": "Recent calculations have suggested that many of the solid bodies that might be the rocky core for Jupiter-size planets in the traditional theory would spin into the parent star before the massive planet could form.", "ok": false}, {"t": "In about a million years, these form rocky planets like Earth and Mars.", "ok": false}, {"t": "The traditional view of astronomy has been that planets form slowly as material congeals within the disk of gas, dust and ice known to surround young stars.", "ok": true}], "pairs": ["the long-held theory of planet creation = The traditional view of astronomy has been that planets form slowly", "a detailed explanation = This theory of planet formation is known as the core-accretion model"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "A", "pill": true}}, {"q": 32, "question": "description of the destructive effect of heat in space", "options": [{"t": "In the core-accretion model, that is not enough time for a Jupiter-like planet to form.", "ok": false}, {"t": "Their temperatures are very intense and the ultraviolet light they send into space can evaporate a proto-planetary disk in less than 100,000 years.", "ok": true}, {"t": "That is several million years too long in the opinion of Lucio Mayer of Zurich University.", "ok": false}, {"t": "Direct telescope sightings suggest that the proto-planetary disks do not last more than about seven million years, and studies of the environment in which stars form suggest that many disks may evaporate in much less time.", "ok": false}], "pairs": ["the destructive effect of heat in space = the ultraviolet light they send into space can evaporate a proto-planetary disk", "heat = Their temperatures are very intense"], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}, {"k": "I", "t": "Paragraph I"}], "ans": "D", "pill": true}}, {"q": 33, "question": "Traditionally astronomers have believed that", "options": [{"t": "These astronomers have devised an alternative theory in which planets as massive as Jupiter, whether orbiting our sun or a distant star, would form completely within a few hundred years, rather than millions of years as previously believed.", "ok": false}, {"t": "In this core-accretion model, these 'gas giants' may take as long as ten million years to form.", "ok": false}, {"t": "The traditional view of astronomy has been that planets form slowly as material congeals within the disk of gas, dust and ice known to surround young stars.", "ok": true}, {"t": "In about a million years, these form rocky planets like Earth and Mars.", "ok": false}], "pairs": ["Traditionally astronomers have believed = The traditional view of astronomy has been that planets form slowly", "large planets take millions of years to form = take as long as ten million years to form"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "gaseous planets form before smaller rocky planets."}, {"k": "B", "t": "large planets take millions of years to form."}, {"k": "E", "t": "gravity could cause planet-sized pieces to break off quickly."}, {"k": "F", "t": "hot clumps of gas, dust and ice were destroyed relatively quickly."}, {"k": "G", "t": "computer studies of planets are too mathematically complex."}], "ans": "B"}, "why": ""}, {"q": 34, "question": "Lucio Mayer physically observed that", "options": [{"t": "Mayer asserts that most stars in the Milky Way form in dense clouds of gas, dust and ice.", "ok": false}, {"t": "That is several million years too long in the opinion of Lucio Mayer of Zurich University.", "ok": false}, {"t": "Direct telescope sightings suggest that the proto-planetary disks do not last more than about seven million years, and studies of the environment in which stars form suggest that many disks may evaporate in much less time.", "ok": true}, {"t": "Their temperatures are very intense and the ultraviolet light they send into space can evaporate a proto-planetary disk in less than 100,000 years.", "ok": false}], "pairs": ["physically observed = Direct telescope sightings suggest", "were destroyed relatively quickly = many disks may evaporate in much less time"], "kind": "Matching", "answer": "F", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "large planets take millions of years to form."}, {"k": "C", "t": "large planets must form fast or not at all."}, {"k": "E", "t": "gravity could cause planet-sized pieces to break off quickly."}, {"k": "F", "t": "hot clumps of gas, dust and ice were destroyed relatively quickly."}, {"k": "G", "t": "computer studies of planets are too mathematically complex."}], "ans": "F"}, "why": ""}, {"q": 35, "question": "Thomas Quinn believes that", "options": [{"t": "Recent computer simulations show that when individual stars form, the gravitational pull between them can result in the outer gaseous parts of the proto-planetary disks being destroyed in 100,000 years or less.", "ok": false}, {"t": "However, since 1995, astronomers have found more than one hundred planets as large as Jupiter outside our solar system.", "ok": false}, {"t": "Thus, Thomas Quinn of the University of Washington concludes that if a 'gas giant' planet cannot form quickly, it will probably never form.", "ok": true}, {"t": "Quinn and his colleagues recently analysed the standard core-accretion model of planet formation and investigated whether or not giant planets could form quickly.", "ok": false}], "pairs": ["large planets must form fast or not at all = it will probably never form", "form fast = cannot form quickly"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "large planets take millions of years to form."}, {"k": "C", "t": "large planets must form fast or not at all."}, {"k": "D", "t": "large planets had the potential to develop relatively fast."}, {"k": "E", "t": "gravity could cause planet-sized pieces to break off quickly."}, {"k": "F", "t": "hot clumps of gas, dust and ice were destroyed relatively quickly."}], "ans": "C"}, "why": ""}, {"q": 36, "question": "Gerard Kuiper was the first to suggest that", "options": [{"t": "Alan P Boss of the Carnegie Institute did more extensive work on the subject in the late 1980s.", "ok": false}, {"t": "They looked at the work of Gerard Kuiper who, in the 1950s, proposed that they could.", "ok": false}, {"t": "Quinn and his colleagues recently analysed the standard core-accretion model of planet formation and investigated whether or not giant planets could form quickly.", "ok": true}, {"t": "Using computer simulations, he was surprised to find that gravity could cause a proto-planetary disk, after a few orbits of its parent star, to break into clumps as big as an average-sized planet.", "ok": false}], "pairs": ["Kuiper was the first to suggest = Gerard Kuiper who, in the 1950s, proposed that they could", "potential to develop relatively fast = whether or not giant planets could form quickly"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "gaseous planets form before smaller rocky planets."}, {"k": "B", "t": "large planets take millions of years to form."}, {"k": "C", "t": "large planets must form fast or not at all."}, {"k": "D", "t": "large planets had the potential to develop relatively fast."}, {"k": "F", "t": "hot clumps of gas, dust and ice were destroyed relatively quickly."}], "ans": "D"}, "why": ""}, {"q": 37, "question": "Alan P Boss discovered that", "options": [{"t": "Using computer simulations, he was surprised to find that gravity could cause a proto-planetary disk, after a few orbits of its parent star, to break into clumps as big as an average-sized planet.", "ok": true}, {"t": "Quinn and his colleagues recently analysed the standard core-accretion model of planet formation and investigated whether or not giant planets could form quickly.", "ok": false}, {"t": "The spinning cloud of gas, dust and ice rapidly fattens into disk-like shapes known as proto-planetary disks; and, as time goes by, gravity causes material in these disks to clump into planet-sized objects.", "ok": false}, {"t": "Alan P Boss of the Carnegie Institute did more extensive work on the subject in the late 1980s.", "ok": false}], "pairs": ["gravity could cause planet-sized pieces to break off quickly = gravity could cause a proto-planetary disk, after a few orbits of its parent star, to break into clumps as big as an average-sized planet"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "gaseous planets form before smaller rocky planets."}, {"k": "D", "t": "large planets had the potential to develop relatively fast."}, {"k": "E", "t": "gravity could cause planet-sized pieces to break off quickly."}, {"k": "F", "t": "hot clumps of gas, dust and ice were destroyed relatively quickly."}, {"k": "G", "t": "computer studies of planets are too mathematically complex."}], "ans": "E"}, "why": ""}, {"q": 38, "question": "A hard centre becomes larger and this produces enough gravity to draw gas from the <b>.........<\/b> around it.", "options": [{"t": "The spinning cloud of gas, dust and ice rapidly fattens into disk-like shapes known as proto-planetary disks; and, as time goes by, gravity causes material in these disks to clump into planet-sized objects.", "ok": false}, {"t": "According to the core-accretion model, the making of Jupiter required the initial formation of a solid core five to ten times Earth's mass.", "ok": false}, {"t": "Most astronomers believe that the large core then had enough gravity to attract a huge amount of gas from the proto-planetary disk to create a planet of the massive proportions of Jupiter.", "ok": true}, {"t": "Over the next few million years, gas from the disk settles around some of these solid bodies and they grow far larger, becoming giants like gaseous Saturn and Jupiter.", "ok": false}], "pairs": ["draw gas from the ___ = attract a huge amount of gas from the proto-planetary disk"], "kind": "Summary (word list)", "answer": "F", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "gravitational pull"}, {"k": "B", "t": "ice"}, {"k": "C", "t": "solid core"}, {"k": "E", "t": "Milky Way"}, {"k": "F", "t": "disk"}], "ans": "F"}, "why": ""}, {"q": 39, "question": "The gravitational-instability model Stars can break up the outer gaseous parts which surround objects in the sky because the attraction of the <b>.........<\/b> from stars is very powerful.", "options": [{"t": "This is called the gravitational-instability model of planet formation.", "ok": false}, {"t": "Recent computer simulations show that when individual stars form, the gravitational pull between them can result in the outer gaseous parts of the proto-planetary disks being destroyed in 100,000 years or less.", "ok": true}, {"t": "Nevertheless, the gravitational-instability model has problems of its own, as it is mathematically complicated and requires sophisticated computer use.", "ok": false}, {"t": "In response, Mayer says that he and his team have described the results of an extensive simulation based on the gravitational-instability model.", "ok": false}], "pairs": ["the attraction of the ___ from stars = the gravitational pull between them can result in the outer gaseous parts"], "kind": "Summary (word list)", "answer": "A", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "gravitational pull"}, {"k": "C", "t": "solid core"}, {"k": "D", "t": "ultraviolet light"}, {"k": "E", "t": "Milky Way"}, {"k": "F", "t": "disk"}], "ans": "A"}, "why": ""}, {"q": 40, "question": "Heat caused by <b>.........<\/b> can also destroy the material surrounding the objects in a relatively short time.", "options": [{"t": "Direct telescope sightings suggest that the proto-planetary disks do not last more than about seven million years, and studies of the environment in which stars form suggest that many disks may evaporate in much less time.", "ok": false}, {"t": "In the core-accretion model, that is not enough time for a Jupiter-like planet to form.", "ok": false}, {"t": "Their temperatures are very intense and the ultraviolet light they send into space can evaporate a proto-planetary disk in less than 100,000 years.", "ok": true}, {"t": "The spinning cloud of gas, dust and ice rapidly fattens into disk-like shapes known as proto-planetary disks; and, as time goes by, gravity causes material in these disks to clump into planet-sized objects.", "ok": false}], "pairs": ["Heat caused by ___ = Their temperatures are very intense and the ultraviolet light they send into space"], "kind": "Summary (word list)", "answer": "D", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "gravitational pull"}, {"k": "C", "t": "solid core"}, {"k": "D", "t": "ultraviolet light"}, {"k": "E", "t": "Milky Way"}, {"k": "F", "t": "disk"}], "ans": "D"}, "why": ""}], "paraphrase": [{"q": "recent discoveries of a large number of massive planets", "p": "astronomers have found more than one hundred planets as large as Jupiter outside our solar system", "rel": "=", "note": "", "n": "27"}, {"q": "the significance of", "p": "if the core-accretion model is correct, gas giant planets like Jupiter should be rare", "rel": "=", "note": "", "n": "27"}, {"q": "the difference between the theories of planet creation", "p": "it is the speed of the clustering, and the size of the initial clumps, that provide the disparity in the two models for planet formation", "rel": "=", "note": "", "n": "28"}, {"q": "the difficulties of proving", "p": "no one has studied the simulations long enough to establish conclusively", "rel": "=", "note": "", "n": "29"}, {"q": "the more recent theory", "p": "the gravitational-instability model has problems of its own", "rel": "=", "note": "", "n": "29"}, {"q": "reasons why Mayer was able to develop his theory", "p": "they had already developed a fast computer code that could run in parallel on machines with hundreds of processors", "rel": "=", "note": "", "n": "30"}, {"q": "earlier experience", "p": "Mayer and his team had made simulations of the formation and evolution of galaxies", "rel": "=", "note": "", "n": "30"}, {"q": "the long-held theory of planet creation", "p": "The traditional view of astronomy has been that planets form slowly", "rel": "=", "note": "", "n": "31"}, {"q": "a detailed explanation", "p": "This theory of planet formation is known as the core-accretion model", "rel": "=", "note": "", "n": "31"}, {"q": "the destructive effect of heat in space", "p": "the ultraviolet light they send into space can evaporate a proto-planetary disk", "rel": "=", "note": "", "n": "32"}, {"q": "heat", "p": "Their temperatures are very intense", "rel": "=", "note": "", "n": "32"}, {"q": "Traditionally astronomers have believed", "p": "The traditional view of astronomy has been that planets form slowly", "rel": "=", "note": "", "n": "33"}, {"q": "large planets take millions of years to form", "p": "take as long as ten million years to form", "rel": "=", "note": "", "n": "33"}, {"q": "physically observed", "p": "Direct telescope sightings suggest", "rel": "=", "note": "", "n": "34"}, {"q": "were destroyed relatively quickly", "p": "many disks may evaporate in much less time", "rel": "=", "note": "", "n": "34"}, {"q": "large planets must form fast or not at all", "p": "it will probably never form", "rel": "=", "note": "", "n": "35"}, {"q": "form fast", "p": "cannot form quickly", "rel": "=", "note": "", "n": "35"}, {"q": "Kuiper was the first to suggest", "p": "Gerard Kuiper who, in the 1950s, proposed that they could", "rel": "=", "note": "", "n": "36"}, {"q": "potential to develop relatively fast", "p": "whether or not giant planets could form quickly", "rel": "=", "note": "", "n": "36"}, {"q": "gravity could cause planet-sized pieces to break off quickly", "p": "gravity could cause a proto-planetary disk, after a few orbits of its parent star, to break into clumps as big as an average-sized planet", "rel": "=", "note": "", "n": "37"}, {"q": "draw gas from the ___", "p": "attract a huge amount of gas from the proto-planetary disk", "rel": "=", "note": "", "n": "38"}, {"q": "the attraction of the ___ from stars", "p": "the gravitational pull between them can result in the outer gaseous parts", "rel": "=", "note": "", "n": "39"}, {"q": "Heat caused by ___", "p": "Their temperatures are very intense and the ultraviolet light they send into space", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "congeals", "pos": "verb", "loc": "A", "d": "becomes thick or solid as it gathers together", "uz": "quyuqlashmoq, to'planib qotmoq", "ex": "The soup congeals into a thick layer when it gets cold.", "form": "congeals"}, {"w": "coalesce", "pos": "verb", "loc": "A", "d": "to come together to form one larger mass", "uz": "birlashmoq, qo'shilib ketmoq", "ex": "Small raindrops coalesce into larger drops as they fall.", "form": "coalesce"}, {"w": "fattens", "pos": "verb", "loc": "B", "d": "grows thicker or larger, often by gaining more material", "uz": "semirmoq, kengayib bormoq", "ex": "The river fattens quickly after the heavy spring rains.", "form": "fattens"}, {"w": "clump into", "pos": "phrasal verb", "loc": "B", "d": "to form small solid groups or masses", "uz": "bo'lak-bo'lak bo'lib to'planmoq", "ex": "Wet flour tends to clump into hard balls in the bowl.", "form": "clump into"}, {"w": "disparity", "pos": "noun", "loc": "B", "d": "a noticeable difference between two things", "uz": "farq, tafovut", "ex": "There is a huge disparity between rural and urban incomes.", "form": "disparity"}, {"w": "proportions", "pos": "noun", "loc": "C", "d": "the size or scale of something", "uz": "o'lchamlar, hajm", "ex": "The flood reached disastrous proportions within a few hours.", "form": "proportions"}, {"w": "asserts", "pos": "verb", "loc": "D", "d": "states something firmly and confidently as true", "uz": "ta'kidlaydi, da'vo qiladi", "ex": "The author asserts that sleep is vital for good memory.", "form": "asserts"}, {"w": "evaporate", "pos": "verb", "loc": "D", "d": "to change from liquid into gas and disappear", "uz": "bug'lanib ketmoq", "ex": "Puddles evaporate quickly when the sun is strong.", "form": "evaporate"}, {"w": "extensive", "pos": "adjective", "loc": "F", "d": "covering a large area or including many details", "uz": "keng qamrovli", "ex": "The team carried out extensive tests before releasing the software.", "form": "extensive"}, {"w": "spin into", "pos": "phrasal verb", "loc": "G", "d": "to move in a circling path towards something", "uz": "aylanib kirib bormoq", "ex": "Small fragments can spin into the centre of the whirlpool.", "form": "spin into"}, {"w": "accumulate", "pos": "verb", "loc": "G", "d": "to gradually collect or build up in amount", "uz": "to'planmoq", "ex": "Dust will accumulate quickly on shelves in an empty house.", "form": "accumulate"}, {"w": "fragmentation", "pos": "noun", "loc": "G", "d": "the process of breaking into small separate pieces", "uz": "parchalanish", "ex": "Habitat fragmentation threatens many species living in the forest.", "form": "fragmentation"}, {"w": "disturbance", "pos": "noun", "loc": "G", "d": "something that interrupts or upsets a settled situation", "uz": "g'alayon, buzilish", "ex": "A sudden disturbance in the air sent the birds flying.", "form": "disturbance"}, {"w": "conclusively", "pos": "adverb", "loc": "H", "d": "in a way that proves something beyond doubt", "uz": "qat'iy, uzil-kesil", "ex": "The experiment conclusively showed that the old method was wrong.", "form": "conclusively"}, {"w": "problems of its own", "pos": "collocation", "loc": "H", "d": "difficulties that are separate and specific to it", "uz": "o'z muammolari", "ex": "The new plan solves one issue but has problems of its own.", "form": "problems of its own"}, {"w": "refining", "pos": "verb", "loc": "I", "d": "improving something by making small changes", "uz": "takomillashtirish, aniqlashtirish", "ex": "She spent months refining her method before publishing it.", "form": "refining"}, {"w": "run in parallel", "pos": "collocation", "loc": "I", "d": "to operate at the same time and side by side", "uz": "parallel ishlamoq", "ex": "Both projects will run in parallel throughout the next year.", "form": "run in parallel"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

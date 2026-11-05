@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 10 / Sorry — / MAMMOTH KILL / Keeping the</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 10 / Sorry — / MAMMOTH KILL / Keeping the</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">Sorry — who are you?</div><div class="passage-subtitle">Prosopagnosia is a medical condition that stops people from recognising people&#x27;s faces. But how common is it and why does it happen?</div><p data-para="1"><span class="sent" id="s0_0">It was Jacob Hodes&#x27; first day at college.</span> <span class="sent" id="s0_1">He can still recall spending an enjoyable afternoon being shown around campus by a second year student named Daniel Byrne, who happened to be from his home town.</span> <span class="sent" id="s0_2">Jacob then spent the rest of the year ignoring him.</span> <span class="sent" id="s0_3">&#x27;I never saw him again,&#x27; he says.</span> <span class="sent" id="s0_4">&#x27;Well, I&#x27;m sure I walked past him plenty of times, but I just didn&#x27;t see him.</span> <span class="sent" id="s0_5">This behaviour wasn&#x27;t intentional.</span> <span class="sent" id="s0_6">Jacob just couldn&#x27;t recollect what his fellow student looked like.</span> <span class="sent" id="s0_7">He had had the same trouble all his life.</span> <span class="sent" id="s0_8">Friends and relatives would greet him and he would have no idea who they were.</span></p><p data-para="2"><span class="sent" id="s0_9">It wasn&#x27;t until five years ago that it all made sense.</span> <span class="sent" id="s0_10">That was when Hodes was diagnosed with prosopagnosia, a condition that means he is unable to recognise faces.</span> <span class="sent" id="s0_11">According to researchers, he is far from alone.</span> <span class="sent" id="s0_12">In fact the condition is not that uncommon but until a few years ago only a few dozen cases had ever been described, and all of these had been caused by brain injury.</span> <span class="sent" id="s0_13">Recently, though, researchers identified a second form of face blindness, developmental prosopagnosia, which is either present from birth or develops very early in life.</span></p><p data-para="3"><span class="sent" id="s0_14">In May a team from Harvard University in the US and University College London (UCL) announced the results of a web survey of 1,600 people, suggesting that up to 2 per cent of people have some degree of face blindness.</span> <span class="sent" id="s0_15">Then in August, Martina Grüter and colleagues at the Institute for Human Genetics in Münster, Germany, similarly reported that 2.5 per cent of 700 secondary school pupils they had tested had trouble recognising faces.</span> <span class="sent" id="s0_16">The results of the survey took everyone by surprise.</span></p><p data-para="4"><span class="sent" id="s0_17">It seems that if you have never known what it is to recognise a face, you don&#x27;t necessarily know that you are supposed to be able to.</span> <span class="sent" id="s0_18">&#x27;Prosopagnosics almost always know that they have trouble recognising people, but they often don&#x27;t realise that other people have better recognition skills than they do,&#x27; says Brad Duchaine, a researcher at UCL.</span></p><p data-para="5"><span class="sent" id="s0_19">Despite these issues, the majority of developmental prosopagnosics possess strategies that allow them to get around their difficulty, for instance, by recognising hair, clothing or a person&#x27;s way of speaking so, unless they see a familiar person out of context, with a new hairstyle or in different clothes, they can recognise people just fine.</span> <span class="sent" id="s0_20">Even so, the discovery of developmental prosopagnosia has attracted attention from neuroscientists keen to discover what is different about the brain of face-blind people.</span> <span class="sent" id="s0_21">This difference, they believe, could help solve the problem of how the brain deals with information in general: not just visual data.</span> <span class="sent" id="s0_22">In other words, it may show whether the brain has specialised parts for specific tasks or is more of a general-purpose information processor.</span></p><p data-para="6"><span class="sent" id="s0_23">One issue, however, that will present challenges for researchers is that no two prosopagnosics are the same.</span> <span class="sent" id="s0_24">Some have problems only with faces, while others have trouble with ordinary everyday objects and, so it turns out, animals which would normally be familiar as well.</span> <span class="sent" id="s0_25">Some prosopagnosics can train themselves to recognise specific faces; others can&#x27;t even recognise their own in a mirror.</span> <span class="sent" id="s0_26">When some have been tested they could identify the emotion which was conveyed on another&#x27;s face, even though the face itself seemed unfamiliar, while for other subjects this was an impossibility.</span> <span class="sent" id="s0_27">Some cannot recognise the faces of old friends or fellow students but have no trouble telling whether a particular face from such groups would be attractive to most people.</span> <span class="sent" id="s0_28">Because of this diversity, working out the cause of prosopagnosia will not be easy.</span></p><p data-para="7"><span class="sent" id="s0_29">In Martina Grüter&#x27;s study, the prosopagnosics who agreed to have their parents and relatives tested reported at least one with the condition.</span> <span class="sent" id="s0_30">Having looked at 38 cases in seven families, the German team believe they have good evidence that a single gene could be responsible.</span> <span class="sent" id="s0_31">Duchaine also has some evidence that face blindness could be inherited but thinks other factors might be more significant.</span> <span class="sent" id="s0_32">He refers to studies of babies born with a condition which means the eye&#x27;s lens is not clear, and when it&#x27;s the left one, being unable to see through this eye during the first two months of life is a major risk factor for prosopagnosia.</span></p><p data-para="8"><span class="sent" id="s0_33">Whatever the cause, what most prosopagnosics want to know is whether they can do anything to improve their face recognition skills.</span> <span class="sent" id="s0_34">Joseph DeGutis, a graduate student at the University of California, recently reported successfully training a severe developmental prosopagnosic to recognise faces during tests carried out in the laboratory.</span> <span class="sent" id="s0_35">The subject also reported that recognising faces in everyday life became easier due to the training.</span> <span class="sent" id="s0_36">Duchaine now plans to attempt to train sufferers to recognise the five people that they most need to know, maybe their immediate family, for example, and essential colleagues.</span> <span class="sent" id="s0_37">Thomas Grüter, Martina Grüter&#x27;s husband, who also works on her team, however, is not convinced it will work.</span> <span class="sent" id="s0_38">&#x27;I don&#x27;t know how you can have more training than you have already had,&#x27; he says.</span> <span class="sent" id="s0_39">&#x27;Humans already spend all day looking at faces.</span> <span class="sent" id="s0_40">He also points out that cheating is a possibility during tests and provides an example.</span> <span class="sent" id="s0_41">&#x27;One person we studied said that when she was doing the face-recognition test, she memorised the distance between nose and upper lip.</span> <span class="sent" id="s0_42">She wasn&#x27;t the only one.</span> <span class="sent" id="s0_43">So you can perform well in the test and not do so well in real life.&#x27;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,7" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;7</div><button type="button" class="flag-toggle" data-flagrange="1,7" title="Flag for review" aria-label="Flag questions 1-7">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–7 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Before attending college Jacob was capable of recognising people he knew well.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">Researchers believe that prosopagnosia may be a growing problem.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">It is harder to identify developmental prosopagnosia in babies than in young children.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">A German study seems to support the Harvard and UCL research findings.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">In general, prosopagnosics are aware that other people can recognise faces more easily than they can.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">6</span><span class="q-stem">In most cases, prosopagnosics have developed ways to deal with their problem.</span><select class="q-select" name="q6"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">7</span><span class="q-stem">The study of prosopagnosia may help neuroscientists to treat different kinds of brain injury.</span><select class="q-select" name="q7"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="8,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 8&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="8,13" title="Flag for review" aria-label="Flag questions 8-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 8–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">The challenges for prosopagnosia researchers</div><div class="notes-sub"><b>Differences in prosopagnosics</b></div><div>As well as being unable to recognise facial features, prosopagnosics may also</div><div>have problems recognising</div><ul><li>commonly seen <span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> and objects.</li><li>the <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"> on someone else&#x27;s face.</li><li>Some prosopagnosics can recognise that people are regarded as attractive by others.</li></ul><div class="notes-sub"><b>Causes of prosopagnosia</b></div><div>Prosopagnosia may be caused by</div><ul><li>just one <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"> , according to Martina Grüter</li><li>a defect in the <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"> , according to Brad Duchaine</li></ul><div class="notes-sub"><b>Treatment for prosopagnosia</b></div><ul><li>Joseph DeGutis&#x27; patient proved he had been successfully trained to recognise faces inside the <span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"> and in the outside world.</li><li>Duchaine&#x27;s training may allow prosopagnosics to recognise faces belonging to family and workmates.</li><li>Thomas Grüter doubts that training will work and mentions that</li><li style="list-style:none"><span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"> by some subjects can affect research results.</li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">MAMMOTH KILL</div><div class="passage-subtitle">What led to the disappearance of the giant mammals? Kate Wong examines the theories.</div><p data-para="1"><span class="sent" id="s1_0">Although it&#x27;s hard to imagine in this age of urban sprawl and automobiles, North America once belonged to huge, elephant-like mammoths, camels, bear-sized beavers and other giant beasts, collectively known as &#x27;megafauna&#x27;.</span> <span class="sent" id="s1_1">Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.</span> <span class="sent" id="s1_2">Their demise coincided roughly with the arrival of humans in this region and dramatic climate change — factors that have inspired several theories about the die-off.</span> <span class="sent" id="s1_3">Yet despite decades of scientific investigation, the exact cause remains a mystery.</span> <span class="sent" id="s1_4">Now new findings offer support to one of these controversial hypotheses: that human hunting drove these huge megafauna species to extinction.</span></p><p data-para="2"><span class="sent" id="s1_5">This belief resulted in the overkill model which emerged in the 1960s, when it was put forth by Paul S Martin of the University of Arizona.</span> <span class="sent" id="s1_6">Since then, critics have charged that no archaeological remains exist to support the idea that the first Americans hunted to the extent necessary to cause these extinctions.</span> <span class="sent" id="s1_7">But at the annual meeting of the Society of Vertebrate Paleontology in Mexico City in October 1999, specialist John Alroy of the University of California at Santa Barbara argued that in fact, hunting-driven extinction is not only plausible, it was unavoidable.</span> <span class="sent" id="s1_8">He has determined, using a computer simulation, that even a very modest amount of hunting would have wiped out these animals.</span></p><p data-para="3"><span class="sent" id="s1_9">Assuming an initial human population of 100 people that grew no more than two per cent annually, Alroy determined that, if each band of, say, 50 people killed 15 to 20 large animals a year, humans could have eliminated the animal populations within 1,000 years.</span> <span class="sent" id="s1_10">Large mammals in particular would have been vulnerable to the pressure because they have longer gestation periods than smaller mammals and their young require extended care.</span></p><p data-para="4"><span class="sent" id="s1_11">However, not everyone agrees with Alroy&#x27;s assessment.</span> <span class="sent" id="s1_12">For one thing, the results depend on population size estimates for the extinct animals — estimates that are not necessarily reliable.</span> <span class="sent" id="s1_13">But a more specific criticism comes from mammal expert Ross D E MacPhee of the American Museum of Natural History in New York City, who points out that the relevant archaeological record contains barely a dozen examples of stone points embedded in mammoth bones (and none, it should be noted, are known from other megafaunal remains) — hardly what one might expect if hunting drove these animals to extinction.</span> <span class="sent" id="s1_14">Furthermore, some of these species had a vast range, covering the whole continent — the Jefferson&#x27;s Ground Sloth, for example, lived as far north as the Yukon and as far south as Mexico — which would have made hunting them in numbers sufficient to cause their extinction rather unlikely, he says.</span></p><p data-para="5"><span class="sent" id="s1_15">MacPhee agrees that humans most likely brought about these extinctions (as well as others around the world that coincided with human arrival), but not directly.</span> <span class="sent" id="s1_16">Rather than through hunting, he suggests that people may have introduced a deadly disease, perhaps through their dogs or accompanying vermin, which then spread wildly among the native species because of their low resistance to the new introductions.</span> <span class="sent" id="s1_17">Repeated outbreaks of a deadly disease could thus quickly drive them to the point of no return.</span> <span class="sent" id="s1_18">So far, MacPhee does not have empirical evidence for this theory, and it will not be easy to come by: such disease would kill far too quickly to leave its signature on the bones themselves.</span> <span class="sent" id="s1_19">But he hopes that analyses of tissue and DNA from the most recent animal remains will eventually reveal the microbes responsible.</span></p><p data-para="6"><span class="sent" id="s1_20">The third explanation for what brought on this North American extinction does not involve human beings.</span> <span class="sent" id="s1_21">Instead, its proponents blame the loss on the climate.</span> <span class="sent" id="s1_22">The Pleistocene epoch in question witnessed considerable climate instability, explains Russell W Graham of the Denver Museum of Nature and Science.</span> <span class="sent" id="s1_23">As a result, their regular habitats disappeared, and species that had once formed communities split apart.</span> <span class="sent" id="s1_24">For some animals, this brought opportunity.</span> <span class="sent" id="s1_25">For much of the megafauna, however, the increasingly uniform terrain left them with shrinking geographical ranges — a death sentence for large animals, which need correspondingly large ranges.</span> <span class="sent" id="s1_26">Although these creatures managed to maintain viable populations through most of the Pleistocene period, the final major climate fluctuation pushed them over the edge, Graham says.</span></p><p data-para="7"><span class="sent" id="s1_27">For his part, Alroy is still convinced that human hunters were the destroyers of the giant animals.</span> <span class="sent" id="s1_28">The overkill model explains everything the disease and climate scenarios explain, he asserts, and in addition makes accurate predictions about which species would eventually become extinct.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,20" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;20</div><button type="button" class="flag-toggle" data-flagrange="14,20" title="Flag for review" aria-label="Flag questions 14-20">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 14–20 on your answer sheet.</p></div><div class="notes-box"><div style="margin-bottom:.5rem">Three theories have been put forward to explain the disappearance of the different species of large mammals that inhabited <span class="q-num">14</span> <input type="text" class="q-text" name="q14" autocomplete="off" spellcheck="false"> 11,000 years ago. The <span class="q-num">15</span> <input type="text" class="q-text" name="q15" autocomplete="off" spellcheck="false"> , proposed around fifty years ago by Paul S Martin, blames <span class="q-num">16</span> <input type="text" class="q-text" name="q16" autocomplete="off" spellcheck="false"> by people for mass extinction. Computer calculations seem to support this explanation, but critics question the reliability of the figures they are based on. The second theory suggests that humans introduced a <span class="q-num">17</span> <input type="text" class="q-text" name="q17" autocomplete="off" spellcheck="false"> which wiped out the large mammals. However, so far this theory also lacks any <span class="q-num">18</span> <input type="text" class="q-text" name="q18" autocomplete="off" spellcheck="false"> . The final theory suggests that this period experienced significant <span class="q-num">19</span> <input type="text" class="q-text" name="q19" autocomplete="off" spellcheck="false"> which eventually led to the loss of habitat and to the division of the <span class="q-num">20</span> <input type="text" class="q-text" name="q20" autocomplete="off" spellcheck="false"> that some of the large mammals had organised.</div></div></div><div class="q-group" data-flagrange="21,26" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 21&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="21,26" title="Flag for review" aria-label="Flag questions 21-26">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements (Questions 21–26) and the list of people below.</p><p>Match each statement with the correct person, A, B or C.</p><p>Write the correct letter, A, B or C, in boxes 21–26 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of People</div><span class="wb-item"><span class="wb-letter">A</span> John Alroy</span><span class="wb-item"><span class="wb-letter">B</span> Ross D E MacPhee</span><span class="wb-item"><span class="wb-letter">C</span> Russell W Graham</span></div><div class="q-row"><span class="q-num">21</span><span class="q-stem">Too little evidence exists to support the hunting theory.</span><select class="q-select" name="q21"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">22</span><span class="q-stem">The bigger the animal, the bigger the territory it requires for survival.</span><select class="q-select" name="q22"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">23</span><span class="q-stem">Globally, humans have been indirectly responsible for the elimination of many species.</span><select class="q-select" name="q23"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">24</span><span class="q-stem">Population estimates can be used to understand how large mammals become extinct.</span><select class="q-select" name="q24"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">25</span><span class="q-stem">Scientific examination of fossil remains may provide some proof for one of the theories.</span><select class="q-select" name="q25"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">26</span><span class="q-stem">Environmental changes negatively affected the social groupings of some large species.</span><select class="q-select" name="q26"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Keeping the fun in funfairs</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s2_0">Fun is becoming a tricky issue for ride designers.</span> <span class="sent" id="s2_1">In order to increase excitement, they have been ramping up the accelerations to create the most dizzying forces possible.</span> <span class="sent" id="s2_2">But getting it right is far from easy.</span> <span class="sent" id="s2_3">Err on the side of caution and people won&#x27;t bother with a second ride.</span> <span class="sent" id="s2_4">Go too far, however, and they may not be able to.</span> <span class="sent" id="s2_5">Experts realise we are now at the limit of how much acceleration a human body can take, and designers are finding it hard to think up ways of keeping the public coming back for more.</span> <span class="sent" id="s2_6">The problem is that true innovation has been lacking for a while, and fairground rides have become more about survival than actual enjoyment.</span> <span class="sent" id="s2_7">So if our thrill-seeking bodies can really take no more, what&#x27;s going to keep dragging us back to amusement parks?</span> <span class="sent" id="s2_8">Creating something new and exciting, yet safe, is going to take some careful thought.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="27"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s2_9">When the Disney Corporation asked German designer Werner Stengel to design a giant loop ride for them in the 1970s, he went to NASA, the aeronautics and space foundation, to discover the effects of sustained acceleration on the pilots.</span> <span class="sent" id="s2_10">NASA&#x27;s research suggests that the maximum level we can endure is 9 g, g being the standard unit of acceleration due to gravity.</span> <span class="sent" id="s2_11">Go much beyond that and pilots pass out.</span> <span class="sent" id="s2_12">Go further still and they suffer serious internal damage.</span> <span class="sent" id="s2_13">So Stengel decided that the maximum vertical acceleration for the public should be 6 g, and then only for a second or so.</span> <span class="sent" id="s2_14">What&#x27;s more, he put firm restrictions on the rate at which acceleration can increase — you&#x27;ll never go down a 45 degree ramp into a tight circular loop, for instance.</span></p><div class="para-dropzone dz-empty" data-letter="C" data-qnum="28"></div><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s2_15">But stricter safety limits only intensify the need to search for novel ways to thrill customers.</span> <span class="sent" id="s2_16">Part of the problem is that no matter how exciting an attraction is, after a few goes the passengers will have some idea of what to expect.</span> <span class="sent" id="s2_17">The next stage in designing rides, however, could throw predictability out of the window.</span> <span class="sent" id="s2_18">This step has already been taken in the most recent waltzers, or tea-cup rides.</span> <span class="sent" id="s2_19">Ride a waltzer and you sit in a car that spins on its own axis.</span> <span class="sent" id="s2_20">The car is on a huge platform that also rotates.</span> <span class="sent" id="s2_21">In the past you could take comfort from the fact that the spin was tightly controlled by gears that turned your car at a rate determined by the rotation speed of the whole ride.</span> <span class="sent" id="s2_22">But the latest generation of waltzer cars spin freely, at a rate determined by the weight and position of the people in them.</span> <span class="sent" id="s2_23">So you never have the same experience twice.</span> <span class="sent" id="s2_24">&#x27;People seem to like these &quot;chaotic rides&quot;,&#x27; says Stengel.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="29"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s2_25">Although seemingly a passport to endless thrills, chaos does have one rather obvious drawback: it&#x27;s unpredictable.</span> <span class="sent" id="s2_26">Despite complex calculations, designers can never be completely sure that something odd won&#x27;t happen, especially since freely turning systems occasionally hit a resonance frequency.</span> <span class="sent" id="s2_27">For example, if pushed at a particular frequency, a child on a swing would go over the top of the swing&#x27;s frame.</span> <span class="sent" id="s2_28">Similarly, if you drive a revolving waltzer car at its resonance frequency it could speed up uncontrollably.</span> <span class="sent" id="s2_29">This could be very hazardous, according to Stengel.</span> <span class="sent" id="s2_30">If a ride is subjected to unforeseen stresses, no one can guarantee that it will be able to cope.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="30"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s2_31">No one even knows what the safe limits of rotational force are, let alone its effect on the human body.</span> <span class="sent" id="s2_32">Stengel has worked with the German Air Force, rotating volunteers head over heels while also making them cartwheel or pirouette like a ballet dancer.</span> <span class="sent" id="s2_33">It emerged that if the pilots were turned on all three axes simultaneously, they became so nauseous they almost blacked out, and when they got off they couldn&#x27;t walk.</span> <span class="sent" id="s2_34">But what Stengel found particularly puzzling was that they also developed headaches and other problems about two days later.</span> <span class="sent" id="s2_35">Since these effects aren&#x27;t understood, he tries to limit how people on his rides are rotated.</span> <span class="sent" id="s2_36">&#x27;We want to provide fun, not pain.&#x27;</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="31"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s2_37">With that goal in mind, Stengel feels that flinging people around in ever more chaotic machines is no longer the way forward.</span> <span class="sent" id="s2_38">He believes that the sequence of accelerations, not their size, is what counts and that the way to make rides more fun is to put people through a carefully designed succession of relatively small accelerations.</span> <span class="sent" id="s2_39">Other experts in this field agree, and it seems likely that designers could formulate profiles even for existing attractions that would lead to higher amusement value.</span> <span class="sent" id="s2_40">Recent experiments testing the tolerances of Dutch military pilots to a range of accelerations have shown that tumbling around in machines doesn&#x27;t have to be unpleasant.</span> <span class="sent" id="s2_41">When the force is kept low, the subjects actually enjoy the experience.</span></p><div class="para-dropzone dz-empty" data-letter="G" data-qnum="32"></div><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s2_42">The fun seems to come from the unforeseen, particularly when an effect called the Coriolis Illusion comes into play.</span> <span class="sent" id="s2_43">This is an agreeable tumbling feeling which occurs, for example, when the head is suddenly tilted while the subject is spinning with eyes closed.</span> <span class="sent" id="s2_44">It appears that a roll which includes, for instance, an unexpected change of acceleration from a small negative g — a feeling of weightlessness — to a small positive g — a slight crushing sensation — has an extraordinary effect on people.</span> <span class="sent" id="s2_45">If the theories of Stengel and other experts really do work, fairground fun might one day be measured in smiles, not screams.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,32" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;32</div><button type="button" class="flag-toggle" data-flagrange="27,32" title="Flag for review" aria-label="Flag questions 27-32">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 3 has seven paragraphs, A–G.</p><p>Choose the correct heading for paragraphs B–G from the list of headings below.</p><p>Write the correct number, i–viii, in boxes 27–32 on your answer sheet.</p></div><div class="info-chip-pool" id="pool-p2g0" data-gid="p2g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>Less is more</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>Research can&#x27;t guarantee safety</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>Unexplained symptoms</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>Setting the limits of acceleration</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>The irresistible appeal of speed</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>Gentle surprises</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>A difficult task</span></div><div class="info-chip" data-heading="viii" draggable="true"><span class="ic-num">viii</span><span>A different ride every time</span></div></div><p class="hint-small">Example: Paragraph A = vii. Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="33,37" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 33&ndash;37</div><button type="button" class="flag-toggle" data-flagrange="33,37" title="Flag for review" aria-label="Flag questions 33-37">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>NO MORE THAN TWO WORDS AND</b>/<b>OR A NUMBER</b> from the</p><p>passage for each answer.</p><p>Write your answers in boxes 33–37 on your answer sheet.</p></div><div class="q-row"><span class="q-num">33</span><span>Some attractions, such as the new type of waltzers, depend on both the <span class="q-num">33</span> <input type="text" class="q-text" name="q33" autocomplete="off" spellcheck="false"> and ………………………… of their passengers in order to create a variety of ride experiences.</span></div><div class="q-row"><span class="q-num">34</span><span>Designers need to be aware that a &#x27;chaotic&#x27; ride could accelerate at a violent rate if it reaches its <span class="q-num">34</span> <input type="text" class="q-text" name="q34" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">35</span><span>Research has shown that people will begin to feel ill if they are subjected to movement on all <span class="q-num">35</span> <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false"> at the same time.</span></div><div class="q-row"><span class="q-num">36</span><span>Volunteers in Stengel&#x27;s rotation tests suffered delayed reactions such as <span class="q-num">36</span> <input type="text" class="q-text" name="q36" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">37</span><span>A phenomenon known as the <span class="q-num">37</span> <input type="text" class="q-text" name="q37" autocomplete="off" spellcheck="false"> produced a pleasurable sensation in test subjects.</span></div></div><div class="q-group" data-flagrange="38,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 38&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="38,40" title="Flag for review" aria-label="Flag questions 38-40">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the claims of the writer of Reading Passage 3?</p><p>In boxes 38–40 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">38</span><span class="q-stem">There is still a lot to be learnt about the rates of acceleration which people can withstand.</span><select class="q-select" name="q38"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">39</span><span class="q-stem">Children enjoy funfairs more than adults.</span><select class="q-select" name="q39"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">40</span><span class="q-stem">Current rides could probably be adapted to become more enjoyable.</span><select class="q-select" name="q40"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 10, "minutes": 60, "parts": [{"title": "Sorry — who are you?", "short": "Sorry —", "qstart": 1, "qend": 13}, {"title": "MAMMOTH KILL", "short": "MAMMOTH KILL", "qstart": 14, "qend": 26}, {"title": "Keeping the fun in funfairs", "short": "Keeping the", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 6, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 7, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 8, "kind": "text", "ans": ["animals"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["emotion"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["gene"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["lens"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["laboratory"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["cheating"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "text", "ans": ["North America"], "group": "p1g0", "part": 2}, {"n": 15, "kind": "text", "ans": ["overkill model"], "group": "p1g0", "part": 2}, {"n": 16, "kind": "text", "ans": ["hunting"], "group": "p1g0", "part": 2}, {"n": 17, "kind": "text", "ans": ["disease"], "group": "p1g0", "part": 2}, {"n": 18, "kind": "text", "ans": ["empirical evidence"], "group": "p1g0", "part": 2}, {"n": 19, "kind": "text", "ans": ["climate instability"], "group": "p1g0", "part": 2}, {"n": 20, "kind": "text", "ans": ["communities"], "group": "p1g0", "part": 2}, {"n": 21, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 22, "kind": "select", "ans": "C", "group": "p1g1", "part": 2}, {"n": 23, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 24, "kind": "select", "ans": "A", "group": "p1g1", "part": 2}, {"n": 25, "kind": "select", "ans": "B", "group": "p1g1", "part": 2}, {"n": 26, "kind": "select", "ans": "C", "group": "p1g1", "part": 2}, {"n": 27, "kind": "heading", "ans": "iv", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 28, "kind": "heading", "ans": "viii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 29, "kind": "heading", "ans": "ii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 30, "kind": "heading", "ans": "iii", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 31, "kind": "heading", "ans": "i", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 32, "kind": "heading", "ans": "vi", "group": "p2g0", "part": 3, "hk": "p2g0"}, {"n": 33, "kind": "text", "ans": ["weight, position"], "group": "p2g1", "part": 3, "ao": ["weight", "position"], "aog": "ao33"}, {"n": 34, "kind": "text", "ans": ["resonance frequency"], "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["three axes", "axes"], "group": "p2g1", "part": 3}, {"n": 36, "kind": "text", "ans": ["headaches"], "group": "p2g1", "part": 3}, {"n": 37, "kind": "text", "ans": ["Coriolis Illusion"], "group": "p2g1", "part": 3}, {"n": 38, "kind": "select", "ans": "YES", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "NOT GIVEN", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "YES", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {"p2g0": {"i": "Less is more", "ii": "Research can't guarantee safety", "iii": "Unexplained symptoms", "iv": "Setting the limits of acceleration", "v": "The irresistible appeal of speed", "vi": "Gentle surprises", "vii": "A difficult task", "viii": "A different ride every time"}};
+const LOC = {"1": "s0_7", "2": "s0_12", "3": "s0_13", "4": "s0_14", "5": "s0_17", "6": "s0_19", "7": "s0_21", "8": "s0_24", "9": "s0_26", "10": "s0_30", "11": "s0_32", "12": "s0_34", "13": "s0_40", "14": "s1_0", "15": "s1_5", "16": "s1_4", "17": "s1_16", "18": "s1_18", "19": "s1_22", "20": "s1_23", "21": "s1_13", "22": "s1_25", "23": "s1_15", "24": "s1_8", "25": "s1_19", "26": "s1_22", "27": "s2_13", "28": "s2_23", "29": "s2_26", "30": "s2_34", "31": "s2_38", "32": "s2_42", "33": "s2_22", "34": "s2_28", "35": "s2_33", "36": "s2_34", "37": "s2_42", "38": "s2_31", "39": "s2_27", "40": "s2_39"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Before attending college Jacob was capable of recognising people he knew well.", "options": [{"t": "It was Jacob Hodes' first day at college.", "ok": false}, {"t": "He had had the same trouble all his life.", "ok": true}, {"t": "Jacob just couldn't recollect what his fellow student looked like.", "ok": false}, {"t": "Jacob then spent the rest of the year ignoring him.", "ok": false}], "pairs": ["Before attending college Jacob was capable of recognising ≠ He had had the same trouble all his life", "people he knew well ≠ Friends and relatives would greet him and he would have no idea who they were"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 2, "question": "Researchers believe that prosopagnosia may be a growing problem.", "options": [{"t": "According to researchers, he is far from alone.", "ok": false}, {"t": "That was when Hodes was diagnosed with prosopagnosia, a condition that means he is unable to recognise faces.", "ok": false}, {"t": "Recently, though, researchers identified a second form of face blindness, developmental prosopagnosia, which is either present from birth or develops very early in life.", "ok": false}, {"t": "In fact the condition is not that uncommon but until a few years ago only a few dozen cases had ever been described, and all of these had been caused by brain injury.", "ok": true}], "pairs": ["may be a growing problem ? the condition is not that uncommon"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 3, "question": "It is harder to identify developmental prosopagnosia in babies than in young children.", "options": [{"t": "That was when Hodes was diagnosed with prosopagnosia, a condition that means he is unable to recognise faces.", "ok": false}, {"t": "According to researchers, he is far from alone.", "ok": false}, {"t": "Recently, though, researchers identified a second form of face blindness, developmental prosopagnosia, which is either present from birth or develops very early in life.", "ok": true}, {"t": "He refers to studies of babies born with a condition which means the eye's lens is not clear, and when it's the left one, being unable to see through this eye during the first two months of life is a major risk factor for prosopagnosia.", "ok": false}], "pairs": ["harder to identify in babies than in young children ? either present from birth or develops very early in life"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 4, "question": "A German study seems to support the Harvard and UCL research findings.", "options": [{"t": "It seems that if you have never known what it is to recognise a face, you don't necessarily know that you are supposed to be able to.", "ok": false}, {"t": "'Prosopagnosics almost always know that they have trouble recognising people, but they often don't realise that other people have better recognition skills than they do,' says Brad Duchaine, a researcher at UCL.", "ok": false}, {"t": "The results of the survey took everyone by surprise.", "ok": false}, {"t": "In May a team from Harvard University in the US and University College London (UCL) announced the results of a web survey of 1,600 people, suggesting that up to 2 per cent of people have some degree of face blindness.", "ok": true}], "pairs": ["A German study seems to support = similarly reported that 2.5 per cent of 700 secondary school pupils", "the Harvard and UCL research findings = a team from Harvard University in the US and University College London (UCL)"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 5, "question": "In general, prosopagnosics are aware that other people can recognise faces more easily than they can.", "options": [{"t": "That was when Hodes was diagnosed with prosopagnosia, a condition that means he is unable to recognise faces.", "ok": false}, {"t": "Some prosopagnosics can train themselves to recognise specific faces; others can't even recognise their own in a mirror.", "ok": false}, {"t": "It seems that if you have never known what it is to recognise a face, you don't necessarily know that you are supposed to be able to.", "ok": true}, {"t": "Some cannot recognise the faces of old friends or fellow students but have no trouble telling whether a particular face from such groups would be attractive to most people.", "ok": false}], "pairs": ["are aware that other people can recognise faces more easily ≠ they often don't realise that other people have better recognition skills than they do", "are aware ≠ you don't necessarily know that you are supposed to be able to"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 6, "question": "In most cases, prosopagnosics have developed ways to deal with their problem.", "options": [{"t": "Even so, the discovery of developmental prosopagnosia has attracted attention from neuroscientists keen to discover what is different about the brain of face-blind people.", "ok": false}, {"t": "One issue, however, that will present challenges for researchers is that no two prosopagnosics are the same.", "ok": false}, {"t": "This difference, they believe, could help solve the problem of how the brain deals with information in general: not just visual data.", "ok": false}, {"t": "Despite these issues, the majority of developmental prosopagnosics possess strategies that allow them to get around their difficulty, for instance, by recognising hair, clothing or a person's way of speaking so, unless they see a familiar person out of context, with a new hairstyle or in different clothes, they can recognise people just fine.", "ok": true}], "pairs": ["In most cases, prosopagnosics = the majority of developmental prosopagnosics", "have developed ways to deal with their problem = possess strategies that allow them to get around their difficulty"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 7, "question": "The study of prosopagnosia may help neuroscientists to treat different kinds of brain injury.", "options": [{"t": "Even so, the discovery of developmental prosopagnosia has attracted attention from neuroscientists keen to discover what is different about the brain of face-blind people.", "ok": false}, {"t": "This difference, they believe, could help solve the problem of how the brain deals with information in general: not just visual data.", "ok": true}, {"t": "In other words, it may show whether the brain has specialised parts for specific tasks or is more of a general-purpose information processor.", "ok": false}, {"t": "In fact the condition is not that uncommon but until a few years ago only a few dozen cases had ever been described, and all of these had been caused by brain injury.", "ok": false}], "pairs": ["help neuroscientists to treat different kinds of brain injury ? could help solve the problem of how the brain deals with information in general"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 8, "question": "commonly seen <b>.........<\/b> and objects.", "options": [{"t": "Some have problems only with faces, while others have trouble with ordinary everyday objects and, so it turns out, animals which would normally be familiar as well.", "ok": true}, {"t": "Some cannot recognise the faces of old friends or fellow students but have no trouble telling whether a particular face from such groups would be attractive to most people.", "ok": false}, {"t": "When some have been tested they could identify the emotion which was conveyed on another's face, even though the face itself seemed unfamiliar, while for other subjects this was an impossibility.", "ok": false}, {"t": "Some prosopagnosics can train themselves to recognise specific faces; others can't even recognise their own in a mirror.", "ok": false}], "pairs": ["commonly seen ___ = animals which would normally be familiar as well", "objects = ordinary everyday objects"], "kind": "Completion", "answer": "animals", "accept": ["animals"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 9, "question": "the <b>.........<\/b> on someone else&#x27;s face.", "options": [{"t": "Some cannot recognise the faces of old friends or fellow students but have no trouble telling whether a particular face from such groups would be attractive to most people.", "ok": false}, {"t": "One issue, however, that will present challenges for researchers is that no two prosopagnosics are the same.", "ok": false}, {"t": "Some have problems only with faces, while others have trouble with ordinary everyday objects and, so it turns out, animals which would normally be familiar as well.", "ok": false}, {"t": "When some have been tested they could identify the emotion which was conveyed on another's face, even though the face itself seemed unfamiliar, while for other subjects this was an impossibility.", "ok": true}], "pairs": ["the ___ on someone else's face = identify the emotion which was conveyed on another's face"], "kind": "Completion", "answer": "emotion", "accept": ["emotion"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 10, "question": "just one <b>.........<\/b> , according to Martina Grüter", "options": [{"t": "Thomas Grüter, Martina Grüter's husband, who also works on her team, however, is not convinced it will work.", "ok": false}, {"t": "In Martina Grüter's study, the prosopagnosics who agreed to have their parents and relatives tested reported at least one with the condition.", "ok": false}, {"t": "Then in August, Martina Grüter and colleagues at the Institute for Human Genetics in Münster, Germany, similarly reported that 2.5 per cent of 700 secondary school pupils they had tested had trouble recognising faces.", "ok": false}, {"t": "Having looked at 38 cases in seven families, the German team believe they have good evidence that a single gene could be responsible.", "ok": true}], "pairs": ["just one ___ = a single gene could be responsible"], "kind": "Completion", "answer": "gene", "accept": ["gene"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 11, "question": "a defect in the <b>.........<\/b> , according to Brad Duchaine", "options": [{"t": "'Prosopagnosics almost always know that they have trouble recognising people, but they often don't realise that other people have better recognition skills than they do,' says Brad Duchaine, a researcher at UCL.", "ok": false}, {"t": "He refers to studies of babies born with a condition which means the eye's lens is not clear, and when it's the left one, being unable to see through this eye during the first two months of life is a major risk factor for prosopagnosia.", "ok": true}, {"t": "Duchaine also has some evidence that face blindness could be inherited but thinks other factors might be more significant.", "ok": false}, {"t": "In Martina Grüter's study, the prosopagnosics who agreed to have their parents and relatives tested reported at least one with the condition.", "ok": false}], "pairs": ["a defect in the ___ = the eye's lens is not clear"], "kind": "Completion", "answer": "lens", "accept": ["lens"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "faces inside the <b>.........<\/b> and in the outside world.", "options": [{"t": "Joseph DeGutis, a graduate student at the University of California, recently reported successfully training a severe developmental prosopagnosic to recognise faces during tests carried out in the laboratory.", "ok": true}, {"t": "Whatever the cause, what most prosopagnosics want to know is whether they can do anything to improve their face recognition skills.", "ok": false}, {"t": "'Humans already spend all day looking at faces.", "ok": false}, {"t": "The subject also reported that recognising faces in everyday life became easier due to the training.", "ok": false}], "pairs": ["inside the ___ = tests carried out in the laboratory", "and in the outside world = recognising faces in everyday life became easier"], "kind": "Completion", "answer": "laboratory", "accept": ["laboratory"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "<b>.........<\/b> by some subjects can affect research results.", "options": [{"t": "He also points out that cheating is a possibility during tests and provides an example.", "ok": true}, {"t": "Joseph DeGutis, a graduate student at the University of California, recently reported successfully training a severe developmental prosopagnosic to recognise faces during tests carried out in the laboratory.", "ok": false}, {"t": "'I don't know how you can have more training than you have already had,' he says.", "ok": false}, {"t": "Thomas Grüter, Martina Grüter's husband, who also works on her team, however, is not convinced it will work.", "ok": false}], "pairs": ["___ by some subjects = cheating is a possibility during tests", "can affect research results = you can perform well in the test and not do so well in real life"], "kind": "Completion", "answer": "cheating", "accept": ["cheating"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "Before attending college Jacob was capable of recognising", "p": "He had had the same trouble all his life", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "1"}, {"q": "people he knew well", "p": "Friends and relatives would greet him and he would have no idea who they were", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "1"}, {"q": "may be a growing problem", "p": "the condition is not that uncommon", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "2"}, {"q": "harder to identify in babies than in young children", "p": "either present from birth or develops very early in life", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "3"}, {"q": "A German study seems to support", "p": "similarly reported that 2.5 per cent of 700 secondary school pupils", "rel": "=", "note": "", "n": "4"}, {"q": "the Harvard and UCL research findings", "p": "a team from Harvard University in the US and University College London (UCL)", "rel": "=", "note": "", "n": "4"}, {"q": "are aware that other people can recognise faces more easily", "p": "they often don't realise that other people have better recognition skills than they do", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "5"}, {"q": "are aware", "p": "you don't necessarily know that you are supposed to be able to", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "5"}, {"q": "In most cases, prosopagnosics", "p": "the majority of developmental prosopagnosics", "rel": "=", "note": "", "n": "6"}, {"q": "have developed ways to deal with their problem", "p": "possess strategies that allow them to get around their difficulty", "rel": "=", "note": "", "n": "6"}, {"q": "help neuroscientists to treat different kinds of brain injury", "p": "could help solve the problem of how the brain deals with information in general", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "7"}, {"q": "commonly seen ___", "p": "animals which would normally be familiar as well", "rel": "=", "note": "", "n": "8"}, {"q": "objects", "p": "ordinary everyday objects", "rel": "=", "note": "", "n": "8"}, {"q": "the ___ on someone else's face", "p": "identify the emotion which was conveyed on another's face", "rel": "=", "note": "", "n": "9"}, {"q": "just one ___", "p": "a single gene could be responsible", "rel": "=", "note": "", "n": "10"}, {"q": "a defect in the ___", "p": "the eye's lens is not clear", "rel": "=", "note": "", "n": "11"}, {"q": "inside the ___", "p": "tests carried out in the laboratory", "rel": "=", "note": "", "n": "12"}, {"q": "and in the outside world", "p": "recognising faces in everyday life became easier", "rel": "=", "note": "", "n": "12"}, {"q": "___ by some subjects", "p": "cheating is a possibility during tests", "rel": "=", "note": "", "n": "13"}, {"q": "can affect research results", "p": "you can perform well in the test and not do so well in real life", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "intentional", "pos": "adjective", "loc": "¶1", "d": "done on purpose, not by accident", "uz": "ataylab qilingan, qasddan", "ex": "The delay was intentional, so the team could check every detail.", "form": "intentional"}, {"w": "recollect", "pos": "verb", "loc": "¶1", "d": "to remember something from the past", "uz": "esga tushirmoq, eslamoq", "ex": "She could not recollect where she had left her keys.", "form": "recollect"}, {"w": "diagnosed with", "pos": "phrase", "loc": "¶2", "d": "officially identified as having a particular illness", "uz": "...tashxisi qo'yilgan", "ex": "He was diagnosed with asthma when he was only six years old.", "form": "diagnosed with"}, {"w": "far from alone", "pos": "phrase", "loc": "¶2", "d": "sharing the same situation as many other people", "uz": "yolg'iz emas, ko'pchilik qatorida", "ex": "If you find grammar hard, you are far from alone.", "form": "far from alone"}, {"w": "took everyone by surprise", "pos": "idiom", "loc": "¶3", "d": "was completely unexpected to all the people involved", "uz": "hammani hayratda qoldirdi", "ex": "The sudden election result took everyone by surprise.", "form": "took everyone by surprise"}, {"w": "get around", "pos": "phrasal verb", "loc": "¶5", "d": "to find a way to avoid or deal with a problem", "uz": "chetlab o'tmoq, yo'lini topmoq", "ex": "She got around the language barrier by using simple drawings.", "form": ""}, {"w": "out of context", "pos": "phrase", "loc": "¶5", "d": "in a situation different from the usual one", "uz": "odatiy vaziyatdan tashqarida", "ex": "I did not recognise my teacher when I met her out of context.", "form": "out of context"}, {"w": "keen to", "pos": "phrase", "loc": "¶5", "d": "very eager to do something", "uz": "...ga intiluvchan, ishtiyoqmand", "ex": "The students were keen to try the new learning software.", "form": "keen to"}, {"w": "present challenges", "pos": "collocation", "loc": "¶6", "d": "to create difficulties that must be dealt with", "uz": "qiyinchiliklar tug'dirmoq", "ex": "Rapid population growth will present challenges for city planners.", "form": "present challenges"}, {"w": "conveyed", "pos": "verb", "loc": "¶6", "d": "communicated an idea or feeling to someone", "uz": "yetkazilgan, ifodalangan", "ex": "Her smile conveyed more warmth than any words could.", "form": "conveyed"}, {"w": "diversity", "pos": "noun", "loc": "¶6", "d": "a wide range of different types or kinds", "uz": "xilma-xillik", "ex": "The diversity of student backgrounds made the discussion very rich.", "form": "diversity"}, {"w": "inherited", "pos": "verb", "loc": "¶7", "d": "received from parents through genes", "uz": "merosga o'tgan, irsiy", "ex": "Eye colour is inherited, but language skills are learned.", "form": "inherited"}, {"w": "major risk factor", "pos": "collocation", "loc": "¶7", "d": "something that greatly increases the chance of illness", "uz": "asosiy xavf omili", "ex": "Smoking is a major risk factor for heart disease.", "form": "major risk factor"}, {"w": "severe", "pos": "adjective", "loc": "¶8", "d": "very serious or extreme in degree", "uz": "og'ir, jiddiy", "ex": "Severe flooding forced hundreds of families to leave their homes.", "form": "Severe"}, {"w": "sufferers", "pos": "noun", "loc": "¶8", "d": "people who have a particular illness or problem", "uz": "kasallanganlar, azob chekuvchilar", "ex": "Many sufferers of migraine are sensitive to bright light.", "form": "sufferers"}, {"w": "convinced", "pos": "adjective", "loc": "¶8", "d": "completely sure that something is true or will work", "uz": "ishongan, amin bo'lgan", "ex": "The jury was not convinced by the witness's story.", "form": "convinced"}]}, {"evidence": [{"q": 14, "question": "Three theories have been put forward to explain the disappearance of the different species of large mammals that inhabited <b>.........<\/b> 11,000 years ago.", "options": [{"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "Assuming an initial human population of 100 people that grew no more than two per cent annually, Alroy determined that, if each band of, say, 50 people killed 15 to 20 large animals a year, humans could have eliminated the animal populations within 1,000 years.", "ok": false}, {"t": "Although it's hard to imagine in this age of urban sprawl and automobiles, North America once belonged to huge, elephant-like mammoths, camels, bear-sized beavers and other giant beasts, collectively known as 'megafauna'.", "ok": true}, {"t": "Their demise coincided roughly with the arrival of humans in this region and dramatic climate change — factors that have inspired several theories about the die-off.", "ok": false}], "pairs": ["inhabited ___ = North America once belonged to", "11,000 years ago = Some 11,000 years ago"], "kind": "Completion", "answer": "North America", "accept": ["North America"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 15, "question": "The <b>.........<\/b> , proposed around fifty years ago by Paul S Martin, blames ...... by people for mass extinction.", "options": [{"t": "Assuming an initial human population of 100 people that grew no more than two per cent annually, Alroy determined that, if each band of, say, 50 people killed 15 to 20 large animals a year, humans could have eliminated the animal populations within 1,000 years.", "ok": false}, {"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "This belief resulted in the overkill model which emerged in the 1960s, when it was put forth by Paul S Martin of the University of Arizona.", "ok": true}, {"t": "But at the annual meeting of the Society of Vertebrate Paleontology in Mexico City in October 1999, specialist John Alroy of the University of California at Santa Barbara argued that in fact, hunting-driven extinction is not only plausible, it was unavoidable.", "ok": false}], "pairs": ["The ___, proposed around fifty years ago by Paul S Martin = the overkill model which emerged in the 1960s, when it was put forth by Paul S Martin"], "kind": "Completion", "answer": "overkill model", "accept": ["overkill model"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 16, "question": "The ...... , proposed around fifty years ago by Paul S Martin, blames <b>.........<\/b> by people for mass extinction.", "options": [{"t": "Assuming an initial human population of 100 people that grew no more than two per cent annually, Alroy determined that, if each band of, say, 50 people killed 15 to 20 large animals a year, humans could have eliminated the animal populations within 1,000 years.", "ok": false}, {"t": "This belief resulted in the overkill model which emerged in the 1960s, when it was put forth by Paul S Martin of the University of Arizona.", "ok": false}, {"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "Now new findings offer support to one of these controversial hypotheses: that human hunting drove these huge megafauna species to extinction.", "ok": true}], "pairs": ["blames ___ by people for mass extinction = human hunting drove these huge megafauna species to extinction"], "kind": "Completion", "answer": "hunting", "accept": ["hunting"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 17, "question": "The second theory suggests that humans introduced a <b>.........<\/b> which wiped out the large mammals.", "options": [{"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "So far, MacPhee does not have empirical evidence for this theory, and it will not be easy to come by: such disease would kill far too quickly to leave its signature on the bones themselves.", "ok": false}, {"t": "MacPhee agrees that humans most likely brought about these extinctions (as well as others around the world that coincided with human arrival), but not directly.", "ok": false}, {"t": "Rather than through hunting, he suggests that people may have introduced a deadly disease, perhaps through their dogs or accompanying vermin, which then spread wildly among the native species because of their low resistance to the new introductions.", "ok": true}], "pairs": ["humans introduced a ___ = people may have introduced a deadly disease"], "kind": "Completion", "answer": "disease", "accept": ["disease"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 18, "question": "However, so far this theory also lacks any <b>.........<\/b> .", "options": [{"t": "Rather than through hunting, he suggests that people may have introduced a deadly disease, perhaps through their dogs or accompanying vermin, which then spread wildly among the native species because of their low resistance to the new introductions.", "ok": false}, {"t": "But he hopes that analyses of tissue and DNA from the most recent animal remains will eventually reveal the microbes responsible.", "ok": false}, {"t": "So far, MacPhee does not have empirical evidence for this theory, and it will not be easy to come by: such disease would kill far too quickly to leave its signature on the bones themselves.", "ok": true}, {"t": "Repeated outbreaks of a deadly disease could thus quickly drive them to the point of no return.", "ok": false}], "pairs": ["this theory also lacks any ___ = MacPhee does not have empirical evidence for this theory"], "kind": "Completion", "answer": "empirical evidence", "accept": ["empirical evidence"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 19, "question": "The final theory suggests that this period experienced significant <b>.........<\/b> which eventually led to the loss of habitat and to the division of the ...... that some of the large mammals had organised.", "options": [{"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "Although these creatures managed to maintain viable populations through most of the Pleistocene period, the final major climate fluctuation pushed them over the edge, Graham says.", "ok": false}, {"t": "Instead, its proponents blame the loss on the climate.", "ok": false}, {"t": "The Pleistocene epoch in question witnessed considerable climate instability, explains Russell W Graham of the Denver Museum of Nature and Science.", "ok": true}], "pairs": ["this period experienced significant ___ = considerable climate instability", "the loss of habitat = their regular habitats disappeared"], "kind": "Completion", "answer": "climate instability", "accept": ["climate instability"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 20, "question": "The final theory suggests that this period experienced significant ...... which eventually led to the loss of habitat and to the division of the <b>.........<\/b> that some of the large mammals had organised.", "options": [{"t": "As a result, their regular habitats disappeared, and species that had once formed communities split apart.", "ok": true}, {"t": "For much of the megafauna, however, the increasingly uniform terrain left them with shrinking geographical ranges — a death sentence for large animals, which need correspondingly large ranges.", "ok": false}, {"t": "Although these creatures managed to maintain viable populations through most of the Pleistocene period, the final major climate fluctuation pushed them over the edge, Graham says.", "ok": false}, {"t": "Instead, its proponents blame the loss on the climate.", "ok": false}], "pairs": ["the division of the ___ that some of the large mammals had organised = species that had once formed communities split apart"], "kind": "Completion", "answer": "communities", "accept": ["communities"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 21, "question": "Too little evidence exists to support the hunting theory.", "options": [{"t": "However, not everyone agrees with Alroy's assessment.", "ok": false}, {"t": "For one thing, the results depend on population size estimates for the extinct animals — estimates that are not necessarily reliable.", "ok": false}, {"t": "So far, MacPhee does not have empirical evidence for this theory, and it will not be easy to come by: such disease would kill far too quickly to leave its signature on the bones themselves.", "ok": false}, {"t": "But a more specific criticism comes from mammal expert Ross D E MacPhee of the American Museum of Natural History in New York City, who points out that the relevant archaeological record contains barely a dozen examples of stone points embedded in mammoth bones (and none, it should be noted, are known from other megafaunal remains) — hardly what one might expect if hunting drove these animals to extinction.", "ok": true}], "pairs": ["Too little evidence exists = barely a dozen examples of stone points embedded in mammoth bones", "to support the hunting theory = hardly what one might expect if hunting drove these animals to extinction"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "B"}, "why": ""}, {"q": 22, "question": "The bigger the animal, the bigger the territory it requires for survival.", "options": [{"t": "Although these creatures managed to maintain viable populations through most of the Pleistocene period, the final major climate fluctuation pushed them over the edge, Graham says.", "ok": false}, {"t": "Instead, its proponents blame the loss on the climate.", "ok": false}, {"t": "For much of the megafauna, however, the increasingly uniform terrain left them with shrinking geographical ranges — a death sentence for large animals, which need correspondingly large ranges.", "ok": true}, {"t": "For some animals, this brought opportunity.", "ok": false}], "pairs": ["The bigger the animal, the bigger the territory it requires = large animals, which need correspondingly large ranges"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "C"}, "why": ""}, {"q": 23, "question": "Globally, humans have been indirectly responsible for the elimination of many species.", "options": [{"t": "MacPhee agrees that humans most likely brought about these extinctions (as well as others around the world that coincided with human arrival), but not directly.", "ok": true}, {"t": "Rather than through hunting, he suggests that people may have introduced a deadly disease, perhaps through their dogs or accompanying vermin, which then spread wildly among the native species because of their low resistance to the new introductions.", "ok": false}, {"t": "But he hopes that analyses of tissue and DNA from the most recent animal remains will eventually reveal the microbes responsible.", "ok": false}, {"t": "Repeated outbreaks of a deadly disease could thus quickly drive them to the point of no return.", "ok": false}], "pairs": ["Globally = others around the world", "indirectly responsible = but not directly"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "B"}, "why": ""}, {"q": 24, "question": "Population estimates can be used to understand how large mammals become extinct.", "options": [{"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "He has determined, using a computer simulation, that even a very modest amount of hunting would have wiped out these animals.", "ok": true}, {"t": "The overkill model explains everything the disease and climate scenarios explain, he asserts, and in addition makes accurate predictions about which species would eventually become extinct.", "ok": false}, {"t": "For one thing, the results depend on population size estimates for the extinct animals — estimates that are not necessarily reliable.", "ok": false}], "pairs": ["Population estimates = population size estimates for the extinct animals", "understand how large mammals become extinct = He has determined, using a computer simulation, that even a very modest amount of hunting would have wiped out these animals"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "A"}, "why": ""}, {"q": 25, "question": "Scientific examination of fossil remains may provide some proof for one of the theories.", "options": [{"t": "MacPhee agrees that humans most likely brought about these extinctions (as well as others around the world that coincided with human arrival), but not directly.", "ok": false}, {"t": "Rather than through hunting, he suggests that people may have introduced a deadly disease, perhaps through their dogs or accompanying vermin, which then spread wildly among the native species because of their low resistance to the new introductions.", "ok": false}, {"t": "Yet despite decades of scientific investigation, the exact cause remains a mystery.", "ok": false}, {"t": "But he hopes that analyses of tissue and DNA from the most recent animal remains will eventually reveal the microbes responsible.", "ok": true}], "pairs": ["Scientific examination of fossil remains = analyses of tissue and DNA from the most recent animal remains", "may provide some proof = will eventually reveal the microbes responsible"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "B"}, "why": ""}, {"q": 26, "question": "Environmental changes negatively affected the social groupings of some large species.", "options": [{"t": "For much of the megafauna, however, the increasingly uniform terrain left them with shrinking geographical ranges — a death sentence for large animals, which need correspondingly large ranges.", "ok": false}, {"t": "Some 11,000 years ago, however, these large-bodied mammals — about 70 species in all — disappeared.", "ok": false}, {"t": "As a result, their regular habitats disappeared, and species that had once formed communities split apart.", "ok": false}, {"t": "The Pleistocene epoch in question witnessed considerable climate instability, explains Russell W Graham of the Denver Museum of Nature and Science.", "ok": true}], "pairs": ["Environmental changes = considerable climate instability", "negatively affected the social groupings = species that had once formed communities split apart"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "John Alroy"}, {"k": "B", "t": "Ross D E MacPhee"}, {"k": "C", "t": "Russell W Graham"}], "ans": "C"}, "why": ""}], "paraphrase": [{"q": "inhabited ___", "p": "North America once belonged to", "rel": "=", "note": "", "n": "14"}, {"q": "11,000 years ago", "p": "Some 11,000 years ago", "rel": "=", "note": "", "n": "14"}, {"q": "The ___, proposed around fifty years ago by Paul S Martin", "p": "the overkill model which emerged in the 1960s, when it was put forth by Paul S Martin", "rel": "=", "note": "", "n": "15"}, {"q": "blames ___ by people for mass extinction", "p": "human hunting drove these huge megafauna species to extinction", "rel": "=", "note": "", "n": "16"}, {"q": "humans introduced a ___", "p": "people may have introduced a deadly disease", "rel": "=", "note": "", "n": "17"}, {"q": "this theory also lacks any ___", "p": "MacPhee does not have empirical evidence for this theory", "rel": "=", "note": "", "n": "18"}, {"q": "this period experienced significant ___", "p": "considerable climate instability", "rel": "=", "note": "", "n": "19"}, {"q": "the loss of habitat", "p": "their regular habitats disappeared", "rel": "=", "note": "", "n": "19"}, {"q": "the division of the ___ that some of the large mammals had organised", "p": "species that had once formed communities split apart", "rel": "=", "note": "", "n": "20"}, {"q": "Too little evidence exists", "p": "barely a dozen examples of stone points embedded in mammoth bones", "rel": "=", "note": "", "n": "21"}, {"q": "to support the hunting theory", "p": "hardly what one might expect if hunting drove these animals to extinction", "rel": "=", "note": "", "n": "21"}, {"q": "The bigger the animal, the bigger the territory it requires", "p": "large animals, which need correspondingly large ranges", "rel": "=", "note": "", "n": "22"}, {"q": "Globally", "p": "others around the world", "rel": "=", "note": "", "n": "23"}, {"q": "indirectly responsible", "p": "but not directly", "rel": "=", "note": "", "n": "23"}, {"q": "Population estimates", "p": "population size estimates for the extinct animals", "rel": "=", "note": "", "n": "24"}, {"q": "understand how large mammals become extinct", "p": "He has determined, using a computer simulation, that even a very modest amount of hunting would have wiped out these animals", "rel": "=", "note": "", "n": "24"}, {"q": "Scientific examination of fossil remains", "p": "analyses of tissue and DNA from the most recent animal remains", "rel": "=", "note": "", "n": "25"}, {"q": "may provide some proof", "p": "will eventually reveal the microbes responsible", "rel": "=", "note": "", "n": "25"}, {"q": "Environmental changes", "p": "considerable climate instability", "rel": "=", "note": "", "n": "26"}, {"q": "negatively affected the social groupings", "p": "species that had once formed communities split apart", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "urban sprawl", "pos": "collocation", "loc": "¶1", "d": "the uncontrolled spreading of cities into the countryside", "uz": "shaharlarning nazoratsiz kengayishi", "ex": "Urban sprawl has swallowed farmland around many fast-growing cities.", "form": "Urban sprawl"}, {"w": "demise", "pos": "noun", "loc": "¶1", "d": "the end or death of something", "uz": "halokat, tugash", "ex": "Competition from supermarkets led to the demise of local shops.", "form": "demise"}, {"w": "coincided", "pos": "verb", "loc": "¶1, ¶5", "d": "happened at the same time as something else", "uz": "bir vaqtga to'g'ri kelgan", "ex": "The drought coincided with a sharp fall in crop yields.", "form": "coincided"}, {"w": "put forth", "pos": "phrasal verb", "loc": "¶2", "d": "to suggest an idea or theory for others to consider", "uz": "taklif qilmoq, ilgari surmoq", "ex": "The professor put forth a bold new theory about ancient trade.", "form": "put forth"}, {"w": "plausible", "pos": "adjective", "loc": "¶2", "d": "seeming reasonable and likely to be true", "uz": "ishonarli, mantiqli", "ex": "Her explanation sounded plausible, but nobody could prove it.", "form": "plausible"}, {"w": "wiped out", "pos": "phrasal verb", "loc": "¶2", "d": "completely destroyed or caused to disappear", "uz": "butunlay yo'q qilingan", "ex": "A single disease wiped out most of the island's frogs.", "form": "wiped out"}, {"w": "vulnerable to", "pos": "phrase", "loc": "¶3", "d": "easily harmed by something", "uz": "...ga zaif, ...dan himoyasiz", "ex": "Young plants are especially vulnerable to frost in early spring.", "form": "vulnerable to"}, {"w": "gestation periods", "pos": "collocation", "loc": "¶3", "d": "the lengths of time that animals carry their unborn young", "uz": "homiladorlik davrlari", "ex": "Elephants have far longer gestation periods than rabbits or mice.", "form": "gestation periods"}, {"w": "embedded in", "pos": "phrase", "loc": "¶4", "d": "fixed firmly inside something", "uz": "...ga o'rnashgan, ichiga kirib qolgan", "ex": "Archaeologists found a stone arrowhead embedded in the animal's rib.", "form": "embedded in"}, {"w": "brought about", "pos": "phrasal verb", "loc": "¶5", "d": "caused something to happen", "uz": "keltirib chiqargan, sabab bo'lgan", "ex": "The invention of the printing press brought about enormous social change.", "form": "brought about"}, {"w": "vermin", "pos": "noun", "loc": "¶5", "d": "small harmful animals such as rats that spread disease", "uz": "zararli kemiruvchilar, zararkunandalar", "ex": "Ships carrying grain often carried vermin from port to port.", "form": "vermin"}, {"w": "the point of no return", "pos": "idiom", "loc": "¶5", "d": "the stage after which a situation cannot be reversed", "uz": "qaytib bo'lmaydigan nuqta", "ex": "The company had reached the point of no return and had to close.", "form": "the point of no return"}, {"w": "empirical", "pos": "adjective", "loc": "¶5", "d": "based on observation and experiment rather than theory", "uz": "empirik, tajribaga asoslangan", "ex": "The claim needs empirical support before doctors can accept it.", "form": "empirical"}, {"w": "proponents", "pos": "noun", "loc": "¶6", "d": "people who publicly support an idea or plan", "uz": "tarafdorlar, himoyachilar", "ex": "Proponents of the scheme say it will cut traffic dramatically.", "form": "Proponents"}, {"w": "viable", "pos": "adjective", "loc": "¶6", "d": "able to survive or succeed in practice", "uz": "hayotiy, yashashga qodir", "ex": "A viable population needs enough animals to breed successfully.", "form": "viable"}, {"w": "pushed them over the edge", "pos": "idiom", "loc": "¶6", "d": "made a bad situation finally become impossible to survive", "uz": "so'nggi tomchi bo'ldi, tubsizlikka itardi", "ex": "The last poor harvest pushed the farmers over the edge.", "form": ""}, {"w": "asserts", "pos": "verb", "loc": "¶7", "d": "states something firmly and confidently", "uz": "qat'iy ta'kidlaydi", "ex": "The author asserts that sleep is more important than diet.", "form": "asserts"}]}, {"evidence": [{"q": 27, "question": "Which heading fits paragraph B?", "options": [{"t": "When the Disney Corporation asked German designer Werner Stengel to design a giant loop ride for them in the 1970s, he went to NASA, the aeronautics and space foundation, to discover the effects of sustained acceleration on the pilots.", "ok": false}, {"t": "What's more, he put firm restrictions on the rate at which acceleration can increase — you'll never go down a 45 degree ramp into a tight circular loop, for instance.", "ok": false}, {"t": "So Stengel decided that the maximum vertical acceleration for the public should be 6 g, and then only for a second or so.", "ok": true}, {"t": "NASA's research suggests that the maximum level we can endure is 9 g, g being the standard unit of acceleration due to gravity.", "ok": false}], "pairs": ["Setting the limits of acceleration = the maximum vertical acceleration for the public should be 6 g", "limits = put firm restrictions on the rate at which acceleration can increase"], "kind": "Matching headings", "answer": "iv", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "ii", "t": "Research can't guarantee safety"}, {"k": "iv", "t": "Setting the limits of acceleration"}, {"k": "vi", "t": "Gentle surprises"}, {"k": "viii", "t": "A different ride every time"}], "ans": "iv"}, "why": ""}, {"q": 28, "question": "Which heading fits paragraph C?", "options": [{"t": "So you never have the same experience twice.", "ok": true}, {"t": "The car is on a huge platform that also rotates.", "ok": false}, {"t": "In the past you could take comfort from the fact that the spin was tightly controlled by gears that turned your car at a rate determined by the rotation speed of the whole ride.", "ok": false}, {"t": "Ride a waltzer and you sit in a car that spins on its own axis.", "ok": false}], "pairs": ["A different ride every time = So you never have the same experience twice"], "kind": "Matching headings", "answer": "viii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "ii", "t": "Research can't guarantee safety"}, {"k": "iv", "t": "Setting the limits of acceleration"}, {"k": "v", "t": "The irresistible appeal of speed"}, {"k": "viii", "t": "A different ride every time"}], "ans": "viii"}, "why": ""}, {"q": 29, "question": "Which heading fits paragraph D?", "options": [{"t": "Despite complex calculations, designers can never be completely sure that something odd won't happen, especially since freely turning systems occasionally hit a resonance frequency.", "ok": true}, {"t": "If a ride is subjected to unforeseen stresses, no one can guarantee that it will be able to cope.", "ok": false}, {"t": "Although seemingly a passport to endless thrills, chaos does have one rather obvious drawback: it's unpredictable.", "ok": false}, {"t": "This could be very hazardous, according to Stengel.", "ok": false}], "pairs": ["Research can't guarantee safety = designers can never be completely sure that something odd won't happen", "can't guarantee = no one can guarantee that it will be able to cope"], "kind": "Matching headings", "answer": "ii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "ii", "t": "Research can't guarantee safety"}, {"k": "iii", "t": "Unexplained symptoms"}, {"k": "iv", "t": "Setting the limits of acceleration"}, {"k": "vii", "t": "A difficult task"}], "ans": "ii"}, "why": ""}, {"q": 30, "question": "Which heading fits paragraph E?", "options": [{"t": "Since these effects aren't understood, he tries to limit how people on his rides are rotated.", "ok": false}, {"t": "Stengel has worked with the German Air Force, rotating volunteers head over heels while also making them cartwheel or pirouette like a ballet dancer.", "ok": false}, {"t": "But what Stengel found particularly puzzling was that they also developed headaches and other problems about two days later.", "ok": true}, {"t": "It emerged that if the pilots were turned on all three axes simultaneously, they became so nauseous they almost blacked out, and when they got off they couldn't walk.", "ok": false}], "pairs": ["Unexplained symptoms = Since these effects aren't understood", "symptoms = they also developed headaches and other problems about two days later"], "kind": "Matching headings", "answer": "iii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "iii", "t": "Unexplained symptoms"}, {"k": "v", "t": "The irresistible appeal of speed"}, {"k": "vi", "t": "Gentle surprises"}, {"k": "vii", "t": "A difficult task"}], "ans": "iii"}, "why": ""}, {"q": 31, "question": "Which heading fits paragraph F?", "options": [{"t": "When the force is kept low, the subjects actually enjoy the experience.", "ok": false}, {"t": "Other experts in this field agree, and it seems likely that designers could formulate profiles even for existing attractions that would lead to higher amusement value.", "ok": false}, {"t": "With that goal in mind, Stengel feels that flinging people around in ever more chaotic machines is no longer the way forward.", "ok": false}, {"t": "He believes that the sequence of accelerations, not their size, is what counts and that the way to make rides more fun is to put people through a carefully designed succession of relatively small accelerations.", "ok": true}], "pairs": ["Less is more = the sequence of accelerations, not their size, is what counts", "Less = a carefully designed succession of relatively small accelerations"], "kind": "Matching headings", "answer": "i", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "ii", "t": "Research can't guarantee safety"}, {"k": "iii", "t": "Unexplained symptoms"}, {"k": "vi", "t": "Gentle surprises"}, {"k": "viii", "t": "A different ride every time"}], "ans": "i"}, "why": ""}, {"q": 32, "question": "Which heading fits paragraph G?", "options": [{"t": "The fun seems to come from the unforeseen, particularly when an effect called the Coriolis Illusion comes into play.", "ok": true}, {"t": "This is an agreeable tumbling feeling which occurs, for example, when the head is suddenly tilted while the subject is spinning with eyes closed.", "ok": false}, {"t": "It appears that a roll which includes, for instance, an unexpected change of acceleration from a small negative g — a feeling of weightlessness — to a small positive g — a slight crushing sensation — has an extraordinary effect on people.", "ok": false}, {"t": "If the theories of Stengel and other experts really do work, fairground fun might one day be measured in smiles, not screams.", "ok": false}], "pairs": ["Gentle surprises = The fun seems to come from the unforeseen", "Gentle = This is an agreeable tumbling feeling"], "kind": "Matching headings", "answer": "vi", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Less is more"}, {"k": "ii", "t": "Research can't guarantee safety"}, {"k": "v", "t": "The irresistible appeal of speed"}, {"k": "vi", "t": "Gentle surprises"}, {"k": "vii", "t": "A difficult task"}], "ans": "vi"}, "why": ""}, {"q": 33, "question": "Some attractions, such as the new type of waltzers, depend on both the <b>.........<\/b> and ………………………… of their passengers in order to create a variety of ride experiences.", "options": [{"t": "This step has already been taken in the most recent waltzers, or tea-cup rides.", "ok": false}, {"t": "Ride a waltzer and you sit in a car that spins on its own axis.", "ok": false}, {"t": "But the latest generation of waltzer cars spin freely, at a rate determined by the weight and position of the people in them.", "ok": true}, {"t": "Part of the problem is that no matter how exciting an attraction is, after a few goes the passengers will have some idea of what to expect.", "ok": false}], "pairs": ["depend on both the ___ and ___ of their passengers = at a rate determined by the weight and position of the people in them", "a variety of ride experiences = So you never have the same experience twice"], "kind": "Completion", "answer": "weight, position", "accept": ["weight, position"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 34, "question": "Designers need to be aware that a &#x27;chaotic&#x27; ride could accelerate at a violent rate if it reaches its <b>.........<\/b>", "options": [{"t": "Fun is becoming a tricky issue for ride designers.", "ok": false}, {"t": "Despite complex calculations, designers can never be completely sure that something odd won't happen, especially since freely turning systems occasionally hit a resonance frequency.", "ok": false}, {"t": "Similarly, if you drive a revolving waltzer car at its resonance frequency it could speed up uncontrollably.", "ok": true}, {"t": "If a ride is subjected to unforeseen stresses, no one can guarantee that it will be able to cope.", "ok": false}], "pairs": ["if it reaches its ___ = drive a revolving waltzer car at its resonance frequency", "accelerate at a violent rate = speed up uncontrollably"], "kind": "Completion", "answer": "resonance frequency", "accept": ["resonance frequency"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 35, "question": "Research has shown that people will begin to feel ill if they are subjected to movement on all <b>.........<\/b> at the same time.", "options": [{"t": "Stengel has worked with the German Air Force, rotating volunteers head over heels while also making them cartwheel or pirouette like a ballet dancer.", "ok": false}, {"t": "Since these effects aren't understood, he tries to limit how people on his rides are rotated.", "ok": false}, {"t": "But what Stengel found particularly puzzling was that they also developed headaches and other problems about two days later.", "ok": false}, {"t": "It emerged that if the pilots were turned on all three axes simultaneously, they became so nauseous they almost blacked out, and when they got off they couldn't walk.", "ok": true}], "pairs": ["subjected to movement on all ___ at the same time = turned on all three axes simultaneously", "begin to feel ill = they became so nauseous"], "kind": "Completion", "answer": "three axes", "accept": ["three axes", "axes"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 36, "question": "Volunteers in Stengel&#x27;s rotation tests suffered delayed reactions such as <b>.........<\/b>", "options": [{"t": "'We want to provide fun, not pain.'", "ok": false}, {"t": "But what Stengel found particularly puzzling was that they also developed headaches and other problems about two days later.", "ok": true}, {"t": "Stengel has worked with the German Air Force, rotating volunteers head over heels while also making them cartwheel or pirouette like a ballet dancer.", "ok": false}, {"t": "No one even knows what the safe limits of rotational force are, let alone its effect on the human body.", "ok": false}], "pairs": ["delayed reactions = about two days later"], "kind": "Completion", "answer": "headaches", "accept": ["headaches"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 37, "question": "A phenomenon known as the <b>.........<\/b> produced a pleasurable sensation in test subjects.", "options": [{"t": "The fun seems to come from the unforeseen, particularly when an effect called the Coriolis Illusion comes into play.", "ok": true}, {"t": "It appears that a roll which includes, for instance, an unexpected change of acceleration from a small negative g — a feeling of weightlessness — to a small positive g — a slight crushing sensation — has an extraordinary effect on people.", "ok": false}, {"t": "This is an agreeable tumbling feeling which occurs, for example, when the head is suddenly tilted while the subject is spinning with eyes closed.", "ok": false}, {"t": "When the force is kept low, the subjects actually enjoy the experience.", "ok": false}], "pairs": ["A phenomenon known as the ___ = an effect called the Coriolis Illusion", "a pleasurable sensation = an agreeable tumbling feeling"], "kind": "Completion", "answer": "Coriolis Illusion", "accept": ["Coriolis Illusion"], "limit": " NO MORE THAN TWO WORDS AND/OR A NUMBER", "why": ""}, {"q": 38, "question": "There is still a lot to be learnt about the rates of acceleration which people can withstand.", "options": [{"t": "It appears that a roll which includes, for instance, an unexpected change of acceleration from a small negative g — a feeling of weightlessness — to a small positive g — a slight crushing sensation — has an extraordinary effect on people.", "ok": false}, {"t": "Since these effects aren't understood, he tries to limit how people on his rides are rotated.", "ok": false}, {"t": "No one even knows what the safe limits of rotational force are, let alone its effect on the human body.", "ok": true}, {"t": "'We want to provide fun, not pain.'", "ok": false}], "pairs": ["still a lot to be learnt about the rates of acceleration = No one even knows what the safe limits of rotational force are", "people can withstand = let alone its effect on the human body"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 39, "question": "Children enjoy funfairs more than adults.", "options": [{"t": "For example, if pushed at a particular frequency, a child on a swing would go over the top of the swing's frame.", "ok": true}, {"t": "Similarly, if you drive a revolving waltzer car at its resonance frequency it could speed up uncontrollably.", "ok": false}, {"t": "Although seemingly a passport to endless thrills, chaos does have one rather obvious drawback: it's unpredictable.", "ok": false}, {"t": "If a ride is subjected to unforeseen stresses, no one can guarantee that it will be able to cope.", "ok": false}], "pairs": ["Children enjoy funfairs more than adults ? a child on a swing"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 40, "question": "Current rides could probably be adapted to become more enjoyable.", "options": [{"t": "He believes that the sequence of accelerations, not their size, is what counts and that the way to make rides more fun is to put people through a carefully designed succession of relatively small accelerations.", "ok": false}, {"t": "Other experts in this field agree, and it seems likely that designers could formulate profiles even for existing attractions that would lead to higher amusement value.", "ok": true}, {"t": "The problem is that true innovation has been lacking for a while, and fairground rides have become more about survival than actual enjoyment.", "ok": false}, {"t": "With that goal in mind, Stengel feels that flinging people around in ever more chaotic machines is no longer the way forward.", "ok": false}], "pairs": ["Current rides could probably be adapted = designers could formulate profiles even for existing attractions", "more enjoyable = higher amusement value"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}], "paraphrase": [{"q": "Setting the limits of acceleration", "p": "the maximum vertical acceleration for the public should be 6 g", "rel": "=", "note": "", "n": "27"}, {"q": "limits", "p": "put firm restrictions on the rate at which acceleration can increase", "rel": "=", "note": "", "n": "27"}, {"q": "A different ride every time", "p": "So you never have the same experience twice", "rel": "=", "note": "", "n": "28"}, {"q": "Research can't guarantee safety", "p": "designers can never be completely sure that something odd won't happen", "rel": "=", "note": "", "n": "29"}, {"q": "can't guarantee", "p": "no one can guarantee that it will be able to cope", "rel": "=", "note": "", "n": "29"}, {"q": "Unexplained symptoms", "p": "Since these effects aren't understood", "rel": "=", "note": "", "n": "30"}, {"q": "symptoms", "p": "they also developed headaches and other problems about two days later", "rel": "=", "note": "", "n": "30"}, {"q": "Less is more", "p": "the sequence of accelerations, not their size, is what counts", "rel": "=", "note": "", "n": "31"}, {"q": "Less", "p": "a carefully designed succession of relatively small accelerations", "rel": "=", "note": "", "n": "31"}, {"q": "Gentle surprises", "p": "The fun seems to come from the unforeseen", "rel": "=", "note": "", "n": "32"}, {"q": "Gentle", "p": "This is an agreeable tumbling feeling", "rel": "=", "note": "", "n": "32"}, {"q": "depend on both the ___ and ___ of their passengers", "p": "at a rate determined by the weight and position of the people in them", "rel": "=", "note": "", "n": "33"}, {"q": "a variety of ride experiences", "p": "So you never have the same experience twice", "rel": "=", "note": "", "n": "33"}, {"q": "if it reaches its ___", "p": "drive a revolving waltzer car at its resonance frequency", "rel": "=", "note": "", "n": "34"}, {"q": "accelerate at a violent rate", "p": "speed up uncontrollably", "rel": "=", "note": "", "n": "34"}, {"q": "subjected to movement on all ___ at the same time", "p": "turned on all three axes simultaneously", "rel": "=", "note": "", "n": "35"}, {"q": "begin to feel ill", "p": "they became so nauseous", "rel": "=", "note": "", "n": "35"}, {"q": "delayed reactions", "p": "about two days later", "rel": "=", "note": "", "n": "36"}, {"q": "A phenomenon known as the ___", "p": "an effect called the Coriolis Illusion", "rel": "=", "note": "", "n": "37"}, {"q": "a pleasurable sensation", "p": "an agreeable tumbling feeling", "rel": "=", "note": "", "n": "37"}, {"q": "still a lot to be learnt about the rates of acceleration", "p": "No one even knows what the safe limits of rotational force are", "rel": "=", "note": "", "n": "38"}, {"q": "people can withstand", "p": "let alone its effect on the human body", "rel": "=", "note": "", "n": "38"}, {"q": "Children enjoy funfairs more than adults", "p": "a child on a swing", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "39"}, {"q": "Current rides could probably be adapted", "p": "designers could formulate profiles even for existing attractions", "rel": "=", "note": "", "n": "40"}, {"q": "more enjoyable", "p": "higher amusement value", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "ramping up", "pos": "phrasal verb", "loc": "A", "d": "increasing something quickly or by a large amount", "uz": "keskin oshirmoq", "ex": "The factory is ramping up production before the holiday season.", "form": "ramping up"}, {"w": "dizzying", "pos": "adjective", "loc": "A", "d": "making you feel as if everything is spinning", "uz": "boshni aylantiradigan", "ex": "The tower offers a dizzying view of the city below.", "form": "dizzying"}, {"w": "err on the side of caution", "pos": "idiom", "loc": "A", "d": "to be too careful rather than take a risk", "uz": "ehtiyotkorlik tomonga og'moq", "ex": "When in doubt, it is wise to err on the side of caution.", "form": "err on the side of caution"}, {"w": "think up", "pos": "phrasal verb", "loc": "A", "d": "to invent an idea, plan or excuse", "uz": "o'ylab topmoq", "ex": "She managed to think up a clever way to save money.", "form": "think up"}, {"w": "dragging us back", "pos": "phrasal verb", "loc": "A", "d": "making us return even if we are not sure we want to", "uz": "bizni qaytarib tortmoq", "ex": "The smell of fresh bread keeps dragging us back to that bakery.", "form": "dragging us back"}, {"w": "endure", "pos": "verb", "loc": "B", "d": "to suffer something painful or difficult for a long time", "uz": "chidamoq, bardosh bermoq", "ex": "Climbers must endure freezing temperatures near the summit.", "form": "endure"}, {"w": "pass out", "pos": "phrasal verb", "loc": "B", "d": "to lose consciousness for a short time", "uz": "hushdan ketmoq", "ex": "Several runners passed out because of the extreme heat.", "form": "passed out"}, {"w": "intensify", "pos": "verb", "loc": "C", "d": "to become stronger or greater in degree", "uz": "kuchaytirmoq, kuchaymoq", "ex": "Competition between the two companies is likely to intensify.", "form": "intensify"}, {"w": "throw predictability out of the window", "pos": "idiom", "loc": "C", "d": "to completely get rid of what people can expect", "uz": "oldindan bilib bo'lishlikni butunlay yo'q qilmoq", "ex": "Social media can throw predictability out of the window in politics.", "form": "throw predictability out of the window"}, {"w": "resonance frequency", "pos": "collocation", "loc": "D", "d": "the rate of vibration at which an object shakes most strongly", "uz": "rezonans chastotasi", "ex": "Soldiers break step on bridges to avoid the bridge's resonance frequency.", "form": "resonance frequency"}, {"w": "hazardous", "pos": "adjective", "loc": "D", "d": "dangerous, especially to health or safety", "uz": "xavfli", "ex": "Working with chemicals can be hazardous without proper protection.", "form": "hazardous"}, {"w": "subjected to", "pos": "phrase", "loc": "D", "d": "made to experience something unpleasant or difficult", "uz": "...ga duchor qilingan", "ex": "The bridge was subjected to heavy loads during the test.", "form": "subjected to"}, {"w": "unforeseen", "pos": "adjective", "loc": "D, G", "d": "not expected or predicted beforehand", "uz": "kutilmagan, oldindan ko'rilmagan", "ex": "The trip was cancelled because of unforeseen circumstances.", "form": "unforeseen"}, {"w": "nauseous", "pos": "adjective", "loc": "E", "d": "feeling as if you are going to be sick", "uz": "ko'ngli aynigan", "ex": "The rocking boat made several passengers feel nauseous.", "form": "nauseous"}, {"w": "blacked out", "pos": "phrasal verb", "loc": "E", "d": "lost consciousness for a short time", "uz": "hushdan ketdi, ko'zi tinib ketdi", "ex": "He blacked out for a few seconds after hitting his head.", "form": "blacked out"}, {"w": "puzzling", "pos": "adjective", "loc": "E", "d": "difficult to understand or explain", "uz": "tushunarsiz, boshni qotiradigan", "ex": "The sudden change in the results was deeply puzzling.", "form": "puzzling"}, {"w": "succession", "pos": "noun", "loc": "F", "d": "a series of things that follow one after another", "uz": "ketma-ketlik, izchillik", "ex": "A succession of small earthquakes shook the region last night.", "form": "succession"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 5 / Studies in / Sleep – / Looking at</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 5 / Studies in / Sleep – / Looking at</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">Studies in the History of Art and Visual Culture</div><p data-para="1"><span class="sent" id="s0_0">General Information The Department of the History of Art, which operates within the Faculty of History, offers a one-year postgraduate course in the History of Art and Visual Culture.</span> <span class="sent" id="s0_1">We welcome applicants from a broad range of backgrounds and do not require students to have a first degree in art history.</span> <span class="sent" id="s0_2">In addition to a compulsory course on Theory and Methods, students take two one-term optional courses, and write a 15,000-word dissertation on a topic of their choice.</span> <span class="sent" id="s0_3">The course aims to redefine art history and includes a broader range of objects and visual media than other art history courses.</span> <span class="sent" id="s0_4">Images and objects produced in many contexts – ranging from the scientific to the popular – have been brought together to show how visual styles at different periods and in different places can be understood in relation to the aesthetic, intellectual and social facets of various cultures.</span></p><p data-para="2"><span class="sent" id="s0_5">Theory and Methods This core course provides an advanced introduction to the major methodological issues and traditions of art history.</span> <span class="sent" id="s0_6">The course is organised around a series of issues that relate to the production of art and people&#x27;s responses to it.</span> <span class="sent" id="s0_7">Students will discuss these issues and assigned readings in small weekly classes.</span> <span class="sent" id="s0_8">In lectures, the tutors will consider works of art from a variety of cultures in order to demonstrate that context and artistic method are important aspects of art history.</span></p><p data-para="3"><span class="sent" id="s0_9">Choosing Courses The optional courses listed below are not available every year and prospective students are advised to check on the availability of specific courses.</span> <span class="sent" id="s0_10">Students should also note there may be some restrictions on combining particular courses within their degree programme.</span> <span class="sent" id="s0_11">Students wishing to take a course that does not appear in the list but is offered by the Faculty of History will need to get permission from the relevant Course Tutor.</span> <span class="sent" id="s0_12">An application should then be made by the candidate&#x27;s supervisor.</span></p><p data-para="4"><span class="sent" id="s0_13">Authenticity and Replication The course is designed to give students exposure to a central issue of the visual arts in an explicitly inter-disciplinary and cross-cultural framework.</span> <span class="sent" id="s0_14">It will use a series of case studies to explore the idea of &#x27;the real&#x27; or &#x27;the authentic&#x27; in both images and objects.</span> <span class="sent" id="s0_15">The historical and geographical contexts to be addressed will range widely, from ancient Greece and Rome, to early modern China and to contemporary art, including works seen as genuine as well as works regarded as fraudulent.</span> <span class="sent" id="s0_16">The course will make particularly extensive use of trips to museums to view actual objects and images.</span></p><p data-para="5"><span class="sent" id="s0_17">French Painting 1880–1912 The course examines the development of Post-impressionist painting between 1880 and 1912, at which point Cubism began to have a major impact on the thinking of French artists.</span> <span class="sent" id="s0_18">Rather than tracing a history of styles or individuals, we consider how artistic practices were closely linked to contemporary developments.</span> <span class="sent" id="s0_19">The rise of new forms of image distribution, including cinema, will be addressed, as well as the changing role of painting in the public sphere.</span> <span class="sent" id="s0_20">The writings of artists and their contemporaries will be examined alongside recent art-historical work.</span></p><p data-para="6"><span class="sent" id="s0_21">Medieval European Art This course addresses two problems central to the history of art: the roots of artistic invention, and suitable methods for instructing on technique.</span> <span class="sent" id="s0_22">During this period, young, would-be artists acted as assistants to a master painter in his workshop.</span> <span class="sent" id="s0_23">With this type of training, what was the scope for originality, and how was stylistic change encouraged?</span> <span class="sent" id="s0_24">These issues are brought into sharp focus by the changing visual culture of late-medieval Europe, between the twelfth and the fifteenth centuries.</span> <span class="sent" id="s0_25">The available literature on these themes is rich, yet inconsistent: the course therefore addresses questions that are very much open.</span></p><p data-para="7"><span class="sent" id="s0_26">Reception of Classical European Art From the fourteenth century the discovery of classical antiquities inspired contemporary artists: some copied closely, some restored the ancient in a contemporary style, while others reinterpreted freely.</span> <span class="sent" id="s0_27">The course focuses on sculpture, painting and architecture in Britain, with a selection of other European works.</span> <span class="sent" id="s0_28">Sculpture is examined in life-size marble statues, and in miniature with porcelain figurines.</span> <span class="sent" id="s0_29">Painting is studied through the designs painted on vases, particularly Athenian and South Italian.</span> <span class="sent" id="s0_30">Architecture is examined through the ancient Greek temples that were excavated in the nineteenth century and also replicated in miniature for sale to travellers.</span></p><p data-para="8"><span class="sent" id="s0_31">Women, Art and Culture in Early Modern Europe This course will explore the various roles played by women in the production and reception of art and architecture in fifteenth- to seventeenth-century Europe.</span> <span class="sent" id="s0_32">After many decades of relative neglect, the significance of the way women contributed to the art and culture of Early Modern Europe has come to light.</span> <span class="sent" id="s0_33">By drawing on this wealth of new research, the course will examine the careers of professional women artists working in Northern and Southern Europe.</span> <span class="sent" id="s0_34">We also consider how famous women patrons, such as Isabella d&#x27;Este and Catherine de Medici, influenced the careers of artists and wider perceptions about art.</span> <span class="sent" id="s0_35">Another topic that will be addressed is the representation of women in the visual arts, for example as sitters for state portraits and marriage paintings.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,6" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;6</div><button type="button" class="flag-toggle" data-flagrange="1,6" title="Flag for review" aria-label="Flag questions 1-6">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–6 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Applicants to the department must have previously studied art history.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">Students can choose two optional courses instead of the Theory and Methods course.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">The course organisers had more problems collecting art objects from some historical periods than others.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">The Theory and Methods course focuses on the way art is made and perceived.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">Students will be able to do any of the optional courses that are listed.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">6</span><span class="q-stem">Students may be able to take an unlisted course if they get the appropriate approval.</span><select class="q-select" name="q6"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="7,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 7&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="7,13" title="Flag for review" aria-label="Flag questions 7-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 7–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Optional courses</div><div class="notes-sub"><b>Authenticity and Replication</b></div><ul><li>genuine art is studied in addition to that considered <span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"></li><li>art objects are studied in <span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>French Painting 1880–1912</b></div><ul><li>the course covers the period up to when <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"> started to be prominent</li><li>the course looks at the connections between art and new developments such as <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>Medieval European Art</b></div><ul><li>the course looks at two issues: artistic creativity and processes for teaching technique</li><li>the course considers how artists could be original when taught by an expert in a <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"></li></ul><div class="notes-sub"><b>Reception of Classical European Art</b></div><ul><li>life-sized and miniature sculpture is examined</li><li>painting is examined by looking at the decoration of <span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"></li><li>architecture is assessed by studying 19th century models bought by</li><li style="list-style:none"><span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"></li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">Sleep – who needs it?</div><div class="passage-subtitle">It appears that some animals can survive on remarkably little sleep. Could this also be the case for humans?</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">As any new parent knows, the first months of an infant&#x27;s life mean little sleep for the family.</span> <span class="sent" id="s1_1">But humans have it easy compared to orcas, also known as killer whales.</span> <span class="sent" id="s1_2">University of California, Los Angeles, neuroscientist Jerome Siegel and post-doctoral fellow Oleg Lyamin have found that for the first month after giving birth, killer whale mothers and their calves do not experience normal sleep at all, and neither stops moving for more than a few minutes at a time.</span> <span class="sent" id="s1_3">&#x27;These sleep patterns contrast with those of most other mammals, which need extra sleep during infancy and gradually sleep less as they age, while orcas are never as active as in the first months of life,&#x27; Siegel says.</span> <span class="sent" id="s1_4">The young orcas&#x27; movement and wakefulness help them keep their body temperature constant until mass and blubber insulation develop and allow for frequent respiration.</span> <span class="sent" id="s1_5">Meanwhile the mothers of newborn orcas must constantly look out for sharks, while teaching the calves to breathe.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_6">According to Siegel, the results of his orca study fundamentally change our view of sleep.</span> <span class="sent" id="s1_7">&#x27;It has often been said that sleep is necessary for an animal&#x27;s primary development, particularly that of the brain,&#x27; Siegel says.</span> <span class="sent" id="s1_8">&#x27;But here we have a creature which grows one of the largest brains in the animal kingdom, and yet it is doing this without sleep.</span> <span class="sent" id="s1_9">All mammals and birds appear to need sleep, but scientists are unsure if reptiles and fish do.</span> <span class="sent" id="s1_10">&#x27;When you come downstairs at three in the morning, the goldfish isn&#x27;t lying on the bottom of the bowl, it&#x27;s swimming around,&#x27; Siegel says.</span> <span class="sent" id="s1_11">But other scientists believe fish do enter a restful dormant state that is at least similar to sleep.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_12">Some animals die without proper sleep, and experiments have shown that sleep deprivation can cause death more quickly than food deprivation.</span> <span class="sent" id="s1_13">Two weeks without sleep can kill laboratory rats.</span> <span class="sent" id="s1_14">Sleep is clearly important, but what determines how much we sleep, and when?</span> <span class="sent" id="s1_15">Siegel thinks that the sleep an animal needs is dictated less by biological functions than by the animal&#x27;s environmental niche.</span> <span class="sent" id="s1_16">Availability of food is a major factor.</span> <span class="sent" id="s1_17">The long rest typical of bats, for example, helps the animals to economise on energy.</span> <span class="sent" id="s1_18">&#x27;If a bat eats insects for only three hours in the evening, then maybe the best thing is to go hang in a cave upside down for the rest of the day,&#x27; Siegel says.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_19">Sleep is not the same for all creatures.</span> <span class="sent" id="s1_20">In dolphins, half the brain may rest while the other half stays vigilantly awake, and the animal carries on everyday activities.</span> <span class="sent" id="s1_21">Dolphins sleep literally with one eye closed – the eye on the opposite side of the body to the dozing brain hemisphere, since the right brain hemisphere works the left eye and vice versa.</span> <span class="sent" id="s1_22">However, for unknown reasons, closed eyes seem to be a virtually universal prerequisite for sleep.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_23">Neuroscientist Clifford Saper of the Harvard Medical School has located a small area at the base of the brain called the ventrolateral preoptic nucleus that sends chemical signals to other parts of the brain during sleep to slow those brain parts down and determines the best sleep budget for the animal.</span> <span class="sent" id="s1_24">It is flexible, able to reverse the normal nocturnal habits of a rodent to make it sleep at night, if day is the only time the rodent can find what it needs to eat.</span> <span class="sent" id="s1_25">According to Saper, evidence suggests that for restoring tired muscles or any other body system, sleep is no more effective than a comparable period of wakeful resting – except for one critical organ, the brain.</span> <span class="sent" id="s1_26">The human brain apparently cannot do without sleep.</span> <span class="sent" id="s1_27">Studies show that prolonged wakefulness leads to degradation of memory, alertness, coordination and judgment.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_28">Nevertheless, studies of species exhibiting &#x27;natural models of sleep deprivation,&#x27; as psychologist Verner Bingman of Ohio&#x27;s Bowling Green State University calls them, may allow researchers to provide us with new methods for adapting to limited sleep without losing effectiveness.</span> <span class="sent" id="s1_29">&#x27;We could live 20-hour days instead of 12- or 14-hour days,&#x27; says Bingman, who is studying the behaviour of the migratory birds Swainson&#x27;s thrushes, which for migration purposes, go from a normal night&#x27;s sleep of 10 to 12 hours down to about 2.5 hours so they can fly at night.</span> <span class="sent" id="s1_30">To handle the energy output of the long journey they must nearly double the amount of fat in their bodies.</span> <span class="sent" id="s1_31">They have to switch from a diet of seeds to one of fruits and insects, which they must search for during the day, so further limiting their sleep time.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_32">Bingman and doctoral student Thomas Fuchs have discovered that during morning and midday hours the thrushes enter phases of drowsiness, during which they take as many as 50 micro naps per hour, most of them lasting about 10 seconds.</span> <span class="sent" id="s1_33">When brain waves are measured, these napping behaviours look very much like normal sleep.</span> <span class="sent" id="s1_34">Says Bingman, &#x27;The trick would be to develop techniques or drugs that could recreate a similar brain pattern in humans.</span> <span class="sent" id="s1_35">Saper, however, disagrees.</span> <span class="sent" id="s1_36">&#x27;The effect of 20 hours of wakefulness on driving is the equivalent of two shots of whiskey,&#x27; he warns.</span> <span class="sent" id="s1_37">&#x27;Sleep deprivation is unfortunately a major cause of death in the US in young adults, who have a very high crash rate between 3 and 6 am.</span> <span class="sent" id="s1_38">He thinks we are dreaming if we think we&#x27;re ever going to get by on as little sleep as newborn orcas or migrating thrushes.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,17" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;17</div><button type="button" class="flag-toggle" data-flagrange="14,17" title="Flag for review" aria-label="Flag questions 14-17">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following findings (Questions 14–17) and the list of researchers below.</p><p>Match each finding with the correct researcher, A, B or C.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of Researchers</div><span class="wb-item"><span class="wb-letter">A</span> Jerome Siegel</span><span class="wb-item"><span class="wb-letter">B</span> Clifford Saper</span><span class="wb-item"><span class="wb-letter">C</span> Verner Bingman</span></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">the physiological mechanism which controls the body&#x27;s sleep patterns</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">an observation that some creatures may have no need for sleep</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">data indicating the dangers of extended periods of sleeplessness</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">an animal behaviour which could serve as a basis for modifying human sleep pattern</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div></div><div class="q-group" data-flagrange="18,23" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 18&ndash;23</div><button type="button" class="flag-toggle" data-flagrange="18,23" title="Flag for review" aria-label="Flag questions 18-23">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 18–23 on your answer sheet.</p></div><div class="q-row"><span class="q-num">18</span><span>Movement and wakefulness in young orcas assist them in maintaining their <span class="q-num">18</span> <input type="text" class="q-text" name="q18" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">19</span><span>New orca mothers need to be awake in order to protect their young from <span class="q-num">19</span> <input type="text" class="q-text" name="q19" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">20</span><span>Sleep deprivation experiments on <span class="q-num">20</span> <input type="text" class="q-text" name="q20" autocomplete="off" spellcheck="false"> have shown that animals die without adequate sleep.</span></div><div class="q-row"><span class="q-num">21</span><span>Scientists have not yet worked out why almost all animals sleep with <span class="q-num">21</span> <input type="text" class="q-text" name="q21" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">22</span><span>For humans, sleep is vital for the efficient functioning of the <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">23</span><span>During periods of <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"> Swainson&#x27;s thrushes experience severe sleep deprivation.</span></div></div><div class="q-group" data-flagrange="24,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 24&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="24,26" title="Flag for review" aria-label="Flag questions 24-26">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has seven paragraphs, A–G.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–G, in boxes 24–26 on your answer sheet.</p></div><div class="q-row"><span class="q-num">24</span><span class="q-stem">mention of the potential use of chemicals to reduce sleep periods</span><select class="q-select" name="q24"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">25</span><span class="q-stem">a reference to a lack of expert consensus regarding the behaviour of certain types of animal</span><select class="q-select" name="q25"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">26</span><span class="q-stem">an example of an animal which continues to function normally during its sleep periods</span><select class="q-select" name="q26"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Looking at daily life in ancient Rome</div><div class="passage-subtitle">In this preface to a history the writer explains the factors affecting the scope of his study</div><p data-para="1"><span class="sent" id="s2_0">If our ideas on Roman life are not to become lost in confusion, we must study it within as strictly defined a time as possible.</span> <span class="sent" id="s2_1">Nothing changes more rapidly than human customs.</span> <span class="sent" id="s2_2">Looking at our own more familiar world, apart from the great scientific discoveries of recent centuries which have turned it upside down – steam, electricity, railways, motor cars and aeroplanes, for example – it is clear that the elementary forms of everyday life have been subject to increasing change.</span> <span class="sent" id="s2_3">Potatoes, for example, were not introduced into Europe until the sixteenth century, coffee was first drunk there in the late sixteenth or early seventeenth, and the banana was used in desserts in Europe at the beginning of the twentieth.</span> <span class="sent" id="s2_4">The law of change was not less operative in antiquity.</span> <span class="sent" id="s2_5">It was a commonplace of Roman rhetoric to contrast the crude simplicity of the Republic (509 BC–27 BC) with the luxury and refinement of the imperial times which followed.</span> <span class="sent" id="s2_6">There is no common measure, whether of home or furniture, between ages which are so different.</span></p><p data-para="2"><span class="sent" id="s2_7">Since a choice of time must necessarily be made, this history will confine itself to studying the generation which was born about the middle of the first century AD, toward the end of the reign of Claudius (41–54 AD) or the beginning of the reign of Nero (54–68 AD), and which lived on into the reign of Trajan (98–117 AD) and of Hadrian (117–138 AD).</span> <span class="sent" id="s2_8">This generation saw the Roman Empire at its most powerful and prosperous.</span> <span class="sent" id="s2_9">It was witness to the last conquests of the Caesars: the conquest of Dacia, in modern-day eastern Europe, which brought vast mineral wealth into the Empire, and the conquest of Arabia, which helped to bring the riches of India and East Asia flooding into Rome.</span> <span class="sent" id="s2_10">In the material domain, this generation attained the pinnacle of ancient civilization.</span></p><p data-para="3"><span class="sent" id="s2_11">By a fortunate coincidence – all the more fortunate in that Latin literature was soon to run nearly dry – this generation is the one whose records combine to offer us the most complete picture of Roman life that we possess.</span> <span class="sent" id="s2_12">We have a profusion of vivid and picturesque descriptions, precise and colourful, in such works as the Epigrams of Martial, the Satires of Juvenal and the Letters of Pliny.</span> <span class="sent" id="s2_13">In addition, the Forum of Trajan in Rome itself and the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius in 79 AD, supply an abundance of evidence.</span> <span class="sent" id="s2_14">To these we may add the ruins of the city of Ostia, which date in the main from the time when the Emperor Hadrian created this great commercial city as a realisation of his town planning ideas.</span> <span class="sent" id="s2_15">Fortune has favoured the historian of this time.</span></p><p data-para="4"><span class="sent" id="s2_16">It is not enough to focus our study of Roman life only on a fixed time.</span> <span class="sent" id="s2_17">It would lack foundation and consistency if we did not also focus it in space – in the country or in the town.</span> <span class="sent" id="s2_18">Even today when the facilities for communication bring something of the city into the smallest and most isolated country cottage, there remains a significant difference between rural existence and the excitement of city life: a much greater difference separated the peasant from the townsman of antiquity.</span> <span class="sent" id="s2_19">So large was the gulf and so great the inequality between them that, according to the historian Rostovtzeff, it pitted one against the other in a fierce and silent struggle which pierced the wall protecting the Roman privileged classes from the barbarian flood from the north.</span> <span class="sent" id="s2_20">When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them.</span></p><p data-para="5"><span class="sent" id="s2_21">The townsman, in fact, enjoyed all the goods and resources of the earth.</span> <span class="sent" id="s2_22">The peasant knew nothing but unending labour without profit and was unable to enjoy the activities available in even the poorest of cities: the liveliness of the sports field, the warmth of the public baths and the magnificence of public spectacles.</span> <span class="sent" id="s2_23">In a work on the history of everyday life, we must give up any attempt to blend two such dissimilar pictures into one and must choose between them.</span> <span class="sent" id="s2_24">The time which we have chosen to describe day by day is that of those Roman subjects who spent their time exclusively in the town, or rather in The City, Rome, which they regarded as the hub and centre of the universe, proud and wealthy ruler of a world which seemed at that time to have been pacified forever.</span></p><p data-para="6"><span class="sent" id="s2_25">To perform our task well, we must first try to form an adequate picture of the surroundings in which our subjects lived, and by which their lives were coloured, freeing ourselves from any misconceptions concerning it.</span> <span class="sent" id="s2_26">We must seek to reconstruct the physical nature of the great city and the social milieu of the various classes of the hierarchy by which it was governed.</span> <span class="sent" id="s2_27">We must also investigate the moral background of thought and sentiment which can help explain both its strength and its weaknesses.</span> <span class="sent" id="s2_28">The way in which the Romans of Rome employed their time can only be studied satisfactorily after we have plotted out the main lines of the framework within which they lived and outside of which the routine of their daily life would be more or less unintelligible.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,30" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;30</div><button type="button" class="flag-toggle" data-flagrange="27,30" title="Flag for review" aria-label="Flag questions 27-30">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in boxes 27–30 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">27</span><span>What does the writer say about the period mentioned in the second paragraph?</span></div><label class="mcq-option"><input type="radio" name="q27" value="A"><span class="opt-letter">A</span><span>There was a high level of immigration into Rome.</span></label><label class="mcq-option"><input type="radio" name="q27" value="B"><span class="opt-letter">B</span><span>The export of minerals made Rome rich.</span></label><label class="mcq-option"><input type="radio" name="q27" value="C"><span class="opt-letter">C</span><span>Rome sent armies to control trade with India and East Asia.</span></label><label class="mcq-option"><input type="radio" name="q27" value="D"><span class="opt-letter">D</span><span>The Roman standard of living reached its highest level.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">28</span><span>Ostia is mentioned as</span></div><label class="mcq-option"><input type="radio" name="q28" value="A"><span class="opt-letter">A</span><span>a city which often features in literature.</span></label><label class="mcq-option"><input type="radio" name="q28" value="B"><span class="opt-letter">B</span><span>an important area for archaeological research.</span></label><label class="mcq-option"><input type="radio" name="q28" value="C"><span class="opt-letter">C</span><span>the birthplace of a Roman Emperor.</span></label><label class="mcq-option"><input type="radio" name="q28" value="D"><span class="opt-letter">D</span><span>a city whose layout was similar to that of Rome.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">29</span><span>The statement that Fortune has favoured the historian of this time refers to the fact that</span></div><label class="mcq-option"><input type="radio" name="q29" value="A"><span class="opt-letter">A</span><span>historians of this period have become wealthy as a result of their discoveries.</span></label><label class="mcq-option"><input type="radio" name="q29" value="B"><span class="opt-letter">B</span><span>works on this period are popular among the reading public.</span></label><label class="mcq-option"><input type="radio" name="q29" value="C"><span class="opt-letter">C</span><span>a wide range of sources is available for this period.</span></label><label class="mcq-option"><input type="radio" name="q29" value="D"><span class="opt-letter">D</span><span>this period has been less studied than many others.</span></label><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">30</span><span>In comparing urban and rural life in the Roman Empire, the writer states that</span></div><label class="mcq-option"><input type="radio" name="q30" value="A"><span class="opt-letter">A</span><span>rural Romans were largely illiterate.</span></label><label class="mcq-option"><input type="radio" name="q30" value="B"><span class="opt-letter">B</span><span>rural life and urban life had little in common.</span></label><label class="mcq-option"><input type="radio" name="q30" value="C"><span class="opt-letter">C</span><span>little information is available concerning rural life.</span></label><label class="mcq-option"><input type="radio" name="q30" value="D"><span class="opt-letter">D</span><span>most readers of history are more interested in city life.</span></label></div><div class="q-group" data-flagrange="31,36" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 31&ndash;36</div><button type="button" class="flag-toggle" data-flagrange="31,36" title="Flag for review" aria-label="Flag questions 31-36">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the claims of the writer in Reading Passage 3?</p><p>In boxes 31–36 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>YES</b> &nbsp;&ndash;&nbsp; if the statement agrees with the claims of the writer</div><div><b>NO</b> &nbsp;&ndash;&nbsp; if the statement contradicts the claims of the writer</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if it is impossible to say what the writer thinks about this</div></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">Rome&#x27;s conquest of Arabia resulted in large-scale immigration from the east into Rome.</span><select class="q-select" name="q31"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">More can be learned about Roman life from the literature of the period studied in this book than from later Latin literature.</span><select class="q-select" name="q32"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">Discoveries at Herculaneum and Pompeii showed that certain beliefs about Roman life were wrong.</span><select class="q-select" name="q33"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">Roman peasants provided assistance to the Empire when it was attacked.</span><select class="q-select" name="q34"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">35</span><span class="q-stem">Rural inhabitants of the Roman Empire had a difficult life.</span><select class="q-select" name="q35"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">Entertainment facilities were limited to the city of Rome itself.</span><select class="q-select" name="q36"><option value="">--</option><option value="YES">YES</option><option value="NO">NO</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="37,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 37&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="37,40" title="Flag for review" aria-label="Flag questions 37-40">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary using the list of words, A–I, below.</p><p>Write the correct letter, A–I, in boxes 37–40 on your answer sheet.</p><p>The scope of the writer&#x27;s study</p></div><div class="word-bank"><div class="wb-title">List of Words</div><span class="wb-item"><span class="wb-letter">A</span> emperors</span><span class="wb-item"><span class="wb-letter">B</span> setting</span><span class="wb-item"><span class="wb-letter">C</span> values</span><span class="wb-item"><span class="wb-letter">D</span> peasants</span><span class="wb-item"><span class="wb-letter">E</span> city-dwellers</span><span class="wb-item"><span class="wb-letter">F</span> social classes</span><span class="wb-item"><span class="wb-letter">G</span> myths</span><span class="wb-item"><span class="wb-letter">H</span> period</span><span class="wb-item"><span class="wb-letter">I</span> investigation</span></div><div class="notes-box"><div style="margin-bottom:.5rem">It was important for the writer to limit several aspects of his <span class="q-num">37</span> <select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select>. He decided to focus on a limited <span class="q-num">38</span> <select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select> in Roman history, and to concentrate on the section of the population who were <span class="q-num">39</span> <select class="q-select" name="q39"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select>. The writer was interested in the physical environment, the people that ruled the country and the <span class="q-num">40</span> <select class="q-select" name="q40"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option></select> that contributed both to Rome&#x27;s strength and to its weaknesses.</div></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 5, "minutes": 60, "parts": [{"title": "Studies in the History of Art and Visual Culture", "short": "Studies in", "qstart": 1, "qend": 13}, {"title": "Sleep – who needs it?", "short": "Sleep –", "qstart": 14, "qend": 26}, {"title": "Looking at daily life in ancient Rome", "short": "Looking at", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 6, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 7, "kind": "text", "ans": ["fraudulent"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["museums"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["Cubism"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["cinema"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["workshop"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["vases"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["travellers"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "A", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "C", "group": "p1g0", "part": 2}, {"n": 18, "kind": "text", "ans": ["body temperature"], "group": "p1g1", "part": 2}, {"n": 19, "kind": "text", "ans": ["sharks"], "group": "p1g1", "part": 2}, {"n": 20, "kind": "text", "ans": ["rats", "laboratory rats"], "group": "p1g1", "part": 2}, {"n": 21, "kind": "text", "ans": ["closed eyes"], "group": "p1g1", "part": 2}, {"n": 22, "kind": "text", "ans": ["brain"], "group": "p1g1", "part": 2}, {"n": 23, "kind": "text", "ans": ["migration"], "group": "p1g1", "part": 2}, {"n": 24, "kind": "select", "ans": "G", "group": "p1g2", "part": 2}, {"n": 25, "kind": "select", "ans": "B", "group": "p1g2", "part": 2}, {"n": 26, "kind": "select", "ans": "D", "group": "p1g2", "part": 2}, {"n": 27, "kind": "radio", "ans": "D", "group": "p2g0", "part": 3}, {"n": 28, "kind": "radio", "ans": "B", "group": "p2g0", "part": 3}, {"n": 29, "kind": "radio", "ans": "C", "group": "p2g0", "part": 3}, {"n": 30, "kind": "radio", "ans": "B", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "NOT GIVEN", "group": "p2g1", "part": 3}, {"n": 32, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 33, "kind": "select", "ans": "NOT GIVEN", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 35, "kind": "select", "ans": "YES", "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "NO", "group": "p2g1", "part": 3}, {"n": 37, "kind": "select", "ans": "I", "group": "p2g2", "part": 3}, {"n": 38, "kind": "select", "ans": "H", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "E", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "C", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_1", "2": "s0_2", "3": "s0_4", "4": "s0_6", "5": "s0_9", "6": "s0_11", "7": "s0_15", "8": "s0_16", "9": "s0_17", "10": "s0_18", "11": "s0_22", "12": "s0_29", "13": "s0_30", "14": "s1_23", "15": "s1_8", "16": "s1_27", "17": "s1_28", "18": "s1_4", "19": "s1_5", "20": "s1_12", "21": "s1_22", "22": "s1_26", "23": "s1_29", "24": "s1_34", "25": "s1_9", "26": "s1_20", "27": "s2_10", "28": "s2_14", "29": "s2_12", "30": "s2_18", "31": "s2_9", "32": "s2_11", "33": "s2_13", "34": "s2_20", "35": "s2_22", "36": "s2_22", "37": "s2_16", "38": "s2_7", "39": "s2_24", "40": "s2_27"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Applicants to the department must have previously studied art history.", "options": [{"t": "The course aims to redefine art history and includes a broader range of objects and visual media than other art history courses.", "ok": false}, {"t": "General Information The Department of the History of Art, which operates within the Faculty of History, offers a one-year postgraduate course in the History of Art and Visual Culture.", "ok": false}, {"t": "Theory and Methods This core course provides an advanced introduction to the major methodological issues and traditions of art history.", "ok": false}, {"t": "We welcome applicants from a broad range of backgrounds and do not require students to have a first degree in art history.", "ok": true}], "pairs": ["must have previously studied art history ≠ do not require students to have a first degree in art history"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 2, "question": "Students can choose two optional courses instead of the Theory and Methods course.", "options": [{"t": "The course aims to redefine art history and includes a broader range of objects and visual media than other art history courses.", "ok": false}, {"t": "In addition to a compulsory course on Theory and Methods, students take two one-term optional courses, and write a 15,000-word dissertation on a topic of their choice.", "ok": true}, {"t": "Theory and Methods This core course provides an advanced introduction to the major methodological issues and traditions of art history.", "ok": false}, {"t": "Choosing Courses The optional courses listed below are not available every year and prospective students are advised to check on the availability of specific courses.", "ok": false}], "pairs": ["two optional courses instead of the Theory and Methods course ≠ In addition to a compulsory course on Theory and Methods"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 3, "question": "The course organisers had more problems collecting art objects from some historical periods than others.", "options": [{"t": "Images and objects produced in many contexts – ranging from the scientific to the popular – have been brought together to show how visual styles at different periods and in different places can be understood in relation to the aesthetic, intellectual and social facets of various cultures.", "ok": true}, {"t": "The course aims to redefine art history and includes a broader range of objects and visual media than other art history courses.", "ok": false}, {"t": "General Information The Department of the History of Art, which operates within the Faculty of History, offers a one-year postgraduate course in the History of Art and Visual Culture.", "ok": false}, {"t": "We welcome applicants from a broad range of backgrounds and do not require students to have a first degree in art history.", "ok": false}], "pairs": ["problems collecting art objects from some historical periods ? Images and objects produced in many contexts"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 4, "question": "The Theory and Methods course focuses on the way art is made and perceived.", "options": [{"t": "The course is organised around a series of issues that relate to the production of art and people's responses to it.", "ok": true}, {"t": "Theory and Methods This core course provides an advanced introduction to the major methodological issues and traditions of art history.", "ok": false}, {"t": "In addition to a compulsory course on Theory and Methods, students take two one-term optional courses, and write a 15,000-word dissertation on a topic of their choice.", "ok": false}, {"t": "Medieval European Art This course addresses two problems central to the history of art: the roots of artistic invention, and suitable methods for instructing on technique.", "ok": false}], "pairs": ["focuses on the way art is made and perceived = issues that relate to the production of art and people's responses to it"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 5, "question": "Students will be able to do any of the optional courses that are listed.", "options": [{"t": "Students should also note there may be some restrictions on combining particular courses within their degree programme.", "ok": false}, {"t": "Choosing Courses The optional courses listed below are not available every year and prospective students are advised to check on the availability of specific courses.", "ok": true}, {"t": "In addition to a compulsory course on Theory and Methods, students take two one-term optional courses, and write a 15,000-word dissertation on a topic of their choice.", "ok": false}, {"t": "Students wishing to take a course that does not appear in the list but is offered by the Faculty of History will need to get permission from the relevant Course Tutor.", "ok": false}], "pairs": ["do any of the optional courses that are listed ≠ are not available every year"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 6, "question": "Students may be able to take an unlisted course if they get the appropriate approval.", "options": [{"t": "In addition to a compulsory course on Theory and Methods, students take two one-term optional courses, and write a 15,000-word dissertation on a topic of their choice.", "ok": false}, {"t": "Choosing Courses The optional courses listed below are not available every year and prospective students are advised to check on the availability of specific courses.", "ok": false}, {"t": "Students wishing to take a course that does not appear in the list but is offered by the Faculty of History will need to get permission from the relevant Course Tutor.", "ok": true}, {"t": "Authenticity and Replication The course is designed to give students exposure to a central issue of the visual arts in an explicitly inter-disciplinary and cross-cultural framework.", "ok": false}], "pairs": ["take an unlisted course = a course that does not appear in the list", "get the appropriate approval = will need to get permission from the relevant Course Tutor"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 7, "question": "genuine art is studied in addition to that considered <b>.........<\/b>", "options": [{"t": "After many decades of relative neglect, the significance of the way women contributed to the art and culture of Early Modern Europe has come to light.", "ok": false}, {"t": "The course will make particularly extensive use of trips to museums to view actual objects and images.", "ok": false}, {"t": "It will use a series of case studies to explore the idea of 'the real' or 'the authentic' in both images and objects.", "ok": false}, {"t": "The historical and geographical contexts to be addressed will range widely, from ancient Greece and Rome, to early modern China and to contemporary art, including works seen as genuine as well as works regarded as fraudulent.", "ok": true}], "pairs": ["genuine art is studied in addition to that considered ___ = works seen as genuine as well as works regarded as fraudulent"], "kind": "Completion", "answer": "fraudulent", "accept": ["fraudulent"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 8, "question": "art objects are studied in <b>.........<\/b>", "options": [{"t": "It will use a series of case studies to explore the idea of 'the real' or 'the authentic' in both images and objects.", "ok": false}, {"t": "The course aims to redefine art history and includes a broader range of objects and visual media than other art history courses.", "ok": false}, {"t": "The historical and geographical contexts to be addressed will range widely, from ancient Greece and Rome, to early modern China and to contemporary art, including works seen as genuine as well as works regarded as fraudulent.", "ok": false}, {"t": "The course will make particularly extensive use of trips to museums to view actual objects and images.", "ok": true}], "pairs": ["art objects are studied in ___ = extensive use of trips to museums to view actual objects and images"], "kind": "Completion", "answer": "museums", "accept": ["museums"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 9, "question": "the course covers the period up to when <b>.........<\/b> started to be", "options": [{"t": "French Painting 1880–1912 The course examines the development of Post-impressionist painting between 1880 and 1912, at which point Cubism began to have a major impact on the thinking of French artists.", "ok": true}, {"t": "Medieval European Art This course addresses two problems central to the history of art: the roots of artistic invention, and suitable methods for instructing on technique.", "ok": false}, {"t": "Students wishing to take a course that does not appear in the list but is offered by the Faculty of History will need to get permission from the relevant Course Tutor.", "ok": false}, {"t": "The rise of new forms of image distribution, including cinema, will be addressed, as well as the changing role of painting in the public sphere.", "ok": false}], "pairs": ["the period up to when ___ started to be prominent = at which point Cubism began to have a major impact"], "kind": "Completion", "answer": "Cubism", "accept": ["Cubism"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 10, "question": "as <b>.........<\/b>", "options": [{"t": "French Painting 1880–1912 The course examines the development of Post-impressionist painting between 1880 and 1912, at which point Cubism began to have a major impact on the thinking of French artists.", "ok": false}, {"t": "Rather than tracing a history of styles or individuals, we consider how artistic practices were closely linked to contemporary developments.", "ok": true}, {"t": "The rise of new forms of image distribution, including cinema, will be addressed, as well as the changing role of painting in the public sphere.", "ok": false}, {"t": "The writings of artists and their contemporaries will be examined alongside recent art-historical work.", "ok": false}], "pairs": ["connections between art and new developments = artistic practices were closely linked to contemporary developments", "new developments such as ___ = new forms of image distribution, including cinema"], "kind": "Completion", "answer": "cinema", "accept": ["cinema"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 11, "question": "in a <b>.........<\/b>", "options": [{"t": "Medieval European Art This course addresses two problems central to the history of art: the roots of artistic invention, and suitable methods for instructing on technique.", "ok": false}, {"t": "The available literature on these themes is rich, yet inconsistent: the course therefore addresses questions that are very much open.", "ok": false}, {"t": "With this type of training, what was the scope for originality, and how was stylistic change encouraged?", "ok": false}, {"t": "During this period, young, would-be artists acted as assistants to a master painter in his workshop.", "ok": true}], "pairs": ["taught by an expert in a ___ = young, would-be artists acted as assistants to a master painter in his workshop", "how artists could be original = what was the scope for originality"], "kind": "Completion", "answer": "workshop", "accept": ["workshop"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "painting is examined by looking at the decoration of <b>.........<\/b>", "options": [{"t": "Architecture is examined through the ancient Greek temples that were excavated in the nineteenth century and also replicated in miniature for sale to travellers.", "ok": false}, {"t": "Sculpture is examined in life-size marble statues, and in miniature with porcelain figurines.", "ok": false}, {"t": "The course focuses on sculpture, painting and architecture in Britain, with a selection of other European works.", "ok": false}, {"t": "Painting is studied through the designs painted on vases, particularly Athenian and South Italian.", "ok": true}], "pairs": ["the decoration of ___ = the designs painted on vases"], "kind": "Completion", "answer": "vases", "accept": ["vases"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "<b>.........<\/b>", "options": [{"t": "The course focuses on sculpture, painting and architecture in Britain, with a selection of other European works.", "ok": false}, {"t": "Reception of Classical European Art From the fourteenth century the discovery of classical antiquities inspired contemporary artists: some copied closely, some restored the ancient in a contemporary style, while others reinterpreted freely.", "ok": false}, {"t": "Architecture is examined through the ancient Greek temples that were excavated in the nineteenth century and also replicated in miniature for sale to travellers.", "ok": true}, {"t": "Painting is studied through the designs painted on vases, particularly Athenian and South Italian.", "ok": false}], "pairs": ["19th century models = excavated in the nineteenth century and also replicated in miniature", "bought by ___ = for sale to travellers"], "kind": "Completion", "answer": "travellers", "accept": ["travellers"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "must have previously studied art history", "p": "do not require students to have a first degree in art history", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "1"}, {"q": "two optional courses instead of the Theory and Methods course", "p": "In addition to a compulsory course on Theory and Methods", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "2"}, {"q": "problems collecting art objects from some historical periods", "p": "Images and objects produced in many contexts", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "3"}, {"q": "focuses on the way art is made and perceived", "p": "issues that relate to the production of art and people's responses to it", "rel": "=", "note": "", "n": "4"}, {"q": "do any of the optional courses that are listed", "p": "are not available every year", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "5"}, {"q": "take an unlisted course", "p": "a course that does not appear in the list", "rel": "=", "note": "", "n": "6"}, {"q": "get the appropriate approval", "p": "will need to get permission from the relevant Course Tutor", "rel": "=", "note": "", "n": "6"}, {"q": "genuine art is studied in addition to that considered ___", "p": "works seen as genuine as well as works regarded as fraudulent", "rel": "=", "note": "", "n": "7"}, {"q": "art objects are studied in ___", "p": "extensive use of trips to museums to view actual objects and images", "rel": "=", "note": "", "n": "8"}, {"q": "the period up to when ___ started to be prominent", "p": "at which point Cubism began to have a major impact", "rel": "=", "note": "", "n": "9"}, {"q": "connections between art and new developments", "p": "artistic practices were closely linked to contemporary developments", "rel": "=", "note": "", "n": "10"}, {"q": "new developments such as ___", "p": "new forms of image distribution, including cinema", "rel": "=", "note": "", "n": "10"}, {"q": "taught by an expert in a ___", "p": "young, would-be artists acted as assistants to a master painter in his workshop", "rel": "=", "note": "", "n": "11"}, {"q": "how artists could be original", "p": "what was the scope for originality", "rel": "=", "note": "", "n": "11"}, {"q": "the decoration of ___", "p": "the designs painted on vases", "rel": "=", "note": "", "n": "12"}, {"q": "19th century models", "p": "excavated in the nineteenth century and also replicated in miniature", "rel": "=", "note": "", "n": "13"}, {"q": "bought by ___", "p": "for sale to travellers", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "first degree", "pos": "collocation", "loc": "¶1", "d": "a person's initial university qualification, usually a bachelor's degree", "uz": "birinchi diplom, bakalavr darajasi", "ex": "She earned her first degree in law before moving into banking.", "form": "first degree"}, {"w": "compulsory", "pos": "adjective", "loc": "¶1", "d": "required by a rule or law; not optional", "uz": "majburiy", "ex": "Attendance at the safety briefing is compulsory for all new staff.", "form": "compulsory"}, {"w": "dissertation", "pos": "noun", "loc": "¶1", "d": "a long piece of formal academic writing on one topic", "uz": "dissertatsiya, ilmiy ish", "ex": "He spent a whole summer researching his dissertation on urban housing.", "form": "dissertation"}, {"w": "redefine", "pos": "verb", "loc": "¶1", "d": "to change the accepted meaning or limits of something", "uz": "qayta belgilash, qayta ta'riflash", "ex": "The new technology may redefine how people think about everyday work.", "form": "redefine"}, {"w": "facets", "pos": "noun", "loc": "¶1", "d": "different parts or aspects of a complex subject", "uz": "jihatlar, tomonlar", "ex": "The report examines several facets of the country's economic decline.", "form": "facets"}, {"w": "brought together", "pos": "phrasal verb", "loc": "¶1", "d": "gathered separate things or people into one group", "uz": "birlashtirish, bir joyga to'plash", "ex": "The festival brought together musicians from more than thirty countries.", "form": "brought together"}, {"w": "methodological", "pos": "adjective", "loc": "¶2", "d": "relating to the methods used in a particular field of study", "uz": "metodologik, uslubiy", "ex": "The study was criticised for serious methodological weaknesses in its sampling.", "form": "methodological"}, {"w": "prospective", "pos": "adjective", "loc": "¶3", "d": "likely to become or hoped to be something in future", "uz": "bo'lajak, istiqboldagi", "ex": "Prospective tenants are invited to view the flat on Saturday morning.", "form": "Prospective"}, {"w": "case studies", "pos": "collocation", "loc": "¶4", "d": "detailed investigations of particular examples used to illustrate a wider point", "uz": "amaliy misollar, keys-stadilar", "ex": "The lecturer used case studies of failed companies to explain poor management.", "form": "case studies"}, {"w": "genuine", "pos": "adjective", "loc": "¶4", "d": "real and not fake; truly what it is claimed to be", "uz": "haqiqiy, asl", "ex": "The expert confirmed that the signature on the letter was genuine.", "form": "genuine"}, {"w": "fraudulent", "pos": "adjective", "loc": "¶4", "d": "intended to deceive people in order to gain money or advantage", "uz": "soxta, firibgarlik bilan bog'liq", "ex": "Police arrested him for making fraudulent claims to the insurance company.", "form": "fraudulent"}, {"w": "would-be", "pos": "adjective", "loc": "¶6", "d": "hoping or trying to become a particular type of person", "uz": "bo'lishni istagan, nomzod", "ex": "Many would-be entrepreneurs fail because they underestimate the costs of starting out.", "form": "would-be"}, {"w": "brought into sharp focus", "pos": "phrase", "loc": "¶6", "d": "made very clear and impossible to ignore", "uz": "yaqqol ko'rsatildi, ravshan namoyon bo'ldi", "ex": "The crisis brought into sharp focus the weaknesses of the health system.", "form": "brought into sharp focus"}, {"w": "antiquities", "pos": "noun", "loc": "¶7", "d": "objects from ancient times, such as statues or tools", "uz": "qadimiy buyumlar, antik asarlar", "ex": "The museum was accused of buying stolen antiquities from private dealers.", "form": "antiquities"}, {"w": "excavated", "pos": "verb", "loc": "¶7", "d": "dug up from the ground, especially in archaeological work", "uz": "qazib olingan, qazilma", "ex": "Archaeologists excavated the site over three summers before finding the tomb.", "form": "excavated"}, {"w": "replicated", "pos": "verb", "loc": "¶7", "d": "copied exactly or made again in the same way", "uz": "nusxalangan, takrorlangan", "ex": "Other laboratories have failed to replicate the surprising results of the experiment.", "form": "replicate"}, {"w": "come to light", "pos": "idiom", "loc": "¶8", "d": "to become known or discovered after being hidden", "uz": "oshkor bo'lmoq, ma'lum bo'lmoq", "ex": "New evidence about the scandal only came to light last year.", "form": ""}, {"w": "patrons", "pos": "noun", "loc": "¶8", "d": "wealthy people who give financial support to artists or causes", "uz": "homiylar, mesenatlar", "ex": "Renaissance painters depended on rich patrons to pay for their large projects.", "form": "patrons"}]}, {"evidence": [{"q": 14, "question": "the physiological mechanism which controls the body&#x27;s sleep patterns", "options": [{"t": "The human brain apparently cannot do without sleep.", "ok": false}, {"t": "According to Saper, evidence suggests that for restoring tired muscles or any other body system, sleep is no more effective than a comparable period of wakeful resting – except for one critical organ, the brain.", "ok": false}, {"t": "It is flexible, able to reverse the normal nocturnal habits of a rodent to make it sleep at night, if day is the only time the rodent can find what it needs to eat.", "ok": false}, {"t": "Neuroscientist Clifford Saper of the Harvard Medical School has located a small area at the base of the brain called the ventrolateral preoptic nucleus that sends chemical signals to other parts of the brain during sleep to slow those brain parts down and determines the best sleep budget for the animal.", "ok": true}], "pairs": ["the physiological mechanism which controls the body's sleep patterns = determines the best sleep budget for the animal"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jerome Siegel"}, {"k": "B", "t": "Clifford Saper"}, {"k": "C", "t": "Verner Bingman"}], "ans": "B"}, "why": ""}, {"q": 15, "question": "an observation that some creatures may have no need for sleep", "options": [{"t": "'But here we have a creature which grows one of the largest brains in the animal kingdom, and yet it is doing this without sleep.", "ok": true}, {"t": "All mammals and birds appear to need sleep, but scientists are unsure if reptiles and fish do.", "ok": false}, {"t": "According to Siegel, the results of his orca study fundamentally change our view of sleep.", "ok": false}, {"t": "'It has often been said that sleep is necessary for an animal's primary development, particularly that of the brain,' Siegel says.", "ok": false}], "pairs": ["creatures may have no need for sleep = yet it is doing this without sleep"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jerome Siegel"}, {"k": "B", "t": "Clifford Saper"}, {"k": "C", "t": "Verner Bingman"}], "ans": "A"}, "why": ""}, {"q": 16, "question": "data indicating the dangers of extended periods of sleeplessness", "options": [{"t": "Studies show that prolonged wakefulness leads to degradation of memory, alertness, coordination and judgment.", "ok": true}, {"t": "According to Saper, evidence suggests that for restoring tired muscles or any other body system, sleep is no more effective than a comparable period of wakeful resting – except for one critical organ, the brain.", "ok": false}, {"t": "The human brain apparently cannot do without sleep.", "ok": false}, {"t": "It is flexible, able to reverse the normal nocturnal habits of a rodent to make it sleep at night, if day is the only time the rodent can find what it needs to eat.", "ok": false}], "pairs": ["dangers of extended periods of sleeplessness = prolonged wakefulness leads to degradation of memory, alertness, coordination and judgment"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jerome Siegel"}, {"k": "B", "t": "Clifford Saper"}, {"k": "C", "t": "Verner Bingman"}], "ans": "B"}, "why": ""}, {"q": 17, "question": "an animal behaviour which could serve as a basis for modifying human sleep pattern", "options": [{"t": "Nevertheless, studies of species exhibiting 'natural models of sleep deprivation,' as psychologist Verner Bingman of Ohio's Bowling Green State University calls them, may allow researchers to provide us with new methods for adapting to limited sleep without losing effectiveness.", "ok": true}, {"t": "The human brain apparently cannot do without sleep.", "ok": false}, {"t": "Siegel thinks that the sleep an animal needs is dictated less by biological functions than by the animal's environmental niche.", "ok": false}, {"t": "They have to switch from a diet of seeds to one of fruits and insects, which they must search for during the day, so further limiting their sleep time.", "ok": false}], "pairs": ["serve as a basis for modifying human sleep pattern = new methods for adapting to limited sleep without losing effectiveness"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Jerome Siegel"}, {"k": "B", "t": "Clifford Saper"}, {"k": "C", "t": "Verner Bingman"}], "ans": "C"}, "why": ""}, {"q": 18, "question": "Movement and wakefulness in young orcas assist them in maintaining their <b>.........<\/b>", "options": [{"t": "'These sleep patterns contrast with those of most other mammals, which need extra sleep during infancy and gradually sleep less as they age, while orcas are never as active as in the first months of life,' Siegel says.", "ok": false}, {"t": "Meanwhile the mothers of newborn orcas must constantly look out for sharks, while teaching the calves to breathe.", "ok": false}, {"t": "But humans have it easy compared to orcas, also known as killer whales.", "ok": false}, {"t": "The young orcas' movement and wakefulness help them keep their body temperature constant until mass and blubber insulation develop and allow for frequent respiration.", "ok": true}], "pairs": ["assist them in maintaining their ___ = help them keep their body temperature constant"], "kind": "Completion", "answer": "body temperature", "accept": ["body temperature"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 19, "question": "New orca mothers need to be awake in order to protect their young from <b>.........<\/b>", "options": [{"t": "'These sleep patterns contrast with those of most other mammals, which need extra sleep during infancy and gradually sleep less as they age, while orcas are never as active as in the first months of life,' Siegel says.", "ok": false}, {"t": "The young orcas' movement and wakefulness help them keep their body temperature constant until mass and blubber insulation develop and allow for frequent respiration.", "ok": false}, {"t": "As any new parent knows, the first months of an infant's life mean little sleep for the family.", "ok": false}, {"t": "Meanwhile the mothers of newborn orcas must constantly look out for sharks, while teaching the calves to breathe.", "ok": true}], "pairs": ["need to be awake in order to protect their young from ___ = must constantly look out for sharks"], "kind": "Completion", "answer": "sharks", "accept": ["sharks"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 20, "question": "Sleep deprivation experiments on <b>.........<\/b> have shown that animals die without adequate sleep.", "options": [{"t": "Nevertheless, studies of species exhibiting 'natural models of sleep deprivation,' as psychologist Verner Bingman of Ohio's Bowling Green State University calls them, may allow researchers to provide us with new methods for adapting to limited sleep without losing effectiveness.", "ok": false}, {"t": "The long rest typical of bats, for example, helps the animals to economise on energy.", "ok": false}, {"t": "Two weeks without sleep can kill laboratory rats.", "ok": false}, {"t": "Some animals die without proper sleep, and experiments have shown that sleep deprivation can cause death more quickly than food deprivation.", "ok": true}], "pairs": ["animals die without adequate sleep = Some animals die without proper sleep", "sleep deprivation experiments on ___ = Two weeks without sleep can kill laboratory rats"], "kind": "Completion", "answer": "rats", "accept": ["rats", "laboratory rats"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 21, "question": "Scientists have not yet worked out why almost all animals sleep with <b>.........<\/b>", "options": [{"t": "Sleep is not the same for all creatures.", "ok": false}, {"t": "Some animals die without proper sleep, and experiments have shown that sleep deprivation can cause death more quickly than food deprivation.", "ok": false}, {"t": "Dolphins sleep literally with one eye closed – the eye on the opposite side of the body to the dozing brain hemisphere, since the right brain hemisphere works the left eye and vice versa.", "ok": false}, {"t": "However, for unknown reasons, closed eyes seem to be a virtually universal prerequisite for sleep.", "ok": true}], "pairs": ["have not yet worked out why almost all animals sleep with ___ = for unknown reasons, closed eyes seem to be a virtually universal prerequisite for sleep"], "kind": "Completion", "answer": "closed eyes", "accept": ["closed eyes"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 22, "question": "For humans, sleep is vital for the efficient functioning of the <b>.........<\/b>", "options": [{"t": "According to Saper, evidence suggests that for restoring tired muscles or any other body system, sleep is no more effective than a comparable period of wakeful resting – except for one critical organ, the brain.", "ok": false}, {"t": "The human brain apparently cannot do without sleep.", "ok": true}, {"t": "It is flexible, able to reverse the normal nocturnal habits of a rodent to make it sleep at night, if day is the only time the rodent can find what it needs to eat.", "ok": false}, {"t": "Studies show that prolonged wakefulness leads to degradation of memory, alertness, coordination and judgment.", "ok": false}], "pairs": ["sleep is vital for the efficient functioning of the ___ = The human brain apparently cannot do without sleep"], "kind": "Completion", "answer": "brain", "accept": ["brain"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 23, "question": "During periods of <b>.........<\/b> Swainson&#x27;s thrushes experience severe sleep deprivation.", "options": [{"t": "'We could live 20-hour days instead of 12- or 14-hour days,' says Bingman, who is studying the behaviour of the migratory birds Swainson's thrushes, which for migration purposes, go from a normal night's sleep of 10 to 12 hours down to about 2.5 hours so they can fly at night.", "ok": true}, {"t": "Nevertheless, studies of species exhibiting 'natural models of sleep deprivation,' as psychologist Verner Bingman of Ohio's Bowling Green State University calls them, may allow researchers to provide us with new methods for adapting to limited sleep without losing effectiveness.", "ok": false}, {"t": "He thinks we are dreaming if we think we're ever going to get by on as little sleep as newborn orcas or migrating thrushes.", "ok": false}, {"t": "They have to switch from a diet of seeds to one of fruits and insects, which they must search for during the day, so further limiting their sleep time.", "ok": false}], "pairs": ["periods of ___ ... severe sleep deprivation = for migration purposes, go from a normal night's sleep of 10 to 12 hours down to about 2.5 hours"], "kind": "Completion", "answer": "migration", "accept": ["migration"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 24, "question": "mention of the potential use of chemicals to reduce sleep periods", "options": [{"t": "'Sleep deprivation is unfortunately a major cause of death in the US in young adults, who have a very high crash rate between 3 and 6 am.", "ok": false}, {"t": "He thinks we are dreaming if we think we're ever going to get by on as little sleep as newborn orcas or migrating thrushes.", "ok": false}, {"t": "When brain waves are measured, these napping behaviours look very much like normal sleep.", "ok": false}, {"t": "Says Bingman, 'The trick would be to develop techniques or drugs that could recreate a similar brain pattern in humans.", "ok": true}], "pairs": ["potential use of chemicals to reduce sleep periods = develop techniques or drugs that could recreate a similar brain pattern in humans"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "G", "pill": true}}, {"q": 25, "question": "a reference to a lack of expert consensus regarding the behaviour of certain types of animal", "options": [{"t": "'But here we have a creature which grows one of the largest brains in the animal kingdom, and yet it is doing this without sleep.", "ok": false}, {"t": "'When you come downstairs at three in the morning, the goldfish isn't lying on the bottom of the bowl, it's swimming around,' Siegel says.", "ok": false}, {"t": "But other scientists believe fish do enter a restful dormant state that is at least similar to sleep.", "ok": false}, {"t": "All mammals and birds appear to need sleep, but scientists are unsure if reptiles and fish do.", "ok": true}], "pairs": ["a lack of expert consensus = scientists are unsure if reptiles and fish do", "certain types of animal = reptiles and fish"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "B", "pill": true}}, {"q": 26, "question": "an example of an animal which continues to function normally during its sleep periods", "options": [{"t": "In dolphins, half the brain may rest while the other half stays vigilantly awake, and the animal carries on everyday activities.", "ok": true}, {"t": "However, for unknown reasons, closed eyes seem to be a virtually universal prerequisite for sleep.", "ok": false}, {"t": "Dolphins sleep literally with one eye closed – the eye on the opposite side of the body to the dozing brain hemisphere, since the right brain hemisphere works the left eye and vice versa.", "ok": false}, {"t": "Sleep is not the same for all creatures.", "ok": false}], "pairs": ["continues to function normally during its sleep periods = the animal carries on everyday activities"], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "D", "pill": true}}], "paraphrase": [{"q": "the physiological mechanism which controls the body's sleep patterns", "p": "determines the best sleep budget for the animal", "rel": "=", "note": "", "n": "14"}, {"q": "creatures may have no need for sleep", "p": "yet it is doing this without sleep", "rel": "=", "note": "", "n": "15"}, {"q": "dangers of extended periods of sleeplessness", "p": "prolonged wakefulness leads to degradation of memory, alertness, coordination and judgment", "rel": "=", "note": "", "n": "16"}, {"q": "serve as a basis for modifying human sleep pattern", "p": "new methods for adapting to limited sleep without losing effectiveness", "rel": "=", "note": "", "n": "17"}, {"q": "assist them in maintaining their ___", "p": "help them keep their body temperature constant", "rel": "=", "note": "", "n": "18"}, {"q": "need to be awake in order to protect their young from ___", "p": "must constantly look out for sharks", "rel": "=", "note": "", "n": "19"}, {"q": "animals die without adequate sleep", "p": "Some animals die without proper sleep", "rel": "=", "note": "", "n": "20"}, {"q": "sleep deprivation experiments on ___", "p": "Two weeks without sleep can kill laboratory rats", "rel": "=", "note": "", "n": "20"}, {"q": "have not yet worked out why almost all animals sleep with ___", "p": "for unknown reasons, closed eyes seem to be a virtually universal prerequisite for sleep", "rel": "=", "note": "", "n": "21"}, {"q": "sleep is vital for the efficient functioning of the ___", "p": "The human brain apparently cannot do without sleep", "rel": "=", "note": "", "n": "22"}, {"q": "periods of ___ ... severe sleep deprivation", "p": "for migration purposes, go from a normal night's sleep of 10 to 12 hours down to about 2.5 hours", "rel": "=", "note": "", "n": "23"}, {"q": "potential use of chemicals to reduce sleep periods", "p": "develop techniques or drugs that could recreate a similar brain pattern in humans", "rel": "=", "note": "", "n": "24"}, {"q": "a lack of expert consensus", "p": "scientists are unsure if reptiles and fish do", "rel": "=", "note": "", "n": "25"}, {"q": "certain types of animal", "p": "reptiles and fish", "rel": "=", "note": "", "n": "25"}, {"q": "continues to function normally during its sleep periods", "p": "the animal carries on everyday activities", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "wakefulness", "pos": "noun", "loc": "A, E", "d": "the state of being awake and not sleeping", "uz": "uyg'oqlik", "ex": "Long periods of wakefulness make it hard to concentrate on anything.", "form": "wakefulness"}, {"w": "blubber", "pos": "noun", "loc": "A", "d": "the thick layer of fat under the skin of whales and seals", "uz": "kit yog'i, teri osti yog'i", "ex": "A thick layer of blubber keeps seals warm in freezing water.", "form": "blubber"}, {"w": "look out for", "pos": "phrasal verb", "loc": "A", "d": "to watch carefully so as to notice or avoid something", "uz": "ehtiyot bo'lmoq, ko'z-quloq bo'lmoq", "ex": "Drivers should look out for children near the school entrance.", "form": "look out for"}, {"w": "dormant", "pos": "adjective", "loc": "B", "d": "temporarily inactive, as if asleep, but able to become active", "uz": "uyquga ketgan, harakatsiz", "ex": "The volcano has been dormant for centuries but could erupt again.", "form": "dormant"}, {"w": "sleep deprivation", "pos": "collocation", "loc": "C", "d": "a serious lack of the sleep a person or animal needs", "uz": "uyqusizlik, uyqudan mahrumlik", "ex": "Sleep deprivation can badly affect a student's memory and mood.", "form": "Sleep deprivation"}, {"w": "dictated", "pos": "verb", "loc": "C", "d": "controlled or decided something completely", "uz": "belgilab berilgan, shart qilib qo'yilgan", "ex": "The size of the budget dictated which projects could go ahead.", "form": "dictated"}, {"w": "environmental niche", "pos": "collocation", "loc": "C", "d": "the particular place and role a species has in its habitat", "uz": "ekologik nisha, yashash muhiti o'rni", "ex": "Each species survives by adapting to its own environmental niche.", "form": "environmental niche"}, {"w": "economise on", "pos": "phrasal verb", "loc": "C", "d": "to use less of something in order to save it", "uz": "tejamoq, tejab ishlatmoq", "ex": "Families had to economise on heating during the long cold winter.", "form": "economise on"}, {"w": "vigilantly", "pos": "adverb", "loc": "D", "d": "in a watchful way, careful to notice possible danger", "uz": "hushyorlik bilan, ziyraklik bilan", "ex": "The guard watched the entrance vigilantly throughout the night.", "form": "vigilantly"}, {"w": "carries on", "pos": "phrasal verb", "loc": "D", "d": "continues doing something without stopping", "uz": "davom ettirmoq", "ex": "She carries on working even when the office is noisy.", "form": "carries on"}, {"w": "prerequisite", "pos": "noun", "loc": "D", "d": "something that must exist or happen before something else can", "uz": "old shart, zaruriy shart", "ex": "Good grades are a prerequisite for entry to the programme.", "form": "prerequisite"}, {"w": "sleep budget", "pos": "collocation", "loc": "E", "d": "the total amount of sleep that an animal can afford or needs", "uz": "uyqu me'yori, uyqu zaxirasi", "ex": "Busy parents often have to live on a very small sleep budget.", "form": "sleep budget"}, {"w": "nocturnal", "pos": "adjective", "loc": "E", "d": "active at night rather than during the day", "uz": "tungi, kechasi faol", "ex": "Owls are nocturnal birds that hunt small animals after dark.", "form": "nocturnal"}, {"w": "degradation", "pos": "noun", "loc": "E", "d": "the process of becoming worse in quality or condition", "uz": "yomonlashuv, buzilish", "ex": "Years of pollution caused serious degradation of the river's ecosystem.", "form": "degradation"}, {"w": "migratory", "pos": "adjective", "loc": "F", "d": "moving regularly from one region to another at certain seasons", "uz": "ko'chib yuruvchi", "ex": "Migratory birds travel thousands of kilometres to find warmer winters.", "form": "Migratory"}, {"w": "drowsiness", "pos": "noun", "loc": "G", "d": "the feeling of being very sleepy and not fully alert", "uz": "mudroq bosish, uyquchanlik", "ex": "Some medicines cause drowsiness, so drivers should read the label first.", "form": "drowsiness"}, {"w": "get by on", "pos": "phrasal verb", "loc": "G", "d": "to manage to live or function with only a small amount of something", "uz": "oz narsa bilan o'tinmoq", "ex": "Students often get by on very little money during their first year.", "form": "get by on"}]}, {"evidence": [{"q": 27, "question": "What does the writer say about the period mentioned in the second paragraph?", "options": [{"t": "It was witness to the last conquests of the Caesars: the conquest of Dacia, in modern-day eastern Europe, which brought vast mineral wealth into the Empire, and the conquest of Arabia, which helped to bring the riches of India and East Asia flooding into Rome.", "ok": false}, {"t": "In the material domain, this generation attained the pinnacle of ancient civilization.", "ok": true}, {"t": "So large was the gulf and so great the inequality between them that, according to the historian Rostovtzeff, it pitted one against the other in a fierce and silent struggle which pierced the wall protecting the Roman privileged classes from the barbarian flood from the north.", "ok": false}, {"t": "This generation saw the Roman Empire at its most powerful and prosperous.", "ok": false}], "pairs": ["the Roman standard of living reached its highest level = this generation attained the pinnacle of ancient civilization", "The export of minerals made Rome rich ≠ brought vast mineral wealth into the Empire"], "kind": "Multiple choice", "answer": "D", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "There was a high level of immigration into Rome."}, {"k": "B", "t": "The export of minerals made Rome rich."}, {"k": "C", "t": "Rome sent armies to control trade with India and East Asia."}, {"k": "D", "t": "The Roman standard of living reached its highest level."}], "ans": "D"}, "why": ""}, {"q": 28, "question": "Ostia is mentioned as", "options": [{"t": "To these we may add the ruins of the city of Ostia, which date in the main from the time when the Emperor Hadrian created this great commercial city as a realisation of his town planning ideas.", "ok": true}, {"t": "In addition, the Forum of Trajan in Rome itself and the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius in 79 AD, supply an abundance of evidence.", "ok": false}, {"t": "We have a profusion of vivid and picturesque descriptions, precise and colourful, in such works as the Epigrams of Martial, the Satires of Juvenal and the Letters of Pliny.", "ok": false}, {"t": "By a fortunate coincidence – all the more fortunate in that Latin literature was soon to run nearly dry – this generation is the one whose records combine to offer us the most complete picture of Roman life that we possess.", "ok": false}], "pairs": ["an important area for archaeological research = the ruins of the city of Ostia"], "kind": "Multiple choice", "answer": "B", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "a city which often features in literature."}, {"k": "B", "t": "an important area for archaeological research."}, {"k": "C", "t": "the birthplace of a Roman Emperor."}, {"k": "D", "t": "a city whose layout was similar to that of Rome."}], "ans": "B"}, "why": ""}, {"q": 29, "question": "The statement that Fortune has favoured the historian of this time refers to the fact that", "options": [{"t": "By a fortunate coincidence – all the more fortunate in that Latin literature was soon to run nearly dry – this generation is the one whose records combine to offer us the most complete picture of Roman life that we possess.", "ok": false}, {"t": "Fortune has favoured the historian of this time.", "ok": false}, {"t": "To these we may add the ruins of the city of Ostia, which date in the main from the time when the Emperor Hadrian created this great commercial city as a realisation of his town planning ideas.", "ok": false}, {"t": "We have a profusion of vivid and picturesque descriptions, precise and colourful, in such works as the Epigrams of Martial, the Satires of Juvenal and the Letters of Pliny.", "ok": true}], "pairs": ["a wide range of sources is available = supply an abundance of evidence", "Fortune has favoured the historian = We have a profusion of vivid and picturesque descriptions"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "historians of this period have become wealthy as a result of their discoveries."}, {"k": "B", "t": "works on this period are popular among the reading public."}, {"k": "C", "t": "a wide range of sources is available for this period."}, {"k": "D", "t": "this period has been less studied than many others."}], "ans": "C"}, "why": ""}, {"q": 30, "question": "In comparing urban and rural life in the Roman Empire, the writer states that", "options": [{"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}, {"t": "So large was the gulf and so great the inequality between them that, according to the historian Rostovtzeff, it pitted one against the other in a fierce and silent struggle which pierced the wall protecting the Roman privileged classes from the barbarian flood from the north.", "ok": false}, {"t": "When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them.", "ok": false}, {"t": "Even today when the facilities for communication bring something of the city into the smallest and most isolated country cottage, there remains a significant difference between rural existence and the excitement of city life: a much greater difference separated the peasant from the townsman of antiquity.", "ok": true}], "pairs": ["rural life and urban life had little in common = a much greater difference separated the peasant from the townsman of antiquity"], "kind": "Multiple choice", "answer": "B", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "rural Romans were largely illiterate."}, {"k": "B", "t": "rural life and urban life had little in common."}, {"k": "C", "t": "little information is available concerning rural life."}, {"k": "D", "t": "most readers of history are more interested in city life."}], "ans": "B"}, "why": ""}, {"q": 31, "question": "Rome&#x27;s conquest of Arabia resulted in large-scale immigration from the east into Rome.", "options": [{"t": "This generation saw the Roman Empire at its most powerful and prosperous.", "ok": false}, {"t": "It was witness to the last conquests of the Caesars: the conquest of Dacia, in modern-day eastern Europe, which brought vast mineral wealth into the Empire, and the conquest of Arabia, which helped to bring the riches of India and East Asia flooding into Rome.", "ok": true}, {"t": "In the material domain, this generation attained the pinnacle of ancient civilization.", "ok": false}, {"t": "The way in which the Romans of Rome employed their time can only be studied satisfactorily after we have plotted out the main lines of the framework within which they lived and outside of which the routine of their daily life would be more or less unintelligible.", "ok": false}], "pairs": ["large-scale immigration from the east into Rome ? helped to bring the riches of India and East Asia flooding into Rome"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 32, "question": "More can be learned about Roman life from the literature of the period studied in this book than from later Latin literature.", "options": [{"t": "The way in which the Romans of Rome employed their time can only be studied satisfactorily after we have plotted out the main lines of the framework within which they lived and outside of which the routine of their daily life would be more or less unintelligible.", "ok": false}, {"t": "By a fortunate coincidence – all the more fortunate in that Latin literature was soon to run nearly dry – this generation is the one whose records combine to offer us the most complete picture of Roman life that we possess.", "ok": true}, {"t": "If our ideas on Roman life are not to become lost in confusion, we must study it within as strictly defined a time as possible.", "ok": false}, {"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}], "pairs": ["More can be learned from the literature of the period studied = this generation is the one whose records combine to offer us the most complete picture of Roman life", "than from later Latin literature = Latin literature was soon to run nearly dry"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 33, "question": "Discoveries at Herculaneum and Pompeii showed that certain beliefs about Roman life were wrong.", "options": [{"t": "If our ideas on Roman life are not to become lost in confusion, we must study it within as strictly defined a time as possible.", "ok": false}, {"t": "By a fortunate coincidence – all the more fortunate in that Latin literature was soon to run nearly dry – this generation is the one whose records combine to offer us the most complete picture of Roman life that we possess.", "ok": false}, {"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}, {"t": "In addition, the Forum of Trajan in Rome itself and the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius in 79 AD, supply an abundance of evidence.", "ok": true}], "pairs": ["certain beliefs about Roman life were wrong ? the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius"], "kind": "Yes / No / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": true, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 34, "question": "Roman peasants provided assistance to the Empire when it was attacked.", "options": [{"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}, {"t": "So large was the gulf and so great the inequality between them that, according to the historian Rostovtzeff, it pitted one against the other in a fierce and silent struggle which pierced the wall protecting the Roman privileged classes from the barbarian flood from the north.", "ok": false}, {"t": "Even today when the facilities for communication bring something of the city into the smallest and most isolated country cottage, there remains a significant difference between rural existence and the excitement of city life: a much greater difference separated the peasant from the townsman of antiquity.", "ok": false}, {"t": "When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them.", "ok": true}], "pairs": ["provided assistance to the Empire when it was attacked ≠ When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 35, "question": "Rural inhabitants of the Roman Empire had a difficult life.", "options": [{"t": "If our ideas on Roman life are not to become lost in confusion, we must study it within as strictly defined a time as possible.", "ok": false}, {"t": "In a work on the history of everyday life, we must give up any attempt to blend two such dissimilar pictures into one and must choose between them.", "ok": false}, {"t": "The peasant knew nothing but unending labour without profit and was unable to enjoy the activities available in even the poorest of cities: the liveliness of the sports field, the warmth of the public baths and the magnificence of public spectacles.", "ok": true}, {"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}], "pairs": ["had a difficult life = The peasant knew nothing but unending labour without profit"], "kind": "Yes / No / Not Given", "answer": "YES", "rel": "same", "yn": true, "why": "Same idea, different words."}, {"q": 36, "question": "Entertainment facilities were limited to the city of Rome itself.", "options": [{"t": "Even today when the facilities for communication bring something of the city into the smallest and most isolated country cottage, there remains a significant difference between rural existence and the excitement of city life: a much greater difference separated the peasant from the townsman of antiquity.", "ok": false}, {"t": "The peasant knew nothing but unending labour without profit and was unable to enjoy the activities available in even the poorest of cities: the liveliness of the sports field, the warmth of the public baths and the magnificence of public spectacles.", "ok": true}, {"t": "In addition, the Forum of Trajan in Rome itself and the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius in 79 AD, supply an abundance of evidence.", "ok": false}, {"t": "The townsman, in fact, enjoyed all the goods and resources of the earth.", "ok": false}], "pairs": ["limited to the city of Rome itself ? unable to enjoy the activities available in even the poorest of cities"], "kind": "Yes / No / Not Given", "answer": "NO", "rel": "opposite", "yn": true, "why": "The passage says the <i>opposite<\/i>."}, {"q": 37, "question": "It was important for the writer to limit several aspects of his <b>.........<\/b>.", "options": [{"t": "So large was the gulf and so great the inequality between them that, according to the historian Rostovtzeff, it pitted one against the other in a fierce and silent struggle which pierced the wall protecting the Roman privileged classes from the barbarian flood from the north.", "ok": false}, {"t": "Even today when the facilities for communication bring something of the city into the smallest and most isolated country cottage, there remains a significant difference between rural existence and the excitement of city life: a much greater difference separated the peasant from the townsman of antiquity.", "ok": false}, {"t": "It would lack foundation and consistency if we did not also focus it in space – in the country or in the town.", "ok": false}, {"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": true}], "pairs": ["limit several aspects of his investigation = It is not enough to focus our study of Roman life only on a fixed time"], "kind": "Summary (word list)", "answer": "I", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "B", "t": "setting"}, {"k": "D", "t": "peasants"}, {"k": "E", "t": "city-dwellers"}, {"k": "H", "t": "period"}, {"k": "I", "t": "investigation"}], "ans": "I"}, "why": ""}, {"q": 38, "question": "He decided to focus on a limited <b>.........<\/b> in Roman history, and to concentrate on the section of the population who were .......", "options": [{"t": "Since a choice of time must necessarily be made, this history will confine itself to studying the generation which was born about the middle of the first century AD, toward the end of the reign of Claudius (41–54 AD) or the beginning of the reign of Nero (54–68 AD), and which lived on into the reign of Trajan (98–117 AD) and of Hadrian (117–138 AD).", "ok": true}, {"t": "When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them.", "ok": false}, {"t": "It is not enough to focus our study of Roman life only on a fixed time.", "ok": false}, {"t": "This generation saw the Roman Empire at its most powerful and prosperous.", "ok": false}], "pairs": ["a limited period in Roman history = this history will confine itself to studying the generation which was born about the middle of the first century AD"], "kind": "Summary (word list)", "answer": "H", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "A", "t": "emperors"}, {"k": "C", "t": "values"}, {"k": "D", "t": "peasants"}, {"k": "G", "t": "myths"}, {"k": "H", "t": "period"}], "ans": "H"}, "why": ""}, {"q": 39, "question": "He decided to focus on a limited ...... in Roman history, and to concentrate on the section of the population who were <b>.........<\/b>.", "options": [{"t": "The time which we have chosen to describe day by day is that of those Roman subjects who spent their time exclusively in the town, or rather in The City, Rome, which they regarded as the hub and centre of the universe, proud and wealthy ruler of a world which seemed at that time to have been pacified forever.", "ok": true}, {"t": "In a work on the history of everyday life, we must give up any attempt to blend two such dissimilar pictures into one and must choose between them.", "ok": false}, {"t": "The peasant knew nothing but unending labour without profit and was unable to enjoy the activities available in even the poorest of cities: the liveliness of the sports field, the warmth of the public baths and the magnificence of public spectacles.", "ok": false}, {"t": "When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them.", "ok": false}], "pairs": ["the section of the population who were city-dwellers = those Roman subjects who spent their time exclusively in the town"], "kind": "Summary (word list)", "answer": "E", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "C", "t": "values"}, {"k": "D", "t": "peasants"}, {"k": "E", "t": "city-dwellers"}, {"k": "F", "t": "social classes"}, {"k": "G", "t": "myths"}], "ans": "E"}, "why": ""}, {"q": 40, "question": "The writer was interested in the physical environment, the people that ruled the country and the <b>.........<\/b> that contributed both to Rome&#x27;s strength and to its weaknesses.", "options": [{"t": "The way in which the Romans of Rome employed their time can only be studied satisfactorily after we have plotted out the main lines of the framework within which they lived and outside of which the routine of their daily life would be more or less unintelligible.", "ok": false}, {"t": "To perform our task well, we must first try to form an adequate picture of the surroundings in which our subjects lived, and by which their lives were coloured, freeing ourselves from any misconceptions concerning it.", "ok": false}, {"t": "We must seek to reconstruct the physical nature of the great city and the social milieu of the various classes of the hierarchy by which it was governed.", "ok": false}, {"t": "We must also investigate the moral background of thought and sentiment which can help explain both its strength and its weaknesses.", "ok": true}], "pairs": ["the values that contributed to strength and weaknesses = the moral background of thought and sentiment which can help explain both its strength and its weaknesses"], "kind": "Summary (word list)", "answer": "C", "choice": {"prompt": "Which word fits the gap?", "opts": [{"k": "C", "t": "values"}, {"k": "D", "t": "peasants"}, {"k": "F", "t": "social classes"}, {"k": "H", "t": "period"}, {"k": "I", "t": "investigation"}], "ans": "C"}, "why": ""}], "paraphrase": [{"q": "the Roman standard of living reached its highest level", "p": "this generation attained the pinnacle of ancient civilization", "rel": "=", "note": "", "n": "27"}, {"q": "The export of minerals made Rome rich", "p": "brought vast mineral wealth into the Empire", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "27"}, {"q": "an important area for archaeological research", "p": "the ruins of the city of Ostia", "rel": "=", "note": "", "n": "28"}, {"q": "a wide range of sources is available", "p": "supply an abundance of evidence", "rel": "=", "note": "", "n": "29"}, {"q": "Fortune has favoured the historian", "p": "We have a profusion of vivid and picturesque descriptions", "rel": "=", "note": "", "n": "29"}, {"q": "rural life and urban life had little in common", "p": "a much greater difference separated the peasant from the townsman of antiquity", "rel": "=", "note": "", "n": "30"}, {"q": "large-scale immigration from the east into Rome", "p": "helped to bring the riches of India and East Asia flooding into Rome", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "31"}, {"q": "More can be learned from the literature of the period studied", "p": "this generation is the one whose records combine to offer us the most complete picture of Roman life", "rel": "=", "note": "", "n": "32"}, {"q": "than from later Latin literature", "p": "Latin literature was soon to run nearly dry", "rel": "=", "note": "", "n": "32"}, {"q": "certain beliefs about Roman life were wrong", "p": "the ruins of Herculaneum and Pompeii, the two prosperous resorts buried by the eruption of Mount Vesuvius", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "33"}, {"q": "provided assistance to the Empire when it was attacked", "p": "When the barbarian forces began to invade Roman territory, the peasants decided to fight alongside them", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "34"}, {"q": "had a difficult life", "p": "The peasant knew nothing but unending labour without profit", "rel": "=", "note": "", "n": "35"}, {"q": "limited to the city of Rome itself", "p": "unable to enjoy the activities available in even the poorest of cities", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "36"}, {"q": "limit several aspects of his investigation", "p": "It is not enough to focus our study of Roman life only on a fixed time", "rel": "=", "note": "", "n": "37"}, {"q": "a limited period in Roman history", "p": "this history will confine itself to studying the generation which was born about the middle of the first century AD", "rel": "=", "note": "", "n": "38"}, {"q": "the section of the population who were city-dwellers", "p": "those Roman subjects who spent their time exclusively in the town", "rel": "=", "note": "", "n": "39"}, {"q": "the values that contributed to strength and weaknesses", "p": "the moral background of thought and sentiment which can help explain both its strength and its weaknesses", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "turned it upside down", "pos": "idiom", "loc": "¶1", "d": "completely changed or disordered how something was", "uz": "tubdan o'zgartirib yubordi", "ex": "The invention of the internet turned the music industry upside down.", "form": ""}, {"w": "subject to", "pos": "collocation", "loc": "¶1", "d": "likely to be affected by something, especially change", "uz": "...ga duchor bo'lgan, ...ga bog'liq", "ex": "All prices are subject to change without any prior notice.", "form": "subject to"}, {"w": "operative", "pos": "adjective", "loc": "¶1", "d": "working or having an effect", "uz": "amalda bo'lgan, ta'sir etuvchi", "ex": "The new tax rules became operative at the start of January.", "form": "operative"}, {"w": "commonplace", "pos": "noun", "loc": "¶1", "d": "a usual, often repeated remark or idea", "uz": "oddiy gap, eskirgan fikr", "ex": "It was a commonplace among farmers that bad weather follows a red sunset.", "form": "commonplace"}, {"w": "refinement", "pos": "noun", "loc": "¶1", "d": "elegance and good taste in manners or style", "uz": "nafislik, odob-axloq go'zalligi", "ex": "Visitors admired the refinement of the palace's furniture and decoration.", "form": "refinement"}, {"w": "pinnacle", "pos": "noun", "loc": "¶2", "d": "the highest or most successful point of something", "uz": "choqqi, eng yuqori nuqta", "ex": "Winning the world title was the pinnacle of her sporting career.", "form": "pinnacle"}, {"w": "run nearly dry", "pos": "idiom", "loc": "¶3", "d": "to almost stop producing or supplying something", "uz": "deyarli to'xtab qolmoq, qurib borar", "ex": "After the war, the poet's inspiration seemed to run nearly dry.", "form": "run nearly dry"}, {"w": "profusion", "pos": "noun", "loc": "¶3", "d": "a very large quantity of something", "uz": "mo'l-ko'llik, serobchilik", "ex": "A profusion of wild flowers covered the hills in spring.", "form": "profusion"}, {"w": "abundance", "pos": "noun", "loc": "¶3", "d": "a very large amount of something, more than enough", "uz": "mo'l-ko'lchilik, serobligi", "ex": "The region has an abundance of fresh water and fertile land.", "form": "abundance"}, {"w": "gulf", "pos": "noun", "loc": "¶4", "d": "a very big difference between two groups or ideas", "uz": "tubsiz tafovut, katta farq", "ex": "There is a widening gulf between rich and poor in the city.", "form": "gulf"}, {"w": "pitted one against the other", "pos": "phrase", "loc": "¶4", "d": "set two sides in direct competition or conflict", "uz": "bir-biriga qarama-qarshi qo'ymoq", "ex": "The election pitted one neighbouring village against the other for months.", "form": ""}, {"w": "hub and centre", "pos": "phrase", "loc": "¶5", "d": "the most important place where activity is concentrated", "uz": "markaz va yurak", "ex": "London was the hub and centre of the nineteenth-century banking world.", "form": "hub and centre"}, {"w": "pacified", "pos": "verb", "loc": "¶5", "d": "brought peace to an area by ending fighting or resistance", "uz": "tinchlantirilgan, bo'ysundirilgan", "ex": "The army pacified the northern provinces within a few years.", "form": "pacified"}, {"w": "misconceptions", "pos": "noun", "loc": "¶6", "d": "wrong ideas based on a failure to understand something", "uz": "noto'g'ri tasavvurlar", "ex": "Many misconceptions about healthy eating spread quickly on social media.", "form": "misconceptions"}, {"w": "milieu", "pos": "noun", "loc": "¶6", "d": "the social surroundings and environment in which people live", "uz": "ijtimoiy muhit", "ex": "The writer grew up in an artistic milieu full of painters.", "form": "milieu"}, {"w": "plotted out", "pos": "phrasal verb", "loc": "¶6", "d": "planned or marked something carefully in detail", "uz": "rejalashtirmoq, chizib chiqmoq", "ex": "The team plotted out the route before starting the long expedition.", "form": "plotted out"}, {"w": "unintelligible", "pos": "adjective", "loc": "¶6", "d": "impossible to understand", "uz": "tushunib bo'lmaydigan", "ex": "The old manuscript was almost unintelligible because the ink had faded.", "form": "unintelligible"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

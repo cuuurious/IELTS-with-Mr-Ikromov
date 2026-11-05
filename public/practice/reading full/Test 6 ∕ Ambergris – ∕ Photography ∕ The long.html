@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 6 / Ambergris – / Photography / The long</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 6 / Ambergris – / Photography / The long</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">Ambergris – what is it and where does it come from?</div><p data-para="1"><span class="sent" id="s0_0">In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.</span> <span class="sent" id="s0_1">It was also widely used as a spice, when added to food or wine.</span> <span class="sent" id="s0_2">Ambergris itself is pleasantly aromatic, especially when warmed, and it was also highly valued as a fixing agent in the making of perfume, since it enabled a scent to retain its fragrance for much longer than might otherwise have been possible.</span> <span class="sent" id="s0_3">Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.</span> <span class="sent" id="s0_4">At one time, ambergris was worth its weight in gold, but there was much confusion about its origins.</span></p><p data-para="2"><span class="sent" id="s0_5">Ambergris was known to the Arabs as &#x27;ambar&#x27; and was originally called amber in the west in the Middle Ages.</span> <span class="sent" id="s0_6">This eventually led to further confusion in the popular mind between ambergris and true amber, the mineral known to mineralogists as succinite, which is actually fossilised tree resin, and generally yellow in colour.</span> <span class="sent" id="s0_7">Both substances were rare and costly, and both were associated with the sea, largely because for Europeans the most common source of amber was the shores of the Baltic.</span> <span class="sent" id="s0_8">In Chapter 92 of Moby Dick, the American writer Herman Melville pours scorn on those who believed the two substances to be the same: &#x27;Though the word ambergris is but the French compound for grey amber, yet the two substances are quite distinct.</span> <span class="sent" id="s0_9">For amber, though at times found on the sea-coast, is also dug up in some far inland soils, whereas ambergris is never found except upon the sea.</span> <span class="sent" id="s0_10">Besides, amber is a hard, transparent, brittle, odorless substance, used for mouth-pieces to pipes, for beads and ornaments; but ambergris is soft, waxy, and so highly fragrant that it is largely used in perfumery.&#x27;</span></p><p data-para="3"><span class="sent" id="s0_11">Moby Dick was published in 1851, by which time the mystery of the origins of ambergris had been resolved by the scientific community.</span> <span class="sent" id="s0_12">In 1783, the botanist Joseph Banks, who had accompanied Captain James Cook on his voyages of discovery in the Pacific, presented a paper to the Royal Society of London by the German physician Dr Franz Xavier Schwediawer in which it was conclusively proved that ambergris came from sperm whales.</span> <span class="sent" id="s0_13">In this, he was confirming an observation made in the 13th century by the great Venetian traveller Marco Polo who, while on the island of Socotra in the Indian Ocean, had witnessed a sperm whale vomiting up ambergris.</span> <span class="sent" id="s0_14">But whereas Marco Polo imagined that the whale had swallowed the lump in the depths of the sea, Schwediawer showed that the origin of the material was inside the whale itself.</span></p><p data-para="4"><span class="sent" id="s0_15">The sperm whale is the largest of the odontocetes, or toothed whales.</span> <span class="sent" id="s0_16">Males can grow up to 20 metres in length.</span> <span class="sent" id="s0_17">Melville described the sperm whale as &#x27;the king of whales&#x27;, and his novel Moby Dick is based on the pursuit of one such creature.</span> <span class="sent" id="s0_18">Sperm whales are renowned for their ability to dive to great depths, possibly as far as 3,000 metres below the surface, and for remaining underwater for periods of two hours or more in pursuit of their favourite prey, the giant squid.</span></p><p data-para="5"><span class="sent" id="s0_19">It is from the problems the whales have in digesting the beaks of such creatures that ambergris has its origins.</span> <span class="sent" id="s0_20">The beak is sharp and irritates the whale&#x27;s lower intestine, which responds by producing a black, foul-smelling liquid.</span> <span class="sent" id="s0_21">It is not clear to scientists whether this secretion should be considered a normal response by the whale&#x27;s digestive system or a pathological one, but from time to time large quantities of the liquid are vomited up by the whale.</span> <span class="sent" id="s0_22">Once outside the whale&#x27;s body and exposed to air, the substance hardens, acquiring the waxy, greyish and pleasantly aromatic characteristics of ambergris.</span> <span class="sent" id="s0_23">Often the beaks of squid are still found embedded in lumps of ambergris, some of which can weigh several hundred kilograms.</span> <span class="sent" id="s0_24">Melville took some delight in contrasting the origins of ambergris with the high value placed upon it by refined society: &#x27;Who would think, then, that such fine ladies and gentlemen should regale themselves with an essence found in the inglorious bowels of a sick whale!&#x27;</span></p><p data-para="6"><span class="sent" id="s0_25">Sperm whales were ruthlessly pursued by commercial whalers in the 19th and 20th centuries.</span> <span class="sent" id="s0_26">In 1963–64 alone, almost 30,000 individuals were killed, and only the imposition of a ban on the hunting of sperm whales in 1984 saved the species from extinction.</span> <span class="sent" id="s0_27">Ambergris was by far the most valuable product to be extracted during the processing of the whales&#x27; carcasses, and over 90 per cent of the annual worldwide total was acquired in this way, as a by-product of commercial whaling.</span> <span class="sent" id="s0_28">However, even before the ban on hunting sperm whales was imposed, the 1972 Marine Mammal Protection Act had prohibited trade in ambergris.</span> <span class="sent" id="s0_29">Just as petroleum and plastic products were replacing other natural products of whaling, so ambergris was supplanted in the making of perfume by other materials, some natural and some synthetic in origin.</span> <span class="sent" id="s0_30">Nevertheless, it is possible that, as sperm whale populations recover to their former numbers in the wild, so the sight of lumps of ambergris washed ashore along the tide line will once again become a familiar one to beachcombers the world over.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,6" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;6</div><button type="button" class="flag-toggle" data-flagrange="1,6" title="Flag for review" aria-label="Flag questions 1-6">&#9873;</button></div><div class="q-group-instructions"><p>According to the information in Reading Passage 1, classify the following facts as</p><p>referring to</p><p>Write the correct letter, A, B, C or D, in boxes 1–6 on your answer sheet.</p></div><div class="word-bank"><span class="wb-item"><span class="wb-letter">A</span> ambergris only</span><span class="wb-item"><span class="wb-letter">B</span> amber only</span><span class="wb-item"><span class="wb-letter">C</span> both ambergris and amber</span><span class="wb-item"><span class="wb-letter">D</span> neither ambergris nor amber</span></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">very expensive</span><select class="q-select" name="q1"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">a food flavouring</span><select class="q-select" name="q2"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">used as currency</span><select class="q-select" name="q3"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">sweet-smelling</span><select class="q-select" name="q4"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">referred to by Herman Melville</span><select class="q-select" name="q5"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div class="q-row"><span class="q-num">6</span><span class="q-stem">can be seen through</span><select class="q-select" name="q6"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div></div><div class="q-group" data-flagrange="7,9" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 7&ndash;9</div><button type="button" class="flag-toggle" data-flagrange="7,9" title="Flag for review" aria-label="Flag questions 7-9">&#9873;</button></div><div class="q-group-instructions"><p>Complete the flow-chart below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 7–9 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title" style="text-align:left">How ambergris is formed</div><div class="flow-box">Ambergris is formed in whales because of problems digesting the <span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> of giant squid.</div><div class="flow-arrow">&#9660;</div><div class="flow-box">Black liquid is produced and is <span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> from time to time.</div><div class="flow-arrow">&#9660;</div><div class="flow-box">The liquid <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"> on contact with the air.</div></div></div><div class="q-group" data-flagrange="10,13" data-gid="p0g2"><div class="q-group-header"><div class="q-group-title">Questions 10&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="10,13" title="Flag for review" aria-label="Flag questions 10-13">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 10–13 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">10</span><span class="q-stem">In the 20th century, most of the world&#x27;s ambergris came from processing dead whales.</span><select class="q-select" name="q10"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">11</span><span class="q-stem">The value of ambergris has increased recently.</span><select class="q-select" name="q11"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">12</span><span class="q-stem">Ambergris remains an important ingredient in perfume.</span><select class="q-select" name="q12"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">13</span><span class="q-stem">New uses have recently been found for ambergris.</span><select class="q-select" name="q13"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">Photography</div><div class="passage-subtitle">Photography emerged as part of a cluster of technical inventions and innovations around the middle of the nineteenth century. Hailed as a great technological invention, it immediately became the subject of debates concerning its aesthetic status and its uses.</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">Central to the nineteenth-century debate about the nature of photography as a new technology was the question as to how far it could be considered as art.</span> <span class="sent" id="s1_1">It was celebrated for its putative ability to produce accurate images of what was in front of the camera&#x27;s lens: images which were seen as being mechanically produced and thus free of the selective discriminations of the human eye and hand.</span> <span class="sent" id="s1_2">On precisely the same grounds, the medium was often regarded as falling outside the realm of art as its assumed power of accurate, dispassionate recording appeared to leave no room for the artist&#x27;s compositional creativity.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_3">Debates concerning the status of photography as art continued to take place in periodicals throughout the nineteenth century.</span> <span class="sent" id="s1_4">The French poet Baudelaire linked &#x27;the invasion of photography and the great industrial madness of today&#x27; and asserted that if photography is allowed to deputise for art in some of art&#x27;s activities, it will not be long before it has supplanted or corrupted art altogether.</span> <span class="sent" id="s1_5">In his view, photography&#x27;s only function was to support intellectual enquiry.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_6">Baudelaire was not alone in this view.</span> <span class="sent" id="s1_7">Absolute material accuracy was seen as the hallmark of photography, and the nineteenth-century desire to explore, record and catalogue human experience, both at home and overseas, encouraged people to emphasise photography as a method of naturalistic documentation, rather than any type of art form.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_8">Photographers responded to criticisms of this kind in two ways: either they accepted that photography was something different from art and sought to discover what the intrinsic properties of the medium were, or they pointed out that photography was more than a mechanical form of image-making, that it could be worked on and contrived so as to produce pictures which in some ways resembled paintings.</span> <span class="sent" id="s1_9">&#x27;Pictorial&#x27; photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.</span> <span class="sent" id="s1_10">For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_11">In the other camp were those photographers who celebrated the qualities of straight photography (with an emphasis upon direct documentary photography), typical of the Modern period in American photography, and did not want to treat the medium as a kind of monochrome painting.</span> <span class="sent" id="s1_12">They were interested in photography&#x27;s ability to provide apparently accurate records of the visual world and tried to give their images the formal status and finish of paintings while concentrating their attention on its intrinsic quality.</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_13">Photography in Britain and France was initially heralded for its technical recording abilities.</span> <span class="sent" id="s1_14">With few exceptions, the emphasis was on picture-taking rather than picture-making – to echo a distinction made by Margaret Harker.</span> <span class="sent" id="s1_15">She suggests that the development of the art of photography in the late 1850s can be partly accounted for through the increasing involvement of people trained as artists.</span> <span class="sent" id="s1_16">They brought with them a concern for form and composition and, in particular, the use of light.</span> <span class="sent" id="s1_17">Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.</span> <span class="sent" id="s1_18">For instance, while few could afford the time and cost of sitting for a painted portrait, the studio photographer could offer a similar service more cheaply.</span> <span class="sent" id="s1_19">As such, portraiture became more democratically available.</span> <span class="sent" id="s1_20">This did not prevent a continuing hierarchy: the painted portrait was still commissioned by the wealthy and the aristocracy.</span> <span class="sent" id="s1_21">But it did allow a greater number of people the status of seeing themselves pictured.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_22">Furthermore, photography provoked artists to re-examine the nature and potential of paint as a particular medium.</span> <span class="sent" id="s1_23">Photography appeared to be more successful than painting in capturing likenesses.</span> <span class="sent" id="s1_24">It had a sense of instantaneousness that painting lacked.</span> <span class="sent" id="s1_25">It has been suggested that photography encouraged Impressionist painters to experiment with manners of painting which could also capture a sense of the moment, and the passage of light.</span> <span class="sent" id="s1_26">It is a truism that photography released painting from its responsibility for literal depiction, allowing it to become more experimental.</span> <span class="sent" id="s1_27">However, the developing relationship between the two was considerably more symbiotic.</span></p><p data-para="H"><span class="para-letter">H</span><span class="sent" id="s1_28">Another respect in which photography may be said to have extended art was in its role as the re-presenter of art objects.</span> <span class="sent" id="s1_29">It was no longer necessary to travel to Florence to see paintings of the Medici, or to Egypt to contemplate classical architecture or artefacts; you could visit an exhibition and view reproductions.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,17" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;17</div><button type="button" class="flag-toggle" data-flagrange="14,17" title="Flag for review" aria-label="Flag questions 14-17">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has eight paragraphs, A–H.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–H, in boxes 14–17 on your answer sheet.</p></div><div class="q-row"><span class="q-num">14</span><span class="q-stem">fears voiced about the potential threat posed to art by photography</span><select class="q-select" name="q14"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">15</span><span class="q-stem">the skills of artists being used in photography</span><select class="q-select" name="q15"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">16</span><span class="q-stem">the attempts of photographers to imitate art</span><select class="q-select" name="q16"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">17</span><span class="q-stem">the influence of photography on artists and painting</span><select class="q-select" name="q17"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div></div><div class="q-group" data-flagrange="18,22" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 18&ndash;22</div><button type="button" class="flag-toggle" data-flagrange="18,22" title="Flag for review" aria-label="Flag questions 18-22">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary of paragraphs D and E below.</p><p>Choose <b>ONE WORD ONLY</b> from paragraph D or E for each answer.</p><p>Write your answers in boxes 18–22 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Photographers&#x27; responses to criticism</div><div style="margin-bottom:.5rem">In response to the suggestion that photography could not be considered an art form, photographers acted in two ways. Some of them rejected this criticism, certain that they could create pictures similar to <span class="q-num">18</span> <input type="text" class="q-text" name="q18" autocomplete="off" spellcheck="false">. They did this by carefully setting up the different parts of the <span class="q-num">19</span> <input type="text" class="q-text" name="q19" autocomplete="off" spellcheck="false"> before taking the photograph. Other things they did included causing the picture to be rather <span class="q-num">20</span> <input type="text" class="q-text" name="q20" autocomplete="off" spellcheck="false">, and some who wanted to try to make the print look like a canvas even <span class="q-num">21</span> <input type="text" class="q-text" name="q21" autocomplete="off" spellcheck="false"> their photographs. Others were anxious that their work should not be looked upon as some sort of <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"> painting and were much more concerned with the fact that the camera seemed to be able to produce a more accurate representation of what they could see around them.</div></div></div><div class="q-group" data-flagrange="23,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 23&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="23,26" title="Flag for review" aria-label="Flag questions 23-26">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 2?</p><p>In boxes 23–26 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">23</span><span class="q-stem">In the 1850s, trained artists were reluctant to take up photography.</span><select class="q-select" name="q23"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">24</span><span class="q-stem">Many photographers felt the need to learn certain techniques from taking art courses.</span><select class="q-select" name="q24"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">25</span><span class="q-stem">Photography brought the demand for portrait painting to an end.</span><select class="q-select" name="q25"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">26</span><span class="q-stem">With the advent of photography, some painters no longer concerned themselves with accuracy.</span><select class="q-select" name="q26"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">The long view</div><div class="passage-subtitle">Climate change, moon bases, cybercrime – we all know the predictions, but how are they made? One expert explains the science of futurology</div><p data-para="1"><span class="sent" id="s2_0">The business of predicting the future has a long history.</span> <span class="sent" id="s2_1">Several millennia ago in ancient Greece, people would consult Apollo, the god of prophecy, to learn if fortune favoured their chosen course of action.</span> <span class="sent" id="s2_2">The tradition has changed considerably since then.</span> <span class="sent" id="s2_3">Today, futurology is a science that drives a thriving business – its three main consumers being the military, big business and national governments.</span> <span class="sent" id="s2_4">Modern futurists do not predict that a certain event will occur at a particular time.</span> <span class="sent" id="s2_5">Instead they look at what is happening now to see what this may lead to further down the line.</span> <span class="sent" id="s2_6">Alternatively, they start with a desired result and work out how people and organisations can be manoeuvred into realising that ambition.</span></p><p data-para="2"><span class="sent" id="s2_7">The oil company Shell has been one of the major producers of future studies.</span> <span class="sent" id="s2_8">It recently published a comprehensive study looking at how people may live in 2020 and 2050, given the type of energy which is purchased.</span> <span class="sent" id="s2_9">Philip Watts from Shell says, &#x27;This is not an exercise in prophecy.</span> <span class="sent" id="s2_10">Rather it is designed to challenge our thinking so that we can make better choices in today&#x27;s business world.&#x27;</span></p><p data-para="3"><span class="sent" id="s2_11">The short-term attitudes and bureaucracy of many governments can be frustrating to futurists, but this mutual wariness is slowly changing.</span> <span class="sent" id="s2_12">The Scottish Parliament recently hosted a conference of 150 futurists from across the globe.</span> <span class="sent" id="s2_13">The parliament is setting up a forum to look at where Scotland is heading in the next 20 years.</span> <span class="sent" id="s2_14">Among the issues are demographics and economic competition within Europe and with Asia.</span> <span class="sent" id="s2_15">It&#x27;s a first for the United Kingdom, although not for Europe – this strategy has already been put into practice in Finland.</span></p><p data-para="4"><span class="sent" id="s2_16">Eamonn Kelly, head of the San Francisco-based Global Business Network futurist group, was one of those who attended the conference.</span> <span class="sent" id="s2_17">According to Kelly, &#x27;There are many different tools a futurist can employ but essentially there are three main ingredients.</span> <span class="sent" id="s2_18">First, there is the &quot;science&quot;, which can encompass everything from environmental studies to psychology.</span> <span class="sent" id="s2_19">Then, there is the &quot;craft&quot;, which may include interviews and the creation of maps of cause and effect.</span> <span class="sent" id="s2_20">Finally, there is the &quot;art&quot;, the intuitive ability to meld all this into a coherent whole.&#x27;</span></p><p data-para="5"><span class="sent" id="s2_21">Dr James Canton is founder of the San Francisco-based Institute for Global Futures and has been an adviser to leading US companies.</span> <span class="sent" id="s2_22">Like many futurists he started in the private sector but is also comfortable in academia and has an urge to change things for the better.</span> <span class="sent" id="s2_23">&#x27;A futurist is an alchemist who mixes the quantitative and the qualitative,&#x27; he says.</span> <span class="sent" id="s2_24">&#x27;He needs intuition and has to work with people from a range of academic backgrounds gathering primary evidence about what motivates people.</span> <span class="sent" id="s2_25">Futurists are constantly discussing ideas with their peers, but they do not simply surf the net picking up on the latest fad.&#x27;</span></p><p data-para="6"><span class="sent" id="s2_26">New Zealand futurist Robin Gunston says, &#x27;I don&#x27;t believe you can train yourself to become a futurist.</span> <span class="sent" id="s2_27">A certain amount of this is to do with how your brain is hard-wired and we know this is difficult to change.</span> <span class="sent" id="s2_28">Futurology requires extensive life experience and a broad education to test theories against.</span> <span class="sent" id="s2_29">Much of modern teenage culture is about me, what I want and what the world owes me – that does not make it easy to see different kinds of futures and pose the hard questions about how we will get there.&#x27;</span></p><p data-para="7"><span class="sent" id="s2_30">Those best able to respond to futurists are the most agile.</span> <span class="sent" id="s2_31">&#x27;Large corporations beholden to shareholders and governments burdened by bureaucracy are often simply too slow.</span> <span class="sent" id="s2_32">Asian companies tend to be better prepared because they take a longer perspective.</span> <span class="sent" id="s2_33">Sony, for example, is very forward looking,&#x27; Canton says.</span> <span class="sent" id="s2_34">&#x27;There will be sunset and sunrise nations and corporations, in terms of prosperity in the 21st century.</span> <span class="sent" id="s2_35">The winners will be those corporations and governments which conduct future studies and take steps to become future-proofed.&#x27;</span></p><p data-para="8"><span class="sent" id="s2_36">According to Alan Beckley, a former West Mercia chief inspector and past president of the Police Futurists International (PFI), getting public bodies in the UK future-proofed could be a long process.</span> <span class="sent" id="s2_37">&#x27;People are concerned about the methodology and the reliability of future studies,&#x27; he says.</span> <span class="sent" id="s2_38">&#x27;They are more likely to follow their political masters than go to them and say, &quot;We have done this scenario, and this is what we should do&quot;.</span> <span class="sent" id="s2_39">However, as the Scottish Parliament has shown, there are a few examples of government exercises.</span> <span class="sent" id="s2_40">Also, in 2003 Britain&#x27;s Foreign and Commonwealth Office (FCO) published for the first time its strategic thinking for the next decade.</span> <span class="sent" id="s2_41">This document was drawn up with the help of in-house and outside futurists.</span> <span class="sent" id="s2_42">FCO minister Bill Rammell says, &#x27;We do occasionally look further ahead than the next ten years on issues such as demographics.</span> <span class="sent" id="s2_43">But the period chosen for the strategy was deliberately a decade.</span> <span class="sent" id="s2_44">Even assumptions about technology get very shaky beyond that.&#x27;</span></p><p data-para="9"><span class="sent" id="s2_45">American futurist Steve Brant stresses the importance of remembering that the road ahead has yet to be chosen.</span> <span class="sent" id="s2_46">&#x27;People can create the future they want using various points of leverage,&#x27; he says.</span> <span class="sent" id="s2_47">&#x27;We have much more influence over what the future will be like than many of us realise.</span> <span class="sent" id="s2_48">Futurists used to be like firefighters – they tried to work out what to do if things went wrong.</span> <span class="sent" id="s2_49">Now, the aim of this profession is to imagine the best possible future for society and start creating it today.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,33" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;33</div><button type="button" class="flag-toggle" data-flagrange="27,33" title="Flag for review" aria-label="Flag questions 27-33">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements (Questions 27–33) and the list of people below.</p><p>Match each statement with the correct person, A–F.</p><p>Write the correct letter, A–F, in boxes 27–33 on your answer sheet.</p><p>NB You may use any letter more than once.</p></div><div class="word-bank"><div class="wb-title">List of People</div><span class="wb-item"><span class="wb-letter">A</span> Philip Watts</span><span class="wb-item"><span class="wb-letter">B</span> Dr James Canton</span><span class="wb-item"><span class="wb-letter">C</span> Robin Gunston</span><span class="wb-item"><span class="wb-letter">D</span> Alan Beckley</span><span class="wb-item"><span class="wb-letter">E</span> Bill Rammell</span><span class="wb-item"><span class="wb-letter">F</span> Steve Brant</span></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">Flexible organisations are in a better position to make use of futurology.</span><select class="q-select" name="q27"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">Predictions about any period beyond the next ten years cannot be trusted.</span><select class="q-select" name="q28"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">Only certain people are suited to becoming futurists.</span><select class="q-select" name="q29"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">Future studies are designed to inform current commercial decisions.</span><select class="q-select" name="q30"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">Futurology involves a broad exchange of information but is not influenced by every new idea.</span><select class="q-select" name="q31"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">People are not aware of the extent to which they can determine the future.</span><select class="q-select" name="q32"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">A lack of confidence in futurology affects how widely it is used.</span><select class="q-select" name="q33"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div></div><div class="q-group" data-flagrange="34,37" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 34&ndash;37</div><button type="button" class="flag-toggle" data-flagrange="34,37" title="Flag for review" aria-label="Flag questions 34-37">&#9873;</button></div><div class="q-group-instructions"><p>Complete the sentences below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 34–37 on your answer sheet.</p></div><div class="q-row"><span class="q-num">34</span><span>A report by Shell considered the impact of various kinds of <span class="q-num">34</span> <input type="text" class="q-text" name="q34" autocomplete="off" spellcheck="false"> on future lifestyles.</span></div><div class="q-row"><span class="q-num">35</span><span>The Scottish Parliament has decided to use futurists to advise on <span class="q-num">35</span> <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false"> from Asian and other European countries.</span></div><div class="q-row"><span class="q-num">36</span><span>Dr James Canton is similar to other futurists in that he began his career in the <span class="q-num">36</span> <input type="text" class="q-text" name="q36" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">37</span><span>Britain&#x27;s FCO sometimes studies developments in areas like <span class="q-num">37</span> <input type="text" class="q-text" name="q37" autocomplete="off" spellcheck="false"> beyond 10 years.</span></div></div><div class="q-group" data-flagrange="38,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 38&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="38,40" title="Flag for review" aria-label="Flag questions 38-40">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>THREE</b> letters, A–G.</p><p>Write the correct letters in boxes 38–40 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>THREE</b> of the following statements are true according to the passage?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="A"><span class="opt-letter">A</span><span>Present-day futurology can focus on achieving a particular outcome.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="B"><span class="opt-letter">B</span><span>Futurists recognise that most governments have already made long-term plans.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="C"><span class="opt-letter">C</span><span>The world&#x27;s first futurology conference was hosted by Finland.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="D"><span class="opt-letter">D</span><span>Futurists need to talk to people from various areas of expertise.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="E"><span class="opt-letter">E</span><span>Futurists should carry out internet research to keep up with popular trends.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="F"><span class="opt-letter">F</span><span>Aspects of modern culture prepare people well for a career in futurology.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p2g2" data-pick="3" value="G"><span class="opt-letter">G</span><span>Conducting future studies can affect whether a company continues to be successful.</span></label></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 6, "minutes": 60, "parts": [{"title": "Ambergris – what is it and where does it come from?", "short": "Ambergris –", "qstart": 1, "qend": 13}, {"title": "Photography", "short": "Photography", "qstart": 14, "qend": 26}, {"title": "The long view", "short": "The long", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "C", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "A", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "D", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "A", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "C", "group": "p0g0", "part": 1}, {"n": 6, "kind": "select", "ans": "B", "group": "p0g0", "part": 1}, {"n": 7, "kind": "text", "ans": ["beaks"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["vomited up", "vomited"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["hardens"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "select", "ans": "TRUE", "group": "p0g2", "part": 1}, {"n": 11, "kind": "select", "ans": "NOT GIVEN", "group": "p0g2", "part": 1}, {"n": 12, "kind": "select", "ans": "FALSE", "group": "p0g2", "part": 1}, {"n": 13, "kind": "select", "ans": "NOT GIVEN", "group": "p0g2", "part": 1}, {"n": 14, "kind": "select", "ans": "B", "group": "p1g0", "part": 2}, {"n": 15, "kind": "select", "ans": "F", "group": "p1g0", "part": 2}, {"n": 16, "kind": "select", "ans": "D", "group": "p1g0", "part": 2}, {"n": 17, "kind": "select", "ans": "G", "group": "p1g0", "part": 2}, {"n": 18, "kind": "text", "ans": ["paintings"], "group": "p1g1", "part": 2}, {"n": 19, "kind": "text", "ans": ["composition"], "group": "p1g1", "part": 2}, {"n": 20, "kind": "text", "ans": ["blurred"], "group": "p1g1", "part": 2}, {"n": 21, "kind": "text", "ans": ["scratched"], "group": "p1g1", "part": 2}, {"n": 22, "kind": "text", "ans": ["monochrome"], "group": "p1g1", "part": 2}, {"n": 23, "kind": "select", "ans": "FALSE", "group": "p1g2", "part": 2}, {"n": 24, "kind": "select", "ans": "NOT GIVEN", "group": "p1g2", "part": 2}, {"n": 25, "kind": "select", "ans": "FALSE", "group": "p1g2", "part": 2}, {"n": 26, "kind": "select", "ans": "TRUE", "group": "p1g2", "part": 2}, {"n": 27, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "E", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "C", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "A", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 32, "kind": "select", "ans": "F", "group": "p2g0", "part": 3}, {"n": 33, "kind": "select", "ans": "D", "group": "p2g0", "part": 3}, {"n": 34, "kind": "text", "ans": ["energy"], "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["economic competition"], "group": "p2g1", "part": 3}, {"n": 36, "kind": "text", "ans": ["private sector"], "group": "p2g1", "part": 3}, {"n": 37, "kind": "text", "ans": ["demographics"], "group": "p2g1", "part": 3}, {"n": 38, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 0, "groupAns": ["A", "D", "G"]}, {"n": 39, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 1, "groupAns": ["A", "D", "G"]}, {"n": 40, "kind": "multi", "ans": null, "group": "p2g2", "part": 3, "idx": 2, "groupAns": ["A", "D", "G"]}];
+const HEADING_TEXT = {};
+const LOC = {"1": "s0_4", "2": "s0_1", "3": "s0_4", "4": "s0_2", "5": "s0_8", "6": "s0_10", "7": "s0_19", "8": "s0_21", "9": "s0_22", "10": "s0_27", "11": "s0_27", "12": "s0_29", "13": "s0_0", "14": "s1_4", "15": "s1_15", "16": "s1_10", "17": "s1_22", "18": "s1_8", "19": "s1_9", "20": "s1_10", "21": "s1_10", "22": "s1_11", "23": "s1_15", "24": "s1_16", "25": "s1_20", "26": "s1_26", "27": "s2_30", "28": "s2_44", "29": "s2_26", "30": "s2_10", "31": "s2_25", "32": "s2_47", "33": "s2_37", "34": "s2_8", "35": "s2_14", "36": "s2_22", "37": "s2_42", "38": "s2_6", "39": "s2_24", "40": "s2_35"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "very expensive", "options": [{"t": "At one time, ambergris was worth its weight in gold, but there was much confusion about its origins.", "ok": true}, {"t": "In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.", "ok": false}, {"t": "Ambergris itself is pleasantly aromatic, especially when warmed, and it was also highly valued as a fixing agent in the making of perfume, since it enabled a scent to retain its fragrance for much longer than might otherwise have been possible.", "ok": false}, {"t": "Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.", "ok": false}], "pairs": ["very expensive = Both substances were rare and costly", "very expensive = worth its weight in gold"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "C"}, "why": ""}, {"q": 2, "question": "a food flavouring", "options": [{"t": "Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.", "ok": false}, {"t": "In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.", "ok": false}, {"t": "Ambergris itself is pleasantly aromatic, especially when warmed, and it was also highly valued as a fixing agent in the making of perfume, since it enabled a scent to retain its fragrance for much longer than might otherwise have been possible.", "ok": false}, {"t": "It was also widely used as a spice, when added to food or wine.", "ok": true}], "pairs": ["a food flavouring = widely used as a spice, when added to food or wine"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "A"}, "why": ""}, {"q": 3, "question": "used as currency", "options": [{"t": "In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.", "ok": false}, {"t": "It was also widely used as a spice, when added to food or wine.", "ok": false}, {"t": "At one time, ambergris was worth its weight in gold, but there was much confusion about its origins.", "ok": true}, {"t": "Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.", "ok": false}], "pairs": ["used as currency ? worth its weight in gold"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "D"}, "why": ""}, {"q": 4, "question": "sweet-smelling", "options": [{"t": "Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.", "ok": false}, {"t": "Ambergris itself is pleasantly aromatic, especially when warmed, and it was also highly valued as a fixing agent in the making of perfume, since it enabled a scent to retain its fragrance for much longer than might otherwise have been possible.", "ok": true}, {"t": "In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.", "ok": false}, {"t": "At one time, ambergris was worth its weight in gold, but there was much confusion about its origins.", "ok": false}], "pairs": ["sweet-smelling = pleasantly aromatic", "amber is sweet-smelling ≠ transparent, brittle, odorless substance"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "A"}, "why": ""}, {"q": 5, "question": "referred to by Herman Melville", "options": [{"t": "In Chapter 92 of Moby Dick, the American writer Herman Melville pours scorn on those who believed the two substances to be the same: 'Though the word ambergris is but the French compound for grey amber, yet the two substances are quite distinct.", "ok": true}, {"t": "Both substances were rare and costly, and both were associated with the sea, largely because for Europeans the most common source of amber was the shores of the Baltic.", "ok": false}, {"t": "Besides, amber is a hard, transparent, brittle, odorless substance, used for mouth-pieces to pipes, for beads and ornaments; but ambergris is soft, waxy, and so highly fragrant that it is largely used in perfumery.'", "ok": false}, {"t": "For amber, though at times found on the sea-coast, is also dug up in some far inland soils, whereas ambergris is never found except upon the sea.", "ok": false}], "pairs": ["referred to by Herman Melville = the American writer Herman Melville pours scorn on those who believed the two substances to be the same"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "C"}, "why": ""}, {"q": 6, "question": "can be seen through", "options": [{"t": "Both substances were rare and costly, and both were associated with the sea, largely because for Europeans the most common source of amber was the shores of the Baltic.", "ok": false}, {"t": "For amber, though at times found on the sea-coast, is also dug up in some far inland soils, whereas ambergris is never found except upon the sea.", "ok": false}, {"t": "In Chapter 92 of Moby Dick, the American writer Herman Melville pours scorn on those who believed the two substances to be the same: 'Though the word ambergris is but the French compound for grey amber, yet the two substances are quite distinct.", "ok": false}, {"t": "Besides, amber is a hard, transparent, brittle, odorless substance, used for mouth-pieces to pipes, for beads and ornaments; but ambergris is soft, waxy, and so highly fragrant that it is largely used in perfumery.'", "ok": true}], "pairs": ["can be seen through = transparent"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "ambergris only"}, {"k": "B", "t": "amber only"}, {"k": "C", "t": "both ambergris and amber"}, {"k": "D", "t": "neither ambergris nor amber"}], "ans": "B"}, "why": ""}, {"q": 7, "question": "Ambergris is formed in whales because of problems digesting the <b>.........<\/b> of giant squid.", "options": [{"t": "Sperm whales are renowned for their ability to dive to great depths, possibly as far as 3,000 metres below the surface, and for remaining underwater for periods of two hours or more in pursuit of their favourite prey, the giant squid.", "ok": false}, {"t": "Once outside the whale's body and exposed to air, the substance hardens, acquiring the waxy, greyish and pleasantly aromatic characteristics of ambergris.", "ok": false}, {"t": "Often the beaks of squid are still found embedded in lumps of ambergris, some of which can weigh several hundred kilograms.", "ok": false}, {"t": "It is from the problems the whales have in digesting the beaks of such creatures that ambergris has its origins.", "ok": true}], "pairs": ["problems digesting the ___ of giant squid = the problems the whales have in digesting the beaks of such creatures"], "kind": "Completion", "answer": "beaks", "accept": ["beaks"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 8, "question": "Black liquid is produced and is <b>.........<\/b> from time to time.", "options": [{"t": "Melville took some delight in contrasting the origins of ambergris with the high value placed upon it by refined society: 'Who would think, then, that such fine ladies and gentlemen should regale themselves with an essence found in the inglorious bowels of a sick whale!'", "ok": false}, {"t": "Once outside the whale's body and exposed to air, the substance hardens, acquiring the waxy, greyish and pleasantly aromatic characteristics of ambergris.", "ok": false}, {"t": "The beak is sharp and irritates the whale's lower intestine, which responds by producing a black, foul-smelling liquid.", "ok": false}, {"t": "It is not clear to scientists whether this secretion should be considered a normal response by the whale's digestive system or a pathological one, but from time to time large quantities of the liquid are vomited up by the whale.", "ok": true}], "pairs": ["is ___ from time to time = from time to time large quantities of the liquid are vomited up by the whale"], "kind": "Completion", "answer": "vomited up", "accept": ["vomited up", "vomited"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 9, "question": "The liquid <b>.........<\/b> on contact with the air.", "options": [{"t": "Once outside the whale's body and exposed to air, the substance hardens, acquiring the waxy, greyish and pleasantly aromatic characteristics of ambergris.", "ok": true}, {"t": "The beak is sharp and irritates the whale's lower intestine, which responds by producing a black, foul-smelling liquid.", "ok": false}, {"t": "Melville took some delight in contrasting the origins of ambergris with the high value placed upon it by refined society: 'Who would think, then, that such fine ladies and gentlemen should regale themselves with an essence found in the inglorious bowels of a sick whale!'", "ok": false}, {"t": "It is not clear to scientists whether this secretion should be considered a normal response by the whale's digestive system or a pathological one, but from time to time large quantities of the liquid are vomited up by the whale.", "ok": false}], "pairs": ["on contact with the air = Once outside the whale's body and exposed to air, the substance hardens"], "kind": "Completion", "answer": "hardens", "accept": ["hardens"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 10, "question": "In the 20th century, most of the world&#x27;s ambergris came from processing dead whales.", "options": [{"t": "Sperm whales were ruthlessly pursued by commercial whalers in the 19th and 20th centuries.", "ok": false}, {"t": "Nevertheless, it is possible that, as sperm whale populations recover to their former numbers in the wild, so the sight of lumps of ambergris washed ashore along the tide line will once again become a familiar one to beachcombers the world over.", "ok": false}, {"t": "However, even before the ban on hunting sperm whales was imposed, the 1972 Marine Mammal Protection Act had prohibited trade in ambergris.", "ok": false}, {"t": "Ambergris was by far the most valuable product to be extracted during the processing of the whales' carcasses, and over 90 per cent of the annual worldwide total was acquired in this way, as a by-product of commercial whaling.", "ok": true}], "pairs": ["most of the world's ambergris = over 90 per cent of the annual worldwide total", "came from processing dead whales = the processing of the whales' carcasses"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 11, "question": "The value of ambergris has increased recently.", "options": [{"t": "Just as petroleum and plastic products were replacing other natural products of whaling, so ambergris was supplanted in the making of perfume by other materials, some natural and some synthetic in origin.", "ok": false}, {"t": "Nevertheless, it is possible that, as sperm whale populations recover to their former numbers in the wild, so the sight of lumps of ambergris washed ashore along the tide line will once again become a familiar one to beachcombers the world over.", "ok": false}, {"t": "However, even before the ban on hunting sperm whales was imposed, the 1972 Marine Mammal Protection Act had prohibited trade in ambergris.", "ok": false}, {"t": "Ambergris was by far the most valuable product to be extracted during the processing of the whales' carcasses, and over 90 per cent of the annual worldwide total was acquired in this way, as a by-product of commercial whaling.", "ok": true}], "pairs": ["The value of ambergris has increased recently ? Ambergris was by far the most valuable product"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 12, "question": "Ambergris remains an important ingredient in perfume.", "options": [{"t": "Nevertheless, it is possible that, as sperm whale populations recover to their former numbers in the wild, so the sight of lumps of ambergris washed ashore along the tide line will once again become a familiar one to beachcombers the world over.", "ok": false}, {"t": "Ambergris was by far the most valuable product to be extracted during the processing of the whales' carcasses, and over 90 per cent of the annual worldwide total was acquired in this way, as a by-product of commercial whaling.", "ok": false}, {"t": "However, even before the ban on hunting sperm whales was imposed, the 1972 Marine Mammal Protection Act had prohibited trade in ambergris.", "ok": false}, {"t": "Just as petroleum and plastic products were replacing other natural products of whaling, so ambergris was supplanted in the making of perfume by other materials, some natural and some synthetic in origin.", "ok": true}], "pairs": ["remains an important ingredient in perfume ≠ ambergris was supplanted in the making of perfume by other materials"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 13, "question": "New uses have recently been found for ambergris.", "options": [{"t": "Most ambergris was found in the form of lumps floating on the surface of the sea, or washed up on the shores of tropical and temperate oceans.", "ok": false}, {"t": "In the ancient world, the waxy grey substance we now refer to as ambergris was highly prized for its medicinal properties, and was believed to be an aphrodisiac.", "ok": true}, {"t": "Ambergris itself is pleasantly aromatic, especially when warmed, and it was also highly valued as a fixing agent in the making of perfume, since it enabled a scent to retain its fragrance for much longer than might otherwise have been possible.", "ok": false}, {"t": "At one time, ambergris was worth its weight in gold, but there was much confusion about its origins.", "ok": false}], "pairs": ["New uses have recently been found ? highly prized for its medicinal properties"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}], "paraphrase": [{"q": "very expensive", "p": "Both substances were rare and costly", "rel": "=", "note": "", "n": "1"}, {"q": "very expensive", "p": "worth its weight in gold", "rel": "=", "note": "", "n": "1"}, {"q": "a food flavouring", "p": "widely used as a spice, when added to food or wine", "rel": "=", "note": "", "n": "2"}, {"q": "used as currency", "p": "worth its weight in gold", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "3"}, {"q": "sweet-smelling", "p": "pleasantly aromatic", "rel": "=", "note": "", "n": "4"}, {"q": "amber is sweet-smelling", "p": "transparent, brittle, odorless substance", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "4"}, {"q": "referred to by Herman Melville", "p": "the American writer Herman Melville pours scorn on those who believed the two substances to be the same", "rel": "=", "note": "", "n": "5"}, {"q": "can be seen through", "p": "transparent", "rel": "=", "note": "", "n": "6"}, {"q": "problems digesting the ___ of giant squid", "p": "the problems the whales have in digesting the beaks of such creatures", "rel": "=", "note": "", "n": "7"}, {"q": "is ___ from time to time", "p": "from time to time large quantities of the liquid are vomited up by the whale", "rel": "=", "note": "", "n": "8"}, {"q": "on contact with the air", "p": "Once outside the whale's body and exposed to air, the substance hardens", "rel": "=", "note": "", "n": "9"}, {"q": "most of the world's ambergris", "p": "over 90 per cent of the annual worldwide total", "rel": "=", "note": "", "n": "10"}, {"q": "came from processing dead whales", "p": "the processing of the whales' carcasses", "rel": "=", "note": "", "n": "10"}, {"q": "The value of ambergris has increased recently", "p": "Ambergris was by far the most valuable product", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "11"}, {"q": "remains an important ingredient in perfume", "p": "ambergris was supplanted in the making of perfume by other materials", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "12"}, {"q": "New uses have recently been found", "p": "highly prized for its medicinal properties", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "13"}], "vocab": [{"w": "highly prized", "pos": "collocation", "loc": "¶1", "d": "valued very much by people", "uz": "juda qadrlangan", "ex": "Saffron is highly prized by chefs because it is so rare.", "form": "highly prized"}, {"w": "aphrodisiac", "pos": "noun", "loc": "¶1", "d": "a food or drug believed to increase romantic desire", "uz": "afrodiziak, ishtiyoq oshiruvchi vosita", "ex": "Oysters have long been regarded as a natural aphrodisiac.", "form": "aphrodisiac"}, {"w": "aromatic", "pos": "adjective", "loc": "¶1", "d": "having a strong, pleasant smell", "uz": "xushbo'y, xushbo'y hidli", "ex": "The kitchen was filled with aromatic herbs drying near the window.", "form": "aromatic"}, {"w": "washed up", "pos": "phrasal verb", "loc": "¶1", "d": "carried onto the shore by the sea", "uz": "qirg'oqqa uloqtirilgan", "ex": "After the storm, plastic bottles were washed up along the entire beach.", "form": "washed up"}, {"w": "worth its weight in gold", "pos": "idiom", "loc": "¶1", "d": "extremely valuable or useful", "uz": "oltinga teng, juda qimmatli", "ex": "A reliable assistant is worth her weight in gold during busy periods.", "form": ""}, {"w": "fossilised", "pos": "adjective", "loc": "¶2", "d": "turned into a hard, stone-like substance over millions of years", "uz": "toshga aylangan, qotib qolgan", "ex": "Scientists found fossilised footprints in the dry riverbed.", "form": "fossilised"}, {"w": "pours scorn on", "pos": "phrasal verb", "loc": "¶2", "d": "criticises something strongly as if it were stupid", "uz": "mazax qilmoq, mensimaslik bilan rad etmoq", "ex": "The minister poured scorn on the idea of a four-day week.", "form": "poured scorn on"}, {"w": "brittle", "pos": "adjective", "loc": "¶2", "d": "hard but easily broken", "uz": "mo'rt, osongina sinadigan", "ex": "Old paper becomes brittle and crumbles when it is handled roughly.", "form": "brittle"}, {"w": "renowned for", "pos": "adjective", "loc": "¶4", "d": "famous and respected for a particular quality", "uz": "...bilan mashhur", "ex": "The region is renowned for its excellent wine and warm hospitality.", "form": "renowned for"}, {"w": "secretion", "pos": "noun", "loc": "¶5", "d": "a liquid substance produced by a part of the body", "uz": "ajralma, shilimshiq suyuqlik", "ex": "Saliva is a natural secretion that helps us to digest food.", "form": "secretion"}, {"w": "pathological", "pos": "adjective", "loc": "¶5", "d": "caused by disease; not normal or healthy", "uz": "patologik, kasallikka oid", "ex": "Doctors could not decide if the symptoms were pathological or simply stress.", "form": "pathological"}, {"w": "embedded", "pos": "adjective", "loc": "¶5", "d": "fixed firmly inside something else", "uz": "ichiga kirib qolgan, o'rnashgan", "ex": "A small piece of glass was embedded in the sole of his shoe.", "form": "embedded"}, {"w": "regale themselves with", "pos": "phrase", "loc": "¶5", "d": "to entertain or enjoy oneself with something pleasant", "uz": "o'zini ... bilan xushnud qilmoq", "ex": "Guests regaled themselves with rich cakes and strong coffee after dinner.", "form": "regaled themselves with"}, {"w": "ruthlessly", "pos": "adverb", "loc": "¶6", "d": "in a cruel way, without any pity", "uz": "shafqatsizlarcha, berahm holda", "ex": "The company ruthlessly cut jobs to protect its profits.", "form": "ruthlessly"}, {"w": "carcasses", "pos": "noun", "loc": "¶6", "d": "the dead bodies of animals", "uz": "o'laksa, hayvon jasadi", "ex": "Vultures circled above the carcasses left in the dry plain.", "form": "carcasses"}, {"w": "by-product", "pos": "noun", "loc": "¶6", "d": "a useful extra thing produced while making something else", "uz": "yon mahsulot, qo'shimcha mahsulot", "ex": "Sawdust is a by-product of the timber industry and is often reused.", "form": "by-product"}, {"w": "supplanted", "pos": "verb", "loc": "¶6", "d": "taken the place of something that was used before", "uz": "o'rnini egallagan, siqib chiqargan", "ex": "Email has largely supplanted the traditional letter in office communication.", "form": "supplanted"}, {"w": "beachcombers", "pos": "noun", "loc": "¶6", "d": "people who search beaches for interesting or valuable objects", "uz": "sohil bo'ylab qidiruvchilar", "ex": "Early morning beachcombers often find shells and pieces of driftwood.", "form": "beachcombers"}]}, {"evidence": [{"q": 14, "question": "fears voiced about the potential threat posed to art by photography", "options": [{"t": "Debates concerning the status of photography as art continued to take place in periodicals throughout the nineteenth century.", "ok": false}, {"t": "The French poet Baudelaire linked 'the invasion of photography and the great industrial madness of today' and asserted that if photography is allowed to deputise for art in some of art's activities, it will not be long before it has supplanted or corrupted art altogether.", "ok": true}, {"t": "Another respect in which photography may be said to have extended art was in its role as the re-presenter of art objects.", "ok": false}, {"t": "Central to the nineteenth-century debate about the nature of photography as a new technology was the question as to how far it could be considered as art.", "ok": false}], "pairs": ["fears voiced about the potential threat posed to art = it will not be long before it has supplanted or corrupted art altogether"], "kind": "Which paragraph?", "answer": "B", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "B", "pill": true}}, {"q": 15, "question": "the skills of artists being used in photography", "options": [{"t": "Furthermore, photography provoked artists to re-examine the nature and potential of paint as a particular medium.", "ok": false}, {"t": "She suggests that the development of the art of photography in the late 1850s can be partly accounted for through the increasing involvement of people trained as artists.", "ok": true}, {"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "Photography in Britain and France was initially heralded for its technical recording abilities.", "ok": false}], "pairs": ["the skills of artists being used in photography = the increasing involvement of people trained as artists"], "kind": "Which paragraph?", "answer": "F", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "F", "pill": true}}, {"q": 16, "question": "the attempts of photographers to imitate art", "options": [{"t": "The French poet Baudelaire linked 'the invasion of photography and the great industrial madness of today' and asserted that if photography is allowed to deputise for art in some of art's activities, it will not be long before it has supplanted or corrupted art altogether.", "ok": false}, {"t": "Another respect in which photography may be said to have extended art was in its role as the re-presenter of art objects.", "ok": false}, {"t": "Absolute material accuracy was seen as the hallmark of photography, and the nineteenth-century desire to explore, record and catalogue human experience, both at home and overseas, encouraged people to emphasise photography as a method of naturalistic documentation, rather than any type of art form.", "ok": false}, {"t": "For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.", "ok": true}], "pairs": ["attempts of photographers to imitate art = in an effort to imitate something of the appearance of a canvas"], "kind": "Which paragraph?", "answer": "D", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "D", "pill": true}}, {"q": 17, "question": "the influence of photography on artists and painting", "options": [{"t": "It is a truism that photography released painting from its responsibility for literal depiction, allowing it to become more experimental.", "ok": false}, {"t": "Furthermore, photography provoked artists to re-examine the nature and potential of paint as a particular medium.", "ok": true}, {"t": "It has been suggested that photography encouraged Impressionist painters to experiment with manners of painting which could also capture a sense of the moment, and the passage of light.", "ok": false}, {"t": "Photography appeared to be more successful than painting in capturing likenesses.", "ok": false}], "pairs": ["the influence of photography on artists and painting = photography provoked artists to re-examine the nature and potential of paint"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}, {"k": "H", "t": "Paragraph H"}], "ans": "G", "pill": true}}, {"q": 18, "question": "Some of them rejected this criticism, certain that they could create pictures similar to <b>.........<\/b>.", "options": [{"t": "Photographers responded to criticisms of this kind in two ways: either they accepted that photography was something different from art and sought to discover what the intrinsic properties of the medium were, or they pointed out that photography was more than a mechanical form of image-making, that it could be worked on and contrived so as to produce pictures which in some ways resembled paintings.", "ok": true}, {"t": "For instance, while few could afford the time and cost of sitting for a painted portrait, the studio photographer could offer a similar service more cheaply.", "ok": false}, {"t": "'Pictorial' photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.", "ok": false}, {"t": "For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.", "ok": false}], "pairs": ["pictures similar to ___ = pictures which in some ways resembled paintings"], "kind": "Completion", "answer": "paintings", "accept": ["paintings"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 19, "question": "They did this by carefully setting up the different parts of the <b>.........<\/b> before taking the photograph.", "options": [{"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "With few exceptions, the emphasis was on picture-taking rather than picture-making – to echo a distinction made by Margaret Harker.", "ok": false}, {"t": "For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.", "ok": false}, {"t": "'Pictorial' photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.", "ok": true}], "pairs": ["carefully setting up the different parts of the ___ = careful arrangement of all the elements of the composition"], "kind": "Completion", "answer": "composition", "accept": ["composition"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 20, "question": "Other things they did included causing the picture to be rather <b>.........<\/b>, and some who wanted to try to make the print look like a canvas even ...... their photographs.", "options": [{"t": "'Pictorial' photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.", "ok": false}, {"t": "For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.", "ok": true}, {"t": "With few exceptions, the emphasis was on picture-taking rather than picture-making – to echo a distinction made by Margaret Harker.", "ok": false}, {"t": "Absolute material accuracy was seen as the hallmark of photography, and the nineteenth-century desire to explore, record and catalogue human experience, both at home and overseas, encouraged people to emphasise photography as a method of naturalistic documentation, rather than any type of art form.", "ok": false}], "pairs": ["causing the picture to be rather ___ = they ensured that the image was somewhat blurred"], "kind": "Completion", "answer": "blurred", "accept": ["blurred"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 21, "question": "Other things they did included causing the picture to be rather ......, and some who wanted to try to make the print look like a canvas even <b>.........<\/b> their photographs.", "options": [{"t": "Absolute material accuracy was seen as the hallmark of photography, and the nineteenth-century desire to explore, record and catalogue human experience, both at home and overseas, encouraged people to emphasise photography as a method of naturalistic documentation, rather than any type of art form.", "ok": false}, {"t": "For example, they ensured that the image was somewhat blurred: they made pictures of allegorical subjects, including religious scenes, and those who worked with the gum bichromate process scratched their prints in an effort to imitate something of the appearance of a canvas.", "ok": true}, {"t": "With few exceptions, the emphasis was on picture-taking rather than picture-making – to echo a distinction made by Margaret Harker.", "ok": false}, {"t": "'Pictorial' photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.", "ok": false}], "pairs": ["make the print look like a canvas = in an effort to imitate something of the appearance of a canvas"], "kind": "Completion", "answer": "scratched", "accept": ["scratched"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 22, "question": "Others were anxious that their work should not be looked upon as some sort of <b>.........<\/b> painting and were much more concerned with the fact that the camera seemed to be able to produce a more accurate representation of what they could see around them.", "options": [{"t": "In the other camp were those photographers who celebrated the qualities of straight photography (with an emphasis upon direct documentary photography), typical of the Modern period in American photography, and did not want to treat the medium as a kind of monochrome painting.", "ok": true}, {"t": "They were interested in photography's ability to provide apparently accurate records of the visual world and tried to give their images the formal status and finish of paintings while concentrating their attention on its intrinsic quality.", "ok": false}, {"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "It was celebrated for its putative ability to produce accurate images of what was in front of the camera's lens: images which were seen as being mechanically produced and thus free of the selective discriminations of the human eye and hand.", "ok": false}], "pairs": ["not looked upon as some sort of ___ painting = did not want to treat the medium as a kind of monochrome painting", "a more accurate representation of what they could see = photography's ability to provide apparently accurate records of the visual world"], "kind": "Completion", "answer": "monochrome", "accept": ["monochrome"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 23, "question": "In the 1850s, trained artists were reluctant to take up photography.", "options": [{"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "Photography in Britain and France was initially heralded for its technical recording abilities.", "ok": false}, {"t": "She suggests that the development of the art of photography in the late 1850s can be partly accounted for through the increasing involvement of people trained as artists.", "ok": true}, {"t": "'Pictorial' photography from the 1850s onwards sought to overcome the problems of photography by careful arrangement of all the elements of the composition and by reducing the signifiers of technological production within the photograph.", "ok": false}], "pairs": ["trained artists were reluctant to take up photography ≠ the increasing involvement of people trained as artists"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 24, "question": "Many photographers felt the need to learn certain techniques from taking art courses.", "options": [{"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "She suggests that the development of the art of photography in the late 1850s can be partly accounted for through the increasing involvement of people trained as artists.", "ok": false}, {"t": "With few exceptions, the emphasis was on picture-taking rather than picture-making – to echo a distinction made by Margaret Harker.", "ok": false}, {"t": "They brought with them a concern for form and composition and, in particular, the use of light.", "ok": true}], "pairs": ["learn certain techniques from taking art courses ? They brought with them a concern for form and composition"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 25, "question": "Photography brought the demand for portrait painting to an end.", "options": [{"t": "Photography came to encroach very directly on genres of painting such as portraiture, not only taking over some of the work of painters, but also extending their work.", "ok": false}, {"t": "This did not prevent a continuing hierarchy: the painted portrait was still commissioned by the wealthy and the aristocracy.", "ok": true}, {"t": "For instance, while few could afford the time and cost of sitting for a painted portrait, the studio photographer could offer a similar service more cheaply.", "ok": false}, {"t": "She suggests that the development of the art of photography in the late 1850s can be partly accounted for through the increasing involvement of people trained as artists.", "ok": false}], "pairs": ["brought the demand for portrait painting to an end ≠ the painted portrait was still commissioned by the wealthy and the aristocracy"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 26, "question": "With the advent of photography, some painters no longer concerned themselves with accuracy.", "options": [{"t": "It has been suggested that photography encouraged Impressionist painters to experiment with manners of painting which could also capture a sense of the moment, and the passage of light.", "ok": false}, {"t": "Photography appeared to be more successful than painting in capturing likenesses.", "ok": false}, {"t": "Furthermore, photography provoked artists to re-examine the nature and potential of paint as a particular medium.", "ok": false}, {"t": "It is a truism that photography released painting from its responsibility for literal depiction, allowing it to become more experimental.", "ok": true}], "pairs": ["painters no longer concerned themselves with accuracy = photography released painting from its responsibility for literal depiction"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}], "paraphrase": [{"q": "fears voiced about the potential threat posed to art", "p": "it will not be long before it has supplanted or corrupted art altogether", "rel": "=", "note": "", "n": "14"}, {"q": "the skills of artists being used in photography", "p": "the increasing involvement of people trained as artists", "rel": "=", "note": "", "n": "15"}, {"q": "attempts of photographers to imitate art", "p": "in an effort to imitate something of the appearance of a canvas", "rel": "=", "note": "", "n": "16"}, {"q": "the influence of photography on artists and painting", "p": "photography provoked artists to re-examine the nature and potential of paint", "rel": "=", "note": "", "n": "17"}, {"q": "pictures similar to ___", "p": "pictures which in some ways resembled paintings", "rel": "=", "note": "", "n": "18"}, {"q": "carefully setting up the different parts of the ___", "p": "careful arrangement of all the elements of the composition", "rel": "=", "note": "", "n": "19"}, {"q": "causing the picture to be rather ___", "p": "they ensured that the image was somewhat blurred", "rel": "=", "note": "", "n": "20"}, {"q": "make the print look like a canvas", "p": "in an effort to imitate something of the appearance of a canvas", "rel": "=", "note": "", "n": "21"}, {"q": "not looked upon as some sort of ___ painting", "p": "did not want to treat the medium as a kind of monochrome painting", "rel": "=", "note": "", "n": "22"}, {"q": "a more accurate representation of what they could see", "p": "photography's ability to provide apparently accurate records of the visual world", "rel": "=", "note": "", "n": "22"}, {"q": "trained artists were reluctant to take up photography", "p": "the increasing involvement of people trained as artists", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "23"}, {"q": "learn certain techniques from taking art courses", "p": "They brought with them a concern for form and composition", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "24"}, {"q": "brought the demand for portrait painting to an end", "p": "the painted portrait was still commissioned by the wealthy and the aristocracy", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "25"}, {"q": "painters no longer concerned themselves with accuracy", "p": "photography released painting from its responsibility for literal depiction", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "putative", "pos": "adjective", "loc": "A", "d": "generally thought or supposed to be true", "uz": "taxminiy, faraz qilingan", "ex": "The putative benefits of the new diet have not been proven.", "form": "putative"}, {"w": "dispassionate", "pos": "adjective", "loc": "A", "d": "calm and fair, not influenced by strong emotion", "uz": "xolis, sovuqqon", "ex": "A judge must give a dispassionate view of the evidence.", "form": "dispassionate"}, {"w": "deputise for", "pos": "phrasal verb", "loc": "B", "d": "to act in place of someone or something else", "uz": "o'rniga ishlamoq, o'rinbosarlik qilmoq", "ex": "The deputy head will deputise for the director during her absence.", "form": "deputise for"}, {"w": "supplanted", "pos": "verb", "loc": "B", "d": "taken the place of something, often by force", "uz": "o'rnini egallagan, siqib chiqargan", "ex": "Digital cameras quickly supplanted film in most households.", "form": "supplanted"}, {"w": "hallmark", "pos": "noun", "loc": "C", "d": "a typical feature that shows quality or character", "uz": "o'ziga xos belgi, nishon", "ex": "Careful planning is the hallmark of a successful project manager.", "form": "hallmark"}, {"w": "naturalistic", "pos": "adjective", "loc": "C", "d": "showing things as they appear in real life", "uz": "tabiiy, real hayotga yaqin", "ex": "The film's naturalistic dialogue makes the characters feel very real.", "form": "naturalistic"}, {"w": "intrinsic", "pos": "adjective", "loc": "D", "d": "belonging naturally to something as an essential part", "uz": "ichki, o'ziga xos", "ex": "Honesty is an intrinsic part of any good teacher's character.", "form": "intrinsic"}, {"w": "contrived", "pos": "adjective", "loc": "D", "d": "deliberately arranged and looking artificial rather than natural", "uz": "sun'iy yaratilgan, atay uyushtirilgan", "ex": "The ending of the story felt contrived and unconvincing.", "form": "contrived"}, {"w": "allegorical", "pos": "adjective", "loc": "D", "d": "using symbols to express a deeper moral or political meaning", "uz": "majoziy, ramziy", "ex": "The painting is an allegorical image of justice and peace.", "form": "allegorical"}, {"w": "straight photography", "pos": "collocation", "loc": "E", "d": "photography that shows the subject sharply and honestly without artistic changes", "uz": "to'g'ridan-to'g'ri fotografiya", "ex": "Straight photography became popular among photographers who disliked artificial effects.", "form": "Straight photography"}, {"w": "encroach", "pos": "verb", "loc": "F", "d": "to slowly take over an area or role belonging to another", "uz": "tajovuz qilmoq, hududiga kirib bormoq", "ex": "Cheap online shops continue to encroach on traditional high-street retailers.", "form": "encroach"}, {"w": "hierarchy", "pos": "noun", "loc": "F", "d": "a system in which people or things are ranked by importance", "uz": "ierarxiya, tabaqalanish", "ex": "There was a strict hierarchy among the staff in the old hospital.", "form": "hierarchy"}, {"w": "provoked", "pos": "verb", "loc": "G", "d": "caused a strong reaction or response in someone", "uz": "qo'zg'atdi, sabab bo'ldi", "ex": "The new law provoked a wave of protests across the country.", "form": "provoked"}, {"w": "capture a sense of the moment", "pos": "collocation", "loc": "G", "d": "to express the feeling of one particular instant in time", "uz": "lahzaning ruhini ifodalamoq", "ex": "Good street photographers capture a sense of the moment in a single frame.", "form": "capture a sense of the moment"}, {"w": "truism", "pos": "noun", "loc": "G", "d": "a statement so obviously true that it is hardly worth saying", "uz": "hammaga ayon haqiqat", "ex": "It is a truism that good habits take time to form.", "form": "truism"}, {"w": "literal depiction", "pos": "collocation", "loc": "G", "d": "an exact picture of something showing it just as it is", "uz": "so'zma-so'z tasvir, aniq tasvirlash", "ex": "Abstract art moves away from the literal depiction of everyday objects.", "form": "literal depiction"}, {"w": "symbiotic", "pos": "adjective", "loc": "G", "d": "describing a relationship in which two sides benefit each other", "uz": "o'zaro foydali, simbiotik", "ex": "Tourism and local farming have a symbiotic relationship in this valley.", "form": "symbiotic"}, {"w": "contemplate", "pos": "verb", "loc": "H", "d": "to look at something thoughtfully for a long time", "uz": "mulohaza qilib tomosha qilmoq, o'ylab ko'rmoq", "ex": "Visitors stood quietly to contemplate the ancient mosaic on the floor.", "form": "contemplate"}]}, {"evidence": [{"q": 27, "question": "Flexible organisations are in a better position to make use of futurology.", "options": [{"t": "Those best able to respond to futurists are the most agile.", "ok": true}, {"t": "Asian companies tend to be better prepared because they take a longer perspective.", "ok": false}, {"t": "'Large corporations beholden to shareholders and governments burdened by bureaucracy are often simply too slow.", "ok": false}, {"t": "Rather it is designed to challenge our thinking so that we can make better choices in today's business world.'", "ok": false}], "pairs": ["Flexible organisations are in a better position to make use of futurology = Those best able to respond to futurists are the most agile"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "B", "t": "Dr James Canton"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}, {"k": "F", "t": "Steve Brant"}], "ans": "B"}, "why": ""}, {"q": 28, "question": "Predictions about any period beyond the next ten years cannot be trusted.", "options": [{"t": "Also, in 2003 Britain's Foreign and Commonwealth Office (FCO) published for the first time its strategic thinking for the next decade.", "ok": false}, {"t": "FCO minister Bill Rammell says, 'We do occasionally look further ahead than the next ten years on issues such as demographics.", "ok": false}, {"t": "Even assumptions about technology get very shaky beyond that.'", "ok": true}, {"t": "But the period chosen for the strategy was deliberately a decade.", "ok": false}], "pairs": ["Predictions beyond the next ten years cannot be trusted = Even assumptions about technology get very shaky beyond that"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "Dr James Canton"}, {"k": "C", "t": "Robin Gunston"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}, {"k": "F", "t": "Steve Brant"}], "ans": "E"}, "why": ""}, {"q": 29, "question": "Only certain people are suited to becoming futurists.", "options": [{"t": "A certain amount of this is to do with how your brain is hard-wired and we know this is difficult to change.", "ok": false}, {"t": "New Zealand futurist Robin Gunston says, 'I don't believe you can train yourself to become a futurist.", "ok": true}, {"t": "Modern futurists do not predict that a certain event will occur at a particular time.", "ok": false}, {"t": "Futurology requires extensive life experience and a broad education to test theories against.", "ok": false}], "pairs": ["Only certain people are suited to becoming futurists = I don't believe you can train yourself to become a futurist"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "B", "t": "Dr James Canton"}, {"k": "C", "t": "Robin Gunston"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}], "ans": "C"}, "why": ""}, {"q": 30, "question": "Future studies are designed to inform current commercial decisions.", "options": [{"t": "It recently published a comprehensive study looking at how people may live in 2020 and 2050, given the type of energy which is purchased.", "ok": false}, {"t": "'People are concerned about the methodology and the reliability of future studies,' he says.", "ok": false}, {"t": "The oil company Shell has been one of the major producers of future studies.", "ok": false}, {"t": "Rather it is designed to challenge our thinking so that we can make better choices in today's business world.'", "ok": true}], "pairs": ["designed to inform current commercial decisions = designed to challenge our thinking so that we can make better choices in today's business world"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "B", "t": "Dr James Canton"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}, {"k": "F", "t": "Steve Brant"}], "ans": "A"}, "why": ""}, {"q": 31, "question": "Futurology involves a broad exchange of information but is not influenced by every new idea.", "options": [{"t": "Futurology requires extensive life experience and a broad education to test theories against.", "ok": false}, {"t": "Like many futurists he started in the private sector but is also comfortable in academia and has an urge to change things for the better.", "ok": false}, {"t": "'He needs intuition and has to work with people from a range of academic backgrounds gathering primary evidence about what motivates people.", "ok": false}, {"t": "Futurists are constantly discussing ideas with their peers, but they do not simply surf the net picking up on the latest fad.'", "ok": true}], "pairs": ["a broad exchange of information = Futurists are constantly discussing ideas with their peers", "not influenced by every new idea = they do not simply surf the net picking up on the latest fad"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "B", "t": "Dr James Canton"}, {"k": "C", "t": "Robin Gunston"}, {"k": "D", "t": "Alan Beckley"}, {"k": "F", "t": "Steve Brant"}], "ans": "B"}, "why": ""}, {"q": 32, "question": "People are not aware of the extent to which they can determine the future.", "options": [{"t": "Now, the aim of this profession is to imagine the best possible future for society and start creating it today.", "ok": false}, {"t": "'People can create the future they want using various points of leverage,' he says.", "ok": false}, {"t": "American futurist Steve Brant stresses the importance of remembering that the road ahead has yet to be chosen.", "ok": false}, {"t": "'We have much more influence over what the future will be like than many of us realise.", "ok": true}], "pairs": ["People are not aware of the extent to which they can determine the future = We have much more influence over what the future will be like than many of us realise"], "kind": "Matching", "answer": "F", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "C", "t": "Robin Gunston"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}, {"k": "F", "t": "Steve Brant"}], "ans": "F"}, "why": ""}, {"q": 33, "question": "A lack of confidence in futurology affects how widely it is used.", "options": [{"t": "According to Alan Beckley, a former West Mercia chief inspector and past president of the Police Futurists International (PFI), getting public bodies in the UK future-proofed could be a long process.", "ok": false}, {"t": "Also, in 2003 Britain's Foreign and Commonwealth Office (FCO) published for the first time its strategic thinking for the next decade.", "ok": false}, {"t": "However, as the Scottish Parliament has shown, there are a few examples of government exercises.", "ok": false}, {"t": "'People are concerned about the methodology and the reliability of future studies,' he says.", "ok": true}], "pairs": ["A lack of confidence in futurology = People are concerned about the methodology and the reliability of future studies"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Philip Watts"}, {"k": "B", "t": "Dr James Canton"}, {"k": "D", "t": "Alan Beckley"}, {"k": "E", "t": "Bill Rammell"}, {"k": "F", "t": "Steve Brant"}], "ans": "D"}, "why": ""}, {"q": 34, "question": "A report by Shell considered the impact of various kinds of <b>.........<\/b> on future lifestyles.", "options": [{"t": "The oil company Shell has been one of the major producers of future studies.", "ok": false}, {"t": "'People can create the future they want using various points of leverage,' he says.", "ok": false}, {"t": "Philip Watts from Shell says, 'This is not an exercise in prophecy.", "ok": false}, {"t": "It recently published a comprehensive study looking at how people may live in 2020 and 2050, given the type of energy which is purchased.", "ok": true}], "pairs": ["the impact of various kinds of ___ on future lifestyles = how people may live in 2020 and 2050, given the type of energy which is purchased"], "kind": "Completion", "answer": "energy", "accept": ["energy"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 35, "question": "The Scottish Parliament has decided to use futurists to advise on <b>.........<\/b> from Asian and other European countries.", "options": [{"t": "The parliament is setting up a forum to look at where Scotland is heading in the next 20 years.", "ok": false}, {"t": "The short-term attitudes and bureaucracy of many governments can be frustrating to futurists, but this mutual wariness is slowly changing.", "ok": false}, {"t": "The Scottish Parliament recently hosted a conference of 150 futurists from across the globe.", "ok": false}, {"t": "Among the issues are demographics and economic competition within Europe and with Asia.", "ok": true}], "pairs": ["advise on ___ from Asian and other European countries = economic competition within Europe and with Asia"], "kind": "Completion", "answer": "economic competition", "accept": ["economic competition"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 36, "question": "Dr James Canton is similar to other futurists in that he began his career in the <b>.........<\/b>", "options": [{"t": "Dr James Canton is founder of the San Francisco-based Institute for Global Futures and has been an adviser to leading US companies.", "ok": false}, {"t": "'He needs intuition and has to work with people from a range of academic backgrounds gathering primary evidence about what motivates people.", "ok": false}, {"t": "Futurists are constantly discussing ideas with their peers, but they do not simply surf the net picking up on the latest fad.'", "ok": false}, {"t": "Like many futurists he started in the private sector but is also comfortable in academia and has an urge to change things for the better.", "ok": true}], "pairs": ["began his career in the ___ = Like many futurists he started in the private sector"], "kind": "Completion", "answer": "private sector", "accept": ["private sector"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 37, "question": "Britain&#x27;s FCO sometimes studies developments in areas like <b>.........<\/b> beyond 10 years.", "options": [{"t": "Even assumptions about technology get very shaky beyond that.'", "ok": false}, {"t": "Also, in 2003 Britain's Foreign and Commonwealth Office (FCO) published for the first time its strategic thinking for the next decade.", "ok": false}, {"t": "FCO minister Bill Rammell says, 'We do occasionally look further ahead than the next ten years on issues such as demographics.", "ok": true}, {"t": "'People are concerned about the methodology and the reliability of future studies,' he says.", "ok": false}], "pairs": ["sometimes studies developments in areas like ___ beyond 10 years = We do occasionally look further ahead than the next ten years on issues such as demographics"], "kind": "Completion", "answer": "demographics", "accept": ["demographics"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 38, "question": "Which THREE of the following statements are true according to the passage?", "options": [{"t": "Instead they look at what is happening now to see what this may lead to further down the line.", "ok": false}, {"t": "The tradition has changed considerably since then.", "ok": false}, {"t": "Alternatively, they start with a desired result and work out how people and organisations can be manoeuvred into realising that ambition.", "ok": true}, {"t": "Modern futurists do not predict that a certain event will occur at a particular time.", "ok": false}], "pairs": ["focus on achieving a particular outcome = they start with a desired result and work out how people and organisations can be manoeuvred"], "kind": "Choose the correct answers", "answer": "A, D, G (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 39, "question": "Which THREE of the following statements are true according to the passage?", "options": [{"t": "'He needs intuition and has to work with people from a range of academic backgrounds gathering primary evidence about what motivates people.", "ok": true}, {"t": "Dr James Canton is founder of the San Francisco-based Institute for Global Futures and has been an adviser to leading US companies.", "ok": false}, {"t": "Like many futurists he started in the private sector but is also comfortable in academia and has an urge to change things for the better.", "ok": false}, {"t": "Futurists are constantly discussing ideas with their peers, but they do not simply surf the net picking up on the latest fad.'", "ok": false}], "pairs": ["talk to people from various areas of expertise = work with people from a range of academic backgrounds"], "kind": "Choose the correct answers", "answer": "A, D, G (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 40, "question": "Which THREE of the following statements are true according to the passage?", "options": [{"t": "Those best able to respond to futurists are the most agile.", "ok": false}, {"t": "Sony, for example, is very forward looking,' Canton says.", "ok": false}, {"t": "The winners will be those corporations and governments which conduct future studies and take steps to become future-proofed.'", "ok": true}, {"t": "According to Alan Beckley, a former West Mercia chief inspector and past president of the Police Futurists International (PFI), getting public bodies in the UK future-proofed could be a long process.", "ok": false}], "pairs": ["affect whether a company continues to be successful = The winners will be those corporations and governments which conduct future studies", "Futurists should carry out internet research to keep up with trends ≠ they do not simply surf the net picking up on the latest fad"], "kind": "Choose the correct answers", "answer": "A, D, G (any order)", "why": "Each correct option is supported by a different sentence."}], "paraphrase": [{"q": "Flexible organisations are in a better position to make use of futurology", "p": "Those best able to respond to futurists are the most agile", "rel": "=", "note": "", "n": "27"}, {"q": "Predictions beyond the next ten years cannot be trusted", "p": "Even assumptions about technology get very shaky beyond that", "rel": "=", "note": "", "n": "28"}, {"q": "Only certain people are suited to becoming futurists", "p": "I don't believe you can train yourself to become a futurist", "rel": "=", "note": "", "n": "29"}, {"q": "designed to inform current commercial decisions", "p": "designed to challenge our thinking so that we can make better choices in today's business world", "rel": "=", "note": "", "n": "30"}, {"q": "a broad exchange of information", "p": "Futurists are constantly discussing ideas with their peers", "rel": "=", "note": "", "n": "31"}, {"q": "not influenced by every new idea", "p": "they do not simply surf the net picking up on the latest fad", "rel": "=", "note": "", "n": "31"}, {"q": "People are not aware of the extent to which they can determine the future", "p": "We have much more influence over what the future will be like than many of us realise", "rel": "=", "note": "", "n": "32"}, {"q": "A lack of confidence in futurology", "p": "People are concerned about the methodology and the reliability of future studies", "rel": "=", "note": "", "n": "33"}, {"q": "the impact of various kinds of ___ on future lifestyles", "p": "how people may live in 2020 and 2050, given the type of energy which is purchased", "rel": "=", "note": "", "n": "34"}, {"q": "advise on ___ from Asian and other European countries", "p": "economic competition within Europe and with Asia", "rel": "=", "note": "", "n": "35"}, {"q": "began his career in the ___", "p": "Like many futurists he started in the private sector", "rel": "=", "note": "", "n": "36"}, {"q": "sometimes studies developments in areas like ___ beyond 10 years", "p": "We do occasionally look further ahead than the next ten years on issues such as demographics", "rel": "=", "note": "", "n": "37"}, {"q": "focus on achieving a particular outcome", "p": "they start with a desired result and work out how people and organisations can be manoeuvred", "rel": "=", "note": "", "n": "38"}, {"q": "talk to people from various areas of expertise", "p": "work with people from a range of academic backgrounds", "rel": "=", "note": "", "n": "39"}, {"q": "affect whether a company continues to be successful", "p": "The winners will be those corporations and governments which conduct future studies", "rel": "=", "note": "", "n": "40"}, {"q": "Futurists should carry out internet research to keep up with trends", "p": "they do not simply surf the net picking up on the latest fad", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "40"}], "vocab": [{"w": "thriving", "pos": "adjective", "loc": "¶1", "d": "growing and doing very well; successful", "uz": "gullab-yashnayotgan, rivojlanayotgan", "ex": "The town has a thriving market that attracts visitors every weekend.", "form": "thriving"}, {"w": "further down the line", "pos": "idiom", "loc": "¶1", "d": "at a later time in the future", "uz": "kelgusida, keyingi bosqichda", "ex": "Small mistakes now can cause serious problems further down the line.", "form": "further down the line"}, {"w": "manoeuvred", "pos": "verb", "loc": "¶1", "d": "skilfully moved or guided into a particular position", "uz": "mohirlik bilan yo'naltirilgan", "ex": "The negotiators manoeuvred their rivals into accepting a weaker deal.", "form": "manoeuvred"}, {"w": "bureaucracy", "pos": "noun", "loc": "¶3, ¶7", "d": "a complicated system of rules and procedures in organisations", "uz": "byurokratiya, qog'ozbozlik", "ex": "Starting a business here involves a great deal of bureaucracy.", "form": "bureaucracy"}, {"w": "wariness", "pos": "noun", "loc": "¶3", "d": "a careful lack of trust towards someone or something", "uz": "ehtiyotkorlik, ishonchsizlik", "ex": "There was a certain wariness between the two negotiating teams.", "form": "wariness"}, {"w": "demographics", "pos": "noun", "loc": "¶3, ¶8", "d": "statistics about the make-up of a population, such as age", "uz": "demografiya, aholi tarkibi", "ex": "Changing demographics will increase demand for care services in coming decades.", "form": "demographics"}, {"w": "meld", "pos": "verb", "loc": "¶4", "d": "to combine different things into one whole", "uz": "qo'shmoq, birlashtirib yuborish", "ex": "The chef likes to meld Asian flavours with traditional French cooking.", "form": "meld"}, {"w": "coherent", "pos": "adjective", "loc": "¶4", "d": "logical and well organised so that it is easy to understand", "uz": "izchil, mantiqiy bog'langan", "ex": "She presented a coherent plan for reducing the company's costs.", "form": "coherent"}, {"w": "alchemist", "pos": "noun", "loc": "¶5", "d": "a person who tries to turn ordinary things into something valuable", "uz": "alkimyogar", "ex": "Medieval alchemists spent years trying to turn lead into gold.", "form": "alchemist"}, {"w": "quantitative", "pos": "adjective", "loc": "¶5", "d": "based on numbers and amounts that can be measured", "uz": "miqdoriy", "ex": "The study combines quantitative data with interviews of ordinary workers.", "form": "quantitative"}, {"w": "picking up on", "pos": "phrasal verb", "loc": "¶5", "d": "noticing something and reacting to it", "uz": "e'tibor berib ilib olmoq", "ex": "The manager was quick at picking up on the team's concerns.", "form": "picking up on"}, {"w": "latest fad", "pos": "collocation", "loc": "¶5", "d": "the newest short-lived fashion or craze", "uz": "eng so'nggi moda, vaqtinchalik havas", "ex": "He changes his hobby whenever he hears about the latest fad.", "form": "latest fad"}, {"w": "hard-wired", "pos": "adjective", "loc": "¶6", "d": "built into the brain or system as a fixed feature", "uz": "tug'ma, o'zgarmas o'rnashgan", "ex": "Some fears seem to be hard-wired in human beings from birth.", "form": "hard-wired"}, {"w": "agile", "pos": "adjective", "loc": "¶7", "d": "able to move, think or change quickly and easily", "uz": "chaqqon, moslashuvchan", "ex": "Small start-ups are often more agile than large corporations.", "form": "agile"}, {"w": "beholden to", "pos": "adjective", "loc": "¶7", "d": "owing loyalty or thanks to someone, so lacking free choice", "uz": "...ga qaram, ...dan minnatdor", "ex": "Journalists should not be beholden to the owners of their newspapers.", "form": "beholden to"}, {"w": "future-proofed", "pos": "adjective", "loc": "¶7", "d": "protected against becoming outdated or damaged in future", "uz": "kelajakka moslashtirilgan", "ex": "The school was future-proofed with flexible rooms and modern wiring.", "form": "future-proofed"}, {"w": "shaky", "pos": "adjective", "loc": "¶8", "d": "not firm or reliable; likely to be wrong", "uz": "ishonchsiz, beqaror", "ex": "The witness gave a shaky account that the court did not trust.", "form": "shaky"}, {"w": "points of leverage", "pos": "collocation", "loc": "¶9", "d": "places where a small action can produce a big effect", "uz": "ta'sir o'tkazish nuqtalari", "ex": "Managers searched for points of leverage that could improve results quickly.", "form": "points of leverage"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

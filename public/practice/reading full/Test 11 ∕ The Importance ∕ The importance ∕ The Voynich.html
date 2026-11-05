@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 11 / The Importance / The importance / The Voynich</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 11 / The Importance / The importance / The Voynich</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The Importance of Business Cards</div><div class="passage-subtitle">The exchanging of business cards is as close to a universal ritual as you can find in the business world</div><p data-para="1"><span class="sent" id="s0_0">The ritual may be universal, but the details of business cards and how they are swapped vary across countries.</span> <span class="sent" id="s0_1">Americans throw their cards casually across a table; the Japanese make the exchange of cards a formal ceremony.</span> <span class="sent" id="s0_2">While there are cards that are discreet and understated, others are crammed full of details and titles.</span> <span class="sent" id="s0_3">Some businesspeople hand out 24-carat gold cards, and there are kindergarten children who have cards with not only their own contact details, but also with the job descriptions of their parents and even grandparents.</span> <span class="sent" id="s0_4">This practice has become so common in parts of New York, for example, that the use of such cards is now prohibited by some of these institutions.</span></p><p data-para="2"><span class="sent" id="s0_5">Cards have been around a long time in one form or another.</span> <span class="sent" id="s0_6">The Chinese invented calling cards in the 15th century to give people notice that they intended to pay them a visit, but these were for social purposes only.</span> <span class="sent" id="s0_7">Then, in the 17th century, European businesspeople invented a new type of card to act as miniature advertisements, signalling the advent of the business card.</span> <span class="sent" id="s0_8">In today&#x27;s world, business cards can cause people to have strong emotional reactions.</span> <span class="sent" id="s0_9">According to one experienced company director, very few things can provoke more heated discussion at a board meeting than the composition of the company&#x27;s business cards.</span></p><p data-para="3"><span class="sent" id="s0_10">Lots of companies try to promote themselves by altering the form of the card.</span> <span class="sent" id="s0_11">Employees at one famous toy company give out little plastic figures with their contact details stamped on them.</span> <span class="sent" id="s0_12">One fast food company has business cards which are shaped like a portion of French fries.</span> <span class="sent" id="s0_13">A Canadian divorce lawyer once gave out cards that could be torn in two – one half for each of the spouses.</span> <span class="sent" id="s0_14">For many business commentators, such gimmicky business cards prove that the use of a physical business card is nearly at an end.</span> <span class="sent" id="s0_15">After all, why bother exchanging bits of thick paper at all when you can simply swap electronic versions by smartphone.</span></p><p data-para="4"><span class="sent" id="s0_16">However, one can just as well argue the opposite: that business cards are here to stay, and in a business world full of meetings and correspondence, it is more important than ever that your card is unique.</span> <span class="sent" id="s0_17">Attempts to reinvent business cards for the digital age have not been successful.</span> <span class="sent" id="s0_18">Even at the latest technology conferences, people still greet each other by handing out little rectangles made from paper rather than using a digital alternative.</span></p><p data-para="5"><span class="sent" id="s0_19">To understand business cards, it is necessary to understand how business works.</span> <span class="sent" id="s0_20">That business cards are thriving in a digital age is a forceful reminder that there is much about business that is timeless.</span> <span class="sent" id="s0_21">According to Kate Jones, a business lecturer, there is one eternal and inescapable issue.</span> <span class="sent" id="s0_22">Her 2006 study of more than 200 business executives in North America found that trust was the key element for running a successful business.</span> <span class="sent" id="s0_23">It is vital to be able to look someone in the eye and decide what sort of person they are.</span> <span class="sent" id="s0_24">In this way, you can transform acquaintanceships into relationships.</span> <span class="sent" id="s0_25">A good proportion of business life will always be about building social connections – having dinner or playing sport with clients and colleagues – and while computers can deal with administrative tasks, it is still human beings that have to focus on the emotional.</span></p><p data-para="6"><span class="sent" id="s0_26">The rapid advance of globalisation means that this relationship-building process is becoming ever more demanding.</span> <span class="sent" id="s0_27">Managers have to put more effort in when dealing with international counterparts, especially when there is not a common language, which is so often the case these days.</span> <span class="sent" id="s0_28">A recent UK survey showed that chief executives of global organisations now routinely spend three out of every four weeks on international travel.</span> <span class="sent" id="s0_29">It is in these situations that business cards are doubly useful, as they are a quick way of establishing connections.</span> <span class="sent" id="s0_30">Cards can also remind you that you have actually met someone in a face-to-face meeting rather than just searched for them on the internet.</span> <span class="sent" id="s0_31">Looking through piles of different cards can enhance your memory in ways that simply looking through uniform electronic lists would never do.</span></p><p data-para="7"><span class="sent" id="s0_32">Janet McIntyre is a leading expert on business cards in today&#x27;s world.</span> <span class="sent" id="s0_33">She maintains that as companies become more complex, cards are essential in determining the exact status of every contact you meet in multinational corporations.</span> <span class="sent" id="s0_34">Janet also explains how exchanging business cards can be an effective way of initiating a conversation, because it gives people a ritual to follow when they first meet a new business contact.</span></p><p data-para="8"><span class="sent" id="s0_35">The business world is obsessed with the idea of creating and inventing new things that will change the way we do everything, and this does lead to progress.</span> <span class="sent" id="s0_36">But there are lots of things that do not need to be changed and, in Janet McIntyre&#x27;s view, tradition also has an equally valuable role to play.</span> <span class="sent" id="s0_37">Therefore the practice of exchanging business cards is likely to continue in the business world.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,5" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;5</div><button type="button" class="flag-toggle" data-flagrange="1,5" title="Flag for review" aria-label="Flag questions 1-5">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–5 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">Children&#x27;s business cards have been banned in some kindergartens.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">It was the Chinese who first began the practice of using business cards.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">Designing business cards can be a controversial process for some companies.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">A famous toy company has boosted their sales by using one type of unusual business card.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">Some business commentators predict a decline in the use of paper business cards.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="6,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 6&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="6,13" title="Flag for review" aria-label="Flag questions 6-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 6–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">How business works</div><div class="notes-sub"><b>Kate Jones&#x27;s research</b></div><ul><li>The most important aspect of business is having <span class="q-num">6</span> <input type="text" class="q-text" name="q6" autocomplete="off" spellcheck="false"> in others.</li><li><span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> do not have the ability to establish the good relationships essential to business.</li></ul><div class="notes-sub"><b>Business and globalisation</b></div><ul><li>Managers must work harder when they don&#x27;t share the same</li><li style="list-style:none"><span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> with their contacts.</li><li>A UK survey indicates that <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"> takes up the largest part of business leaders&#x27; time.</li><li>A business person&#x27;s <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"> of a meeting can be improved by looking at business cards.</li></ul><div class="notes-sub"><b>Janet McIntyre</b></div><ul><li>Business cards clearly show the <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"> of each person in a large company.</li><li>The ritual of swapping business cards is a good way of starting a</li><li style="list-style:none"><span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"> at the beginning of a business relationship.</li><li>Janet feels that in the business world, <span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"> is just as important as innovation.</li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">The importance of law</div><div class="para-dropzone dz-empty" data-letter="A" data-qnum="14"></div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">The law influences all of us virtually all the time.</span> <span class="sent" id="s1_1">It governs almost all aspects of our behaviour, and even what happens to us when we are no longer alive.</span> <span class="sent" id="s1_2">It affects us from the embryo onwards.</span> <span class="sent" id="s1_3">It governs the air we breathe, the food and drink we consume, our travel, family relationships, and our property.</span> <span class="sent" id="s1_4">It applies at the bottom of the ocean and in space.</span> <span class="sent" id="s1_5">Each time we examine a label on a food product, engage in work as an employee or employer, travel on the roads, go to school to learn or to teach, stay in a hotel, borrow a library book, create or dissolve a commercial company, play sports, or engage the services of someone for anything from plumbing a sink to planning a city, we are in the world of law.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="15"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_6">Law has also become much more widely recognised as the standard by which behaviour needs to be judged.</span> <span class="sent" id="s1_7">A very telling development in recent history is the way in which the idea of law has permeated all parts of social life.</span> <span class="sent" id="s1_8">The universal standard of whether something is socially tolerated is progressively becoming whether it is legal, rather than something that has always been considered acceptable.</span> <span class="sent" id="s1_9">In earlier times, most people were illiterate.</span> <span class="sent" id="s1_10">Today, by contrast, a vast number of people can read, and it is becoming easier for people to take an interest in law, and for the general population to help actually shape the law in many countries.</span> <span class="sent" id="s1_11">However, law is a versatile instrument that can be used equally well for the improvement or the degradation of humanity.</span></p><div class="para-dropzone dz-empty" data-letter="C" data-qnum="16"></div><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_12">This, of course, puts law in a very significant position.</span> <span class="sent" id="s1_13">In our rapidly developing world, all sorts of skills and knowledge are valuable.</span> <span class="sent" id="s1_14">Those people, for example, with knowledge of computers, the internet, and communications technology are relied upon by the rest of us.</span> <span class="sent" id="s1_15">There is now someone with IT skills or an IT help desk in every UK school, every company, every hospital, every local and central government office.</span> <span class="sent" id="s1_16">Without their knowledge, many parts of commercial and social life today would seize up in minutes.</span> <span class="sent" id="s1_17">But legal understanding is just as vital and as universally needed.</span> <span class="sent" id="s1_18">The American comedian Jerry Seinfeld put it like this: &#x27;We are all throwing the dice, playing the game, moving our pieces around the board, but if there is a problem, the lawyer is the only person who has read the inside of the top of the box.</span> <span class="sent" id="s1_19">In other words, the lawyer is the only person who has read and made sense of the rules.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="17"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_20">The number of laws has never been greater.</span> <span class="sent" id="s1_21">In the UK alone, about 35 new Acts of Parliament are produced every year, thereby delivering thousands of new rules.</span> <span class="sent" id="s1_22">The legislative output of the British Parliament has more than doubled in recent times, from 1,100 pages a year in the early 1970s to over 2,500 pages a year today.</span> <span class="sent" id="s1_23">Between 1997 and 2006, the legislature passed 365 Acts of Parliament and more than 32,000 legally binding statutory instruments.</span> <span class="sent" id="s1_24">In a system with so much law, lawyers do a great deal not just to vindicate the rights of citizens and organisations but also to help develop the law through legal arguments, some of which are adapted by judges to become laws.</span> <span class="sent" id="s1_25">Law courts can and do produce new law and revise old law, but they do so having heard the arguments of lawyers.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="18"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_26">However, despite their important role in developing the rules, lawyers are not universally admired.</span> <span class="sent" id="s1_27">Anti-lawyer jokes have a long history going back to the ancient Greeks.</span> <span class="sent" id="s1_28">More recently the son of a famous Hollywood actor was asked at his junior school what his father did for a living, to which he replied, &#x27;My daddy is a movie actor, and sometimes he plays the good guy, and sometimes he plays the lawyer.</span> <span class="sent" id="s1_29">For balance, though, it is worth remembering that there are, and have been, many heroic and revered lawyers such as the Roman philosopher and politician Cicero, and Mahatma Gandhi, the Indian campaigner for independence.</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="19"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_30">People sometimes make comments that characterise lawyers as professionals whose concerns put personal reward above truth, or who gain financially from misfortune.</span> <span class="sent" id="s1_31">There are undoubtedly lawyers that would fit that bill, just as there are some scientists, journalists and others in that category.</span> <span class="sent" id="s1_32">But, in general, it is no more just to say that lawyers are bad because they make a living from people&#x27;s problems than it is to make the same accusation in respect of nurses or IT consultants.</span> <span class="sent" id="s1_33">A great many lawyers are involved in public law work, such as that involving civil liberties, housing and other issues.</span> <span class="sent" id="s1_34">Such work is not lavishly remunerated and the quality of the service provided by these lawyers relies on considerable professional dedication.</span> <span class="sent" id="s1_35">Moreover, much legal work has nothing to do with conflict or misfortune, but is primarily concerned with drafting documents.</span> <span class="sent" id="s1_36">Another source of social disaffection for lawyers, and disaffection for the law, is a limited public understanding of how law works and how it could be changed.</span> <span class="sent" id="s1_37">Greater clarity about these issues, maybe as a result of better public relations, would reduce many aspects of public dissatisfaction with the law.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,19" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;19</div><button type="button" class="flag-toggle" data-flagrange="14,19" title="Flag for review" aria-label="Flag questions 14-19">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has six paragraphs, A–F.</p><p>Choose the correct heading for each paragraph from the list of headings below.</p><p>Write the correct number, i–viii, in boxes 14–19 on your answer sheet.</p></div><div class="info-chip-pool" id="pool-p1g0" data-gid="p1g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>Different areas of professional expertise</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>Reasons why it is unfair to criticise lawyers</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>The disadvantages of the legal system</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>The law applies throughout our lives</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>The law has affected historical events</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>A negative regard for lawyers</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>The public&#x27;s increasing ability to influence the law</span></div><div class="info-chip" data-heading="viii" draggable="true"><span class="ic-num">viii</span><span>Growth in laws</span></div></div><p class="hint-small">Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="20,21" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 20&ndash;21</div><button type="button" class="flag-toggle" data-flagrange="20,21" title="Flag for review" aria-label="Flag questions 20-21">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>TWO</b> letters, A–E.</p><p>Write the correct letters in boxes 20 and 21 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>TWO</b> of the following statements does the writer make about legal skills</span></div><div class="q-group-instructions"></div><div class="mcq-stem" style="margin-top:.4rem"><span>in today&#x27;s world?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="A"><span class="opt-letter">A</span><span>There should be a person with legal training in every hospital.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="B"><span class="opt-letter">B</span><span>Lawyers with experience in commercial law are the most in demand.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="C"><span class="opt-letter">C</span><span>Knowledge of the law is as important as having computer skills.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="D"><span class="opt-letter">D</span><span>Society could not function effectively without legal experts.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g1" data-pick="2" value="E"><span class="opt-letter">E</span><span>Schools should teach students about the law.</span></label></div><div class="q-group" data-flagrange="22,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 22&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="22,26" title="Flag for review" aria-label="Flag questions 22-26">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 22–26 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Lawyers as professionals</div><div style="margin-bottom:.5rem">People sometimes say that <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false"> is of little interest to lawyers, who are more concerned with making money. This may well be the case with some individuals, in the same way that some <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false"> or scientific experts may also be driven purely by financial greed. However, criticising lawyers because their work is concerned with people&#x27;s problems would be similar to attacking IT staff or <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false"> for the same reason. In fact, many lawyers focus on questions relating, for example, to housing or civil liberties, which requires them to have <span class="q-num">25</span> <input type="text" class="q-text" name="q25" autocomplete="off" spellcheck="false"> to their work. What&#x27;s more, a lot of lawyers&#x27; time is spent writing <span class="q-num">26</span> <input type="text" class="q-text" name="q26" autocomplete="off" spellcheck="false"> rather than dealing with people&#x27;s misfortunes.</div></div></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">The Voynich Manuscript</div><p data-para="1"><span class="sent" id="s2_0">The starkly modern Beinecke Library at Yale University is home to some of the most valuable books in the world: first folios of Shakespeare, Gutenberg Bibles and manuscripts from the early Middle Ages.</span> <span class="sent" id="s2_1">Yet the library&#x27;s most controversial possession is an unprepossessing vellum manuscript about the size of a hardback book, containing 240-odd pages of drawings and text of unknown age and authorship.</span> <span class="sent" id="s2_2">Catalogued as MS408, the manuscript would attract little attention were it not for the fact that the drawings hint at esoteric knowledge, while the text seems to be some sort of code – one that no-one has been able to break.</span> <span class="sent" id="s2_3">It&#x27;s known to scholars as the Voynich manuscript, after the American book dealer Wilfrid Voynich, who bought the manuscript from a Jesuit college in Italy in 1912.</span></p><p data-para="2"><span class="sent" id="s2_4">Over the years, the manuscript has attracted the attention of everyone from amateur dabblers to top codebreakers, all determined to succeed where countless others have failed.</span> <span class="sent" id="s2_5">Academic research papers, books and websites are devoted to making sense of the contents of the manuscript, which are freely available to all.</span> <span class="sent" id="s2_6">&#x27;Most other mysteries involve secondhand reports,&#x27; says Dr Gordon Rugg of Keele University, a leading Voynich expert.</span> <span class="sent" id="s2_7">&#x27;But this is one that you can see for yourself.&#x27;</span></p><p data-para="3"><span class="sent" id="s2_8">It is certainly strange: page after page of drawings of weird plants, astrological symbolism and human figures, accompanied by a script that looks like some form of shorthand.</span> <span class="sent" id="s2_9">What does it say and what are the drawings about?</span> <span class="sent" id="s2_10">Voynich himself believed that the manuscript was the work of the 13th-century English monk Roger Bacon, famed for his knowledge of alchemy, philosophy and science.</span> <span class="sent" id="s2_11">In 1921 Voynich&#x27;s view that Bacon was the writer appeared to win support from the work of William Newbold, Professor of Philosophy at the University of Pennsylvania, who claimed to have found the key to the cipher system used by Bacon.</span> <span class="sent" id="s2_12">According to Newbold, the manuscript proved that Bacon had access to a microscope centuries before they were supposedly first invented.</span> <span class="sent" id="s2_13">The claim that this medieval monk had observed living cells created a sensation.</span> <span class="sent" id="s2_14">It soon became clear, however, that Newbold had fallen victim to wishful thinking.</span> <span class="sent" id="s2_15">Other scholars showed that his &#x27;decoding&#x27; methods produced a host of possible interpretations.</span></p><p data-para="4"><span class="sent" id="s2_16">The Voynich manuscript has continued to defy the efforts of world-class experts.</span> <span class="sent" id="s2_17">In 1944, a team was assembled to tackle the mystery, led by William Friedman, the renowned American codebreaker.</span> <span class="sent" id="s2_18">They began with the most basic codebreaking task: analysing the relative frequencies of the characters making up the text, looking for signs of an underlying structure.</span> <span class="sent" id="s2_19">Yet Friedman&#x27;s team soon found themselves in deep water.</span> <span class="sent" id="s2_20">The precise size of the &#x27;alphabet&#x27; of the Voynich manuscript was unclear: it&#x27;s possible to make out more than 70 distinct symbols among the 170,000-character text.</span> <span class="sent" id="s2_21">Furthermore, Friedman discovered that some words and phrases appeared more often than expected in a standard language, casting doubt on claims that the manuscript concealed a real language, as encryption typically reduces word frequencies.</span></p><p data-para="5"><span class="sent" id="s2_22">Friedman concluded that the most plausible resolution of this paradox was that &#x27;Voynichese&#x27; is some sort of specially created artificial language, whose words are devised from concepts, rather than linguistics.</span> <span class="sent" id="s2_23">So, could the Voynich manuscript be the earliest known example of an artificial language?</span> <span class="sent" id="s2_24">&#x27;Friedman&#x27;s hypothesis commands respect because of the lifetime of cryptanalytical expertise he brought to bear,&#x27; says Rob Churchill, co-author of The Voynich Manuscript, &#x27;but that still leaves a host of questions unanswered&#x27;, such as the identity of the author and the meaning of the bizarre drawings.</span> <span class="sent" id="s2_25">&#x27;It does little to advance our understanding of the manuscript as a whole,&#x27; says Churchill.</span> <span class="sent" id="s2_26">Even though Friedman was working more than 60 years ago, he suspected that major insights would come from using the device that had already transformed codebreaking: the computer.</span> <span class="sent" id="s2_27">In this he was right – it is now the key tool for uncovering clues about the manuscript&#x27;s language.</span></p><p data-para="6"><span class="sent" id="s2_28">The insights so far have been perplexing.</span> <span class="sent" id="s2_29">For example, in 2001 another leading Voynich scholar, Dr Gabriel Landini of Birmingham University in the UK, published the results of his study of the manuscript using a pattern-detecting method called spectral analysis.</span> <span class="sent" id="s2_30">This revealed evidence that the manuscript contains genuine words, rather than random nonsense, consistent with the existence of some underlying natural language.</span> <span class="sent" id="s2_31">Yet the following year, Voynich expert René Zandbergen of the European Space Agency in Darmstadt, Germany, showed that the entropy of the text (a measure of the rate of transfer of information) was consistent with Friedman&#x27;s suspicions that an artificial language had been used.</span></p><p data-para="7"><span class="sent" id="s2_32">Many are convinced that the Voynich manuscript isn&#x27;t a hoax.</span> <span class="sent" id="s2_33">For how could a medieval hoaxer create so many telltale signs of a message from random nonsense?</span> <span class="sent" id="s2_34">Yet even this has been challenged in new research by Rugg.</span> <span class="sent" id="s2_35">Using a system, first published by the Italian mathematician Girolamo Cardano in 1550, in which a specially constructed grille is used to pick out symbols from a table, Rugg found he could rapidly generate text with many of the basic traits of the Voynich manuscript.</span> <span class="sent" id="s2_36">Publishing his results in 2004, Rugg stresses that he hadn&#x27;t set out to prove the manuscript a hoax.</span> <span class="sent" id="s2_37">&#x27;I simply demonstrated that it&#x27;s feasible to hoax something this complex in a few months,&#x27; he says.</span> <span class="sent" id="s2_38">Inevitably, others beg to differ.</span> <span class="sent" id="s2_39">Some scholars, such as Zandbergen, still suspect the text has genuine meaning, though believe it may never be decipherable.</span> <span class="sent" id="s2_40">Others, such as Churchill, have suggested that the sheer weirdness of the illustrations and text hint at an author who had lost touch with reality.</span> <span class="sent" id="s2_41">What is clear is that the book-sized manuscript kept under lock and key at Yale University has lost none of its fascination.</span> <span class="sent" id="s2_42">&#x27;Many derive great intellectual pleasure from solving puzzles,&#x27; says Rugg.</span> <span class="sent" id="s2_43">&#x27;The Voynich manuscript is as challenging a puzzle as anyone could ask for.&#x27;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,30" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;30</div><button type="button" class="flag-toggle" data-flagrange="27,30" title="Flag for review" aria-label="Flag questions 27-30">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 3?</p><p>In boxes 27–30 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">It is uncertain when the Voynich manuscript was written.</span><select class="q-select" name="q27"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">Wilfrid Voynich donated the manuscript to the Beinecke Library.</span><select class="q-select" name="q28"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">Interest in the Voynich manuscript extends beyond that of academics and professional codebreakers.</span><select class="q-select" name="q29"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">The text of the Voynich manuscript contains just under 70 symbols.</span><select class="q-select" name="q30"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="31,34" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 31&ndash;34</div><button type="button" class="flag-toggle" data-flagrange="31,34" title="Flag for review" aria-label="Flag questions 31-34">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following statements (Questions 31–34) and the list of people below.</p><p>Match each statement with the correct person, A–H.</p><p>Write the correct letter, A–H, in boxes 31–34 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of People</div><span class="wb-item"><span class="wb-letter">A</span> Gordon Rugg</span><span class="wb-item"><span class="wb-letter">B</span> Roger Bacon</span><span class="wb-item"><span class="wb-letter">C</span> William Newbold</span><span class="wb-item"><span class="wb-letter">D</span> William Friedman</span><span class="wb-item"><span class="wb-letter">E</span> Rob Churchill</span><span class="wb-item"><span class="wb-letter">F</span> Gabriel Landini</span><span class="wb-item"><span class="wb-letter">G</span> René Zandbergen</span><span class="wb-item"><span class="wb-letter">H</span> Girolamo Cardano</span></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">The number of times that some words occur makes it unlikely that the manuscript is based on an authentic language.</span><select class="q-select" name="q31"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">32</span><span class="q-stem">Unlike some other similar objects of fascination, people can gain direct access to the Voynich manuscript.</span><select class="q-select" name="q32"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">33</span><span class="q-stem">The person who wrote the manuscript may not have been entirely sane.</span><select class="q-select" name="q33"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">34</span><span class="q-stem">It is likely that the author of the manuscript is the same person as suggested by Wilfrid Voynich.</span><select class="q-select" name="q34"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div></div><div class="q-group" data-flagrange="35,39" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 35&ndash;39</div><button type="button" class="flag-toggle" data-flagrange="35,39" title="Flag for review" aria-label="Flag questions 35-39">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>NO MORE THAN TWO WORDS</b> from the passage for each answer.</p><p>Write your answers in boxes 35–39 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">Voynich Researchers</div><div style="margin-bottom:.5rem">William Newbold believed that the author of the Voynich manuscript had been able to look at cells through a <span class="q-num">35</span> <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false">. Other researchers later demonstrated that there were flaws in his argument. William Friedman concluded that the manuscript was written in an artificial language that was based on <span class="q-num">36</span> <input type="text" class="q-text" name="q36" autocomplete="off" spellcheck="false">. He couldn&#x27;t find out the meaning of this language but he believed that the <span class="q-num">37</span> <input type="text" class="q-text" name="q37" autocomplete="off" spellcheck="false"> would continue to bring advances in code breaking. Dr Gabriel Landini used a system known as <span class="q-num">38</span> <input type="text" class="q-text" name="q38" autocomplete="off" spellcheck="false"> in his research, and claims to have demonstrated the presence of genuine words. Dr Gordon Rugg&#x27;s system involved a grille that made it possible to quickly select symbols that appeared in a <span class="q-num">39</span> <input type="text" class="q-text" name="q39" autocomplete="off" spellcheck="false">. Rugg&#x27;s conclusion was that the manuscript lacked genuine meaning.</div></div></div><div class="q-group" data-flagrange="40,40" data-gid="p2g3"><div class="q-group-header"><div class="q-group-title">Question 40</div><button type="button" class="flag-toggle" data-flagrange="40,40" title="Flag for review" aria-label="Flag questions 40-40">&#9873;</button></div><div class="q-group-instructions"><p>Choose the correct letter, A, B, C or D.</p><p>Write the correct letter in box 40 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.9rem"><span class="q-num">40</span><span>The writer&#x27;s main aim in this passage is to</span></div><label class="mcq-option"><input type="radio" name="q40" value="A"><span class="opt-letter">A</span><span>explain the meaning of the manuscript.</span></label><label class="mcq-option"><input type="radio" name="q40" value="B"><span class="opt-letter">B</span><span>determine the true identity of the manuscript&#x27;s author.</span></label><label class="mcq-option"><input type="radio" name="q40" value="C"><span class="opt-letter">C</span><span>describe the numerous attempts to decode the manuscript.</span></label><label class="mcq-option"><input type="radio" name="q40" value="D"><span class="opt-letter">D</span><span>identify which research into the manuscript has had the most media coverage.</span></label></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 11, "minutes": 60, "parts": [{"title": "The Importance of Business Cards", "short": "The Importance", "qstart": 1, "qend": 13}, {"title": "The importance of law", "short": "The importance", "qstart": 14, "qend": 26}, {"title": "The Voynich Manuscript", "short": "The Voynich", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 6, "kind": "text", "ans": ["trust"], "group": "p0g1", "part": 1}, {"n": 7, "kind": "text", "ans": ["computers"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["language"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["travel"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["memory"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["status"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["conversation"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["tradition"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "heading", "ans": "iv", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 15, "kind": "heading", "ans": "vii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 16, "kind": "heading", "ans": "i", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 17, "kind": "heading", "ans": "viii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 18, "kind": "heading", "ans": "vi", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 19, "kind": "heading", "ans": "ii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 20, "kind": "multi", "ans": null, "group": "p1g1", "part": 2, "idx": 0, "groupAns": ["C", "D"]}, {"n": 21, "kind": "multi", "ans": null, "group": "p1g1", "part": 2, "idx": 1, "groupAns": ["C", "D"]}, {"n": 22, "kind": "text", "ans": ["truth"], "group": "p1g2", "part": 2}, {"n": 23, "kind": "text", "ans": ["journalists"], "group": "p1g2", "part": 2}, {"n": 24, "kind": "text", "ans": ["nurses"], "group": "p1g2", "part": 2}, {"n": 25, "kind": "text", "ans": ["dedication"], "group": "p1g2", "part": 2}, {"n": 26, "kind": "text", "ans": ["documents"], "group": "p1g2", "part": 2}, {"n": 27, "kind": "select", "ans": "TRUE", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "NOT GIVEN", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "TRUE", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "FALSE", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "D", "group": "p2g1", "part": 3}, {"n": 32, "kind": "select", "ans": "A", "group": "p2g1", "part": 3}, {"n": 33, "kind": "select", "ans": "E", "group": "p2g1", "part": 3}, {"n": 34, "kind": "select", "ans": "C", "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["microscope"], "group": "p2g2", "part": 3}, {"n": 36, "kind": "text", "ans": ["concepts"], "group": "p2g2", "part": 3}, {"n": 37, "kind": "text", "ans": ["computer"], "group": "p2g2", "part": 3}, {"n": 38, "kind": "text", "ans": ["spectral analysis"], "group": "p2g2", "part": 3}, {"n": 39, "kind": "text", "ans": ["table"], "group": "p2g2", "part": 3}, {"n": 40, "kind": "radio", "ans": "C", "group": "p2g3", "part": 3}];
+const HEADING_TEXT = {"p1g0": {"i": "Different areas of professional expertise", "ii": "Reasons why it is unfair to criticise lawyers", "iii": "The disadvantages of the legal system", "iv": "The law applies throughout our lives", "v": "The law has affected historical events", "vi": "A negative regard for lawyers", "vii": "The public's increasing ability to influence the law", "viii": "Growth in laws"}};
+const LOC = {"1": "s0_3", "2": "s0_6", "3": "s0_9", "4": "s0_11", "5": "s0_14", "6": "s0_22", "7": "s0_25", "8": "s0_27", "9": "s0_28", "10": "s0_31", "11": "s0_33", "12": "s0_34", "13": "s0_36", "14": "s1_0", "15": "s1_10", "16": "s1_13", "17": "s1_20", "18": "s1_26", "19": "s1_32", "20": "s1_17", "21": "s1_16", "22": "s1_30", "23": "s1_31", "24": "s1_32", "25": "s1_33", "26": "s1_35", "27": "s2_1", "28": "s2_3", "29": "s2_4", "30": "s2_20", "31": "s2_21", "32": "s2_6", "33": "s2_40", "34": "s2_11", "35": "s2_12", "36": "s2_22", "37": "s2_26", "38": "s2_29", "39": "s2_35", "40": "s2_4"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "Children&#x27;s business cards have been banned in some kindergartens.", "options": [{"t": "Some businesspeople hand out 24-carat gold cards, and there are kindergarten children who have cards with not only their own contact details, but also with the job descriptions of their parents and even grandparents.", "ok": true}, {"t": "The ritual may be universal, but the details of business cards and how they are swapped vary across countries.", "ok": false}, {"t": "Americans throw their cards casually across a table; the Japanese make the exchange of cards a formal ceremony.", "ok": false}, {"t": "While there are cards that are discreet and understated, others are crammed full of details and titles.", "ok": false}], "pairs": ["banned = is now prohibited", "Children's business cards ... kindergartens = kindergarten children who have cards"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 2, "question": "It was the Chinese who first began the practice of using business cards.", "options": [{"t": "Therefore the practice of exchanging business cards is likely to continue in the business world.", "ok": false}, {"t": "The Chinese invented calling cards in the 15th century to give people notice that they intended to pay them a visit, but these were for social purposes only.", "ok": true}, {"t": "According to one experienced company director, very few things can provoke more heated discussion at a board meeting than the composition of the company's business cards.", "ok": false}, {"t": "In today's world, business cards can cause people to have strong emotional reactions.", "ok": false}], "pairs": ["It was the Chinese who first began the practice of using business cards ≠ European businesspeople invented a new type of card", "business cards (a commercial purpose) ≠ these were for social purposes only"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 3, "question": "Designing business cards can be a controversial process for some companies.", "options": [{"t": "In today's world, business cards can cause people to have strong emotional reactions.", "ok": false}, {"t": "According to one experienced company director, very few things can provoke more heated discussion at a board meeting than the composition of the company's business cards.", "ok": true}, {"t": "Cards have been around a long time in one form or another.", "ok": false}, {"t": "Then, in the 17th century, European businesspeople invented a new type of card to act as miniature advertisements, signalling the advent of the business card.", "ok": false}], "pairs": ["controversial = provoke more heated discussion", "Designing business cards = the composition of the company's business cards"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 4, "question": "A famous toy company has boosted their sales by using one type of unusual business card.", "options": [{"t": "Employees at one famous toy company give out little plastic figures with their contact details stamped on them.", "ok": true}, {"t": "For many business commentators, such gimmicky business cards prove that the use of a physical business card is nearly at an end.", "ok": false}, {"t": "One fast food company has business cards which are shaped like a portion of French fries.", "ok": false}, {"t": "Then, in the 17th century, European businesspeople invented a new type of card to act as miniature advertisements, signalling the advent of the business card.", "ok": false}], "pairs": ["one type of unusual business card = little plastic figures with their contact details stamped on them", "has boosted their sales ? Employees at one famous toy company give out"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 5, "question": "Some business commentators predict a decline in the use of paper business cards.", "options": [{"t": "A Canadian divorce lawyer once gave out cards that could be torn in two – one half for each of the spouses.", "ok": false}, {"t": "For many business commentators, such gimmicky business cards prove that the use of a physical business card is nearly at an end.", "ok": true}, {"t": "One fast food company has business cards which are shaped like a portion of French fries.", "ok": false}, {"t": "Janet McIntyre is a leading expert on business cards in today's world.", "ok": false}], "pairs": ["Some business commentators = many business commentators", "predict a decline in the use of paper business cards = the use of a physical business card is nearly at an end"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 6, "question": "The most important aspect of business is having <b>.........<\/b> in", "options": [{"t": "A good proportion of business life will always be about building social connections – having dinner or playing sport with clients and colleagues – and while computers can deal with administrative tasks, it is still human beings that have to focus on the emotional.", "ok": false}, {"t": "That business cards are thriving in a digital age is a forceful reminder that there is much about business that is timeless.", "ok": false}, {"t": "Her 2006 study of more than 200 business executives in North America found that trust was the key element for running a successful business.", "ok": true}, {"t": "To understand business cards, it is necessary to understand how business works.", "ok": false}], "pairs": ["having ___ in others = trust was the key element"], "kind": "Completion", "answer": "trust", "accept": ["trust"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 7, "question": "<b>.........<\/b> do not have the ability to establish the good", "options": [{"t": "Her 2006 study of more than 200 business executives in North America found that trust was the key element for running a successful business.", "ok": false}, {"t": "In this way, you can transform acquaintanceships into relationships.", "ok": false}, {"t": "A good proportion of business life will always be about building social connections – having dinner or playing sport with clients and colleagues – and while computers can deal with administrative tasks, it is still human beings that have to focus on the emotional.", "ok": true}, {"t": "To understand business cards, it is necessary to understand how business works.", "ok": false}], "pairs": ["___ do not have the ability to establish good relationships = it is still human beings that have to focus on the emotional"], "kind": "Completion", "answer": "computers", "accept": ["computers"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 8, "question": "<b>.........<\/b> with their contacts.", "options": [{"t": "Cards can also remind you that you have actually met someone in a face-to-face meeting rather than just searched for them on the internet.", "ok": false}, {"t": "Looking through piles of different cards can enhance your memory in ways that simply looking through uniform electronic lists would never do.", "ok": false}, {"t": "Managers have to put more effort in when dealing with international counterparts, especially when there is not a common language, which is so often the case these days.", "ok": true}, {"t": "The rapid advance of globalisation means that this relationship-building process is becoming ever more demanding.", "ok": false}], "pairs": ["work harder = have to put more effort in", "don't share the same ___ = when there is not a common language"], "kind": "Completion", "answer": "language", "accept": ["language"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 9, "question": "A UK survey indicates that <b>.........<\/b> takes up the largest part of", "options": [{"t": "Managers have to put more effort in when dealing with international counterparts, especially when there is not a common language, which is so often the case these days.", "ok": false}, {"t": "A recent UK survey showed that chief executives of global organisations now routinely spend three out of every four weeks on international travel.", "ok": true}, {"t": "It is in these situations that business cards are doubly useful, as they are a quick way of establishing connections.", "ok": false}, {"t": "Cards can also remind you that you have actually met someone in a face-to-face meeting rather than just searched for them on the internet.", "ok": false}], "pairs": ["takes up the largest part of business leaders' time = three out of every four weeks on international travel"], "kind": "Completion", "answer": "travel", "accept": ["travel"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 10, "question": "A business person&#x27;s <b>.........<\/b> of a meeting can be improved", "options": [{"t": "Cards can also remind you that you have actually met someone in a face-to-face meeting rather than just searched for them on the internet.", "ok": false}, {"t": "According to one experienced company director, very few things can provoke more heated discussion at a board meeting than the composition of the company's business cards.", "ok": false}, {"t": "It is in these situations that business cards are doubly useful, as they are a quick way of establishing connections.", "ok": false}, {"t": "Looking through piles of different cards can enhance your memory in ways that simply looking through uniform electronic lists would never do.", "ok": true}], "pairs": ["A business person's ___ of a meeting can be improved = can enhance your memory", "by looking at business cards = Looking through piles of different cards"], "kind": "Completion", "answer": "memory", "accept": ["memory"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 11, "question": "Business cards clearly show the <b>.........<\/b> of each person in a", "options": [{"t": "She maintains that as companies become more complex, cards are essential in determining the exact status of every contact you meet in multinational corporations.", "ok": true}, {"t": "Janet McIntyre is a leading expert on business cards in today's world.", "ok": false}, {"t": "According to one experienced company director, very few things can provoke more heated discussion at a board meeting than the composition of the company's business cards.", "ok": false}, {"t": "Janet also explains how exchanging business cards can be an effective way of initiating a conversation, because it gives people a ritual to follow when they first meet a new business contact.", "ok": false}], "pairs": ["clearly show the ___ of each person = determining the exact status of every contact", "a large company = multinational corporations"], "kind": "Completion", "answer": "status", "accept": ["status"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "<b>.........<\/b> at the beginning of a business relationship.", "options": [{"t": "Janet McIntyre is a leading expert on business cards in today's world.", "ok": false}, {"t": "Janet also explains how exchanging business cards can be an effective way of initiating a conversation, because it gives people a ritual to follow when they first meet a new business contact.", "ok": true}, {"t": "The business world is obsessed with the idea of creating and inventing new things that will change the way we do everything, and this does lead to progress.", "ok": false}, {"t": "It is in these situations that business cards are doubly useful, as they are a quick way of establishing connections.", "ok": false}], "pairs": ["a good way of starting a ___ = an effective way of initiating a conversation", "at the beginning of a business relationship = when they first meet a new business contact"], "kind": "Completion", "answer": "conversation", "accept": ["conversation"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "Janet feels that in the business world, <b>.........<\/b> is just as", "options": [{"t": "The business world is obsessed with the idea of creating and inventing new things that will change the way we do everything, and this does lead to progress.", "ok": false}, {"t": "Therefore the practice of exchanging business cards is likely to continue in the business world.", "ok": false}, {"t": "But there are lots of things that do not need to be changed and, in Janet McIntyre's view, tradition also has an equally valuable role to play.", "ok": true}, {"t": "However, one can just as well argue the opposite: that business cards are here to stay, and in a business world full of meetings and correspondence, it is more important than ever that your card is unique.", "ok": false}], "pairs": ["___ is just as important as innovation = tradition also has an equally valuable role to play"], "kind": "Completion", "answer": "tradition", "accept": ["tradition"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "banned", "p": "is now prohibited", "rel": "=", "note": "", "n": "1"}, {"q": "Children's business cards ... kindergartens", "p": "kindergarten children who have cards", "rel": "=", "note": "", "n": "1"}, {"q": "It was the Chinese who first began the practice of using business cards", "p": "European businesspeople invented a new type of card", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "2"}, {"q": "business cards (a commercial purpose)", "p": "these were for social purposes only", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "2"}, {"q": "controversial", "p": "provoke more heated discussion", "rel": "=", "note": "", "n": "3"}, {"q": "Designing business cards", "p": "the composition of the company's business cards", "rel": "=", "note": "", "n": "3"}, {"q": "one type of unusual business card", "p": "little plastic figures with their contact details stamped on them", "rel": "=", "note": "", "n": "4"}, {"q": "has boosted their sales", "p": "Employees at one famous toy company give out", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "4"}, {"q": "Some business commentators", "p": "many business commentators", "rel": "=", "note": "", "n": "5"}, {"q": "predict a decline in the use of paper business cards", "p": "the use of a physical business card is nearly at an end", "rel": "=", "note": "", "n": "5"}, {"q": "having ___ in others", "p": "trust was the key element", "rel": "=", "note": "", "n": "6"}, {"q": "___ do not have the ability to establish good relationships", "p": "it is still human beings that have to focus on the emotional", "rel": "=", "note": "", "n": "7"}, {"q": "work harder", "p": "have to put more effort in", "rel": "=", "note": "", "n": "8"}, {"q": "don't share the same ___", "p": "when there is not a common language", "rel": "=", "note": "", "n": "8"}, {"q": "takes up the largest part of business leaders' time", "p": "three out of every four weeks on international travel", "rel": "=", "note": "", "n": "9"}, {"q": "A business person's ___ of a meeting can be improved", "p": "can enhance your memory", "rel": "=", "note": "", "n": "10"}, {"q": "by looking at business cards", "p": "Looking through piles of different cards", "rel": "=", "note": "", "n": "10"}, {"q": "clearly show the ___ of each person", "p": "determining the exact status of every contact", "rel": "=", "note": "", "n": "11"}, {"q": "a large company", "p": "multinational corporations", "rel": "=", "note": "", "n": "11"}, {"q": "a good way of starting a ___", "p": "an effective way of initiating a conversation", "rel": "=", "note": "", "n": "12"}, {"q": "at the beginning of a business relationship", "p": "when they first meet a new business contact", "rel": "=", "note": "", "n": "12"}, {"q": "___ is just as important as innovation", "p": "tradition also has an equally valuable role to play", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "crammed full of", "pos": "phrase", "loc": "¶1", "d": "packed tightly with too many things", "uz": "to'lib-toshgan, zich to'ldirilgan", "ex": "Her diary was crammed full of appointments and reminders.", "form": "crammed full of"}, {"w": "discreet", "pos": "adjective", "loc": "¶1", "d": "careful not to attract attention or cause embarrassment", "uz": "ehtiyotkor, ko'zga tashlanmaydigan", "ex": "He made a discreet exit before the speeches began.", "form": "discreet"}, {"w": "understated", "pos": "adjective", "loc": "¶1", "d": "simple and restrained rather than showy", "uz": "oddiy, bo'rttirilmagan", "ex": "The hotel has an understated elegance that guests really appreciate.", "form": "understated"}, {"w": "prohibited", "pos": "verb", "loc": "¶1", "d": "officially forbidden by a rule or law", "uz": "taqiqlangan", "ex": "Smoking is strictly prohibited in all areas of the building.", "form": "prohibited"}, {"w": "advent", "pos": "noun", "loc": "¶2", "d": "the arrival or beginning of an important thing or period", "uz": "kelishi, paydo bo'lishi", "ex": "The advent of the internet changed how people shop.", "form": "advent"}, {"w": "heated discussion", "pos": "collocation", "loc": "¶2", "d": "an argument in which people become angry or very emotional", "uz": "qizg'in bahs", "ex": "The budget led to a heated discussion among the directors.", "form": "heated discussion"}, {"w": "gimmicky", "pos": "adjective", "loc": "¶3", "d": "using clever tricks to attract attention rather than real value", "uz": "e'tibor tortish uchun qilingan, hiyla-nayrangli", "ex": "Many customers find the gimmicky packaging more annoying than attractive.", "form": "gimmicky"}, {"w": "nearly at an end", "pos": "phrase", "loc": "¶3", "d": "almost finished or no longer going to continue", "uz": "tugab qolay deb turgan, oxiriga yaqin", "ex": "Critics claim the era of printed newspapers is nearly at an end.", "form": "nearly at an end"}, {"w": "here to stay", "pos": "idiom", "loc": "¶4", "d": "likely to continue for a long time or permanently", "uz": "uzoq qoladigan, doimiy", "ex": "Remote working is clearly here to stay in many industries.", "form": "here to stay"}, {"w": "forceful reminder", "pos": "collocation", "loc": "¶5", "d": "a strong signal that makes you remember an important fact", "uz": "kuchli eslatma", "ex": "The financial crisis was a forceful reminder of the risks of debt.", "form": "forceful reminder"}, {"w": "timeless", "pos": "adjective", "loc": "¶5", "d": "not affected by time or fashion; always relevant", "uz": "abadiy, zamon tanlamaydigan", "ex": "Good manners are a timeless quality in any profession.", "form": "timeless"}, {"w": "acquaintanceships", "pos": "noun", "loc": "¶5", "d": "relationships with people you know slightly but not closely", "uz": "tanishlik munosabatlari", "ex": "Networking events help professionals form useful acquaintanceships across different industries.", "form": "acquaintanceships"}, {"w": "put more effort in", "pos": "phrasal verb", "loc": "¶6", "d": "work harder to achieve a result", "uz": "ko'proq kuch sarflamoq", "ex": "You must put more effort in if you want the promotion.", "form": "put more effort in"}, {"w": "counterparts", "pos": "noun", "loc": "¶6", "d": "people who have an equivalent position in another organisation or country", "uz": "hamkasblar, muqobil lavozimdagilar", "ex": "The minister met her foreign counterparts to discuss the trade deal.", "form": "counterparts"}, {"w": "initiating", "pos": "verb", "loc": "¶7", "d": "starting something, especially a process or conversation", "uz": "boshlamoq, tashabbus ko'rsatmoq", "ex": "Initiating small talk can help nervous speakers feel more relaxed.", "form": "Initiating"}, {"w": "obsessed with", "pos": "adjective", "loc": "¶8", "d": "unable to stop thinking about one particular thing", "uz": "ruhlanib ketgan, berilib ketgan", "ex": "Some managers are obsessed with efficiency and ignore their employees' wellbeing.", "form": "obsessed with"}]}, {"evidence": [{"q": 14, "question": "Which heading fits paragraph A?", "options": [{"t": "It governs the air we breathe, the food and drink we consume, our travel, family relationships, and our property.", "ok": false}, {"t": "The law influences all of us virtually all the time.", "ok": true}, {"t": "It applies at the bottom of the ocean and in space.", "ok": false}, {"t": "In a system with so much law, lawyers do a great deal not just to vindicate the rights of citizens and organisations but also to help develop the law through legal arguments, some of which are adapted by judges to become laws.", "ok": false}], "pairs": ["The law applies throughout our lives = The law influences all of us virtually all the time", "throughout our lives = It affects us from the embryo onwards"], "kind": "Matching headings", "answer": "iv", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "iv", "t": "The law applies throughout our lives"}, {"k": "vi", "t": "A negative regard for lawyers"}, {"k": "vii", "t": "The public's increasing ability to influence the law"}, {"k": "viii", "t": "Growth in laws"}], "ans": "iv"}, "why": ""}, {"q": 15, "question": "Which heading fits paragraph B?", "options": [{"t": "Today, by contrast, a vast number of people can read, and it is becoming easier for people to take an interest in law, and for the general population to help actually shape the law in many countries.", "ok": true}, {"t": "A very telling development in recent history is the way in which the idea of law has permeated all parts of social life.", "ok": false}, {"t": "However, law is a versatile instrument that can be used equally well for the improvement or the degradation of humanity.", "ok": false}, {"t": "Law has also become much more widely recognised as the standard by which behaviour needs to be judged.", "ok": false}], "pairs": ["The public's increasing ability to influence the law = for the general population to help actually shape the law", "increasing ability = it is becoming easier for people to take an interest in law"], "kind": "Matching headings", "answer": "vii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Different areas of professional expertise"}, {"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "iii", "t": "The disadvantages of the legal system"}, {"k": "v", "t": "The law has affected historical events"}, {"k": "vii", "t": "The public's increasing ability to influence the law"}], "ans": "vii"}, "why": ""}, {"q": 16, "question": "Which heading fits paragraph C?", "options": [{"t": "Without their knowledge, many parts of commercial and social life today would seize up in minutes.", "ok": false}, {"t": "Those people, for example, with knowledge of computers, the internet, and communications technology are relied upon by the rest of us.", "ok": false}, {"t": "In our rapidly developing world, all sorts of skills and knowledge are valuable.", "ok": true}, {"t": "There is now someone with IT skills or an IT help desk in every UK school, every company, every hospital, every local and central government office.", "ok": false}], "pairs": ["Different areas of professional expertise = all sorts of skills and knowledge are valuable", "professional expertise = Those people, for example, with knowledge of computers"], "kind": "Matching headings", "answer": "i", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Different areas of professional expertise"}, {"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "iii", "t": "The disadvantages of the legal system"}, {"k": "v", "t": "The law has affected historical events"}, {"k": "viii", "t": "Growth in laws"}], "ans": "i"}, "why": ""}, {"q": 17, "question": "Which heading fits paragraph D?", "options": [{"t": "In the UK alone, about 35 new Acts of Parliament are produced every year, thereby delivering thousands of new rules.", "ok": false}, {"t": "The legislative output of the British Parliament has more than doubled in recent times, from 1,100 pages a year in the early 1970s to over 2,500 pages a year today.", "ok": false}, {"t": "The number of laws has never been greater.", "ok": true}, {"t": "In a system with so much law, lawyers do a great deal not just to vindicate the rights of citizens and organisations but also to help develop the law through legal arguments, some of which are adapted by judges to become laws.", "ok": false}], "pairs": ["Growth in laws = The number of laws has never been greater", "Growth = more than doubled in recent times"], "kind": "Matching headings", "answer": "viii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Different areas of professional expertise"}, {"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "v", "t": "The law has affected historical events"}, {"k": "vii", "t": "The public's increasing ability to influence the law"}, {"k": "viii", "t": "Growth in laws"}], "ans": "viii"}, "why": ""}, {"q": 18, "question": "Which heading fits paragraph E?", "options": [{"t": "Anti-lawyer jokes have a long history going back to the ancient Greeks.", "ok": false}, {"t": "More recently the son of a famous Hollywood actor was asked at his junior school what his father did for a living, to which he replied, 'My daddy is a movie actor, and sometimes he plays the good guy, and sometimes he plays the lawyer.", "ok": false}, {"t": "However, despite their important role in developing the rules, lawyers are not universally admired.", "ok": true}, {"t": "For balance, though, it is worth remembering that there are, and have been, many heroic and revered lawyers such as the Roman philosopher and politician Cicero, and Mahatma Gandhi, the Indian campaigner for independence.", "ok": false}], "pairs": ["A negative regard for lawyers = lawyers are not universally admired", "negative regard = Anti-lawyer jokes have a long history"], "kind": "Matching headings", "answer": "vi", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Different areas of professional expertise"}, {"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "iv", "t": "The law applies throughout our lives"}, {"k": "vi", "t": "A negative regard for lawyers"}, {"k": "vii", "t": "The public's increasing ability to influence the law"}], "ans": "vi"}, "why": ""}, {"q": 19, "question": "Which heading fits paragraph F?", "options": [{"t": "There are undoubtedly lawyers that would fit that bill, just as there are some scientists, journalists and others in that category.", "ok": false}, {"t": "Another source of social disaffection for lawyers, and disaffection for the law, is a limited public understanding of how law works and how it could be changed.", "ok": false}, {"t": "But, in general, it is no more just to say that lawyers are bad because they make a living from people's problems than it is to make the same accusation in respect of nurses or IT consultants.", "ok": true}, {"t": "A great many lawyers are involved in public law work, such as that involving civil liberties, housing and other issues.", "ok": false}], "pairs": ["Reasons why it is unfair to criticise lawyers = it is no more just to say that lawyers are bad", "unfair to criticise = much legal work has nothing to do with conflict or misfortune"], "kind": "Matching headings", "answer": "ii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "Reasons why it is unfair to criticise lawyers"}, {"k": "iii", "t": "The disadvantages of the legal system"}, {"k": "v", "t": "The law has affected historical events"}, {"k": "vii", "t": "The public's increasing ability to influence the law"}, {"k": "viii", "t": "Growth in laws"}], "ans": "ii"}, "why": ""}, {"q": 20, "question": "in today&#x27;s world?", "options": [{"t": "There is now someone with IT skills or an IT help desk in every UK school, every company, every hospital, every local and central government office.", "ok": false}, {"t": "Without their knowledge, many parts of commercial and social life today would seize up in minutes.", "ok": false}, {"t": "But legal understanding is just as vital and as universally needed.", "ok": true}, {"t": "In our rapidly developing world, all sorts of skills and knowledge are valuable.", "ok": false}], "pairs": ["Knowledge of the law is as important as having computer skills = legal understanding is just as vital and as universally needed", "There should be a person with legal training in every hospital ≠ someone with IT skills or an IT help desk in every UK school, every company, every hospital"], "kind": "Choose the correct answers", "answer": "C, D (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 21, "question": "in today&#x27;s world?", "options": [{"t": "Without their knowledge, many parts of commercial and social life today would seize up in minutes.", "ok": true}, {"t": "In our rapidly developing world, all sorts of skills and knowledge are valuable.", "ok": false}, {"t": "There is now someone with IT skills or an IT help desk in every UK school, every company, every hospital, every local and central government office.", "ok": false}, {"t": "But legal understanding is just as vital and as universally needed.", "ok": false}], "pairs": ["Society could not function effectively without legal experts = Without their knowledge, many parts of commercial and social life today would seize up in minutes"], "kind": "Choose the correct answers", "answer": "C, D (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 22, "question": "People sometimes say that <b>.........<\/b> is of little interest to lawyers, who are more concerned with making money.", "options": [{"t": "But, in general, it is no more just to say that lawyers are bad because they make a living from people's problems than it is to make the same accusation in respect of nurses or IT consultants.", "ok": false}, {"t": "People sometimes make comments that characterise lawyers as professionals whose concerns put personal reward above truth, or who gain financially from misfortune.", "ok": true}, {"t": "There are undoubtedly lawyers that would fit that bill, just as there are some scientists, journalists and others in that category.", "ok": false}, {"t": "Another source of social disaffection for lawyers, and disaffection for the law, is a limited public understanding of how law works and how it could be changed.", "ok": false}], "pairs": ["is of little interest to lawyers = put personal reward above truth", "more concerned with making money = gain financially from misfortune"], "kind": "Completion", "answer": "truth", "accept": ["truth"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 23, "question": "This may well be the case with some individuals, in the same way that some <b>.........<\/b> or scientific experts may also be driven purely by financial greed.", "options": [{"t": "But, in general, it is no more just to say that lawyers are bad because they make a living from people's problems than it is to make the same accusation in respect of nurses or IT consultants.", "ok": false}, {"t": "There are undoubtedly lawyers that would fit that bill, just as there are some scientists, journalists and others in that category.", "ok": true}, {"t": "A great many lawyers are involved in public law work, such as that involving civil liberties, housing and other issues.", "ok": false}, {"t": "Such work is not lavishly remunerated and the quality of the service provided by these lawyers relies on considerable professional dedication.", "ok": false}], "pairs": ["some ___ or scientific experts = just as there are some scientists, journalists and others in that category"], "kind": "Completion", "answer": "journalists", "accept": ["journalists"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "However, criticising lawyers because their work is concerned with people&#x27;s problems would be similar to attacking IT staff or <b>.........<\/b> for the same reason.", "options": [{"t": "But, in general, it is no more just to say that lawyers are bad because they make a living from people's problems than it is to make the same accusation in respect of nurses or IT consultants.", "ok": true}, {"t": "A great many lawyers are involved in public law work, such as that involving civil liberties, housing and other issues.", "ok": false}, {"t": "Moreover, much legal work has nothing to do with conflict or misfortune, but is primarily concerned with drafting documents.", "ok": false}, {"t": "People sometimes make comments that characterise lawyers as professionals whose concerns put personal reward above truth, or who gain financially from misfortune.", "ok": false}], "pairs": ["attacking IT staff or ___ = the same accusation in respect of nurses or IT consultants"], "kind": "Completion", "answer": "nurses", "accept": ["nurses"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "In fact, many lawyers focus on questions relating, for example, to housing or civil liberties, which requires them to have <b>.........<\/b> to their work.", "options": [{"t": "Such work is not lavishly remunerated and the quality of the service provided by these lawyers relies on considerable professional dedication.", "ok": false}, {"t": "Another source of social disaffection for lawyers, and disaffection for the law, is a limited public understanding of how law works and how it could be changed.", "ok": false}, {"t": "A great many lawyers are involved in public law work, such as that involving civil liberties, housing and other issues.", "ok": true}, {"t": "People sometimes make comments that characterise lawyers as professionals whose concerns put personal reward above truth, or who gain financially from misfortune.", "ok": false}], "pairs": ["which requires them to have ___ to their work = relies on considerable professional dedication", "housing or civil liberties = public law work, such as that involving civil liberties, housing and other issues"], "kind": "Completion", "answer": "dedication", "accept": ["dedication"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 26, "question": "What&#x27;s more, a lot of lawyers&#x27; time is spent writing <b>.........<\/b> rather than dealing with people&#x27;s misfortunes.", "options": [{"t": "But, in general, it is no more just to say that lawyers are bad because they make a living from people's problems than it is to make the same accusation in respect of nurses or IT consultants.", "ok": false}, {"t": "People sometimes make comments that characterise lawyers as professionals whose concerns put personal reward above truth, or who gain financially from misfortune.", "ok": false}, {"t": "Moreover, much legal work has nothing to do with conflict or misfortune, but is primarily concerned with drafting documents.", "ok": true}, {"t": "Another source of social disaffection for lawyers, and disaffection for the law, is a limited public understanding of how law works and how it could be changed.", "ok": false}], "pairs": ["spent writing ___ = primarily concerned with drafting documents", "rather than dealing with people's misfortunes = has nothing to do with conflict or misfortune"], "kind": "Completion", "answer": "documents", "accept": ["documents"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "The law applies throughout our lives", "p": "The law influences all of us virtually all the time", "rel": "=", "note": "", "n": "14"}, {"q": "throughout our lives", "p": "It affects us from the embryo onwards", "rel": "=", "note": "", "n": "14"}, {"q": "The public's increasing ability to influence the law", "p": "for the general population to help actually shape the law", "rel": "=", "note": "", "n": "15"}, {"q": "increasing ability", "p": "it is becoming easier for people to take an interest in law", "rel": "=", "note": "", "n": "15"}, {"q": "Different areas of professional expertise", "p": "all sorts of skills and knowledge are valuable", "rel": "=", "note": "", "n": "16"}, {"q": "professional expertise", "p": "Those people, for example, with knowledge of computers", "rel": "=", "note": "", "n": "16"}, {"q": "Growth in laws", "p": "The number of laws has never been greater", "rel": "=", "note": "", "n": "17"}, {"q": "Growth", "p": "more than doubled in recent times", "rel": "=", "note": "", "n": "17"}, {"q": "A negative regard for lawyers", "p": "lawyers are not universally admired", "rel": "=", "note": "", "n": "18"}, {"q": "negative regard", "p": "Anti-lawyer jokes have a long history", "rel": "=", "note": "", "n": "18"}, {"q": "Reasons why it is unfair to criticise lawyers", "p": "it is no more just to say that lawyers are bad", "rel": "=", "note": "", "n": "19"}, {"q": "unfair to criticise", "p": "much legal work has nothing to do with conflict or misfortune", "rel": "=", "note": "", "n": "19"}, {"q": "Knowledge of the law is as important as having computer skills", "p": "legal understanding is just as vital and as universally needed", "rel": "=", "note": "", "n": "20"}, {"q": "There should be a person with legal training in every hospital", "p": "someone with IT skills or an IT help desk in every UK school, every company, every hospital", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "20"}, {"q": "Society could not function effectively without legal experts", "p": "Without their knowledge, many parts of commercial and social life today would seize up in minutes", "rel": "=", "note": "", "n": "21"}, {"q": "is of little interest to lawyers", "p": "put personal reward above truth", "rel": "=", "note": "", "n": "22"}, {"q": "more concerned with making money", "p": "gain financially from misfortune", "rel": "=", "note": "", "n": "22"}, {"q": "some ___ or scientific experts", "p": "just as there are some scientists, journalists and others in that category", "rel": "=", "note": "", "n": "23"}, {"q": "attacking IT staff or ___", "p": "the same accusation in respect of nurses or IT consultants", "rel": "=", "note": "", "n": "24"}, {"q": "which requires them to have ___ to their work", "p": "relies on considerable professional dedication", "rel": "=", "note": "", "n": "25"}, {"q": "housing or civil liberties", "p": "public law work, such as that involving civil liberties, housing and other issues", "rel": "=", "note": "", "n": "25"}, {"q": "spent writing ___", "p": "primarily concerned with drafting documents", "rel": "=", "note": "", "n": "26"}, {"q": "rather than dealing with people's misfortunes", "p": "has nothing to do with conflict or misfortune", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "permeated", "pos": "verb", "loc": "B", "d": "spread through every part of something", "uz": "singib ketgan, qamrab olgan", "ex": "Social media has permeated every aspect of modern teenage life.", "form": "permeated"}, {"w": "illiterate", "pos": "adjective", "loc": "B", "d": "unable to read or write", "uz": "savodsiz", "ex": "In the nineteenth century, many villagers were illiterate and relied on others.", "form": "illiterate"}, {"w": "versatile", "pos": "adjective", "loc": "B", "d": "able to be used in many different ways", "uz": "ko'p qirrali, universal", "ex": "A versatile employee can handle sales, accounting and customer service.", "form": "versatile"}, {"w": "degradation", "pos": "noun", "loc": "B", "d": "the process of becoming worse in quality or condition", "uz": "tubanlashuv, yomonlashuv", "ex": "Pollution has led to the degradation of the river ecosystem.", "form": "degradation"}, {"w": "relied upon", "pos": "phrasal verb", "loc": "C", "d": "depended on with trust and confidence", "uz": "tayanilgan, ishonilgan", "ex": "Experienced translators are relied upon to deliver accurate and fast results.", "form": "relied upon"}, {"w": "seize up", "pos": "phrasal verb", "loc": "C", "d": "stop working properly or become stuck", "uz": "ishdan to'xtamoq, qotib qolmoq", "ex": "If the servers fail, the whole banking system could seize up.", "form": "seize up"}, {"w": "made sense of", "pos": "phrasal verb", "loc": "C", "d": "understood something that was complicated or unclear", "uz": "tushunib yetmoq, ma'nosini anglamoq", "ex": "It took the students hours before they made sense of the graph.", "form": "made sense of"}, {"w": "legislative output", "pos": "collocation", "loc": "D", "d": "the amount of new laws produced by a government", "uz": "qonun ijodkorligi hajmi", "ex": "The legislative output of parliament slowed down during the election year.", "form": "legislative output"}, {"w": "legally binding", "pos": "collocation", "loc": "D", "d": "required by law, so that people must obey it", "uz": "huquqiy majburiy", "ex": "Once both parties sign it, the agreement becomes legally binding.", "form": "legally binding"}, {"w": "vindicate", "pos": "verb", "loc": "D", "d": "defend or prove something to be right or justified", "uz": "oqlamoq, himoya qilmoq", "ex": "The new evidence helped to vindicate the scientist's controversial theory.", "form": "vindicate"}, {"w": "universally admired", "pos": "collocation", "loc": "E", "d": "respected and liked by everyone in every place", "uz": "hamma tomonidan hurmat qilingan", "ex": "Few politicians are universally admired, even after they retire from office.", "form": "universally admired"}, {"w": "revered", "pos": "adjective", "loc": "E", "d": "respected and admired very deeply", "uz": "e'zozlangan, hurmatga sazovor", "ex": "She is a revered teacher whom former students still visit.", "form": "revered"}, {"w": "characterise", "pos": "verb", "loc": "F", "d": "describe something by pointing to its typical qualities", "uz": "ta'riflamoq, tavsiflamoq", "ex": "Critics often characterise the new policy as rushed and poorly planned.", "form": "characterise"}, {"w": "fit that bill", "pos": "idiom", "loc": "F", "d": "match a description or meet a requirement exactly", "uz": "talabga mos kelmoq", "ex": "We need someone with strong leadership skills, and Anna would fit that bill.", "form": "fit that bill"}, {"w": "lavishly remunerated", "pos": "collocation", "loc": "F", "d": "paid a very large amount of money for work", "uz": "juda yaxshi haq to'lanadigan", "ex": "Top surgeons are often lavishly remunerated for their rare skills.", "form": "lavishly remunerated"}, {"w": "drafting", "pos": "verb", "loc": "F", "d": "writing the first version of a document or plan", "uz": "loyihalashtirish, qoralama yozish", "ex": "Drafting the contract took the lawyers almost three weeks.", "form": "Drafting"}, {"w": "disaffection", "pos": "noun", "loc": "F", "d": "a feeling of dissatisfaction and loss of loyalty", "uz": "norozilik, ko'ngli sovish", "ex": "Low wages caused widespread disaffection among the factory workers.", "form": "disaffection"}]}, {"evidence": [{"q": 27, "question": "It is uncertain when the Voynich manuscript was written.", "options": [{"t": "Yet the library's most controversial possession is an unprepossessing vellum manuscript about the size of a hardback book, containing 240-odd pages of drawings and text of unknown age and authorship.", "ok": true}, {"t": "It's known to scholars as the Voynich manuscript, after the American book dealer Wilfrid Voynich, who bought the manuscript from a Jesuit college in Italy in 1912.", "ok": false}, {"t": "The Voynich manuscript has continued to defy the efforts of world-class experts.", "ok": false}, {"t": "Catalogued as MS408, the manuscript would attract little attention were it not for the fact that the drawings hint at esoteric knowledge, while the text seems to be some sort of code – one that no-one has been able to break.", "ok": false}], "pairs": ["It is uncertain when the manuscript was written = of unknown age and authorship"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 28, "question": "Wilfrid Voynich donated the manuscript to the Beinecke Library.", "options": [{"t": "Catalogued as MS408, the manuscript would attract little attention were it not for the fact that the drawings hint at esoteric knowledge, while the text seems to be some sort of code – one that no-one has been able to break.", "ok": false}, {"t": "Yet the library's most controversial possession is an unprepossessing vellum manuscript about the size of a hardback book, containing 240-odd pages of drawings and text of unknown age and authorship.", "ok": false}, {"t": "The starkly modern Beinecke Library at Yale University is home to some of the most valuable books in the world: first folios of Shakespeare, Gutenberg Bibles and manuscripts from the early Middle Ages.", "ok": false}, {"t": "It's known to scholars as the Voynich manuscript, after the American book dealer Wilfrid Voynich, who bought the manuscript from a Jesuit college in Italy in 1912.", "ok": true}], "pairs": ["Wilfrid Voynich donated the manuscript to the Beinecke Library ? who bought the manuscript from a Jesuit college in Italy in 1912"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 29, "question": "Interest in the Voynich manuscript extends beyond that of academics and professional codebreakers.", "options": [{"t": "Over the years, the manuscript has attracted the attention of everyone from amateur dabblers to top codebreakers, all determined to succeed where countless others have failed.", "ok": true}, {"t": "'Most other mysteries involve secondhand reports,' says Dr Gordon Rugg of Keele University, a leading Voynich expert.", "ok": false}, {"t": "Many are convinced that the Voynich manuscript isn't a hoax.", "ok": false}, {"t": "'Friedman's hypothesis commands respect because of the lifetime of cryptanalytical expertise he brought to bear,' says Rob Churchill, co-author of The Voynich Manuscript, 'but that still leaves a host of questions unanswered', such as the identity of the author and the meaning of the bizarre drawings.", "ok": false}], "pairs": ["Interest ... extends beyond that of academics and professional codebreakers = everyone from amateur dabblers to top codebreakers", "Interest = has attracted the attention of"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 30, "question": "The text of the Voynich manuscript contains just under 70 symbols.", "options": [{"t": "Using a system, first published by the Italian mathematician Girolamo Cardano in 1550, in which a specially constructed grille is used to pick out symbols from a table, Rugg found he could rapidly generate text with many of the basic traits of the Voynich manuscript.", "ok": false}, {"t": "The precise size of the 'alphabet' of the Voynich manuscript was unclear: it's possible to make out more than 70 distinct symbols among the 170,000-character text.", "ok": true}, {"t": "The Voynich manuscript has continued to defy the efforts of world-class experts.", "ok": false}, {"t": "Furthermore, Friedman discovered that some words and phrases appeared more often than expected in a standard language, casting doubt on claims that the manuscript concealed a real language, as encryption typically reduces word frequencies.", "ok": false}], "pairs": ["just under 70 symbols ≠ more than 70 distinct symbols"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 31, "question": "The number of times that some words occur makes it unlikely that the manuscript is based on an authentic language.", "options": [{"t": "This revealed evidence that the manuscript contains genuine words, rather than random nonsense, consistent with the existence of some underlying natural language.", "ok": false}, {"t": "The precise size of the 'alphabet' of the Voynich manuscript was unclear: it's possible to make out more than 70 distinct symbols among the 170,000-character text.", "ok": false}, {"t": "Furthermore, Friedman discovered that some words and phrases appeared more often than expected in a standard language, casting doubt on claims that the manuscript concealed a real language, as encryption typically reduces word frequencies.", "ok": true}, {"t": "The Voynich manuscript has continued to defy the efforts of world-class experts.", "ok": false}], "pairs": ["The number of times that some words occur = some words and phrases appeared more often than expected", "makes it unlikely that the manuscript is based on an authentic language = casting doubt on claims that the manuscript concealed a real language"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Gordon Rugg"}, {"k": "D", "t": "William Friedman"}, {"k": "E", "t": "Rob Churchill"}, {"k": "F", "t": "Gabriel Landini"}, {"k": "G", "t": "René Zandbergen"}], "ans": "D"}, "why": ""}, {"q": 32, "question": "Unlike some other similar objects of fascination, people can gain direct access to the Voynich manuscript.", "options": [{"t": "Over the years, the manuscript has attracted the attention of everyone from amateur dabblers to top codebreakers, all determined to succeed where countless others have failed.", "ok": false}, {"t": "'The Voynich manuscript is as challenging a puzzle as anyone could ask for.'", "ok": false}, {"t": "'Most other mysteries involve secondhand reports,' says Dr Gordon Rugg of Keele University, a leading Voynich expert.", "ok": true}, {"t": "The Voynich manuscript has continued to defy the efforts of world-class experts.", "ok": false}], "pairs": ["Unlike some other similar objects of fascination = Most other mysteries involve secondhand reports", "people can gain direct access = this is one that you can see for yourself"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Gordon Rugg"}, {"k": "D", "t": "William Friedman"}, {"k": "E", "t": "Rob Churchill"}, {"k": "F", "t": "Gabriel Landini"}, {"k": "G", "t": "René Zandbergen"}], "ans": "A"}, "why": ""}, {"q": 33, "question": "The person who wrote the manuscript may not have been entirely sane.", "options": [{"t": "Using a system, first published by the Italian mathematician Girolamo Cardano in 1550, in which a specially constructed grille is used to pick out symbols from a table, Rugg found he could rapidly generate text with many of the basic traits of the Voynich manuscript.", "ok": false}, {"t": "Others, such as Churchill, have suggested that the sheer weirdness of the illustrations and text hint at an author who had lost touch with reality.", "ok": true}, {"t": "Publishing his results in 2004, Rugg stresses that he hadn't set out to prove the manuscript a hoax.", "ok": false}, {"t": "Many are convinced that the Voynich manuscript isn't a hoax.", "ok": false}], "pairs": ["may not have been entirely sane = an author who had lost touch with reality"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "B", "t": "Roger Bacon"}, {"k": "D", "t": "William Friedman"}, {"k": "E", "t": "Rob Churchill"}, {"k": "F", "t": "Gabriel Landini"}, {"k": "G", "t": "René Zandbergen"}], "ans": "E"}, "why": ""}, {"q": 34, "question": "It is likely that the author of the manuscript is the same person as suggested by Wilfrid Voynich.", "options": [{"t": "It's known to scholars as the Voynich manuscript, after the American book dealer Wilfrid Voynich, who bought the manuscript from a Jesuit college in Italy in 1912.", "ok": false}, {"t": "According to Newbold, the manuscript proved that Bacon had access to a microscope centuries before they were supposedly first invented.", "ok": false}, {"t": "Voynich himself believed that the manuscript was the work of the 13th-century English monk Roger Bacon, famed for his knowledge of alchemy, philosophy and science.", "ok": false}, {"t": "In 1921 Voynich's view that Bacon was the writer appeared to win support from the work of William Newbold, Professor of Philosophy at the University of Pennsylvania, who claimed to have found the key to the cipher system used by Bacon.", "ok": true}], "pairs": ["the author is the same person as suggested by Wilfrid Voynich = Voynich's view that Bacon was the writer", "It is likely = appeared to win support"], "kind": "Matching", "answer": "C", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "Gordon Rugg"}, {"k": "B", "t": "Roger Bacon"}, {"k": "C", "t": "William Newbold"}, {"k": "E", "t": "Rob Churchill"}, {"k": "G", "t": "René Zandbergen"}], "ans": "C"}, "why": ""}, {"q": 35, "question": "William Newbold believed that the author of the Voynich manuscript had been able to look at cells through a <b>.........<\/b>.", "options": [{"t": "Voynich himself believed that the manuscript was the work of the 13th-century English monk Roger Bacon, famed for his knowledge of alchemy, philosophy and science.", "ok": false}, {"t": "In 1921 Voynich's view that Bacon was the writer appeared to win support from the work of William Newbold, Professor of Philosophy at the University of Pennsylvania, who claimed to have found the key to the cipher system used by Bacon.", "ok": false}, {"t": "'Friedman's hypothesis commands respect because of the lifetime of cryptanalytical expertise he brought to bear,' says Rob Churchill, co-author of The Voynich Manuscript, 'but that still leaves a host of questions unanswered', such as the identity of the author and the meaning of the bizarre drawings.", "ok": false}, {"t": "According to Newbold, the manuscript proved that Bacon had access to a microscope centuries before they were supposedly first invented.", "ok": true}], "pairs": ["look at cells through a ___ = had access to a microscope", "look at cells = observed living cells"], "kind": "Completion", "answer": "microscope", "accept": ["microscope"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 36, "question": "William Friedman concluded that the manuscript was written in an artificial language that was based on <b>.........<\/b>.", "options": [{"t": "So, could the Voynich manuscript be the earliest known example of an artificial language?", "ok": false}, {"t": "Friedman concluded that the most plausible resolution of this paradox was that 'Voynichese' is some sort of specially created artificial language, whose words are devised from concepts, rather than linguistics.", "ok": true}, {"t": "Even though Friedman was working more than 60 years ago, he suspected that major insights would come from using the device that had already transformed codebreaking: the computer.", "ok": false}, {"t": "Furthermore, Friedman discovered that some words and phrases appeared more often than expected in a standard language, casting doubt on claims that the manuscript concealed a real language, as encryption typically reduces word frequencies.", "ok": false}], "pairs": ["an artificial language that was based on ___ = whose words are devised from concepts"], "kind": "Completion", "answer": "concepts", "accept": ["concepts"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 37, "question": "He couldn&#x27;t find out the meaning of this language but he believed that the <b>.........<\/b> would continue to bring advances in code breaking.", "options": [{"t": "In this he was right – it is now the key tool for uncovering clues about the manuscript's language.", "ok": false}, {"t": "Friedman concluded that the most plausible resolution of this paradox was that 'Voynichese' is some sort of specially created artificial language, whose words are devised from concepts, rather than linguistics.", "ok": false}, {"t": "So, could the Voynich manuscript be the earliest known example of an artificial language?", "ok": false}, {"t": "Even though Friedman was working more than 60 years ago, he suspected that major insights would come from using the device that had already transformed codebreaking: the computer.", "ok": true}], "pairs": ["would continue to bring advances in code breaking = major insights would come from using the device that had already transformed codebreaking"], "kind": "Completion", "answer": "computer", "accept": ["computer"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 38, "question": "Dr Gabriel Landini used a system known as <b>.........<\/b> in his research, and claims to have demonstrated the presence of genuine words.", "options": [{"t": "In 1921 Voynich's view that Bacon was the writer appeared to win support from the work of William Newbold, Professor of Philosophy at the University of Pennsylvania, who claimed to have found the key to the cipher system used by Bacon.", "ok": false}, {"t": "For example, in 2001 another leading Voynich scholar, Dr Gabriel Landini of Birmingham University in the UK, published the results of his study of the manuscript using a pattern-detecting method called spectral analysis.", "ok": true}, {"t": "This revealed evidence that the manuscript contains genuine words, rather than random nonsense, consistent with the existence of some underlying natural language.", "ok": false}, {"t": "Yet the following year, Voynich expert René Zandbergen of the European Space Agency in Darmstadt, Germany, showed that the entropy of the text (a measure of the rate of transfer of information) was consistent with Friedman's suspicions that an artificial language had been used.", "ok": false}], "pairs": ["a system known as ___ = a pattern-detecting method called spectral analysis"], "kind": "Completion", "answer": "spectral analysis", "accept": ["spectral analysis"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 39, "question": "Dr Gordon Rugg&#x27;s system involved a grille that made it possible to quickly select symbols that appeared in a <b>.........<\/b>.", "options": [{"t": "Publishing his results in 2004, Rugg stresses that he hadn't set out to prove the manuscript a hoax.", "ok": false}, {"t": "'Most other mysteries involve secondhand reports,' says Dr Gordon Rugg of Keele University, a leading Voynich expert.", "ok": false}, {"t": "Using a system, first published by the Italian mathematician Girolamo Cardano in 1550, in which a specially constructed grille is used to pick out symbols from a table, Rugg found he could rapidly generate text with many of the basic traits of the Voynich manuscript.", "ok": true}, {"t": "'Many derive great intellectual pleasure from solving puzzles,' says Rugg.", "ok": false}], "pairs": ["a grille that made it possible to quickly select symbols that appeared in a ___ = a specially constructed grille is used to pick out symbols from a table", "quickly = rapidly generate text"], "kind": "Completion", "answer": "table", "accept": ["table"], "limit": "NO MORE THAN TWO WORDS", "why": ""}, {"q": 40, "question": "The writer&#x27;s main aim in this passage is to", "options": [{"t": "'Most other mysteries involve secondhand reports,' says Dr Gordon Rugg of Keele University, a leading Voynich expert.", "ok": false}, {"t": "Over the years, the manuscript has attracted the attention of everyone from amateur dabblers to top codebreakers, all determined to succeed where countless others have failed.", "ok": true}, {"t": "Academic research papers, books and websites are devoted to making sense of the contents of the manuscript, which are freely available to all.", "ok": false}, {"t": "'Friedman's hypothesis commands respect because of the lifetime of cryptanalytical expertise he brought to bear,' says Rob Churchill, co-author of The Voynich Manuscript, 'but that still leaves a host of questions unanswered', such as the identity of the author and the meaning of the bizarre drawings.", "ok": false}], "pairs": ["describe the numerous attempts to decode the manuscript = determined to succeed where countless others have failed", "explain the meaning of the manuscript ≠ one that no-one has been able to break"], "kind": "Multiple choice", "answer": "C", "choice": {"prompt": "Which option is correct?", "opts": [{"k": "A", "t": "explain the meaning of the manuscript."}, {"k": "B", "t": "determine the true identity of the manuscript's author."}, {"k": "C", "t": "describe the numerous attempts to decode the manuscript."}, {"k": "D", "t": "identify which research into the manuscript has had the most media coverage."}], "ans": "C"}, "why": ""}], "paraphrase": [{"q": "It is uncertain when the manuscript was written", "p": "of unknown age and authorship", "rel": "=", "note": "", "n": "27"}, {"q": "Wilfrid Voynich donated the manuscript to the Beinecke Library", "p": "who bought the manuscript from a Jesuit college in Italy in 1912", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "28"}, {"q": "Interest ... extends beyond that of academics and professional codebreakers", "p": "everyone from amateur dabblers to top codebreakers", "rel": "=", "note": "", "n": "29"}, {"q": "Interest", "p": "has attracted the attention of", "rel": "=", "note": "", "n": "29"}, {"q": "just under 70 symbols", "p": "more than 70 distinct symbols", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "30"}, {"q": "The number of times that some words occur", "p": "some words and phrases appeared more often than expected", "rel": "=", "note": "", "n": "31"}, {"q": "makes it unlikely that the manuscript is based on an authentic language", "p": "casting doubt on claims that the manuscript concealed a real language", "rel": "=", "note": "", "n": "31"}, {"q": "Unlike some other similar objects of fascination", "p": "Most other mysteries involve secondhand reports", "rel": "=", "note": "", "n": "32"}, {"q": "people can gain direct access", "p": "this is one that you can see for yourself", "rel": "=", "note": "", "n": "32"}, {"q": "may not have been entirely sane", "p": "an author who had lost touch with reality", "rel": "=", "note": "", "n": "33"}, {"q": "the author is the same person as suggested by Wilfrid Voynich", "p": "Voynich's view that Bacon was the writer", "rel": "=", "note": "", "n": "34"}, {"q": "It is likely", "p": "appeared to win support", "rel": "=", "note": "", "n": "34"}, {"q": "look at cells through a ___", "p": "had access to a microscope", "rel": "=", "note": "", "n": "35"}, {"q": "look at cells", "p": "observed living cells", "rel": "=", "note": "", "n": "35"}, {"q": "an artificial language that was based on ___", "p": "whose words are devised from concepts", "rel": "=", "note": "", "n": "36"}, {"q": "would continue to bring advances in code breaking", "p": "major insights would come from using the device that had already transformed codebreaking", "rel": "=", "note": "", "n": "37"}, {"q": "a system known as ___", "p": "a pattern-detecting method called spectral analysis", "rel": "=", "note": "", "n": "38"}, {"q": "a grille that made it possible to quickly select symbols that appeared in a ___", "p": "a specially constructed grille is used to pick out symbols from a table", "rel": "=", "note": "", "n": "39"}, {"q": "quickly", "p": "rapidly generate text", "rel": "=", "note": "", "n": "39"}, {"q": "describe the numerous attempts to decode the manuscript", "p": "determined to succeed where countless others have failed", "rel": "=", "note": "", "n": "40"}, {"q": "explain the meaning of the manuscript", "p": "one that no-one has been able to break", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "40"}], "vocab": [{"w": "unprepossessing", "pos": "adjective", "loc": "¶1", "d": "not attractive or impressive in appearance", "uz": "bejirim, ko'zga tashlanmaydigan", "ex": "The unprepossessing little shop sold some extremely rare coins.", "form": "unprepossessing"}, {"w": "vellum", "pos": "noun", "loc": "¶1", "d": "fine writing material made from the skin of a calf", "uz": "pergament", "ex": "Medieval scribes copied important texts onto expensive sheets of vellum.", "form": "vellum"}, {"w": "esoteric", "pos": "adjective", "loc": "¶1", "d": "understood by only a small number of people with special knowledge", "uz": "sirli, tor doiraga tushunarli", "ex": "The professor gave an esoteric lecture on ancient numerical systems.", "form": "esoteric"}, {"w": "dabblers", "pos": "noun", "loc": "¶2", "d": "people who take part in an activity casually, without serious commitment", "uz": "havaskorlar, yuzaki shug'ullanuvchilar", "ex": "The club welcomes serious players as well as casual dabblers.", "form": "dabblers"}, {"w": "created a sensation", "pos": "collocation", "loc": "¶3", "d": "caused great excitement and public interest", "uz": "shov-shuv qo'zg'atmoq", "ex": "The young singer's first album created a sensation across the country.", "form": "created a sensation"}, {"w": "wishful thinking", "pos": "collocation", "loc": "¶3", "d": "believing something is true because you want it to be", "uz": "orzu-havas, xomxayol", "ex": "Hoping to pass without studying is just wishful thinking.", "form": "wishful thinking"}, {"w": "defy", "pos": "verb", "loc": "¶4", "d": "resist or refuse to obey; be impossible to explain or solve", "uz": "bo'ysunmaslik, yengib bo'lmaslik", "ex": "Some natural phenomena still defy any scientific explanation.", "form": "defy"}, {"w": "in deep water", "pos": "idiom", "loc": "¶4", "d": "in serious trouble or a difficult situation", "uz": "og'ir ahvolda, qiyin vaziyatda", "ex": "The company was in deep water after the audit revealed missing funds.", "form": "in deep water"}, {"w": "casting doubt on", "pos": "phrasal verb", "loc": "¶4", "d": "making people less sure that something is true", "uz": "shubha uyg'otmoq", "ex": "The witness's changing story is casting doubt on the whole case.", "form": "casting doubt on"}, {"w": "commands respect", "pos": "collocation", "loc": "¶5", "d": "deserves and receives admiration from other people", "uz": "hurmat qozonadi", "ex": "Her long experience in diplomacy commands respect from younger colleagues.", "form": "commands respect"}, {"w": "brought to bear", "pos": "idiom", "loc": "¶5", "d": "applied or used with force in order to achieve a result", "uz": "qo'llangan, ishga solingan", "ex": "The detective brought to bear all his skills to solve the puzzle.", "form": "brought to bear"}, {"w": "perplexing", "pos": "adjective", "loc": "¶6", "d": "confusing and difficult to understand", "uz": "boshni qotiruvchi, tushunarsiz", "ex": "The test results were perplexing, even to the experienced doctors.", "form": "perplexing"}, {"w": "hoax", "pos": "noun", "loc": "¶7", "d": "a trick that makes people believe something false is real", "uz": "aldov, soxta yolg'on", "ex": "The famous photograph of the monster was later exposed as a hoax.", "form": "hoax"}, {"w": "telltale", "pos": "adjective", "loc": "¶7", "d": "revealing something that someone wants to keep hidden", "uz": "oshkor qiluvchi, fosh etuvchi", "ex": "Fingerprints on the glass were the telltale sign of his presence.", "form": "telltale"}, {"w": "beg to differ", "pos": "idiom", "loc": "¶7", "d": "politely say that you disagree with someone", "uz": "hurmat bilan rozi bo'lmaslik", "ex": "You think the plan is perfect, but I beg to differ.", "form": "beg to differ"}, {"w": "decipherable", "pos": "adjective", "loc": "¶7", "d": "possible to read or understand, even if difficult", "uz": "o'qib bo'ladigan, shifrini ochsa bo'ladigan", "ex": "His handwriting was barely decipherable, so I asked him to retype it.", "form": "decipherable"}, {"w": "under lock and key", "pos": "idiom", "loc": "¶7", "d": "kept in a locked, safe place", "uz": "qulf ostida, qattiq saqlanadigan", "ex": "The rare documents are kept under lock and key in the basement.", "form": "under lock and key"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>

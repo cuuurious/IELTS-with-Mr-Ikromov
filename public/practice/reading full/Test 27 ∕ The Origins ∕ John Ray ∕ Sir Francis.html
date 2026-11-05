@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test 27 / The Origins / John Ray / Sir Francis</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--amber:#d97706;--amber-d:#92400e;--amber-l:#fef3c7;--amber-ll:#fffbeb;--line:#d1d5db;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#fffbeb;color:#1f2937;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:1rem;}
+body.dark{background:#0b1220;color:#e5e7eb;}
+button{font-family:inherit;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;gap:.5rem;}
+body.dark .header{background:#111827;border-color:#374151;}
+.header__brand{display:flex;align-items:center;gap:.6rem;}
+.logo{font-size:1.5rem;}
+.header__brand-name{font-weight:800;color:var(--amber);font-size:1.05rem;}
+.header__candidate{font-size:.76rem;color:#6b7280;line-height:1.3;}
+body.dark .header__candidate{color:#9ca3af;}
+.header__right{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.ibtn:disabled{opacity:.35;cursor:default;}
+.ibtn{background:none;border:none;font-size:1rem;color:var(--amber-d);cursor:pointer;position:relative;padding:.15rem .3rem;}
+body.dark .ibtn{color:#fbbf24;}
+.ws-open{font-weight:700;font-size:.82rem;border:2px solid var(--amber);border-radius:999px;padding:.25rem .85rem;}
+.badge{position:absolute;top:-8px;right:-10px;background:#dc2626;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.05rem .35rem;}
+.timer{font-weight:800;font-size:1.05rem;color:var(--amber-d);border:2px solid var(--amber);border-radius:999px;padding:.3rem .95rem;background:#fffbeb;cursor:pointer;user-select:none;min-width:5.2rem;text-align:center;}
+body.dark .timer{background:#1f2937;color:#fbbf24;}
+.timer.low{color:#dc2626;border-color:#dc2626;animation:pulse 1s infinite;}
+.timer.off{opacity:.55;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.parttabs{display:flex;gap:.4rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;flex-wrap:wrap;}
+body.dark .parttabs{background:#1f2937;border-color:#374151;}
+.ptab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:10px;padding:.3rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem;display:flex;gap:.5rem;align-items:center;}
+.ptab small{font-weight:600;color:#6b7280;font-size:.72rem;}
+.ptab.active{background:var(--amber);color:#fff;} .ptab.active small{color:#fff;}
+body.dark .ptab{background:#111827;color:#fbbf24;} body.dark .ptab.active{background:var(--amber);color:#fff;}
+.main{flex:1;min-height:0;position:relative;}
+.part{display:none;height:100%;}
+.part.active{display:flex;}
+.passage-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fffdf7;line-height:1.65;font-size:1rem;}
+body.dark .passage-container{background:#0f172a;}
+.passage-container,.questions-container,.ws-body{zoom:var(--fs,1);}
+.divider{width:6px;cursor:col-resize;background:#e5e7eb;flex-shrink:0;}
+body.dark .divider{background:#374151;} .divider:hover,.divider.dragging{background:var(--amber);}
+.passage-instructions{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.9rem;color:#78350f;}
+body.dark .passage-instructions{background:#1f2937;border-color:#374151;color:#fbbf24;}
+.passage-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+.passage-subtitle{font-style:italic;color:#6b7280;margin-bottom:1rem;font-size:.92rem;}
+.passage-container p{margin-bottom:1rem;text-align:justify;}
+.para-letter{font-weight:800;color:var(--amber);margin-right:.5rem;}
+.fnote{font-size:.8rem;color:#6b7280;}
+.sent{border-radius:3px;transition:background .3s;}
+.sent.location-found{background:#fde68a;box-shadow:0 0 0 3px #fde68a;}
+body.dark .sent.location-found{background:#78350f;box-shadow:0 0 0 3px #78350f;}
+.sent.ws-flashloc{animation:wsloc 2.6s;}
+@keyframes wsloc{0%,70%{background:#fde047;box-shadow:0 0 0 4px #facc15}100%{}}
+.hl-yellow{background:#fef08a;} .hl-green{background:#bbf7d0;} .hl-blue{background:#bfdbfe;}
+body.dark .hl-yellow{background:#854d0e;} body.dark .hl-green{background:#14532d;} body.dark .hl-blue{background:#1e3a8a;}
+.para-dropzone{border:2px dashed var(--amber);border-radius:8px;background:#fffbeb;padding:.45rem .7rem;margin-bottom:.5rem;min-height:2.4rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
+body.dark .para-dropzone{background:#1f2937;}
+.para-dropzone.dz-empty::before{content:"Drag the correct heading here";color:#b45309;font-size:.82rem;font-style:italic;}
+.para-dropzone.drag-over{background:#fde68a;}
+.placed-chip{display:flex;align-items:center;gap:.4rem;background:var(--amber);color:#fff;border-radius:6px;padding:.3rem .55rem;font-size:.82rem;max-width:100%;}
+.placed-chip .pc-num{font-weight:800;background:rgba(255,255,255,.25);border-radius:4px;padding:0 .35rem;}
+.placed-chip .pc-remove{background:none;border:none;color:#fff;cursor:pointer;font-weight:800;font-size:.9rem;line-height:1;}
+.questions-container{flex:1;overflow-y:auto;padding:1.2rem 1.5rem;background:#fff;}
+body.dark .questions-container{background:#111827;}
+.q-group{margin-bottom:1.7rem;position:relative;}
+.q-group-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;}
+.q-group-title{font-weight:800;color:var(--amber);font-size:1rem;}
+.q-group-instructions{font-style:italic;font-size:.88rem;color:#4b5563;margin-bottom:.75rem;}
+.q-group-instructions p{margin-bottom:.3rem;} body.dark .q-group-instructions{color:#9ca3af;}
+.hint-small{font-size:.8rem;color:#6b7280;margin:.2rem 0 .8rem;font-style:italic;}
+.q-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.6rem;font-size:.94rem;flex-wrap:wrap;}
+.q-row .q-stem{flex:1 1 260px;min-width:0;}
+.q-num{font-weight:800;color:var(--amber-d);background:var(--amber-l);border-radius:6px;min-width:1.7rem;height:1.7rem;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 .2rem;}
+body.dark .q-num{background:#1f2937;color:#fbbf24;}
+select.q-select{border:1.5px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.9rem;background:#fff;max-width:240px;}
+body.dark select.q-select{background:#1f2937;color:#e5e7eb;border-color:#4b5563;}
+input.q-text{border:none;border-bottom:2px solid var(--amber);padding:.2rem .4rem;font-size:.94rem;background:transparent;min-width:150px;color:inherit;}
+input.q-text:focus{outline:none;border-bottom-color:var(--amber-d);background:#fffbeb55;}
+.mcq-option{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .65rem;border:1.5px solid #e5e7eb;border-radius:8px;margin-bottom:.45rem;cursor:pointer;font-size:.9rem;}
+body.dark .mcq-option{border-color:#374151;} .mcq-option:hover{background:var(--amber-l);} body.dark .mcq-option:hover{background:#1f2937;}
+.mcq-option input{margin-top:.2rem;width:1.05rem;height:1.05rem;accent-color:var(--amber);cursor:pointer;flex-shrink:0;}
+.opt-letter{font-weight:800;color:var(--amber-d);} body.dark .opt-letter{color:#fbbf24;}
+.mcq-stem{display:flex;align-items:flex-start;gap:.6rem;font-weight:600;margin-bottom:.5rem;font-size:.95rem;}
+.word-bank{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;font-size:.9rem;line-height:1.7;}
+body.dark .word-bank{background:#1f2937;border-color:#374151;}
+.word-bank .wb-title{font-weight:800;text-align:center;margin-bottom:.4rem;color:#78350f;} body.dark .word-bank .wb-title{color:#fbbf24;}
+.word-bank .wb-item{display:block;} .wb-letter{font-weight:800;color:var(--amber-d);margin-right:.4rem;}
+.flag-toggle{background:none;border:none;font-size:1.1rem;color:#d1d5db;cursor:pointer;width:1.8rem;height:1.8rem;}
+.flag-toggle:hover{color:#f59e0b;} .flag-toggle.flagged{color:#dc2626;}
+.info-chip-pool{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem;}
+.info-chip{border:1.5px solid var(--amber);border-radius:8px;padding:.5rem .7rem;font-size:.86rem;background:#fffbeb;cursor:grab;display:flex;gap:.5rem;align-items:flex-start;}
+body.dark .info-chip{background:#1f2937;color:#e5e7eb;}
+.info-chip .ic-num{font-weight:800;color:var(--amber);flex-shrink:0;min-width:1.6rem;}
+.info-chip.armed{outline:2.5px solid var(--amber);background:#fde68a;} body.dark .info-chip.armed{background:#78350f;}
+.info-chip.placed{opacity:.35;cursor:default;pointer-events:none;}
+.notes-box{background:var(--amber-l);border:1px solid #fde68a;border-radius:8px;padding:1rem 1.2rem;font-size:.92rem;line-height:2;margin-bottom:.8rem;overflow-x:auto;}
+body.dark .notes-box{background:#1f2937;border-color:#374151;}
+.notes-box table{border-collapse:collapse;width:100%;margin:.3rem 0;font-size:.86rem;line-height:1.7;}
+.notes-box th,.notes-box td{border:1px solid #d6b45a;padding:.4rem .55rem;vertical-align:top;text-align:left;}
+body.dark .notes-box th,body.dark .notes-box td{border-color:#4b5563;}
+.notes-box ul{margin:.2rem 0 .2rem 1.3rem;}
+.notes-title{font-weight:800;text-align:center;margin-bottom:.5rem;color:#78350f;} body.dark .notes-title{color:#fbbf24;}
+.notes-sub{margin-top:.5rem;}
+.notes-box input.q-text{min-width:90px;max-width:150px;}
+.flow-box{background:#fff;border:1.5px solid #d6b45a;border-radius:8px;padding:.45rem .8rem;text-align:center;line-height:1.7;}
+body.dark .flow-box{background:#111827;} .flow-arrow{text-align:center;color:var(--amber);line-height:1.2;}
+.footer{display:flex;align-items:center;gap:.75rem;padding:.5rem 1.1rem;background:#fff;border-top:1px solid var(--line);flex-shrink:0;}
+body.dark .footer{background:#111827;border-color:#374151;}
+.footer__navwrap{display:flex;gap:.9rem;flex-wrap:wrap;flex:1;align-items:center;}
+.navpart{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.navpart .lbl{font-size:.7rem;font-weight:800;color:var(--amber-d);margin-right:.2rem;cursor:pointer;}
+.navbtn{width:1.95rem;height:1.95rem;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:.74rem;font-weight:700;color:#374151;cursor:pointer;}
+body.dark .navbtn{background:#1f2937;color:#d1d5db;border-color:#4b5563;}
+.navbtn.answered{background:#d1fae5;border-color:#34d399;} body.dark .navbtn.answered{background:#065f46;border-color:#10b981;}
+.navbtn.flagged{position:relative;} .navbtn.flagged::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#dc2626;border-radius:50%;}
+.navbtn.cur{outline:2px solid var(--amber);}
+.btn-line{padding:.5rem 1rem;border-radius:8px;border:1.5px solid var(--amber);background:#fff;color:var(--amber);font-weight:700;cursor:pointer;}
+body.dark .btn-line{background:#1f2937;}
+.btn-solid{padding:.5rem 1.2rem;border-radius:8px;border:none;background:var(--amber);color:#fff;font-weight:700;cursor:pointer;}
+.btn-solid:hover{background:#b45309;} .btn-solid:disabled{opacity:.5;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+.modal-box{background:#fff;border-radius:14px;padding:1.6rem;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;}
+body.dark .modal-box{background:#111827;color:#e5e7eb;}
+.modal-box h2{color:var(--amber);border-bottom:2px solid #fde68a;padding-bottom:.6rem;margin-bottom:1rem;}
+.review-part{font-weight:800;color:var(--amber-d);margin:.8rem 0 .2rem;font-size:.85rem;}
+.review-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.4rem;margin:.3rem 0;}
+.review-cell{aspect-ratio:1;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer;position:relative;color:inherit;}
+body.dark .review-cell{background:#1f2937;border-color:#4b5563;}
+.review-cell.answered{background:#d1fae5;border-color:#34d399;} body.dark .review-cell.answered{background:#065f46;}
+.review-cell.flagged::after{content:'\1F6A9';position:absolute;top:-9px;right:-6px;font-size:.65rem;}
+.score-hero{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1rem;}
+body.dark .score-hero{background:#1f2937;border-color:#374151;}
+.score-hero .big-num{font-size:2.6rem;font-weight:800;color:var(--amber);}
+.score-hero .band{font-size:1.3rem;font-weight:800;color:#b45309;margin:.3rem 0;}
+.score-hero .verdict{background:#ecfdf5;color:#065f46;font-weight:700;border-radius:8px;padding:.5rem;margin-top:.6rem;}
+.partscores{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+.pscore{background:#fff;border:1.5px solid #fde68a;border-radius:10px;padding:.45rem .9rem;font-weight:700;font-size:.85rem;}
+body.dark .pscore{background:#111827;border-color:#374151;}
+.pscore button{margin-left:.5rem;border:none;background:var(--amber);color:#fff;border-radius:6px;padding:.15rem .5rem;font-size:.72rem;cursor:pointer;}
+.answer-item{border-left:4px solid #34d399;background:#ecfdf5;border-radius:6px;padding:.55rem .8rem;margin-bottom:.5rem;font-size:.87rem;}
+.answer-item.wrong{border-left-color:#f87171;background:#fef2f2;}
+body.dark .answer-item{background:#064e3b;} body.dark .answer-item.wrong{background:#450a0a;}
+.answer-item .ai-correct{color:#6b7280;font-size:.82rem;} body.dark .answer-item .ai-correct{color:#9ca3af;}
+.ai-locate-btn{border:1px solid var(--amber);background:#fff;color:var(--amber);border-radius:6px;padding:.1rem .5rem;font-size:.75rem;cursor:pointer;margin-left:.4rem;}
+.ai-check{float:right;font-weight:800;}
+.highlight-popup{position:fixed;display:none;background:#1f2937;border-radius:8px;padding:.35rem;gap:.3rem;z-index:500;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+.highlight-popup button{width:1.5rem;height:1.5rem;border-radius:4px;border:none;cursor:pointer;font-size:.8rem;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#fbbf24;border-radius:4px;}
+/* ---------- Workshop ---------- */
+.ws-overlay{position:absolute;inset:0;z-index:20;background:#fffaf0;display:none;flex-direction:column;}
+.ws-overlay.open{display:flex;}
+body.dark .ws-overlay{background:#111827;color:#e5e7eb;}
+.ws-top{display:flex;align-items:center;gap:.8rem;padding:.55rem 1.1rem;border-bottom:2px solid #f59e0b;background:#fff;flex-wrap:wrap;}
+body.dark .ws-top{background:#1f2937;}
+.ws-title{font-weight:800;color:var(--amber);font-size:1.05rem;white-space:nowrap;}
+.ws-title small{display:block;font-weight:500;color:#6b7280;font-size:.72rem;}
+.ws-tabs{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ws-tab{border:2px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;padding:.32rem .95rem;font-weight:700;cursor:pointer;font-size:.86rem;}
+.ws-tab.active{background:#f59e0b;color:#fff;} body.dark .ws-tab{background:#1f2937;color:#fbbf24;} body.dark .ws-tab.active{background:var(--amber);color:#fff;}
+.ws-passages{display:flex;gap:.35rem;padding:.4rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-wrap:wrap;}
+body.dark .ws-passages{background:#1f2937;border-color:#374151;}
+.ws-pp{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;cursor:pointer;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ws-pp.active{background:#fcd34d;} body.dark .ws-pp{background:#111827;color:#fbbf24;} body.dark .ws-pp.active{background:#b45309;color:#fff;}
+.ws-close{border:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer;margin-left:auto;}
+.ws-body{flex:1;overflow:auto;padding:1.1rem;}
+.ws-wrap{max-width:920px;margin:0 auto;}
+.ws-intro{background:#fffbeb;border-left:4px solid #f59e0b;padding:.7rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:.92rem;color:#78350f;}
+body.dark .ws-intro{background:#1f2937;color:#fcd34d;}
+.ws-score{display:inline-block;background:#f59e0b;color:#fff;font-weight:800;border-radius:999px;padding:.2rem .8rem;font-size:.85rem;margin-left:.5rem;}
+.ws-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+body.dark .ws-card{background:#1f2937;border-color:#374151;}
+.ws-card.done{border-color:#34d399;background:#f0fdf4;} body.dark .ws-card.done{background:#064e3b;}
+.ws-qhead{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.ws-qn{background:var(--amber);color:#fff;font-weight:800;border-radius:8px;padding:.15rem .6rem;min-width:2.1rem;text-align:center;}
+.ws-qtype{font-size:.72rem;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.ws-opt{display:block;width:100%;text-align:left;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;padding:.5rem .7rem;margin:.3rem 0;cursor:pointer;font-size:.9rem;line-height:1.45;color:inherit;}
+body.dark .ws-opt{background:#111827;border-color:#374151;}
+.ws-opt:hover{border-color:#f59e0b;background:#fffbeb;} body.dark .ws-opt:hover{background:#78350f;}
+.ws-opt.ok{border-color:#10b981;background:#d1fae5;color:#065f46;} .ws-opt.bad{border-color:#ef4444;background:#fee2e2;color:#991b1b;}
+.ws-opt[disabled]{cursor:default;opacity:.95;}
+.ws-step{font-size:.78rem;font-weight:700;color:#b45309;margin:.5rem 0 .2rem;text-transform:uppercase;letter-spacing:.04em;}
+.ws-rel{display:flex;gap:.5rem;flex-wrap:wrap;} .ws-rel .ws-opt{width:auto;flex:1;text-align:center;font-weight:700;min-width:140px;}
+.ws-rel.pills .ws-opt{min-width:0;flex:0 0 auto;padding:.4rem .9rem;}
+.ws-input{border:1.5px solid #f59e0b;border-radius:8px;padding:.4rem .7rem;font-size:.95rem;width:230px;background:#fff;color:#111;}
+.ws-btn{border:none;background:var(--amber);color:#fff;border-radius:8px;padding:.45rem 1rem;font-weight:700;cursor:pointer;font-size:.88rem;}
+.ws-btn.ghost{background:#fff;color:var(--amber-d);border:1.5px solid #f59e0b;} body.dark .ws-btn.ghost{background:#1f2937;color:#fbbf24;}
+.ws-btn:disabled{opacity:.5;}
+.ws-reveal{margin-top:.6rem;font-size:.88rem;background:#ecfdf5;border-radius:8px;padding:.6rem .8rem;color:#065f46;}
+body.dark .ws-reveal{background:#064e3b;color:#a7f3d0;}
+.ws-pair{display:inline-block;background:#fff;border:1px solid #6ee7b7;border-radius:6px;padding:.1rem .45rem;margin:.15rem .2rem .15rem 0;font-size:.82rem;color:#064e3b;}
+body.dark .ws-pair{background:#065f46;color:#d1fae5;}
+.ws-game{display:grid;grid-template-columns:1fr 1fr;gap:1rem;} @media(max-width:700px){.ws-game{grid-template-columns:1fr;}}
+.ws-col h4{margin:0 0 .4rem;font-size:.8rem;color:var(--amber-d);text-transform:uppercase;letter-spacing:.05em;} body.dark .ws-col h4{color:#fbbf24;}
+.ws-tile{display:block;width:100%;text-align:left;border:2px solid #fcd34d;background:#fffbeb;border-radius:10px;padding:.55rem .75rem;margin:.4rem 0;cursor:pointer;font-size:.92rem;line-height:1.4;color:#1f2937;transition:transform .12s;}
+body.dark .ws-tile{background:#1f2937;color:#e5e7eb;border-color:#b45309;}
+.ws-tile:hover{transform:translateY(-1px);}
+.ws-tile.sel{border-color:#2563eb;background:#dbeafe;color:#1e3a8a;}
+.ws-tile.matched{border-color:#10b981;background:#d1fae5;color:#065f46;cursor:default;opacity:.75;}
+.ws-tile.wrong{border-color:#ef4444;background:#fee2e2;animation:wsshake .35s;}
+@keyframes wsshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ws-bar{display:flex;gap:.8rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap;font-size:.9rem;font-weight:700;color:var(--amber-d);} body.dark .ws-bar{color:#fbbf24;}
+.ws-sub{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.ws-pill{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:8px;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+.ws-pill.active{background:#fcd34d;} body.dark .ws-pill{background:#1f2937;color:#fbbf24;} body.dark .ws-pill.active{background:#b45309;color:#fff;}
+.ws-flash{perspective:900px;height:250px;max-width:560px;margin:0 auto .8rem;cursor:pointer;}
+.ws-flash-in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+.ws-flash.flip .ws-flash-in{transform:rotateY(180deg);}
+.ws-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:2px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center;background:#fff;overflow:auto;}
+body.dark .ws-face{background:#1f2937;} .ws-face.back{transform:rotateY(180deg);background:#fffbeb;} body.dark .ws-face.back{background:#292524;}
+.ws-word{font-size:1.8rem;font-weight:800;color:#b45309;}
+.ws-meta{font-size:.78rem;color:#6b7280;margin-top:.3rem;}
+.ws-uz{color:#2563eb;font-weight:700;margin:.3rem 0;} body.dark .ws-uz{color:#93c5fd;}
+.ws-ex{font-style:italic;font-size:.9rem;margin-top:.4rem;}
+.spk{border:1.5px solid #f59e0b;background:#fff;color:var(--amber-d);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:.4rem;flex-shrink:0;}
+.spk:hover{background:#fcd34d;} .spk.speaking{background:#f59e0b;color:#fff;animation:pulse 1s infinite;}
+body.dark .spk{background:#1f2937;color:#fbbf24;}
+.spk.sm{width:1.7rem;height:1.7rem;font-size:.8rem;}
+.ws-ttsbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:0 auto .9rem;max-width:560px;font-size:.82rem;background:#fff7e0;border:1px solid #fde68a;border-radius:10px;padding:.5rem .7rem;}
+body.dark .ws-ttsbar{background:#1f2937;border-color:#374151;}
+.ws-ttsbar label{display:flex;align-items:center;gap:.3rem;font-weight:600;color:var(--amber-d);cursor:pointer;} body.dark .ws-ttsbar label{color:#fbbf24;}
+.ws-ttsbar select{border:1.5px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.8rem;background:#fff;color:#111;max-width:190px;}
+.ws-know{display:flex;gap:.6rem;justify-content:center;margin-bottom:.7rem;}
+.ws-progress{height:7px;background:#fde68a;border-radius:99px;max-width:560px;margin:0 auto .9rem;overflow:hidden;} .ws-progress i{display:block;height:100%;background:#10b981;width:0;transition:width .3s;}
+.ws-gap{line-height:2.3;font-size:.95rem;}
+.ws-gap select{border:2px solid #f59e0b;border-radius:6px;padding:.15rem .3rem;font-size:.9rem;background:#fff;color:#111;}
+.ws-gap select.ok{border-color:#10b981;background:#d1fae5;} .ws-gap select.bad{border-color:#ef4444;background:#fee2e2;}
+.ws-gaprow{padding:.35rem 0;border-bottom:1px dashed #e5e7eb;}
+.ws-hunt{border:none;background:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:.82rem;text-decoration:underline;padding:0;}
+.ws-listen{text-align:center;padding:1rem;}
+.ws-listen .big{font-size:3rem;cursor:pointer;border:none;background:none;}
+.timer.over{color:#fff;background:#dc2626;border-color:#dc2626;animation:none;}
+.timer.paused{background:#ccfbf1;border-color:#0f766e;color:#0f766e;}
+.ws-paused{margin-left:auto;font-size:.78rem;font-weight:700;color:#0f766e;background:#ccfbf1;border-radius:8px;padding:.3rem .7rem;}
+body.inws .footer{display:none;}
+.navbar{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;padding:.5rem 1.1rem;background:#fff7e0;border-bottom:1px solid #fde68a;flex-shrink:0;}
+body.dark .navbar{background:#1f2937;border-color:#374151;}
+.ngroup{background:#fff;border:2px solid #fcd34d;border-radius:12px;padding:.35rem .6rem .45rem;display:flex;flex-direction:column;gap:.3rem;min-width:0;transition:border-color .15s,box-shadow .15s;}
+body.dark .ngroup{background:#111827;border-color:#78350f;}
+.ngroup.cur{border-color:var(--amber);box-shadow:0 2px 8px rgba(217,119,6,.25);}
+.ngroup.cur.inw{border-color:#0f766e;box-shadow:0 2px 8px rgba(15,118,110,.28);}
+.ngt{display:flex;gap:.5rem;align-items:baseline;min-width:0;font-size:.82rem;}
+.ngt b{color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+.ngt span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nbtns{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;}
+.mtab{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.28rem .5rem;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;gap:.4rem;align-items:center;justify-content:center;white-space:nowrap;}
+.mtab small{font-weight:700;color:#6b7280;font-size:.7rem;}
+.mtab:hover{background:#fef3c7;}
+.mtab.active{background:var(--amber);color:#fff;} .mtab.active small{color:#fff;}
+.mtab.wk{border-color:#0f766e;color:#0f766e;} .mtab.wk:hover{background:#ccfbf1;}
+.mtab.wk.active{background:#0f766e;color:#fff;}
+.mtab.wk.todo{animation:pulse 1.4s infinite;box-shadow:0 0 0 3px #fca5a5;border-color:#dc2626;color:#b91c1c;}
+body.dark .mtab{background:#1f2937;color:#fbbf24;} body.dark .mtab.wk{color:#5eead4;} body.dark .mtab.active{background:var(--amber);color:#fff;} body.dark .mtab.wk.active{background:#0f766e;color:#fff;}
+.nprog{height:5px;background:#e5e7eb;border-radius:99px;overflow:hidden;} .nprog i{display:block;height:100%;width:0;background:#10b981;transition:width .4s;}
+.ws-back{border:2px solid var(--amber);background:#fff;color:var(--amber-d);border-radius:8px;padding:.35rem .8rem;font-weight:700;cursor:pointer;font-size:.82rem;}
+body.dark .ws-back{background:#1f2937;color:#fbbf24;}
+.ws-tab b{display:inline-block;background:rgba(0,0,0,.12);border-radius:50%;width:1.25rem;height:1.25rem;line-height:1.25rem;text-align:center;font-size:.72rem;margin-right:.2rem;}
+.ws-tab small{font-weight:700;opacity:.8;margin-left:.2rem;}
+.ws-top{border-bottom:3px solid #0f766e !important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header__brand">
+    <span class="logo">&#127891;</span>
+    <div>
+      <div class="header__brand-name">Mr.Ikromov's IELTS</div>
+      <div class="header__candidate">Test 27 / The Origins / John Ray / Sir Francis</div>
+    </div>
+  </div>
+  <div class="header__right">
+    <button class="ibtn" id="textDecreaseBtn" title="Smaller text">A&minus;</button>
+    <button class="ibtn" id="textIncreaseBtn" title="Larger text">A+</button>
+    <button class="ibtn" id="darkModeToggle" title="Toggle dark mode">&#127769;</button>
+    <button class="ibtn" id="flagOverviewBtn" title="Flagged questions">&#9873;<span class="badge" id="flagBadge" style="display:none;">0</span></button>
+    <div class="timer" id="testTimer" title="Click to hide / show the timer">60:00</div>
+  </div>
+</div>
+<div class="navbar" id="mainTabs"></div>
+<div class="main">
+<div class="part" data-part="0"><div class="passage-container" id="passage-container-0"><div class="passage-instructions">You should spend about 20 minutes on Questions 1&ndash;13, which are based on Reading Passage 1 below.</div><div class="passage-title">The Origins of Tennis</div><p data-para="1"><span class="sent" id="s0_0">The game of tennis has a very long history.</span> <span class="sent" id="s0_1">It is officially still known as &quot;lawn tennis,&quot; partly because it was originally only played on grass, and also to distinguish it from the older game known as &quot;real tennis,&quot; from which the modern game developed.</span></p><p data-para="2"><span class="sent" id="s0_2">Some people believe that the ancient Egyptians, Greeks, and Romans played various versions of tennis.</span> <span class="sent" id="s0_3">No drawings or descriptions of any tennis-like games have been discovered, but a couple of Arabic words dating from ancient Egyptian times are cited as evidence.</span> <span class="sent" id="s0_4">The theory goes that the name &quot;tennis&quot; is derived from the Egyptian town of Tennis alongside the Nile, and the word &quot;racquet&quot; evolved from the Arabic word for the palm of the hand, rahat.</span></p><p data-para="3"><span class="sent" id="s0_5">Aside from these two Arabic words, there is no other evidence for any form of tennis prior to the year 1000.</span> <span class="sent" id="s0_6">Most historians believe the origins of the game date back to 11th- and 12th-century France.</span> <span class="sent" id="s0_7">It&#x27;s thought that French monks were the first to play a basic game of handball against their monastery buildings, or over a rope strung across a courtyard.</span> <span class="sent" id="s0_8">Those who dispute more ancient origins argue that the name &quot;tennis&quot; is derived from the French tenez, which meant something to the effect of &quot;take this,&quot; said as one player would serve to the other.</span></p><p data-para="4"><span class="sent" id="s0_9">This game took on the name jeu de paume, which means &quot;game of the hand or palm.</span> <span class="sent" id="s0_10">But as they found playing with bare hands quite uncomfortable, players began using a simple glove, and later either a glove with webbing between the fingers or a solid paddle, similar to the ones used in table tennis today.</span> <span class="sent" id="s0_11">Wooden racquets were not invented until much later.</span></p><p data-para="5"><span class="sent" id="s0_12">The French nobility learned the game from the monks, and some accounts report as many as 1,800 tennis courts in France by the 13th century.</span> <span class="sent" id="s0_13">The game, which remained exclusive to the upper classes, gained more popularity over the 14th and 15th centuries.</span> <span class="sent" id="s0_14">As it became increasingly fashionable, outdoor courtyards were modified into indoor courts.</span> <span class="sent" id="s0_15">The game became such a widespread diversion among the aristocracy that both the pope and the French king tried to ban it.</span> <span class="sent" id="s0_16">By the 16th century, the game had spread to England, where it became known as &quot;tennis.</span> <span class="sent" id="s0_17">Both kings Henry VII and Henry VIII were avid players who promoted the building of courts, and it also became a very fashionable game among the English upper classes.</span></p><p data-para="6"><span class="sent" id="s0_18">An example of one of these early &quot;real tennis&quot; courts can be seen at the royal palace of Hampton Court near London.</span> <span class="sent" id="s0_19">It was built in 1525 and is still used today.</span> <span class="sent" id="s0_20">Only a handful of such courts remain.</span> <span class="sent" id="s0_21">It is a tall, narrow indoor court, bearing more resemblance to a squash court than the type of tennis courts we are familiar with today.</span> <span class="sent" id="s0_22">&quot;Real tennis&quot; is a remarkably fast and difficult game as the ball can be bounced off any of the surfaces, some of which are slanted at odd angles.</span> <span class="sent" id="s0_23">The net is just over 1.5 metres high at each end, but drops to just under a metre in the middle.</span></p><p data-para="7"><span class="sent" id="s0_24">Until the 19th century, the ball was either constructed from a wad of hair, wool, or cork wrapped in string and cloth or leather.</span> <span class="sent" id="s0_25">Then a major development took place when Charles Goodyear invented vulcanisation, a process that allows rubber to withstand heat and cold.</span> <span class="sent" id="s0_26">This led to the development of rubber tennis balls.</span></p><p data-para="8"><span class="sent" id="s0_27">During the 1850s, players began to experiment with these new balls, which bounced easily on outdoor grass courts.</span></p><p data-para="9"><span class="sent" id="s0_28">In 1874 a Welshman, Major Walter C. Wingfield, known as &quot;the father of lawn tennis,&quot; had the idea of devising rules, which he published.</span> <span class="sent" id="s0_29">He also introduced standardised equipment, including racquets, balls, posts, and a net, which he patented and sold in sets.</span> <span class="sent" id="s0_30">The game quickly became a very popular and sociable open-air pursuit for the English middle classes.</span> <span class="sent" id="s0_31">People also started playing tennis in countries such as the United States, Russia, India, Canada, and China.</span></p><p data-para="10"><span class="sent" id="s0_32">However, not all of Wingfield&#x27;s ideas ultimately survived.</span> <span class="sent" id="s0_33">Inspired by his knowledge of Greek, he called his version of tennis Sphairistike — a name which never caught on.</span> <span class="sent" id="s0_34">Interestingly, his original court had the shape of an hourglass, with the net across its narrowest section.</span></p><p data-para="11"><span class="sent" id="s0_35">A major tennis tournament took place for the first time in Wimbledon, London in 1877, and its organising committee came up with a rectangular court and a modified set of rules that are essentially the same as for the game we know today.</span> <span class="sent" id="s0_36">The net was still high at the sides, a carryover from the game&#x27;s indoor ancestor.</span> <span class="sent" id="s0_37">But by 1882, the specifications for the size of the court, the equipment, and the rules had evolved to their current form.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-0"><div class="q-group" data-flagrange="1,6" data-gid="p0g0"><div class="q-group-header"><div class="q-group-title">Questions 1&ndash;6</div><button type="button" class="flag-toggle" data-flagrange="1,6" title="Flag for review" aria-label="Flag questions 1-6">&#9873;</button></div><div class="q-group-instructions"><p>Do the following statements agree with the information given in Reading Passage 1?</p><p>In boxes 1–6 on your answer sheet, write</p></div><div class="q-group-instructions" style="font-style:normal;"><div><b>TRUE</b> &nbsp;&ndash;&nbsp; if the statement agrees with the information</div><div><b>FALSE</b> &nbsp;&ndash;&nbsp; if the statement contradicts the information</div><div><b>NOT GIVEN</b> &nbsp;&ndash;&nbsp; if there is no information on this</div></div><div class="q-row"><span class="q-num">1</span><span class="q-stem">There are a few surviving documents which show that a game similar to tennis was played in the ancient world.</span><select class="q-select" name="q1"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">2</span><span class="q-stem">An early form of tennis involved players hitting a ball with just their hand.</span><select class="q-select" name="q2"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">3</span><span class="q-stem">The game of table tennis developed around the same time as tennis.</span><select class="q-select" name="q3"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">4</span><span class="q-stem">Tennis became popular with all sections of French society in the 14th and 15th centuries.</span><select class="q-select" name="q4"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">5</span><span class="q-stem">The indoor courts created in the 14th and 15th centuries were larger than the outdoor courtyards.</span><select class="q-select" name="q5"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div><div class="q-row"><span class="q-num">6</span><span class="q-stem">There were attempts to prevent French aristocrats from playing tennis.</span><select class="q-select" name="q6"><option value="">--</option><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option><option value="NOT GIVEN">NOT GIVEN</option></select></div></div><div class="q-group" data-flagrange="7,13" data-gid="p0g1"><div class="q-group-header"><div class="q-group-title">Questions 7&ndash;13</div><button type="button" class="flag-toggle" data-flagrange="7,13" title="Flag for review" aria-label="Flag questions 7-13">&#9873;</button></div><div class="q-group-instructions"><p>Complete the notes below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 7–13 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">The development of tennis in England</div><div class="notes-sub"><b>&quot;Real tennis&quot; court at Hampton Court</b></div><ul><li>The ball may be hit against the <span class="q-num">7</span> <input type="text" class="q-text" name="q7" autocomplete="off" spellcheck="false"> around the court</li><li>The <span class="q-num">8</span> <input type="text" class="q-text" name="q8" autocomplete="off" spellcheck="false"> is lower in the centre</li></ul><div class="notes-sub"><b>1850s</b></div><ul><li>Balls made out of <span class="q-num">9</span> <input type="text" class="q-text" name="q9" autocomplete="off" spellcheck="false"> started to be used</li></ul><div class="notes-sub"><b>1874</b></div><ul><li>Major Walter C. Wingfield published written <span class="q-num">10</span> <input type="text" class="q-text" name="q10" autocomplete="off" spellcheck="false"> for the game</li><li>Produced complete sets of tennis <span class="q-num">11</span> <input type="text" class="q-text" name="q11" autocomplete="off" spellcheck="false"> for sale</li><li>Introduced a name for the game which was never adopted</li><li>Designed an unusual <span class="q-num">12</span> <input type="text" class="q-text" name="q12" autocomplete="off" spellcheck="false"> for the court</li></ul><div class="notes-sub"><b>1877</b></div><ul><li>The first large <span class="q-num">13</span> <input type="text" class="q-text" name="q13" autocomplete="off" spellcheck="false"> was held</li></ul></div></div></div></div>
+<div class="part" data-part="1"><div class="passage-container" id="passage-container-1"><div class="passage-instructions">You should spend about 20 minutes on Questions 14&ndash;26, which are based on Reading Passage 2 below.</div><div class="passage-title">John Ray and the Study of Plants</div><div class="para-dropzone dz-empty" data-letter="A" data-qnum="14"></div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s1_0">The 17th-century English scholar and botanist John Ray was well aware that he lived through, and participated in, a profound revolution in the way people interacted with nature.</span> <span class="sent" id="s1_1">In the preface to his Synopsis of British Plants, published in 1690, he gave thanks that he had been born at a time when traditional dependence on the teaching of the Greek philosopher Aristotle (384–322 BCE) had given way to a new philosophy, based on experiment and observation of the real world, that we now call science.</span></p><div class="para-dropzone dz-empty" data-letter="B" data-qnum="15"></div><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s1_2">Ray was born in 1627.</span> <span class="sent" id="s1_3">His father was a village blacksmith, and his mother was also a respected member of the community, a healer who was an expert in folk medicine and the use of herbs to treat ailments.</span> <span class="sent" id="s1_4">Ray must have stood out as an unusually bright boy among his schoolmates, and his talents were recognised by a church official, Samuel Covell, who had graduated from Cambridge University in 1600, and maintained his links with his university.</span> <span class="sent" id="s1_5">Through his influence, Ray was admitted to Cambridge University in 1644 at the age of seventeen — a huge step for a village blacksmith&#x27;s son.</span> <span class="sent" id="s1_6">There he made a solid start, and quickly gained a reputation as a brilliant student.</span> <span class="sent" id="s1_7">He studied the classics (Greek, Latin and Hebrew) and mathematics, but there was nothing yet we would now call science in the curriculum.</span> <span class="sent" id="s1_8">After graduating in 1648, he became a minor member of staff at Trinity College, Cambridge.</span> <span class="sent" id="s1_9">He was appointed Lecturer in Greek in 1651, Lecturer in Mathematics in 1653, and Lecturer in Humanities in 1655.</span></p><div class="para-dropzone dz-empty" data-letter="C" data-qnum="16"></div><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s1_10">Almost immediately after graduating, Ray also seems to have developed the interest to which he would devote the rest of his life: the study of the natural world.</span> <span class="sent" id="s1_11">He explains this conversion into a naturalist — in particular into a botanist — in the preface to his first book, the Cambridge Catalogue of English Plants.</span> <span class="sent" id="s1_12">Here Ray tells us that he suffered an illness in his early twenties, and was advised to take long walks and ride in the fresh air while recovering.</span> <span class="sent" id="s1_13">While doing this, he became interested in the local flora, and finding nobody able to teach him, Ray investigated it for himself.</span> <span class="sent" id="s1_14">He then went on to pass on the knowledge he acquired to others.</span></p><div class="para-dropzone dz-empty" data-letter="D" data-qnum="17"></div><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s1_15">By the mid-1650s, even the first-year students at Trinity College were able to identify the plants and flowers around Cambridge, as they were being taught (unofficially — none of this was part of their formal education) by Ray.</span> <span class="sent" id="s1_16">Many of them were the sons of landowners, and so had a natural, if amateurish, interest in country matters.</span> <span class="sent" id="s1_17">But a few of them took his efforts to understand the natural world much more seriously.</span> <span class="sent" id="s1_18">One of these, Francis Willughby, later played an important part in Ray&#x27;s life.</span></p><div class="para-dropzone dz-empty" data-letter="E" data-qnum="18"></div><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s1_19">Having himself had no authority on the subject of plants on which to draw, Ray also started work on what would become his Cambridge Catalogue of English Plants.</span> <span class="sent" id="s1_20">The work was not published until 1660 because, as Ray explained in the preface, he had to start from scratch: &quot;I had first to become familiar with the literature, to compare the plants that I found with the pictures, and when there seemed to be a resemblance, to go fully into any unknown descriptions.</span> <span class="sent" id="s1_21">Gaining skill by experience, I acquired at last the ability to recognise to what tribe and family similars could be assigned; this taught me to search for similarities and saved a vast deal of labour, which others would have spent in their difficulties.</span> <span class="sent" id="s1_22">I was eager to make the most of this and was fortunate to share my enthusiasm with my friends …&quot;</span></p><div class="para-dropzone dz-empty" data-letter="F" data-qnum="19"></div><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s1_23">Ray&#x27;s Cambridge Catalogue of English Plants was much more than a simple list of species.</span> <span class="sent" id="s1_24">It gave the names of plants found in the area around Cambridge and included information about where they grew and how common they were.</span> <span class="sent" id="s1_25">In doing this, Ray was producing something that would be of practical use to students and other readers interested in the local natural world.</span> <span class="sent" id="s1_26">At the same time, the book showed his determination to describe plants accurately, on the basis of direct examination rather than reliance on old authorities.</span> <span class="sent" id="s1_27">In this respect, it reflected the spirit of the new learning that Ray admired.</span></p><div class="para-dropzone dz-empty" data-letter="G" data-qnum="20"></div><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s1_28">Ray&#x27;s studies of plants were only the beginning of a much larger ambition.</span> <span class="sent" id="s1_29">With the support of Francis Willughby, he began to imagine a more comprehensive investigation of nature, one that would attempt to classify living things according to careful observation of their shared characteristics.</span> <span class="sent" id="s1_30">This was an ambitious undertaking, especially at a time when many aspects of the natural world remained poorly described.</span> <span class="sent" id="s1_31">Yet Ray believed that by collecting evidence systematically and comparing related forms, it would be possible to build a more reliable understanding of nature than scholars had possessed before.</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-1"><div class="q-group" data-flagrange="14,20" data-gid="p1g0"><div class="q-group-header"><div class="q-group-title">Questions 14&ndash;20</div><button type="button" class="flag-toggle" data-flagrange="14,20" title="Flag for review" aria-label="Flag questions 14-20">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 2 has seven paragraphs, A–G.</p><p>Choose the correct heading for each paragraph from the list of headings below.</p><p>Write the correct number, i–ix, in boxes 14–20 on your answer sheet.</p></div><div class="info-chip-pool" id="pool-p1g0" data-gid="p1g0"><div class="info-chip" data-heading="i" draggable="true"><span class="ic-num">i</span><span>Ray&#x27;s account of his working methods</span></div><div class="info-chip" data-heading="ii" draggable="true"><span class="ic-num">ii</span><span>The botanical expert who inspired Ray</span></div><div class="info-chip" data-heading="iii" draggable="true"><span class="ic-num">iii</span><span>A succession of academic achievements</span></div><div class="info-chip" data-heading="iv" draggable="true"><span class="ic-num">iv</span><span>Ray&#x27;s informal tuition</span></div><div class="info-chip" data-heading="v" draggable="true"><span class="ic-num">v</span><span>Ray&#x27;s appreciation of his contemporary academic culture</span></div><div class="info-chip" data-heading="vi" draggable="true"><span class="ic-num">vi</span><span>A childhood interest in plants</span></div><div class="info-chip" data-heading="vii" draggable="true"><span class="ic-num">vii</span><span>Plans for a bold new project</span></div><div class="info-chip" data-heading="viii" draggable="true"><span class="ic-num">viii</span><span>A description of the content of Ray&#x27;s first book</span></div><div class="info-chip" data-heading="ix" draggable="true"><span class="ic-num">ix</span><span>A change of direction for Ray</span></div></div><p class="hint-small">Drag a heading into the box above the paragraph in the passage (or click a heading, then click the box).</p></div><div class="q-group" data-flagrange="21,24" data-gid="p1g1"><div class="q-group-header"><div class="q-group-title">Questions 21&ndash;24</div><button type="button" class="flag-toggle" data-flagrange="21,24" title="Flag for review" aria-label="Flag questions 21-24">&#9873;</button></div><div class="q-group-instructions"><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p><p>Write your answers in boxes 21–24 on your answer sheet.</p></div><div class="notes-box"><div class="notes-title">New approach to knowledge</div><div style="margin-bottom:.5rem">John Ray was a scholar and self-taught botanist, whose work reflected the <span class="q-num">21</span> <input type="text" class="q-text" name="q21" autocomplete="off" spellcheck="false"> that was taking place during the 17th century in people&#x27;s way of thinking about the natural world. This new approach is the basis of the modern field of <span class="q-num">22</span> <input type="text" class="q-text" name="q22" autocomplete="off" spellcheck="false">. It represented a complete break from the ideas of Aristotle, which had dominated thinking up until that time. As Ray himself explained, his interest in plants was aroused after graduating, when he had to spend time outdoors after a period of <span class="q-num">23</span> <input type="text" class="q-text" name="q23" autocomplete="off" spellcheck="false">. He taught himself, in addition to many Cambridge <span class="q-num">24</span> <input type="text" class="q-text" name="q24" autocomplete="off" spellcheck="false">, and began compiling his catalogue of plants, which was published in 1660.</div></div></div><div class="q-group" data-flagrange="25,26" data-gid="p1g2"><div class="q-group-header"><div class="q-group-title">Questions 25&ndash;26</div><button type="button" class="flag-toggle" data-flagrange="25,26" title="Flag for review" aria-label="Flag questions 25-26">&#9873;</button></div><div class="q-group-instructions"><p>Choose <b>TWO</b> correct letters, A–E.</p><p>Write the correct letters in boxes 25 and 26 on your answer sheet.</p></div><div class="mcq-stem" style="margin-top:.4rem"><span>Which <b>TWO</b> of the following statements are true of Ray&#x27;s early life?</span></div><div class="q-group-instructions"></div><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="A"><span class="opt-letter">A</span><span>His teacher recommended that he should go to university.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="B"><span class="opt-letter">B</span><span>His school record was not exceptional in any way.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="C"><span class="opt-letter">C</span><span>He was helped by a former student of Cambridge University.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="D"><span class="opt-letter">D</span><span>His parents were both valued by the people in their local area.</span></label><label class="mcq-option"><input type="checkbox" data-mgroup="p1g2" data-pick="2" value="E"><span class="opt-letter">E</span><span>He originally planned to take up his father&#x27;s occupation.</span></label></div></div></div>
+<div class="part" data-part="2"><div class="passage-container" id="passage-container-2"><div class="passage-instructions">You should spend about 20 minutes on Questions 27&ndash;40, which are based on Reading Passage 3 below.</div><div class="passage-title">Sir Francis Ronalds 1788–1873</div><div class="passage-subtitle">An early pioneer in the story of long-distance communication</div><p data-para="A"><span class="para-letter">A</span><span class="sent" id="s2_0">Francis Ronalds was born in London in 1788, the second of eleven children.</span> <span class="sent" id="s2_1">When he was nineteen his father died, and as the eldest son, the young Ronalds had to assume the responsibility of running the family&#x27;s cheese business.</span> <span class="sent" id="s2_2">He combined this occupation with his passions for chemical experiments and for meteorology, the study of the Earth&#x27;s atmosphere and its changes.</span> <span class="sent" id="s2_3">This brought him into contact with the elderly Swiss meteorologist Jean Andre de Luc, who was also an inspired inventor in the field of electricity.</span> <span class="sent" id="s2_4">In 1814, de Luc encouraged Ronalds to start work on this new discipline.</span></p><p data-para="B"><span class="para-letter">B</span><span class="sent" id="s2_5">For the next few years, Ronalds experimented enthusiastically with various kinds of electrostatic clockwork devices.</span> <span class="sent" id="s2_6">He was particularly interested in the idea of electric telegraphy: transmitting messages over distance, using electrical impulses carried along metal wires.</span> <span class="sent" id="s2_7">In the best traditions of nineteenth-century scientists, these investigations were carried out at home.</span> <span class="sent" id="s2_8">In early 1816, Ronalds gutted the family home in Hammersmith, West London, and covered its rooms, halls, and staircases with electric wire.</span> <span class="sent" id="s2_9">This experiment involved the use of current to produce movement in small corks at the ends of circuits.</span></p><p data-para="C"><span class="para-letter">C</span><span class="sent" id="s2_10">Some months later, Ronalds built two large wooden frames accommodating 8 miles (12.9 km) of electrically charged iron wire in his back garden.</span> <span class="sent" id="s2_11">At either end of the wire was a revolving disc, on which letters and numbers were engraved.</span> <span class="sent" id="s2_12">These dials were kept revolving by means of a clockwork mechanism.</span> <span class="sent" id="s2_13">When somebody wanted to send a message, he would wait until the dial at his end was showing the desired number or letter, and then interrupt the charge on the wire.</span> <span class="sent" id="s2_14">This would cause two balls suspended on the wire to fall together.</span> <span class="sent" id="s2_15">The person at the opposite end would then note down what was indicated by the dial at his end at the moment when the balls made contact.</span> <span class="sent" id="s2_16">Ronalds soon developed a modified version of his invention in which the wire was encased in glass tubes and buried in the ground.</span> <span class="sent" id="s2_17">The system was slow and depended on the two dials staying in step, but it worked.</span></p><p data-para="D"><span class="para-letter">D</span><span class="sent" id="s2_18">Ronalds immediately contacted the Admiralty, the department of the British government which had control over the nation&#x27;s naval affairs.</span> <span class="sent" id="s2_19">He was not the first to propose a system of this nature to them.</span> <span class="sent" id="s2_20">Some ten years earlier, in 1806, the inventor Ralph Wedgwood had offered the Admiralty a similar type of telegraph based on frictional electricity, which it had rejected.</span> <span class="sent" id="s2_21">The Admiralty had its home in London, whereas its naval fleets were based over 130 km away in Portsmouth.</span> <span class="sent" id="s2_22">With communication between these two cities in mind, Ronalds wrote to Lord Melville, the then First Lord of the Admiralty, to offer him his telegraphic system.</span></p><p data-para="E"><span class="para-letter">E</span><span class="sent" id="s2_23">Ronalds believed that his invention was capable of carrying messages some 800 km, and in his letter to Lord Melville written on 11 July 1816 he spoke of the &quot;mode of conveying telegraphic intelligence with great rapidity, accuracy, and certainty, in all states of the atmosphere, either at night or in the day, and at small expense.</span> <span class="sent" id="s2_24">In 1816, the Admiralty had at its disposal only the late eighteenth-century telegraphic system of semaphore, whereby a mechanical device was used to control a mast with two arms.</span> <span class="sent" id="s2_25">The disadvantage of this system was that it was only usable in daylight and in clear weather conditions.</span> <span class="sent" id="s2_26">Nevertheless, John Barrow, Secretary to the Admiralty, wrote back to Ronalds on 5 August, saying that &quot;telegraphs of any kind are wholly unnecessary, and NO other than the one now in use will be adopted.&quot;</span></p><p data-para="F"><span class="para-letter">F</span><span class="sent" id="s2_27">Ronalds did not pursue the matter further or attempt to patent his telegraph.</span> <span class="sent" id="s2_28">However, in a small pamphlet published in 1823, he described his invention and listed some of its potential uses.</span> <span class="sent" id="s2_29">Although Ronalds lived long enough to see his prophecies come to fruition, he made no further contribution to the progress of telegraphic communication.</span> <span class="sent" id="s2_30">In 1843, he was appointed the first Honorary Director and Superintendent of the Observatory at Kew, where he devised an accurate, automatic system for registering meteorological data using photography.</span> <span class="sent" id="s2_31">A similar system was developed independently by Charles Brooke, but the British Association of Meteorologists confirmed Ronalds&#x27;s priority.</span> <span class="sent" id="s2_32">His system remained in use for many decades.</span></p><p data-para="G"><span class="para-letter">G</span><span class="sent" id="s2_33">Meanwhile, the people who benefited most directly from Ronalds&#x27;s telegraphic work were the physicist Charles Wheatstone and his business partner William Cooke.</span> <span class="sent" id="s2_34">They saw the potential of a rapid communication system for the growing number of private railway companies, and in 1837 they developed the Wheatstone-Cooke five-needle telegraph.</span> <span class="sent" id="s2_35">The pair patented their design in the same year, the first of its kind to be officially registered, and reaped considerable financial gain as a result.</span> <span class="sent" id="s2_36">Ronalds himself retired in 1852 and devoted his later years to collecting and cataloguing a vast library of published material on electricity and magnetism.</span> <span class="sent" id="s2_37">In 1870, three years before he died, he was knighted by Queen Victoria, a belated honour in recognition of his &quot;early and remarkable labours in telegraphic investigations.&quot;</span></p></div><div class="divider"></div><div class="questions-container" id="questions-container-2"><div class="q-group" data-flagrange="27,31" data-gid="p2g0"><div class="q-group-header"><div class="q-group-title">Questions 27&ndash;31</div><button type="button" class="flag-toggle" data-flagrange="27,31" title="Flag for review" aria-label="Flag questions 27-31">&#9873;</button></div><div class="q-group-instructions"><p>Look at the following events (Questions 27–31) and the list of dates below.</p><p>Match each event with the correct date, A–H.</p><p>Write the correct letter, A–H, in boxes 27–31 on your answer sheet.</p></div><div class="word-bank"><div class="wb-title">List of Dates</div><span class="wb-item"><span class="wb-letter">A</span> 1806</span><span class="wb-item"><span class="wb-letter">B</span> 1814</span><span class="wb-item"><span class="wb-letter">C</span> 1816</span><span class="wb-item"><span class="wb-letter">D</span> 1823</span><span class="wb-item"><span class="wb-letter">E</span> 1837</span><span class="wb-item"><span class="wb-letter">F</span> 1843</span><span class="wb-item"><span class="wb-letter">G</span> 1852</span><span class="wb-item"><span class="wb-letter">H</span> 1870</span></div><div class="q-row"><span class="q-num">27</span><span class="q-stem">The first electric telegraph system was submitted to the Admiralty.</span><select class="q-select" name="q27"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">28</span><span class="q-stem">Ronalds received official recognition of his contribution to telegraphy.</span><select class="q-select" name="q28"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">29</span><span class="q-stem">The first electric telegraph was patented.</span><select class="q-select" name="q29"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">30</span><span class="q-stem">Ronalds began to experiment with electricity.</span><select class="q-select" name="q30"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div><div class="q-row"><span class="q-num">31</span><span class="q-stem">Ronalds informed the public about the possible uses of his telegraph.</span><select class="q-select" name="q31"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select></div></div><div class="q-group" data-flagrange="32,35" data-gid="p2g1"><div class="q-group-header"><div class="q-group-title">Questions 32&ndash;35</div><button type="button" class="flag-toggle" data-flagrange="32,35" title="Flag for review" aria-label="Flag questions 32-35">&#9873;</button></div><div class="q-group-instructions"><p>Answer the questions below.</p><p>Choose <b>NO MORE THAN THREE WORDS AND</b>/<b>OR A NUMBER</b> from the</p><p>passage for each answer.</p><p>Write your answers in boxes 32–35 on your answer sheet.</p></div><div class="q-row"><span class="q-num">32</span><span>What was marked on the dials on Ronalds&#x27;s garden telegraph? <input type="text" class="q-text" name="q32" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">33</span><span>What did Ronalds use to enclose the wires on his later version of the garden telegraph? <input type="text" class="q-text" name="q33" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">34</span><span>How far did Ronalds believe his telegraph could transmit information? <input type="text" class="q-text" name="q34" autocomplete="off" spellcheck="false"></span></div><div class="q-row"><span class="q-num">35</span><span>What did the communication system invented by Ralph Wedgwood use? <input type="text" class="q-text" name="q35" autocomplete="off" spellcheck="false"></span></div></div><div class="q-group" data-flagrange="36,40" data-gid="p2g2"><div class="q-group-header"><div class="q-group-title">Questions 36&ndash;40</div><button type="button" class="flag-toggle" data-flagrange="36,40" title="Flag for review" aria-label="Flag questions 36-40">&#9873;</button></div><div class="q-group-instructions"><p>Reading Passage 3 has seven paragraphs, A–G.</p><p>Which paragraph contains the following information?</p><p>Write the correct letter, A–G, in boxes 36–40 on your answer sheet.</p></div><div class="q-row"><span class="q-num">36</span><span class="q-stem">a description of a commercial application for the electric telegraph</span><select class="q-select" name="q36"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">37</span><span class="q-stem">a rejection of Ronalds&#x27;s invention</span><select class="q-select" name="q37"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">38</span><span class="q-stem">a drawback of Ronalds&#x27;s invention</span><select class="q-select" name="q38"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">39</span><span class="q-stem">reference to the positive influence on Ronalds of a fellow scientist</span><select class="q-select" name="q39"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div><div class="q-row"><span class="q-num">40</span><span class="q-stem">reference to the adoption of one of Ronalds&#x27;s procedures in preference to that of another scientist</span><select class="q-select" name="q40"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div></div></div></div>
+<div class="ws-overlay" id="wsOverlay" role="region" aria-label="Workshop">
+  <div class="ws-top">
+    <button class="ws-back" id="wsBack" type="button">&larr; Back to the questions</button>
+    <div class="ws-title" id="wsTitle">Workshop</div>
+    <div class="ws-tabs">
+      <button class="ws-tab active" data-tab="ev"><b>1</b> &#128269; Evidence Hunt <small id="wtEv"></small></button>
+      <button class="ws-tab" data-tab="pa"><b>2</b> &#128279; Paraphrase Match</button>
+      <button class="ws-tab" data-tab="vo"><b>3</b> &#128214; Vocabulary Lab <small id="wtVo"></small></button>
+    </div>
+    <div class="ws-paused">&#9208; Timer paused</div>
+  </div>
+  <div class="ws-body"><div class="ws-wrap" id="wsMain"></div></div>
+</div>
+</div>
+<div class="footer">
+  <div class="footer__navwrap" id="footerNav"></div>
+  <button class="btn-line" id="reviewBtn">Review</button>
+  <button class="btn-solid" id="deliver-button">&#10003; Submit</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal"><div class="modal-box">
+  <h2>Review Your Answers</h2>
+  <p style="font-size:.88rem;color:#6b7280;">Click any question number to jump to it. Green = answered, white = unanswered, red flag = flagged.</p>
+  <div id="reviewBody"></div>
+  <button class="btn-solid" style="margin-top:1rem" onclick="document.getElementById('reviewModal').style.display='none'">Close</button>
+</div></div>
+
+<div class="modal-overlay" id="submissionModal"><div class="modal-box">
+  <h2>Test Submitted</h2>
+  <p style="font-size:.85rem;color:#6b7280;margin-bottom:.5rem;">Time spent: <span id="timeSpentDisplay"></span></p>
+  <div class="score-hero">
+    <div class="big-num" id="scoreBig">0</div><div>out of 40</div>
+    <div class="band" id="bandDisplay">Band: 0</div>
+    <div class="verdict" id="verdictDisplay"></div>
+    <div class="partscores" id="partScores"></div>
+  </div>
+  <h3 style="color:var(--amber);margin-bottom:.6rem;">Your Answers</h3>
+  <div id="answerReviewList"></div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="btn-solid" onclick="document.getElementById('submissionModal').style.display='none'">Close</button>
+    <button class="btn-line" onclick="document.getElementById('submissionModal').style.display='none';WSAPI.open(0)">Open the Workshop</button>
+    <button class="btn-line" id="resetBtn">Start again</button>
+  </div>
+</div></div>
+
+<div class="highlight-popup" id="highlightPopup">
+  <button class="hl-yellow" data-c="hl-yellow" title="Yellow"></button>
+  <button class="hl-green" data-c="hl-green" title="Green"></button>
+  <button class="hl-blue" data-c="hl-blue" title="Blue"></button>
+  <button data-c="clear" title="Remove highlight" style="background:#fff">&#10005;</button>
+</div>
+
+<script>
+/* ================= data injected by the generator ================= */
+const CFG = {"test": 27, "minutes": 60, "parts": [{"title": "The Origins of Tennis", "short": "The Origins", "qstart": 1, "qend": 13}, {"title": "John Ray and the Study of Plants", "short": "John Ray", "qstart": 14, "qend": 26}, {"title": "Sir Francis Ronalds 1788–1873", "short": "Sir Francis", "qstart": 27, "qend": 40}]};
+const QS = [{"n": 1, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 2, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 3, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 4, "kind": "select", "ans": "FALSE", "group": "p0g0", "part": 1}, {"n": 5, "kind": "select", "ans": "NOT GIVEN", "group": "p0g0", "part": 1}, {"n": 6, "kind": "select", "ans": "TRUE", "group": "p0g0", "part": 1}, {"n": 7, "kind": "text", "ans": ["surfaces"], "group": "p0g1", "part": 1}, {"n": 8, "kind": "text", "ans": ["net"], "group": "p0g1", "part": 1}, {"n": 9, "kind": "text", "ans": ["rubber"], "group": "p0g1", "part": 1}, {"n": 10, "kind": "text", "ans": ["rules"], "group": "p0g1", "part": 1}, {"n": 11, "kind": "text", "ans": ["equipment"], "group": "p0g1", "part": 1}, {"n": 12, "kind": "text", "ans": ["shape"], "group": "p0g1", "part": 1}, {"n": 13, "kind": "text", "ans": ["tournament"], "group": "p0g1", "part": 1}, {"n": 14, "kind": "heading", "ans": "v", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 15, "kind": "heading", "ans": "iii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 16, "kind": "heading", "ans": "ix", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 17, "kind": "heading", "ans": "iv", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 18, "kind": "heading", "ans": "i", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 19, "kind": "heading", "ans": "viii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 20, "kind": "heading", "ans": "vii", "group": "p1g0", "part": 2, "hk": "p1g0"}, {"n": 21, "kind": "text", "ans": ["revolution"], "group": "p1g1", "part": 2}, {"n": 22, "kind": "text", "ans": ["science"], "group": "p1g1", "part": 2}, {"n": 23, "kind": "text", "ans": ["illness"], "group": "p1g1", "part": 2}, {"n": 24, "kind": "text", "ans": ["students"], "group": "p1g1", "part": 2}, {"n": 25, "kind": "multi", "ans": null, "group": "p1g2", "part": 2, "idx": 0, "groupAns": ["C", "D"]}, {"n": 26, "kind": "multi", "ans": null, "group": "p1g2", "part": 2, "idx": 1, "groupAns": ["C", "D"]}, {"n": 27, "kind": "select", "ans": "A", "group": "p2g0", "part": 3}, {"n": 28, "kind": "select", "ans": "H", "group": "p2g0", "part": 3}, {"n": 29, "kind": "select", "ans": "E", "group": "p2g0", "part": 3}, {"n": 30, "kind": "select", "ans": "B", "group": "p2g0", "part": 3}, {"n": 31, "kind": "select", "ans": "D", "group": "p2g0", "part": 3}, {"n": 32, "kind": "text", "ans": ["letters and numbers"], "group": "p2g1", "part": 3}, {"n": 33, "kind": "text", "ans": ["glass tubes"], "group": "p2g1", "part": 3}, {"n": 34, "kind": "text", "ans": ["800 km"], "group": "p2g1", "part": 3}, {"n": 35, "kind": "text", "ans": ["frictional electricity"], "group": "p2g1", "part": 3}, {"n": 36, "kind": "select", "ans": "G", "group": "p2g2", "part": 3}, {"n": 37, "kind": "select", "ans": "E", "group": "p2g2", "part": 3}, {"n": 38, "kind": "select", "ans": "C", "group": "p2g2", "part": 3}, {"n": 39, "kind": "select", "ans": "A", "group": "p2g2", "part": 3}, {"n": 40, "kind": "select", "ans": "F", "group": "p2g2", "part": 3}];
+const HEADING_TEXT = {"p1g0": {"i": "Ray's account of his working methods", "ii": "The botanical expert who inspired Ray", "iii": "A succession of academic achievements", "iv": "Ray's informal tuition", "v": "Ray's appreciation of his contemporary academic culture", "vi": "A childhood interest in plants", "vii": "Plans for a bold new project", "viii": "A description of the content of Ray's first book", "ix": "A change of direction for Ray"}};
+const LOC = {"1": "s0_3", "2": "s0_7", "3": "s0_10", "4": "s0_13", "5": "s0_14", "6": "s0_15", "7": "s0_22", "8": "s0_23", "9": "s0_26", "10": "s0_28", "11": "s0_29", "12": "s0_34", "13": "s0_35", "14": "s1_1", "15": "s1_9", "16": "s1_11", "17": "s1_15", "18": "s1_20", "19": "s1_24", "20": "s1_28", "21": "s1_0", "22": "s1_1", "23": "s1_12", "24": "s1_13", "25": "s1_4", "26": "s1_3", "27": "s2_20", "28": "s2_37", "29": "s2_35", "30": "s2_4", "31": "s2_28", "32": "s2_11", "33": "s2_16", "34": "s2_23", "35": "s2_20", "36": "s2_34", "37": "s2_26", "38": "s2_17", "39": "s2_4", "40": "s2_31"};
+const WS = {"parts": [{"evidence": [{"q": 1, "question": "There are a few surviving documents which show that a game similar to tennis was played in the ancient world.", "options": [{"t": "The theory goes that the name \"tennis\" is derived from the Egyptian town of Tennis alongside the Nile, and the word \"racquet\" evolved from the Arabic word for the palm of the hand, rahat.", "ok": false}, {"t": "Some people believe that the ancient Egyptians, Greeks, and Romans played various versions of tennis.", "ok": false}, {"t": "No drawings or descriptions of any tennis-like games have been discovered, but a couple of Arabic words dating from ancient Egyptian times are cited as evidence.", "ok": true}, {"t": "It is officially still known as \"lawn tennis,\" partly because it was originally only played on grass, and also to distinguish it from the older game known as \"real tennis,\" from which the modern game developed.", "ok": false}], "pairs": ["There are a few surviving documents which show ≠ No drawings or descriptions of any tennis-like games have been discovered", "a game similar to tennis ... in the ancient world = Egyptians, Greeks, and Romans played various versions of tennis"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 2, "question": "An early form of tennis involved players hitting a ball with just their hand.", "options": [{"t": "Those who dispute more ancient origins argue that the name \"tennis\" is derived from the French tenez, which meant something to the effect of \"take this,\" said as one player would serve to the other.", "ok": false}, {"t": "It's thought that French monks were the first to play a basic game of handball against their monastery buildings, or over a rope strung across a courtyard.", "ok": true}, {"t": "Aside from these two Arabic words, there is no other evidence for any form of tennis prior to the year 1000.", "ok": false}, {"t": "The theory goes that the name \"tennis\" is derived from the Egyptian town of Tennis alongside the Nile, and the word \"racquet\" evolved from the Arabic word for the palm of the hand, rahat.", "ok": false}], "pairs": ["hitting a ball with just their hand = playing with bare hands", "An early form of tennis = a basic game of handball"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 3, "question": "The game of table tennis developed around the same time as tennis.", "options": [{"t": "\"Real tennis\" is a remarkably fast and difficult game as the ball can be bounced off any of the surfaces, some of which are slanted at odd angles.", "ok": false}, {"t": "A major tennis tournament took place for the first time in Wimbledon, London in 1877, and its organising committee came up with a rectangular court and a modified set of rules that are essentially the same as for the game we know today.", "ok": false}, {"t": "But as they found playing with bare hands quite uncomfortable, players began using a simple glove, and later either a glove with webbing between the fingers or a solid paddle, similar to the ones used in table tennis today.", "ok": true}, {"t": "It is officially still known as \"lawn tennis,\" partly because it was originally only played on grass, and also to distinguish it from the older game known as \"real tennis,\" from which the modern game developed.", "ok": false}], "pairs": ["The game of table tennis developed around the same time ? similar to the ones used in table tennis today"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 4, "question": "Tennis became popular with all sections of French society in the 14th and 15th centuries.", "options": [{"t": "The game became such a widespread diversion among the aristocracy that both the pope and the French king tried to ban it.", "ok": false}, {"t": "The French nobility learned the game from the monks, and some accounts report as many as 1,800 tennis courts in France by the 13th century.", "ok": false}, {"t": "The game, which remained exclusive to the upper classes, gained more popularity over the 14th and 15th centuries.", "ok": true}, {"t": "By the 16th century, the game had spread to England, where it became known as \"tennis.", "ok": false}], "pairs": ["popular with all sections of French society ≠ remained exclusive to the upper classes", "became popular ... in the 14th and 15th centuries = gained more popularity over the 14th and 15th centuries"], "kind": "True / False / Not Given", "answer": "FALSE", "rel": "opposite", "yn": false, "why": "The passage says the <i>opposite<\/i>."}, {"q": 5, "question": "The indoor courts created in the 14th and 15th centuries were larger than the outdoor courtyards.", "options": [{"t": "The French nobility learned the game from the monks, and some accounts report as many as 1,800 tennis courts in France by the 13th century.", "ok": false}, {"t": "As it became increasingly fashionable, outdoor courtyards were modified into indoor courts.", "ok": true}, {"t": "The game, which remained exclusive to the upper classes, gained more popularity over the 14th and 15th centuries.", "ok": false}, {"t": "Both kings Henry VII and Henry VIII were avid players who promoted the building of courts, and it also became a very fashionable game among the English upper classes.", "ok": false}], "pairs": ["indoor courts were larger than the outdoor courtyards ? outdoor courtyards were modified into indoor courts"], "kind": "True / False / Not Given", "answer": "NOT GIVEN", "rel": "missing", "yn": false, "why": "The idea is <i>not in the passage<\/i>."}, {"q": 6, "question": "There were attempts to prevent French aristocrats from playing tennis.", "options": [{"t": "By the 16th century, the game had spread to England, where it became known as \"tennis.", "ok": false}, {"t": "The French nobility learned the game from the monks, and some accounts report as many as 1,800 tennis courts in France by the 13th century.", "ok": false}, {"t": "But as they found playing with bare hands quite uncomfortable, players began using a simple glove, and later either a glove with webbing between the fingers or a solid paddle, similar to the ones used in table tennis today.", "ok": false}, {"t": "The game became such a widespread diversion among the aristocracy that both the pope and the French king tried to ban it.", "ok": true}], "pairs": ["attempts to prevent = tried to ban it", "French aristocrats = widespread diversion among the aristocracy"], "kind": "True / False / Not Given", "answer": "TRUE", "rel": "same", "yn": false, "why": "Same idea, different words."}, {"q": 7, "question": "The ball may be hit against the <b>.........<\/b> around the court", "options": [{"t": "An example of one of these early \"real tennis\" courts can be seen at the royal palace of Hampton Court near London.", "ok": false}, {"t": "\"Real tennis\" is a remarkably fast and difficult game as the ball can be bounced off any of the surfaces, some of which are slanted at odd angles.", "ok": true}, {"t": "The net is just over 1.5 metres high at each end, but drops to just under a metre in the middle.", "ok": false}, {"t": "It is a tall, narrow indoor court, bearing more resemblance to a squash court than the type of tennis courts we are familiar with today.", "ok": false}], "pairs": ["The ball may be hit against the ___ around the court = the ball can be bounced off any of the surfaces"], "kind": "Completion", "answer": "surfaces", "accept": ["surfaces"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 8, "question": "The <b>.........<\/b> is lower in the centre", "options": [{"t": "\"Real tennis\" is a remarkably fast and difficult game as the ball can be bounced off any of the surfaces, some of which are slanted at odd angles.", "ok": false}, {"t": "An example of one of these early \"real tennis\" courts can be seen at the royal palace of Hampton Court near London.", "ok": false}, {"t": "It is a tall, narrow indoor court, bearing more resemblance to a squash court than the type of tennis courts we are familiar with today.", "ok": false}, {"t": "The net is just over 1.5 metres high at each end, but drops to just under a metre in the middle.", "ok": true}], "pairs": ["The ___ is lower in the centre = drops to just under a metre in the middle"], "kind": "Completion", "answer": "net", "accept": ["net"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 9, "question": "Balls made out of <b>.........<\/b> started to be used", "options": [{"t": "Then a major development took place when Charles Goodyear invented vulcanisation, a process that allows rubber to withstand heat and cold.", "ok": false}, {"t": "During the 1850s, players began to experiment with these new balls, which bounced easily on outdoor grass courts.", "ok": false}, {"t": "Until the 19th century, the ball was either constructed from a wad of hair, wool, or cork wrapped in string and cloth or leather.", "ok": false}, {"t": "This led to the development of rubber tennis balls.", "ok": true}], "pairs": ["Balls made out of ___ started to be used = This led to the development of rubber tennis balls"], "kind": "Completion", "answer": "rubber", "accept": ["rubber"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 10, "question": "Major Walter C. Wingfield published written <b>.........<\/b> for the", "options": [{"t": "In 1874 a Welshman, Major Walter C. Wingfield, known as \"the father of lawn tennis,\" had the idea of devising rules, which he published.", "ok": true}, {"t": "The game quickly became a very popular and sociable open-air pursuit for the English middle classes.", "ok": false}, {"t": "People also started playing tennis in countries such as the United States, Russia, India, Canada, and China.", "ok": false}, {"t": "A major tennis tournament took place for the first time in Wimbledon, London in 1877, and its organising committee came up with a rectangular court and a modified set of rules that are essentially the same as for the game we know today.", "ok": false}], "pairs": ["published written ___ for the game = had the idea of devising rules, which he published"], "kind": "Completion", "answer": "rules", "accept": ["rules"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 11, "question": "Produced complete sets of tennis <b>.........<\/b> for sale", "options": [{"t": "The game quickly became a very popular and sociable open-air pursuit for the English middle classes.", "ok": false}, {"t": "He also introduced standardised equipment, including racquets, balls, posts, and a net, which he patented and sold in sets.", "ok": true}, {"t": "People also started playing tennis in countries such as the United States, Russia, India, Canada, and China.", "ok": false}, {"t": "In 1874 a Welshman, Major Walter C. Wingfield, known as \"the father of lawn tennis,\" had the idea of devising rules, which he published.", "ok": false}], "pairs": ["Produced complete sets of tennis ___ = standardised equipment, including racquets, balls, posts, and a net, which he patented and sold in sets", "for sale = sold in sets"], "kind": "Completion", "answer": "equipment", "accept": ["equipment"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 12, "question": "Designed an unusual <b>.........<\/b> for the court", "options": [{"t": "However, not all of Wingfield's ideas ultimately survived.", "ok": false}, {"t": "An example of one of these early \"real tennis\" courts can be seen at the royal palace of Hampton Court near London.", "ok": false}, {"t": "Inspired by his knowledge of Greek, he called his version of tennis Sphairistike — a name which never caught on.", "ok": false}, {"t": "Interestingly, his original court had the shape of an hourglass, with the net across its narrowest section.", "ok": true}], "pairs": ["Designed an unusual ___ for the court = his original court had the shape of an hourglass"], "kind": "Completion", "answer": "shape", "accept": ["shape"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 13, "question": "The first large <b>.........<\/b> was held", "options": [{"t": "A major tennis tournament took place for the first time in Wimbledon, London in 1877, and its organising committee came up with a rectangular court and a modified set of rules that are essentially the same as for the game we know today.", "ok": true}, {"t": "The net was still high at the sides, a carryover from the game's indoor ancestor.", "ok": false}, {"t": "But by 1882, the specifications for the size of the court, the equipment, and the rules had evolved to their current form.", "ok": false}, {"t": "It's thought that French monks were the first to play a basic game of handball against their monastery buildings, or over a rope strung across a courtyard.", "ok": false}], "pairs": ["The first large ___ was held = A major tennis tournament took place for the first time"], "kind": "Completion", "answer": "tournament", "accept": ["tournament"], "limit": "ONE WORD ONLY", "why": ""}], "paraphrase": [{"q": "There are a few surviving documents which show", "p": "No drawings or descriptions of any tennis-like games have been discovered", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "1"}, {"q": "a game similar to tennis ... in the ancient world", "p": "Egyptians, Greeks, and Romans played various versions of tennis", "rel": "=", "note": "", "n": "1"}, {"q": "hitting a ball with just their hand", "p": "playing with bare hands", "rel": "=", "note": "", "n": "2"}, {"q": "An early form of tennis", "p": "a basic game of handball", "rel": "=", "note": "", "n": "2"}, {"q": "The game of table tennis developed around the same time", "p": "similar to the ones used in table tennis today", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "3"}, {"q": "popular with all sections of French society", "p": "remained exclusive to the upper classes", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "4"}, {"q": "became popular ... in the 14th and 15th centuries", "p": "gained more popularity over the 14th and 15th centuries", "rel": "=", "note": "", "n": "4"}, {"q": "indoor courts were larger than the outdoor courtyards", "p": "outdoor courtyards were modified into indoor courts", "rel": "?", "note": "The passage does not say this &mdash; so the answer is NOT GIVEN.", "n": "5"}, {"q": "attempts to prevent", "p": "tried to ban it", "rel": "=", "note": "", "n": "6"}, {"q": "French aristocrats", "p": "widespread diversion among the aristocracy", "rel": "=", "note": "", "n": "6"}, {"q": "The ball may be hit against the ___ around the court", "p": "the ball can be bounced off any of the surfaces", "rel": "=", "note": "", "n": "7"}, {"q": "The ___ is lower in the centre", "p": "drops to just under a metre in the middle", "rel": "=", "note": "", "n": "8"}, {"q": "Balls made out of ___ started to be used", "p": "This led to the development of rubber tennis balls", "rel": "=", "note": "", "n": "9"}, {"q": "published written ___ for the game", "p": "had the idea of devising rules, which he published", "rel": "=", "note": "", "n": "10"}, {"q": "Produced complete sets of tennis ___", "p": "standardised equipment, including racquets, balls, posts, and a net, which he patented and sold in sets", "rel": "=", "note": "", "n": "11"}, {"q": "for sale", "p": "sold in sets", "rel": "=", "note": "", "n": "11"}, {"q": "Designed an unusual ___ for the court", "p": "his original court had the shape of an hourglass", "rel": "=", "note": "", "n": "12"}, {"q": "The first large ___ was held", "p": "A major tennis tournament took place for the first time", "rel": "=", "note": "", "n": "13"}], "vocab": [{"w": "distinguish it from", "pos": "collocation", "loc": "¶1", "d": "to show or recognise the difference between two things", "uz": "farqlamoq, ajratmoq", "ex": "Colour helps us distinguish it from the other models on sale.", "form": "distinguish it from"}, {"w": "cited as evidence", "pos": "collocation", "loc": "¶2", "d": "mentioned as proof to support an argument", "uz": "dalil sifatida keltirilgan", "ex": "Her diary was cited as evidence in the historian's new book.", "form": "cited as evidence"}, {"w": "is derived from", "pos": "collocation", "loc": "¶2, ¶3", "d": "comes from an earlier source or origin", "uz": "...dan kelib chiqqan", "ex": "The word 'salary' is derived from the Latin word for salt.", "form": "is derived from"}, {"w": "evolved from", "pos": "phrasal verb", "loc": "¶2", "d": "developed gradually from an earlier, simpler form", "uz": "...dan rivojlanib chiqqan", "ex": "Modern birds evolved from small feathered dinosaurs millions of years ago.", "form": "evolved from"}, {"w": "prior to", "pos": "phrase", "loc": "¶3", "d": "before a particular time or event", "uz": "...dan oldin", "ex": "Prior to the merger, the two firms were fierce competitors.", "form": "Prior to"}, {"w": "dispute", "pos": "verb", "loc": "¶3", "d": "to argue that a claim or statement is not true", "uz": "bahslashmoq, rad etmoq", "ex": "Few scientists dispute the link between smoking and lung disease.", "form": "dispute"}, {"w": "to the effect of", "pos": "phrase", "loc": "¶3", "d": "having roughly the same meaning as", "uz": "...ma'nosidagi, ...mazmunida", "ex": "He left a note to the effect of 'back in an hour'.", "form": "to the effect of"}, {"w": "nobility", "pos": "noun", "loc": "¶5", "d": "the social class of people with high birth and titles", "uz": "zodagonlar", "ex": "The nobility once owned most of the land in the region.", "form": "nobility"}, {"w": "diversion", "pos": "noun", "loc": "¶5", "d": "an activity that entertains you and takes your mind off work", "uz": "ermak, ko'ngil ochish", "ex": "Chess was her favourite diversion after a long day at work.", "form": "diversion"}, {"w": "avid", "pos": "adjective", "loc": "¶5", "d": "very enthusiastic about a hobby or interest", "uz": "g'ayratli, ishtiyoqmand", "ex": "My uncle is an avid collector of old maps and coins.", "form": "avid"}, {"w": "slanted", "pos": "adjective", "loc": "¶6", "d": "sloping at an angle rather than straight or level", "uz": "qiya, og'ma", "ex": "The attic has a slanted ceiling that makes it hard to stand.", "form": "slanted"}, {"w": "withstand", "pos": "verb", "loc": "¶7", "d": "to remain undamaged by a strong force or condition", "uz": "bardosh bermoq, chidamoq", "ex": "The bridge was designed to withstand earthquakes and powerful winds.", "form": "withstand"}, {"w": "devising", "pos": "verb", "loc": "¶9", "d": "inventing or planning something new, especially a clever method", "uz": "o'ylab topmoq, ishlab chiqmoq", "ex": "She spent months devising a plan to cut the company's costs.", "form": "devising"}, {"w": "patented", "pos": "verb", "loc": "¶9", "d": "gained the legal right to be the only maker of an invention", "uz": "patentlagan, patent olgan", "ex": "The engineer patented his invention before showing it to investors.", "form": "patented"}, {"w": "caught on", "pos": "phrasal verb", "loc": "¶10", "d": "became popular or fashionable", "uz": "ommalashdi, urf bo'ldi", "ex": "Electric scooters caught on quickly among students in big cities.", "form": "caught on"}, {"w": "carryover", "pos": "noun", "loc": "¶11", "d": "something that continues from an earlier period or situation", "uz": "avvalgidan qolgan narsa, meros", "ex": "The strict dress code is a carryover from the school's founding years.", "form": "carryover"}, {"w": "ancestor", "pos": "noun", "loc": "¶11", "d": "an earlier form or person from which a later one developed", "uz": "ajdod, avvalgi shakl", "ex": "The wolf is considered the ancestor of the domestic dog.", "form": "ancestor"}]}, {"evidence": [{"q": 14, "question": "Which heading fits paragraph A?", "options": [{"t": "Ray's studies of plants were only the beginning of a much larger ambition.", "ok": false}, {"t": "The 17th-century English scholar and botanist John Ray was well aware that he lived through, and participated in, a profound revolution in the way people interacted with nature.", "ok": false}, {"t": "In the preface to his Synopsis of British Plants, published in 1690, he gave thanks that he had been born at a time when traditional dependence on the teaching of the Greek philosopher Aristotle (384–322 BCE) had given way to a new philosophy, based on experiment and observation of the real world, that we now call science.", "ok": true}, {"t": "One of these, Francis Willughby, later played an important part in Ray's life.", "ok": false}], "pairs": ["Ray's appreciation = he gave thanks that he had been born at a time", "his contemporary academic culture = a new philosophy, based on experiment and observation of the real world"], "kind": "Matching headings", "answer": "v", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "The botanical expert who inspired Ray"}, {"k": "iii", "t": "A succession of academic achievements"}, {"k": "ix", "t": "A change of direction for Ray"}, {"k": "v", "t": "Ray's appreciation of his contemporary academic culture"}, {"k": "vi", "t": "A childhood interest in plants"}], "ans": "v"}, "why": ""}, {"q": 15, "question": "Which heading fits paragraph B?", "options": [{"t": "He was appointed Lecturer in Greek in 1651, Lecturer in Mathematics in 1653, and Lecturer in Humanities in 1655.", "ok": true}, {"t": "After graduating in 1648, he became a minor member of staff at Trinity College, Cambridge.", "ok": false}, {"t": "Ray was born in 1627.", "ok": false}, {"t": "Ray must have stood out as an unusually bright boy among his schoolmates, and his talents were recognised by a church official, Samuel Covell, who had graduated from Cambridge University in 1600, and maintained his links with his university.", "ok": false}], "pairs": ["A succession of academic achievements = He was appointed Lecturer in Greek in 1651, Lecturer in Mathematics in 1653, and Lecturer in Humanities in 1655"], "kind": "Matching headings", "answer": "iii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Ray's account of his working methods"}, {"k": "ii", "t": "The botanical expert who inspired Ray"}, {"k": "iii", "t": "A succession of academic achievements"}, {"k": "iv", "t": "Ray's informal tuition"}, {"k": "ix", "t": "A change of direction for Ray"}], "ans": "iii"}, "why": ""}, {"q": 16, "question": "Which heading fits paragraph C?", "options": [{"t": "Almost immediately after graduating, Ray also seems to have developed the interest to which he would devote the rest of his life: the study of the natural world.", "ok": false}, {"t": "He explains this conversion into a naturalist — in particular into a botanist — in the preface to his first book, the Cambridge Catalogue of English Plants.", "ok": true}, {"t": "While doing this, he became interested in the local flora, and finding nobody able to teach him, Ray investigated it for himself.", "ok": false}, {"t": "Here Ray tells us that he suffered an illness in his early twenties, and was advised to take long walks and ride in the fresh air while recovering.", "ok": false}], "pairs": ["A change of direction for Ray = He explains this conversion into a naturalist"], "kind": "Matching headings", "answer": "ix", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Ray's account of his working methods"}, {"k": "ix", "t": "A change of direction for Ray"}, {"k": "v", "t": "Ray's appreciation of his contemporary academic culture"}, {"k": "vi", "t": "A childhood interest in plants"}, {"k": "viii", "t": "A description of the content of Ray's first book"}], "ans": "ix"}, "why": ""}, {"q": 17, "question": "Which heading fits paragraph D?", "options": [{"t": "But a few of them took his efforts to understand the natural world much more seriously.", "ok": false}, {"t": "One of these, Francis Willughby, later played an important part in Ray's life.", "ok": false}, {"t": "By the mid-1650s, even the first-year students at Trinity College were able to identify the plants and flowers around Cambridge, as they were being taught (unofficially — none of this was part of their formal education) by Ray.", "ok": true}, {"t": "Many of them were the sons of landowners, and so had a natural, if amateurish, interest in country matters.", "ok": false}], "pairs": ["Ray's informal tuition = being taught (unofficially"], "kind": "Matching headings", "answer": "iv", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "ii", "t": "The botanical expert who inspired Ray"}, {"k": "iv", "t": "Ray's informal tuition"}, {"k": "ix", "t": "A change of direction for Ray"}, {"k": "v", "t": "Ray's appreciation of his contemporary academic culture"}, {"k": "vi", "t": "A childhood interest in plants"}], "ans": "iv"}, "why": ""}, {"q": 18, "question": "Which heading fits paragraph E?", "options": [{"t": "Gaining skill by experience, I acquired at last the ability to recognise to what tribe and family similars could be assigned; this taught me to search for similarities and saved a vast deal of labour, which others would have spent in their difficulties.", "ok": false}, {"t": "Ray's studies of plants were only the beginning of a much larger ambition.", "ok": false}, {"t": "The work was not published until 1660 because, as Ray explained in the preface, he had to start from scratch: \"I had first to become familiar with the literature, to compare the plants that I found with the pictures, and when there seemed to be a resemblance, to go fully into any unknown descriptions.", "ok": true}, {"t": "Having himself had no authority on the subject of plants on which to draw, Ray also started work on what would become his Cambridge Catalogue of English Plants.", "ok": false}], "pairs": ["Ray's account of his working methods = as Ray explained in the preface, he had to start from scratch", "working methods = to compare the plants that I found with the pictures"], "kind": "Matching headings", "answer": "i", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Ray's account of his working methods"}, {"k": "iii", "t": "A succession of academic achievements"}, {"k": "iv", "t": "Ray's informal tuition"}, {"k": "ix", "t": "A change of direction for Ray"}, {"k": "vi", "t": "A childhood interest in plants"}], "ans": "i"}, "why": ""}, {"q": 19, "question": "Which heading fits paragraph F?", "options": [{"t": "Ray's Cambridge Catalogue of English Plants was much more than a simple list of species.", "ok": false}, {"t": "He explains this conversion into a naturalist — in particular into a botanist — in the preface to his first book, the Cambridge Catalogue of English Plants.", "ok": false}, {"t": "It gave the names of plants found in the area around Cambridge and included information about where they grew and how common they were.", "ok": true}, {"t": "At the same time, the book showed his determination to describe plants accurately, on the basis of direct examination rather than reliance on old authorities.", "ok": false}], "pairs": ["A description of the content of Ray's first book = It gave the names of plants found in the area around Cambridge"], "kind": "Matching headings", "answer": "viii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "i", "t": "Ray's account of his working methods"}, {"k": "iii", "t": "A succession of academic achievements"}, {"k": "v", "t": "Ray's appreciation of his contemporary academic culture"}, {"k": "vi", "t": "A childhood interest in plants"}, {"k": "viii", "t": "A description of the content of Ray's first book"}], "ans": "viii"}, "why": ""}, {"q": 20, "question": "Which heading fits paragraph G?", "options": [{"t": "Yet Ray believed that by collecting evidence systematically and comparing related forms, it would be possible to build a more reliable understanding of nature than scholars had possessed before.", "ok": false}, {"t": "With the support of Francis Willughby, he began to imagine a more comprehensive investigation of nature, one that would attempt to classify living things according to careful observation of their shared characteristics.", "ok": false}, {"t": "This was an ambitious undertaking, especially at a time when many aspects of the natural world remained poorly described.", "ok": false}, {"t": "Ray's studies of plants were only the beginning of a much larger ambition.", "ok": true}], "pairs": ["Plans for a bold new project = a much larger ambition", "bold = This was an ambitious undertaking"], "kind": "Matching headings", "answer": "vii", "choice": {"prompt": "Which heading fits this paragraph?", "opts": [{"k": "iii", "t": "A succession of academic achievements"}, {"k": "iv", "t": "Ray's informal tuition"}, {"k": "ix", "t": "A change of direction for Ray"}, {"k": "v", "t": "Ray's appreciation of his contemporary academic culture"}, {"k": "vii", "t": "Plans for a bold new project"}], "ans": "vii"}, "why": ""}, {"q": 21, "question": "John Ray was a scholar and self-taught botanist, whose work reflected the <b>.........<\/b> that was taking place during the 17th century in people&#x27;s way of thinking about the natural world.", "options": [{"t": "This was an ambitious undertaking, especially at a time when many aspects of the natural world remained poorly described.", "ok": false}, {"t": "In doing this, Ray was producing something that would be of practical use to students and other readers interested in the local natural world.", "ok": false}, {"t": "Almost immediately after graduating, Ray also seems to have developed the interest to which he would devote the rest of his life: the study of the natural world.", "ok": false}, {"t": "The 17th-century English scholar and botanist John Ray was well aware that he lived through, and participated in, a profound revolution in the way people interacted with nature.", "ok": true}], "pairs": ["the ___ that was taking place = a profound revolution"], "kind": "Completion", "answer": "revolution", "accept": ["revolution"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 22, "question": "This new approach is the basis of the modern field of <b>.........<\/b>.", "options": [{"t": "The 17th-century English scholar and botanist John Ray was well aware that he lived through, and participated in, a profound revolution in the way people interacted with nature.", "ok": false}, {"t": "At the same time, the book showed his determination to describe plants accurately, on the basis of direct examination rather than reliance on old authorities.", "ok": false}, {"t": "In the preface to his Synopsis of British Plants, published in 1690, he gave thanks that he had been born at a time when traditional dependence on the teaching of the Greek philosopher Aristotle (384–322 BCE) had given way to a new philosophy, based on experiment and observation of the real world, that we now call science.", "ok": true}, {"t": "In this respect, it reflected the spirit of the new learning that Ray admired.", "ok": false}], "pairs": ["the modern field of ___ = that we now call science", "a complete break from the ideas of Aristotle = had given way to a new philosophy"], "kind": "Completion", "answer": "science", "accept": ["science"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 23, "question": "As Ray himself explained, his interest in plants was aroused after graduating, when he had to spend time outdoors after a period of <b>.........<\/b>.", "options": [{"t": "While doing this, he became interested in the local flora, and finding nobody able to teach him, Ray investigated it for himself.", "ok": false}, {"t": "Here Ray tells us that he suffered an illness in his early twenties, and was advised to take long walks and ride in the fresh air while recovering.", "ok": true}, {"t": "Having himself had no authority on the subject of plants on which to draw, Ray also started work on what would become his Cambridge Catalogue of English Plants.", "ok": false}, {"t": "Almost immediately after graduating, Ray also seems to have developed the interest to which he would devote the rest of his life: the study of the natural world.", "ok": false}], "pairs": ["after a period of ___ = he suffered an illness in his early twenties", "spend time outdoors = advised to take long walks and ride in the fresh air"], "kind": "Completion", "answer": "illness", "accept": ["illness"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 24, "question": "He taught himself, in addition to many Cambridge <b>.........<\/b>, and began compiling his catalogue of plants, which was published in 1660.", "options": [{"t": "Having himself had no authority on the subject of plants on which to draw, Ray also started work on what would become his Cambridge Catalogue of English Plants.", "ok": false}, {"t": "By the mid-1650s, even the first-year students at Trinity College were able to identify the plants and flowers around Cambridge, as they were being taught (unofficially — none of this was part of their formal education) by Ray.", "ok": false}, {"t": "He explains this conversion into a naturalist — in particular into a botanist — in the preface to his first book, the Cambridge Catalogue of English Plants.", "ok": false}, {"t": "While doing this, he became interested in the local flora, and finding nobody able to teach him, Ray investigated it for himself.", "ok": true}], "pairs": ["He taught himself = Ray investigated it for himself", "in addition to many Cambridge ___ = pass on the knowledge he acquired to others"], "kind": "Completion", "answer": "students", "accept": ["students"], "limit": "ONE WORD ONLY", "why": ""}, {"q": 25, "question": "Which TWO of the following statements are true of Ray&#x27;s early life?", "options": [{"t": "After graduating in 1648, he became a minor member of staff at Trinity College, Cambridge.", "ok": false}, {"t": "Ray must have stood out as an unusually bright boy among his schoolmates, and his talents were recognised by a church official, Samuel Covell, who had graduated from Cambridge University in 1600, and maintained his links with his university.", "ok": true}, {"t": "Through his influence, Ray was admitted to Cambridge University in 1644 at the age of seventeen — a huge step for a village blacksmith's son.", "ok": false}, {"t": "There he made a solid start, and quickly gained a reputation as a brilliant student.", "ok": false}], "pairs": ["helped by a former student of Cambridge University = Samuel Covell, who had graduated from Cambridge University", "His teacher recommended that he should go to university ≠ a church official, Samuel Covell"], "kind": "Choose the correct answers", "answer": "C, D (any order)", "why": "Each correct option is supported by a different sentence."}, {"q": 26, "question": "Which TWO of the following statements are true of Ray&#x27;s early life?", "options": [{"t": "Ray must have stood out as an unusually bright boy among his schoolmates, and his talents were recognised by a church official, Samuel Covell, who had graduated from Cambridge University in 1600, and maintained his links with his university.", "ok": false}, {"t": "His father was a village blacksmith, and his mother was also a respected member of the community, a healer who was an expert in folk medicine and the use of herbs to treat ailments.", "ok": true}, {"t": "Ray was born in 1627.", "ok": false}, {"t": "Through his influence, Ray was admitted to Cambridge University in 1644 at the age of seventeen — a huge step for a village blacksmith's son.", "ok": false}], "pairs": ["both valued by the people in their local area = his mother was also a respected member of the community"], "kind": "Choose the correct answers", "answer": "C, D (any order)", "why": "Each correct option is supported by a different sentence."}], "paraphrase": [{"q": "Ray's appreciation", "p": "he gave thanks that he had been born at a time", "rel": "=", "note": "", "n": "14"}, {"q": "his contemporary academic culture", "p": "a new philosophy, based on experiment and observation of the real world", "rel": "=", "note": "", "n": "14"}, {"q": "A succession of academic achievements", "p": "He was appointed Lecturer in Greek in 1651, Lecturer in Mathematics in 1653, and Lecturer in Humanities in 1655", "rel": "=", "note": "", "n": "15"}, {"q": "A change of direction for Ray", "p": "He explains this conversion into a naturalist", "rel": "=", "note": "", "n": "16"}, {"q": "Ray's informal tuition", "p": "being taught (unofficially", "rel": "=", "note": "", "n": "17"}, {"q": "Ray's account of his working methods", "p": "as Ray explained in the preface, he had to start from scratch", "rel": "=", "note": "", "n": "18"}, {"q": "working methods", "p": "to compare the plants that I found with the pictures", "rel": "=", "note": "", "n": "18"}, {"q": "A description of the content of Ray's first book", "p": "It gave the names of plants found in the area around Cambridge", "rel": "=", "note": "", "n": "19"}, {"q": "Plans for a bold new project", "p": "a much larger ambition", "rel": "=", "note": "", "n": "20"}, {"q": "bold", "p": "This was an ambitious undertaking", "rel": "=", "note": "", "n": "20"}, {"q": "the ___ that was taking place", "p": "a profound revolution", "rel": "=", "note": "", "n": "21"}, {"q": "the modern field of ___", "p": "that we now call science", "rel": "=", "note": "", "n": "22"}, {"q": "a complete break from the ideas of Aristotle", "p": "had given way to a new philosophy", "rel": "=", "note": "", "n": "22"}, {"q": "after a period of ___", "p": "he suffered an illness in his early twenties", "rel": "=", "note": "", "n": "23"}, {"q": "spend time outdoors", "p": "advised to take long walks and ride in the fresh air", "rel": "=", "note": "", "n": "23"}, {"q": "He taught himself", "p": "Ray investigated it for himself", "rel": "=", "note": "", "n": "24"}, {"q": "in addition to many Cambridge ___", "p": "pass on the knowledge he acquired to others", "rel": "=", "note": "", "n": "24"}, {"q": "helped by a former student of Cambridge University", "p": "Samuel Covell, who had graduated from Cambridge University", "rel": "=", "note": "", "n": "25"}, {"q": "His teacher recommended that he should go to university", "p": "a church official, Samuel Covell", "rel": "≠", "note": "The passage says the opposite &mdash; so the answer is FALSE / NO (or the option is wrong).", "n": "25"}, {"q": "both valued by the people in their local area", "p": "his mother was also a respected member of the community", "rel": "=", "note": "", "n": "26"}], "vocab": [{"w": "well aware", "pos": "collocation", "loc": "A", "d": "fully conscious of a fact or situation", "uz": "yaxshi xabardor", "ex": "The manager was well aware that the deadline could not be met.", "form": "well aware"}, {"w": "profound revolution", "pos": "collocation", "loc": "A", "d": "a very deep and far-reaching change", "uz": "chuqur inqilob", "ex": "The internet brought a profound revolution in how people shop.", "form": "profound revolution"}, {"w": "given way to", "pos": "phrasal verb", "loc": "A", "d": "been replaced by something else", "uz": "...ga o'rnini bo'shatgan", "ex": "Horse carriages had given way to cars by the 1920s.", "form": "given way to"}, {"w": "ailments", "pos": "noun", "loc": "B", "d": "minor illnesses or health problems", "uz": "kasalliklar, dardlar", "ex": "Herbal tea was her remedy for most everyday ailments.", "form": "ailments"}, {"w": "stood out", "pos": "phrasal verb", "loc": "B", "d": "was easy to notice because of being clearly better or different", "uz": "ajralib turdi, ko'zga tashlandi", "ex": "Among hundreds of applicants, her portfolio really stood out.", "form": "stood out"}, {"w": "maintained his links with", "pos": "collocation", "loc": "B", "d": "kept a connection or relationship with a person or place", "uz": "aloqasini saqlab qoldi", "ex": "She maintained her links with the village long after moving abroad.", "form": ""}, {"w": "conversion", "pos": "noun", "loc": "C", "d": "a change from one belief, use or form to another", "uz": "o'zgarish, o'tish", "ex": "His conversion to vegetarianism surprised everyone in his family.", "form": "conversion"}, {"w": "flora", "pos": "noun", "loc": "C", "d": "all the plants that grow in a particular area", "uz": "o'simliklar olami", "ex": "The mountain region has rich and varied flora.", "form": "flora"}, {"w": "pass on", "pos": "phrasal verb", "loc": "C", "d": "to give knowledge or information to another person", "uz": "uzatmoq, o'rgatmoq", "ex": "Grandmothers often pass on recipes to the younger generation.", "form": "pass on"}, {"w": "amateurish", "pos": "adjective", "loc": "D", "d": "done without professional skill or knowledge", "uz": "havaskorona", "ex": "The film was ruined by amateurish acting and poor editing.", "form": "amateurish"}, {"w": "from scratch", "pos": "idiom", "loc": "E", "d": "from the very beginning, with nothing prepared in advance", "uz": "noldan, boshidan", "ex": "After the fire, they had to rebuild the shop from scratch.", "form": "from scratch"}, {"w": "resemblance", "pos": "noun", "loc": "E", "d": "a similarity in the way things look", "uz": "o'xshashlik", "ex": "There is a striking resemblance between the twin sisters.", "form": "resemblance"}, {"w": "a vast deal of", "pos": "phrase", "loc": "E", "d": "a very large amount of", "uz": "juda katta miqdorda", "ex": "Building the bridge required a vast deal of money and effort.", "form": "a vast deal of"}, {"w": "make the most of", "pos": "idiom", "loc": "E", "d": "to use an opportunity or situation as well as possible", "uz": "to'liq foydalanmoq", "ex": "Students should make the most of every chance to practise speaking.", "form": "make the most of"}, {"w": "reliance on", "pos": "collocation", "loc": "F", "d": "dependence on someone or something for support", "uz": "...ga tayanish, ...ga qaramlik", "ex": "Our reliance on oil has caused serious environmental problems.", "form": "reliance on"}, {"w": "undertaking", "pos": "noun", "loc": "G", "d": "a large or important task or project", "uz": "ish, katta loyiha", "ex": "Translating the whole encyclopedia was a huge undertaking.", "form": "undertaking"}, {"w": "systematically", "pos": "adverb", "loc": "G", "d": "in an organised way following a fixed plan", "uz": "tizimli ravishda", "ex": "The team systematically tested every part of the engine.", "form": "systematically"}]}, {"evidence": [{"q": 27, "question": "The first electric telegraph system was submitted to the Admiralty.", "options": [{"t": "With communication between these two cities in mind, Ronalds wrote to Lord Melville, the then First Lord of the Admiralty, to offer him his telegraphic system.", "ok": false}, {"t": "Some ten years earlier, in 1806, the inventor Ralph Wedgwood had offered the Admiralty a similar type of telegraph based on frictional electricity, which it had rejected.", "ok": true}, {"t": "The Admiralty had its home in London, whereas its naval fleets were based over 130 km away in Portsmouth.", "ok": false}, {"t": "He was not the first to propose a system of this nature to them.", "ok": false}], "pairs": ["submitted to the Admiralty = had offered the Admiralty a similar type of telegraph", "The first = Some ten years earlier, in 1806"], "kind": "Matching", "answer": "A", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "1806"}, {"k": "C", "t": "1816"}, {"k": "D", "t": "1823"}, {"k": "G", "t": "1852"}, {"k": "H", "t": "1870"}], "ans": "A"}, "why": ""}, {"q": 28, "question": "Ronalds received official recognition of his contribution to telegraphy.", "options": [{"t": "Meanwhile, the people who benefited most directly from Ronalds's telegraphic work were the physicist Charles Wheatstone and his business partner William Cooke.", "ok": false}, {"t": "Ronalds himself retired in 1852 and devoted his later years to collecting and cataloguing a vast library of published material on electricity and magnetism.", "ok": false}, {"t": "In 1870, three years before he died, he was knighted by Queen Victoria, a belated honour in recognition of his \"early and remarkable labours in telegraphic investigations.\"", "ok": true}, {"t": "They saw the potential of a rapid communication system for the growing number of private railway companies, and in 1837 they developed the Wheatstone-Cooke five-needle telegraph.", "ok": false}], "pairs": ["received official recognition of his contribution = he was knighted by Queen Victoria, a belated honour"], "kind": "Matching", "answer": "H", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "1806"}, {"k": "B", "t": "1814"}, {"k": "D", "t": "1823"}, {"k": "G", "t": "1852"}, {"k": "H", "t": "1870"}], "ans": "H"}, "why": ""}, {"q": 29, "question": "The first electric telegraph was patented.", "options": [{"t": "Meanwhile, the people who benefited most directly from Ronalds's telegraphic work were the physicist Charles Wheatstone and his business partner William Cooke.", "ok": false}, {"t": "In 1870, three years before he died, he was knighted by Queen Victoria, a belated honour in recognition of his \"early and remarkable labours in telegraphic investigations.\"", "ok": false}, {"t": "The pair patented their design in the same year, the first of its kind to be officially registered, and reaped considerable financial gain as a result.", "ok": true}, {"t": "They saw the potential of a rapid communication system for the growing number of private railway companies, and in 1837 they developed the Wheatstone-Cooke five-needle telegraph.", "ok": false}], "pairs": ["was patented = The pair patented their design in the same year", "The first electric telegraph = the first of its kind to be officially registered"], "kind": "Matching", "answer": "E", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "1806"}, {"k": "C", "t": "1816"}, {"k": "E", "t": "1837"}, {"k": "F", "t": "1843"}, {"k": "G", "t": "1852"}], "ans": "E"}, "why": ""}, {"q": 30, "question": "Ronalds began to experiment with electricity.", "options": [{"t": "This brought him into contact with the elderly Swiss meteorologist Jean Andre de Luc, who was also an inspired inventor in the field of electricity.", "ok": false}, {"t": "In 1814, de Luc encouraged Ronalds to start work on this new discipline.", "ok": true}, {"t": "Francis Ronalds was born in London in 1788, the second of eleven children.", "ok": false}, {"t": "When he was nineteen his father died, and as the eldest son, the young Ronalds had to assume the responsibility of running the family's cheese business.", "ok": false}], "pairs": ["began to experiment with electricity = encouraged Ronalds to start work on this new discipline"], "kind": "Matching", "answer": "B", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "1806"}, {"k": "B", "t": "1814"}, {"k": "C", "t": "1816"}, {"k": "E", "t": "1837"}, {"k": "F", "t": "1843"}], "ans": "B"}, "why": ""}, {"q": 31, "question": "Ronalds informed the public about the possible uses of his telegraph.", "options": [{"t": "His system remained in use for many decades.", "ok": false}, {"t": "Although Ronalds lived long enough to see his prophecies come to fruition, he made no further contribution to the progress of telegraphic communication.", "ok": false}, {"t": "However, in a small pamphlet published in 1823, he described his invention and listed some of its potential uses.", "ok": true}, {"t": "Ronalds did not pursue the matter further or attempt to patent his telegraph.", "ok": false}], "pairs": ["informed the public about the possible uses of his telegraph = a small pamphlet published in 1823, he described his invention and listed some of its potential uses"], "kind": "Matching", "answer": "D", "choice": {"prompt": "Which option matches?", "opts": [{"k": "A", "t": "1806"}, {"k": "C", "t": "1816"}, {"k": "D", "t": "1823"}, {"k": "F", "t": "1843"}, {"k": "H", "t": "1870"}], "ans": "D"}, "why": ""}, {"q": 32, "question": "What was marked on the dials on Ronalds&#x27;s garden telegraph?", "options": [{"t": "The system was slow and depended on the two dials staying in step, but it worked.", "ok": false}, {"t": "Some months later, Ronalds built two large wooden frames accommodating 8 miles (12.9 km) of electrically charged iron wire in his back garden.", "ok": false}, {"t": "Ronalds soon developed a modified version of his invention in which the wire was encased in glass tubes and buried in the ground.", "ok": false}, {"t": "At either end of the wire was a revolving disc, on which letters and numbers were engraved.", "ok": true}], "pairs": ["What was marked on the dials = letters and numbers were engraved"], "kind": "Completion", "answer": "letters and numbers", "accept": ["letters and numbers"], "limit": " NO MORE THAN THREE WORDS AND/OR A NUMBER", "why": ""}, {"q": 33, "question": "What did Ronalds use to enclose the wires on his later version of the garden telegraph?", "options": [{"t": "Some months later, Ronalds built two large wooden frames accommodating 8 miles (12.9 km) of electrically charged iron wire in his back garden.", "ok": false}, {"t": "The person at the opposite end would then note down what was indicated by the dial at his end at the moment when the balls made contact.", "ok": false}, {"t": "Ronalds soon developed a modified version of his invention in which the wire was encased in glass tubes and buried in the ground.", "ok": true}, {"t": "Ronalds himself retired in 1852 and devoted his later years to collecting and cataloguing a vast library of published material on electricity and magnetism.", "ok": false}], "pairs": ["use to enclose the wires = the wire was encased in glass tubes"], "kind": "Completion", "answer": "glass tubes", "accept": ["glass tubes"], "limit": " NO MORE THAN THREE WORDS AND/OR A NUMBER", "why": ""}, {"q": 34, "question": "How far did Ronalds believe his telegraph could transmit information?", "options": [{"t": "Ronalds believed that his invention was capable of carrying messages some 800 km, and in his letter to Lord Melville written on 11 July 1816 he spoke of the \"mode of conveying telegraphic intelligence with great rapidity, accuracy, and certainty, in all states of the atmosphere, either at night or in the day, and at small expense.", "ok": true}, {"t": "Ronalds did not pursue the matter further or attempt to patent his telegraph.", "ok": false}, {"t": "Nevertheless, John Barrow, Secretary to the Admiralty, wrote back to Ronalds on 5 August, saying that \"telegraphs of any kind are wholly unnecessary, and NO other than the one now in use will be adopted.\"", "ok": false}, {"t": "The disadvantage of this system was that it was only usable in daylight and in clear weather conditions.", "ok": false}], "pairs": ["How far ... could transmit information = capable of carrying messages some 800 km"], "kind": "Completion", "answer": "800 km", "accept": ["800 km"], "limit": " NO MORE THAN THREE WORDS AND/OR A NUMBER", "why": ""}, {"q": 35, "question": "What did the communication system invented by Ralph Wedgwood use?", "options": [{"t": "With communication between these two cities in mind, Ronalds wrote to Lord Melville, the then First Lord of the Admiralty, to offer him his telegraphic system.", "ok": false}, {"t": "He was not the first to propose a system of this nature to them.", "ok": false}, {"t": "They saw the potential of a rapid communication system for the growing number of private railway companies, and in 1837 they developed the Wheatstone-Cooke five-needle telegraph.", "ok": false}, {"t": "Some ten years earlier, in 1806, the inventor Ralph Wedgwood had offered the Admiralty a similar type of telegraph based on frictional electricity, which it had rejected.", "ok": true}], "pairs": ["the communication system invented by Ralph Wedgwood = a similar type of telegraph based on frictional electricity"], "kind": "Completion", "answer": "frictional electricity", "accept": ["frictional electricity"], "limit": " NO MORE THAN THREE WORDS AND/OR A NUMBER", "why": ""}, {"q": 36, "question": "a description of a commercial application for the electric telegraph", "options": [{"t": "The pair patented their design in the same year, the first of its kind to be officially registered, and reaped considerable financial gain as a result.", "ok": false}, {"t": "They saw the potential of a rapid communication system for the growing number of private railway companies, and in 1837 they developed the Wheatstone-Cooke five-needle telegraph.", "ok": true}, {"t": "Ronalds himself retired in 1852 and devoted his later years to collecting and cataloguing a vast library of published material on electricity and magnetism.", "ok": false}, {"t": "Ronalds did not pursue the matter further or attempt to patent his telegraph.", "ok": false}], "pairs": ["a commercial application = private railway companies"], "kind": "Which paragraph?", "answer": "G", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "G", "pill": true}}, {"q": 37, "question": "a rejection of Ronalds&#x27;s invention", "options": [{"t": "In 1816, the Admiralty had at its disposal only the late eighteenth-century telegraphic system of semaphore, whereby a mechanical device was used to control a mast with two arms.", "ok": false}, {"t": "The disadvantage of this system was that it was only usable in daylight and in clear weather conditions.", "ok": false}, {"t": "Ronalds soon developed a modified version of his invention in which the wire was encased in glass tubes and buried in the ground.", "ok": false}, {"t": "Nevertheless, John Barrow, Secretary to the Admiralty, wrote back to Ronalds on 5 August, saying that \"telegraphs of any kind are wholly unnecessary, and NO other than the one now in use will be adopted.\"", "ok": true}], "pairs": ["a rejection of Ronalds's invention = wholly unnecessary"], "kind": "Which paragraph?", "answer": "E", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "E", "pill": true}}, {"q": 38, "question": "a drawback of Ronalds&#x27;s invention", "options": [{"t": "Ronalds soon developed a modified version of his invention in which the wire was encased in glass tubes and buried in the ground.", "ok": false}, {"t": "This would cause two balls suspended on the wire to fall together.", "ok": false}, {"t": "The system was slow and depended on the two dials staying in step, but it worked.", "ok": true}, {"t": "Some months later, Ronalds built two large wooden frames accommodating 8 miles (12.9 km) of electrically charged iron wire in his back garden.", "ok": false}], "pairs": ["a drawback of Ronalds's invention = The system was slow and depended on the two dials staying in step"], "kind": "Which paragraph?", "answer": "C", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "C", "pill": true}}, {"q": 39, "question": "reference to the positive influence on Ronalds of a fellow scientist", "options": [{"t": "When he was nineteen his father died, and as the eldest son, the young Ronalds had to assume the responsibility of running the family's cheese business.", "ok": false}, {"t": "Francis Ronalds was born in London in 1788, the second of eleven children.", "ok": false}, {"t": "He combined this occupation with his passions for chemical experiments and for meteorology, the study of the Earth's atmosphere and its changes.", "ok": false}, {"t": "In 1814, de Luc encouraged Ronalds to start work on this new discipline.", "ok": true}], "pairs": ["the positive influence on Ronalds of a fellow scientist = de Luc encouraged Ronalds"], "kind": "Which paragraph?", "answer": "A", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "A", "pill": true}}, {"q": 40, "question": "reference to the adoption of one of Ronalds&#x27;s procedures in preference to that of another scientist", "options": [{"t": "Ronalds did not pursue the matter further or attempt to patent his telegraph.", "ok": false}, {"t": "A similar system was developed independently by Charles Brooke, but the British Association of Meteorologists confirmed Ronalds's priority.", "ok": true}, {"t": "Although Ronalds lived long enough to see his prophecies come to fruition, he made no further contribution to the progress of telegraphic communication.", "ok": false}, {"t": "In 1843, he was appointed the first Honorary Director and Superintendent of the Observatory at Kew, where he devised an accurate, automatic system for registering meteorological data using photography.", "ok": false}], "pairs": ["the adoption of one of Ronalds's procedures in preference to that of another scientist = the British Association of Meteorologists confirmed Ronalds's priority"], "kind": "Which paragraph?", "answer": "F", "choice": {"prompt": "Which paragraph contains the information?", "opts": [{"k": "A", "t": "Paragraph A"}, {"k": "B", "t": "Paragraph B"}, {"k": "C", "t": "Paragraph C"}, {"k": "D", "t": "Paragraph D"}, {"k": "E", "t": "Paragraph E"}, {"k": "F", "t": "Paragraph F"}, {"k": "G", "t": "Paragraph G"}], "ans": "F", "pill": true}}], "paraphrase": [{"q": "submitted to the Admiralty", "p": "had offered the Admiralty a similar type of telegraph", "rel": "=", "note": "", "n": "27"}, {"q": "The first", "p": "Some ten years earlier, in 1806", "rel": "=", "note": "", "n": "27"}, {"q": "received official recognition of his contribution", "p": "he was knighted by Queen Victoria, a belated honour", "rel": "=", "note": "", "n": "28"}, {"q": "was patented", "p": "The pair patented their design in the same year", "rel": "=", "note": "", "n": "29"}, {"q": "The first electric telegraph", "p": "the first of its kind to be officially registered", "rel": "=", "note": "", "n": "29"}, {"q": "began to experiment with electricity", "p": "encouraged Ronalds to start work on this new discipline", "rel": "=", "note": "", "n": "30"}, {"q": "informed the public about the possible uses of his telegraph", "p": "a small pamphlet published in 1823, he described his invention and listed some of its potential uses", "rel": "=", "note": "", "n": "31"}, {"q": "What was marked on the dials", "p": "letters and numbers were engraved", "rel": "=", "note": "", "n": "32"}, {"q": "use to enclose the wires", "p": "the wire was encased in glass tubes", "rel": "=", "note": "", "n": "33"}, {"q": "How far ... could transmit information", "p": "capable of carrying messages some 800 km", "rel": "=", "note": "", "n": "34"}, {"q": "the communication system invented by Ralph Wedgwood", "p": "a similar type of telegraph based on frictional electricity", "rel": "=", "note": "", "n": "35"}, {"q": "a commercial application", "p": "private railway companies", "rel": "=", "note": "", "n": "36"}, {"q": "a rejection of Ronalds's invention", "p": "wholly unnecessary", "rel": "=", "note": "", "n": "37"}, {"q": "a drawback of Ronalds's invention", "p": "The system was slow and depended on the two dials staying in step", "rel": "=", "note": "", "n": "38"}, {"q": "the positive influence on Ronalds of a fellow scientist", "p": "de Luc encouraged Ronalds", "rel": "=", "note": "", "n": "39"}, {"q": "the adoption of one of Ronalds's procedures in preference to that of another scientist", "p": "the British Association of Meteorologists confirmed Ronalds's priority", "rel": "=", "note": "", "n": "40"}], "vocab": [{"w": "assume the responsibility", "pos": "collocation", "loc": "A", "d": "to take on a duty or job that was not yours before", "uz": "mas'uliyatni zimmasiga olmoq", "ex": "After the director resigned, she had to assume the responsibility.", "form": "assume the responsibility"}, {"w": "meteorology", "pos": "noun", "loc": "A", "d": "the scientific study of weather and the atmosphere", "uz": "meteorologiya", "ex": "He studied meteorology so that he could work as a weather forecaster.", "form": "meteorology"}, {"w": "gutted", "pos": "verb", "loc": "B", "d": "removed everything from the inside of a building", "uz": "ichini bo'shatdi, butunlay tozaladi", "ex": "They gutted the old warehouse and turned it into flats.", "form": "gutted"}, {"w": "impulses", "pos": "noun", "loc": "B", "d": "short electrical signals sent along a wire or nerve", "uz": "impulslar, signallar", "ex": "Nerves carry impulses from the skin to the brain.", "form": "impulses"}, {"w": "In the best traditions of", "pos": "phrase", "loc": "B", "d": "in the typical and admired way of a particular group", "uz": "...ning eng yaxshi an'analariga muvofiq", "ex": "In the best traditions of journalism, she checked every single fact.", "form": "In the best traditions of"}, {"w": "encased", "pos": "verb", "loc": "C", "d": "completely covered or surrounded by something hard", "uz": "o'rab olingan, qoplangan", "ex": "The cables were encased in thick plastic for protection.", "form": "encased"}, {"w": "in step", "pos": "idiom", "loc": "C", "d": "moving or working at exactly the same pace as another", "uz": "bir maromda, hamohang", "ex": "The soldiers marched in step across the square.", "form": "in step"}, {"w": "at its disposal", "pos": "collocation", "loc": "E", "d": "available for it to use whenever it wants", "uz": "ixtiyorida", "ex": "The rescue team had three helicopters at its disposal.", "form": "at its disposal"}, {"w": "semaphore", "pos": "noun", "loc": "E", "d": "a system of sending signals using flags or moving arms", "uz": "semafor, bayroq signalizatsiyasi", "ex": "Sailors once used semaphore to signal between ships.", "form": "semaphore"}, {"w": "wholly unnecessary", "pos": "collocation", "loc": "E", "d": "not needed at all", "uz": "mutlaqo keraksiz", "ex": "The committee decided that a second meeting was wholly unnecessary.", "form": "wholly unnecessary"}, {"w": "pursue the matter", "pos": "collocation", "loc": "F", "d": "to continue trying to deal with a subject or issue", "uz": "masalani davom ettirmoq", "ex": "The lawyer advised him not to pursue the matter in court.", "form": "pursue the matter"}, {"w": "patent", "pos": "verb", "loc": "F", "d": "to get official legal protection for an invention", "uz": "patentlamoq", "ex": "She hurried to patent her design before competitors copied it.", "form": "patent"}, {"w": "prophecies", "pos": "noun", "loc": "F", "d": "statements about what will happen in the future", "uz": "bashoratlar", "ex": "Many of the old writer's prophecies about technology proved accurate.", "form": "prophecies"}, {"w": "come to fruition", "pos": "idiom", "loc": "F", "d": "to finally happen or produce the desired result", "uz": "amalga oshmoq, natija bermoq", "ex": "Years of planning finally came to fruition when the museum opened.", "form": ""}, {"w": "priority", "pos": "noun", "loc": "F", "d": "the right to be recognised as the first to do something", "uz": "birinchilik huquqi", "ex": "The court confirmed the priority of her claim over his.", "form": "priority"}, {"w": "reaped", "pos": "verb", "loc": "G", "d": "received a benefit as a result of earlier actions", "uz": "yig'ib oldi, ko'rdi (foyda)", "ex": "The company reaped huge profits from its popular new product.", "form": "reaped"}, {"w": "belated", "pos": "adjective", "loc": "G", "d": "coming later than it should have", "uz": "kechikkan", "ex": "He sent a belated birthday card three weeks after the party.", "form": "belated"}, {"w": "cataloguing", "pos": "verb", "loc": "G", "d": "making an organised list of items in a collection", "uz": "ro'yxatga olish, kataloglash", "ex": "She spent the summer cataloguing the rare books in the library.", "form": "cataloguing"}]}]};
+/* ================= helpers ================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const QMAP = {}; QS.forEach(q => QMAP[q.n] = q);
+const ALLQ = QS.map(q => q.n);
+const STORE = 'ikromov-reading-test-' + CFG.test;
+const WSSTORE = STORE + '-workshop';
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[‐-―]/g, '-').replace(/[-_]/g, ' ').replace(/[^a-z0-9À-ɏ %$.,\/ ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function textMatches(user, accepted) {
+  const u = normalizeText(user); if (!u) return false;
+  const noArt = t => t.replace(/^(the|a|an) /, '');
+  return accepted.some(a => { const n = normalizeText(a); return n === u || noArt(n) === noArt(u); });
+}
+
+/* ================= tabs: passages + workshops ================= */
+let curPart = 0, wsActive = false, wsPart = 0, WSREADY = false;
+function showTab(kind, i) {
+  const wasWs = wsActive;
+  if (kind === 'p') { curPart = i; wsActive = false; } else { wsPart = i; wsActive = true; }
+  $$('.part').forEach((p, k) => p.classList.toggle('active', kind === 'p' && k === i));
+  $('#wsOverlay').classList.toggle('open', kind === 'w');
+  document.body.classList.toggle('inws', kind === 'w');
+  $$('.mtab').forEach(b => b.classList.toggle('active', b.dataset.kind === kind && Number(b.dataset.i) === i));
+  $$('.ngroup').forEach(g => { g.classList.toggle('cur', Number(g.dataset.i) === i); g.classList.toggle('inw', Number(g.dataset.i) === i && kind === 'w'); });
+  if (WSREADY) { if (kind === 'w') WSAPI.show(i); else if (wasWs) WSAPI.stop(); }
+  renderTimer(); updateAll();
+}
+function showPart(i) { showTab('p', i); }
+function buildMainTabs() {
+  const wrap = $('#mainTabs'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const g = el('div', 'ngroup'); g.dataset.i = i;
+    g.innerHTML = '<div class="ngt"><b>Passage ' + (i + 1) + '</b><span title="' + esc(p.title) + '">' + esc(p.title) + '</span></div>' +
+      '<div class="nbtns"><button type="button" class="mtab" data-kind="p" data-i="' + i + '" title="Read the passage and answer the questions">&#128214; Questions <small id="pc' + i + '"></small></button>' +
+      '<button type="button" class="mtab wk" data-kind="w" data-i="' + i + '" title="Workshop for this passage (timer is paused)">&#127891; Workshop <small id="wp' + i + '"></small></button></div>' +
+      '<div class="nprog" title="Workshop progress"><i id="wbar' + i + '"></i></div>';
+    g.querySelector('[data-kind="p"]').addEventListener('click', () => showTab('p', i));
+    g.querySelector('[data-kind="w"]').addEventListener('click', () => showTab('w', i));
+    wrap.appendChild(g);
+  });
+}
+let partWrong = null;
+function updateWsBadges() {
+  CFG.parts.forEach((p, i) => {
+    const pr = WSREADY ? WSAPI.progress(i) : { ev: 0, evTotal: 1, kn: 0, vTotal: 1 };
+    const pct = Math.round(100 * (pr.ev + pr.kn) / Math.max(1, pr.evTotal + pr.vTotal));
+    const bar = $('#wbar' + i); if (bar) bar.style.width = pct + '%';
+    const lab = $('#wp' + i); if (lab) lab.textContent = pct ? pct + '%' : '';
+    const btn = $('.mtab.wk[data-i="' + i + '"]');
+    if (btn) { const todo = partWrong && partWrong[i] > 0 && pct < 100; btn.classList.toggle('todo', !!todo); if (todo) lab.textContent = partWrong[i] + ' to review'; }
+  });
+}
+
+/* ================= flags ================= */
+let flaggedRanges = new Set();
+$$('.flag-toggle').forEach(btn => btn.addEventListener('click', () => {
+  const r = btn.dataset.flagrange;
+  if (flaggedRanges.has(r)) flaggedRanges.delete(r); else flaggedRanges.add(r);
+  $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.toggle('flagged', flaggedRanges.has(r)));
+  updateAll(); save();
+}));
+function isFlagged(n) { for (const r of flaggedRanges) { const [a, b] = r.split(',').map(Number); if (n >= a && n <= b) return true; } return false; }
+function updateFlagBadge() {
+  let c = 0; flaggedRanges.forEach(r => { const [a, b] = r.split(',').map(Number); c += b - a + 1; });
+  const bd = $('#flagBadge'); bd.textContent = c; bd.style.display = c ? 'inline-block' : 'none';
+}
+
+/* ================= headings drag and drop (scoped per question group) ================= */
+function zoneFor(n) { return $('.para-dropzone[data-qnum="' + n + '"]'); }
+function placedHeading(n) { const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); return c ? c.dataset.heading : ''; }
+function groupZones(hk) { return $$('.para-dropzone').filter(z => QMAP[z.dataset.qnum] && QMAP[z.dataset.qnum].hk === hk); }
+function poolChip(hk, h) { return $('#pool-' + hk + ' .info-chip[data-heading="' + h + '"]'); }
+function placeHeading(h, n) {
+  const q = QMAP[n]; if (!q) return; const hk = q.hk;
+  groupZones(hk).forEach(z => { const c = z.querySelector('.placed-chip[data-heading="' + h + '"]'); if (c) c.remove(); });
+  const zone = zoneFor(n); if (!zone) return;
+  const old = zone.querySelector('.placed-chip'); if (old) { const pc = poolChip(hk, old.dataset.heading); if (pc) pc.classList.remove('placed'); old.remove(); }
+  const src = poolChip(hk, h); const text = src ? src.querySelector('span:last-child').textContent : '';
+  const pill = el('div', 'placed-chip'); pill.dataset.heading = h;
+  pill.innerHTML = '<span class="pc-num">' + esc(h) + '</span><span class="pc-text"></span><button type="button" class="pc-remove" aria-label="Remove">&times;</button>';
+  pill.querySelector('.pc-text').textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  pill.querySelector('.pc-remove').addEventListener('click', e => { e.stopPropagation(); removeHeading(n); });
+  zone.appendChild(pill);
+  $$('#pool-' + hk + ' .info-chip').forEach(c => c.classList.toggle('placed', groupZones(hk).some(z => { const p = z.querySelector('.placed-chip'); return p && p.dataset.heading === c.dataset.heading; })));
+  dzState(); updateAll(); save();
+}
+function removeHeading(n) {
+  const z = zoneFor(n); const c = z && z.querySelector('.placed-chip'); if (!c) return;
+  const hk = QMAP[n].hk; const pc = poolChip(hk, c.dataset.heading); if (pc) pc.classList.remove('placed'); c.remove();
+  dzState(); updateAll(); save();
+}
+function dzState() { $$('.para-dropzone').forEach(z => z.classList.toggle('dz-empty', !z.querySelector('.placed-chip'))); }
+let armed = null;
+$$('.info-chip[data-heading]').forEach(chip => {
+  const hk = chip.parentElement.dataset.gid;
+  chip.addEventListener('dragstart', e => { if (chip.classList.contains('placed')) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', hk + '|' + chip.dataset.heading); });
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('placed')) return;
+    $$('.info-chip.armed').forEach(c => c.classList.remove('armed'));
+    if (armed && armed.chip === chip) { armed = null; return; }
+    armed = { chip, hk, h: chip.dataset.heading }; chip.classList.add('armed');
+  });
+});
+$$('.para-dropzone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const [hk, h] = (e.dataTransfer.getData('text/plain') || '').split('|');
+    if (h && QMAP[zone.dataset.qnum] && QMAP[zone.dataset.qnum].hk === hk) placeHeading(h, zone.dataset.qnum);
+  });
+  zone.addEventListener('click', () => {
+    if (armed && QMAP[zone.dataset.qnum].hk === armed.hk) { placeHeading(armed.h, zone.dataset.qnum); $$('.info-chip.armed').forEach(c => c.classList.remove('armed')); armed = null; }
+  });
+});
+dzState();
+
+/* ================= answers ================= */
+function checkedLetters(gid) { return $$('input[type="checkbox"][data-mgroup="' + gid + '"]:checked').map(c => c.value); }
+function getUserAnswer(q) {
+  if (q.kind === 'heading') return placedHeading(q.n);
+  if (q.kind === 'select') { const s = $('select[name="q' + q.n + '"]'); return s ? s.value : ''; }
+  if (q.kind === 'radio') { const r = $('input[type="radio"][name="q' + q.n + '"]:checked'); return r ? r.value : ''; }
+  if (q.kind === 'text') { const i = $('input[name="q' + q.n + '"]'); return i ? i.value.trim() : ''; }
+  if (q.kind === 'multi') return checkedLetters(q.group).join(', ');
+  return '';
+}
+function isAnswered(n) {
+  const q = QMAP[n]; if (!q) return false;
+  if (q.kind === 'multi') return checkedLetters(q.group).length > q.idx;
+  return getUserAnswer(q).length > 0;
+}
+function scrollToQuestion(n) {
+  const q = QMAP[n]; if (!q) return;
+  showPart(q.part - 1);
+  let target = null;
+  if (q.kind === 'heading') target = zoneFor(n) || $('#pool-' + q.hk);
+  else { const e = $('[name="q' + n + '"], input[data-mgroup="' + q.group + '"]'); target = e ? (e.closest('.q-row,.mcq-stem,.mcq-option,.notes-box,li,td,div') || e) : null; }
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $$('.navbtn').forEach(b => b.classList.toggle('cur', Number(b.dataset.q) === n));
+}
+
+/* ================= footer / review ================= */
+function buildFooterNav() {
+  const wrap = $('#footerNav'); wrap.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    const box = el('div', 'navpart'); const lb = el('span', 'lbl', 'P' + (i + 1)); lb.addEventListener('click', () => showPart(i)); box.appendChild(lb);
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const b = el('button', 'navbtn', String(n)); b.dataset.q = n; b.addEventListener('click', () => scrollToQuestion(n)); box.appendChild(b);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateAll() {
+  $$('.navbtn').forEach(b => { const n = Number(b.dataset.q); b.classList.toggle('answered', isAnswered(n)); b.classList.toggle('flagged', isFlagged(n)); });
+  CFG.parts.forEach((p, i) => { let c = 0; for (let n = p.qstart; n <= p.qend; n++) if (isAnswered(n)) c++; const s = $('#pc' + i); if (s) s.textContent = c + '/' + (p.qend - p.qstart + 1); });
+  updateFlagBadge(); updateWsBadges();
+}
+function buildReview() {
+  const body = $('#reviewBody'); body.innerHTML = '';
+  CFG.parts.forEach((p, i) => {
+    body.appendChild(el('div', 'review-part', 'Part ' + (i + 1) + ' — ' + esc(p.title)));
+    const g = el('div', 'review-grid');
+    for (let n = p.qstart; n <= p.qend; n++) {
+      const c = el('button', 'review-cell', String(n)); if (isAnswered(n)) c.classList.add('answered'); if (isFlagged(n)) c.classList.add('flagged');
+      c.addEventListener('click', () => { $('#reviewModal').style.display = 'none'; scrollToQuestion(n); }); g.appendChild(c);
+    }
+    body.appendChild(g);
+  });
+}
+function openReview() { buildReview(); $('#reviewModal').style.display = 'flex'; }
+$('#reviewBtn').addEventListener('click', openReview);
+$('#flagOverviewBtn').addEventListener('click', openReview);
+
+/* ================= save / restore ================= */
+let secondsLeft = CFG.minutes * 60, timerShown = true, submitted = false, startTime = Date.now(), prevElapsed = 0;
+function save() {
+  if (submitted) return;
+  const a = {};
+  QS.forEach(q => { if (q.kind === 'multi') return; const v = getUserAnswer(q); if (v) a[q.n] = v; });
+  const multi = {}; QS.forEach(q => { if (q.kind === 'multi') multi[q.group] = checkedLetters(q.group); });
+  lsSet(STORE, { a, multi, flags: Array.from(flaggedRanges), left: secondsLeft, elapsed: prevElapsed + Math.floor((Date.now() - startTime) / 1000), part: curPart });
+}
+function restore() {
+  const s = lsGet(STORE); if (!s) return;
+  QS.forEach(q => {
+    const v = s.a && s.a[q.n]; if (v == null) return;
+    if (q.kind === 'heading') placeHeading(v, q.n);
+    else if (q.kind === 'select') { const e = $('select[name="q' + q.n + '"]'); if (e) e.value = v; }
+    else if (q.kind === 'radio') { const e = $('input[type="radio"][name="q' + q.n + '"][value="' + v + '"]'); if (e) e.checked = true; }
+    else if (q.kind === 'text') { const e = $('input[name="q' + q.n + '"]'); if (e) e.value = v; }
+  });
+  Object.keys(s.multi || {}).forEach(g => (s.multi[g] || []).forEach(l => { const c = $('input[data-mgroup="' + g + '"][value="' + l + '"]'); if (c) c.checked = true; }));
+  $$('input[type="checkbox"][data-mgroup]').forEach(syncMulti);
+  (s.flags || []).forEach(r => { flaggedRanges.add(r); $$('.flag-toggle[data-flagrange="' + r + '"]').forEach(b => b.classList.add('flagged')); });
+  if (typeof s.left === 'number') secondsLeft = s.left;
+  prevElapsed = s.elapsed || 0;
+  if (typeof s.part === 'number') curPart = s.part;
+}
+function syncMulti(cb) {
+  const gid = cb.dataset.mgroup, pick = Number(cb.dataset.pick), n = checkedLetters(gid).length;
+  $$('input[type="checkbox"][data-mgroup="' + gid + '"]').forEach(b => { if (!b.checked) b.disabled = n >= pick; });
+}
+document.addEventListener('input', e => { if (e.target.closest('.part')) { updateAll(); save(); } });
+document.addEventListener('change', e => { if (e.target.matches('input[type="checkbox"][data-mgroup]')) syncMulti(e.target); if (e.target.closest('.part')) { updateAll(); save(); } });
+
+/* ================= timer ================= */
+const pad2 = n => String(n).padStart(2, '0');
+function renderTimer() {
+  const t = $('#testTimer'); const neg = secondsLeft < 0, a = Math.abs(secondsLeft);
+  const txt = (neg ? '-' : '') + pad2(Math.floor(a / 60)) + ':' + pad2(a % 60);
+  t.textContent = !timerShown ? '\u23F1 hidden' : (wsActive ? '\u23F8 ' + txt : txt);
+  t.classList.toggle('over', neg && !wsActive); t.classList.toggle('low', !neg && secondsLeft <= 300 && !wsActive);
+  t.classList.toggle('off', !timerShown); t.classList.toggle('paused', wsActive);
+  t.title = wsActive ? 'Timer paused while you are in the Workshop' : 'Click to hide / show the timer';
+}
+$('#testTimer').addEventListener('click', () => { timerShown = !timerShown; renderTimer(); });
+let timerInterval = null;
+function tick() {
+  if (submitted || wsActive) return;      // paused in the Workshop
+  secondsLeft--;                           // keeps going below zero (overtime)
+  renderTimer(); if (secondsLeft % 5 === 0) save();
+}
+
+/* ================= locate in passage ================= */
+function locateAnswer(n, fromWs) {
+  const id = LOC[n]; const q = QMAP[n]; if (!q) return;
+  $('#submissionModal').style.display = 'none';
+  showPart(q.part - 1);
+  $$('.sent.location-found').forEach(x => x.classList.remove('location-found'));
+  const t = id ? document.getElementById(id) : null;
+  if (t) { t.classList.add('location-found'); setTimeout(() => t.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); setTimeout(() => t.classList.remove('location-found'), 3600); }
+}
+
+/* ================= scoring ================= */
+function bandFor(s) {
+  const t = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5]];
+  for (const [m, b] of t) if (s >= m) return b; return s >= 2 ? 2 : 1;
+}
+function evaluate() {
+  const multiPts = {};
+  QS.forEach(q => { if (q.kind === 'multi' && !(q.group in multiPts)) multiPts[q.group] = checkedLetters(q.group).filter(c => q.groupAns.includes(c)).length; });
+  // any-order text groups
+  const aoDone = {};
+  QS.forEach(q => {
+    if (q.aog) {
+      (aoDone[q.aog] = aoDone[q.aog] || { items: [] }).items.push(q);
+    }
+  });
+  const aoResult = {};
+  Object.keys(aoDone).forEach(g => {
+    const used = new Set();
+    aoDone[g].items.forEach(q => {
+      const u = normalizeText(getUserAnswer(q)); const ok = !!u && q.ao.some(a => normalizeText(a) === u) && !used.has(u);
+      if (ok) used.add(u); aoResult[q.n] = ok;
+    });
+  });
+  return QS.map(q => {
+    const ua = getUserAnswer(q); let ok = false, ud = '', cd = '';
+    if (q.kind === 'heading') { ok = ua === q.ans; ud = ua ? esc(ua) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[ua]) || '') : ''; cd = esc(q.ans) + ' – ' + esc(((HEADING_TEXT[q.hk] || {})[q.ans]) || ''); }
+    else if (q.kind === 'select' || q.kind === 'radio') { ok = ua.toUpperCase() === String(q.ans).toUpperCase(); ud = esc(ua); cd = esc(q.ans); }
+    else if (q.kind === 'text') { ok = q.aog ? aoResult[q.n] : textMatches(ua, q.ans); ud = esc(ua); cd = q.aog ? esc(q.ao.join(', ')) + ' (any order)' : esc(q.ans[0]); }
+    else if (q.kind === 'multi') { ok = q.idx < multiPts[q.group]; ud = esc(ua); cd = esc(q.groupAns.join(', ')) + ' (any order)'; }
+    return { q, ok, ud: ud || '(not answered)', cd };
+  });
+}
+function showSubmissionModal() {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const res = evaluate(); let score = 0; const per = [0, 0, 0];
+  const list = $('#answerReviewList'); list.innerHTML = '';
+  let lastPart = 0;
+  res.forEach(r => {
+    if (r.ok) { score++; per[r.q.part - 1]++; }
+    if (r.q.part !== lastPart) { lastPart = r.q.part; list.appendChild(el('div', 'review-part', 'Part ' + r.q.part + ' — ' + esc(CFG.parts[r.q.part - 1].title))); }
+    const it = el('div', 'answer-item' + (r.ok ? '' : ' wrong'));
+    it.innerHTML = '<span class="ai-check">' + (r.ok ? '✓' : '✗') + '</span><b>Question ' + r.q.n + ':</b> ' + r.ud + '<br><span class="ai-correct">(Correct answer: ' + r.cd + ') <button class="ai-locate-btn" data-n="' + r.q.n + '">Show in passage</button></span>';
+    list.appendChild(it);
+  });
+  $$('.ai-locate-btn', list).forEach(b => b.addEventListener('click', () => locateAnswer(Number(b.dataset.n))));
+  $('#scoreBig').textContent = score;
+  $('#bandDisplay').textContent = 'Band: ' + bandFor(score).toFixed(1);
+  const pct = score / QS.length;
+  $('#verdictDisplay').textContent = pct >= .92 ? 'Excellent!' : pct >= .7 ? 'Very good!' : pct >= .5 ? 'Good effort!' : 'Keep practising!';
+  const ps = $('#partScores'); ps.innerHTML = '';
+  partWrong = per.map((v, i) => (CFG.parts[i].qend - CFG.parts[i].qstart + 1) - v); updateWsBadges();
+  CFG.parts.forEach((p, i) => { const d = el('div', 'pscore', 'Part ' + (i + 1) + ': ' + per[i] + ' / ' + (p.qend - p.qstart + 1) + ' <button data-p="' + i + '">Workshop</button>'); ps.appendChild(d); });
+  $$('button', ps).forEach(b => b.addEventListener('click', () => { $('#submissionModal').style.display = 'none'; WSAPI.open(Number(b.dataset.p)); }));
+  const elapsed = CFG.minutes * 60 - secondsLeft;
+  $('#timeSpentDisplay').textContent = Math.floor(elapsed / 60) + 'm ' + (elapsed % 60) + 's' + (secondsLeft < 0 ? '  (overtime: ' + Math.floor(-secondsLeft / 60) + 'm ' + ((-secondsLeft) % 60) + 's)' : '');
+  $('#submissionModal').style.display = 'flex';
+  submitted = true; clearInterval(timerInterval);
+  $$('.part select, .part input').forEach(e => e.disabled = true);
+  $$('.info-chip, .para-dropzone').forEach(e => e.style.pointerEvents = 'none');
+  $('#deliver-button').disabled = true;
+  lsSet(STORE, null);
+}
+$('#deliver-button').addEventListener('click', () => {
+  if (submitted) { $('#submissionModal').style.display = 'flex'; return; }
+  const un = ALLQ.filter(n => !isAnswered(n)).length;
+  if (confirm(un ? 'You have ' + un + ' unanswered question' + (un > 1 ? 's' : '') + '. Submit anyway? You cannot change your answers after submitting.' : 'Submit the test? You cannot change your answers after submitting.')) showSubmissionModal();
+});
+$('#resetBtn').addEventListener('click', () => { lsSet(STORE, null); location.reload(); });
+
+/* ================= dark mode / text size / divider ================= */
+$('#darkModeToggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('#darkModeToggle').innerHTML = document.body.classList.contains('dark') ? '&#9728;&#65039;' : '&#127769;'; lsSet(STORE + '-dark', document.body.classList.contains('dark')); });
+if (lsGet(STORE + '-dark')) { document.body.classList.add('dark'); $('#darkModeToggle').innerHTML = '&#9728;&#65039;'; }
+let textScale = lsGet(STORE + '-fs') || 1;
+function applyScale() {
+  textScale = Math.round(Math.min(1.5, Math.max(.8, textScale)) * 100) / 100;
+  document.documentElement.style.setProperty('--fs', textScale);   // scales the passage, questions and workshop only
+  lsSet(STORE + '-fs', textScale);
+  const l = $('#textDecreaseBtn'), u = $('#textIncreaseBtn'); if (l) l.disabled = textScale <= .8; if (u) u.disabled = textScale >= 1.5;
+}
+$('#textIncreaseBtn').addEventListener('click', () => { textScale += .1; applyScale(); });
+$('#textDecreaseBtn').addEventListener('click', () => { textScale -= .1; applyScale(); });
+applyScale();
+$$('.divider').forEach(d => {
+  let drag = false;
+  d.addEventListener('mousedown', () => { drag = true; d.classList.add('dragging'); document.body.style.userSelect = 'none'; });
+  document.addEventListener('mouseup', () => { drag = false; d.classList.remove('dragging'); document.body.style.userSelect = ''; });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return; const r = d.parentElement.getBoundingClientRect(); const pct = (e.clientX - r.left) / r.width;
+    if (pct > .15 && pct < .85) { d.previousElementSibling.style.flex = '0 0 ' + (pct * 100) + '%'; d.nextElementSibling.style.flex = '0 0 ' + ((1 - pct) * 100 - .6) + '%'; }
+  });
+});
+
+/* ================= highlighter (multi-node, removable) ================= */
+function onSel(e) {
+  const sel = window.getSelection(), pop = $('#highlightPopup');
+  if (sel && !sel.isCollapsed && sel.toString().trim() && e.target.closest && e.target.closest('.passage-container')) {
+    const r = sel.getRangeAt(0), rect = r.getBoundingClientRect();
+    pop.style.left = Math.max(8, rect.left) + 'px'; pop.style.top = Math.max(8, rect.top - 40) + 'px'; pop.style.display = 'flex'; window._rng = r.cloneRange();
+  } else if (!(e.target.closest && e.target.closest('.highlight-popup'))) pop.style.display = 'none';
+}
+document.addEventListener('mouseup', onSel);
+function applyHL(cls) {
+  const r = window._rng; if (!r) return;
+  const root = r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer;
+  if (cls === 'clear') {
+    $$('.hl-yellow,.hl-green,.hl-blue', root.closest('.passage-container') || root).forEach(s => { if (r.intersectsNode(s)) { const p = s.parentNode; while (s.firstChild) p.insertBefore(s.firstChild, s); p.removeChild(s); p.normalize(); } });
+  } else {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (r.intersectsNode(n) && n.nodeValue.trim()) nodes.push(n); }
+    nodes.forEach(n => {
+      let s = 0, e = n.nodeValue.length; if (n === r.startContainer) s = r.startOffset; if (n === r.endContainer) e = r.endOffset; if (e <= s) return;
+      let t = n; if (s > 0) t = n.splitText(s); if (e - s < t.nodeValue.length) t.splitText(e - s);
+      const sp = document.createElement('span'); sp.className = cls; t.parentNode.insertBefore(sp, t); sp.appendChild(t);
+    });
+  }
+  $('#highlightPopup').style.display = 'none'; window.getSelection().removeAllRanges();
+}
+$$('#highlightPopup button').forEach(b => b.addEventListener('click', () => applyHL(b.dataset.c)));
+document.addEventListener('dblclick', e => { const h = e.target.closest && e.target.closest('.hl-yellow,.hl-green,.hl-blue'); if (h) { const p = h.parentNode; while (h.firstChild) p.insertBefore(h.firstChild, h); p.removeChild(h); p.normalize(); } });
+
+/* ================= start ================= */
+buildMainTabs(); buildFooterNav(); restore(); showPart(curPart); renderTimer(); updateAll();
+timerInterval = setInterval(tick, 1000);
+window.addEventListener('beforeunload', save);
+
+/* ================================================================ */
+/*                          W O R K S H O P                          */
+/* ================================================================ */
+const WSAPI = (function () {
+  const overlay = $('#wsOverlay'), main = $('#wsMain');
+  let tab = 'ev', wp = 0;
+  const saved = lsGet(WSSTORE) || { ev: {}, known: {} };
+  const persist = () => { lsSet(WSSTORE, saved); try { refreshTabs(); updateAll(); } catch (e) {} };
+  const st = () => (saved.ev[wp] = saved.ev[wp] || {});
+  const knownSet = () => (saved.known[wp] = saved.known[wp] || {});
+
+  /* ---------- text to speech ---------- */
+  const TTS = { ok: ('speechSynthesis' in window) && typeof SpeechSynthesisUtterance !== 'undefined', voices: [], uri: (saved.tts && saved.tts.uri) || '', rate: (saved.tts && saved.tts.rate) || 0.9, auto: saved.tts ? saved.tts.auto !== false : true, more: saved.tts ? saved.tts.more !== false : true, token: 0 };
+  function ttsSave() { saved.tts = { uri: TTS.uri, rate: TTS.rate, auto: TTS.auto, more: TTS.more }; persist(); }
+  function loadVoices() { if (!TTS.ok) return; TTS.voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); }
+  if (TTS.ok) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); if (overlay.classList.contains('open') && tab === 'vo') { const s = $('#ttsVoice'); if (s) fillVoices(s); } }); } catch (e) {} }
+  function pickVoice() {
+    return TTS.voices.find(v => v.voiceURI === TTS.uri) || TTS.voices.find(v => /en[-_]GB/i.test(v.lang)) || TTS.voices.find(v => /en[-_]US/i.test(v.lang)) || TTS.voices[0] || null;
+  }
+  function say(text, rate) {
+    return new Promise(res => {
+      if (!TTS.ok || !text) { res(); return; }
+      const u = new SpeechSynthesisUtterance(text); const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      u.rate = rate || TTS.rate; u.pitch = 1;
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(4000, text.length * 160 / (u.rate)));
+      speechSynthesis.speak(u);
+    });
+  }
+  function stopSpeech() { TTS.token++; if (TTS.ok) { try { speechSynthesis.cancel(); } catch (e) {} } $$('.spk.speaking').forEach(b => b.classList.remove('speaking')); }
+  async function speakNow(text, btn) {
+    stopSpeech(); await sleep(40);
+    if (btn) btn.classList.add('speaking');
+    await say(text);
+    if (btn) btn.classList.remove('speaking');
+  }
+  function spkBtn(text, cls) {
+    if (!TTS.ok) return '';
+    return '<button type="button" class="spk ' + (cls || '') + '" data-say="' + esc(text) + '" title="Listen" aria-label="Listen">&#128266;</button>';
+  }
+  function bindSpk(root) { $$('.spk[data-say]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speakNow(b.dataset.say, b); })); }
+  function fillVoices(sel) {
+    sel.innerHTML = TTS.voices.length ? TTS.voices.map(v => '<option value="' + esc(v.voiceURI) + '"' + ((pickVoice() === v) ? ' selected' : '') + '>' + esc(v.name + ' (' + v.lang + ')') + '</option>').join('') : '<option>default voice</option>';
+  }
+
+  /* ---------- show / open / close ---------- */
+  function progress(i) { const S = saved.ev[i] || {}; const K = saved.known[i] || {}; return { ev: Object.values(S).filter(r => r && r.done).length, evTotal: WS.parts[i].evidence.length, kn: Object.keys(K).length, vTotal: WS.parts[i].vocab.length }; }
+  function refreshTabs() { const pr = progress(wp); const a = $('#wtEv'), b = $('#wtVo'); if (a) a.textContent = pr.ev + '/' + pr.evTotal; if (b) b.textContent = pr.kn + '/' + pr.vTotal; }
+  $('#wsBack').addEventListener('click', () => showTab('p', wp));
+  function show(p) { wp = p; refreshTabs(); $('#wsTitle').innerHTML = '&#127891; Workshop &middot; Passage ' + (p + 1) + '<small>' + esc(CFG.parts[p].title) + '</small>'; render(); }
+  function open(p) { showTab('w', typeof p === 'number' ? p : curPart); }
+  function close() { showTab('p', curPart); }
+  function stop() { stopSpeech(); }
+  $$('.ws-tab').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; stopSpeech(); $$('.ws-tab').forEach(x => x.classList.toggle('active', x === b)); render(); }));
+  const W = () => WS.parts[wp];
+
+  /* ---------- Evidence Hunt ---------- */
+  function renderEvidence() {
+    main.innerHTML = '';
+    const items = W().evidence, S = st();
+    const nd = () => items.filter(i => S[i.q] && S[i.q].done).length;
+    const intro = el('div', 'ws-intro', '<b>Prove every answer.</b> For each question: (1) choose the sentence in the passage that contains the answer, then (2) show how it connects to the question. The wrong sentences share key words with the question &mdash; read carefully!<span class="ws-score" id="evScore">' + nd() + ' / ' + items.length + '</span>');
+    main.appendChild(intro);
+    items.forEach(item => {
+      const q = item.q; const rec = S[q] || (S[q] = {});
+      const card = el('div', 'ws-card'); card.id = 'evcard' + q;
+      card.innerHTML = '<div class="ws-qhead"><span class="ws-qn">' + q + '</span><div><div class="ws-qtype">' + esc(item.kind || '') + '</div><div>' + item.question + '</div></div></div>';
+      card.appendChild(el('div', 'ws-step', 'Step 1 &middot; Which sentence proves the answer?'));
+      const wrap = el('div'); card.appendChild(wrap);
+      const s2 = el('div'); card.appendChild(s2);
+      const reveal = el('div'); card.appendChild(reveal);
+      const needRel = !!item.rel, needAns = !!item.accept, needChoice = !!item.choice;
+      const state = { picked: !!rec.done, rel: !!rec.done, ans: !!rec.done, choice: !!rec.done };
+      function finish() {
+        if (state.picked && (!needRel || state.rel) && (!needAns || state.ans) && (!needChoice || state.choice)) {
+          if (!rec.done) { rec.done = true; persist(); $('#evScore').textContent = nd() + ' / ' + items.length; }
+          card.classList.add('done');
+          let h = '<b>Answer: ' + esc(item.answer) + '</b>'; if (item.why) h += ' &mdash; ' + item.why;
+          if (item.pairs && item.pairs.length) h += '<div style="margin-top:.4rem">Words that helped: ' + item.pairs.map(p => '<span class="ws-pair">' + esc(p) + '</span>').join('') + '</div>';
+          h += '<div style="margin-top:.4rem"><button class="ws-hunt" type="button"><b>&#128065;</b> Show in passage</button></div>';
+          reveal.className = 'ws-reveal'; reveal.innerHTML = h;
+          reveal.querySelector('.ws-hunt').addEventListener('click', () => locateAnswer(q, true));
+        }
+      }
+      item.options.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.t)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (state.picked) return;
+          if (o.ok) { b.classList.add('ok'); state.picked = true; $$('button', wrap).forEach(x => x.disabled = true); step2(); finish(); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        if (rec.done && o.ok) { b.classList.add('ok'); b.disabled = true; } else if (rec.done) b.disabled = true;
+        wrap.appendChild(b);
+      });
+      function step2() {
+        s2.innerHTML = '';
+        if (needRel) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; How does the sentence relate to the statement?'));
+          const row = el('div', 'ws-rel');
+          (item.yn ? [['same', 'Same idea (YES)'], ['opposite', 'Opposite idea (NO)'], ['missing', 'Information missing (NOT GIVEN)']] : [['same', 'Same idea (TRUE)'], ['opposite', 'Opposite idea (FALSE)'], ['missing', 'Information missing (NOT GIVEN)']]).forEach(([k, l]) => {
+            const b = el('button', 'ws-opt', l); b.type = 'button';
+            b.addEventListener('click', () => { if (state.rel) return; if (k === item.rel) { b.classList.add('ok'); state.rel = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && k === item.rel) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        } else if (needAns) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; Type the answer' + (item.limit ? ' (' + esc(item.limit) + ')' : '')));
+          const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false;
+          const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+          const fb = el('span'); fb.style.marginLeft = '.6rem'; fb.style.fontWeight = '700';
+          const test = () => { if (state.ans) return; if (textMatches(inp.value, item.accept)) { state.ans = true; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; finish(); } else { fb.textContent = 'Try again'; fb.style.color = '#dc2626'; } };
+          go.addEventListener('click', test); inp.addEventListener('keydown', e => { if (e.key === 'Enter') test(); });
+          if (rec.done) { inp.value = item.answer; inp.disabled = true; go.disabled = true; fb.textContent = '✓'; fb.style.color = '#059669'; }
+          s2.appendChild(inp); s2.appendChild(go); s2.appendChild(fb);
+        } else if (needChoice) {
+          s2.appendChild(el('div', 'ws-step', 'Step 2 &middot; ' + esc(item.choice.prompt)));
+          const row = el('div', 'ws-rel' + (item.choice.pill ? ' pills' : ''));
+          item.choice.opts.forEach(o => {
+            const b = el('button', 'ws-opt', item.choice.pill ? esc(o.k) : '<b>' + esc(o.k) + '</b> &nbsp;' + esc(o.t)); b.type = 'button';
+            if (!item.choice.pill) { b.style.textAlign = 'left'; b.style.flexBasis = '100%'; }
+            b.addEventListener('click', () => { if (state.choice) return; if (o.k === item.choice.ans) { b.classList.add('ok'); state.choice = true; $$('button', row).forEach(x => x.disabled = true); finish(); } else { b.classList.add('bad'); b.disabled = true; } });
+            if (rec.done && o.k === item.choice.ans) b.classList.add('ok'); if (rec.done) b.disabled = true;
+            row.appendChild(b);
+          });
+          s2.appendChild(row);
+        }
+      }
+      if (rec.done) { step2(); finish(); }
+      main.appendChild(card);
+    });
+    if (items.length) { const rs = el('button', 'ws-btn ghost', 'Reset my progress for this passage'); rs.type = 'button'; rs.addEventListener('click', () => { saved.ev[wp] = {}; persist(); renderEvidence(); }); main.appendChild(rs); }
+  }
+
+  /* ---------- generic matching game ---------- */
+  function pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft) {
+    perRound = perRound || 6;
+    const order = shuffle(pairs.map((p, i) => i));
+    let round = 0, matched = 0, mistakes = 0; const total = pairs.length;
+    const bar = el('div', 'ws-bar'); container.appendChild(bar);
+    const game = el('div', 'ws-game'); container.appendChild(game);
+    const msg = el('div'); container.appendChild(msg);
+    function upd() { bar.innerHTML = '<span>Matched: ' + matched + ' / ' + total + '</span><span>Mistakes: ' + mistakes + '</span><span>Round ' + Math.min(round + 1, Math.ceil(total / perRound)) + ' / ' + Math.ceil(total / perRound) + '</span>'; }
+    function start() {
+      const ids = order.slice(round * perRound, round * perRound + perRound);
+      game.innerHTML = ''; msg.innerHTML = '';
+      const L = el('div', 'ws-col'), R = el('div', 'ws-col'); L.appendChild(el('h4', null, leftLbl)); R.appendChild(el('h4', null, rightLbl));
+      let sel = null, left = ids.length;
+      const mk = (side, id) => { const b = el('button', 'ws-tile', esc(side === 'L' ? pairs[id].l : pairs[id].r)); b.type = 'button'; b.dataset.id = id; b.dataset.side = side; return b; };
+      shuffle(ids).forEach(id => L.appendChild(mk('L', id))); shuffle(ids).forEach(id => R.appendChild(mk('R', id)));
+      game.appendChild(L); game.appendChild(R);
+      $$('.ws-tile', game).forEach(t => t.addEventListener('click', () => {
+        if (t.classList.contains('matched')) return;
+        if (speakLeft && t.dataset.side === 'L' && TTS.auto) speakNow(pairs[t.dataset.id].l);
+        if (!sel || sel.dataset.side === t.dataset.side) { if (sel) sel.classList.remove('sel'); sel = t; t.classList.add('sel'); return; }
+        const a = sel, b = t; sel = null; a.classList.remove('sel');
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add('matched'); b.classList.add('matched'); matched++; left--; upd();
+          if (left === 0) {
+            if ((round + 1) * perRound < total) { msg.innerHTML = '<div class="ws-reveal">Round complete! <button class="ws-btn" id="wsNext" style="margin-left:.6rem">Next round &rarr;</button></div>'; $('#wsNext', msg).addEventListener('click', () => { round++; start(); }); }
+            else { msg.innerHTML = '<div class="ws-reveal"><b>All matched!</b> Mistakes: ' + mistakes + '. <button class="ws-btn ghost" id="wsAgain" style="margin-left:.6rem">Play again</button></div>'; $('#wsAgain', msg).addEventListener('click', () => { container.innerHTML = ''; pairGame(container, pairs, leftLbl, rightLbl, perRound, speakLeft); }); }
+          }
+        } else { mistakes++; upd(); a.classList.add('wrong'); b.classList.add('wrong'); setTimeout(() => { a.classList.remove('wrong'); b.classList.remove('wrong'); }, 450); }
+      }));
+      upd();
+    }
+    start();
+  }
+
+  /* ---------- Paraphrase ---------- */
+  let paMode = 'match';
+  function renderPara() {
+    main.innerHTML = '';
+    const rows = W().paraphrase;
+    const sub = el('div', 'ws-sub');
+    const hasRel = rows.filter(r => r.rel !== '=').length >= 3;
+    (hasRel ? [['match', '1 &middot; Match the paraphrases'], ['rel', '2 &middot; Same, opposite or missing?']] : [['match', 'Match the paraphrases']]).forEach(([k, l]) => {
+      const b = el('button', 'ws-pill' + (paMode === k ? ' active' : ''), l); b.addEventListener('click', () => { paMode = k; renderPara(); }); sub.appendChild(b);
+    });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    if (paMode === 'match' || !hasRel) {
+      box.appendChild(el('div', 'ws-intro', 'Examiners never copy the question &mdash; they <b>paraphrase</b>. Click a phrase from the <b>question</b>, then the phrase in the <b>passage</b> that means the same.'));
+      let same = rows.filter(r => r.rel === '='); const seen = new Set();
+      same = same.filter(r => { const k = r.q + '|' + r.p; if (seen.has(k)) return false; seen.add(k); return true; });
+      same = shuffle(same).slice(0, 18);
+      pairGame(box, same.map(r => ({ l: r.q, r: r.p })), 'In the question', 'In the passage', 6, false);
+    } else {
+      box.appendChild(el('div', 'ws-intro', 'Read each pair. Does the passage say the <b>same</b> thing, the <b>opposite</b>, or is the idea <b>not in the passage</b>? This is exactly the decision you make in True / False / Not Given.'));
+      const items = shuffle(rows.filter(r => r.rel !== '=')).slice(0, 10).concat(shuffle(rows.filter(r => r.rel === '=')).slice(0, 6));
+      let score = 0; box.appendChild(el('div', 'ws-bar', '<span id="relScore">Score: 0 / ' + items.length + '</span>'));
+      shuffle(items).forEach(r => {
+        const card = el('div', 'ws-card');
+        card.innerHTML = '<div><span class="ws-qtype">Question</span><br>' + esc(r.q) + '</div><div style="margin-top:.4rem"><span class="ws-qtype">Passage</span><br>' + esc(r.p) + '</div>';
+        const row = el('div', 'ws-rel'); row.style.marginTop = '.5rem';
+        [['=', 'Same meaning'], ['≠', 'Opposite meaning'], ['?', 'Not in the passage']].forEach(([k, l]) => {
+          const b = el('button', 'ws-opt', l); b.type = 'button';
+          b.addEventListener('click', () => {
+            if (row.dataset.done) return;
+            if (k === r.rel) { b.classList.add('ok'); row.dataset.done = 1; $$('button', row).forEach(x => x.disabled = true); score++; $('#relScore').textContent = 'Score: ' + score + ' / ' + items.length; if (r.note) card.appendChild(el('div', 'ws-reveal', r.note)); }
+            else { b.classList.add('bad'); b.disabled = true; }
+          });
+          row.appendChild(b);
+        });
+        card.appendChild(row); box.appendChild(card);
+      });
+    }
+  }
+
+  /* ---------- Vocabulary Lab ---------- */
+  let voMode = 'flash', flashIdx = 0, deck = 'all', listening = false;
+  const VOMODES = [['flash', '&#128266; Flashcards'], ['listen', '&#127911; Listen &amp; choose'], ['type', '&#9000;&#65039; Listen &amp; type'], ['def', 'Word &harr; Meaning'], ['uz', 'Word &harr; Uzbek'], ['gap', 'Fill the gaps']];
+  function ttsBar(extra) {
+    const bar = el('div', 'ws-ttsbar');
+    if (!TTS.ok) { bar.innerHTML = '&#128263; Your browser cannot read words aloud. Try Chrome, Edge or Safari.'; return bar; }
+    bar.innerHTML = '<label><input type="checkbox" id="ttsAuto"' + (TTS.auto ? ' checked' : '') + '> Auto-read words</label>' +
+      '<label><input type="checkbox" id="ttsMore"' + (TTS.more ? ' checked' : '') + '> Read meaning + example on flip</label>' +
+      '<label>Speed <select id="ttsRate"><option value="0.7">Slow</option><option value="0.9">Normal</option><option value="1.05">Fast</option></select></label>' +
+      '<label>Voice <select id="ttsVoice"></select></label>' + (extra || '');
+    setTimeout(() => {
+      const r = $('#ttsRate'); if (!r) return; r.value = String(TTS.rate); if (r.value !== String(TTS.rate)) r.value = '0.9';
+      fillVoices($('#ttsVoice'));
+      $('#ttsAuto').onchange = e => { TTS.auto = e.target.checked; ttsSave(); };
+      $('#ttsMore').onchange = e => { TTS.more = e.target.checked; ttsSave(); };
+      r.onchange = e => { TTS.rate = parseFloat(e.target.value); ttsSave(); };
+      $('#ttsVoice').onchange = e => { TTS.uri = e.target.value; ttsSave(); speakNow('Hello! This is how I sound.'); };
+    }, 0);
+    return bar;
+  }
+  function renderVocab() {
+    stopSpeech(); main.innerHTML = '';
+    const sub = el('div', 'ws-sub');
+    VOMODES.forEach(([k, l]) => { const b = el('button', 'ws-pill' + (voMode === k ? ' active' : ''), l); b.addEventListener('click', () => { voMode = k; renderVocab(); }); sub.appendChild(b); });
+    main.appendChild(sub);
+    const box = el('div'); main.appendChild(box);
+    const V = W().vocab; const K = knownSet();
+    if (!V.length) { box.appendChild(el('div', 'ws-intro', 'No vocabulary for this passage.')); return; }
+    if (voMode === 'flash') flashcards(box, V, K);
+    else if (voMode === 'listen') listenChoose(box, V);
+    else if (voMode === 'type') listenType(box, V);
+    else if (voMode === 'def') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its English meaning. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.d })), 'Word / phrase', 'Meaning', 6, true); }
+    else if (voMode === 'uz') { box.appendChild(el('div', 'ws-intro', 'Match each word or phrase with its Uzbek translation. Click an English word to hear it.')); box.appendChild(ttsBar()); pairGame(box, V.map(w => ({ l: w.w, r: w.uz })), 'English', 'Uzbek', 6, true); }
+    else gapFill(box, V);
+  }
+
+  function flashcards(box, V, K) {
+    box.appendChild(el('div', 'ws-intro', '<b>' + V.length + ' new words from this passage.</b> Press &#128266; to hear a word. Click the card to flip it &mdash; try to recall the meaning first! Mark each word as <b>known</b> or <b>still learning</b>.'));
+    box.appendChild(ttsBar('<button type="button" class="ws-btn" id="listenAll">&#9654; Listen to the whole deck</button>'));
+    const pills = el('div', 'ws-sub'); pills.style.justifyContent = 'center';
+    [['all', 'All words'], ['learning', 'Still learning']].forEach(([k, l]) => { const b = el('button', 'ws-pill' + (deck === k ? ' active' : ''), l); b.addEventListener('click', () => { deck = k; flashIdx = 0; renderVocab(); }); pills.appendChild(b); });
+    box.appendChild(pills);
+    const cards = deck === 'learning' ? V.filter(w => !K[w.w]) : V;
+    const knownN = V.filter(w => K[w.w]).length;
+    const prog = el('div', 'ws-progress', '<i id="kprog" style="width:' + Math.round(100 * knownN / V.length) + '%"></i>'); box.appendChild(prog);
+    box.appendChild(el('div', null, '<div style="text-align:center;font-size:.8rem;color:#6b7280;margin-bottom:.6rem">Known: <b id="kcount">' + knownN + '</b> / ' + V.length + '</div>'));
+    const updKnown = () => { const n = V.filter(w => K[w.w]).length; const a = $('#kcount'), b = $('#kprog'); if (a) a.textContent = n; if (b) b.style.width = Math.round(100 * n / V.length) + '%'; };
+    if (!cards.length) { box.appendChild(el('div', 'ws-reveal', '&#127881; You marked every word as known. Switch to &ldquo;All words&rdquo; to revise.')); return; }
+    if (flashIdx >= cards.length) flashIdx = 0;
+    const wrap = el('div', 'ws-flash'); box.appendChild(wrap);
+    const know = el('div', 'ws-know'); box.appendChild(know);
+    const nav = el('div'); nav.style.textAlign = 'center'; box.appendChild(nav);
+    let flipped = false;
+    function draw(autoplay) {
+      const w = cards[flashIdx]; flipped = false; wrap.classList.remove('flip');
+      wrap.innerHTML = '<div class="ws-flash-in"><div class="ws-face"><div class="ws-word">' + esc(w.w) + spkBtn(w.w) + '</div><div class="ws-meta">' + esc(w.pos) + (w.loc ? ' &middot; ' + esc(w.loc) : '') + '</div><div class="ws-meta" style="margin-top:.8rem">click to flip</div></div>' +
+        '<div class="ws-face back"><div>' + esc(w.d) + spkBtn(w.d, 'sm') + '</div><div class="ws-uz">' + esc(w.uz) + '</div><div class="ws-ex">&ldquo;' + esc(w.ex) + '&rdquo;' + spkBtn(w.ex, 'sm') + '</div></div></div>';
+      bindSpk(wrap);
+      know.innerHTML = '<button class="ws-btn ghost" id="kNo" type="button">&#128260; Still learning</button><button class="ws-btn" id="kYes" type="button">&#10003; I know it</button>';
+      $('#kYes', know).onclick = () => { K[w.w] = 1; persist(); updKnown(); next(); };
+      $('#kNo', know).onclick = () => { delete K[w.w]; persist(); updKnown(); next(); };
+      nav.innerHTML = '<button class="ws-btn ghost" id="fp" type="button">&larr;</button> <span style="margin:0 .8rem;font-weight:700">' + (flashIdx + 1) + ' / ' + cards.length + '</span> <button class="ws-btn ghost" id="fn" type="button">&rarr;</button>';
+      $('#fp', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx - 1 + cards.length) % cards.length; draw(true); };
+      $('#fn', nav).onclick = () => { stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); };
+      if (autoplay && TTS.auto && !listening) speakNow(w.w);
+    }
+    function next() { if (deck === 'learning') { renderVocab(); return; } stopSpeech(); flashIdx = (flashIdx + 1) % cards.length; draw(true); }
+    wrap.addEventListener('click', async e => {
+      if (e.target.closest('.spk')) return;
+      wrap.classList.toggle('flip'); flipped = wrap.classList.contains('flip');
+      if (flipped && TTS.more && !listening) { const w = cards[flashIdx]; stopSpeech(); const my = TTS.token; await sleep(350); if (my !== TTS.token) return; await say(w.d); if (my !== TTS.token) return; await sleep(250); await say(w.ex); }
+    });
+    const la = $('#listenAll'); if (la) la.onclick = async () => {
+      if (listening) { listening = false; stopSpeech(); la.innerHTML = '&#9654; Listen to the whole deck'; return; }
+      listening = true; la.innerHTML = '&#9632; Stop'; stopSpeech(); const my = TTS.token;
+      for (let i = flashIdx; i < cards.length && listening; i++) {
+        flashIdx = i; draw(false); const w = cards[i];
+        await say(w.w); if (my !== TTS.token) break; await sleep(500);
+        wrap.classList.add('flip'); await sleep(450); await say(w.d); if (my !== TTS.token) break; await sleep(300); await say(w.ex); if (my !== TTS.token) break; await sleep(900);
+      }
+      listening = false; const b = $('#listenAll'); if (b) b.innerHTML = '&#9654; Listen to the whole deck';
+    };
+    draw(false);
+  }
+
+  function listenChoose(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and choose.</b> You will hear a word. Choose its correct meaning.'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i]; const opts = shuffle([w].concat(shuffle(V.filter(x => x !== w)).slice(0, 3)));
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep" title="Play again">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Tap to hear it again</div></div>';
+      opts.forEach(o => {
+        const b = el('button', 'ws-opt', esc(o.d)); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (zone.dataset.done === String(i)) return;
+          if (o === w) { zone.dataset.done = String(i); b.classList.add('ok'); score++; const rv = el('div', 'ws-reveal', '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz)); zone.appendChild(rv); $$('.ws-opt', zone).forEach(x => x.disabled = true); setTimeout(() => { i++; round(); }, 1500); }
+          else { b.classList.add('bad'); b.disabled = true; }
+        });
+        zone.appendChild(b);
+      });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      speakNow(w.w);
+    }
+    round();
+  }
+
+  function listenType(box, V) {
+    box.appendChild(el('div', 'ws-intro', '<b>Listen and type.</b> You will hear a word or phrase. Type exactly what you hear &mdash; spelling counts!'));
+    box.appendChild(ttsBar());
+    if (!TTS.ok) return;
+    const order = shuffle(V); let i = 0, score = 0;
+    const zone = el('div'); box.appendChild(zone);
+    function round() {
+      if (i >= order.length) { zone.innerHTML = '<div class="ws-reveal"><b>Finished!</b> Score: ' + score + ' / ' + order.length + ' <button class="ws-btn ghost" id="again" style="margin-left:.6rem">Play again</button></div>'; $('#again', zone).onclick = () => renderVocab(); return; }
+      const w = order[i];
+      zone.innerHTML = '<div class="ws-bar"><span>Word ' + (i + 1) + ' / ' + order.length + '</span><span>Score: ' + score + '</span></div><div class="ws-listen"><button class="big" type="button" id="rep">&#128266;</button><div style="font-size:.8rem;color:#6b7280">Meaning: ' + esc(w.d) + '</div></div>';
+      const inp = el('input', 'ws-input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'Type here…';
+      const go = el('button', 'ws-btn', 'Check'); go.type = 'button'; go.style.marginLeft = '.5rem';
+      const sk = el('button', 'ws-btn ghost', 'Skip'); sk.type = 'button'; sk.style.marginLeft = '.4rem';
+      const fb = el('div'); fb.style.marginTop = '.6rem';
+      zone.appendChild(inp); zone.appendChild(go); zone.appendChild(sk); zone.appendChild(fb);
+      const done = ok => { go.disabled = true; sk.disabled = true; inp.disabled = true; if (ok) score++; fb.innerHTML = '<div class="ws-reveal">' + (ok ? '&#10003; Correct! ' : 'The answer was ') + '<b>' + esc(w.w) + '</b> &mdash; ' + esc(w.uz) + '</div>'; setTimeout(() => { i++; round(); }, ok ? 1200 : 2200); };
+      const check = () => { const a = normalizeText(inp.value), b = normalizeText(w.w); if (!a) return; if (a === b) done(true); else { fb.innerHTML = '<span style="color:#dc2626;font-weight:700">Not quite &mdash; listen again.</span>'; } };
+      go.onclick = check; sk.onclick = () => done(false); inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      $('#rep', zone).onclick = () => speakNow(w.w);
+      inp.focus(); speakNow(w.w);
+    }
+    round();
+  }
+
+  function gapFill(box, V) {
+    const G = V.filter(w => w.form && w.ex.indexOf(w.form) >= 0);
+    box.appendChild(el('div', 'ws-intro', 'Choose the right word or phrase for each gap. Change the form if you need to &mdash; here you only choose the <b>base</b> expression.'));
+    if (!G.length) { box.appendChild(el('div', 'ws-reveal', 'No gap-fill sentences for this passage.')); return; }
+    const sorted = G.map(w => w.w).sort((a, b) => a.localeCompare(b));
+    box.appendChild(el('div', 'ws-bar', '<span id="gapScore">Score: 0 / ' + G.length + '</span><button class="ws-btn" id="gapCheck" type="button">Check answers</button>'));
+    const list = el('div', 'ws-card ws-gap'); box.appendChild(list); const sels = [];
+    shuffle(G).forEach(w => {
+      const row = el('div', 'ws-gaprow'); const sel = el('select'); sel.innerHTML = '<option value="">&mdash; choose &mdash;</option>' + sorted.map(s => '<option>' + esc(s) + '</option>').join(''); sel.dataset.ans = w.w;
+      const k = w.ex.indexOf(w.form);
+      row.appendChild(el('span', null, esc(w.ex.slice(0, k)))); row.appendChild(sel); row.appendChild(el('span', null, esc(w.ex.slice(k + w.form.length)))); row.insertAdjacentHTML('beforeend', spkBtn(w.ex.replace(w.form, w.w), 'sm'));
+      list.appendChild(row); sels.push(sel);
+    });
+    bindSpk(list);
+    $('#gapCheck').onclick = () => { let sc = 0; sels.forEach(s => { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('bad', !ok && !!s.value); if (ok) sc++; }); $('#gapScore').textContent = 'Score: ' + sc + ' / ' + G.length; };
+  }
+
+  function render() { if (tab === 'ev') renderEvidence(); else if (tab === 'pa') renderPara(); else renderVocab(); }
+  return { open, close, show, stop, progress };
+})();
+WSREADY = true;
+
+</script>
+</body>
+</html>
