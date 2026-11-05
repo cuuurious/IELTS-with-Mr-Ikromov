@@ -26,7 +26,8 @@ export default function GroupWorkspace({ teacherId }) {
   // whether you were inside it, see lib/sessionState.js.
   const [activeGroup, setActiveGroup] = useSessionState(`ielts:${teacherId}:groups:activeGroup`, null)
   // Group page tabs (2026-11-05): homework | students | grades | course
-  const [groupTab, setGroupTab] = useSessionState(`ielts:${teacherId}:groups:tab`, 'homework')
+  // Grades opens first whenever a group is opened (Jasur, 2026-11-05).
+  const [groupTab, setGroupTab] = useState('grades')
 
   // Keeps the latest activeGroup readable from inside async callbacks
   // without them closing over a stale value. Used so a slow-loading
@@ -42,6 +43,9 @@ export default function GroupWorkspace({ teacherId }) {
   // every group's homework table living permanently on the same
   // screen as the group picker.
   const [screen, setScreen] = useSessionState(`ielts:${teacherId}:groups:screen`, 'groups')
+  useEffect(() => {
+    if (screen === 'detail') setGroupTab('grades')
+  }, [activeGroup, screen])
 
   // Lightweight per-group counts (students, assignments) shown on
   // each tile in the overview grid. Loaded once — in bulk, for every
@@ -1575,9 +1579,9 @@ export default function GroupWorkspace({ teacherId }) {
           {(() => {
             const accent = getGroupAccent(activeGroup)
             const TABS = [
+              { key: 'grades', label: 'Grades' },
               { key: 'homework', label: 'Homework', count: homeworks.length },
               { key: 'students', label: 'Students', count: roster.length },
-              { key: 'grades', label: 'Grades' },
               { key: 'course', label: 'Course & tools' },
             ]
             return (
