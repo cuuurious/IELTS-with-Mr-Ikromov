@@ -154,6 +154,16 @@ export function peekPage(url) {
     peekCache[url] = fetch(url)
       .then((r) => (r.ok ? r.text() : ''))
       .then((html) => {
+        // Writing pages keep their question as data: show that.
+        const st = /"promptStatement":\s*(\[[^\]]*\])/.exec(html)
+        const ins = /"promptInstruction":\s*(\[[^\]]*\])/.exec(html)
+        if (st) {
+          try {
+            return { title: 'Essay question', sub: '', text: [...JSON.parse(st[1]), ...(ins ? JSON.parse(ins[1]) : [])].join(' ') }
+          } catch {
+            /* fall through */
+          }
+        }
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const title = doc.querySelector('.passage-title')?.textContent?.trim() || ''
         const sub = doc.querySelector('.passage-subtitle')?.textContent?.trim() || ''

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 2 Practice Test T78 - When Reading Is Out of Reach: The Cost of Adult Illiteracy | MrIkromov&#x27;s IELTS</title>
+<style>
+:root{ --navy:#17324d; --gold:#c8922a; --goldd:#a8761a; --teal:#127c7c; --coral:#d9573b; --lilac:#f1edf8; --ok:#2e8b57; --bad:#c0392b; --line:#e0e0e0; }
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:Arial,Helvetica,sans-serif; background:#fff; color:#222; font-size:16px; line-height:1.45; padding:60px 0 64px; }
+.hidden{ display:none !important; }
+button{ font-family:inherit; cursor:pointer; }
+
+/* header */
+.header{ position:fixed; top:0; left:0; right:0; height:60px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 20px; z-index:100; }
+.timer-container{ display:flex; align-items:center; gap:10px; min-width:230px; font-weight:600; font-size:17px; color:#333; }
+.timer-container .note{ font-size:12px; font-weight:700; color:#fff; background:var(--coral); border-radius:10px; padding:2px 9px; display:none; letter-spacing:.3px; }
+.timer-container.paused .note{ display:inline-block; }
+.timer-container.paused #timer{ color:var(--coral); }
+.timer-container.low #timer{ color:var(--bad); }
+.brand{ font-weight:700; font-size:18px; color:var(--navy); letter-spacing:.2px; }
+.brand span{ color:var(--gold); }
+.hdr-right{ min-width:230px; display:flex; justify-content:flex-end; gap:10px; }
+.btn-ws{ background:var(--gold); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-weight:700; font-size:15px; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.btn-ws:hover{ background:var(--goldd); }
+.btn-back{ background:var(--navy); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-weight:700; font-size:15px; }
+.btn-back:hover{ background:#0f2437; }
+
+/* test view */
+.part-banner{ background:#f1f2ec; border:1px solid var(--line); border-radius:5px; margin:14px 20px 0; padding:12px 16px; }
+.panels{ display:flex; height:calc(100vh - 60px - 64px - 78px); min-height:420px; }
+.left{ width:50%; padding:20px; border-right:1px solid var(--line); overflow-y:auto; }
+.right{ width:50%; padding:20px; display:flex; flex-direction:column; overflow-y:auto; }
+.task-prompt{ border:1px solid #000; padding:15px; margin:14px 0 18px; font-style:italic; font-weight:bold; }
+.task-prompt p+p{ margin-top:10px; }
+.hint-box{ background:var(--tealbox,#e3f3f1); border:1px solid #bfe0dc; border-radius:6px; padding:12px 14px; margin-top:20px; font-size:14px; }
+.hint-box b{ color:#0d6b62; }
+textarea#essay{ flex:1; min-height:340px; border:1px solid #ccc; padding:15px; font-size:16px; font-family:Arial,sans-serif; line-height:1.55; resize:none; outline:none; width:100%; }
+textarea#essay:focus{ border-color:#4a90e2; }
+textarea#essay:disabled{ background:#f6f6f6; }
+.wc{ text-align:right; margin-top:8px; font-size:14px; color:#666; }
+.wc b{ color:#222; } .wc.ok b{ color:var(--ok); }
+
+/* nav */
+.nav-row{ position:fixed; bottom:0; left:0; right:0; height:64px; background:#fff; border-top:1px solid var(--line); display:flex; z-index:100; }
+.nav-item{ flex:1; position:relative; display:flex; align-items:center; background:none; border:none; border-right:1px solid #f0f0f0; padding-left:20px; text-align:left; gap:12px; }
+.nav-item:hover{ background:#f8f9fa; }
+.nav-item.selected{ background:#f5f5f5; }
+.nav-item .t{ font-weight:700; font-size:18px; color:#333; }
+.nav-item .s{ font-size:14px; color:#666; }
+.nav-item.done::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--ok); }
+.nav-item.ws .t{ color:var(--goldd); }
+.nav-item.ws.selected{ background:#fbf4e3; }
+.deliver{ position:absolute; right:20px; top:12px; width:42px; height:40px; background:#f0f0f0; border:1px solid #ccc; border-radius:4px; font-size:20px; font-weight:700; color:#333; }
+.deliver:hover{ background:#e0e0e0; }
+
+/* modal */
+.modal-bg{ position:fixed; inset:0; background:rgba(23,50,77,.55); display:flex; align-items:center; justify-content:center; z-index:300; padding:20px; }
+.modal{ background:#fff; border-radius:12px; max-width:520px; width:100%; padding:28px; box-shadow:0 10px 40px rgba(0,0,0,.35); }
+.modal h2{ color:var(--navy); margin-bottom:8px; font-size:24px; }
+.modal p{ margin:8px 0; color:#444; }
+.modal .row{ display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+.btn{ border:none; border-radius:7px; padding:12px 20px; font-weight:700; font-size:16px; }
+.btn.primary{ background:var(--navy); color:#fff; } .btn.primary:hover{ background:#0f2437; }
+.btn.gold{ background:var(--gold); color:#fff; } .btn.gold:hover{ background:var(--goldd); }
+.btn.light{ background:#eef0f3; color:#333; } .btn.light:hover{ background:#e0e3e8; }
+.btn.small{ padding:8px 14px; font-size:14px; }
+
+/* workshop */
+#workshopView{ background:#faf9f5; min-height:calc(100vh - 124px); }
+.ws-top{ background:#fff; border-bottom:1px solid var(--line); padding:10px 20px; display:flex; gap:8px; flex-wrap:wrap; position:sticky; top:60px; z-index:50; align-items:center; }
+.ws-tab{ background:#fff; border:1px solid #d6d6d6; border-radius:22px; padding:8px 14px; font-weight:700; font-size:14px; color:#444; display:flex; align-items:center; gap:7px; }
+.ws-tab:hover{ background:#f3f3f3; }
+.ws-tab.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+.ws-tab .chk{ width:18px; height:18px; border-radius:50%; background:#e3e3e3; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.ws-tab.done .chk{ background:var(--ok); }
+.ws-note{ margin-left:auto; font-size:13px; color:#a35a00; font-weight:700; background:#fff3d6; border-radius:6px; padding:6px 10px; }
+.ws-body{ max-width:900px; margin:0 auto; padding:22px 20px 40px; }
+.ws-body h2{ color:var(--navy); font-size:26px; margin-bottom:4px; }
+.ws-body .lead{ color:#555; margin-bottom:16px; }
+.card{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.card h3{ color:var(--navy); margin-bottom:8px; font-size:18px; }
+.tag{ background:var(--navy); display:inline-block; font-size:12px; font-weight:700; color:#fff; border-radius:4px; padding:2px 8px; letter-spacing:.5px; text-transform:uppercase; }
+.tag.agree,.tag.A{ background:var(--ok); } .tag.disagree,.tag.D{ background:var(--coral); } .tag.S{ background:#2f6fb3; }
+.qcard{ font-style:italic; background:#eceef1; border-radius:6px; padding:12px 14px; box-shadow:1px 2px 4px rgba(0,0,0,.2); margin-bottom:14px; }
+table.st{ width:100%; border-collapse:collapse; margin:6px 0 4px; font-size:15px; }
+table.st th{ background:var(--navy); color:#fff; text-align:left; padding:7px 10px; }
+table.st td{ border:1px solid #ddd; padding:7px 10px; vertical-align:top; }
+.two{ display:grid; grid-template-columns:1.5fr 1fr; gap:18px; }
+.vocab li{ list-style:none; border-bottom:1px dotted #ccc; padding:4px 0; }
+.chain{ font-size:15px; }
+.sticky{ background:#fff1a8; box-shadow:1px 2px 4px rgba(0,0,0,.25); padding:12px 14px; border-radius:2px; font-size:14px; }
+/* reading */
+.read-ctl{ display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.article{ background:var(--lilac); border-top:3px solid #b7a8dc; border-radius:0 0 8px 8px; padding:22px 28px; box-shadow:0 1px 4px rgba(70,50,120,.25); font-family:Georgia,'Times New Roman',serif; font-size:var(--fs,18px); line-height:1.65; }
+.article h1{ font-family:Arial,sans-serif; font-size:1.45em; color:var(--navy); margin-bottom:12px; line-height:1.25; }
+.article h3{ font-family:Arial,sans-serif; font-size:1.05em; color:var(--navy); margin:18px 0 4px; }
+.article p{ margin-bottom:10px; }
+.article mark.v{ background:transparent; font-weight:inherit; }
+.article.hl mark.v{ background:#fff3c4; font-weight:bold; padding:0 2px; border-radius:2px; }
+.chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.chip{ background:#fff3c4; border:1px solid #e6cf7a; border-radius:16px; padding:4px 12px; font-size:14px; font-weight:600; color:#4a3a00; }
+/* games */
+.prog{ height:8px; background:#e5e5e5; border-radius:4px; overflow:hidden; margin:10px 0 16px; }
+.prog i{ display:block; height:100%; background:linear-gradient(90deg,#28a745,#20c997); width:0; transition:width .3s; }
+.qbig{ font-size:20px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+.step-l{ color:#666; font-size:14px; margin:12px 0 8px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+.opts{ display:flex; flex-direction:column; gap:9px; }
+.opt{ text-align:left; background:#fff; border:2px solid #d8dbe0; border-radius:8px; padding:11px 14px; font-size:16px; line-height:1.4; }
+.opt:hover:not(:disabled){ border-color:#8aa4c0; background:#f6f9fc; }
+.opt.right{ border-color:var(--ok); background:#e6f4ec; }
+.opt.wrong{ border-color:var(--bad); background:#fbeaea; }
+.opt:disabled{ cursor:default; }
+.opts.row{ flex-direction:row; flex-wrap:wrap; }
+.opts.row .opt{ font-weight:700; min-width:90px; text-align:center; }
+.fb{ margin-top:12px; padding:10px 14px; border-radius:7px; font-size:15px; }
+.fb.ok{ background:#e6f4ec; color:#1d6b40; } .fb.no{ background:#fbeaea; color:#8e2b20; }
+.score-big{ font-size:46px; font-weight:800; color:var(--navy); }
+.stars{ font-size:32px; color:var(--gold); letter-spacing:4px; }
+.bank{ position:sticky; top:118px; z-index:40; background:#fff8e1; border:1px solid #ead9a2; border-radius:8px; padding:8px 10px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:6px; }
+.bchip{ background:#fff; border:2px solid var(--gold); border-radius:16px; padding:3px 11px; font-weight:700; font-size:14px; color:#4a3a00; user-select:none; }
+.bchip.sel{ background:var(--gold); color:#fff; } .bchip.used{ opacity:.25; pointer-events:none; }
+ol.gaps{ padding-left:26px; } ol.gaps li{ margin-bottom:14px; line-height:2; font-size:17px; padding-left:4px; }
+ol.gaps li::marker{ color:var(--coral); font-weight:700; }
+.slot{ display:inline-block; min-width:150px; border-bottom:2px solid #999; background:#f3f3f3; border-radius:4px 4px 0 0; padding:0 8px; text-align:center; font-weight:700; color:var(--navy); cursor:pointer; min-height:28px; vertical-align:bottom; }
+.slot.over{ background:#fff3c4; } .slot.ok{ border-color:var(--ok); background:#e6f4ec; color:#1d6b40; } .slot.bad{ border-color:var(--bad); background:#fbeaea; color:#8e2b20; }
+.pairs{ display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; }
+.pair{ border:2px solid #d8dbe0; background:#fff; border-radius:8px; padding:10px 12px; text-align:left; font-size:15px; }
+.pair.sel{ border-color:var(--navy); background:#eef3f8; } .pair.done{ border-color:var(--ok); background:#e6f4ec; pointer-events:none; }
+.pair.shake{ animation:sh .3s; border-color:var(--bad); }
+@keyframes sh{ 25%{ transform:translateX(-5px);} 75%{ transform:translateX(5px);} }
+.streak{ color:var(--coral); font-weight:800; }
+
+/* word cards */
+.deck-wrap{ display:flex; flex-direction:column; align-items:center; }
+.flip{ perspective:1200px; width:100%; max-width:640px; height:340px; cursor:pointer; margin:8px 0 16px; }
+.flip-in{ position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d; }
+.flip.on .flip-in{ transform:rotateY(180deg); }
+.face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:16px; padding:22px 26px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+.face.front{ background:linear-gradient(135deg,#17324d,#2b5a86); color:#fff; }
+.face.back{ background:#fffdf5; border:2px solid var(--gold); transform:rotateY(180deg); color:#222; overflow:auto; justify-content:flex-start; }
+.face .w{ font-size:34px; font-weight:800; line-height:1.2; }
+.face .pos{ margin-top:8px; font-size:14px; opacity:.8; font-style:italic; }
+.face .ex{ margin-top:18px; font-size:16px; line-height:1.5; opacity:.95; font-family:Georgia,serif; }
+.face .ex b{ color:#ffd873; }
+.face .tap{ position:absolute; bottom:12px; font-size:12px; opacity:.6; letter-spacing:.5px; }
+.face.back .bw{ font-size:22px; font-weight:800; color:var(--navy); margin-bottom:6px; }
+.face.back .en{ font-size:18px; line-height:1.45; margin:6px 0 12px; }
+.face.back .uz{ font-size:20px; font-weight:700; color:#0d6b62; background:#e3f3f1; border-radius:10px; padding:10px 14px; margin-bottom:12px; width:100%; }
+.face.back .uz small{ display:block; font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:#4a8a84; margin-bottom:3px; }
+.face.back .ex{ font-size:15px; color:#444; } .face.back .ex b{ color:var(--navy); background:#fff3c4; }
+.say{ position:absolute; top:12px; right:14px; background:rgba(255,255,255,.2); border:none; color:inherit; border-radius:50%; width:38px; height:38px; font-size:18px; }
+.face.back .say{ background:#f0e4bd; }
+.deck-ctl{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+.dots{ display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin:6px 0 4px; }
+.dots i{ width:12px; height:12px; border-radius:50%; background:#d5d5d5; } .dots i.cur{ outline:2px solid var(--navy); } .dots i.k{ background:var(--ok); } .dots i.r{ background:var(--gold); }
+table.vt{ width:100%; border-collapse:collapse; font-size:15px; } table.vt th{ background:var(--navy); color:#fff; padding:8px 10px; text-align:left; } table.vt td{ border:1px solid #ddd; padding:8px 10px; vertical-align:top; } table.vt td:nth-child(3){ color:#0d6b62; font-weight:700; }
+/* results */
+#resultsView{ max-width:980px; margin:0 auto; padding:24px 20px; }
+.res-head{ background:linear-gradient(135deg,#17324d,#2b5a86); color:#fff; border-radius:12px; padding:22px; text-align:center; margin-bottom:20px; }
+.res-head h1{ font-size:28px; } .res-head p{ opacity:.9; margin-top:4px; }
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:18px; }
+.stat{ background:#f8f9fa; border-radius:10px; padding:14px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.stat .n{ font-size:30px; font-weight:800; color:var(--navy); } .stat .l{ font-size:13px; color:#666; }
+.stat.good .n{ color:var(--ok); } .stat.warn .n{ color:var(--coral); }
+.wused{ display:flex; flex-wrap:wrap; gap:7px; } .wused .chip.miss{ background:#f1f1f1; border-color:#ddd; color:#777; font-weight:400; } .wused .chip.hit{ background:#d9f0e2; border-color:#8ccaa6; color:#17613a; }
+.checks label{ display:flex; gap:10px; padding:7px 0; align-items:flex-start; cursor:pointer; }
+.checks input{ margin-top:4px; width:18px; height:18px; }
+.actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+@media (max-width:820px){
+  .panels{ flex-direction:column; height:auto; } .left,.right{ width:100%; border-right:none; } .left{ border-bottom:1px solid var(--line); }
+  .two{ grid-template-columns:1fr; } .pairs{ grid-template-columns:1fr; }
+  .brand{ font-size:14px; } .timer-container{ min-width:0; font-size:15px; } .hdr-right{ min-width:0; }
+  .bank{ top:118px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="timer-container" id="timerBox"><span id="timer">40:00</span><span class="note" id="timerNote">PAUSED</span></div>
+  <div class="brand">MrIkromov's <span>IELTS</span></div>
+  <div class="hdr-right">
+    <button class="btn-ws" id="hdrWs">Workshop</button>
+    <button class="btn-back hidden" id="hdrBack">Back to the test</button>
+  </div>
+</header>
+
+<!-- TEST -->
+<div id="testView">
+  <div class="part-banner"><p><strong>Writing Task 2</strong></p><p>You should spend about 40 minutes on this task. Write at least 250 words.</p></div>
+  <div class="panels">
+    <div class="left">
+      <p><strong>Write about the following topic:</strong></p>
+      <div class="task-prompt" id="prompt"></div>
+      <p>Give reasons for your answer and include any relevant examples from your own knowledge or experience.</p>
+      <div class="hint-box"><b>Stuck for ideas or words?</b> Open the <b>Workshop</b> to read the article and play the games. Your timer stops while you are there, and your essay is saved.</div>
+    </div>
+    <div class="right">
+      <textarea id="essay" placeholder="Start writing your response here..."></textarea>
+      <div class="wc" id="wcBox">Words: <b id="wc">0</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSHOP -->
+<div id="workshopView" class="hidden">
+  <div class="ws-top" id="wsTop"></div>
+  <div class="ws-body" id="wsBody"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsView" class="hidden"></div>
+
+<nav class="nav-row" id="nav">
+  <button class="nav-item selected" id="navTest"><div><div class="t">Writing task</div><div class="s" id="navTestS">0 of 250 words</div></div></button>
+  <button class="nav-item ws" id="navWs"><div><div class="t">Workshop</div><div class="s" id="navWsS">0 done</div></div></button>
+  <button class="deliver" id="submitBtn" title="Submit and check">&#10003;</button>
+</nav>
+
+<div class="modal-bg hidden" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<script>
+const D = {"id": "T78", "n": 78, "type": "Effects and solutions", "lesson": 7, "question": "Despite better access to education, many adults today still cannot read or write. In what ways are they disadvantaged? What can governments do to help them?", "promptStatement": ["Despite better access to education, many adults today still cannot read or write."], "promptInstruction": ["In what ways are they disadvantaged?", "What can governments do to help them?"], "main": "adult illiteracy", "para": [["better access to education", "improved schooling opportunities; wider availability of education"], ["cannot read or write", "are illiterate; lack basic literacy"], ["disadvantaged", "at a disadvantage; handicapped; held back"]], "sample": "Although schooling is now more widely available, a large number of adults remain illiterate.", "angle": "Effects: employment, health, independence; solutions: adult classes, funding and workplace training.", "ideas": [["Effects", "Hard to find a decent job → many jobs need reading and forms → low pay and unemployment"], ["Effects", "Daily life is harder → they cannot read medicine labels or official letters → risk to health and loss of independence"], ["Solutions", "Free adult-education programs → evening classes and community centers → adults learn without cost"], ["Solutions", "Support at work and awareness campaigns → employers fund training and media encourages learning → less shame and more participation"]], "vocab": ["illiteracy", "functional literacy", "adult education", "marginalized", "employment prospects", "disadvantaged", "literacy program", "stigma"], "structs": [["Unable to… , …", "Unable to read forms, many adults cannot apply for jobs or benefits."], ["By + -ing", "By funding free evening classes, governments can give adults a second chance."]], "words": ["functional illiteracy", "employment barriers", "low-wage work", "health literacy", "exploitation", "stigma", "social exclusion", "intergenerational effects", "civic participation", "adult literacy programs", "second-chance education", "community learning centers", "volunteer tutors", "workplace literacy"], "legend": [["E", "a way illiterate adults are disadvantaged"], ["S", "something governments can do"]], "claims": [["Illiteracy limits jobs and income.", "E", "Functional illiteracy brings employment barriers and low-wage work with little chance of promotion.", "Retraining courses beginning with reading"], ["Workers face greater risks.", "E", "They cannot read safety notices, instructions or contracts, increasing accidents and mistakes.", "Earnings half those of literate workers"], ["Health and money are harder to manage.", "E", "Poor health literacy and difficulty with bills and forms cause harm and invite exploitation.", "Misreading medicine labels"], ["Shame leads to exclusion.", "E", "Stigma pushes people to hide the problem and withdraw from community life, with intergenerational effects on children.", "Pretending to forget glasses"], ["Illiterate adults take less part in civic life.", "E", "Ballots, newspapers and notices are hard to follow, and complaining in writing is difficult.", "Fewer people voting"], ["Governments can fund adult literacy programs.", "S", "Libraries, centers and workplaces offer a second-chance education with suitable materials.", "Evening classes after work"], ["Outreach reaches learners.", "S", "Community learning centers, campaigns and volunteer tutors make it easy to take the first step.", "Radio and television campaigns removing shame"], ["Employers can help.", "S", "Workplace literacy training gives staff paid time to learn basic skills and benefits the company.", "Simple forms and clear signs in the meantime"]], "gaps": [["A report found that ______ remains common among older workers, many of whom left school at twelve to help their families on farms.", "functional illiteracy", 0], ["Because he could not read well, he faced serious ______ and could only apply for cleaning and packing jobs that required no written test.", "employment barriers", 1], ["Many people with poor reading skills are stuck in ______, which pays the minimum wage and offers no chance of promotion or training.", "low-wage work", 2], ["Public posters and phone messages are important ways of sharing information about vaccination campaigns, but they work only for people with adequate ______.", "health literacy", 3], ["The elderly woman was the victim of ______ when a salesman made her sign a contract that she could not read, and she paid far too much.", "exploitation", 4], ["He felt such ______ about being unable to read that he avoided restaurants, because he could not understand the menu.", "stigma", 5], ["Because he could not read the newsletter, he drifted into ______ and stopped attending the meetings of the local football club.", "social exclusion", 6], ["Researchers have found ______ in families where the parents cannot read, as their children are less likely to complete school.", "intergenerational effects", 7], ["Low literacy can reduce ______, since those who cannot read leaflets or notices may not find out when and where elections will be held.", "civic participation", 8], ["The government's new ______ includes free classes for retired people who want to learn to read, so they can enjoy newspapers and write to their families.", "adult literacy programs", 9], ["With a flexible timetable and childcare, ______ gave single mothers the chance to complete the qualifications that they had missed as girls.", "second-chance education", 10], ["Local ______ in the district offer friendly, informal lessons in reading and writing, with no tests and no cost to the participants.", "community learning centers", 11], ["______ visit homes and libraries to give private lessons, which helps adults who are too embarrassed to join a class.", "volunteer tutors", 12], ["Several large companies now provide ______ that allows staff to study reading and arithmetic during working hours without losing pay.", "workplace literacy", 13]], "sprint": [["People with ______, the inability to read and write well enough to manage daily life, face serious employment barriers.", "functional illiteracy"], ["People with functional illiteracy, the inability to read and write well enough to manage daily life, face serious ______.", "employment barriers"], ["Most applications require forms or online registration, so they are limited to ______, which is usually poorly paid and insecure.", "low-wage work"], ["Illiterate adults often struggle with ______, the ability to understand medical information.", "health literacy"], ["Some people are cheated because they cannot check what they sign, a form of ______ that affects the most vulnerable.", "exploitation"], ["Many adults who cannot read feel ______ and go to great lengths to hide the problem, for example claiming that they have forgotten their glasses.", "stigma"], ["This leads to ______: they may avoid parent meetings, clubs and celebrations in which reading is expected, and they may gradually withdraw from community life.", "social exclusion"], ["They may also avoid helping their children with schoolwork, which can create ______: children of parents who cannot read are more likely to struggle at school themselves, so disadvantage is passed down.", "intergenerational effects"], ["______ is also reduced.", "Civic participation"], ["Free ______, offered in libraries, community centers and workplaces, give a second chance to people who left school early.", "adult literacy programs"], ["______, with flexible timetables and evening classes, allows people to study after work or while their children are at school.", "Second-chance education"], ["______ in neighborhoods that learners already know make it easier to take the first step, and campaigns on radio, television and social media can remove shame and invite people to join.", "Community learning centers"], ["______ can offer one-to-one help in a private and friendly setting.", "Volunteer tutors"], ["Employers can provide ______ training, giving staff paid time to study basic skills, which benefits both the worker and the company.", "workplace literacy"]], "article": {"title": "When Reading Is Out of Reach: The Cost of Adult Illiteracy", "body": [["P", "Millions of adults around the world cannot read a bus timetable, sign a form or help a child with homework. This is true even in countries where schools are free and widely available. Some missed education because of poverty, war or illness, while others struggled in class and were never helped. Their difficulties affect every part of daily life, and societies also pay a price when so many people cannot take full part. The problem is often hidden, because adults who cannot read become skilled at concealing it, and many employers, neighbors and even family members may not realize how much help they need."], ["H", "Work and income"], ["P", "The most obvious disadvantage concerns work. People with **functional illiteracy**, the inability to read and write well enough to manage daily life, face serious **employment barriers**. Most applications require forms or online registration, so they are limited to **low-wage work**, which is usually poorly paid and insecure. Even in those jobs, they may be unable to read safety notices, instructions or contracts, which increases the risk of accidents and mistakes. Promotion is unlikely, and when industries change, they find it very hard to retrain because most courses begin with reading and writing. Their earnings may be half of those of literate workers."], ["H", "Health, money and rights"], ["P", "Illiterate adults often struggle with **health literacy**, the ability to understand medical information. They may misread labels on medicine, miss appointment letters or fail to follow instructions after an operation. Studies show that poor readers are more likely to be admitted to hospital and less likely to manage long-term conditions. Handling money is also harder: reading bills, bank statements and prices requires literacy and numeracy. Some people are cheated because they cannot check what they sign, a form of **exploitation** that affects the most vulnerable. Knowledge of legal rights and benefits also depends on reading, so many do not receive help that they are entitled to."], ["H", "Social life and confidence"], ["P", "The effects on social life can be painful. Many adults who cannot read feel **stigma** and go to great lengths to hide the problem, for example claiming that they have forgotten their glasses. This leads to **social exclusion**: they may avoid parent meetings, clubs and celebrations in which reading is expected, and they may gradually withdraw from community life. They may also avoid helping their children with schoolwork, which can create **intergenerational effects**: children of parents who cannot read are more likely to struggle at school themselves, so disadvantage is passed down."], ["H", "Citizenship and participation"], ["P", "**Civic participation** is also reduced. People who cannot read ballot papers, newspapers and notices find it harder to vote, to take part in community meetings and to follow public debate. They are more reliant on others for information, and may be misled by rumors. A democracy depends on citizens who can understand what is happening, and a large group of non-readers is a weakness for the whole society. Illiterate adults may also hesitate to challenge unfair treatment by landlords, employers or officials, because they cannot read the documents involved or complain in writing."], ["H", "Government action"], ["P", "Governments can respond in several ways. Free **adult literacy programs**, offered in libraries, community centers and workplaces, give a second chance to people who left school early. National campaigns can set targets, train teachers and provide materials designed for adults rather than children, since adult learners need different topics and respectful methods. **Second-chance education**, with flexible timetables and evening classes, allows people to study after work or while their children are at school. Funding for such programs is modest compared with the cost of unemployment, ill health and lost talent, and several countries have cut illiteracy substantially within a generation."], ["H", "Reaching learners"], ["P", "Reaching learners is as important as providing classes. **Community learning centers** in neighborhoods that learners already know make it easier to take the first step, and campaigns on radio, television and social media can remove shame and invite people to join. **Volunteer tutors** can offer one-to-one help in a private and friendly setting. Employers can provide **workplace literacy** training, giving staff paid time to study basic skills, which benefits both the worker and the company. Clear signs, simple forms and images can help in the meantime. Libraries, which are trusted public places, are well suited to be a first point of contact."], ["H", "The cost of doing nothing"], ["P", "The cost of inaction is high. Studies by international organizations estimate that illiteracy costs the global economy hundreds of billions of dollars each year in lost productivity and extra spending on health and welfare. Countries that invest in adult education see returns in higher earnings, better health and lower crime. These findings suggest that literacy programs are not charity but an investment, and that a society which neglects its non-readers weakens itself as well as them."], ["H", "Stories from learners"], ["P", "Adults who have learned to read late in life often describe small moments as the most important: reading a bedtime story to a child, signing their own name, understanding a letter from the bank. These accounts show that the benefits of literacy are not only economic. They concern dignity and independence, and they remind governments that programs should be designed with respect for the learners. In conclusion, adults who cannot read are disadvantaged in work, health, money, social life and citizenship, and governments can help by funding accessible, respectful and well-publicized programs that offer a second chance."]]}, "cards": [{"w": "functional illiteracy", "pos": "noun phrase", "en": "being unable to read and write well enough to cope with everyday tasks", "uz": "funksional savodsizlik (kundalik hayot uchun yetarli o'qish va yozishni bilmaslik)", "ex": "People with functional illiteracy, the inability to read and write well enough to manage daily life, face serious employment barriers.", "sj": 0}, {"w": "employment barriers", "pos": "noun phrase", "en": "problems or obstacles that make it hard for a person to find or keep a job", "uz": "ish topishdagi to'siqlar", "ex": "People with functional illiteracy, the inability to read and write well enough to manage daily life, face serious employment barriers.", "sj": 1}, {"w": "low-wage work", "pos": "noun phrase", "en": "jobs that pay very little money, often with poor conditions", "uz": "kam haq to'lanadigan ish", "ex": "Most applications require forms or online registration, so they are limited to low-wage work, which is usually poorly paid and insecure.", "sj": 2}, {"w": "health literacy", "pos": "noun phrase", "en": "the ability to read, understand and use medical information to make good health choices", "uz": "sog'liq savodxonligi (tibbiy ma'lumotni tushunib, undan to'g'ri foydalana olish)", "ex": "Illiterate adults often struggle with health literacy, the ability to understand medical information.", "sj": 3}, {"w": "exploitation", "pos": "noun", "en": "treating someone unfairly to gain an advantage or profit from them", "uz": "ekspluatatsiya (birovdan adolatsiz ravishda foyda olish)", "ex": "Some people are cheated because they cannot check what they sign, a form of exploitation that affects the most vulnerable.", "sj": 4}, {"w": "stigma", "pos": "noun", "en": "a strong feeling of shame or disapproval that society attaches to a certain condition", "uz": "ijtimoiy tamg'a (jamiyatning biror holatga nisbatan uyat yoki salbiy munosabati)", "ex": "Many adults who cannot read feel stigma and go to great lengths to hide the problem, for example claiming that they have forgotten their glasses.", "sj": 5}, {"w": "social exclusion", "pos": "noun phrase", "en": "being kept apart from normal community life and activities", "uz": "ijtimoiy chetlashtirish (jamiyat hayotidan ajralib qolish)", "ex": "This leads to social exclusion: they may avoid parent meetings, clubs and celebrations in which reading is expected, and they may gradually withdraw from community life.", "sj": 6}, {"w": "intergenerational effects", "pos": "noun phrase", "en": "results that pass from parents to their children and continue through later generations", "uz": "avlodlararo ta'sirlar (ota-onadan bolalarga o'tadigan oqibatlar)", "ex": "They may also avoid helping their children with schoolwork, which can create intergenerational effects: children of parents who cannot read are more likely to struggle at school themselves, so disadvantage is passed down.", "sj": 7}, {"w": "civic participation", "pos": "noun phrase", "en": "taking part in community and public life, for example by voting or joining local groups", "uz": "fuqarolik ishtiroki (saylov va mahalla ishlarida qatnashish)", "ex": "Civic participation is also reduced.", "sj": 8}, {"w": "adult literacy programs", "pos": "noun phrase", "en": "courses that teach reading and writing to grown-ups who never learned them well", "uz": "kattalar uchun savodxonlik dasturlari", "ex": "Free adult literacy programs, offered in libraries, community centers and workplaces, give a second chance to people who left school early.", "sj": 9}, {"w": "second-chance education", "pos": "noun phrase", "en": "schooling that lets adults who left school early finally complete their studies", "uz": "ikkinchi imkoniyat ta'limi (maktabni erta tark etgan kattalarga o'qishni davom ettirish imkoni)", "ex": "Second-chance education, with flexible timetables and evening classes, allows people to study after work or while their children are at school.", "sj": 10}, {"w": "community learning centers", "pos": "noun phrase", "en": "local places in a neighbourhood where people of all ages can come to take classes", "uz": "mahalla o'quv markazlari", "ex": "Community learning centers in neighborhoods that learners already know make it easier to take the first step, and campaigns on radio, television and social media can remove shame and invite people to join.", "sj": 11}, {"w": "volunteer tutors", "pos": "noun phrase", "en": "people who give private lessons to learners without being paid", "uz": "ixtiyoriy o'qituvchilar (haq olmay yakka tartibda dars beradigan odamlar)", "ex": "Volunteer tutors can offer one-to-one help in a private and friendly setting.", "sj": 12}, {"w": "workplace literacy", "pos": "noun phrase", "en": "training in basic reading and writing skills that is offered at the place of work", "uz": "ish joyida savodxonlik o'rgatish", "ex": "Employers can provide workplace literacy training, giving staff paid time to study basic skills, which benefits both the worker and the company.", "sj": 13}]};
+const KEY = 'mri-task2-' + D.id;
+const MINW = 250, TOTAL = 40*60;
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const wordCount = t => { t=t.trim(); return t? t.split(/\s+/).length : 0; };
+const store = {
+  get(k,def){ try{ const v=localStorage.getItem(KEY+'-'+k); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
+  set(k,v){ try{ localStorage.setItem(KEY+'-'+k, JSON.stringify(v)); }catch(e){} },
+  clear(keys){ try{ keys.forEach(k=>localStorage.removeItem(KEY+'-'+k)); }catch(e){} }
+};
+const fmt = s => { s=Math.max(0,s); const m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; };
+
+/* ---------- state ---------- */
+let remaining = store.get('remaining', TOTAL);
+let started = store.get('started', false);
+let expired = store.get('expired', false);
+let view = 'test';              // test | workshop | results
+let paused = true;              // timer paused unless the test view is open and started
+let prog = Object.assign({cards:0,sheet:false,read:false,ad:0,ww:0,ws:0,pi:0}, store.get('prog', {})); // numbers = best score %, booleans for sheet/read
+let usedSec = store.get('used', 0);
+
+/* ---------- prompt ---------- */
+(function(){
+  const p=$('prompt');
+  p.innerHTML = D.promptStatement.map(s=>'<p>'+esc(s)+'</p>').join('') + D.promptInstruction.map(s=>'<p>'+esc(s)+'</p>').join('');
+})();
+
+/* ---------- timer ---------- */
+function renderTimer(){
+  $('timer').textContent = fmt(remaining);
+  const box=$('timerBox');
+  box.classList.toggle('paused', started && !expired && view==='workshop');
+  box.classList.toggle('low', remaining<=300 && remaining>0);
+  $('timerNote').textContent = view==='workshop' ? 'PAUSED IN WORKSHOP' : 'PAUSED';
+  if(!started) box.classList.remove('paused');
+}
+setInterval(()=>{
+  if(started && !expired && view==='test' && $('modalBg').classList.contains('hidden')){
+    remaining--; usedSec++;
+    if(remaining%5===0){ store.set('remaining',remaining); store.set('used',usedSec); }
+    if(remaining<=0){ remaining=0; timeUp(); }
+    renderTimer();
+  }
+},1000);
+function timeUp(){
+  expired=true; store.set('expired',true); store.set('remaining',0);
+  $('essay').disabled=true;
+  showModal('<h2>Time is up</h2><p>Your 40 minutes have finished. Your essay has been saved.</p><div class="row"><button class="btn primary" id="mTimeOk">See my essay check</button></div>');
+  $('mTimeOk').onclick=()=>{ hideModal(); showResults(); };
+}
+
+/* ---------- modal ---------- */
+function showModal(html){ $('modal').innerHTML=html; $('modalBg').classList.remove('hidden'); }
+function hideModal(){ $('modalBg').classList.add('hidden'); }
+function startModal(){
+  if(expired){ showResults(); return; }
+  const cont = started;
+  showModal('<h2>'+(cont?'Welcome back':'Ready to write?')+'</h2>'+
+    '<p><b>Task 2 &middot; 40 minutes &middot; at least 250 words.</b></p>'+
+    '<p>'+(cont?'You have <b>'+fmt(remaining)+'</b> left. Your essay was saved.':'The timer starts when you press Start. You can open the <b>Workshop</b> at any time: the timer stops while you are there.')+'</p>'+
+    '<div class="row"><button class="btn primary" id="mStart">'+(cont?'Continue the test':'Start the test')+'</button><button class="btn gold" id="mWs">Study in the Workshop first</button></div>');
+  $('mStart').onclick=()=>{ hideModal(); if(!started){ started=true; store.set('started',true);} renderTimer(); $('essay').focus(); };
+  $('mWs').onclick=()=>{ hideModal(); openWorkshop(); };
+}
+
+/* ---------- views ---------- */
+function setView(v){
+  view=v;
+  $('testView').classList.toggle('hidden',v!=='test');
+  $('workshopView').classList.toggle('hidden',v!=='workshop');
+  $('resultsView').classList.toggle('hidden',v!=='results');
+  $('hdrWs').classList.toggle('hidden',v==='workshop');
+  $('hdrBack').classList.toggle('hidden',v!=='workshop');
+  $('navTest').classList.toggle('selected',v==='test');
+  $('navWs').classList.toggle('selected',v==='workshop');
+  $('nav').classList.toggle('hidden',v==='results');
+  document.body.style.paddingBottom = v==='results' ? '20px' : '64px';
+  window.scrollTo(0,0); renderTimer();
+}
+function openWorkshop(){ store.set('essay',$('essay').value); setView('workshop'); renderWs(); }
+function backToTest(){
+  setView('test');
+  if(expired) return;
+  if(!started){ startModal(); }
+}
+$('hdrWs').onclick=openWorkshop; $('navWs').onclick=openWorkshop;
+$('hdrBack').onclick=backToTest; $('navTest').onclick=()=>{ if(view!=='test') backToTest(); };
+
+/* ---------- essay ---------- */
+const ta=$('essay');
+ta.value = store.get('essay','');
+function updateWc(){
+  const n=wordCount(ta.value); $('wc').textContent=n;
+  $('wcBox').classList.toggle('ok', n>=MINW);
+  $('navTestS').textContent = n+' of '+MINW+' words';
+  $('navTest').classList.toggle('done', n>=MINW);
+}
+ta.addEventListener('input',()=>{ updateWc(); store.set('essay',ta.value); });
+setInterval(()=>store.set('essay',ta.value),5000);
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){ e.preventDefault(); store.set('essay',ta.value); }
+});
+updateWc();
+
+/* ---------- workshop shell ---------- */
+const TABS=(D.cards&&D.cards.length?[['cards','Word cards']]:[]).concat([
+  ['sheet','Study sheet'],['read','Read the article'],['ad','Argument detective'],['ww','Word workshop'],['ws','Word sprint'],['pi','Paraphrase & ideas']
+]);
+let tab = store.get('tab', TABS[0][0]); if(!TABS.some(t=>t[0]===tab)) tab=TABS[0][0];
+function isDone(k){ return k==='sheet'||k==='read' ? !!prog[k] : (prog[k]||0)>0; }
+function saveProg(){ store.set('prog',prog); updateWsNav(); }
+function updateWsNav(){ const n=TABS.filter(t=>isDone(t[0])).length; $('navWsS').textContent=n+' of '+TABS.length+' done'; $('navWs').classList.toggle('done',n===TABS.length); }
+function renderWs(){
+  $('wsTop').innerHTML = TABS.map(t=>'<button class="ws-tab'+(tab===t[0]?' active':'')+(isDone(t[0])?' done':'')+'" data-t="'+t[0]+'"><span class="chk">&#10003;</span>'+esc(t[1])+'</button>').join('')+
+    (started&&!expired?'<span class="ws-note">Timer stopped at '+fmt(remaining)+'</span>':'');
+  $('wsTop').querySelectorAll('.ws-tab').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; store.set('tab',tab); renderWs(); window.scrollTo(0,0); });
+  const b=$('wsBody'); b.innerHTML='';
+  ({cards:gCards,sheet:gSheet,read:gRead,ad:gAD,ww:gWW,ws:gWS,pi:gPI})[tab](b);
+  updateWsNav();
+}
+function doneBtn(label,fn){ const d=document.createElement('div'); d.className='actions'; d.innerHTML='<button class="btn primary">'+label+'</button><button class="btn gold" data-back="1">Back to the test</button>'; d.querySelector('.primary').onclick=fn; d.querySelector('[data-back]').onclick=backToTest; return d; }
+function stars(p){ return p>=90?'&#9733;&#9733;&#9733;':p>=60?'&#9733;&#9733;&#9734;':'&#9733;&#9734;&#9734;'; }
+
+
+/* ---------- Word cards ---------- */
+function say(txt){ try{ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt.replace(/^(a|an|the)\s+/i,'')); u.lang='en-GB'; u.rate=.9; speechSynthesis.speak(u); }catch(e){} }
+let cardState=null;
+function gCards(b){
+  const C=D.cards;
+  if(!cardState||cardState.n!==C.length) cardState={deck:C.map((_,i)=>i), i:0, flip:false, known:{}, list:false, n:C.length, finished:false};
+  const S=cardState;
+  function render(){
+    if(S.list) return renderList();
+    if(S.finished) return renderEnd();
+    const idx=S.deck[S.i], c=C[idx];
+    let h='<h2>Word cards</h2><p class="lead">Learn the '+C.length+' topic words before you read and play. Look at the word, then tap the card to see its meaning and the Uzbek translation.</p>';
+    h+='<div class="prog"><i style="width:'+(S.i/S.deck.length*100)+'%"></i></div>';
+    h+='<div class="deck-wrap"><div class="step-l">Card '+(S.i+1)+' of '+S.deck.length+'</div>';
+    h+='<div class="flip'+(S.flip?' on':'')+'" id="flip"><div class="flip-in">'+
+       '<div class="face front"><button class="say" data-say="1" title="Listen">&#128266;</button><div class="w">'+esc(c.w)+'</div><div class="pos">'+esc(c.pos)+'</div><div class="ex">'+esc(c.ex).replace(esc(D.sprint[c.sj][1]),'<b>'+esc(D.sprint[c.sj][1])+'</b>')+'</div><div class="tap">TAP TO TURN</div></div>'+
+       '<div class="face back"><button class="say" data-say="1" title="Listen">&#128266;</button><div class="bw">'+esc(c.w)+' <span style="font-size:13px;font-weight:400;color:#888;font-style:italic">'+esc(c.pos)+'</span></div><div class="en">'+esc(c.en)+'</div><div class="uz"><small>O’zbekcha</small>'+esc(c.uz)+'</div><div class="ex">'+esc(c.ex).replace(esc(D.sprint[c.sj][1]),'<b>'+esc(D.sprint[c.sj][1])+'</b>')+'</div></div>'+
+       '</div></div>';
+    h+='<div class="deck-ctl"><button class="btn light" id="cPrev"'+(S.i===0?' disabled':'')+'>&larr; Back</button><button class="btn light" id="cFlip">Turn card</button><button class="btn light" id="cList">See all as a list</button></div>';
+    h+='<div class="deck-ctl"><button class="btn gold" id="cReview">&#8635; Need more practice</button><button class="btn primary" id="cKnow">&#10003; I know it</button></div>';
+    h+='<div class="dots">'+S.deck.map((x,k)=>'<i class="'+(k===S.i?'cur ':'')+(S.known[x]==='k'?'k':S.known[x]==='r'?'r':'')+'"></i>').join('')+'</div></div>';
+    b.innerHTML=h;
+    const fl=$('flip');
+    fl.onclick=e=>{ if(e.target.closest('.say')) return; S.flip=!S.flip; fl.classList.toggle('on',S.flip); };
+    b.querySelectorAll('[data-say]').forEach(x=>x.onclick=e=>{ e.stopPropagation(); say(c.w); });
+    $('cFlip').onclick=()=>{ S.flip=!S.flip; fl.classList.toggle('on',S.flip); };
+    $('cPrev').onclick=()=>{ if(S.i>0){ S.i--; S.flip=false; render(); } };
+    $('cList').onclick=()=>{ S.list=true; render(); };
+    const adv=v=>{ S.known[idx]=v; S.flip=false; if(S.i+1<S.deck.length) S.i++; else S.finished=true; render(); };
+    $('cKnow').onclick=()=>adv('k'); $('cReview').onclick=()=>adv('r');
+  }
+  function renderEnd(){
+    const kn=Object.values(S.known).filter(x=>x==='k').length, tot=C.length, p=Math.round(kn/tot*100);
+    prog.cards=Math.max(prog.cards||0,Math.max(p,1)); saveProg(); renderWsTopOnly();
+    const review=C.map((_,i)=>i).filter(i=>S.known[i]!=='k');
+    b.innerHTML='<h2>Word cards</h2><div class="card" style="text-align:center"><div class="stars">'+stars(p)+'</div><div class="score-big">'+kn+' / '+tot+'</div><p>words you marked as known.</p>'+(review.length?'<p style="margin-top:10px;text-align:left"><b>Still learning:</b> '+review.map(i=>'<span class="chip">'+esc(C[i].w)+'</span>').join(' ')+'</p>':'<p style="margin-top:8px">Great start! You are ready to read the article.</p>')+'</div>';
+    const a=document.createElement('div'); a.className='actions';
+    if(review.length) a.innerHTML+='<button class="btn gold" id="eRev">Practise the ones I am still learning</button>';
+    a.innerHTML+='<button class="btn light" id="eAll">Go through all the cards again</button><button class="btn primary" id="eNext">Next: study sheet</button><button class="btn gold" id="eBack" style="background:#17324d">Back to the test</button>';
+    b.appendChild(a);
+    if(review.length) $('eRev').onclick=()=>{ cardState={deck:review,i:0,flip:false,known:{},list:false,n:C.length,finished:false}; gCards(b); };
+    $('eAll').onclick=()=>{ cardState=null; gCards(b); };
+    $('eNext').onclick=()=>{ tab='sheet'; store.set('tab',tab); renderWs(); window.scrollTo(0,0); };
+    $('eBack').onclick=backToTest;
+  }
+  function renderList(){
+    b.innerHTML='<h2>Word cards</h2><p class="lead">All '+C.length+' words with their meanings and Uzbek translations.</p><div class="card"><table class="vt"><tr><th>#</th><th>Word</th><th>Uzbek</th><th>Meaning</th></tr>'+C.map((c,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(c.w)+'</b><br><i style="color:#777;font-size:13px">'+esc(c.pos)+'</i></td><td>'+esc(c.uz)+'</td><td>'+esc(c.en)+'</td></tr>').join('')+'</table></div><div class="actions"><button class="btn primary" id="lBack">Back to the cards</button></div>';
+    $('lBack').onclick=()=>{ S.list=false; render(); };
+  }
+  render();
+}
+
+/* ---------- Study sheet ---------- */
+function gSheet(b){
+  prog.sheet=true; saveProg();
+  let h='<h2>Study sheet</h2><p class="lead">Everything the topic page of the Practice Book gives you. Read it, then try the games.</p>';
+  h+='<div class="qcard">'+esc(D.question)+'</div>';
+  h+='<div class="card"><h3>Main topic</h3><p>'+esc(D.main)+'</p></div>';
+  h+='<div class="card"><h3>Say it in your own words</h3><table class="st"><tr><th style="width:34%">In the question</th><th>Other ways to say it</th></tr>'+D.para.map(p=>'<tr><td>'+esc(p[0])+'</td><td>'+esc(p[1])+'</td></tr>').join('')+'</table><p style="margin-top:10px"><b>Sample first sentence:</b> <i>'+esc(D.sample)+'</i></p></div>';
+  h+='<div class="card"><h3>Your angle</h3><p>'+esc(D.angle)+'</p></div>';
+  const labs=[...new Set(D.ideas.map(i=>i[0]))];
+  h+='<div class="two"><div class="card"><h3>Ideas</h3>'+labs.map(l=>'<p style="margin-top:8px"><span class="tag '+esc(l.toLowerCase())+'">'+esc(l)+'</span></p><ul style="margin:6px 0 0 18px">'+D.ideas.filter(i=>i[0]===l).map(i=>'<li class="chain" style="margin-bottom:6px">'+esc(i[1]).replace(/&rarr;|→/g,'<b style="color:#d9573b"> &rarr; </b>')+'</li>').join('')+'</ul>').join('')+'</div>';
+  h+='<div class="card"><h3>Vocabulary</h3><ul class="vocab">'+D.vocab.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ul></div></div>';
+  h+='<div class="card"><h3>Structures</h3>'+D.structs.map(s=>'<p style="margin-bottom:8px"><b>'+esc(s[0])+'</b> &mdash; <i>'+esc(s[1])+'</i></p>').join('')+'</div>';
+  b.innerHTML=h; b.appendChild(doneBtn('Next: read the article',()=>{ tab='read'; store.set('tab',tab); renderWs(); window.scrollTo(0,0); }));
+}
+
+/* ---------- Read ---------- */
+let fs=18, hl=true;
+function gRead(b){
+  let h='<h2>Read the article</h2><p class="lead">This is not an essay. Read it for ideas, explanations, examples and topic words. The highlighted words are the ones the games practise.</p>';
+  h+='<div class="read-ctl"><button class="btn small light" id="fsm">A&minus;</button><button class="btn small light" id="fsp">A+</button><label style="margin-left:8px;font-size:15px"><input type="checkbox" id="hlc" '+(hl?'checked':'')+'> Highlight topic words</label></div>';
+  h+='<div class="article '+(hl?'hl':'')+'" id="art" style="--fs:'+fs+'px"><h1>'+esc(D.article.title)+'</h1>';
+  D.article.body.forEach(x=>{ h+= x[0]==='H' ? '<h3>'+esc(x[1])+'</h3>' : '<p>'+esc(x[1]).replace(/\*\*(.+?)\*\*/g,'<mark class="v">$1</mark>')+'</p>'; });
+  h+='</div><div class="card" style="margin-top:16px"><h3>Topic words in this article</h3><div class="chips">'+D.words.map(w=>'<span class="chip">'+esc(w)+'</span>').join('')+'</div></div>';
+  b.innerHTML=h;
+  $('fsm').onclick=()=>{ fs=Math.max(14,fs-1); $('art').style.setProperty('--fs',fs+'px'); };
+  $('fsp').onclick=()=>{ fs=Math.min(26,fs+1); $('art').style.setProperty('--fs',fs+'px'); };
+  $('hlc').onchange=e=>{ hl=e.target.checked; $('art').classList.toggle('hl',hl); };
+  b.appendChild(doneBtn('I have read it &mdash; next: Argument detective',()=>{ prog.read=true; saveProg(); tab='ad'; store.set('tab',tab); renderWs(); window.scrollTo(0,0); }));
+}
+
+/* ---------- Game 1: Argument detective ---------- */
+function gAD(b){
+  const C=D.claims, K=D.legend;
+  const noEx='No example is given';
+  const isNo=e=>!e||/^[—–\-\s]*$/.test(e);
+  const order=shuffle(C.map((_,i)=>i));
+  let n=0, score=0, max=0, mistakes=[];
+  function pick(correct,pool,k){ const o=shuffle(pool.filter(x=>x!==correct)); return shuffle([correct].concat(o.slice(0,k))); }
+  function show(){
+    if(n>=order.length) return finish();
+    const c=C[order[n]]; step(c,0);
+  }
+  function step(c,s){
+    const total=order.length*3, doneSteps=n*3+s;
+    let h='<h2>Argument detective</h2><p class="lead">For each claim from the article: say what kind of argument it is, how the writer explains it, and which example supports it.</p>';
+    h+='<div class="prog"><i style="width:'+(doneSteps/total*100)+'%"></i></div>';
+    h+='<div class="card"><div class="step-l">Claim '+(n+1)+' of '+order.length+'</div><div class="qbig">'+esc(c[0])+'</div><div id="stepArea"></div><div id="fb"></div><div class="actions" id="nx"></div></div>';
+    b.innerHTML=h;
+    const area=$('stepArea');
+    if(s===0){
+      area.innerHTML='<div class="step-l">1 &middot; What kind of claim is this?</div><div class="opts" id="o">'+K.map(k=>'<button class="opt" data-v="'+esc(k[0])+'"><b>'+esc(k[0])+'</b> &mdash; '+esc(k[1])+'</button>').join('')+'</div>';
+      $('o').querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>answer(btn,btn.dataset.v===c[1],c[1],s,c,K.find(k=>k[0]===c[1])[1]));
+    } else {
+      const pool = s===1 ? C.map(x=>x[2]) : C.map(x=>x[3]).filter(x=>!isNo(x));
+      const correct = s===1 ? c[2] : (isNo(c[3])?noEx:c[3]);
+      const opts = pick(correct,pool,3);
+      area.innerHTML='<div class="step-l">'+(s===1?'2 &middot; How does the article explain it?':'3 &middot; Which example does the writer give?')+'</div><div class="opts" id="o">'+opts.map(o=>'<button class="opt" data-v="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div>';
+      $('o').querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>answer(btn,btn.dataset.v===correct,correct,s,c));
+    }
+  }
+  function answer(btn,ok,correct,s,c,extra){
+    max++; if(ok) score++; else mistakes.push(c[0]);
+    document.querySelectorAll('#o .opt').forEach(x=>{ x.disabled=true; if(x.dataset.v===correct) x.classList.add('right'); });
+    if(!ok) btn.classList.add('wrong');
+    $('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct!':'Not quite.')+' '+(s===0?'This is '+esc(correct)+' &mdash; '+esc(extra):'')+'</div>';
+    const nx=$('nx'); nx.innerHTML='<button class="btn primary">'+(s<2?'Next step':(n+1<order.length?'Next claim':'See my score'))+'</button>';
+    nx.firstChild.onclick=()=>{ if(s<2) step(c,s+1); else { n++; show(); } };
+  }
+  function finish(){
+    const p=Math.round(score/max*100); prog.ad=Math.max(prog.ad||0,Math.max(p,1)); saveProg();
+    const uniq=[...new Set(mistakes)];
+    b.innerHTML='<h2>Argument detective</h2><div class="card" style="text-align:center"><div class="stars">'+stars(p)+'</div><div class="score-big">'+score+' / '+max+'</div><p>'+(p>=90?'Excellent! You can see exactly how each argument is built.':p>=60?'Good work. Look again at the claims you missed.':'Read the article again, then try once more.')+'</p>'+(uniq.length?'<p style="margin-top:10px;text-align:left"><b>Claims to review:</b></p><ul style="text-align:left;margin-left:22px">'+uniq.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ul>':'')+'</div>';
+    const a=doneBtn('Play again',()=>gAD(b)); b.appendChild(a); renderWsTopOnly();
+  }
+  show();
+}
+function renderWsTopOnly(){ const t=$('wsTop'); const keep=t.querySelector('.ws-note'); t.querySelectorAll('.ws-tab').forEach(x=>{ x.classList.toggle('done',isDone(x.dataset.t)); }); }
+
+/* ---------- Game 2: Word workshop (gap fill) ---------- */
+function gWW(b){
+  const W=D.words, G=D.gaps;               // G: [sentence, answer, wordIndex]
+  let sel=-1; const placed=new Array(G.length).fill(-1); let checked=false;
+  function render(){
+    let h='<h2>Word workshop</h2><p class="lead">Tap a word in the bank, then tap a gap. (On a computer you can also drag.) Change the form of the word if the sentence needs it &mdash; the check will show the correct form.</p>';
+    h+='<div class="bank" id="bank">'+W.map((w,i)=>'<span class="bchip'+(sel===i?' sel':'')+(placed.indexOf(i)>=0?' used':'')+'" draggable="true" data-i="'+i+'">'+esc(w)+'</span>').join('')+'</div>';
+    h+='<ol class="gaps">'+G.map((g,i)=>{ const parts=g[0].split('______'); return '<li>'+esc(parts[0])+'<span class="slot'+(checked&&placed[i]>=0?(placed[i]===g[2]?' ok':' bad'):'')+'" data-g="'+i+'">'+(placed[i]>=0?esc(checked&&placed[i]===g[2]?g[1]:W[placed[i]]):'')+'</span>'+esc(parts.slice(1).join('______'))+'</li>'; }).join('')+'</ol>';
+    h+='<div id="wwres"></div><div class="actions"><button class="btn primary" id="wwCheck">Check my answers</button><button class="btn light" id="wwReset">Clear wrong answers</button><button class="btn light" id="wwShow">Show answers</button><button class="btn gold" id="wwBack">Back to the test</button></div>';
+    b.innerHTML=h; bind();
+  }
+  function bind(){
+    b.querySelectorAll('.bchip').forEach(c=>{
+      c.onclick=()=>{ sel = sel===+c.dataset.i ? -1 : +c.dataset.i; render(); };
+      c.ondragstart=e=>{ e.dataTransfer.setData('text/plain',c.dataset.i); sel=+c.dataset.i; };
+    });
+    b.querySelectorAll('.slot').forEach(s=>{
+      const g=+s.dataset.g;
+      s.onclick=()=>{ if(checked&&placed[g]>=0&&placed[g]===G[g][2]) return; if(placed[g]>=0){ placed[g]=-1; checked=false; render(); } else if(sel>=0){ placed[g]=sel; sel=-1; checked=false; render(); } };
+      s.ondragover=e=>{ e.preventDefault(); s.classList.add('over'); }; s.ondragleave=()=>s.classList.remove('over');
+      s.ondrop=e=>{ e.preventDefault(); const i=+e.dataTransfer.getData('text/plain'); if(placed.indexOf(i)>=0) placed[placed.indexOf(i)]=-1; placed[g]=i; sel=-1; checked=false; render(); };
+    });
+    $('wwBack').onclick=backToTest;
+    $('wwCheck').onclick=()=>{ checked=true; render(); const ok=placed.filter((p,i)=>p===G[i][2]).length; const p=Math.round(ok/G.length*100); if(placed.every(x=>x>=0)){ prog.ww=Math.max(prog.ww||0,Math.max(p,1)); saveProg(); renderWsTopOnly(); }
+      $('wwres').innerHTML='<div class="fb '+(ok===G.length?'ok':'no')+'"><b>'+ok+' / '+G.length+' correct</b> '+stars(p)+(ok===G.length?' &mdash; perfect!':placed.some(x=>x<0)?' &mdash; some gaps are still empty.':' &mdash; fix the red gaps and check again.')+'</div>'; };
+    $('wwReset').onclick=()=>{ for(let i=0;i<G.length;i++) if(placed[i]!==G[i][2]) placed[i]=-1; checked=false; render(); };
+    $('wwShow').onclick=()=>{ for(let i=0;i<G.length;i++) placed[i]=G[i][2]; checked=true; render(); };
+  }
+  render();
+}
+
+/* ---------- Game 3: Word sprint ---------- */
+function gWS(b){
+  const R=shuffle(D.sprint.map((x,i)=>i));   // D.sprint: [sentenceWithBlank, correctText]
+  const all=D.sprint.map(x=>x[1]);
+  let n=0, score=0, streak=0, best=0;
+  function show(){
+    if(n>=R.length) return finish();
+    const q=D.sprint[R[n]];
+    const opts=shuffle([q[1]].concat(shuffle(all.filter(x=>x!==q[1])).slice(0,3)));
+    b.innerHTML='<h2>Word sprint</h2><p class="lead">Which topic word completes the sentence from the article?</p><div class="prog"><i style="width:'+(n/R.length*100)+'%"></i></div>'+
+      '<div class="card"><div class="step-l">Question '+(n+1)+' of '+R.length+' &nbsp;&middot;&nbsp; Score '+score+' &nbsp;<span class="streak">'+(streak>=2?'&#128293; '+streak+' in a row':'')+'</span></div><div class="qbig" style="font-weight:400;font-size:19px;color:#222;line-height:1.55">'+esc(q[0]).replace('______','<span class="slot" style="cursor:default;min-width:110px">&nbsp;</span>')+'</div><div class="opts" id="o" style="margin-top:14px">'+opts.map(o=>'<button class="opt" data-v="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div><div id="fb"></div><div class="actions" id="nx"></div></div>';
+    $('o').querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{
+      const ok=btn.dataset.v===q[1]; if(ok){ score++; streak++; best=Math.max(best,streak);} else streak=0;
+      $('o').querySelectorAll('.opt').forEach(x=>{ x.disabled=true; if(x.dataset.v===q[1]) x.classList.add('right'); });
+      if(!ok) btn.classList.add('wrong');
+      $('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct!':'The answer is <b>'+esc(q[1])+'</b>.')+'</div>';
+      $('nx').innerHTML='<button class="btn primary">'+(n+1<R.length?'Next':'See my score')+'</button>'; $('nx').firstChild.onclick=()=>{ n++; show(); };
+    });
+  }
+  function finish(){
+    const p=Math.round(score/R.length*100); prog.ws=Math.max(prog.ws||0,Math.max(p,1)); saveProg();
+    b.innerHTML='<h2>Word sprint</h2><div class="card" style="text-align:center"><div class="stars">'+stars(p)+'</div><div class="score-big">'+score+' / '+R.length+'</div><p>Longest streak: <b>'+best+'</b>. '+(p>=90?'You know these words well!':p>=60?'Good. Play again to lock them in.':'Read the article again, then play once more.')+'</p></div>';
+    b.appendChild(doneBtn('Play again',()=>gWS(b))); renderWsTopOnly();
+  }
+  show();
+}
+
+/* ---------- Game 4: Paraphrase & ideas ---------- */
+function gPI(b){
+  const P=D.para, I=D.ideas.filter(i=>i[1].split(/\s*(?:→|&rarr;)\s*/).length>=2);
+  let st={a:false,b:false}, bp=100;
+  const split=t=>t.split(/\s*(?:→|&rarr;)\s*/);
+  function shell(){
+    b.innerHTML='<h2>Paraphrase &amp; ideas</h2><p class="lead">Part 1: say the question in your own words. Part 2: build the idea chains (idea &rarr; how it works &rarr; result).</p><div id="pa"></div><div id="pb"></div><div id="pe"></div>';
+    partA(); partB();
+  }
+  function partA(){
+    const L=P.map((p,i)=>({i,t:p[0]})), Rr=shuffle(P.map((p,i)=>({i,t:p[1]})));
+    let selL=-1, selR=-1, doneN=0;
+    const el=$('pa');
+    el.innerHTML='<div class="card"><h3>Part 1 &middot; Match the phrase with other ways to say it</h3><div class="pairs"><div id="pl" class="opts"></div><div id="pr" class="opts"></div></div><div id="pf"></div></div>';
+    const draw=()=>{
+      $('pl').innerHTML=L.map(x=>'<button class="pair'+(x.d?' done':'')+(selL===x.i?' sel':'')+'" data-i="'+x.i+'">'+esc(x.t)+'</button>').join('');
+      $('pr').innerHTML=Rr.map(x=>'<button class="pair'+(x.d?' done':'')+(selR===x.i?' sel':'')+'" data-i="'+x.i+'">'+esc(x.t)+'</button>').join('');
+      $('pl').querySelectorAll('.pair').forEach(bt=>bt.onclick=()=>{ selL=+bt.dataset.i; tryM(); });
+      $('pr').querySelectorAll('.pair').forEach(bt=>bt.onclick=()=>{ selR=+bt.dataset.i; tryM(); });
+    };
+    const tryM=()=>{
+      if(selL>=0&&selR>=0){
+        if(selL===selR){ L.find(x=>x.i===selL).d=true; Rr.find(x=>x.i===selR).d=true; doneN++; selL=selR=-1; draw();
+          if(doneN===P.length){ st.a=true; $('pf').innerHTML='<div class="fb ok">All matched! Now use these ideas in your own first sentence.</div>'; finishCheck(); } }
+        else { const a=document.querySelector('#pl .pair[data-i="'+selL+'"]'), c=document.querySelector('#pr .pair[data-i="'+selR+'"]'); a.classList.add('shake'); c.classList.add('shake'); selL=selR=-1; setTimeout(draw,350); }
+      } else draw();
+    };
+    draw();
+  }
+  function partB(){
+    const chains=shuffle(I.map(i=>({lab:i[0],parts:split(i[1])})));
+    let n=0, score=0, max=0, step=1;
+    const el=$('pb');
+    function pool(pos){ return chains.map(c=>c.parts[pos]).filter(x=>x); }
+    function pick(correct,pos){ const o=shuffle(pool(pos).filter(x=>x!==correct)).slice(0,2); return shuffle([correct].concat(o)); }
+    function draw(){
+      if(n>=chains.length){ const p=Math.round(score/max*100); st.b=true; bp=p; el.innerHTML='<div class="card" style="text-align:center"><h3>Part 2 complete</h3><div class="stars">'+stars(p)+'</div><div class="score-big">'+score+' / '+max+'</div></div>'; finishCheck(p); return; }
+      const c=chains[n], parts=c.parts;
+      el.innerHTML='<div class="card"><h3>Part 2 &middot; Build the idea chain ('+(n+1)+' of '+chains.length+')</h3><p><span class="tag '+esc(c.lab.toLowerCase())+'">'+esc(c.lab)+'</span> <b style="margin-left:6px">'+esc(parts[0])+'</b></p>'+
+        '<div class="chain" style="margin-top:8px">'+parts.slice(1,step).map(x=>'<div style="color:#1d6b40;margin:4px 0">&rarr; '+esc(x)+'</div>').join('')+'</div>'+
+        '<div class="step-l">'+(step===1?'How does it work?':'So what is the result?')+'</div><div class="opts" id="o">'+pick(parts[step],step).map(o=>'<button class="opt" data-v="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div><div id="fb"></div><div class="actions" id="nx"></div></div>';
+      $('o').querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{
+        const ok=btn.dataset.v===parts[step]; max++; if(ok) score++;
+        $('o').querySelectorAll('.opt').forEach(x=>{ x.disabled=true; if(x.dataset.v===parts[step]) x.classList.add('right'); });
+        if(!ok) btn.classList.add('wrong');
+        $('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+(ok?'Correct!':'Not quite. The writer\'s chain continues with the highlighted answer.')+'</div>';
+        const last = step>=parts.length-1;
+        $('nx').innerHTML='<button class="btn primary">'+(last?(n+1<chains.length?'Next idea':'Finish'):'Next step')+'</button>';
+        $('nx').firstChild.onclick=()=>{ if(last){ n++; step=1; } else step++; draw(); };
+      });
+    }
+    draw();
+  }
+  function finishCheck(p){
+    if(st.a&&st.b){ prog.pi=Math.max(prog.pi||0,Math.max(bp,1)); saveProg(); renderWsTopOnly();
+      const e=$('pe'); e.innerHTML=''; e.appendChild(doneBtn('Play again',()=>gPI(b))); }
+  }
+  shell();
+}
+
+/* ---------- Results ---------- */
+const STEM = w => { w=w.toLowerCase().replace(/^(a|an|the|to)\s+/,'').trim(); return w.length>8 ? w.slice(0,w.length-3) : (w.length>5? w.slice(0,w.length-1):w); };
+function showResults(){
+  store.set('essay',ta.value); store.set('remaining',remaining); store.set('used',usedSec);
+  const t=ta.value, n=wordCount(t), low=t.toLowerCase();
+  const paras=t.split(/\n\s*\n|\n/).filter(x=>x.trim().length>0).length;
+  const hits=D.words.map(w=>({w,hit:low.indexOf(STEM(w))>=0}));
+  const nh=hits.filter(x=>x.hit).length;
+  const sh=D.structs.map(s=>{ const parts=s[0].split('…').map(x=>x.replace(/[,]/g,'').trim().toLowerCase()).filter(x=>x.length>=3); let pos=0, ok=parts.length>0; parts.forEach(p=>{ const i=low.indexOf(p,pos); if(i<0) ok=false; else pos=i+p.length; }); return {s:s[0],ok}; });
+  const used=Math.round(usedSec/60);
+  const v=$('resultsView');
+  v.innerHTML='<div class="res-head"><h1>Essay check</h1><p>This is a quick check of what you wrote. It does not give a band score; ask your teacher to mark the essay, or compare it with the checklist below.</p></div>'+
+   '<div class="stats">'+
+   '<div class="stat '+(n>=MINW?'good':'warn')+'"><div class="n">'+n+'</div><div class="l">words (minimum '+MINW+')</div></div>'+
+   '<div class="stat '+(paras>=4?'good':'warn')+'"><div class="n">'+paras+'</div><div class="l">paragraphs (aim for 4)</div></div>'+
+   '<div class="stat '+(nh>=5?'good':'warn')+'"><div class="n">'+nh+' / '+D.words.length+'</div><div class="l">topic words used (aim for 5+)</div></div>'+
+   '<div class="stat"><div class="n">'+used+'</div><div class="l">minutes of writing time</div></div></div>'+
+   '<div class="card"><h3>Topic words from the article</h3><div class="wused">'+hits.map(x=>'<span class="chip '+(x.hit?'hit':'miss')+'">'+(x.hit?'&#10003; ':'')+esc(x.w)+'</span>').join('')+'</div><p style="margin-top:10px;font-size:14px;color:#555">Green words appear in your essay. Use them only where they fit the meaning.</p></div>'+
+   '<div class="card"><h3>Structures from the study sheet</h3>'+sh.map(x=>'<p>'+(x.ok?'<b style="color:#2e8b57">&#10003;</b>':'<b style="color:#999">&#9675;</b>')+' '+esc(x.s)+'</p>').join('')+'</div>'+
+   '<div class="card checks"><h3>Check your essay (tick each one yourself)</h3>'+
+   ['My opinion or answer is clear in the introduction and the conclusion.','Both body paragraphs give reasons, and each reason says how it works and why it matters.','I answered every part of the question.','I used at least five topic words and one structure.','I wrote 250 words or more.','I proofread: spelling, subject-verb agreement, articles, punctuation.'].map((c,i)=>'<label><input type="checkbox"> <span>'+c+'</span></label>').join('')+'</div>'+
+   '<div class="actions"><button class="btn primary" id="rBack">Back to my essay</button><button class="btn gold" id="rWs">Open the Workshop</button><button class="btn light" id="rDl">Download my essay (.txt)</button><button class="btn light" id="rNew">Start again</button></div>';
+  setView('results');
+  $('rBack').onclick=()=>{ setView('test'); };
+  $('rWs').onclick=openWorkshop;
+  $('rDl').onclick=()=>{ const blob=new Blob([D.question+'\n\n'+ta.value],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Task2_'+D.id+'_my_essay.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); };
+  $('rNew').onclick=()=>{ showModal('<h2>Start again?</h2><p>This clears your essay and the timer for this test. Your Workshop progress is kept.</p><div class="row"><button class="btn primary" id="yy">Yes, start again</button><button class="btn light" id="nn">Cancel</button></div>'); $('nn').onclick=hideModal; $('yy').onclick=()=>{ store.clear(['essay','remaining','started','expired','used']); location.reload(); }; };
+}
+$('submitBtn').onclick=()=>{
+  const n=wordCount(ta.value);
+  if(!n){ showModal('<h2>Write your essay first</h2><p>There is nothing to check yet.</p><div class="row"><button class="btn primary" id="ok1">OK</button></div>'); $('ok1').onclick=hideModal; return; }
+  showModal('<h2>Submit and check?</h2><p>You have written <b>'+n+'</b> words'+(n<MINW?' (the minimum is '+MINW+')':'')+'. The timer will stop.</p><div class="row"><button class="btn primary" id="sy">Yes, check my essay</button><button class="btn light" id="sn">Keep writing</button></div>');
+  $('sn').onclick=hideModal; $('sy').onclick=()=>{ hideModal(); expired=true; store.set('expired',true); ta.disabled=true; showResults(); };
+};
+
+/* ---------- init ---------- */
+updateWsNav(); renderTimer();
+if(expired){ ta.disabled=true; }
+startModal();
+</script>
+</body>
+</html>

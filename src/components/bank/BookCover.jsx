@@ -42,6 +42,8 @@ export function coverCode(name, types) {
   const part = /Part\s*(\d)/i.exec(name)
   if (part) return `Part ${part[1]}`
   if (/word list/i.test(name)) return 'Summary + list'
+  const essay = { 'agree or disagree': 'Agree?', 'discuss both views': 'Both views', 'positive or negative': '+ or −', 'advantages & disadvantages': 'Pros & cons', 'problems & solutions': 'Problems', 'two-part questions': 'Two-part' }[name.split(' · ').pop().toLowerCase()]
+  if (essay) return essay
   const list = [...(types || [])]
   if (list.length === 1 && CODES[list[0]]) return CODES[list[0]]
   const tail = name.split(' · ').pop()
@@ -60,6 +62,7 @@ export function splitSet(name) {
 
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
+  if (!unit && skill === 'writing') unit = 'essays'
   return (
     <button
       type="button"

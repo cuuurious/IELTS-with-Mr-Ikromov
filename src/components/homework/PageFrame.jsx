@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react'
  * The page itself keeps its real-test look; on phones the helper in
  * HtmlTask.jsx switches it to Passage / Questions tabs.
  */
-export default function PageFrame({ title, kicker, html, error, onClose, score, status, action }) {
+export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null }) {
   const frameRef = useRef(null)
   const overlayOpen = useRef(false)
   const closeRef = useRef(onClose)
@@ -50,7 +50,15 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
         return
       }
       leaving = true
-      closeRef.current?.()
+      // onClose may say no (e.g. an essay not handed in): stay on the page.
+      if (closeRef.current?.() === false) {
+        leaving = false
+        try {
+          window.history.pushState(marker, '')
+        } catch {
+          /* ignore */
+        }
+      }
     }
     window.addEventListener('popstate', onPop)
     const prevOverflow = document.body.style.overflow
@@ -85,8 +93,8 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
           <p className="truncate text-[14px] font-extrabold text-white sm:text-[15px]">{title}</p>
         </div>
         {status && <p className="hidden max-w-[320px] truncate text-xs font-bold text-white/80 lg:block">{status}</p>}
-        <span className={`grid h-10 min-w-[56px] shrink-0 place-items-center rounded-[12px] px-2.5 font-brand text-[15px] font-semibold ${score ? 'bg-white text-[#13807c]' : 'bg-white/15 text-white/70'}`}>
-          {score ? `${score.score}/${score.max}` : '—'}
+        <span className={`grid h-10 min-w-[56px] shrink-0 place-items-center rounded-[12px] px-2.5 font-brand text-[15px] font-semibold ${score || badge ? 'bg-white text-[#13807c]' : 'bg-white/15 text-white/70'}`}>
+          {badge || (score ? `${score.score}/${score.max}` : '—')}
         </span>
         {action}
       </div>
