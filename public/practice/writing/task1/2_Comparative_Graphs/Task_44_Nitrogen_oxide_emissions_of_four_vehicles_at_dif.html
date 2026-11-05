@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 44 · IELTS Writing Task 1 · MrIkromov's IELTS</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, Helvetica, sans-serif; background: #fff; line-height: 1.4; font-size: 16px; color: #222; }
+
+/* ---------- header ---------- */
+.header { background: #fff; padding: 0 20px; border-bottom: 1px solid #e0e0e0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; }
+.timer-container { color: #333; font-size: 16px; font-weight: 500; }
+.timer-display { font-variant-numeric: tabular-nums; }
+.timer-display.low { color: #c62828; font-weight: 700; }
+.brand { color: #16284f; font-weight: 700; font-size: 17px; letter-spacing: .2px; display: flex; align-items: center; gap: 9px; }
+.brand i { width: 26px; height: 26px; border-radius: 50%; background: #16284f; color: #f5c32c; font-style: normal; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+.head-right { text-align: right; color: #666; font-size: 14px; }
+
+/* ---------- test screen ---------- */
+.main-container { margin-top: 60px; display: flex; flex-direction: column; height: calc(100vh - 120px); }
+.part-header { background: #f1f2ec; padding: 15px; border-radius: 5px; margin: 20px; border: 1px solid #e0e0e0; }
+.part-header p { margin: 0; }
+.panels-container { display: flex; flex-grow: 1; overflow: hidden; }
+.left-panel { width: 50%; padding: 20px; border-right: 1px solid #e0e0e0; overflow-y: auto; }
+.right-panel { width: 50%; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.task-prompt { padding: 15px; margin: 0 0 20px; border: 1px solid #000; font-style: italic; }
+.task-prompt p { margin-bottom: 10px; }
+.task-prompt p:last-child { margin-bottom: 0; }
+.chart-container { text-align: center; margin: 10px 0 20px; }
+.chart-container img { max-width: 100%; height: auto; }
+.chart-container .mark { margin-top: 6px; font-size: 13px; color: #16284f; font-weight: 700; }
+.writing-area { flex: 1; display: flex; flex-direction: column; }
+.writing-textarea { border: 1px solid #ccc; padding: 15px; font-size: 16px; font-family: Arial, sans-serif; line-height: 1.5; resize: none; outline: none; min-height: 300px; width: 100%; overflow: hidden; }
+.writing-textarea:focus { border-color: #4a90e2; }
+.word-count { text-align: right; margin-top: 10px; font-size: 14px; color: #666; }
+.hint { margin-top: 10px; font-size: 13px; color: #6b6b6b; background: #fafafa; border: 1px dashed #d5d5d5; padding: 8px 10px; border-radius: 4px; }
+
+/* ---------- bottom bar ---------- */
+.nav-row { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 20px; z-index: 100; }
+.nav-row::before { content: ""; position: absolute; top: 0; left: 0; height: 3px; width: var(--done, 0%); background: #28a745; transition: width .2s; }
+.part-title { font-size: 18px; font-weight: bold; color: #333; line-height: 1.2; }
+.attemptedCount { font-size: 14px; color: #666; }
+.submit-btn { background: #28a745; color: #fff; border: 0; border-radius: 6px; padding: 11px 26px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.submit-btn:hover { background: #218838; }
+
+/* ---------- confirm modal ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 300; }
+.overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 10px; padding: 24px; width: min(420px, 92vw); box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.modal h3 { margin-bottom: 8px; }
+.modal p { color: #555; margin-bottom: 18px; }
+.modal .row { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ---------- results ---------- */
+.results-container { display: none; padding: 20px; max-width: 1180px; margin: 80px auto 30px; }
+.results-header { text-align: center; margin-bottom: 26px; padding: 26px 20px; background: linear-gradient(135deg, #16284f 0%, #0f6b75 100%); color: #fff; border-radius: 10px; }
+.results-header h1 { font-size: 26px; margin-bottom: 6px; }
+.overall { font-size: 52px; font-weight: bold; margin: 12px 0 4px; }
+.overall small { font-size: 22px; opacity: .8; font-weight: 400; }
+.band-description { font-size: 17px; opacity: .92; }
+.progress-bar { width: 100%; height: 9px; background: rgba(255,255,255,.25); border-radius: 5px; overflow: hidden; margin: 16px 0 0; }
+.progress-fill { height: 100%; background: #f5c32c; transition: width .4s; }
+.disclaimer { font-size: 13px; opacity: .8; margin-top: 12px; }
+.word-analysis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.word-stat { background: #fff; padding: 14px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,.12); }
+.word-stat-number { font-size: 24px; font-weight: bold; color: #0f6b75; }
+.word-stat-label { color: #666; font-size: 14px; }
+.group { background: #fff; border-radius: 10px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.1); overflow: hidden; border-left: 5px solid #0f6b75; }
+.group-h { display: flex; justify-content: space-between; align-items: center; padding: 13px 18px; background: #f4f8f8; font-weight: 700; font-size: 17px; color: #16284f; }
+.group-h .sc { font-size: 14px; color: #0f6b75; background: #dcedee; border-radius: 12px; padding: 2px 11px; }
+.group-h .sc.full { background: #d4edda; color: #1e7a37; }
+.items { list-style: none; }
+.items li { display: flex; gap: 12px; padding: 11px 18px; border-top: 1px solid #eee; }
+.items .ic { flex: 0 0 24px; height: 24px; border-radius: 50%; color: #fff; font-weight: 700; text-align: center; line-height: 24px; font-size: 14px; }
+.items .ok .ic { background: #28a745; } .items .no .ic { background: #dc3545; } .items .info .ic { background: #8a93a0; }
+.items .lab { font-weight: 600; }
+.items .sub { font-size: 14px; color: #555; margin-top: 3px; }
+.items .sub b { color: #16284f; }
+.items .no .lab { color: #9b1c28; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 22px 0; }
+.sheet { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.12); overflow: hidden; }
+.sheet h3 { padding: 12px 18px; background: #16284f; color: #fff; font-size: 16px; display: flex; justify-content: space-between; }
+.sheet.model h3 { background: #0f6b75; }
+.sheet .p { padding: 11px 18px; border-top: 1px solid #eee; font-size: 15px; line-height: 1.55; }
+.sheet .p:first-of-type { border-top: 0; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; border-radius: 3px; padding: 1px 7px; margin-bottom: 5px; background: #6b7686; }
+.tag.o { background: #b3262f; } .tag.b1 { background: #0f6b75; } .tag.b2 { background: #c8502e; }
+.hl { background: #fdeb8a; border-radius: 2px; padding: 0 1px; }
+.hb { background: #cfe0f5; border-radius: 2px; padding: 0 1px; }
+.hg { background: #cdeccf; border-radius: 2px; padding: 0 1px; }
+.mine .p { white-space: pre-wrap; }
+.action-buttons { text-align: center; margin-top: 26px; }
+.btn { padding: 12px 22px; margin: 4px 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
+.btn-primary { background: #0f6b75; color: #fff; } .btn-primary:hover { background: #0b4f58; }
+.btn-secondary { background: #6c757d; color: #fff; } .btn-secondary:hover { background: #545b62; }
+.btn-light { background: #e9ecef; color: #222; }
+
+@media (max-width: 768px) {
+  .main-container { height: auto; min-height: calc(100vh - 120px); margin-bottom: 70px; }
+  .panels-container { flex-direction: column; overflow: visible; }
+  .left-panel, .right-panel { width: 100%; border-right: none; overflow: visible; }
+  .left-panel { border-bottom: 1px solid #e0e0e0; }
+  .compare { grid-template-columns: 1fr; }
+  .head-right { display: none; } .header { grid-template-columns: auto 1fr; gap: 14px; }
+}
+@media print {
+  .header, .nav-row, .action-buttons { display: none !important; }
+  .results-container { margin-top: 0; }
+  .results-header { background: #16284f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="timer-container"><span class="timer-display" id="timer">20:00</span></div>
+  <div class="brand"><i>MI</i>MrIkromov's IELTS</div>
+  <div class="head-right">Writing Task 1 · Task 44</div>
+</div>
+
+<!-- Test screen -->
+<div class="main-container" id="mainContainer">
+  <div class="part-header">
+    <p><strong>Task 44</strong> &middot; Line graph</p>
+    <p>You should spend about 20 minutes on this task. Write at least 150 words.</p>
+  </div>
+  <div class="panels-container">
+    <div class="left-panel">
+      <div class="task-prompt">
+<p><strong>Study the task below, then write your report in the box on the right.</strong></p>
+      </div>
+      <div class="chart-container">
+        <img src="data:image/jpeg;base64,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kBSXG5IpMnbipXpLtIQQP8R8xl/WHr6gHEnzAYSFYxXh6/EEUfUf8waNlI4Y4QRGxrATs9I0grWXldDn5WzXZY60mPLjG+wYYmuEjAD1Abbvq1tQ9W540FaHIZKerRBublbceA2Rkjehom2C4BpcRvz6Vf5ImSA9TGuB7HY3tYGtAWBhijLG+QLRoINPj89i1hKE9wEWZK7HSgjXtFvfY9yk0RAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQFD8lnu1MLamoyNZZjjJY8sLwD9wBKmE0g5Za5pmwymyKzYrWJKElgRSUPFkmmbIWhpDQOlp+KlYs5yiTkjqrq8UUTe4qujeRIPC3sSBhbvr+LgrT9Dwu5AzM9cnjMquqBvbp6S8OJ+O9tUroK7HMaXI+WPxM9mw/o/Wwsle2nIZaYJPiEMMYDg35dSkMBTvTcAzkLGT+tWX3nROkhMTpesuLXdJ1rewr9oL5oa0pscruZG6WcfyHH67pmQ4ySGV8cRea4BiD9N9726Omrdscoy7+TTUaFqSVjJavRX9TJ8aORrS9zngDo0F0ZsbGfstAUbSw8VLKZHIskc598xl7TrTehvSNIKZxKbLYOxXFp7xjLFi+6Vj4OgVw2Rzg8u+BU56PiH4SWaNpbXnuWJa+xr9U6QlpA+BVoc0OaQ7uD7ivoAaAB2CDJERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREH/2Q==" alt="Nitrogen oxide emissions of four vehicles at different speeds">
+        <div class="mark">MrIkromov's IELTS</div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="writing-area">
+        <textarea class="writing-textarea" id="answer" placeholder="Start writing your report here..." oninput="onType()"></textarea>
+        <div class="word-count">Words: <span id="wordCount">0</span></div>
+        <div class="hint">Write four paragraphs: introduction, overview, body 1, body 2. Press Enter twice between paragraphs. Do not write a conclusion.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="results-container" id="results">
+  <div class="results-header">
+    <h1>Your report checked against the sample answer</h1>
+    <div class="overall"><span id="scoreNum">0</span><small> / <span id="scoreTot">0</span> features</small></div>
+    <div class="band-description" id="scoreMsg"></div>
+    <div class="progress-bar"><div class="progress-fill" id="scoreBar" style="width:0%"></div></div>
+    <div class="disclaimer">This check compares your report with the features of the sample answer. It is not an official band score: your teacher gives the final mark.</div>
+  </div>
+  <div class="word-analysis" id="stats"></div>
+  <div id="groups"></div>
+  <div class="compare">
+    <div class="sheet mine"><h3><span>Your answer</span><span id="myWords"></span></h3><div id="mine"></div></div>
+    <div class="sheet model"><h3><span>Sample answer</span><span id="modelWords"></span></h3><div id="model"></div></div>
+  </div>
+  <div class="action-buttons">
+    <button class="btn btn-primary" onclick="backToEdit()">Improve my answer</button>
+    <button class="btn btn-secondary" onclick="window.print()">Print / save as PDF</button>
+    <button class="btn btn-secondary" onclick="downloadReport()">Download report (.txt)</button>
+    <button class="btn btn-light" onclick="retake()">Start again</button>
+  </div>
+</div>
+
+<!-- Bottom bar -->
+<nav class="nav-row" id="nav">
+  <div>
+    <div class="part-title">Task 44</div>
+    <div class="attemptedCount" id="attempted">0 of 150 words</div>
+  </div>
+  <button class="submit-btn" id="submitBtn" onclick="askSubmit()">Submit <span>&#10003;</span></button>
+</nav>
+
+<div class="overlay" id="confirm">
+  <div class="modal">
+    <h3>Submit your report?</h3>
+    <p id="confirmText"></p>
+    <div class="row">
+      <button class="btn btn-light" onclick="closeConfirm()">Keep writing</button>
+      <button class="btn btn-primary" onclick="doSubmit()">Submit and check</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CFG = {"no": 44, "minutes": 20, "minWords": 150, "title": "Nitrogen oxide emissions of four vehicles at different speeds", "groups": [{"title": "1 · Length and structure", "items": [{"type": "words", "min": 150, "label": "At least 150 words", "sample": "The sample has 202 words.", "fix": "Add detail to the body paragraphs."}, {"type": "paras", "n": 4, "label": "Four paragraphs: introduction, overview, body 1, body 2", "sample": "Intro (1 sentence), overview, two body paragraphs.", "fix": "Press Enter twice between paragraphs. Use exactly four."}, {"type": "noconclusion", "re": "^(in conclusion|to conclude|to sum up|in summary|finally,? to)", "label": "No separate conclusion", "sample": "The overview does the job of a conclusion.", "fix": "Delete the conclusion. Task 1 has none."}, {"type": "count", "scope": "all", "re": "\\b(was|were|rose|fell|stood|reached|began|started|increased|grew|climbed|had|peaked|remained|stayed|surged|edged|settled|overtook|continued|showed|dropped|declined|decreased|recorded|accounted|made|represented|saw|ranked|led|followed|doubled|dipped|jumped|totalled|ended|returned|hit|went|came|took|received|spent|used|produced|became|did|gave)\\b", "n": 6, "label": "Past tense for past data", "sample": "was, rose, fell, stood, reached, remained", "fix": "Use the past simple (rose, fell, stood, reached) for past years."}, {"type": "nore", "scope": "all", "re": "\\b(i think|in my opinion|i believe|i feel|personally|in my view)\\b", "label": "No personal opinion", "sample": "Task 1 reports only the facts.", "fix": "Remove opinions. Describe only what the graphic shows."}]}, {"title": "2 · Introduction (paragraph 1)", "items": [{"type": "kw", "scope": "intro", "words": ["nitrog", "oxide", "grams", "kilomet", "produc", "types", "vehic"], "n": 3, "label": "Says what the graphic is about (nitrogen, oxide, grams, kilometer …)", "sample": "The line graph compares the amount of nitrogen oxide, in grams per kilometer, produced by four types of vehicle at speeds from 10 to 130 kilometers per hour.", "fix": "Paraphrase the question: name the topic, the place and the group of data."}, {"type": "re", "scope": "intro", "re": "(\\b(line graph|graph|chart)\\b[^.]*(compar|show|illustrat|depict|present|give|display|outline|describ|provid|detail|track|summar|indicat|reveal|represent|explain|demonstrat|look|trace|record|chart|plot|break|set out))|((compar|show|illustrat|depict|present|give|display|outline|describ|provid|detail|track|summar|indicat|reveal|represent|explain|demonstrat|look|trace|record|chart|plot|break|set out)[^.]*\\b(line graph|graph|chart)\\b)", "label": "Names the visual and uses a reporting verb", "sample": "The line graph compares the amount of nitrogen oxide, in grams per kilometer, produced by four types of vehicl", "fix": "Start with: The line graph shows / compares / illustrates / gives information about…"}, {"type": "nsent", "scope": "intro", "max": 1, "label": "Short introduction (one sentence)", "sample": "The sample introduction has 1 sentence.", "fix": "Keep the introduction short."}]}, {"title": "3 · Overview (paragraph 2)", "items": [{"type": "re", "scope": "over", "re": "\\b(overall|in general|generally|it is (clear|evident|obvious)|it can be seen|as (can be|is) seen|as we can see|looking at the (whole|overall)|in summary|to summari[sz]e|the most (striking|noticeable) )", "label": "Signals the overview (Overall, / In general, / It is clear that)", "sample": "Overall, buses emitted the most nitrogen oxide at every speed, while diesel cars emitted t", "fix": "Start the paragraph with Overall, / In general, / It is clear that…"}, {"type": "nodigit", "scope": "over", "label": "No numbers in the overview", "sample": "The sample overview has no figures.", "fix": "Take every number out of the overview. Numbers belong in the body paragraphs."}, {"type": "re", "scope": "over", "re": "(highest|lowest|most|least|largest|smallest|biggest|greatest|leading|top|best|worst|peak|lead|first|last|majority|minority|dominat|only)", "label": "Standout feature: highest / lowest / biggest", "sample": "Overall, buses emitted the most nitrogen oxide at every speed, while diesel cars emitted the least. It is also clear that the emissions of buses and lorries changed consi", "fix": "Name the biggest, highest or lowest feature."}, {"type": "re", "scope": "over", "re": "(whereas|while|by contrast|in contrast|although|however|but|compared|unlike|on the other hand|except)", "label": "Contrast between two groups (whereas / while / by contrast)", "sample": "Overall, buses emitted the most nitrogen oxide at every speed, while diesel cars emitted the least. It is also clear that the emissions of buses and lorries changed consi", "fix": "Contrast the groups: …whereas… / …while…"}, {"type": "kw", "scope": "over", "words": ["buses", "emitt", "nitrog", "oxide", "speed", "dies", "least", "clear"], "n": 2, "label": "Overview covers the key subjects (buses, emitted, nitrogen, oxide …)", "sample": "Overall, buses emitted the most nitrogen oxide at every speed, while diesel cars emitted the least. It is also clear that the emissions of buses and lorries changed considerably with speed, whereas those of the two types of car hardly changed.", "fix": "Name the main subjects of the graphic in your overview."}]}, {"title": "4 · Body paragraphs: organisation", "note": "The sample's grouping is one good way. Another clear grouping is acceptable.", "items": [{"type": "kw", "scope": "b1", "words": ["buses", "u\\-shaped", "lorries"], "n": 1, "label": "Body 1 covers: buses, u-shaped, lorries", "sample": "Buses and lorries were the heaviest polluters and both followed a U-shaped pattern.", "fix": "Group the information logically: Body 1 should deal with buses, u-shaped, lorries."}, {"type": "kw", "scope": "b2", "words": ["cars", "petrol", "diesel"], "n": 1, "label": "Body 2 covers: cars, petrol, diesel", "sample": "Cars were far cleaner.", "fix": "Group the information logically: Body 2 should deal with cars, petrol, diesel."}, {"type": "count", "scope": "body", "re": "\\b(whereas|while|however|by contrast|in contrast|after that|then|respectively|meanwhile|but|although|despite|in comparison|similarly|both|likewise|also|whilst|compared|followed by|while|in addition|furthermore|moreover|as well as|next|finally|first|second|third|lastly|after|before|once|following|subsequently)\\b", "n": 2, "label": "Linking words show contrast and sequence", "sample": "whereas, by contrast, then, respectively, after that", "fix": "Link your ideas with whereas / while / by contrast / then / respectively."}]}, {"title": "5 · Body paragraphs: key figures from the graphic", "note": "Figures are read from the graphic and may differ a little. Accepted answers allow a small margin.", "items": [{"type": "figs", "entity": "\\b(buses)\\b", "nums": [[38.0, 42.0], [9.5, 10.5], [24.7, 27.3], [57.0, 63.0]], "need": 2, "label": "Key figures for Buses: about 40, 10, 26, 60", "sample": "Buses produced about 40 grams per kilometer at 10 kph, and this fell steadily to a low of about 26 grams at 60 kph.", "fix": "Include the figures from the graphic for Buses (read it carefully; a small margin is accepted)."}, {"type": "figs", "entity": "", "nums": [[39.9, 44.1], [123.5, 136.5]], "need": 1, "label": "Key figures: about 42, 130", "sample": "It then rose again, reaching about 42 grams at 130 kph.", "fix": "Include the figure from the graphic (read it carefully; a small margin is accepted)."}, {"type": "figs", "entity": "\\b(lorries|u\\-shaped)\\b", "nums": [[30.88, 34.12], [9.5, 10.5], [17.1, 18.9], [85.5, 94.5], [23.75, 26.25]], "need": 3, "label": "Key figures for Lorries, U-shaped: about 32.5, 10, 18, 90", "sample": "Lorries followed a similar U-shaped pattern but at a lower level, dropping from 32.5 grams at 10 kph to a minimum of 18 grams at 90 kph before climbing to 25 grams.", "fix": "Include the figures from the graphic for Lorries (read it carefully; a small margin is accepted)."}, {"type": "figs", "entity": "\\b(petrol)\\b", "nums": [[9.5, 10.5], [9.5, 10.5], [8.5, 9.5], [10.45, 11.55], [123.5, 136.5]], "need": 3, "label": "Key figures for Petrol: about 10, 10, 9, 11", "sample": "Petrol cars emitted roughly 10 grams at 10 kph, fell slightly to 9 grams in the middle of the range, and rose back to nearly 11 grams at 130 kph.", "fix": "Include the figures from the graphic for Petrol (read it carefully; a small margin is accepted)."}, {"type": "figs", "entity": "\\b(diesel)\\b", "nums": [[6.0, 7.0], [4.5, 5.5]], "need": 1, "label": "Key figures for Diesel: about 6.5, 5", "sample": "Diesel cars started at around 6.5 grams and then remained almost constant at 5 grams at every higher speed.", "fix": "Include the figure from the graphic for Diesel (read it carefully; a small margin is accepted)."}]}, {"title": "6 · Language for this task type", "items": [{"type": "count", "scope": "body", "re": "(\\w+er than|more \\w+ than|less \\w+ than|fewer|higher|lower|larger|smaller|greater|bigger|\\w+est\\b|most|least|twice|double|half|as \\w+ as|compared|whereas|while|by contrast|in contrast|ahead of|behind|exceed|outnumber|overtook|surpass)", "n": 2, "label": "Comparison language (higher than, the most, whereas…)", "sample": "higher than, the lowest, whereas, twice as", "fix": "Compare the data: higher than / lower than / the most / the least / whereas."}]}, {"title": "Bonus · Language pieces from the sample", "bonus": true, "note": "These are phrases the sample uses. Using them is a bonus; it does not change your score.", "items": [{"type": "re", "scope": "all", "re": "\\bemissio", "label": "emissions", "sample": "", "fix": ""}, {"type": "re", "scope": "all", "re": "\\bat\\s+a\\s+speed\\s+of", "label": "at a speed of", "sample": "", "fix": ""}, {"type": "re", "scope": "all", "re": "\\bfell\\s+steadi\\s+to", "label": "fell steadily to", "sample": "", "fix": ""}, {"type": "re", "scope": "all", "re": "\\breach\\s+a\\s+low\\s+of", "label": "reached a low of", "sample": "", "fix": ""}, {"type": "re", "scope": "all", "re": "\\brose\\s+again", "label": "rose again", "sample": "", "fix": ""}, {"type": "re", "scope": "all", "re": "\\bremain\\s+almo\\s+consta", "label": "remained almost constant", "sample": "", "fix": ""}]}], "model": ["The line graph compares the amount of nitrogen oxide, in grams per kilometer, produced by four types of vehicle at speeds from 10 to 130 kilometers per hour.", "Overall, buses emitted the most nitrogen oxide at every speed, while diesel cars emitted the least. It is also clear that the emissions of buses and lorries changed considerably with speed, whereas those of the two types of car hardly changed.", "Buses and lorries were the heaviest polluters and both followed a U-shaped pattern. Buses produced about 40 grams per kilometer at 10 kph, and this fell steadily to a low of about 26 grams at 60 kph. It then rose again, reaching about 42 grams at 130 kph. Lorries followed a similar U-shaped pattern but at a lower level, dropping from 32.5 grams at 10 kph to a minimum of 18 grams at 90 kph before climbing to 25 grams.", "Cars were far cleaner. Petrol cars emitted roughly 10 grams at 10 kph, fell slightly to 9 grams in the middle of the range, and rose back to nearly 11 grams at 130 kph. Diesel cars started at around 6.5 grams and then remained almost constant at 5 grams at every higher speed."], "modelWords": 202};
+const KEY = 'mrikromov-ielts-task1-' + CFG.no;
+let secs = CFG.minutes * 60, timer = null, submitted = false;
+
+/* ---------- storage (safe) ---------- */
+function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+function load() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+
+/* ---------- timer ---------- */
+function tick() {
+  secs--; if (secs < 0) secs = 0;
+  const m = Math.floor(secs / 60), s = secs % 60;
+  const el = document.getElementById('timer');
+  el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  el.classList.toggle('low', secs <= 120);
+  if (secs <= 0) { clearInterval(timer); timer = null; doSubmit(true); }
+}
+function startTimer() { if (!timer) timer = setInterval(tick, 1000); }
+
+/* ---------- typing ---------- */
+const ta = document.getElementById('answer');
+function countWords(t) { t = t.trim(); return t ? t.split(/\s+/).length : 0; }
+function onType() {
+  ta.style.height = 'auto'; ta.style.height = Math.max(300, ta.scrollHeight) + 'px';
+  const n = countWords(ta.value);
+  document.getElementById('wordCount').textContent = n;
+  document.getElementById('attempted').textContent = n + ' of ' + CFG.minWords + ' words';
+  document.getElementById('nav').style.setProperty('--done', Math.min(100, n / CFG.minWords * 100) + '%');
+  save(ta.value);
+}
+window.addEventListener('load', () => { ta.value = load(); onType(); startTimer(); });
+
+/* ---------- submit ---------- */
+function askSubmit() {
+  const n = countWords(ta.value);
+  if (!n) { document.getElementById('confirmText').textContent = 'Please write your report first.'; }
+  else { document.getElementById('confirmText').textContent = 'You have written ' + n + ' words. After you submit, your report is checked against the sample answer.'; }
+  document.getElementById('confirm').classList.add('show');
+}
+function closeConfirm() { document.getElementById('confirm').classList.remove('show'); }
+function doSubmit(auto) {
+  closeConfirm();
+  const text = ta.value;
+  if (!text.trim()) { if (!auto) return; }
+  if (timer) { clearInterval(timer); timer = null; }
+  submitted = true;
+  showResults(text);
+}
+function backToEdit() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('mainContainer').style.display = 'flex';
+  document.getElementById('nav').style.display = 'flex';
+  if (secs > 0) startTimer();
+  window.scrollTo(0, 0);
+}
+function retake() {
+  if (!confirm('This clears your report and restarts the timer. Continue?')) return;
+  ta.value = ''; save(''); secs = CFG.minutes * 60; document.getElementById('timer').textContent = CFG.minutes + ':00';
+  document.getElementById('timer').classList.remove('low'); backToEdit(); onType(); startTimer();
+}
+
+/* ---------- text helpers ---------- */
+function paragraphs(t) { return t.split(/\n+/).map(s => s.trim()).filter(Boolean); }
+function sentences(t) { return t.replace(/([.!?])\s+/g, '$1|').split('|').map(s => s.trim()).filter(Boolean); }
+function numbers(s) {
+  const out = [], re = /\d+(?:[.,]\d+)?/g; let m;
+  while ((m = re.exec(s))) {
+    const v = parseFloat(m[0].replace(',', '.'));
+    if (/^\d{4}$/.test(m[0]) && v >= 1900 && v <= 2100) continue;   // years are not data
+    out.push(v);
+  }
+  return out;
+}
+function rx(p) { return new RegExp(p, 'i'); }
+function esc(s) { return s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+/* ---------- the checker ---------- */
+function scopeText(scope, P, text) {
+  if (scope === 'intro') return P[0] || '';
+  if (scope === 'over') return P[1] || '';
+  if (scope === 'body') return P.slice(2).join(' ');
+  if (scope === 'b1') return P[2] || '';
+  if (scope === 'b2') return P[3] || '';
+  return text;
+}
+function runItem(it, P, text) {
+  const sc = scopeText(it.scope || 'all', P, text);
+  switch (it.type) {
+    case 'words': return countWords(text) >= it.min;
+    case 'paras': return P.length === it.n;
+    case 'nsent': return sentences(sc).length <= it.max && sentences(sc).length >= 1;
+    case 'noconclusion': return !(P.length > 1 && rx(it.re).test(P[P.length - 1].slice(0, 60)));
+    case 're': return rx(it.re).test(sc);
+    case 'all': return it.re.every(p => rx(p).test(sc));
+    case 'nore': return !rx(it.re).test(sc);
+    case 'count': return (sc.match(new RegExp(it.re, 'gi')) || []).length >= it.n;
+    case 'nodigit': return numbers(sc).length === 0 && !/%|\bper ?cents?\b/i.test(sc);
+    case 'sent': return sentences(sc).some(s => it.all.every(p => rx(p).test(s)));
+    case 'topic': {   // first sentence of each body paragraph names at least n of the listed words
+      const names = new RegExp(it.names, 'gi');
+      const first = [P[2], P[3]].map(p => p ? sentences(p)[0] || '' : '');
+      const grp = new RegExp(it.groupWords || '$^', 'i');
+      return first.length === 2 && first.every(s => new Set((s.match(names) || []).map(x => x.toLowerCase())).size >= it.n || grp.test(s));
+    }
+    case 'kw': {      // at least n of the listed word stems appear
+      return it.words.filter(w => rx('\\b' + w).test(sc)).length >= it.n;
+    }
+    case 'figs': {    // a sentence (or two neighbouring sentences) with the entity and enough figures in range
+      const S = sentences(sc), units = S.concat(S.slice(0, -1).map((s, i) => s + ' ' + S[i + 1]));
+      return units.some(u => (!it.entity || rx(it.entity).test(u)) &&
+        it.nums.filter(r => numbers(u).some(v => v >= r[0] && v <= r[1])).length >= it.need);
+    }
+    case 'num': {     // a sentence that mentions the entity and a figure within the range
+      return sentences(sc).some(s => rx(it.entity).test(s) && numbers(s).some(v => v >= it.min && v <= it.max) &&
+                                     (!it.also || rx(it.also).test(s)));
+    }
+  }
+  return false;
+}
+function runCheck(text) {
+  const P = paragraphs(text);
+  let got = 0, tot = 0;
+  const groups = CFG.groups.map(g => {
+    const items = g.items.map(it => { const ok = runItem(it, P, text); return Object.assign({ ok }, it); });
+    const n = items.filter(i => i.ok).length;
+    if (!g.bonus) { got += n; tot += items.length; }
+    return { title: g.title, note: g.note, bonus: !!g.bonus, items, n };
+  });
+  return { P, got, tot, groups };
+}
+
+/* ---------- results screen ---------- */
+function msgFor(r) {
+  const p = r.got / r.tot;
+  if (p >= .9) return 'Excellent: your report matches almost every feature of the sample.';
+  if (p >= .75) return 'Strong report. Fix the red items to match the sample.';
+  if (p >= .55) return 'A good start. Read the red items and the sample answer, then improve your report.';
+  return 'Keep going. Study the sample answer on the right, then rewrite your report using its structure.';
+}
+function showResults(text) {
+  const r = runCheck(text);
+  const words = countWords(text), sents = sentences(text).length;
+  document.getElementById('scoreNum').textContent = r.got;
+  document.getElementById('scoreTot').textContent = r.tot;
+  document.getElementById('scoreMsg').textContent = msgFor(r);
+  document.getElementById('scoreBar').style.width = (r.got / r.tot * 100) + '%';
+  document.getElementById('stats').innerHTML =
+    [[words, 'Words'], [r.P.length, 'Paragraphs'], [sents, 'Sentences'], [Math.max(0, CFG.minutes * 60 - secs) >= 60 ? Math.round((CFG.minutes * 60 - secs) / 60) + ' min' : '< 1 min', 'Time used']]
+      .map(a => '<div class="word-stat"><div class="word-stat-number">' + a[0] + '</div><div class="word-stat-label">' + a[1] + '</div></div>').join('');
+  document.getElementById('groups').innerHTML = r.groups.map(g => {
+    const full = g.n === g.items.length;
+    const lis = g.items.map(i => {
+      const cls = g.bonus ? (i.ok ? 'ok' : 'info') : (i.ok ? 'ok' : 'no');
+      const mark = i.ok ? '&#10003;' : (g.bonus ? '&ndash;' : '&#10007;');
+      const sub = i.ok ? (i.good ? '<div class="sub">' + i.good + '</div>' : '') : '<div class="sub">' + (i.sample ? '<b>Sample answer:</b> ' + i.sample + '<br>' : '') + (i.fix ? '<b>Fix:</b> ' + i.fix : '') + '</div>';
+      return '<li class="' + cls + '"><div class="ic">' + mark + '</div><div><div class="lab">' + i.label + '</div>' + sub + '</div></li>';
+    }).join('');
+    return '<div class="group"><div class="group-h"><span>' + g.title + '</span><span class="sc ' + (full ? 'full' : '') + '">' + g.n + ' / ' + g.items.length + (g.bonus ? ' (bonus)' : '') + '</span></div>' +
+           (g.note ? '<div style="padding:9px 18px;font-size:14px;color:#555;background:#fcfcfc">' + g.note + '</div>' : '') + '<ul class="items">' + lis + '</ul></div>';
+  }).join('');
+  const tagNames = ['Introduction', 'Overview', 'Body 1', 'Body 2'], tagCls = ['', 'o', 'b1', 'b2'];
+  document.getElementById('mine').innerHTML = r.P.length ? r.P.map((p, i) => '<div class="p"><span class="tag ' + (tagCls[i] || '') + '">' + (tagNames[i] || 'Extra paragraph') + '</span><br>' + esc(p) + '</div>').join('') : '<div class="p">(nothing written)</div>';
+  document.getElementById('myWords').textContent = words + ' words';
+  document.getElementById('model').innerHTML = CFG.model.map((m, i) => '<div class="p"><span class="tag ' + (tagCls[i] || '') + '">' + tagNames[i] + '</span><br>' + m + '</div>').join('');
+  document.getElementById('modelWords').textContent = CFG.modelWords + ' words';
+  document.getElementById('mainContainer').style.display = 'none';
+  document.getElementById('nav').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo(0, 0);
+  window.__lastResult = r;
+}
+function downloadReport() {
+  const r = window.__lastResult; if (!r) return;
+  let t = "MrIkromov's IELTS · Writing Task 1 · Task " + CFG.no + '\n' + CFG.title + '\n\nFeatures matched: ' + r.got + ' / ' + r.tot + '\n\n';
+  r.groups.forEach(g => { t += g.title + ' (' + g.n + '/' + g.items.length + ')\n'; g.items.forEach(i => { t += '  ' + (i.ok ? '[x] ' : '[ ] ') + i.label + '\n'; }); t += '\n'; });
+  t += 'YOUR ANSWER\n' + ta.value + '\n';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type: 'text/plain' })); a.download = 'Task_' + CFG.no + '_report.txt'; a.click();
+}
+</script>
+</body>
+</html>
