@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { qtypeLabel } from '../../lib/questionTypes'
 import { cleanQs, withHelper } from '../../components/homework/HtmlTask'
 import PageFrame from '../../components/homework/PageFrame'
+import { needsWorkshop, openWorkshop, useWorkshopGate } from '../../lib/workshopGate'
 import WeakSpots from '../../components/WeakSpots'
 import SkillArt, { SkillIcon } from '../../components/SkillArt'
 
@@ -216,6 +217,7 @@ export default function BooksPage({ studentId }) {
         createPortal(
           <BookPlayer
             item={open}
+            studentId={studentId}
             onClose={() => setOpen(null)}
             onSaved={(row) => setTries((prev) => [...prev, row])}
           />,
@@ -225,13 +227,17 @@ export default function BooksPage({ studentId }) {
   )
 }
 
-function BookPlayer({ item, onClose, onSaved }) {
+function BookPlayer({ item, studentId, onClose, onSaved }) {
   const [html, setHtml] = useState(null)
   const [error, setError] = useState('')
   const [score, setScore] = useState(null)
   const [saved, setSaved] = useState(null) // the score key last saved
   const scoreRef = useRef(null)
   const savedRef = useRef(null)
+  // Thematic Reading: the score only counts once the Workshop is finished (2026-11-05).
+  const gate = useWorkshopGate(item.url, studentId, needsWorkshop(item.url, html))
+  const gateRef = useRef(gate)
+  gateRef.current = gate
 
   useEffect(() => {
     let cancelled = false
@@ -248,7 +254,7 @@ function BookPlayer({ item, onClose, onSaved }) {
   }, [item.url])
 
   const save = async (s) => {
-    if (!s) return
+    if (!s || !gateRef.current.complete) return
     const key = `${s.score}/${s.max}`
     if (savedRef.current === key) return
     savedRef.current = key
@@ -287,6 +293,12 @@ function BookPlayer({ item, onClose, onSaved }) {
   }, [item.id])
 
 
+  useEffect(() => {
+    if (gate.complete && scoreRef.current) save(scoreRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gate.complete])
+
+  const waiting = gate.on && !gate.complete
   return (
     <PageFrame
       title={item.title}
@@ -295,11 +307,29 @@ function BookPlayer({ item, onClose, onSaved }) {
       error={error}
       onClose={onClose}
       score={score}
-      status={score && saved === `${score.score}/${score.max}` ? 'Score saved. It counts toward your weak-spot report.' : 'Press Submit at the end — your score is saved by itself.'}
+      status={
+        score && saved === `${score.score}/${score.max}`
+          ? 'Score saved. It counts toward your weak-spot report.'
+          : waiting
+            ? `${gate.label} — finish every Workshop part and your score is saved.${score ? ' Your score is waiting.' : ''}`
+            : 'Press Submit at the end — your score is saved by itself.'
+      }
       action={
-        score && saved === `${score.score}/${score.max}` ? (
-          <span className="hidden h-10 shrink-0 items-center rounded-[12px] bg-white/15 px-3 text-xs font-extrabold text-white sm:flex">✓ Saved</span>
-        ) : null
+        <>
+          {gate.on && (
+            <button
+              type="button"
+              onClick={openWorkshop}
+              title="Finish every Workshop part — then the page counts as done"
+              className={`focus-ring h-10 shrink-0 rounded-[12px] px-3 text-sm font-extrabold ${waiting ? 'bg-saffron text-[#17213a]' : 'bg-white/15 text-white'} hover:brightness-105`}
+            >
+              {waiting ? (<><span className="sm:hidden">Workshop</span><span className="hidden sm:inline">{gate.label}</span></>) : '✓ Workshop'}
+            </button>
+          )}
+          {score && saved === `${score.score}/${score.max}` ? (
+            <span className="hidden h-10 shrink-0 items-center rounded-[12px] bg-white/15 px-3 text-xs font-extrabold text-white sm:flex">✓ Saved</span>
+          ) : null}
+        </>
       }
     />
   )

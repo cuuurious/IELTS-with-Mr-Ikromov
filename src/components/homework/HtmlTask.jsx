@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
 import PageFrame from './PageFrame'
 import WritingFeedback from './WritingFeedback'
+import { needsWorkshop, openWorkshop, useWorkshopGate } from '../../lib/workshopGate'
 
 /*
  * One of Mr Ikromov's interactive HTML workshops set as homework
@@ -37,6 +38,8 @@ var seen={};var parts=found.filter(function(f){var k=f.label;if(seen[k])return f
 post(best.s,best.m,parts)}
 var tt;function texts(){clearTimeout(tt);tt=setTimeout(function(){var out=[];document.querySelectorAll('textarea,[contenteditable="true"]').forEach(function(el,i){var v=el.tagName==='TEXTAREA'?el.value:el.innerText;if(v&&v.trim().length>20)out.push({id:el.id||('box'+(i+1)),text:v.slice(0,20000)})});if(out.length)parent.postMessage({type:'ielts-workshop-text',texts:out},'*')},600)}
 function ovOpen(){var cf=document.getElementById('confirm');if(t1()&&cf&&cf.classList.contains('show'))return true;if(t1Res())return true;var wv=document.getElementById('workshopView');if(wv&&!wv.classList.contains('hidden')&&document.getElementById('essay'))return true;var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
+var wsLast='';function wsProg(){if(!document.getElementById('ws-overlay'))return;var bs=document.querySelectorAll('#ws-tabs .ws-tab');var d=[];bs.forEach(function(b){if(b.querySelector('.ws-done'))d.push((b.textContent||'').replace(/\u2713/g,'').trim())});var k=bs.length+'|'+d.join(',');if(k===wsLast)return;wsLast=k;parent.postMessage({type:'ielts-workshop-progress',total:bs.length||0,done:d},'*')}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-open-workshop'&&window.openWorkshop){try{window.openWorkshop()}catch(_){}}});
 var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
 window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;if(t1()){var cf=document.getElementById('confirm');if(cf&&cf.classList.contains('show'))cf.classList.remove('show');else if(t1Res()&&window.backToEdit)window.backToEdit();setTimeout(ovTell,50);return}var hb=document.getElementById('hdrBack');var wv=document.getElementById('workshopView');if(hb&&wv&&!wv.classList.contains('hidden')){hb.click();setTimeout(ovTell,50);return}var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
 function fitTables(){if(!(window.innerWidth<760))return;document.querySelectorAll('table').forEach(function(t){if(t.getAttribute('data-ielts-fit'))return;var p=t.parentElement;if(!p)return;if(t.scrollWidth<=p.clientWidth+2)return;t.setAttribute('data-ielts-fit','1');var w=document.createElement('div');w.className='ielts-swipe';w.style.cssText='overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:0 0 .5rem';var h=document.createElement('div');h.textContent='Swipe the table sideways \u2192';h.style.cssText='font-size:11px;font-weight:700;color:#92400e;margin:2px 0 4px';p.insertBefore(h,t);p.insertBefore(w,t);w.appendChild(t);var cols=0;t.querySelectorAll('tr').forEach(function(r){cols=Math.max(cols,r.children.length)});t.style.width='auto';t.style.minWidth=Math.min(Math.max(cols,2)*150,900)+'px';t.style.fontSize='.86rem';t.querySelectorAll('th,td').forEach(function(c){c.style.padding='.35rem .45rem'})})}
@@ -49,8 +52,8 @@ function show(q){document.body.classList.toggle('ielts-q',q);a.className=q?'':'o
 var siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{if(this.closest&&this.closest('.passage-container')&&document.body.classList.contains('ielts-q'))show(false)}catch(_){}return siv.apply(this,arguments)};
 document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&(t.closest('.footer__navbtn')||t.closest('.footer .navbtn')))show(true)},true)}
 document.addEventListener('input',texts,true);
-document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80)},true);
-document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
+document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80);setTimeout(wsProg,120)},true);
+document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 })();</script>`
 
 // Which questions were right / wrong, as the page reported them (2026-11-05).
@@ -82,6 +85,10 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
   const [check, setCheck] = useState(null) // Task 1 self-check: { got, tot }
+  const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
+  useEffect(() => {
+    if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
+  }, [gate.on, gate.complete])
 
   useEffect(() => {
     let cancelled = false
@@ -161,6 +168,12 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   }
 
   const handIn = async () => {
+    // Thematic Reading: the Workshop must be finished first (2026-11-05).
+    if (!gate.complete) {
+      setError(`Finish all parts of the Workshop first (${gate.label}). Then hand in.`)
+      openWorkshop()
+      return
+    }
     setSaving(true)
     setError('')
     const { data, error: rpcError } = await supabase.rpc('submit_homework_score', {
@@ -194,7 +207,9 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       ? words
         ? `${words} words${check ? ` · self-check ${check.got}/${check.tot}` : ''} — press Hand in when you finish. Your essay is sent with it.`
         : 'Write your essay in the page, then press Hand in.'
-      : score
+      : gate.on && !gate.complete
+        ? `${gate.label} — finish every Workshop part, then hand in.${score ? ' Your score is waiting.' : ''}`
+        : score
         ? 'Score found. Hand it in when you are happy.'
         : texts.length
           ? `${words} words written. Hand it in when you finish.`
@@ -231,6 +246,16 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
                 const b = fb.results?.teacher?.band ?? (fb.results?.ai?.status === 'done' ? fb.results.ai.overall_band : null)
                 return b != null ? `Feedback · ${Number(b).toFixed(1)}` : 'Feedback'
               })()}
+            </button>
+          )}
+          {gate.on && !showFb && (
+            <button
+              type="button"
+              onClick={openWorkshop}
+              title="Every Workshop part must be finished before you hand in"
+              className={`focus-ring h-10 shrink-0 rounded-[12px] px-3 text-sm font-extrabold ${gate.complete ? 'bg-white/15 text-white' : 'bg-white text-[#9a5b12]'} hover:brightness-105`}
+            >
+              {gate.complete ? '✓ Workshop' : (<><span className="sm:hidden">Workshop</span><span className="hidden sm:inline">{gate.label}</span></>)}
             </button>
           )}
           {showFb ? (

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /*
  * Full-screen frame for an interactive practice page (2026-11-05).
@@ -87,8 +87,26 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
     }
   }, [])
 
+  // Laptops: the browser's own full screen hides the tabs and address bar,
+  // like the real computer test (2026-11-05).
+  const rootRef = useRef(null)
+  const [full, setFull] = useState(false)
+  const canFull = typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
+  useEffect(() => {
+    const onChange = () => setFull(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', onChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+    }
+  }, [])
+  const toggleFull = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+    else rootRef.current?.requestFullscreen?.().catch(() => {})
+  }
+
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-ink">
+    <div ref={rootRef} className="fixed inset-0 z-[70] flex flex-col bg-ink">
       <div className="registan-band flex shrink-0 items-center gap-2 px-2 py-2 text-white sm:gap-3 sm:px-4">
         <button
           type="button"
@@ -108,6 +126,19 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
         <span className={`grid h-10 min-w-[56px] shrink-0 place-items-center rounded-[12px] px-2.5 font-brand text-[15px] font-semibold ${score || badge ? 'bg-white text-[#13807c]' : 'bg-white/15 text-white/70'}`}>
           {badge || (score ? `${score.score}/${score.max}` : '—')}
         </span>
+        {canFull && (
+          <button
+            type="button"
+            onClick={toggleFull}
+            aria-label={full ? 'Leave full screen' : 'Full screen'}
+            title={full ? 'Leave full screen (Esc)' : 'Full screen'}
+            className="focus-ring hidden h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white/15 text-white transition hover:bg-white/25 md:grid"
+          >
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {full ? <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+            </svg>
+          </button>
+        )}
         {action}
       </div>
       {error && <p className="shrink-0 bg-urgent-tint px-4 py-2 text-sm font-bold text-coral">{error}</p>}
@@ -116,6 +147,7 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
         {html ? (
           <iframe
             ref={frameRef}
+            data-ielts-page="1"
             title={title || 'Practice page'}
             srcDoc={html}
             sandbox="allow-scripts allow-forms allow-modals allow-popups"
