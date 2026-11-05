@@ -12,6 +12,7 @@ import SkillArt, { SkillIcon, VocabArt } from '../../components/SkillArt'
 import TargetBandModal from '../../components/TargetBandModal'
 import { LearningCurve, PracticeTime, WordOfTheDay, useStudyActivity } from './HomeExtras'
 import { firstNameOf } from '../../lib/names'
+import { qtypeLabel } from '../../lib/questionTypes'
 
 /*
  * STUDENT HOME — "Study room" design (approved 2026-10-05).
@@ -231,6 +232,43 @@ const BAND_TILE = {
   speaking: 'text-speaking',
 }
 
+// Weakest question type (5+ answers, under 70%) and a Books-shelf page of
+// that type the student hasn't practised yet — for "Today's plan".
+function useWeakPractice(studentId) {
+  const [item, setItem] = useState(null)
+  useEffect(() => {
+    if (!studentId) return undefined
+    let cancelled = false
+    Promise.all([
+      supabase.rpc('weak_spots', {}),
+      supabase.from('book_practice').select('material_id').eq('user_id', studentId),
+    ]).then(async ([w, done]) => {
+      if (cancelled || w.error) return
+      const weak = (w.data || [])
+        .filter((r) => r.total >= 5)
+        .map((r) => ({ ...r, pct: Math.round((100 * r.correct) / r.total) }))
+        .filter((r) => r.pct < 70)
+        .sort((a, b) => a.pct - b.pct)[0]
+      if (!weak) return
+      const { data: shelf } = await supabase
+        .from('materials')
+        .select('id, title, position')
+        .eq('on_shelf', true)
+        .eq('question_type', weak.qtype)
+        .order('position', { ascending: true })
+        .limit(60)
+      if (cancelled) return
+      const seen = new Set((done.data || []).map((d) => d.material_id))
+      const page = (shelf || []).find((m) => !seen.has(m.id))
+      setItem({ qtype: weak.qtype, pct: weak.pct, page: page || null })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [studentId])
+  return item
+}
+
 function greetingFor(now) {
   const h = now.getHours()
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
@@ -269,6 +307,7 @@ export default function StudentHome({
   const feedback = useLatestFeedback(profile?.id)
   const activity = useStudyActivity(profile?.id)
   const mock = useMockStatus(profile?.id)
+  const weakPractice = useWeakPractice(profile?.id)
 
   const now = useMemo(() => new Date(), [])
   const group = groups.find((g) => g.id === activeGroup)
@@ -455,6 +494,71 @@ export default function StudentHome({
           </button>
         </div>
       )}
+
+      {/* TODAY'S PLAN (2026-11-05) — a short to-do list for today:
+          homework due soonest, words to revise, one page for the weak spot. */}
+      {(() => {
+        const soon = upcoming.filter((i) => i.hw.due_date && new Date(i.hw.due_date) - now <= 2 * 86400000).slice(0, 3)
+        const plan = [
+          ...soon.map((i) => ({
+            key: i.hw.id,
+            skill: i.skill.key,
+            title: i.hw.title,
+            line: `Homework · due ${formatDue(i.hw.due_date, now)}`,
+            go: () => onOpenHomework(i.hw.id),
+            cta: 'Start',
+          })),
+          ...(words.due
+            ? [{ key: 'words', skill: 'vocab', title: `Revise ${words.due} ${words.due === 1 ? 'word' : 'words'}`, line: 'Word review · about 5 minutes', go: () => onNavigate('wordlists'), cta: 'Review' }]
+            : []),
+          ...(weakPractice
+            ? [{
+                key: 'weak',
+                skill: 'reading',
+                title: weakPractice.page ? `${qtypeLabel(weakPractice.qtype)} · ${weakPractice.page.title}` : `Practise ${qtypeLabel(weakPractice.qtype)}`,
+                line: `Your weak spot (${weakPractice.pct}%) · Practice shelf`,
+                go: () => onNavigate('books'),
+                cta: 'Practise',
+              }]
+            : []),
+        ]
+        return (
+          <section aria-labelledby="sh-plan" className="lg:col-span-12 rounded-[20px] border border-line bg-panel p-4 sm:p-5">
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+              <h2 id="sh-plan" className="font-brand text-[18px] font-semibold text-brass">Today’s plan</h2>
+              <span className="text-xs font-bold text-mist">{plan.length ? `${plan.length} thing${plan.length === 1 ? '' : 's'} to do` : ''}</span>
+            </div>
+            {plan.length === 0 ? (
+              <p className="rounded-[14px] bg-panel-2 px-4 py-3 text-sm font-bold text-paper-dim">Nothing due today. Well done — a page from the Practice shelf keeps you sharp.</p>
+            ) : (
+              <ol className="flex flex-col gap-2">
+                {plan.map((p, n) => {
+                  const sk = SKILLS[p.skill] || SKILLS.reading
+                  return (
+                    <li key={p.key}>
+                      <button
+                        type="button"
+                        onClick={p.go}
+                        className="focus-ring flex w-full items-center gap-3 rounded-[14px] bg-panel-2 px-3 py-2.5 text-left transition hover:ring-1 hover:ring-brass/40"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-panel text-[13px] font-extrabold text-mist">{n + 1}</span>
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${sk.tint || 'bg-panel'} ${sk.text || 'text-paper'}`}>
+                          <SkillIcon skill={p.skill} className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-extrabold text-paper">{p.title}</span>
+                          <span className="block truncate text-xs font-semibold text-mist">{p.line}</span>
+                        </span>
+                        <span className={`shrink-0 rounded-[12px] px-3 py-1.5 text-xs font-extrabold bg-panel text-brass`}>{p.cta}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </section>
+        )
+      })()}
 
       {/* BANDS — one tile per skill */}
       <section aria-labelledby="sh-bands" className="lg:col-span-12 flex flex-col gap-3">

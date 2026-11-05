@@ -33,6 +33,25 @@ export async function loadBank() {
   return { pages: data || [], missing: false, error: null }
 }
 
+// Which groups already got each page as homework (2026-11-05):
+// { url: Set(groupId) }. Used for the "Given" marks and so weak-spot
+// suggestions only pick pages a group hasn't done.
+export async function loadGivenPages() {
+  const { data, error } = await supabase
+    .from('homework_tasks')
+    .select('html_url, homeworks!inner(group_id)')
+    .eq('kind', 'html')
+    .not('html_url', 'is', null)
+  const map = {}
+  if (error) return map
+  ;(data || []).forEach((r) => {
+    const g = r.homeworks?.group_id
+    if (!g) return
+    ;(map[r.html_url] = map[r.html_url] || new Set()).add(g)
+  })
+  return map
+}
+
 const isHtml = (f) => /\.html?$/i.test(f.name)
 const isAudio = (f) => /\.(mp3|m4a|wav|ogg|aac)$/i.test(f.name)
 const relPath = (f) => f.webkitRelativePath || f.name

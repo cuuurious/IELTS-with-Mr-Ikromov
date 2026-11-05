@@ -263,6 +263,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
       <BankPicker
         open={bankOpen}
         initialSkill={bankSkill}
+        groupId={groupId}
         onClose={() => setBankOpen(false)}
         onLibrary={() => {
           setBankOpen(false)

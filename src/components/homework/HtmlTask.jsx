@@ -40,6 +40,7 @@ function mobile(){if(!(window.innerWidth<760))return;var tc=document.querySelect
 var st=document.createElement('style');st.textContent='body.ielts-m{height:100vh;height:100dvh}body.ielts-m .header{padding:.4rem .75rem}body.ielts-m .header__candidate{display:none}body.ielts-m .header__timer{padding:.2rem .7rem;font-size:.95rem}body.ielts-m .test-container{flex-direction:column;height:auto!important;flex:1;min-height:0}body.ielts-m .divider{display:none!important}body.ielts-m .passage-container,body.ielts-m .questions-container{flex:1 1 auto!important;width:100%!important;max-width:none!important;min-height:0}body.ielts-m.ielts-q .passage-container{display:none!important}body.ielts-m:not(.ielts-q) .questions-container{display:none!important}body.ielts-m .footer{flex-wrap:wrap;gap:.4rem;padding:.45rem .6rem}body.ielts-m .footer__navwrap{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}body.ielts-m .footer__navbtn{flex:0 0 auto}#ielts-mtabs{display:flex;gap:6px;padding:6px 8px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0}#ielts-mtabs button{flex:1;height:38px;border-radius:10px;border:1.5px solid #d97706;background:#fff;color:#92400e;font-weight:800;font-size:.95rem}#ielts-mtabs button.on{background:#d97706;color:#fff}';
 document.head.appendChild(st);document.body.classList.add('ielts-m');var bar=document.createElement('div');bar.id='ielts-mtabs';var a=document.createElement('button');a.type='button';a.textContent='Passage';var b=document.createElement('button');b.type='button';b.textContent='Questions';bar.appendChild(a);bar.appendChild(b);tc.parentNode.insertBefore(bar,tc);
 function show(q){document.body.classList.toggle('ielts-q',q);a.className=q?'':'on';b.className=q?'on':''}a.onclick=function(){show(false)};b.onclick=function(){show(true)};show(false);
+var siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{if(this.closest&&this.closest('.passage-container')&&document.body.classList.contains('ielts-q'))show(false)}catch(_){}return siv.apply(this,arguments)};
 document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&t.closest('.footer__navbtn'))show(true)},true)}
 document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80)},true);
@@ -47,6 +48,9 @@ document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}t
 })();</script>`
 
 export function withHelper(html) {
+  // The thematic pages load their logo from an outside emoji site, which
+  // often fails and shows a broken picture: use the school's own logo.
+  html = html.replace(/https:\/\/em-content\.zobj\.net\/[^"')\s]+/g, '/mrikromov.jpg')
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => `${m}${HELPER}`)
   return HELPER + html
 }

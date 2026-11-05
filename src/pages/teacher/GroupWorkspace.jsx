@@ -17,6 +17,7 @@ import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib
 import Icon from '../../components/Icon'
 import GroupHomeworkTable from '../../components/groups/GroupHomeworkTable'
 import GroupStudentsTab from '../../components/groups/GroupStudentsTab'
+import WeakSpotSuggest from '../../components/groups/WeakSpotSuggest'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -1689,6 +1690,10 @@ export default function GroupWorkspace({ teacherId }) {
               </>
             )
           })()}
+
+          {groupTab === 'homework' && !groupDataLoading && activeGroup && roster.length > 0 && (
+            <WeakSpotSuggest groupId={activeGroup} onPosted={() => loadGroupData()} />
+          )}
 
           {groupTab === 'homework' && !groupDataLoading && (
             <GroupHomeworkTable

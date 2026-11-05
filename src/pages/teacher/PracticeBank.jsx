@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
-import { BANK_SKILLS, loadBank, shortTitle, uploadPages } from '../../lib/pageBank'
+import { BANK_SKILLS, loadBank, loadGivenPages, shortTitle, uploadPages } from '../../lib/pageBank'
+import { groupBadge, groupColour } from '../../lib/groupLook'
 import { QUESTION_TYPES, qtypeLabel } from '../../lib/questionTypes'
 import { SkillIcon } from '../../components/SkillArt'
 import PagePreview from '../../components/bank/PagePreview'
@@ -27,10 +28,15 @@ export default function PracticeBank() {
   const [collection, setCollection] = useState(null)
   const [adding, setAdding] = useState(false)
 
+  // Which groups already got each page (small group badges on the rows).
+  const [given, setGiven] = useState({})
+  const [groups, setGroups] = useState([])
   const load = async () => {
     const r = await loadBank()
     setPages(r.pages)
     setMissing(r.missing)
+    loadGivenPages().then(setGiven)
+    supabase.from('groups').select('id, name, created_at').order('created_at').then(({ data }) => setGroups(data || []))
   }
   useEffect(() => {
     load()
@@ -67,6 +73,8 @@ export default function PracticeBank() {
         pages={(pages || []).filter((p) => p.collection === collection)}
         onBack={() => setCollection(null)}
         onChanged={load}
+        given={given}
+        groups={groups}
         onRenamed={(n) => {
           setCollection(n)
           load()
@@ -140,7 +148,7 @@ export default function PracticeBank() {
   )
 }
 
-function CollectionView({ name, pages, onBack, onChanged, onRenamed }) {
+function CollectionView({ name, pages, onBack, onChanged, onRenamed, given = {}, groups = [] }) {
   const [selected, setSelected] = useState(() => new Set())
   const [preview, setPreview] = useState(null)
   const [assign, setAssign] = useState(null)
@@ -288,6 +296,19 @@ function CollectionView({ name, pages, onBack, onChanged, onRenamed }) {
                 <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="h-4 w-4 shrink-0 accent-brass" aria-label={`Select ${p.title}`} />
                 <span className="w-8 shrink-0 text-[13px] font-extrabold text-mist">{p.position ?? ''}</span>
                 <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-paper">{shortTitle(p.title)}</span>
+                {given[p.url]?.size > 0 && (
+                  <span className="flex shrink-0 gap-1" title={`Given to ${groups.filter((g) => given[p.url].has(g.id)).map((g) => g.name).join(', ')}`}>
+                    {groups
+                      .map((g, i) => ({ g, c: groupColour(i) }))
+                      .filter(({ g }) => given[p.url].has(g.id))
+                      .slice(0, 4)
+                      .map(({ g, c }) => (
+                        <span key={g.id} className={`grid h-6 min-w-6 place-items-center rounded-lg px-1 text-[11px] font-extrabold ${c.tint} ${c.text}`}>
+                          {groupBadge(g.name)}
+                        </span>
+                      ))}
+                  </span>
+                )}
                 <button type="button" onClick={() => setPreview(p)} className="focus-ring shrink-0 rounded-[10px] px-2.5 py-1 text-[12px] font-extrabold text-brass hover:bg-panel-2">Preview</button>
               </li>
             ))}

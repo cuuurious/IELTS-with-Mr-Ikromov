@@ -23,12 +23,12 @@ const deadline = (days) => {
   return toLocalInput(d.toISOString())
 }
 
-export default function AssignPagesModal({ pages, onClose, onDone }) {
+export default function AssignPagesModal({ pages, onClose, onDone, initialGroups = [], initialTitle = '' }) {
   const { profile } = useAuth()
   const [groups, setGroups] = useState([])
   const [next, setNext] = useState({}) // group id -> next lesson start (ISO)
-  const [chosen, setChosen] = useState(() => new Set())
-  const [title, setTitle] = useState(pages.length === 1 ? shortTitle(pages[0].title) : `${pages[0]?.collection || 'Practice'} · ${pages.length} pages`)
+  const [chosen, setChosen] = useState(() => new Set(initialGroups))
+  const [title, setTitle] = useState(initialTitle || (pages.length === 1 ? shortTitle(pages[0].title) : `${pages[0]?.collection || 'Practice'} · ${pages.length} pages`))
   const [note, setNote] = useState('')
   const [due, setDue] = useState('next') // 'next' | 'none' | datetime-local string
   const [telegram, setTelegram] = useState(true)

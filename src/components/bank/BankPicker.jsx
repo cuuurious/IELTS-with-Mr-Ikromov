@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BANK_SKILLS, loadBank, shortTitle } from '../../lib/pageBank'
+import { BANK_SKILLS, loadBank, loadGivenPages, shortTitle } from '../../lib/pageBank'
 import { qtypeLabel } from '../../lib/questionTypes'
 
 /*
@@ -8,24 +8,34 @@ import { qtypeLabel } from '../../lib/questionTypes'
  * Skill tabs → books/sets → tick pages. onPick(pages) with the chosen rows.
  * onLibrary (optional) switches to the Materials Library picker.
  */
-export default function BankPicker({ open, onClose, onPick, onLibrary, initialSkill = 'reading' }) {
+export default function BankPicker({ open, onClose, onPick, onLibrary, initialSkill = 'reading', groupId = null }) {
   const [pages, setPages] = useState(null)
   const [missing, setMissing] = useState(false)
   const [skill, setSkill] = useState('reading')
   const [collection, setCollection] = useState(null)
   const [picked, setPicked] = useState(() => new Set())
+  const [given, setGiven] = useState({}) // url -> Set(groupId)
 
   useEffect(() => {
     if (!open) return
     setPicked(new Set())
     setSkill(initialSkill)
     setCollection(null)
+    if (groupId) loadGivenPages().then(setGiven)
     loadBank().then((r) => {
       setPages(r.pages)
       setMissing(r.missing)
     })
-  }, [open, initialSkill])
+  }, [open, initialSkill, groupId])
 
+  const isGiven = (p) => Boolean(groupId && given[p.url]?.has(groupId))
+  const givenIn = useMemo(() => {
+    const m = {}
+    ;(pages || []).forEach((p) => {
+      if (groupId && given[p.url]?.has(groupId)) m[p.collection] = (m[p.collection] || 0) + 1
+    })
+    return m
+  }, [pages, given, groupId])
   const collections = useMemo(() => {
     const map = {}
     ;(pages || []).filter((p) => (p.skill || 'reading') === skill).forEach((p) => {
@@ -55,7 +65,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
   return createPortal(
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-ink/85 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
       <div className="flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-ink shadow-2xl sm:rounded-[28px]" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Practice Bank">
-        <div className="registan-band flex items-center gap-3 px-5 py-4 text-white">
+        <div className="registan-band flex shrink-0 items-center gap-3 px-5 py-4 text-white">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">Practice Bank</p>
             <p className="font-brand text-[19px] font-semibold text-white">{collection || 'Choose pages'}</p>
@@ -77,6 +87,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
                       <input type="checkbox" checked={picked.has(p.id)} onChange={() => toggle(p.id)} className="h-4 w-4 accent-brass" />
                       <span className="w-8 shrink-0 text-[13px] font-extrabold text-mist">{p.position ?? ''}</span>
                       <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-paper">{shortTitle(p.title)}</span>
+                      {isGiven(p) && <span className="shrink-0 rounded-lg bg-reading-tint px-2 py-0.5 text-[11px] font-extrabold text-reading">✓ Given</span>}
                       {p.question_type && <span className="hidden shrink-0 rounded-lg bg-panel-2 px-2 py-0.5 text-[11px] font-extrabold text-paper-dim sm:inline">{qtypeLabel(p.question_type)}</span>}
                     </label>
                   </li>
@@ -111,7 +122,10 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
                       {list.map((c) => (
                         <button key={c.name} type="button" onClick={() => setCollection(c.name)} className="focus-ring flex flex-col items-start gap-0.5 rounded-[16px] bg-panel px-3.5 py-3 text-left transition hover:bg-panel-2">
                           <span className="text-[14px] font-extrabold leading-snug text-paper">{c.short}</span>
-                          <span className="text-[12px] font-bold text-mist">{c.n} {skill === 'listening' ? 'tests' : 'pages'}</span>
+                          <span className="text-[12px] font-bold text-mist">
+                            {c.n} {skill === 'listening' ? 'tests' : 'pages'}
+                            {givenIn[c.name] ? <span className="text-reading"> · {givenIn[c.name]} given</span> : null}
+                          </span>
                         </button>
                       ))}
                     </div>
