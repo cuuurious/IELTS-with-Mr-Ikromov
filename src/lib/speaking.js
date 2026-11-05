@@ -59,7 +59,8 @@ export async function loadSpeakingSet(id) {
 export async function loadSpeakingSets() {
   const { data, error } = await supabase.from('speaking_sets').select('id, number, title, topics, content, updated_at').order('number')
   if (error) throw error
-  return data || []
+  // The daily warm-up bank (migration_106) is not a test: keep it out of the lists.
+  return (data || []).filter((s) => !s.content?.warmup)
 }
 
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim()

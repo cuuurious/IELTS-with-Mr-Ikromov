@@ -6,7 +6,8 @@ import { MicIcon } from './SpeakingFeedback'
 
 /*
  * DAILY SPEAKING WARM-UP (2026-11-05, migration_104). Three Part 1
- * questions a day from the speaking sets (the same three all day), asked
+ * questions a day (the same three all day) from the warm-up bank, or
+ * from the speaking sets when there is no bank, asked
  * by the examiner's voice. The student answers out loud; where the
  * browser can, it shows what it heard, then the book's model answer and
  * phrases. Finishing pays a small coin bonus once a day. Mr Ikromov can
@@ -46,25 +47,43 @@ function useWarmup(studentId) {
       ])
       if (cancelled) return
       if (set.error || !set.data?.speaking_warmup || sets.error) return setState({ on: false })
-      const all = []
-      ;(sets.data || []).forEach((s) =>
-        (s.content?.part1 || []).forEach((t, ti) =>
-          (t.questions || []).forEach((q, qi) => q?.q && all.push({ setId: s.id, key: `${s.id}-${ti}-${qi}`, topic: t.topic, q: q.q, model: q.model || null }))
-        )
-      )
-      if (all.length < 3) return setState({ on: false })
-      // Not two questions on the same topic.
-      const order = seeded(all, `${today()}:${studentId}`)
-      const picked = []
-      for (const x of order) {
-        if (picked.some((p) => p.topic === x.topic && p.setId === x.setId)) continue
-        picked.push(x)
-        if (picked.length === 3) break
+      // Mr Ikromov's warm-up bank (migration_106: "Part 1 · Always in use")
+      // is used when it is there: one of its topics a day, its opening
+      // question first and two more in the book's order, like the start
+      // of a real test. Otherwise any Part 1 questions from the sets.
+      const bank = (sets.data || []).filter((s) => s.content?.warmup)
+      let picked = []
+      if (bank.length) {
+        const topics = []
+        bank.forEach((s) => (s.content.part1 || []).forEach((t) => t.questions?.length && topics.push({ setId: s.id, t })))
+        if (topics.length) {
+          const { setId, t } = seeded(topics, `${today()}:${studentId}:topic`)[0]
+          const qs = t.questions.map((q, qi) => ({ setId, key: `${setId}-${t.topic}-${qi}`, topic: t.topic, q: q.q, model: q.model || null, qi })).filter((x) => x.q)
+          const rest = seeded(qs.slice(1), `${today()}:${studentId}`).slice(0, 2).sort((a, b) => a.qi - b.qi)
+          picked = [qs[0], ...rest].filter(Boolean)
+        }
       }
-      // Few topics so far: fill up with other questions.
-      for (const x of order) {
-        if (picked.length === 3) break
-        if (!picked.includes(x)) picked.push(x)
+      if (picked.length < 3) {
+        picked = []
+        const all = []
+        ;(sets.data || []).forEach((s) =>
+          (s.content?.part1 || []).forEach((t, ti) =>
+            (t.questions || []).forEach((q, qi) => q?.q && all.push({ setId: s.id, key: `${s.id}-${ti}-${qi}`, topic: t.topic, q: q.q, model: q.model || null }))
+          )
+        )
+        if (all.length < 3) return setState({ on: false })
+        // Not two questions on the same topic.
+        const order = seeded(all, `${today()}:${studentId}`)
+        for (const x of order) {
+          if (picked.some((p) => p.topic === x.topic && p.setId === x.setId)) continue
+          picked.push(x)
+          if (picked.length === 3) break
+        }
+        // Few topics so far: fill up with other questions.
+        for (const x of order) {
+          if (picked.length === 3) break
+          if (!picked.includes(x)) picked.push(x)
+        }
       }
       setState({ on: true, coins: set.data.warmup_coins || 0, done: Boolean(led.data?.length), questions: picked })
     })()
@@ -88,7 +107,7 @@ export function WarmupCard({ studentId, className = '' }) {
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-speaking">Speaking warm-up</p>
           <p className="truncate text-[15px] font-extrabold text-paper">{w.done ? 'Done for today ✓' : '3 questions · about 3 minutes'}</p>
-          <p className="truncate text-[12px] font-bold text-mist">{w.questions.map((q) => q.topic).join(' · ')}{!w.done && w.coins ? ` · +${w.coins} coin${w.coins === 1 ? '' : 's'}` : ''}</p>
+          <p className="truncate text-[12px] font-bold text-mist">{[...new Set(w.questions.map((q) => q.topic))].join(' · ')}{!w.done && w.coins ? ` · +${w.coins} coin${w.coins === 1 ? '' : 's'}` : ''}</p>
         </div>
         <button type="button" onClick={() => setOpen(true)} className={`focus-ring h-10 shrink-0 rounded-[12px] px-3.5 text-[13px] font-extrabold ${w.done ? 'bg-panel-2 text-paper' : 'bg-saffron text-[#17213a]'}`}>
           {w.done ? 'Again' : 'Start'}
