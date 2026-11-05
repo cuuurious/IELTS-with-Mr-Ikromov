@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { SkillIcon } from '../../components/SkillArt'
 import { CoinAmount, CoinIcon, CoinStackArt, SKILL_GRADIENT, SKILL_TONES, youtubeId } from '../../components/coins/Coin'
+import RewardsShop from '../../components/coins/RewardsShop'
 
 /*
  * COINS & COURSES (2026-11-02).
@@ -95,6 +96,9 @@ export default function CoursesPage({ studentId, onOpenMockCenter }) {
       </div>
 
       {error && <p className="rounded-[14px] bg-urgent-tint px-4 py-3 text-sm font-bold text-coral">{error}</p>}
+
+      {/* Rewards shop (2026-11-05): real things for coins */}
+      <RewardsShop studentId={studentId} balance={balance} onBalance={setBalance} />
 
       {/* Spend */}
       <h2 className="-mb-2 font-brand text-[18px] font-semibold text-paper">Spend your coins</h2>

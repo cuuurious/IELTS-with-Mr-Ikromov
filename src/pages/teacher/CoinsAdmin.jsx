@@ -3,32 +3,36 @@ import { supabase } from '../../lib/supabaseClient'
 import { SkillIcon } from '../../components/SkillArt'
 import EmptyState from '../../components/EmptyState'
 import { CoinAmount, CoinIcon, SKILL_GRADIENT, youtubeId } from '../../components/coins/Coin'
+import ShopAdmin from '../../components/coins/ShopAdmin'
 
 /*
  * COINS & COURSES — teacher side (2026-11-02).
  *   Courses: video courses (unlisted YouTube links) students unlock with coins.
  *   Prices:  how many coins homework earns and what a mock costs.
  *   Students: everyone's balance.
+ *   Rewards shop (2026-11-05): real things students swap coins for.
  */
 const SKILLS = ['reading', 'listening', 'writing', 'speaking', 'vocab', 'general']
 const SKILL_LABEL = { reading: 'Reading', listening: 'Listening', writing: 'Writing', speaking: 'Speaking', vocab: 'Vocabulary', general: 'General' }
 
 export default function CoinsAdmin() {
-  const [tab, setTab] = useState('courses')
+  const [tab, setTab] = useState('shop')
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex w-fit gap-1 rounded-[16px] border border-line bg-panel p-1">
+      <div className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-[16px] border border-line bg-panel p-1">
         {[
+          ['shop', 'Rewards shop'],
           ['courses', 'Courses'],
           ['prices', 'Coins & prices'],
           ['students', 'Student coins'],
         ].map(([k, l]) => (
           <button key={k} type="button" onClick={() => setTab(k)} aria-pressed={tab === k}
-            className={`focus-ring h-10 rounded-[12px] px-4 text-sm font-extrabold transition ${tab === k ? 'bg-brass text-onbrass' : 'text-paper-dim hover:text-paper'}`}>
+            className={`focus-ring h-10 shrink-0 rounded-[12px] px-4 text-sm font-extrabold transition ${tab === k ? 'bg-brass text-onbrass' : 'text-paper-dim hover:text-paper'}`}>
             {l}
           </button>
         ))}
       </div>
+      {tab === 'shop' && <ShopAdmin />}
       {tab === 'courses' && <CoursesTab />}
       {tab === 'prices' && <PricesTab />}
       {tab === 'students' && <StudentsTab />}

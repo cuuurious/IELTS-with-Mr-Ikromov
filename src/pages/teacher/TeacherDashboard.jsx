@@ -270,7 +270,7 @@ export default function TeacherDashboard() {
         // from Telegram to the bot (2026-09-30).
         { key: 'materials', label: 'Materials Library', icon: IconFolder, subtitle: 'Every teaching file in one place: upload here or forward from Telegram.' },
         { key: 'leaderboards', label: 'Leaderboards', icon: IconLeaderboard, subtitle: 'Ranked by homework handed in, then by completion rate.' },
-        { key: 'coins', label: 'Coins & Courses', icon: IconCoins, subtitle: 'Video courses students unlock with coins, and what coins are worth.' },
+        { key: 'coins', label: 'Coins & Rewards', icon: IconCoins, subtitle: 'The rewards shop, video courses students unlock with coins, and what coins are worth.' },
         { key: 'ai-grading', label: 'AI Grading', icon: IconAI },
         {
           key: 'approvals',

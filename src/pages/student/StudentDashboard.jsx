@@ -704,7 +704,7 @@ const messageId = linkParts[2] || null
         items: [
           { key: 'wordlists', label: 'Word lists', icon: IconWordlist },
           { key: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard },
-          { key: 'courses', label: 'Coins & courses', icon: IconCoins },
+          { key: 'courses', label: 'Coins & rewards', icon: IconCoins },
         ],
       },
       {
