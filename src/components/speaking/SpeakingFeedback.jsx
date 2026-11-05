@@ -3,6 +3,7 @@ import SkillAudioPlayer from '../SkillAudioPlayer'
 import { BandRing } from '../homework/TaskShell'
 import { matchPercent } from '../homework/ShadowingTask'
 import { modelFor } from '../../lib/speaking'
+import { TeacherBandNote } from '../homework/TeacherBand'
 
 /*
  * Speaking feedback (2026-11-05): the AI band and what to do next, for
@@ -187,6 +188,7 @@ export default function SpeakingFeedback({ set, results, onAgain = null, teacher
 
   return (
     <div className="flex flex-col gap-4">
+      {!teacher && <TeacherBandNote teacher={results?.teacher} />}
       {ai?.status === 'done' ? (
         <section className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-4 sm:p-6">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">

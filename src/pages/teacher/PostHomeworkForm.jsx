@@ -9,6 +9,7 @@ import { safeFileName } from '../../lib/storageKey'
 import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
 import { SUBMISSION_TYPE_OPTIONS } from '../../lib/submissionTypes'
 import { MOCK_TASK_MODES, DEFAULT_TIME_LIMITS } from '../../lib/writingMock'
+import MockBankPicker from '../../components/writing/MockBankPicker'
 import MaterialPicker, { PickedMaterialsList, attachMaterialsToHomework } from '../../components/MaterialPicker'
 import Icon from '../../components/Icon'
 import { SkillIcon } from '../../components/SkillArt'
@@ -325,7 +326,7 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
       }
       let mock_task1_image_url = null
       if (isMock && mockTask1Image) {
-        const path = `${teacherId}/${groupId}/mock-task1-${safeFileName(mockTask1Image.name)}`
+        const path = `${teacherId}/${groupId}/mock-task1-${Date.now()}-${safeFileName(mockTask1Image.name)}`
         const { error: mockUpErr } = await supabase.storage
           .from('homework-files')
           .upload(path, mockTask1Image, { contentType: guessMimeType(mockTask1Image.name, mockTask1Image.type) })
@@ -613,6 +614,15 @@ export default function PostHomeworkForm({ groupId, teacherId, groupName = '', o
                     min
                   </label>
                 </div>
+                <MockBankPicker
+                  groupId={groupId}
+                  mode={mockTaskMode}
+                  onTask1={({ prompt, file }) => {
+                    setMockTask1Prompt(prompt)
+                    setMockTask1Image(file)
+                  }}
+                  onTask2={({ prompt }) => setMockTask2Prompt(prompt)}
+                />
                 {(mockTaskMode === 'task1' || mockTaskMode === 'full') && (
                   <div className="flex flex-col gap-2">
                     <p className="text-[13px] font-extrabold text-paper-dim">Task 1 prompt</p>

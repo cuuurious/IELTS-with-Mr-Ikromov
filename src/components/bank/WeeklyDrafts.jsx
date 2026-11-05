@@ -11,6 +11,9 @@ import { groupColour, groupDisplayName } from '../../lib/groupLook'
  * question type (5+ answers, under 70%) and the next 2 pages of that type
  * it hasn't done, easiest first, due at its next lesson. Nothing is sent
  * until the teacher presses Post (one group) or Post all.
+ * Writing & speaking (2026-11-05): for every group also one new writing
+ * page (Task 1 or Task 2, whichever it has had less, from the type it
+ * has had least) and one new speaking test part.
  */
 const PER_GROUP = 2
 
@@ -69,7 +72,7 @@ export default function WeeklyDrafts({ pages, given, stats, groups, onPosted }) 
 
   const drafts = useMemo(() => {
     if (!weak || !pages) return []
-    return groups
+    const out = groups
       .map((g, i) => {
         for (const w of weak[g.id] || []) {
           const fresh = pages
@@ -83,12 +86,34 @@ export default function WeeklyDrafts({ pages, given, stats, groups, onPosted }) 
               return (a.position ?? 0) - (b.position ?? 0)
             })
             .slice(0, PER_GROUP)
-          if (fresh.length) return { g, i, w, pages: fresh }
+          if (fresh.length) return { key: g.id, g, i, w, title: `${qtypeLabel(w.qtype)} practice`, label: qtypeLabel(w.qtype), pages: fresh }
         }
         return null
       })
       .filter(Boolean)
-      .filter((d) => !skipped.has(d.g.id))
+    // One new writing page + one new speaking part per group.
+    const usedBy = (gid, list) => list.filter((p) => given[p.url]?.has(gid))
+    const leastGiven = (gid, list, keyOf) => {
+      const counts = {}
+      list.forEach((p) => (counts[keyOf(p)] = counts[keyOf(p)] || 0))
+      usedBy(gid, list).forEach((p) => (counts[keyOf(p)] += 1))
+      const fresh = list.filter((p) => !given[p.url]?.has(gid))
+      return fresh.sort((a, b) => counts[keyOf(a)] - counts[keyOf(b)] || (a.position ?? 0) - (b.position ?? 0))[0] || null
+    }
+    const t1 = pages.filter((p) => p.question_type === 'writing_task1')
+    const t2 = pages.filter((p) => p.question_type === 'writing_task2')
+    const sp = pages.filter((p) => /^speaking_part/.test(p.question_type || ''))
+    const ws = groups
+      .map((g, i) => {
+        const writingList = usedBy(g.id, t1).length <= usedBy(g.id, t2).length && t1.length ? t1 : t2
+        const w = leastGiven(g.id, writingList, (p) => p.collection)
+        const s = leastGiven(g.id, sp, (p) => p.question_type)
+        const list = [w, s].filter(Boolean)
+        if (!list.length) return null
+        return { key: `${g.id}:ws`, g, i, title: 'Writing & speaking practice', label: 'Writing & speaking', pages: list }
+      })
+      .filter(Boolean)
+    return [...out, ...ws].filter((d) => !skipped.has(d.key))
   }, [weak, pages, groups, given, stats, skipped])
 
   if (!weak || (!drafts.length && !Object.keys(done).length)) return null
@@ -102,28 +127,28 @@ export default function WeeklyDrafts({ pages, given, stats, groups, onPosted }) 
   }
 
   const post = async (d) => {
-    setBusy(d.g.id)
+    setBusy(d.key)
     try {
       await postPagesHomework({
         groupId: d.g.id,
         pages: d.pages,
-        title: `${qtypeLabel(d.w.qtype)} practice`,
+        title: d.title,
         dueIso: dueFor(d.g.id),
         teacherId: profile?.id,
         telegramLinked: Boolean(d.g.telegram_chat_id),
       })
-      setDone((m) => ({ ...m, [d.g.id]: 'ok' }))
-      skip(d.g.id)
+      setDone((m) => ({ ...m, [d.key]: 'ok' }))
+      skip(d.key)
       onPosted?.()
     } catch (e) {
-      setDone((m) => ({ ...m, [d.g.id]: e.message }))
+      setDone((m) => ({ ...m, [d.key]: e.message }))
     } finally {
       setBusy('')
     }
   }
-  const skip = (gid) =>
+  const skip = (key) =>
     setSkipped((prev) => {
-      const n = new Set(prev).add(gid)
+      const n = new Set(prev).add(key)
       try {
         window.localStorage.setItem(weekKey(), JSON.stringify([...n]))
       } catch {
@@ -153,19 +178,19 @@ export default function WeeklyDrafts({ pages, given, stats, groups, onPosted }) 
           {drafts.map((d) => {
             const c = groupColour(d.i)
             return (
-              <li key={d.g.id} className="flex flex-col gap-2 rounded-[16px] bg-panel-2 p-3">
+              <li key={d.key} className="flex flex-col gap-2 rounded-[16px] bg-panel-2 p-3">
                 <div className="flex items-center gap-2">
                   <span className={`rounded-lg px-2 py-0.5 text-[12px] font-extrabold ${c.tint} ${c.text}`}>{groupDisplayName(d.g.name)}</span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-paper">{qtypeLabel(d.w.qtype)}</span>
-                  <span className={`shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-extrabold ${d.w.pct < 50 ? 'bg-urgent-tint text-coral' : 'bg-[color-mix(in_srgb,var(--color-saffron)_20%,var(--color-panel))] text-amber'}`}>{d.w.pct}%</span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-paper">{d.label}</span>
+                  {d.w && <span className={`shrink-0 rounded-lg px-1.5 py-0.5 text-[11px] font-extrabold ${d.w.pct < 50 ? 'bg-urgent-tint text-coral' : 'bg-[color-mix(in_srgb,var(--color-saffron)_20%,var(--color-panel))] text-amber'}`}>{d.w.pct}%</span>}
                 </div>
                 <p className="truncate text-[12px] font-semibold text-paper-dim">{d.pages.map((p) => shortTitle(p.title)).join(' · ')}</p>
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-mist">Due {next[d.g.id] ? `next lesson · ${lessonTime(next[d.g.id])}` : 'in 2 days'}</span>
-                  {done[d.g.id] && done[d.g.id] !== 'ok' && <span className="truncate text-[11px] font-bold text-coral">{done[d.g.id]}</span>}
-                  <button type="button" onClick={() => skip(d.g.id)} className="focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold text-mist hover:text-paper">Skip</button>
+                  {done[d.key] && done[d.key] !== 'ok' && <span className="truncate text-[11px] font-bold text-coral">{done[d.key]}</span>}
+                  <button type="button" onClick={() => skip(d.key)} className="focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold text-mist hover:text-paper">Skip</button>
                   <button type="button" onClick={() => post(d)} disabled={Boolean(busy)} className="focus-ring h-8 rounded-[10px] bg-panel px-3 text-[12px] font-extrabold text-brass hover:ring-1 hover:ring-brass/50 disabled:opacity-50">
-                    {busy === d.g.id ? 'Posting…' : 'Post'}
+                    {busy === d.key ? 'Posting…' : 'Post'}
                   </button>
                 </div>
               </li>
@@ -173,9 +198,9 @@ export default function WeeklyDrafts({ pages, given, stats, groups, onPosted }) 
           })}
           {Object.entries(done)
             .filter(([, v]) => v === 'ok')
-            .map(([gid]) => (
-              <li key={`ok-${gid}`} className="rounded-[16px] bg-reading-tint px-3 py-2 text-[12px] font-extrabold text-reading">
-                Posted to {groupDisplayName(groups.find((g) => g.id === gid)?.name || '')} ✓
+            .map(([key]) => (
+              <li key={`ok-${key}`} className="rounded-[16px] bg-reading-tint px-3 py-2 text-[12px] font-extrabold text-reading">
+                Posted to {groupDisplayName(groups.find((g) => g.id === key.split(':')[0])?.name || '')}{key.endsWith(':ws') ? ' · writing & speaking' : ''} ✓
               </li>
             ))}
         </ul>

@@ -41,6 +41,7 @@ export default function RewardsShop({ studentId, balance, onBalance }) {
   const [error, setError] = useState('')
   const [done, setDone] = useState('')
   const [missing, setMissing] = useState(false)
+  const [wishes, setWishes] = useState(null) // Set(item_id); null before migration_103
 
   const load = useCallback(async () => {
     const [it, or] = await Promise.all([
@@ -54,7 +55,24 @@ export default function RewardsShop({ studentId, balance, onBalance }) {
     }
     setItems(it.data || [])
     setOrders(or.data || [])
+    const w = await supabase.from('shop_wishes').select('item_id').eq('user_id', studentId)
+    setWishes(w.error ? null : new Set((w.data || []).map((r) => r.item_id)))
   }, [studentId])
+
+  // Star the reward you're saving for (shown on the home page).
+  const toggleWish = async (it) => {
+    const on = wishes?.has(it.id)
+    setWishes((prev) => {
+      const n = new Set(prev)
+      if (on) n.delete(it.id)
+      else n.add(it.id)
+      return n
+    })
+    const { error: e } = on
+      ? await supabase.from('shop_wishes').delete().eq('user_id', studentId).eq('item_id', it.id)
+      : await supabase.from('shop_wishes').insert({ user_id: studentId, item_id: it.id })
+    if (e) load()
+  }
 
   useEffect(() => {
     load()
@@ -92,7 +110,7 @@ export default function RewardsShop({ studentId, balance, onBalance }) {
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="font-brand text-[18px] font-semibold text-paper">Rewards shop</h2>
-        <p className="text-[13px] font-semibold text-mist">Swap your coins for real things. Mr Ikromov hands them over in class.</p>
+        <p className="text-[13px] font-semibold text-mist">Swap your coins for real things. Mr Ikromov hands them over in class.{wishes ? ' Tap ☆ on what you’re saving for.' : ''}</p>
       </div>
 
       {done && (
@@ -121,6 +139,17 @@ export default function RewardsShop({ studentId, balance, onBalance }) {
                     <span className={`absolute left-2 top-2 rounded-lg px-2 py-0.5 text-[11px] font-extrabold ${sold ? 'bg-coral text-white' : 'bg-panel/90 text-paper'}`}>
                       {sold ? 'Sold out' : `${it.stock} left`}
                     </span>
+                  )}
+                  {wishes && (
+                    <button
+                      type="button"
+                      onClick={() => toggleWish(it)}
+                      aria-pressed={wishes.has(it.id)}
+                      title={wishes.has(it.id) ? 'Saving for this — tap to remove' : 'Save for this'}
+                      className={`focus-ring absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-[12px] text-[18px] leading-none ${wishes.has(it.id) ? 'bg-saffron text-[#17213a]' : 'bg-panel/90 text-mist hover:text-amber'}`}
+                    >
+                      {wishes.has(it.id) ? '★' : '☆'}
+                    </button>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
@@ -201,6 +230,57 @@ export default function RewardsShop({ studentId, balance, onBalance }) {
           </div>,
           document.body
         )}
+    </section>
+  )
+}
+
+/*
+ * The reward a student is saving for, on their home page (2026-11-05):
+ * photo, coins so far and what is left. Quiet when nothing is starred.
+ */
+export function WishGoal({ studentId, onOpen, className = '' }) {
+  const [goal, setGoal] = useState(null)
+  useEffect(() => {
+    if (!studentId) return undefined
+    let cancelled = false
+    ;(async () => {
+      const w = await supabase.from('shop_wishes').select('item_id, created_at, shop_items(id, title, image_url, price, stock, is_active)').eq('user_id', studentId).order('created_at', { ascending: false })
+      if (cancelled || w.error) return
+      const items = (w.data || []).map((r) => r.shop_items).filter((it) => it && it.is_active)
+      if (!items.length) return
+      const bal = await supabase.rpc('my_coins')
+      if (cancelled) return
+      const balance = bal.error ? 0 : bal.data ?? 0
+      const item = items.find((it) => it.price > balance) || items[0]
+      setGoal({ item, balance, more: items.length - 1 })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [studentId])
+  if (!goal) return null
+  const { item, balance } = goal
+  const left = Math.max(0, item.price - balance)
+  const pct = Math.min(100, Math.round((balance / item.price) * 100))
+  const sold = item.stock != null && item.stock <= 0
+  return (
+    <section className={`flex items-center gap-3 rounded-[20px] border border-line bg-panel p-3 sm:gap-4 sm:p-4 ${className}`}>
+      <span className="h-16 w-14 shrink-0 overflow-hidden rounded-[12px] sm:h-20 sm:w-16">
+        <ItemPhoto src={item.image_url} title={item.title} className="h-full" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-amber">Saving for</p>
+        <p className="truncate text-[15px] font-extrabold text-paper">{item.title}</p>
+        <div className="mt-1.5 h-2 overflow-hidden rounded bg-panel-2">
+          <div className="h-full rounded bg-saffron" style={{ width: `${pct}%` }} />
+        </div>
+        <p className="mt-1 text-[12px] font-bold text-mist">
+          {sold ? 'Sold out for now' : left > 0 ? `${balance} of ${item.price} coins · ${left} more to go` : `You have enough coins (${balance})!`}
+        </p>
+      </div>
+      <button type="button" onClick={onOpen} className={`focus-ring h-10 shrink-0 rounded-[12px] px-3.5 text-[13px] font-extrabold ${left === 0 && !sold ? 'bg-saffron text-[#17213a]' : 'bg-panel-2 text-paper'}`}>
+        {left === 0 && !sold ? 'Get it' : 'Shop'}
+      </button>
     </section>
   )
 }

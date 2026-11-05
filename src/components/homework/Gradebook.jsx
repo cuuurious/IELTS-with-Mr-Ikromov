@@ -4,6 +4,7 @@ import SkillAudioPlayer from '../SkillAudioPlayer'
 import { supabase } from '../../lib/supabaseClient'
 import SpeakingFeedback from '../speaking/SpeakingFeedback'
 import WritingFeedback from './WritingFeedback'
+import TeacherBand from './TeacherBand'
 import { SkillIcon } from '../SkillArt'
 import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 import WeakSpots from '../WeakSpots'
@@ -170,13 +171,14 @@ export default function Gradebook({ roster, homeworks, accent }) {
           attempts={attempts.filter((a) => a.user_id === student.id)}
           hwById={hwById}
           onClose={() => setStudent(null)}
+          onBand={(id, band) => setAttempts((prev) => prev.map((a) => (a.id === id ? { ...a, band } : a)))}
         />
       )}
     </section>
   )
 }
 
-function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
+function StudentGrades({ student, tasks, attempts, hwById, onClose, onBand }) {
   const rows = tasks
     .map((t) => ({ t, s: summariseAttempts(attempts.filter((a) => a.task_id === t.id)), hw: hwById[t.homework_id] }))
     .sort((a, b) => new Date(b.hw?.created_at || 0) - new Date(a.hw?.created_at || 0))
@@ -254,7 +256,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
                   </div>
                   <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
                   {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
-                  {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} /> : <PageAnswer attemptId={s.first.id} />)}
+                  {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} onBand={onBand} /> : <PageAnswer attemptId={s.first.id} onBand={onBand} writing={/\/writing\//.test(t.html_url || '')} />)}
                 </li>
               )
             })}
@@ -268,7 +270,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
 
 // A speaking test: recordings, what was heard and the AI feedback
 // (2026-11-05). "Mark again" re-runs the AI marking.
-function SpeakingAnswer({ attemptId, url }) {
+function SpeakingAnswer({ attemptId, url, onBand }) {
   const [open, setOpen] = useState(false)
   const [row, setRow] = useState(undefined)
   const [set, setSet] = useState(null)
@@ -307,6 +309,17 @@ function SpeakingAnswer({ attemptId, url }) {
                   {busy ? 'Marking… (about a minute)' : row?.results?.ai?.status === 'done' ? 'Mark again with AI' : 'Mark with AI'}
                 </button>
               )}
+              {row && (
+                <TeacherBand
+                  attemptId={attemptId}
+                  results={row.results}
+                  aiBand={row.results?.ai?.overall_band}
+                  onSaved={(next) => {
+                    setRow((r) => ({ ...r, results: next }))
+                    onBand?.(attemptId, next.teacher?.band ?? next.ai?.overall_band ?? null)
+                  }}
+                />
+              )}
               <SpeakingFeedback set={set} results={row?.results} teacher />
             </>
           )}
@@ -318,7 +331,7 @@ function SpeakingAnswer({ attemptId, url }) {
 
 // What the student typed on a practice page (Writing pages) and the
 // page's own part scores — loaded when the teacher opens it (2026-11-02).
-function PageAnswer({ attemptId }) {
+function PageAnswer({ attemptId, onBand, writing = false }) {
   const [open, setOpen] = useState(false)
   const [res, setRes] = useState(undefined)
   const toggle = async () => {
@@ -349,6 +362,17 @@ function PageAnswer({ attemptId }) {
             <p className="text-[12px] font-bold text-paper-dim">
               Page self-check: <span className="font-extrabold text-paper">{res.check.got}/{res.check.tot}</span> features of the sample answer (not a band score)
             </p>
+          )}
+          {writing && res?.texts?.length > 0 && (
+            <TeacherBand
+              attemptId={attemptId}
+              results={res}
+              aiBand={res?.ai?.overall_band}
+              onSaved={(next) => {
+                setRes(next)
+                onBand?.(attemptId, next.teacher?.band ?? next.ai?.overall_band ?? null)
+              }}
+            />
           )}
           {res?.ai && <WritingFeedback results={res} teacher />}
           {!res?.ai && (res?.texts || []).map((t) => (

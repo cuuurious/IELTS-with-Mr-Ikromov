@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BandRing } from './TaskShell'
+import { TeacherBandNote } from './TeacherBand'
 
 /*
  * AI feedback on a Writing Task 1 / Task 2 page (2026-11-05). Shown to
@@ -14,7 +15,7 @@ export default function WritingFeedback({ results, teacher = false }) {
   const ai = results?.ai || null
   const essay = results?.texts?.[0]?.text || ''
 
-  if (!ai) return null
+  if (!ai) return results?.teacher && !teacher ? <TeacherBandNote teacher={results.teacher} /> : null
   if (ai.status === 'processing') {
     return (
       <section className="flex items-center gap-3 rounded-[20px] border border-line bg-panel p-5">
@@ -26,7 +27,7 @@ export default function WritingFeedback({ results, teacher = false }) {
   if (ai.status === 'error') {
     return <section className="rounded-[20px] bg-urgent-tint px-4 py-3 text-sm font-bold text-coral">Marking did not finish: {ai.error}</section>
   }
-  if (ai.status !== 'done') return null
+  if (ai.status !== 'done') return results?.teacher && !teacher ? <TeacherBandNote teacher={results.teacher} /> : null
 
   const tabs = [
     ...(ai.corrections?.length ? [['fix', 'Fix these']] : []),
@@ -39,6 +40,7 @@ export default function WritingFeedback({ results, teacher = false }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {!teacher && <TeacherBandNote teacher={results?.teacher} />}
       <section className="flex flex-col gap-4 rounded-[20px] border border-line bg-panel p-4 sm:p-6">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
           <BandRing value={ai.overall_band != null ? Number(ai.overall_band).toFixed(1) : null} label="AI band" tone="#9a5b12" />

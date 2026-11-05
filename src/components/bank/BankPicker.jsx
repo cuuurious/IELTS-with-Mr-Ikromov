@@ -142,7 +142,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
           ) : null}
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">{collection && !q ? splitSet(collection).book || skillLabel : `${heading || skillLabel} · Practice Bank`}</p>
-            <p className="truncate font-brand text-[19px] font-semibold text-white">{collection && !q ? (splitSet(collection).book === 'Full Reading Tests' ? splitSet(collection).short : splitSet(collection).subtitle) : 'Choose pages'}</p>
+            <p className="truncate font-brand text-[19px] font-semibold text-white">{collection && !q ? (/^Full (Reading|Listening) Tests$/.test(splitSet(collection).book) ? splitSet(collection).short : splitSet(collection).subtitle) : 'Choose pages'}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white/15 hover:bg-white/25">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>

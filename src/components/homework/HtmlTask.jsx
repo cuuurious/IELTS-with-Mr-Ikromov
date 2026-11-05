@@ -130,7 +130,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       .limit(1)
       .then(({ data }) => {
         const last = data?.[0]
-        if (!cancelled && last?.results?.ai) setFb({ id: last.id, results: last.results })
+        if (!cancelled && (last?.results?.ai || last?.results?.teacher)) setFb({ id: last.id, results: last.results })
       })
     return () => {
       cancelled = true
@@ -227,7 +227,10 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
               onClick={() => setShowFb(true)}
               className="focus-ring h-10 shrink-0 rounded-[12px] bg-white/15 px-3 text-sm font-extrabold text-white hover:bg-white/25"
             >
-              {fb.results?.ai?.status === 'done' && fb.results.ai.overall_band != null ? `Feedback · ${Number(fb.results.ai.overall_band).toFixed(1)}` : 'Feedback'}
+              {(() => {
+                const b = fb.results?.teacher?.band ?? (fb.results?.ai?.status === 'done' ? fb.results.ai.overall_band : null)
+                return b != null ? `Feedback · ${Number(b).toFixed(1)}` : 'Feedback'
+              })()}
             </button>
           )}
           {showFb ? (

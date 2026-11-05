@@ -206,7 +206,7 @@ export default function EditHomeworkModal({ homework, onClose, onSaved }) {
       if (isMock && mockTask1Image) {
         // ASCII-safe storage keys (2026-10-06) — Cyrillic/Uzbek file names
         // were rejected by Storage; the original name stays in attachment_name.
-        const path = `${homework.created_by}/${homework.group_id}/mock-task1-${safeFileName(mockTask1Image.name)}`
+        const path = `${homework.created_by}/${homework.group_id}/mock-task1-${Date.now()}-${safeFileName(mockTask1Image.name)}`
         const { error: upErr } = await supabase.storage
           .from('homework-files')
           .upload(path, mockTask1Image, { contentType: guessMimeType(mockTask1Image.name, mockTask1Image.type) })

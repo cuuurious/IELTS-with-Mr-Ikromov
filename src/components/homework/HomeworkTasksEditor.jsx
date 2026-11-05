@@ -25,10 +25,12 @@ import { TASK_KINDS, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 // 3-passage tests. `book` keeps only that book; `notBook` leaves it out.
 // Writing is two tiles too: Task 1 reports and Task 2 essays.
 const FULL_READING = 'Full Reading Tests'
+const FULL_LISTENING = 'Full Listening Tests'
 const PAGE_TILES = [
   { id: 'reading-type', skill: 'reading', notBook: FULL_READING, label: 'Reading by type', unit: 'pages', tint: 'bg-reading-tint', text: 'text-reading' },
   { id: 'reading-full', skill: 'reading', book: FULL_READING, label: 'Full reading test', unit: 'tests', tint: 'bg-reading-tint', text: 'text-reading', hideEmpty: true },
-  { id: 'listening', skill: 'listening', label: 'Listening', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
+  { id: 'listening', skill: 'listening', notBook: FULL_LISTENING, label: 'Listening by part', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
+  { id: 'listening-full', skill: 'listening', book: FULL_LISTENING, label: 'Full listening test', unit: 'tests', tint: 'bg-listening-tint', text: 'text-listening', hideEmpty: true },
   { id: 'writing-1', skill: 'writing', book: 'Writing Task 1', label: 'Writing Task 1', unit: 'reports', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },

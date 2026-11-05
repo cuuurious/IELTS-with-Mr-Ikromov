@@ -64,6 +64,7 @@ export function splitSet(name) {
   const short = cut > 0 ? name.slice(cut + 3) : name
   const part = /Part\s*(\d)/i.exec(name)
   if (book === 'Full Reading Tests') return { book, short, subtitle: '3 passages · 40 questions · 60 min' }
+  if (book === 'Full Listening Tests') return { book, short, subtitle: '4 parts · 40 questions · 30 min' }
   if (book === 'Speaking Tests') {
     const sp = { 'Full tests': 'Parts 1, 2 and 3 · 11–14 min', 'Part 1': 'Familiar topics · 4–5 min', 'Part 2': 'Cue card · 3–4 min', 'Part 3': 'Discussion · 4–5 min' }[short]
     return { book, short, subtitle: sp || short }
@@ -75,7 +76,7 @@ export function splitSet(name) {
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
   if (!unit && skill === 'writing') unit = /^Writing Task 1/.test(name) ? 'reports' : 'essays'
-  if (!unit && (/^Full Reading Tests/.test(name) || skill === 'speaking')) unit = 'tests'
+  if (!unit && (/^Full (Reading|Listening) Tests/.test(name) || skill === 'speaking')) unit = 'tests'
   return (
     <button
       type="button"

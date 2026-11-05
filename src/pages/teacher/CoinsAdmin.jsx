@@ -274,13 +274,14 @@ const PRICE_FIELDS = [
   { key: 'homework_on_time', label: 'Homework handed in on time', unit: 'coins earned' },
   { key: 'homework_late', label: 'Homework handed in late', unit: 'coins earned' },
   // First try of each in-site task, by its score (migration_95).
-  { key: 'score_coins_top', label: 'Task score 90% or more', unit: 'coins earned' },
-  { key: 'score_coins_good', label: 'Task score 70% or more', unit: 'coins earned' },
-  { key: 'score_coins_ok', label: 'Task score 50% or more', unit: 'coins earned' },
+  { key: 'score_coins_top', label: 'Task score 90%+ · or band 7+', unit: 'coins earned' },
+  { key: 'score_coins_good', label: 'Task score 70%+ · or band 6+', unit: 'coins earned' },
+  { key: 'score_coins_ok', label: 'Task score 50%+ · or band 5+', unit: 'coins earned' },
   { key: 'streak_length', label: 'Homeworks in a row for a bonus', unit: 'homeworks' },
   { key: 'streak_bonus', label: 'Streak bonus', unit: 'coins earned' },
   { key: 'top_group_bonus', label: 'Week’s top group, each student', unit: 'coins earned' },
   { key: 'mock_slot_price', label: 'Full mock request', unit: 'coins it costs' },
+  { key: 'warmup_coins', label: 'Daily speaking warm-up done', unit: 'coins earned' },
 ]
 
 function PricesTab() {
@@ -296,7 +297,8 @@ function PricesTab() {
   const save = async () => {
     setSaved('')
     // Score tiers only once migration_95 has added their columns.
-    const patch = Object.fromEntries(PRICE_FIELDS.filter((f) => f.key in values || !f.key.startsWith("score_")).map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
+    const patch = Object.fromEntries(PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins')).map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
+    if ('speaking_warmup' in values) patch.speaking_warmup = Boolean(values.speaking_warmup)
     const { error: e } = await supabase.from('coin_settings').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
     if (e) setError(e.message)
     else setSaved('Saved.')
@@ -305,7 +307,7 @@ function PricesTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {PRICE_FIELDS.filter((f) => f.key in values || !f.key.startsWith("score_")).map((f) => (
+        {PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins')).map((f) => (
           <label key={f.key} className={`flex flex-col gap-2 rounded-[20px] p-5 ${f.key === 'mock_slot_price' ? 'bg-[color-mix(in_srgb,var(--color-brass)_10%,var(--color-panel))]' : 'bg-[color-mix(in_srgb,var(--color-saffron)_12%,var(--color-panel))]'}`}>
             <span className="text-sm font-extrabold text-paper">{f.label}</span>
             <span className="flex items-center gap-2">
@@ -317,6 +319,15 @@ function PricesTab() {
           </label>
         ))}
       </div>
+      {'speaking_warmup' in values && (
+        <label className="flex items-start gap-3 rounded-[20px] border border-line bg-panel p-4">
+          <input type="checkbox" checked={Boolean(values.speaking_warmup)} onChange={(e) => setValues({ ...values, speaking_warmup: e.target.checked })} className="mt-1 h-4 w-4 accent-brass" />
+          <span>
+            <span className="block text-sm font-extrabold text-paper">Daily speaking warm-up for students</span>
+            <span className="block text-[13px] font-semibold text-mist">Three Part 1 questions a day from your speaking sets, on the students’ home page. They answer out loud and see a Band 8 answer. No AI marking.</span>
+          </span>
+        </label>
+      )}
       <p className="text-[13px] font-semibold text-mist">Coins are only earned — nobody can buy them or give them by hand. A declined mock request gives the coins back.</p>
       {error && <p className="text-sm font-bold text-coral">{error}</p>}
       <div className="flex items-center gap-3">

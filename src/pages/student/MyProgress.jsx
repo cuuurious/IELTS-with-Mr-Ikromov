@@ -154,6 +154,8 @@ export default function MyProgress({ studentId }) {
         <Tile label="Strongest" value={view.best ? SKILLS[view.best.k].label : '—'} sub={view.best ? `${view.best.avg}% average` : 'no scores yet'} />
       </div>
 
+      <BandProgress studentId={studentId} />
+
       <section className="flex flex-col gap-3 rounded-[20px] border border-line bg-panel p-5">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="mr-auto font-brand text-[18px] font-semibold text-paper">Last 10 weeks</h2>
@@ -285,5 +287,119 @@ function Chart({ weeks, series }) {
         )
       })}
     </svg>
+  )
+}
+
+/*
+ * Writing and Speaking bands over time (2026-11-05): every marked
+ * Writing page / Speaking test homework (Mr Ikromov's band if he gave
+ * one, otherwise the AI's), the latest band, the trend and the criterion
+ * to work on (lowest average over the last five).
+ */
+const BAND_SKILLS = [
+  { k: 'writing', label: 'Writing', color: '#9a5b12', tint: 'bg-writing-tint', text: 'text-writing' },
+  { k: 'speaking', label: 'Speaking', color: '#6a3f99', tint: 'bg-speaking-tint', text: 'text-speaking' },
+]
+
+function BandProgress({ studentId }) {
+  const [rows, setRows] = useState(null)
+  useEffect(() => {
+    if (!studentId) return undefined
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('homework_attempts')
+        .select('id, task_id, attempt_no, submitted_at, band, criteria:results->ai->criteria')
+        .eq('user_id', studentId)
+        .not('submitted_at', 'is', null)
+        .not('band', 'is', null)
+        .is('score', null)
+        .order('submitted_at', { ascending: true })
+        .limit(200)
+      if (cancelled || error || !data?.length) return setRows([])
+      const ids = [...new Set(data.map((r) => r.task_id))]
+      const { data: tasks } = await supabase.from('homework_tasks').select('id, kind, html_url, title').in('id', ids)
+      if (cancelled) return
+      const byId = Object.fromEntries((tasks || []).map((t) => [t.id, t]))
+      setRows(
+        data
+          .map((r) => {
+            const t = byId[r.task_id]
+            const url = t?.html_url || ''
+            const k = /^speaking:/.test(url) ? 'speaking' : /\/writing\//.test(url) ? 'writing' : null
+            return k ? { ...r, k, title: t?.title || '' } : null
+          })
+          .filter(Boolean)
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [studentId])
+
+  if (!rows || !rows.length) return null
+
+  return (
+    <section className="grid gap-3 md:grid-cols-2">
+      {BAND_SKILLS.map((sk) => {
+        const list = rows.filter((r) => r.k === sk.k)
+        if (!list.length) {
+          return (
+            <div key={sk.k} className="flex flex-col justify-center gap-1 rounded-[20px] border border-dashed border-line bg-panel p-5">
+              <p className={`font-brand text-[17px] font-semibold ${sk.text}`}>{sk.label} band</p>
+              <p className="text-sm font-semibold text-mist">No marked {sk.label.toLowerCase()} homework yet.</p>
+            </div>
+          )
+        }
+        const bands = list.map((r) => Number(r.band))
+        const latest = bands[bands.length - 1]
+        const last5 = list.slice(-5)
+        const avg5 = Math.round((last5.reduce((n, r) => n + Number(r.band), 0) / last5.length) * 2) / 2
+        const prev = bands.length > 1 ? bands[bands.length - 2] : null
+        // Lowest criterion over the last five marked tries.
+        const crit = {}
+        last5.forEach((r) => (Array.isArray(r.criteria) ? r.criteria : []).forEach((c) => {
+          if (!c?.name || !Number.isFinite(Number(c.band))) return
+          ;(crit[c.name] = crit[c.name] || []).push(Number(c.band))
+        }))
+        const weakest = Object.entries(crit)
+          .map(([name, b]) => ({ name, avg: b.reduce((x, y) => x + y, 0) / b.length }))
+          .sort((a, b) => a.avg - b.avg)[0]
+        // Sparkline 0..9.
+        const pts = bands.slice(-12)
+        const W = 480
+        const H = 64
+        const lo = Math.max(0, Math.min(...pts) - 0.5)
+        const hi = Math.min(9, Math.max(...pts) + 0.5)
+        const xy = pts.map((b, i) => [pts.length === 1 ? W / 2 : (i * W) / (pts.length - 1), H - ((b - lo) / Math.max(0.5, hi - lo)) * (H - 8) - 4])
+        return (
+          <div key={sk.k} className="flex flex-col gap-3 rounded-[20px] border border-line bg-panel p-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <p className={`font-brand text-[17px] font-semibold ${sk.text}`}>{sk.label} band</p>
+                <p className="text-[12px] font-bold text-mist">{list.length} marked · average of the last {last5.length}: {avg5.toFixed(1)}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-brand text-[32px] font-semibold leading-none text-paper">{latest.toFixed(1)}</p>
+                {prev != null && latest !== prev && (
+                  <p className={`text-[12px] font-extrabold ${latest > prev ? 'text-reading' : 'text-coral'}`}>{latest > prev ? '▲' : '▼'} {Math.abs(latest - prev).toFixed(1)} since last</p>
+                )}
+              </div>
+            </div>
+            <svg viewBox={`-6 0 ${W + 12} ${H}`} className="h-auto w-full max-h-20" role="img" aria-label={`${sk.label} bands: ${pts.map((b) => b.toFixed(1)).join(', ')}`}>
+              <polyline points={xy.map((p) => p.join(',')).join(' ')} fill="none" stroke={sk.color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+              {xy.map((p, i) => (
+                <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill={sk.color} />
+              ))}
+            </svg>
+            {weakest && (
+              <p className={`rounded-[12px] px-3 py-2 text-[13px] font-bold ${sk.tint} text-paper`}>
+                Work on: <span className={sk.text}>{weakest.name}</span> <span className="text-mist">(about {(Math.round(weakest.avg * 2) / 2).toFixed(1)})</span>
+              </p>
+            )}
+          </div>
+        )
+      })}
+    </section>
   )
 }
