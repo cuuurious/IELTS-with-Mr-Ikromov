@@ -21,11 +21,21 @@ import { TASK_KINDS, taskTitle } from '../../lib/homeworkTasks'
 // that is where the built-in pages live; word lists and shadowing next.
 // A full test from the Mock Center homework bank and an HTML file from
 // the Materials Library are small links underneath.
+// Reading is two tiles (2026-11-05): practice by question type, and full
+// 3-passage tests. `book` keeps only that book; `notBook` leaves it out.
+const FULL_READING = 'Full Reading Tests'
 const PAGE_TILES = [
-  { skill: 'reading', label: 'Reading', unit: 'pages', tint: 'bg-reading-tint', text: 'text-reading' },
-  { skill: 'listening', label: 'Listening', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
-  { skill: 'writing', label: 'Writing', unit: 'tasks', tint: 'bg-writing-tint', text: 'text-writing' },
+  { id: 'reading-type', skill: 'reading', notBook: FULL_READING, label: 'Reading by type', unit: 'pages', tint: 'bg-reading-tint', text: 'text-reading' },
+  { id: 'reading-full', skill: 'reading', book: FULL_READING, label: 'Full reading test', unit: 'tests', tint: 'bg-reading-tint', text: 'text-reading', hideEmpty: true },
+  { id: 'listening', skill: 'listening', label: 'Listening', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
+  { id: 'writing', skill: 'writing', label: 'Writing', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
 ]
+const inBook = (t, collection) => {
+  const book = String(collection || '').split(' · ')[0]
+  if (t.book) return book === t.book
+  if (t.notBook) return book !== t.notBook
+  return true
+}
 
 export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   const [adding, setAdding] = useState(null) // kind
@@ -35,6 +45,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [bankOpen, setBankOpen] = useState(false)
   const [bankSkill, setBankSkill] = useState('reading')
+  const [bankTile, setBankTile] = useState(null)
   const [pageCounts, setPageCounts] = useState({})
   const [newClip, setNewClip] = useState(null) // { title, transcript, file }
   const [busy, setBusy] = useState(false)
@@ -50,13 +61,14 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
         ? supabase.from('wordlists').select('id, title, created_at').eq('group_id', groupId).order('created_at', { ascending: false })
         : supabase.from('wordlists').select('id, title, created_at').order('created_at', { ascending: false }),
       supabase.from('shadowing_clips').select('id, title, created_at').order('created_at', { ascending: false }),
-      supabase.from('materials').select('skill').not('collection', 'is', null),
+      supabase.from('materials').select('skill, collection').not('collection', 'is', null),
     ]).then(([b, w, c, m]) => {
       if (cancelled) return
       const counts = {}
       ;(m.data || []).forEach((r) => {
-        const k = r.skill || 'reading'
-        counts[k] = (counts[k] || 0) + 1
+        PAGE_TILES.forEach((t) => {
+          if ((r.skill || 'reading') === t.skill && inBook(t, r.collection)) counts[t.id] = (counts[t.id] || 0) + 1
+        })
       })
       setPageCounts(counts)
       setBank(b.data || [])
@@ -153,14 +165,15 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
       )}
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {PAGE_TILES.filter((t) => t.skill !== 'writing' || pageCounts.writing).map((t) => (
+        {PAGE_TILES.filter((t) => !t.hideEmpty || pageCounts[t.id]).map((t) => (
           <button
-            key={t.skill}
+            key={t.id}
             type="button"
             onClick={() => {
               setError('')
               setAdding(null)
               setBankSkill(t.skill)
+              setBankTile(t)
               setBankOpen(true)
             }}
             className={`focus-ring flex items-center gap-2.5 rounded-[14px] px-3 py-3 text-left transition hover:brightness-95 ${t.tint} ${t.text}`}
@@ -168,7 +181,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
             <SkillIcon skill={t.skill} className="h-5 w-5 shrink-0" />
             <span className="min-w-0">
               <span className="block text-[13px] font-extrabold leading-tight">+ {t.label}</span>
-              <span className="block text-[11px] font-bold opacity-75">{pageCounts[t.skill] ? `${pageCounts[t.skill]} ${t.unit}` : 'Practice Bank'}</span>
+              <span className="block text-[11px] font-bold opacity-75">{pageCounts[t.id] ? `${pageCounts[t.id]} ${t.unit}` : 'Practice Bank'}</span>
             </span>
           </button>
         ))}
@@ -263,6 +276,9 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
       <BankPicker
         open={bankOpen}
         initialSkill={bankSkill}
+        book={bankTile?.book || null}
+        notBook={bankTile?.notBook || null}
+        heading={bankTile?.label || null}
         groupId={groupId}
         lockSkill
         onClose={() => setBankOpen(false)}

@@ -19,7 +19,7 @@ import { BookCoverCard, PageRow, skillShade, splitSet } from './BookCover'
  */
 const NEW_PICK = 3
 
-export default function BankPicker({ open, onClose, onPick, onLibrary, initialSkill = 'reading', groupId = null, lockSkill = false }) {
+export default function BankPicker({ open, onClose, onPick, onLibrary, initialSkill = 'reading', groupId = null, lockSkill = false, book = null, notBook = null, heading = null }) {
   const [pages, setPages] = useState(null)
   const [missing, setMissing] = useState(false)
   const [skill, setSkill] = useState('reading')
@@ -58,7 +58,18 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
   }, [open, onClose])
 
   const isGiven = (p) => Boolean(groupId && given[p.url]?.has(groupId))
-  const ofSkill = useMemo(() => (pages || []).filter((p) => (p.skill || 'reading') === skill), [pages, skill])
+  // Opened from "Reading by type" / "Full reading test": only that book.
+  const ofSkill = useMemo(
+    () =>
+      (pages || []).filter((p) => {
+        if ((p.skill || 'reading') !== skill) return false
+        const b = String(p.collection || '').split(' · ')[0]
+        if (book && b !== book) return false
+        if (notBook && b === notBook) return false
+        return true
+      }),
+    [pages, skill, book, notBook]
+  )
 
   const setsOf = useMemo(() => {
     const map = {}
@@ -130,8 +141,8 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
             </button>
           ) : null}
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">{collection && !q ? splitSet(collection).book || skillLabel : `${skillLabel} · Practice Bank`}</p>
-            <p className="truncate font-brand text-[19px] font-semibold text-white">{collection && !q ? splitSet(collection).subtitle : 'Choose pages'}</p>
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">{collection && !q ? splitSet(collection).book || skillLabel : `${heading || skillLabel} · Practice Bank`}</p>
+            <p className="truncate font-brand text-[19px] font-semibold text-white">{collection && !q ? (splitSet(collection).book === 'Full Reading Tests' ? splitSet(collection).short : splitSet(collection).subtitle) : 'Choose pages'}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white/15 hover:bg-white/25">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -159,7 +170,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${counts[skill] || ''} ${skillLabel.toLowerCase()} pages…`}
+            placeholder={`Search ${ofSkill.length || ''} ${book ? 'tests' : `${skillLabel.toLowerCase()} pages`}…`}
             className="focus-ring h-10 min-w-0 flex-1 rounded-[12px] border border-line bg-panel px-3.5 text-sm text-paper placeholder:text-mist/70"
           />
           {groupId && (
@@ -230,12 +241,12 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
             <p className="rounded-[14px] bg-panel px-4 py-6 text-center text-sm font-semibold text-mist">No {skillLabel.toLowerCase()} pages yet. Add them in Practice Bank.</p>
           ) : (
             <>
-              {sets.filter((st) => (pages || []).some((p) => st.material_ids.includes(p.id) && (p.skill || 'reading') === skill)).length > 0 && (
+              {sets.filter((st) => ofSkill.some((p) => st.material_ids.includes(p.id))).length > 0 && (
                 <section className="flex flex-col gap-2">
                   <p className="px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-mist">Your saved sets</p>
                   <div className="flex flex-wrap gap-1.5">
                     {sets.map((st) => {
-                      const list = (pages || []).filter((p) => st.material_ids.includes(p.id) && (p.skill || 'reading') === skill)
+                      const list = ofSkill.filter((p) => st.material_ids.includes(p.id))
                       if (!list.length) return null
                       return (
                         <button

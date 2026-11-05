@@ -519,7 +519,8 @@ function CollectionView({ name, pages, allCount, onBack, onChanged, onRenamed, s
   const skill = pages[0]?.skill || 'reading'
   const shelfable = skill === 'reading' || skill === 'listening'
   const onShelf = pages.length > 0 && pages.every((p) => p.on_shelf)
-  const { book, subtitle } = splitSet(name)
+  const { book, short, subtitle: sub } = splitSet(name)
+  const subtitle = book === 'Full Reading Tests' ? short : sub
 
   // "Easiest first" (ladder): pages with 3+ first tries by their average,
   // highest first; pages nobody has tried yet keep book order after them.

@@ -57,12 +57,14 @@ export function splitSet(name) {
   const book = cut > 0 ? name.slice(0, cut) : ''
   const short = cut > 0 ? name.slice(cut + 3) : name
   const part = /Part\s*(\d)/i.exec(name)
+  if (book === 'Full Reading Tests') return { book, short, subtitle: '3 passages · 40 questions · 60 min' }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
 }
 
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
   if (!unit && skill === 'writing') unit = 'essays'
+  if (!unit && /^Full Reading Tests/.test(name)) unit = 'tests'
   return (
     <button
       type="button"
