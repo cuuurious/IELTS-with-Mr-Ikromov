@@ -3,6 +3,7 @@ import SkillAudioPlayer from '../SkillAudioPlayer'
 import { BandRing } from '../homework/TaskShell'
 import { matchPercent } from '../homework/ShadowingTask'
 import { modelFor } from '../../lib/speaking'
+import { UsedCheck, targets } from './speakingPrep'
 import { TeacherBandNote } from '../homework/TeacherBand'
 
 /*
@@ -277,6 +278,7 @@ export default function SpeakingFeedback({ set, results, onAgain = null, teacher
                 </div>
                 {a.url && <SkillAudioPlayer src={a.url} label={teacher ? 'Recording' : 'Your answer'} sublabel={a.secs ? `${Math.round(a.secs)} s` : ''} download={teacher} />}
                 {said != null && <p className="text-[13px] leading-relaxed text-paper-dim"><span className="font-extrabold text-mist">We heard: </span>{said || '(nothing — was the microphone on?)'}</p>}
+                {said && said.trim().split(/\s+/).length > 3 && targets({ model: modelFor(content, a.key) }).length > 0 && <UsedCheck q={{ key: a.key, model: modelFor(content, a.key) }} said={said} />}
                 {x?.comment && <p className="text-[13px] font-semibold leading-relaxed text-paper">{x.comment}</p>}
                 {x?.better && (
                   <div className="rounded-[14px] bg-speaking-tint/60 px-3 py-2.5">

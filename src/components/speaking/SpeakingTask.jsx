@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { LIMITS, SPEAKING_PARTS, buildSteps, fetchVoice, fmtTime, linesOf, loadSpeakingSet, modelFor, parseSpeakingUrl, setTitle } from '../../lib/speaking'
 import SpeakingFeedback, { MicIcon } from './SpeakingFeedback'
+import { GetReady, targets } from './speakingPrep'
 
 /*
  * SPEAKING TEST SCREEN (2026-11-05). Works like the real test: the
@@ -126,7 +127,30 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   const stoppedRef = useRef(false)
 
   const part = ref?.part || 'full'
-  const steps = useMemo(() => (set ? buildSteps(set.content, part) : []), [set, part])
+  // Homework (2026-11-05): before each question a "Get ready" step with the
+  // words, grammar and a quick practice from its Band 8 answer. Mocks and
+  // the teacher preview keep the real-test flow.
+  const coached = !mock && !preview
+  const steps = useMemo(() => {
+    if (!set) return []
+    const base = buildSteps(set.content, part)
+    if (!coached) return base
+    const has = (key) => {
+      const m = modelFor(set.content, key)
+      return Boolean(m?.phrases?.length || m?.grammar?.length)
+    }
+    const out = []
+    base.forEach((st, i) => {
+      const nx = base[i + 1]
+      if (st.type === 'say' && nx?.type === 'answer' && !nx.long && has(nx.key)) out.push({ type: 'ready', key: nx.key, q: nx.q })
+      if (st.type === 'say' && nx?.type === 'cue') {
+        const long = base.find((x) => x.type === 'answer' && x.long)
+        if (long && has(long.key)) out.push({ type: 'ready', key: long.key, q: long.q, long: true })
+      }
+      out.push(st)
+    })
+    return out
+  }, [set, part, coached])
   stepsRef.current = steps
   const answerSteps = useMemo(() => steps.filter((s) => s.type === 'answer'), [steps])
   const step = steps[idx] || null
@@ -573,7 +597,18 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
             </section>
           )}
 
-          {stage === 'run' && step && (
+          {stage === 'run' && step?.type === 'ready' && (
+            <>
+              <section className="registan-band flex flex-col gap-1.5 rounded-[24px] p-5 text-white sm:p-6">
+                <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/75">Get ready · Part {partNow}{step.long ? ' · long turn' : ''}</p>
+                <p className="font-brand text-[19px] font-semibold leading-snug sm:text-[22px]">{step.long ? c.part2?.cue : step.q}</p>
+                <p className="text-[13px] font-semibold text-white/85">Learn these first — the examiner asks when you press the button.</p>
+              </section>
+              <GetReady key={step.key} q={{ key: step.key, q: step.q, model: modelFor(c, step.key) }} onReady={next} readyLabel={step.long ? 'I’m ready — show me the card' : 'I’m ready — ask me'} />
+            </>
+          )}
+
+          {stage === 'run' && step && step.type !== 'ready' && (
             <>
               <section className="registan-band flex flex-col gap-3 rounded-[24px] p-5 text-white sm:p-6">
                 <div className="flex items-center gap-3">
@@ -636,6 +671,14 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
                   <div className="h-1.5 overflow-hidden rounded bg-panel-2">
                     <div className={`h-full rounded ${step.long && elapsed < 60 ? 'bg-saffron' : 'bg-speaking'}`} style={{ width: `${Math.min(100, (elapsed / step.limit) * 100)}%` }} />
                   </div>
+                  {coached && targets({ model: modelFor(c, step.key) }).length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[12px] font-extrabold text-paper-dim">Try to use:</span>
+                      {targets({ model: modelFor(c, step.key) }).slice(0, 8).map((t) => (
+                        <span key={t.label} className="rounded-[10px] bg-speaking-tint px-2 py-0.5 text-[12px] font-bold text-speaking">{t.label}</span>
+                      ))}
+                    </div>
+                  )}
                   {step.long && Object.values(notes).some((n) => n?.trim()) && (
                     <div className="grid gap-1.5 rounded-[12px] bg-panel-2/60 p-2.5 text-[13px] text-paper sm:grid-cols-2">
                       {Object.entries(notes).filter(([, v]) => v?.trim()).map(([k, v]) => <p key={k} className="whitespace-pre-wrap">• {v}</p>)}
