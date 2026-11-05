@@ -221,8 +221,8 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
             </span>
           </Link>
 
-          <div className="grid items-end gap-6 sm:grid-cols-[130px_minmax(0,1fr)]">
-            <div className="relative hidden h-[160px] w-[130px] sm:block">
+          <div className="grid items-end gap-6 sm:grid-cols-[130px_minmax(0,1fr)] [@media(min-width:1024px)_and_(max-height:820px)]:sm:grid-cols-[98px_minmax(0,1fr)]">
+            <div className="relative hidden h-[160px] w-[130px] sm:block [@media(min-width:1024px)_and_(max-height:820px)]:h-[120px] [@media(min-width:1024px)_and_(max-height:820px)]:w-[98px]">
               <div className="absolute inset-[14px_-14px_-8px_14px] rounded-[999px_999px_22px_22px] bg-white/15" aria-hidden="true" />
               <div className="absolute inset-0 overflow-hidden rounded-[999px_999px_22px_22px] border-[5px] border-white bg-listening-tint">
                 <img src="/mrikromov.jpg" alt="Mr Jasur Ikromov" className="h-full w-full object-cover" />
@@ -248,14 +248,14 @@ export default function AuthShell({ title, subtitle, cardTitle, cardSubtitle, ch
             <div className="@container">
             <div className="grid grid-cols-1 gap-2.5 @min-[22rem]:grid-cols-2 @min-[34rem]:grid-cols-3">
               {PERKS.map(({ art: Art, bg, title: t, text }) => (
-                <div key={t} className="flex flex-col overflow-hidden rounded-[20px] bg-panel text-paper">
-                  <div className={`@container flex h-[104px] items-center justify-center overflow-hidden p-2.5 ${bg} [@media(min-width:1024px)_and_(max-height:940px)]:h-[90px] [@media(min-width:1024px)_and_(max-height:940px)]:p-1`} aria-hidden="true">
-                    <div className="shrink-0 origin-center @max-[250px]:scale-[0.92] @max-[228px]:scale-[0.86] @max-[208px]:scale-[0.8] @max-[192px]:scale-[0.75]">
+                <div key={t} className={`flex flex-col overflow-hidden rounded-[20px] bg-panel text-paper [@media(min-width:1024px)_and_(max-height:820px)]:rounded-[16px]`}>
+                  <div className={`@container flex h-[104px] items-center justify-center overflow-hidden p-2.5 ${bg} [@media(min-width:1024px)_and_(max-height:940px)]:h-[90px] [@media(min-width:1024px)_and_(max-height:940px)]:p-1 [@media(min-width:1024px)_and_(max-height:820px)]:!h-[56px] [@media(min-width:1024px)_and_(max-height:820px)]:!p-0`} aria-hidden="true">
+                    <div className="shrink-0 origin-center @max-[250px]:scale-[0.92] @max-[228px]:scale-[0.86] @max-[208px]:scale-[0.8] @max-[192px]:scale-[0.75] [@media(min-width:1024px)_and_(max-height:820px)]:!scale-[0.5]">
                       <Art />
                     </div>
                   </div>
-                  <div className="px-3.5 pb-3 pt-2.5">
-                    <div className="text-[15px] font-extrabold">{t}</div>
+                  <div className="px-3.5 pb-3 pt-2.5 [@media(min-width:1024px)_and_(max-height:820px)]:py-2">
+                    <div className="text-[15px] font-extrabold [@media(min-width:1024px)_and_(max-height:820px)]:text-[13px] [@media(min-width:1024px)_and_(max-height:820px)]:leading-tight">{t}</div>
                     <div className="mt-0.5 text-[13px] font-semibold leading-snug text-mist [@media(min-width:1024px)_and_(max-height:940px)]:hidden">{text}</div>
                   </div>
                 </div>
