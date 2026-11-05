@@ -106,7 +106,7 @@ export function WarmupCard({ studentId, className = '' }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-speaking">Speaking warm-up</p>
-          <p className="truncate text-[15px] font-extrabold text-paper">{w.done ? 'Done for today ✓' : '3 questions · about 3 minutes'}</p>
+          <p className="truncate text-[15px] font-extrabold text-paper">{w.done ? 'Done for today ✓' : '3 questions · 3 min'}</p>
           <p className="truncate text-[12px] font-bold text-mist">{[...new Set(w.questions.map((q) => q.topic))].join(' · ')}{!w.done && w.coins ? ` · +${w.coins} coin${w.coins === 1 ? '' : 's'}` : ''}</p>
         </div>
         <button type="button" onClick={() => setOpen(true)} className={`focus-ring h-10 shrink-0 rounded-[12px] px-3.5 text-[13px] font-extrabold ${w.done ? 'bg-panel-2 text-paper' : 'bg-saffron text-[#17213a]'}`}>
@@ -335,6 +335,7 @@ function WarmupRunner({ w, onClose, onDone }) {
                           ))}
                         </ul>
                       )}
+                      {q.model.phrases?.length > 0 && <SavePhrases phrases={q.model.phrases} answer={q.model.answer} topic={q.topic} />}
                     </section>
                   )}
                   <div className="flex gap-2">
@@ -348,5 +349,27 @@ function WarmupRunner({ w, onClose, onDone }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// Keep the phrases (2026-11-05): they go into My words and come back in
+// the daily word review.
+function SavePhrases({ phrases, answer, topic }) {
+  const [state, setState] = useState('')
+  const save = async () => {
+    setState('saving')
+    const sentences = String(answer || '').split(/(?<=[.!?])\s+/)
+    const rows = phrases.map(([p, m]) => {
+      const key = String(p).replace(/\(.*?\)/g, '').trim().toLowerCase().split(' ')[0]
+      const ex = sentences.find((x) => x.toLowerCase().includes(key)) || null
+      return { word: String(p).slice(0, 120), definition: String(m || '').slice(0, 400) || null, example_sentence: ex, source: `Speaking warm-up · ${topic || 'Part 1'}` }
+    })
+    const { error } = await supabase.from('student_words').upsert(rows, { onConflict: 'user_id,word', ignoreDuplicates: true })
+    setState(error ? 'error' : 'done')
+  }
+  return (
+    <button type="button" onClick={save} disabled={state === 'saving' || state === 'done'} className="focus-ring self-start text-[12px] font-extrabold text-brass disabled:opacity-70">
+      {state === 'done' ? '✓ Saved to My words' : state === 'error' ? 'Could not save — try again' : state === 'saving' ? 'Saving…' : '+ Save these phrases to My words'}
+    </button>
   )
 }

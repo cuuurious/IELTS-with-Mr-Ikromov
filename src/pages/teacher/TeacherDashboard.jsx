@@ -38,6 +38,7 @@ const HowToUseGuide = lazyWithReload(() => import('../../components/HowToUseGuid
 const CoinsAdmin = lazyWithReload(() => import('./CoinsAdmin'))
 const CoursePlans = lazyWithReload(() => import('./CoursePlans'))
 const PracticeBank = lazyWithReload(() => import('./PracticeBank'))
+const ReviewQueue = lazyWithReload(() => import('./ReviewQueue'))
 
 // Coins & courses nav icon (2026-11-02).
 function IconCoins({ className }) {
@@ -249,6 +250,8 @@ export default function TeacherDashboard() {
         { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
         { key: 'groups', label: 'Groups & Homework', icon: IconGroups, subtitle: 'Open a group to post homework and see who has done it.' },
         { key: 'bank', label: 'Practice Bank', icon: IconHomework, subtitle: 'Your interactive Reading, Listening and Writing pages by book: preview them and give them as homework.' },
+        // One queue for AI-marked writing / speaking and speaking mocks (2026-11-05).
+        { key: 'review', label: 'Review', icon: IconHomework, subtitle: 'Writing and speaking the AI has marked, waiting for your band — and speaking mock requests.' },
       ],
     },
     {
@@ -448,6 +451,7 @@ export default function TeacherDashboard() {
 
       {tab === 'plans' && <CoursePlans />}
       {tab === 'bank' && <PracticeBank />}
+      {tab === 'review' && <ReviewQueue />}
 
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>

@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
 import PageFrame from './PageFrame'
 import WritingFeedback from './WritingFeedback'
-import { needsWorkshop, openWorkshop, useWorkshopGate } from '../../lib/workshopGate'
+import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from '../../lib/workshopGate'
 
 /*
  * One of Mr Ikromov's interactive HTML workshops set as homework
@@ -38,6 +38,8 @@ var seen={};var parts=found.filter(function(f){var k=f.label;if(seen[k])return f
 post(best.s,best.m,parts)}
 var tt;function texts(){clearTimeout(tt);tt=setTimeout(function(){var out=[];document.querySelectorAll('textarea,[contenteditable="true"]').forEach(function(el,i){var v=el.tagName==='TEXTAREA'?el.value:el.innerText;if(v&&v.trim().length>20)out.push({id:el.id||('box'+(i+1)),text:v.slice(0,20000)})});if(out.length)parent.postMessage({type:'ielts-workshop-text',texts:out},'*')},600)}
 function ovOpen(){var cf=document.getElementById('confirm');if(t1()&&cf&&cf.classList.contains('show'))return true;if(t1Res())return true;var wv=document.getElementById('workshopView');if(wv&&!wv.classList.contains('hidden')&&document.getElementById('essay'))return true;var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
+var mk=[];function marks(){if(!mk.length)return;if(!document.getElementById('ielts-mk-st')){var st=document.createElement('style');st.id='ielts-mk-st';st.textContent='.ielts-mk{box-shadow:0 0 0 3px #dc2626!important;border-radius:6px}'+mk.map(function(n){return '[data-q="'+n+'"]'}).join(',')+'{box-shadow:0 0 0 3px #dc2626!important;border-radius:6px}';document.head.appendChild(st)}document.querySelectorAll('.q-num,.footer__navbtn,.navbtn,.nb').forEach(function(el){var n=parseInt((el.textContent||'').replace(/[^0-9]/g,''),10);if(n&&mk.indexOf(n)>=0)el.classList.add('ielts-mk')})}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-mark-questions'&&Array.isArray(e.data.nums)){mk=e.data.nums.map(Number).filter(function(n){return n>0&&n<200});var o=document.getElementById('ielts-mk-st');if(o)o.remove();marks()}});
 var wsLast='';function wsProg(){if(!document.getElementById('ws-overlay'))return;var bs=document.querySelectorAll('#ws-tabs .ws-tab');var d=[];bs.forEach(function(b){if(b.querySelector('.ws-done'))d.push((b.textContent||'').replace(/\u2713/g,'').trim())});var k=bs.length+'|'+d.join(',');if(k===wsLast)return;wsLast=k;parent.postMessage({type:'ielts-workshop-progress',total:bs.length||0,done:d},'*')}
 window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-open-workshop'&&window.openWorkshop){try{window.openWorkshop()}catch(_){}}});
 var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
@@ -53,7 +55,7 @@ var siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=functi
 document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&(t.closest('.footer__navbtn')||t.closest('.footer .navbtn')))show(true)},true)}
 document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80);setTimeout(wsProg,120)},true);
-document.addEventListener('DOMContentLoaded',function(){try{mobile()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
+document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 })();</script>`
 
 // Which questions were right / wrong, as the page reported them (2026-11-05).
@@ -88,7 +90,9 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
   useEffect(() => {
     if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
-  }, [gate.on, gate.complete])
+    // The Workshop's words go into the student's own list (My words).
+    if (gate.on && gate.complete && rawRef.current) saveWorkshopWords(supabase, { url: task.html_url, html: rawRef.current, title: task.title, studentId })
+  }, [gate.on, gate.complete, task.html_url, task.title, studentId])
 
   useEffect(() => {
     let cancelled = false

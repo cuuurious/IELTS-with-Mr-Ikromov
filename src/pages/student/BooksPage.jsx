@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { qtypeLabel } from '../../lib/questionTypes'
 import { cleanQs, withHelper } from '../../components/homework/HtmlTask'
 import PageFrame from '../../components/homework/PageFrame'
-import { needsWorkshop, openWorkshop, useWorkshopGate } from '../../lib/workshopGate'
+import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from '../../lib/workshopGate'
 import WeakSpots from '../../components/WeakSpots'
 import SkillArt, { SkillIcon } from '../../components/SkillArt'
 
@@ -294,6 +294,7 @@ function BookPlayer({ item, studentId, onClose, onSaved }) {
 
 
   useEffect(() => {
+    if (gate.on && gate.complete && html) saveWorkshopWords(supabase, { url: item.url, html, title: item.title, studentId })
     if (gate.complete && scoreRef.current) save(scoreRef.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gate.complete])

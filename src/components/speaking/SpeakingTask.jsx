@@ -93,7 +93,11 @@ function Voice({ on }) {
   )
 }
 
-export default function SpeakingTask({ task, studentId, onClose, onChanged, preview = false }) {
+export default function SpeakingTask({ task, studentId, onClose, onChanged, preview = false, mock = null }) {
+  // mock (2026-11-05): a speaking mock ({ id, status, band, results }) from
+  // speaking_mocks instead of a homework task; marked the same way.
+  const table = mock ? 'speaking_mocks' : 'homework_attempts'
+  const markBody = (id) => (mock ? { action: 'speaking_task', mockId: id } : { action: 'speaking_task', attemptId: id })
   const ref = useMemo(() => parseSpeakingUrl(task.html_url), [task.html_url])
   const [set, setSet] = useState(null)
   const [stage, setStage] = useState('loading') // loading | intro | run | review | saving | feedback | error
@@ -140,7 +144,12 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
         const s = await loadSpeakingSet(ref.setId)
         if (cancelled) return
         setSet(s)
-        if (!preview && task.id && studentId) {
+        if (mock?.results?.speaking) {
+          setAttempt({ id: mock.id, attempt_no: 1, submitted_at: mock.submitted_at, band: mock.band, results: mock.results })
+          setStage('feedback')
+          return
+        }
+        if (!preview && !mock && task.id && studentId) {
           const { data } = await supabase
             .from('homework_attempts')
             .select('id, attempt_no, submitted_at, band, results')
@@ -168,7 +177,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
     return () => {
       cancelled = true
     }
-  }, [ref, task.id, studentId, preview])
+  }, [ref, task.id, studentId, preview, mock])
 
   // Prepare the examiner's voice while the student reads the intro.
   useEffect(() => {
@@ -186,14 +195,14 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   useEffect(() => {
     if (stage !== 'feedback' || attempt?.results?.ai?.status !== 'processing') return undefined
     const t = setInterval(async () => {
-      const { data } = await supabase.from('homework_attempts').select('id, attempt_no, submitted_at, band, results').eq('id', attempt.id).maybeSingle()
+      const { data } = await supabase.from(table).select(mock ? 'id, submitted_at, band, results' : 'id, attempt_no, submitted_at, band, results').eq('id', attempt.id).maybeSingle()
       if (data && data.results?.ai?.status !== 'processing') {
         setAttempt(data)
         onChanged?.()
       }
     }, 5000)
     return () => clearInterval(t)
-  }, [stage, attempt, onChanged])
+  }, [stage, attempt, onChanged, table])
 
   // ---------- clean up ----------
   const stopAll = useCallback(() => {
@@ -447,14 +456,16 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
         const t = takes[s.key]
         if (!t?.blob?.size) continue
         const ext = /mp4|aac|m4a/.test(t.blob.type) ? 'm4a' : 'webm'
-        const path = `${studentId}/speaking/${task.id}-${Date.now()}-${s.key}.${ext}`
+        const path = `${studentId}/speaking/${mock ? `mock-${mock.id}` : task.id}-${Date.now()}-${s.key}.${ext}`
         const { error: upErr } = await supabase.storage.from('submissions').upload(path, t.blob, { contentType: t.blob.type || 'audio/webm' })
         if (upErr) throw upErr
         answers.push({ key: s.key, part: s.part, q: s.q, url: supabase.storage.from('submissions').getPublicUrl(path).data.publicUrl, secs: Math.round(t.secs) })
       }
       if (!answers.length) throw new Error('Nothing was recorded. Check the microphone and take the test again.')
       const results = { speaking: { setId: set.id, set_number: set.number, part, answers, notes } }
-      const { data, error: rpcError } = await supabase.rpc('submit_homework_score', { p_task_id: task.id, p_score: null, p_max: null, p_details: results })
+      const { data, error: rpcError } = mock
+        ? await supabase.rpc('submit_speaking_mock', { p_id: mock.id, p_set: set.id, p_details: results })
+        : await supabase.rpc('submit_homework_score', { p_task_id: task.id, p_score: null, p_max: null, p_details: results })
       if (rpcError) throw rpcError
       const row = (Array.isArray(data) ? data[0] : data) || {}
       if (!row.id) throw new Error('Could not save the attempt. Try again.')
@@ -463,7 +474,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
       setStage('feedback')
       onChanged?.()
       // Mark it (about a minute). The screen also checks every 5 s.
-      const { data: res, error: fnErr } = await supabase.functions.invoke('ai-grading', { body: { action: 'speaking_task', attemptId: row.id } })
+      const { data: res, error: fnErr } = await supabase.functions.invoke('ai-grading', { body: markBody(row.id) })
       if (fnErr || res?.error) {
         let msg = res?.error || fnErr?.message || 'Marking failed.'
         try {
@@ -486,7 +497,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   const markAgain = async () => {
     if (!attempt?.id) return
     setAttempt((a) => ({ ...a, results: { ...a.results, ai: { status: 'processing' } } }))
-    const { data: res, error: fnErr } = await supabase.functions.invoke('ai-grading', { body: { action: 'speaking_task', attemptId: attempt.id } })
+    const { data: res, error: fnErr } = await supabase.functions.invoke('ai-grading', { body: markBody(attempt.id) })
     if (res?.ai) setAttempt((a) => ({ ...a, band: res.ai.overall_band, results: { ...a.results, ai: res.ai } }))
     else setAttempt((a) => ({ ...a, results: { ...a.results, ai: { status: 'error', error: res?.error || fnErr?.message || 'Marking failed.' } } }))
     onChanged?.()
@@ -517,7 +528,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
           <span className="hidden sm:inline">Back</span>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="hidden truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70 sm:block">{preview ? 'Teacher preview · Speaking' : 'Speaking'} · {SPEAKING_PARTS[part]?.label}</p>
+          <p className="hidden truncate text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70 sm:block">{preview ? 'Teacher preview · Speaking' : mock ? 'Speaking mock' : 'Speaking'} · {SPEAKING_PARTS[part]?.label}</p>
           <p className="truncate text-[14px] font-extrabold text-white sm:text-[15px]">{title}</p>
         </div>
         {stage === 'run' && (
@@ -675,7 +686,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
               {attempt.results?.ai?.status === 'error' && (
                 <button type="button" onClick={markAgain} className="focus-ring h-11 self-start rounded-[14px] bg-speaking px-5 text-sm font-extrabold text-white">Mark it again</button>
               )}
-              <SpeakingFeedback set={set} results={attempt.results} onAgain={() => { setTakes({}); setStage('intro') }} />
+              <SpeakingFeedback set={set} results={attempt.results} onAgain={mock ? null : () => { setTakes({}); setStage('intro') }} />
               <p className="text-center text-[12px] font-semibold text-mist">
                 {attempt.attempt_no === 1 ? 'Handed in. Your first try counts.' : 'Handed in as a retake. Your first try still counts.'}
               </p>

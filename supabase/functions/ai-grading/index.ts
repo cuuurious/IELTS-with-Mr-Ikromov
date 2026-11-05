@@ -985,14 +985,17 @@ Deno.serve(async (req) => {
      */
 
     if (action === 'speaking_task') {
-      const attemptId = payload?.attemptId
+      // A speaking mock (2026-11-05, migration_107) is marked the same way;
+      // it lives in speaking_mocks instead of homework_attempts.
+      const mockId = payload?.mockId
+      const attemptId = mockId || payload?.attemptId
 
       if (!attemptId) {
         return jsonResponse({ error: 'attemptId is required.' }, 400)
       }
 
       const { data: attempt, error: attemptError } = await admin
-        .from('homework_attempts')
+        .from(mockId ? 'speaking_mocks' : 'homework_attempts')
         .select('id, user_id, results, submitted_at')
         .eq('id', attemptId)
         .maybeSingle()
@@ -1014,11 +1017,13 @@ Deno.serve(async (req) => {
       }
 
       const save = async (band, ai) => {
-        const { error } = await admin.rpc('save_speaking_feedback', {
-          p_attempt_id: attemptId,
-          p_band: band,
-          p_ai: ai,
-        })
+        const { error } = mockId
+          ? await admin.rpc('save_speaking_mock_feedback', { p_mock_id: mockId, p_band: band, p_ai: ai })
+          : await admin.rpc('save_speaking_feedback', {
+              p_attempt_id: attemptId,
+              p_band: band,
+              p_ai: ai,
+            })
         if (error) throw error
       }
 

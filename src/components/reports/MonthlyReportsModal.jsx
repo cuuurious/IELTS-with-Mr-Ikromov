@@ -78,6 +78,8 @@ export default function MonthlyReportsModal({ groupId, groupName, onClose }) {
           {rows === null && <p className="text-sm font-semibold text-mist">Loading…</p>}
           {rows?.length === 0 && !error && <p className="text-sm font-semibold text-mist">No students in this group.</p>}
 
+          {rows && rows.length > 0 && <SendToParents rows={rows} month={month} />}
+
           <ul className="flex flex-col gap-2.5">
             {(rows || []).map((r, i) => (
               <StudentRow key={r.student_id} row={r} s={sums[i]} month={month} />
@@ -90,13 +92,103 @@ export default function MonthlyReportsModal({ groupId, groupName, onClose }) {
   )
 }
 
+// The text a parent gets for one student (also used by Send to parents).
+export function reportMessage(row, month) {
+  const url = row.token ? `${window.location.origin}/report/${row.token}?month=${month.slice(0, 7)}` : ''
+  const first = (row.full_name || '').split(' ')[0]
+  return { url, text: `Assalomu alaykum! ${first}ning ${monthLabel(month, 'uz')} oyi bo‘yicha hisoboti (darslar, uy vazifalari, natijalar): ${url}` }
+}
+
+/*
+ * Send to parents (2026-11-05): after checking the reports and notes,
+ * one press texts every parent their child's report link (Parent SMS,
+ * kind 'report'). The texts are shown first; nothing goes until Send.
+ */
+function SendToParents({ rows, month }) {
+  const [review, setReview] = useState(null) // { messages, skipped } | { loading }
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState('')
+  const [error, setError] = useState('')
+  const ready = rows.filter((r) => r.token && r.link_enabled !== false)
+  const texts = Object.fromEntries(ready.map((r) => [r.student_id, reportMessage(r, month).text]))
+
+  const prepare = async () => {
+    setError('')
+    setDone('')
+    setReview({ loading: true })
+    const { data, error: e } = await supabase.functions.invoke('parent-sms', { body: { mode: 'compose', kind: 'report', studentIds: ready.map((r) => r.student_id), texts } })
+    if (e || data?.error) {
+      setReview(null)
+      return setError(data?.error || e.message)
+    }
+    // Parents who already got this month's report are left out.
+    const { data: log } = await supabase
+      .from('parent_sms_log')
+      .select('student_id')
+      .eq('kind', 'report')
+      .eq('status', 'sent')
+      .ilike('message', `%month=${month.slice(0, 7)}%`)
+    const sent = new Set((log || []).map((l) => l.student_id))
+    const all = data.messages || []
+    setReview({ messages: all.filter((m) => !sent.has(m.studentId)), already: all.filter((m) => sent.has(m.studentId)).length, skipped: data.skipped || [] })
+  }
+  const send = async () => {
+    setBusy(true)
+    setError('')
+    const ids = (review?.messages || []).map((m) => m.studentId)
+    const { data, error: e } = await supabase.functions.invoke('parent-sms', { body: { mode: 'send', kind: 'report', studentIds: ids, texts } })
+    setBusy(false)
+    if (e || data?.error) return setError(data?.error || e.message)
+    setReview(null)
+    setDone(`Sent to ${data.sent} parent${data.sent === 1 ? '' : 's'}${data.failed ? ` · ${data.failed} failed` : ''}.`)
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-[18px] border border-line bg-panel p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-extrabold text-paper">Send to parents</p>
+          <p className="text-[12px] font-semibold text-mist">Check the reports and add your notes below first. Each parent gets an SMS with their child’s report link.</p>
+        </div>
+        {!review && (
+          <button type="button" onClick={prepare} disabled={!ready.length} className="focus-ring h-10 rounded-[12px] bg-saffron px-4 text-[13px] font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50">
+            Review the texts
+          </button>
+        )}
+      </div>
+      {review?.loading && <p className="text-[13px] font-semibold text-mist">Preparing…</p>}
+      {review && !review.loading && (
+        <div className="flex flex-col gap-2">
+          <p className="text-[13px] font-bold text-paper">
+            {review.messages.length} SMS ready{review.already ? ` · ${review.already} already sent this report` : ''}{review.skipped.length ? ` · ${review.skipped.length} without a parent number (add it in Parent SMS)` : ''}
+          </p>
+          <ul className="flex max-h-56 flex-col gap-1.5 overflow-y-auto">
+            {review.messages.map((m) => (
+              <li key={m.studentId} className="rounded-[12px] bg-panel-2/70 px-3 py-2 text-[12px] text-paper-dim">
+                <b className="text-paper">{m.student}</b> · {m.phone}
+                <span className="block break-words">{m.text}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setReview(null)} disabled={busy} className="focus-ring h-10 rounded-[12px] border border-line px-4 text-[13px] font-extrabold text-paper">Back</button>
+            <button type="button" onClick={send} disabled={busy || !review.messages.length} className="focus-ring h-10 rounded-[12px] bg-saffron px-5 text-[13px] font-extrabold text-[#17213a] disabled:opacity-50">
+              {busy ? 'Sending…' : `Send ${review.messages.length} SMS`}
+            </button>
+          </div>
+        </div>
+      )}
+      {done && <p className="text-[13px] font-extrabold text-reading">{done} ✓</p>}
+      {error && <p className="rounded-[12px] bg-urgent-tint px-3 py-2 text-[13px] font-bold text-coral">{error}</p>}
+    </div>
+  )
+}
+
 function StudentRow({ row, s, month }) {
   const [note, setNote] = useState(row.report?.note || '')
   const [saved, setSaved] = useState('')
   const [copied, setCopied] = useState(false)
-  const url = row.token ? `${window.location.origin}/report/${row.token}?month=${month.slice(0, 7)}` : ''
-  const first = row.full_name.split(' ')[0]
-  const message = `Assalomu alaykum! ${first}ning ${monthLabel(month, 'uz')} oyi bo‘yicha hisoboti (darslar, uy vazifalari, natijalar): ${url}`
+  const { url, text: message } = reportMessage(row, month)
 
   const saveNote = async () => {
     if ((row.report?.note || '') === note) return

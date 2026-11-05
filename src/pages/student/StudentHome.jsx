@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { WishGoal } from '../../components/coins/RewardsShop'
 import { WarmupCard } from '../../components/speaking/SpeakingWarmup'
+import { NotebookCard } from '../../components/notebook/MistakeNotebook'
 import { supabase } from '../../lib/supabaseClient'
 import { roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import {
@@ -563,8 +564,13 @@ export default function StudentHome({
       })()}
 
       {/* BANDS — one tile per skill */}
-      <WarmupCard studentId={profile?.id} className="lg:col-span-6" />
-      <WishGoal studentId={profile?.id} onOpen={() => onNavigate('courses')} className="lg:col-span-6" />
+      {/* Daily habits (2026-11-05): warm-up, mistake notebook, saving goal.
+          Cards that have nothing to show hide themselves. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:col-span-12 xl:grid-cols-3">
+        <WarmupCard studentId={profile?.id} />
+        <NotebookCard studentId={profile?.id} />
+        <WishGoal studentId={profile?.id} onOpen={() => onNavigate('courses')} />
+      </div>
 
       <section aria-labelledby="sh-bands" className="lg:col-span-12 flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

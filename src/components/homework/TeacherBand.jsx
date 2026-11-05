@@ -23,7 +23,7 @@ export function TeacherBandNote({ teacher }) {
   )
 }
 
-export default function TeacherBand({ attemptId, results, aiBand, onSaved }) {
+export default function TeacherBand({ attemptId, results, aiBand, onSaved, table = 'homework_attempts' }) {
   const t = results?.teacher || null
   const [band, setBand] = useState(t?.band != null ? Number(t.band).toFixed(1) : aiBand != null ? Number(aiBand).toFixed(1) : '')
   const [comment, setComment] = useState(t?.comment || '')
@@ -34,7 +34,7 @@ export default function TeacherBand({ attemptId, results, aiBand, onSaved }) {
     setBusy(true)
     setMsg('')
     // Read the latest results first so the AI feedback is never lost.
-    const { data: row, error: readErr } = await supabase.from('homework_attempts').select('results').eq('id', attemptId).maybeSingle()
+    const { data: row, error: readErr } = await supabase.from(table).select('results').eq('id', attemptId).maybeSingle()
     if (readErr) {
       setBusy(false)
       return setMsg(readErr.message)
@@ -44,7 +44,7 @@ export default function TeacherBand({ attemptId, results, aiBand, onSaved }) {
     else next.teacher = { band: Number(band), comment: comment.trim(), at: new Date().toISOString() }
     const aiB = next.ai?.overall_band
     const { error } = await supabase
-      .from('homework_attempts')
+      .from(table)
       .update({ band: clear ? (aiB != null ? Number(aiB) : null) : Number(band), results: next })
       .eq('id', attemptId)
     setBusy(false)

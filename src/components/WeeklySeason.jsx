@@ -112,6 +112,9 @@ export default function WeeklySeason({ groupId, meId }) {
           <li>In-site task, first try · up to 10</li>
           <li>Daily Marathon · 1 per right answer</li>
           <li>Word practice · 1 per 10 answers (max 20)</li>
+          <li>Speaking warm-up · 3 a day</li>
+          <li>Books page practice · 2 a page (max 20)</li>
+          <li>Speaking mock · 10</li>
         </ul>
       )}
 
@@ -123,6 +126,10 @@ export default function WeeklySeason({ groupId, meId }) {
               <p className="text-sm font-extrabold text-paper">You · {me.points} points</p>
               <p className="truncate text-xs font-bold text-mist">
                 Homework {me.homework_points} · Tasks {me.task_points} · Marathon {me.marathon_points} · Words {me.word_points}
+                {(() => {
+                  const extra = me.points - me.homework_points - me.task_points - me.marathon_points - me.word_points
+                  return extra > 0 ? ` · Practice ${extra}` : ''
+                })()}
               </p>
             </div>
           </div>

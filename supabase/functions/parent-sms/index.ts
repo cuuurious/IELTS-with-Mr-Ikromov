@@ -272,10 +272,13 @@ async function buildMessages(admin: any, runShift: number) {
 function pickTemplate(settings: any, kind: string, customText: string) {
   if (kind === 'thanks') return { template: settings?.thanks_template || '', logKind: 'thanks' }
   if (kind === 'custom') return { template: String(customText || '').slice(0, 1000), logKind: 'custom' }
+  // 'report' (2026-11-05): the monthly report message, one text per student
+  // written in the Monthly reports window and checked by the teacher there.
+  if (kind === 'report') return { template: 'report', logKind: 'report' }
   return { template: settings?.template || '', logKind: 'manual' }
 }
 
-async function composeManual(admin: any, studentIds: string[], kind = 'missed', customText = '') {
+async function composeManual(admin: any, studentIds: string[], kind = 'missed', customText = '', texts: Record<string, string> | null = null) {
   const ids = [...new Set((studentIds || []).filter((x) => typeof x === 'string'))].slice(0, 500)
   const today = tashkentDay(0)
   const since = new Date(Date.now() - 14 * DAY).toISOString()
@@ -341,6 +344,15 @@ async function composeManual(admin: any, studentIds: string[], kind = 'missed', 
       skipped.push({ ...base, reason: 'no_phone' })
       continue
     }
+    if (kind === 'report') {
+      const own = String((texts && texts[id]) || '').trim().slice(0, 600)
+      if (!own) {
+        skipped.push({ ...base, reason: 'no_text' })
+        continue
+      }
+      messages.push({ ...base, phone: phoneOf[id], text: own })
+      continue
+    }
     messages.push({
       ...base,
       phone: phoneOf[id],
@@ -395,12 +407,12 @@ Deno.serve(async (req) => {
     }
 
     if (mode === 'compose') {
-      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text)
+      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text, body?.texts && typeof body.texts === 'object' ? body.texts : null)
       return json({ date: r.today.date, messages: r.messages, skipped: r.skipped })
     }
 
     if (mode === 'send') {
-      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text)
+      const r = await composeManual(admin, body?.studentIds, body?.kind, body?.text, body?.texts && typeof body.texts === 'object' ? body.texts : null)
       if (!r.settings?.template?.trim()) return json({ error: 'Write the message text first.' }, 400)
       if (!r.messages.length) return json({ error: 'None of the chosen students has a parent number.' }, 400)
       const token = await eskizToken()

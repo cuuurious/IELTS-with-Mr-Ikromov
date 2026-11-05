@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { SkillIcon } from '../../components/SkillArt'
 import { CoinAmount, CoinIcon, CoinStackArt, SKILL_GRADIENT, SKILL_TONES, youtubeId } from '../../components/coins/Coin'
 import RewardsShop from '../../components/coins/RewardsShop'
+import SpeakingMockCard from '../../components/speaking/SpeakingMockCard'
 
 /*
  * COINS & COURSES (2026-11-02).
@@ -100,6 +101,9 @@ export default function CoursesPage({ studentId, onOpenMockCenter }) {
 
       {/* Rewards shop (2026-11-05): real things for coins */}
       <RewardsShop studentId={studentId} balance={balance} onBalance={setBalance} />
+
+      {/* Speaking mock (2026-11-05): asked for, or bought with coins */}
+      <SpeakingMockCard studentId={studentId} balance={balance} onBalance={setBalance} />
 
       {/* Spend */}
       <h2 className="-mb-2 font-brand text-[18px] font-semibold text-paper">Spend your coins</h2>

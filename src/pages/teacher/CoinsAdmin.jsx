@@ -282,6 +282,7 @@ const PRICE_FIELDS = [
   { key: 'top_group_bonus', label: 'Week’s top group, each student', unit: 'coins earned' },
   { key: 'mock_slot_price', label: 'Full mock request', unit: 'coins it costs' },
   { key: 'warmup_coins', label: 'Daily speaking warm-up done', unit: 'coins earned' },
+  { key: 'speaking_mock_price', label: 'Speaking mock (bought by a student)', unit: 'coins' },
 ]
 
 function PricesTab() {
@@ -297,7 +298,7 @@ function PricesTab() {
   const save = async () => {
     setSaved('')
     // Score tiers only once migration_95 has added their columns.
-    const patch = Object.fromEntries(PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins')).map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
+    const patch = Object.fromEntries(PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins' || f.key === 'speaking_mock_price')).map((f) => [f.key, Math.max(0, Number(values[f.key]) || 0)]))
     if ('speaking_warmup' in values) patch.speaking_warmup = Boolean(values.speaking_warmup)
     const { error: e } = await supabase.from('coin_settings').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
     if (e) setError(e.message)
@@ -307,7 +308,7 @@ function PricesTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins')).map((f) => (
+        {PRICE_FIELDS.filter((f) => f.key in values || !(f.key.startsWith('score_') || f.key === 'warmup_coins' || f.key === 'speaking_mock_price')).map((f) => (
           <label key={f.key} className={`flex flex-col gap-2 rounded-[20px] p-5 ${f.key === 'mock_slot_price' ? 'bg-[color-mix(in_srgb,var(--color-brass)_10%,var(--color-panel))]' : 'bg-[color-mix(in_srgb,var(--color-saffron)_12%,var(--color-panel))]'}`}>
             <span className="text-sm font-extrabold text-paper">{f.label}</span>
             <span className="flex items-center gap-2">

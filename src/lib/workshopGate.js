@@ -69,3 +69,51 @@ export function openWorkshop() {
     /* ignore */
   }
 }
+
+/*
+ * Workshop words → My words (2026-11-05). When a student finishes a
+ * page's Workshop, its word bank (word, meaning, Uzbek, example) goes into
+ * their own list, which comes back in the daily My words review. Once per
+ * page and student; words already in the list are left as they are.
+ */
+export function workshopWords(html) {
+  const m = /const D=(\{[\s\S]*?\});\s*\n/.exec(html || '')
+  if (!m) return []
+  try {
+    const d = JSON.parse(m[1])
+    return (Array.isArray(d.words) ? d.words : [])
+      .map((w) => ({
+        word: String(w.head || '').trim().slice(0, 120),
+        definition: String(w.df || '').trim().slice(0, 400) || null,
+        uzbek_translation: String(w.uz || '').trim().slice(0, 300) || null,
+        example_sentence: String(w.ex || '').trim().slice(0, 400) || null,
+      }))
+      .filter((w) => w.word)
+      .slice(0, 80)
+  } catch {
+    return []
+  }
+}
+
+export async function saveWorkshopWords(supabase, { url, html, title, studentId }) {
+  const key = `ielts:workshop-words:${studentId || 'me'}:${url}`
+  try {
+    if (window.localStorage.getItem(key)) return 0
+  } catch {
+    /* private window */
+  }
+  const words = workshopWords(html)
+  if (!words.length) return 0
+  const source = `Workshop · ${String(title || '').slice(0, 80)}`
+  const { error } = await supabase.from('student_words').upsert(
+    words.map((w) => ({ ...w, source })),
+    { onConflict: 'user_id,word', ignoreDuplicates: true }
+  )
+  if (error) return 0
+  try {
+    window.localStorage.setItem(key, '1')
+  } catch {
+    /* private window */
+  }
+  return words.length
+}
