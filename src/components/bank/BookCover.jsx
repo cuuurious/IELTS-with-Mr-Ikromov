@@ -14,6 +14,7 @@ export const COVER = {
   reading: { shades: ['#13807c', '#0e6a73', '#1b7f62', '#176a8a'] },
   listening: { shades: ['#1f4e8c', '#2a5fa8', '#1d6a9a', '#38428f'] },
   writing: { shades: ['#9a5b12', '#b8641a', '#8a4d1f', '#a8702a'] },
+  speaking: { shades: ['#6a3f99', '#7b4bb0', '#5a3685', '#83509e'] },
 }
 export const skillShade = (skill, i = 0) => {
   const c = COVER[skill] || COVER.reading
@@ -39,6 +40,7 @@ const CODES = {
 
 // Big short name on a cover: "Part 2", "T / F / NG", "Summary + list".
 export function coverCode(name, types) {
+  if (/^Speaking Tests · Full/.test(name)) return 'Full test'
   const part = /Part\s*(\d)/i.exec(name)
   if (part) return `Part ${part[1]}`
   if (/word list/i.test(name)) return 'Summary + list'
@@ -62,6 +64,10 @@ export function splitSet(name) {
   const short = cut > 0 ? name.slice(cut + 3) : name
   const part = /Part\s*(\d)/i.exec(name)
   if (book === 'Full Reading Tests') return { book, short, subtitle: '3 passages · 40 questions · 60 min' }
+  if (book === 'Speaking Tests') {
+    const sp = { 'Full tests': 'Parts 1, 2 and 3 · 11–14 min', 'Part 1': 'Familiar topics · 4–5 min', 'Part 2': 'Cue card · 3–4 min', 'Part 3': 'Discussion · 4–5 min' }[short]
+    return { book, short, subtitle: sp || short }
+  }
   if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
 }
@@ -69,7 +75,7 @@ export function splitSet(name) {
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
   if (!unit && skill === 'writing') unit = /^Writing Task 1/.test(name) ? 'reports' : 'essays'
-  if (!unit && /^Full Reading Tests/.test(name)) unit = 'tests'
+  if (!unit && (/^Full Reading Tests/.test(name) || skill === 'speaking')) unit = 'tests'
   return (
     <button
       type="button"
@@ -85,7 +91,10 @@ export function BookCoverCard({ name, types, count, skill, index, onClick, unit,
         <span className={`font-extrabold leading-snug text-paper ${compact ? 'text-[13px]' : 'text-[15px]'}`}>{subtitle}</span>
         <span className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-bold text-mist">
           <span>
-            {count} {unit || (skill === 'listening' ? 'tests' : 'pages')}
+            {count} {(() => {
+              const u = unit || (skill === 'listening' ? 'tests' : 'pages')
+              return count === 1 ? u.replace(/s$/, '') : u
+            })()}
           </span>
           {footer}
         </span>
@@ -109,7 +118,7 @@ export function PageRow({ page, checked, onToggle, given = [], stat, showType = 
     setPeek((await peekPage(page.url)) || { title: '', sub: '', text: 'Could not open this page.' })
   }
   return (
-    <li className={`rounded-[14px] ${checked ? 'bg-brass/10 ring-1 ring-brass/50' : 'bg-panel'}`}>
+    <li className={`min-w-0 rounded-[14px] ${checked ? 'bg-brass/10 ring-1 ring-brass/50' : 'bg-panel'}`}>
       <label className="flex cursor-pointer items-center gap-3 px-3 py-2">
         {onToggle && <input type="checkbox" checked={checked} onChange={onToggle} className="h-4 w-4 shrink-0 accent-brass" aria-label={`Select ${page.title}`} />}
         <span className="w-8 shrink-0 text-[13px] font-extrabold text-mist">{page.position ?? ''}</span>

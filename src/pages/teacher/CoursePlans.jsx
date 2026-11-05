@@ -6,7 +6,7 @@ import HomeworkTasksEditor from '../../components/homework/HomeworkTasksEditor'
 import EmptyState from '../../components/EmptyState'
 import { SkillIcon } from '../../components/SkillArt'
 import { uploadMaterial } from '../../lib/materials'
-import { TASK_KINDS } from '../../lib/homeworkTasks'
+import { TASK_KINDS, taskMeta } from '../../lib/homeworkTasks'
 import { slidesHref } from '../../lib/courses'
 
 /*
@@ -270,7 +270,7 @@ function LessonRow({ lesson: l, onOpen }) {
         {l.slides_url && <span className="rounded-lg bg-speaking-tint px-2 py-0.5 text-speaking">Slides</span>}
         {(l.materials || []).length > 0 && <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{l.materials.length} class file{l.materials.length === 1 ? '' : 's'}</span>}
         {tasks.map((t, i) => {
-          const m = TASK_KINDS[t.kind] || TASK_KINDS.reading
+          const m = taskMeta(t)
           return <span key={i} className={`rounded-lg px-2 py-0.5 ${m.tint} ${m.text}`}>{m.short}</span>
         })}
         {(l.homework_title || l.homework_text) && !tasks.length && <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">Homework</span>}

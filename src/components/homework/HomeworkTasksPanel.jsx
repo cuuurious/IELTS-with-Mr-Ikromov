@@ -3,12 +3,13 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { lazyWithReload } from '../../lib/lazyWithReload'
 import { SkillIcon } from '../SkillArt'
-import { TASK_KINDS, gradeLabel, gradeTone, percentOf, summariseAttempts, taskTitle } from '../../lib/homeworkTasks'
+import { gradeLabel, gradeTone, percentOf, summariseAttempts, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 
 const TestTask = lazyWithReload(() => import('./TestTask'))
 const WordlistTask = lazyWithReload(() => import('./WordlistTask'))
 const HtmlTask = lazyWithReload(() => import('./HtmlTask'))
 const ShadowingTask = lazyWithReload(() => import('./ShadowingTask'))
+const SpeakingTask = lazyWithReload(() => import('../speaking/SpeakingTask'))
 
 /*
  * The tasks of one homework, on the student's homework card
@@ -54,6 +55,7 @@ export default function HomeworkTasksPanel({ homework, studentId, onAllDone }) {
     const props = { task: openTask, studentId, onClose: () => setOpenTask(null), onChanged: refresh }
     if (openTask.kind === 'reading' || openTask.kind === 'listening') return <TestTask {...props} />
     if (openTask.kind === 'wordlist') return <WordlistTask {...props} />
+    if (openTask.kind === 'html' && /^speaking:/.test(openTask.html_url || '')) return <SpeakingTask {...props} />
     if (openTask.kind === 'html') return <HtmlTask {...props} />
     if (openTask.kind === 'shadowing') return <ShadowingTask {...props} />
     return null
@@ -67,9 +69,9 @@ export default function HomeworkTasksPanel({ homework, studentId, onAllDone }) {
           {doneCount}/{tasks.length} done
         </span>
       </div>
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {tasks.map((t) => {
-          const meta = TASK_KINDS[t.kind] || TASK_KINDS.reading
+          const meta = taskMeta(t)
           const s = summariseAttempts(attempts.filter((a) => a.task_id === t.id))
           const pct = percentOf(s.first)
           const tone = gradeTone(pct)
@@ -78,7 +80,7 @@ export default function HomeworkTasksPanel({ homework, studentId, onAllDone }) {
               key={t.id}
               type="button"
               onClick={() => setOpenTask(t)}
-              className="focus-ring group flex items-center gap-3 rounded-[16px] border border-line bg-panel p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(36,86,176,0.10)]"
+              className="focus-ring group flex min-w-0 items-center gap-3 rounded-[16px] border border-line bg-panel p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(36,86,176,0.10)]"
             >
               <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${meta.tint} ${meta.text}`} aria-hidden="true">
                 <SkillIcon skill={meta.skill} className="h-6 w-6" />

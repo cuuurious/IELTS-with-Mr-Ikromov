@@ -149,6 +149,199 @@ const SPEAKING_EVALUATION_SCHEMA = {
   additionalProperties: false,
 }
 
+/*
+ * ------------------------------------------------------------------
+ * SPEAKING TESTS (2026-11-05)
+ * ------------------------------------------------------------------
+ */
+const OPENAI_SPEECH_URL = 'https://api.openai.com/v1/audio/speech'
+// Voice for the examiner. Both can be changed without editing code:
+//   npx supabase secrets set OPENAI_TTS_MODEL=<model>  OPENAI_TTS_VOICE=<voice>
+const TTS_MODEL = Deno.env.get('OPENAI_TTS_MODEL') || 'gpt-4o-mini-tts'
+const TTS_VOICE = Deno.env.get('OPENAI_TTS_VOICE') || 'sage'
+const TTS_STYLE =
+  'You are a friendly, professional IELTS Speaking examiner from the UK, talking face to face with one candidate. Speak with a natural, warm British accent at a calm, clear, unhurried pace, with natural pauses and the rising or falling intonation a real person uses for questions. Sound like a real person in a quiet room, not an announcer, a narrator or a robot.'
+
+// Lines every test uses (the same text is in src/lib/speaking.js).
+const SPEAKING_FIXED_LINES = [
+  'Good afternoon. This is the speaking test. Let’s begin.',
+  'Now, in this first part, I’d like to ask you some questions about yourself.',
+  'Now I’m going to give you a topic, and I’d like you to talk about it for one to two minutes. Before you talk, you’ll have one minute to think about what you’re going to say, and you can make some notes if you wish. Here’s your topic.',
+  'All right? Remember, you have one to two minutes for this, so don’t worry if I stop you. I’ll tell you when the time is up. Can you start speaking now, please?',
+  'Thank you.',
+  'We’ve been talking about your topic, and now I’d like to discuss with you one or two more general questions related to this.',
+  'Thank you. That is the end of the speaking test.',
+]
+
+async function sha256Hex(text) {
+  const bytes = new TextEncoder().encode(text)
+  const hash = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+async function makeSpeech(apiKey, text, model) {
+  const body = { model, voice: TTS_VOICE, input: text, response_format: 'mp3' }
+  if (!/^tts-1/.test(model)) body.instructions = TTS_STYLE
+  const res = await fetch(OPENAI_SPEECH_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    throw new Error(json?.error?.message || `Voice failed (${res.status}).`)
+  }
+  return new Uint8Array(await res.arrayBuffer())
+}
+
+async function speakingVoiceUrl(admin, supabaseUrl, apiKey, text) {
+  const key = await sha256Hex(`${TTS_MODEL}|${TTS_VOICE}|${TTS_STYLE}|${text}`)
+  const path = `${key.slice(0, 2)}/${key}.mp3`
+  const publicUrl = admin.storage.from('speaking-voice').getPublicUrl(path).data.publicUrl
+
+  const head = await fetch(publicUrl, { method: 'HEAD' }).catch(() => null)
+  if (head && head.ok) return publicUrl
+
+  let audio
+  try {
+    audio = await makeSpeech(apiKey, text, TTS_MODEL)
+  } catch (err) {
+    // An older account or a renamed model: fall back to the HD voice.
+    if (TTS_MODEL === 'tts-1-hd') throw err
+    audio = await makeSpeech(apiKey, text, 'tts-1-hd')
+  }
+
+  const { error } = await admin.storage
+    .from('speaking-voice')
+    .upload(path, audio, { contentType: 'audio/mpeg', upsert: true, cacheControl: '31536000' })
+  if (error) throw error
+
+  return publicUrl
+}
+
+// Used only until a teacher uploads the speaking criteria.
+const DEFAULT_SPEAKING_CRITERIA = [
+  'IELTS Speaking band descriptors (summary). Four criteria, each 0–9 with half bands allowed in the overall score:',
+  'Fluency and Coherence: speaks at length without noticeable effort or loss of coherence; hesitation is content-related; uses a range of connectives and discourse markers; develops topics fully and appropriately.',
+  'Lexical Resource: wide, precise and flexible vocabulary; idiomatic language used naturally; paraphrases effectively; few inappropriate word choices.',
+  'Grammatical Range and Accuracy: full range of structures used naturally and appropriately; complex structures; majority of sentences error-free; only occasional slips.',
+  'Pronunciation: uses a full range of pronunciation features; sustains flexible use; easy to understand throughout; L1 accent has minimal effect.',
+  'Band 9 = expert, 8 = very good with rare errors, 7 = good with some errors and some loss of flexibility, 6 = competent with noticeable errors and some hesitation, 5 = limited range, frequent errors and pauses, 4 = basic.',
+  'The overall Speaking band is the average of the four criteria, rounded to the nearest half band (.25 rounds up to .5, .75 rounds up to the next whole band).',
+].join('\n')
+
+const SAY_BETTER_SCHEMA = {
+  type: 'object',
+  properties: {
+    key: { type: 'string' },
+    original: { type: 'string' },
+    better: { type: 'string' },
+    why: { type: 'string' },
+  },
+  required: ['key', 'original', 'better', 'why'],
+  additionalProperties: false,
+}
+
+const SPEAKING_TASK_SCHEMA = {
+  type: 'object',
+  properties: {
+    overall_band: { type: 'number' },
+    criteria: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          band: { type: 'number' },
+          comment: { type: 'string' },
+        },
+        required: ['name', 'band', 'comment'],
+        additionalProperties: false,
+      },
+    },
+    summary: { type: 'string' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improvements: { type: 'array', items: { type: 'string' } },
+    answers: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          key: { type: 'string' },
+          comment: { type: 'string' },
+          better: { type: 'string' },
+        },
+        required: ['key', 'comment', 'better'],
+        additionalProperties: false,
+      },
+    },
+    say_it_better: { type: 'array', items: SAY_BETTER_SCHEMA },
+    exercises: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          instructions: { type: 'string' },
+          items: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['title', 'instructions', 'items'],
+        additionalProperties: false,
+      },
+    },
+    grammar_structures: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+    useful_collocations: { type: 'array', items: LANGUAGE_TIP_SCHEMA },
+  },
+  required: [
+    'overall_band',
+    'criteria',
+    'summary',
+    'strengths',
+    'improvements',
+    'answers',
+    'say_it_better',
+    'exercises',
+    'grammar_structures',
+    'useful_collocations',
+  ],
+  additionalProperties: false,
+}
+
+function buildSpeakingTaskPrompt(criteriaText, speaking, answers, transcripts) {
+  const byKey = Object.fromEntries(transcripts.map((t) => [t.key, t.text]))
+  const partName = { full: 'the full test (Parts 1, 2 and 3)', part1: 'Part 1 only', part2: 'Part 2 only (with the rounding-off question)', part3: 'Part 3 only' }[speaking?.part] || 'the test'
+  const lines = answers.map((a) => {
+    const secs = Number(a.secs) ? ` (spoke for ${Math.round(Number(a.secs))} seconds)` : ''
+    return [`[${a.key}] Part ${a.part} — Examiner: ${a.q}`, `Candidate${secs}: ${byKey[a.key] || '(no speech heard)'}`].join('\n')
+  })
+  return [
+    "You are an experienced, kind but honest IELTS Speaking examiner. A student has just done an IELTS Speaking practice test on their phone or computer, answering a recorded examiner. Mark it and coach them.",
+    '',
+    "Grade STRICTLY according to the grading criteria below and use its own criterion names (normally Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, Pronunciation).",
+    '',
+    '=== GRADING CRITERIA ===',
+    criteriaText,
+    '=== END OF GRADING CRITERIA ===',
+    '',
+    `The student did ${partName}. Each answer below is an automatic transcript, so small transcription errors are possible: do not penalise likely transcription artefacts. Pronunciation cannot be judged reliably from a transcript: estimate it from the evidence (clear words captured, self-corrections, very short or broken answers) and say plainly in that comment that it is an estimate. Answer length matters: Part 1 answers should be 2–4 sentences, Part 2 should last 1–2 minutes, Part 3 answers should be developed with reasons and examples. Very short answers and "(no speech heard)" lower Fluency and Coherence.`,
+    '',
+    lines.join('\n\n'),
+    '',
+    SCORING_DISCIPLINE,
+    '',
+    'Write for an Uzbek learner of English at about B1–C1 level: short, clear sentences, no jargon.',
+    'criteria: one item per criterion, each comment quoting the student’s own words as evidence.',
+    'summary: 2–3 sentences, the main message.',
+    'strengths and improvements: 2–4 each, specific to this student.',
+    'answers: one item for EVERY answer above, using its [key]. comment = one or two sentences on that answer. better = a natural Band 8 version of THE STUDENT’S OWN answer (keep their ideas and details, improve language and development), the right length for the part (Part 1: 2–4 sentences; Part 2: about 150–200 words; Part 3: 3–5 sentences).',
+    'say_it_better: 4 to 6 items. original = a short sentence or phrase the student really said (quoted exactly from the transcript), better = how a Band 8 speaker would say the same idea (one sentence, easy to say aloud), why = what changed, in a few words. key = the answer it came from.',
+    'exercises: 2 or 3 short speaking exercises aimed at this student’s weakest criterion (for example: answer 3 new questions using a structure; extend 3 short answers with a reason and an example; replace 5 basic words with better ones). Each has a title, one-line instructions and 3–5 concrete items (questions or prompts to say aloud).',
+    LANGUAGE_TIPS_INSTRUCTION,
+  ].join('\n')
+}
+
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -640,6 +833,167 @@ Deno.serve(async (req) => {
       if (upsertError) throw upsertError
 
       return jsonResponse({ criteria_text: criteriaText })
+    }
+
+    /*
+     * ============================================================
+     * SPEAKING TESTS (2026-11-05, migration_101)
+     * ============================================================
+     * speaking_voice: the examiner's lines for one set, as natural
+     * speech. Each line is made once and kept in the public
+     * "speaking-voice" bucket, so every student hears the same voice
+     * and later plays cost nothing. Only lines that are really in the
+     * set (or the standard test lines) are spoken.
+     */
+
+    if (action === 'speaking_voice') {
+      const setId = payload?.setId
+      const texts = Array.isArray(payload?.texts) ? payload.texts.slice(0, 60) : []
+
+      if (!setId || !texts.length) {
+        return jsonResponse({ error: 'setId and texts are required.' }, 400)
+      }
+
+      const { data: set, error: setError } = await admin
+        .from('speaking_sets')
+        .select('content')
+        .eq('id', setId)
+        .maybeSingle()
+
+      if (setError) throw setError
+      if (!set) return jsonResponse({ error: 'Speaking set not found.' }, 404)
+
+      const haystack = JSON.stringify(set.content)
+      const urls = {}
+
+      const allowed = [...new Set(texts.map((raw) => String(raw || '').trim()))].filter(
+        (text) =>
+          text &&
+          text.length <= 900 &&
+          (haystack.includes(JSON.stringify(text).slice(1, -1)) || SPEAKING_FIXED_LINES.includes(text))
+      )
+
+      // Six at a time: a new set's ~35 lines take about 15 seconds once.
+      for (let i = 0; i < allowed.length; i += 6) {
+        const chunk = allowed.slice(i, i + 6)
+        const got = await Promise.all(
+          chunk.map((text) => speakingVoiceUrl(admin, supabaseUrl, openaiKey, text).catch(() => null))
+        )
+        chunk.forEach((text, j) => {
+          if (got[j]) urls[text] = got[j]
+        })
+      }
+
+      return jsonResponse({ urls })
+    }
+
+    /*
+     * speaking_task: mark a Speaking homework attempt. The recordings
+     * (one per question) are transcribed, then marked against the
+     * speaking criteria with a band per criterion, a comment and a
+     * better version for each answer, "Say it better" sentences and
+     * short exercises. Saved on the attempt (results.ai).
+     */
+
+    if (action === 'speaking_task') {
+      const attemptId = payload?.attemptId
+
+      if (!attemptId) {
+        return jsonResponse({ error: 'attemptId is required.' }, 400)
+      }
+
+      const { data: attempt, error: attemptError } = await admin
+        .from('homework_attempts')
+        .select('id, user_id, results, submitted_at')
+        .eq('id', attemptId)
+        .maybeSingle()
+
+      if (attemptError) throw attemptError
+      if (!attempt) return jsonResponse({ error: 'Attempt not found.' }, 404)
+
+      if (!callerIsTeacher && attempt.user_id !== caller.id) {
+        return jsonResponse({ error: 'Not allowed to mark this attempt.' }, 403)
+      }
+
+      const speaking = attempt.results?.speaking
+      const answers = Array.isArray(speaking?.answers)
+        ? speaking.answers.filter((a) => a && a.url).slice(0, 30)
+        : []
+
+      if (!answers.length) {
+        return jsonResponse({ error: 'No recordings to mark.' }, 400)
+      }
+
+      const save = async (band, ai) => {
+        const { error } = await admin.rpc('save_speaking_feedback', {
+          p_attempt_id: attemptId,
+          p_band: band,
+          p_ai: ai,
+        })
+        if (error) throw error
+      }
+
+      await save(null, { status: 'processing', started_at: new Date().toISOString() })
+
+      try {
+        // Transcribe a few at a time.
+        const transcripts = []
+        for (let i = 0; i < answers.length; i += 5) {
+          const chunk = answers.slice(i, i + 5)
+          const texts = await Promise.all(
+            chunk.map((a) =>
+              transcribeAudio(openaiKey, a.url, `answer-${i}`).catch(() => '')
+            )
+          )
+          chunk.forEach((a, j) => transcripts.push({ key: a.key, text: (texts[j] || '').trim() }))
+        }
+
+        if (!transcripts.some((t) => t.text)) {
+          throw new Error('No speech was heard in the recordings. Check the microphone and try again.')
+        }
+
+        const { data: criteria } = await admin
+          .from('grading_criteria')
+          .select('criteria_text')
+          .eq('skill', 'speaking')
+          .maybeSingle()
+
+        const criteriaText = criteria?.criteria_text?.trim() || DEFAULT_SPEAKING_CRITERIA
+
+        const promptText = buildSpeakingTaskPrompt(criteriaText, speaking, answers, transcripts)
+
+        const evaluation = await callOpenAiResponses(openaiKey, {
+          model: TEXT_MODEL,
+          input: [{ role: 'user', content: [{ type: 'input_text', text: promptText }] }],
+          text: {
+            format: {
+              type: 'json_schema',
+              name: 'speaking_task_evaluation',
+              strict: true,
+              schema: SPEAKING_TASK_SCHEMA,
+            },
+          },
+        })
+
+        const result = parseJsonLoose(extractOutputText(evaluation))
+        const band = Math.max(0, Math.min(9, Math.round(Number(result.overall_band) * 2) / 2))
+
+        const ai = {
+          status: 'done',
+          graded_at: new Date().toISOString(),
+          transcripts,
+          ...result,
+          overall_band: band,
+        }
+
+        await save(Number.isFinite(band) ? band : null, ai)
+
+        return jsonResponse({ ai })
+      } catch (err) {
+        const message = err?.message || 'Marking failed.'
+        await save(null, { status: 'error', error: message }).catch(() => {})
+        return jsonResponse({ error: message }, 500)
+      }
     }
 
     /*

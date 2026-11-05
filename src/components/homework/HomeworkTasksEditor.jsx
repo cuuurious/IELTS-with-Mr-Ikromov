@@ -6,7 +6,7 @@ import { SkillIcon } from '../SkillArt'
 import MaterialPicker from '../MaterialPicker'
 import BankPicker from '../bank/BankPicker'
 import { shortTitle } from '../../lib/pageBank'
-import { TASK_KINDS, taskTitle } from '../../lib/homeworkTasks'
+import { TASK_KINDS, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 
 /*
  * "Tasks done in the site" for Post / Edit homework (2026-11-02).
@@ -31,6 +31,7 @@ const PAGE_TILES = [
   { id: 'listening', skill: 'listening', label: 'Listening', unit: 'parts', tint: 'bg-listening-tint', text: 'text-listening' },
   { id: 'writing-1', skill: 'writing', book: 'Writing Task 1', label: 'Writing Task 1', unit: 'reports', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
+  { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
 ]
 const inBook = (t, collection) => {
   const book = String(collection || '').split(' · ')[0]
@@ -145,7 +146,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
       {tasks.length > 0 && (
         <ul className="flex flex-col gap-2">
           {tasks.map((t, i) => {
-            const meta = TASK_KINDS[t.kind] || TASK_KINDS.reading
+            const meta = taskMeta(t)
             return (
               <li key={t.id || `${t.kind}-${i}`} className="flex items-center gap-3 rounded-[14px] border border-line bg-panel px-3 py-2.5">
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${meta.tint} ${meta.text}`} aria-hidden="true">

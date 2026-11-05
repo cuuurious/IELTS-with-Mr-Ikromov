@@ -8,6 +8,8 @@ import { groupBadge, groupColour, groupDisplayName } from '../../lib/groupLook'
 import { BookCoverCard, PageRow, skillShade, splitSet } from '../../components/bank/BookCover'
 import { QUESTION_TYPES, qtypeLabel } from '../../lib/questionTypes'
 import PagePreview from '../../components/bank/PagePreview'
+import SpeakingSetEditor from '../../components/speaking/SpeakingSetEditor'
+import { loadSpeakingSets } from '../../lib/speaking'
 import AssignPagesModal from '../../components/bank/AssignPagesModal'
 
 /*
@@ -46,6 +48,8 @@ export default function PracticeBank() {
   const [sets, setSets] = useState(null) // saved sets (null before migration_97)
   const [setName, setSetName] = useState(null) // naming a new set
   const [report, setReport] = useState(null)
+  const [speakingSets, setSpeakingSets] = useState(null) // null before migration_101
+  const [editingSet, setEditingSet] = useState(null) // null | 'new' | set
 
   const load = async () => {
     const r = await loadBank()
@@ -55,6 +59,7 @@ export default function PracticeBank() {
     loadPageStats().then(setStats)
     supabase.from('groups').select('id, name, created_at, telegram_chat_id').order('created_at').then(({ data }) => setGroups(data || []))
     loadSets().then(setSets)
+    loadSpeakingSets().then(setSpeakingSets).catch(() => setSpeakingSets(null))
     supabase.from('group_shelf').select('group_id, collection').then(({ data, error: e }) => {
       setShelfMissing(Boolean(e))
       const m = {}
@@ -113,6 +118,10 @@ export default function PracticeBank() {
     load()
   }
   const remove = async () => {
+    if (chosen.some((p) => p.skill === 'speaking')) {
+      setError('Speaking tests are deleted with the set: Speaking → Edit → Delete set.')
+      return
+    }
     if (!window.confirm(`Delete ${chosen.length} page${chosen.length === 1 ? '' : 's'} from the bank? Homework that already uses them keeps working.`)) return
     const { error: err } = await supabase.from('materials').delete().in('id', chosen.map((p) => p.id))
     if (err) setError(err.message)
@@ -124,7 +133,7 @@ export default function PracticeBank() {
     return <p className="rounded-[20px] bg-panel px-5 py-4 text-sm font-bold text-mist">Run migration_92_practice_bank.sql to use the Practice Bank.</p>
   }
 
-  const tabs = BANK_SKILLS.filter((s) => counts[s.value] || s.value === skill)
+  const tabs = BANK_SKILLS.filter((s) => counts[s.value] || s.value === skill || (s.value === 'speaking' && speakingSets))
   const q = search.trim().toLowerCase()
   const found = q || topic
     ? (pages || [])
@@ -144,7 +153,7 @@ export default function PracticeBank() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {!collection && (
-          <div role="tablist" className="flex gap-1 rounded-[16px] border border-line bg-panel p-1">
+          <div role="tablist" className="flex max-w-full gap-1 overflow-x-auto rounded-[16px] border border-line bg-panel p-1">
             {tabs.map((s) => {
               const on = s.value === skill
               return (
@@ -154,7 +163,7 @@ export default function PracticeBank() {
                   role="tab"
                   aria-selected={on}
                   onClick={() => setSkill(s.value)}
-                  className={`focus-ring flex h-10 items-baseline gap-2 rounded-[12px] px-4 pt-2.5 text-sm font-extrabold transition ${on ? 'text-white' : 'text-paper-dim hover:bg-panel-2 hover:text-paper'}`}
+                  className={`focus-ring flex h-10 shrink-0 items-baseline gap-2 rounded-[12px] px-3.5 pt-2.5 text-sm font-extrabold transition sm:px-4 ${on ? 'text-white' : 'text-paper-dim hover:bg-panel-2 hover:text-paper'}`}
                   style={on ? { backgroundColor: skillShade(s.value, 0) } : undefined}
                 >
                   {s.label}
@@ -196,12 +205,42 @@ export default function PracticeBank() {
             {newOnly ? '✓ New only' : 'New only'}
           </button>
         )}
-        <button type="button" onClick={() => setAdding(true)} className="focus-ring h-11 rounded-[14px] border border-line bg-panel px-4 text-sm font-extrabold text-brass hover:border-brass">
-          + Add pages
-        </button>
+        {skill === 'speaking' && !collection ? (
+          <button type="button" onClick={() => setEditingSet('new')} className="focus-ring h-11 rounded-[14px] border border-line bg-panel px-4 text-sm font-extrabold text-speaking hover:border-speaking">
+            + New speaking set
+          </button>
+        ) : (
+          <button type="button" onClick={() => setAdding(true)} className="focus-ring h-11 rounded-[14px] border border-line bg-panel px-4 text-sm font-extrabold text-brass hover:border-brass">
+            + Add pages
+          </button>
+        )}
       </div>
 
       {error && <p className="rounded-[14px] bg-urgent-tint px-4 py-2 text-sm font-bold text-coral">{error}</p>}
+
+      {skill === 'speaking' && !collection && !found && (
+        <section className="flex flex-col gap-2 rounded-[20px] border border-line bg-panel p-4">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <p className="font-brand text-[17px] font-semibold text-paper">Speaking sets</p>
+            <p className="text-[12px] font-semibold text-mist">Each set is one full test; it also shows as Part 1, Part 2 and Part 3 below.</p>
+          </div>
+          {speakingSets === null ? (
+            <p className="text-sm font-semibold text-mist">Run migration_101_speaking_tests.sql to add speaking tests.</p>
+          ) : speakingSets.length === 0 ? (
+            <p className="text-sm font-semibold text-mist">No sets yet — press “New speaking set”.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {speakingSets.map((s) => (
+                <li key={s.id} className="flex items-center gap-2 rounded-[14px] bg-speaking-tint px-3 py-1.5">
+                  <span className="text-[13px] font-extrabold text-speaking">Set {s.number}</span>
+                  <span className="max-w-[220px] truncate text-[12px] font-bold text-paper-dim">{s.topics}</span>
+                  <button type="button" onClick={() => setEditingSet(s)} className="focus-ring rounded-[8px] px-1.5 text-[12px] font-extrabold text-brass hover:bg-panel">Edit</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {pages === null ? (
         <p className="text-sm font-semibold text-mist">Loading…</p>
@@ -211,7 +250,7 @@ export default function PracticeBank() {
             <p className="text-[13px] font-bold text-mist">{found.length ? `${found.length} page${found.length === 1 ? '' : 's'}${topic ? ` about ${topic}` : ''}` : 'Nothing found — try another word from the passage title.'}</p>
             {topic && <button type="button" onClick={() => setTopic('')} className="focus-ring text-[12px] font-extrabold text-brass">× Clear topic</button>}
           </div>
-          <ul className="grid gap-1.5 md:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
             {found.map((p) => (
               <PageRow
                 key={p.id}
@@ -336,7 +375,7 @@ export default function PracticeBank() {
       {pages === null || found || collection ? null : collections.length === 0 ? (
         <div className="rounded-[20px] border border-dashed border-line bg-panel px-5 py-10 text-center">
           <p className="font-brand text-[17px] font-semibold text-paper">No {BANK_SKILLS.find((x) => x.value === skill)?.label} pages yet</p>
-          <p className="mt-1 text-sm font-semibold text-mist">Press “Add pages” and choose a whole book folder.</p>
+          <p className="mt-1 text-sm font-semibold text-mist">{skill === 'speaking' ? 'Press “New speaking set”.' : 'Press “Add pages” and choose a whole book folder.'}</p>
         </div>
       ) : (
         Object.entries(books).map(([book, list]) => (
@@ -466,6 +505,17 @@ export default function PracticeBank() {
       )}
 
       {preview && <PagePreview page={preview} onClose={() => setPreview(null)} />}
+      {editingSet && (
+        <SpeakingSetEditor
+          set={editingSet === 'new' ? null : editingSet}
+          nextNumber={Math.max(0, ...(speakingSets || []).map((s) => s.number)) + 1}
+          onClose={() => setEditingSet(null)}
+          onSaved={() => {
+            setEditingSet(null)
+            load()
+          }}
+        />
+      )}
       {report && <PageReport page={report} onClose={() => setReport(null)} />}
       {assign && (
         <AssignPagesModal
@@ -591,7 +641,7 @@ function CollectionView({ name, pages, allCount, onBack, onChanged, onRenamed, s
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 pb-4 pr-4 sm:pb-0">
-          {renaming === null && (
+          {renaming === null && skill !== 'speaking' && (
             <button type="button" onClick={() => setRenaming(name)} className="focus-ring h-9 rounded-[12px] px-3 text-[13px] font-extrabold text-mist hover:text-paper">Rename</button>
           )}
           {shelfable && (
@@ -671,7 +721,7 @@ function CollectionView({ name, pages, allCount, onBack, onChanged, onRenamed, s
                 </button>
               )}
             </div>
-            <ul className="grid gap-1.5 md:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
               {g.items.map((p) => (
                 <PageRow
                   key={p.id}
@@ -737,7 +787,7 @@ function AddPages({ skill: startSkill, fixedCollection, collections, existing, o
           <>
             {!fixedCollection && (
               <div className="flex flex-wrap gap-1.5">
-                {BANK_SKILLS.map((s) => (
+                {BANK_SKILLS.filter((s) => s.value !== 'speaking').map((s) => (
                   <button key={s.value} type="button" onClick={() => setSkill(s.value)} className={`focus-ring h-9 rounded-[12px] px-3 text-[13px] font-extrabold ${s.value === skill ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>
                     {s.label}
                   </button>

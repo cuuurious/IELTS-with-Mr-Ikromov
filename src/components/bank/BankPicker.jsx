@@ -151,7 +151,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-3">
           {!lockSkill && tabs.length > 1 && (
-            <div className="flex gap-1 rounded-[14px] bg-panel p-1">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-[14px] bg-panel p-1">
               {tabs.map((s) => (
                 <button
                   key={s.value}
@@ -160,7 +160,7 @@ export default function BankPicker({ open, onClose, onPick, onLibrary, initialSk
                     setSkill(s.value)
                     setCollection(null)
                   }}
-                  className={`focus-ring h-8 rounded-[10px] px-3 text-[13px] font-extrabold ${s.value === skill ? 'bg-brass text-onbrass' : 'text-paper-dim'}`}
+                  className={`focus-ring h-8 shrink-0 rounded-[10px] px-3 text-[13px] font-extrabold ${s.value === skill ? 'bg-brass text-onbrass' : 'text-paper-dim'}`}
                 >
                   {s.label}
                 </button>

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import SkillAudioPlayer from '../SkillAudioPlayer'
 import { supabase } from '../../lib/supabaseClient'
+import SpeakingFeedback from '../speaking/SpeakingFeedback'
 import { SkillIcon } from '../SkillArt'
-import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskTitle } from '../../lib/homeworkTasks'
+import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 import WeakSpots from '../WeakSpots'
 
 /*
@@ -109,7 +110,7 @@ export default function Gradebook({ roster, homeworks, accent }) {
                 <th className="sticky left-0 z-10 bg-panel px-2 text-left text-[12px] font-extrabold text-mist">Student</th>
                 <th className="px-1 text-[12px] font-extrabold text-mist">Avg</th>
                 {columns.map((t) => {
-                  const meta = TASK_KINDS[t.kind] || TASK_KINDS.reading
+                  const meta = taskMeta(t)
                   return (
                     <th key={t.id} className="min-w-[72px] px-1 align-bottom" title={`${hwById[t.homework_id]?.title || ''} — ${taskTitle(t)}`}>
                       <span className={`mx-auto grid h-8 w-8 place-items-center rounded-xl ${meta.tint} ${meta.text}`}>
@@ -233,7 +234,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
           <WeakSpots userId={student.id} title="Weak spots by question type" emptyText="No scored Reading or Listening work yet." />
           <ul className="flex flex-col gap-2">
             {rows.map(({ t, s, hw }) => {
-              const meta = TASK_KINDS[t.kind] || TASK_KINDS.reading
+              const meta = taskMeta(t)
               const pct = percentOf(s.first)
               const tone = gradeTone(s.first ? pct ?? 100 : null)
               const bestPct = percentOf(s.best)
@@ -252,7 +253,7 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
                   </div>
                   <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
                   {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
-                  {t.kind === 'html' && s.first && <PageAnswer attemptId={s.first.id} />}
+                  {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} /> : <PageAnswer attemptId={s.first.id} />)}
                 </li>
               )
             })}
@@ -261,6 +262,56 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose }) {
       </div>
     </div>,
     document.body
+  )
+}
+
+// A speaking test: recordings, what was heard and the AI feedback
+// (2026-11-05). "Mark again" re-runs the AI marking.
+function SpeakingAnswer({ attemptId, url }) {
+  const [open, setOpen] = useState(false)
+  const [row, setRow] = useState(undefined)
+  const [set, setSet] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const load = async () => {
+    const { data } = await supabase.from('homework_attempts').select('id, band, results').eq('id', attemptId).maybeSingle()
+    setRow(data || null)
+  }
+  const toggle = async () => {
+    setOpen((v) => !v)
+    if (row !== undefined) return
+    load()
+    const { parseSpeakingUrl, loadSpeakingSet } = await import('../../lib/speaking')
+    const ref = parseSpeakingUrl(url)
+    if (ref) loadSpeakingSet(ref.setId).then(setSet).catch(() => setSet({ content: {} }))
+  }
+  const markAgain = async () => {
+    setBusy(true)
+    await supabase.functions.invoke('ai-grading', { body: { action: 'speaking_task', attemptId } })
+    await load()
+    setBusy(false)
+  }
+  return (
+    <div className="w-full">
+      <button type="button" onClick={toggle} className="focus-ring h-9 rounded-[12px] bg-speaking-tint px-3 text-[13px] font-extrabold text-speaking">
+        {open ? 'Hide answers' : 'Listen & feedback'}
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2">
+          {row === undefined ? (
+            <p className="text-xs font-bold text-mist">Loading…</p>
+          ) : (
+            <>
+              {row?.results?.ai?.status !== 'processing' && (
+                <button type="button" onClick={markAgain} disabled={busy} className="focus-ring self-start text-[12px] font-extrabold text-brass disabled:opacity-50">
+                  {busy ? 'Marking… (about a minute)' : row?.results?.ai?.status === 'done' ? 'Mark again with AI' : 'Mark with AI'}
+                </button>
+              )}
+              <SpeakingFeedback set={set} results={row?.results} teacher />
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

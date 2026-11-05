@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { withHelper } from '../homework/HtmlTask'
 import TaskShell, { Panel } from '../homework/TaskShell'
 import { qtypeLabel } from '../../lib/questionTypes'
+import { lazyWithReload } from '../../lib/lazyWithReload'
+
+const SpeakingTask = lazyWithReload(() => import('../speaking/SpeakingTask'))
 
 /*
  * Teacher preview of a Practice Bank page (2026-11-02). Same sealed frame
@@ -11,6 +14,19 @@ import { qtypeLabel } from '../../lib/questionTypes'
  * report its score is spotted before it is set as homework.
  */
 export default function PagePreview({ page, onClose }) {
+  // Speaking tests: the real test screen, without handing in.
+  if (/^speaking:/.test(page.url || '')) {
+    return createPortal(
+      <Suspense fallback={<div className="fixed inset-0 z-[70] bg-ink/80" />}>
+        <SpeakingTask task={{ id: null, html_url: page.url, title: page.title }} preview onClose={onClose} />
+      </Suspense>,
+      document.body
+    )
+  }
+  return <HtmlPagePreview page={page} onClose={onClose} />
+}
+
+function HtmlPagePreview({ page, onClose }) {
   const [html, setHtml] = useState(null)
   const [error, setError] = useState('')
   const [score, setScore] = useState(null)

@@ -16,6 +16,10 @@ const EXTRA = {
   // Writing pages (2026-11-02): homework only, never on the Books shelf.
   writing_task1: 'Writing Task 1',
   writing_task2: 'Writing Task 2',
+  speaking_full: 'Speaking · full test',
+  speaking_part1: 'Speaking Part 1',
+  speaking_part2: 'Speaking Part 2',
+  speaking_part3: 'Speaking Part 3',
   completion: 'Gap-fill (completion)',
   matching: 'Matching',
   other: 'Other',

@@ -14,6 +14,14 @@ export const TASK_KINDS = {
   wordlist: { label: 'Word list', short: 'Words', skill: 'vocab', tint: 'bg-vocab-tint', text: 'text-vocab', solid: 'bg-vocab' },
   html: { label: 'Practice page', short: 'Page', skill: 'general', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', solid: 'bg-brass' },
   shadowing: { label: 'Shadowing', short: 'Shadowing', skill: 'speaking', tint: 'bg-speaking-tint', text: 'text-speaking', solid: 'bg-speaking' },
+  // Not a task kind of its own: an html task whose url is "speaking:…".
+  speaking: { label: 'Speaking test', short: 'Speaking', skill: 'speaking', tint: 'bg-speaking-tint', text: 'text-speaking', solid: 'bg-speaking' },
+}
+
+// The look of a task: speaking tests are html tasks with a speaking: url.
+export function taskMeta(task) {
+  if (task?.kind === 'html' && /^speaking:/.test(task.html_url || '')) return TASK_KINDS.speaking
+  return TASK_KINDS[task?.kind] || TASK_KINDS.reading
 }
 
 export const TASK_SELECT = 'id, position, kind, exam_id, wordlist_id, html_url, title, shadowing_clip_id'
@@ -23,6 +31,8 @@ export function taskTitle(task) {
 }
 
 export function percentOf(attempt) {
+  // Speaking tests have an AI band and no score.
+  if (attempt && attempt.score == null && attempt.band != null) return Math.round((Number(attempt.band) / 9) * 100)
   if (!attempt || attempt.score == null || !attempt.max_score) return null
   return Math.round((attempt.score / attempt.max_score) * 100)
 }
@@ -30,6 +40,7 @@ export function percentOf(attempt) {
 // "30/40 · Band 7.0", "8/10", "Done"
 export function gradeLabel(attempt) {
   if (!attempt?.submitted_at) return null
+  if (attempt.score == null && attempt.band != null) return `Band ${Number(attempt.band).toFixed(1)}`
   if (attempt.score == null || !attempt.max_score) return 'Done'
   const base = `${attempt.score}/${attempt.max_score}`
   return attempt.band != null ? `${base} · Band ${Number(attempt.band).toFixed(1)}` : base

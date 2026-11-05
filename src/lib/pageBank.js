@@ -17,6 +17,7 @@ export const BANK_SKILLS = [
   { value: 'reading', label: 'Reading' },
   { value: 'listening', label: 'Listening' },
   { value: 'writing', label: 'Writing' },
+  { value: 'speaking', label: 'Speaking' },
 ]
 // "Workshops" was its own shelf until 2026-11-05; every Reading page has
 // its Workshop built in, so it was always empty and is gone.
@@ -150,6 +151,22 @@ export function difficultyOf(stat) {
 const peekCache = {}
 export function peekPage(url) {
   if (!url) return Promise.resolve(null)
+  // Speaking tests live in the database (migration_101), not in a file.
+  if (/^speaking:/.test(url)) {
+    if (!peekCache[url]) {
+      peekCache[url] = import('./speaking').then(async ({ parseSpeakingUrl, loadSpeakingSet }) => {
+        const ref = parseSpeakingUrl(url)
+        const set = await loadSpeakingSet(ref.setId)
+        const c = set.content || {}
+        const p1 = (c.part1 || []).map((t) => `${t.topic}: ${(t.questions || []).map((q) => q.q).join(' ')}`).join('  ')
+        const p2 = c.part2?.cue ? `${c.part2.cue}. You should say: ${(c.part2.bullets || []).join('; ')}${c.part2.explain ? `; ${c.part2.explain}` : ''}` : ''
+        const p3 = (c.part3?.questions || []).map((q) => q.q).join(' ')
+        const text = { part1: p1, part2: p2, part3: p3 }[ref.part] || [p1, p2].filter(Boolean).join('  ·  ')
+        return { title: `Set ${set.number} · ${set.topics || ''}`, sub: { full: 'Full test · Parts 1, 2 and 3', part1: 'Part 1', part2: 'Part 2 · cue card', part3: `Part 3 · ${c.part3?.theme || ''}` }[ref.part], text: text.slice(0, 260) }
+      }).catch(() => null)
+    }
+    return peekCache[url]
+  }
   if (!peekCache[url]) {
     peekCache[url] = fetch(url)
       .then((r) => (r.ok ? r.text() : ''))
