@@ -15,6 +15,23 @@ export default function ResetPassword() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [username, setUsername] = useState('')
+
+  // Once the link works: show the username this account signs in with,
+  // so the student signs in to THIS account with the new password.
+  useEffect(() => {
+    if (!ready) return
+    supabase.auth.getUser().then(({ data }) => {
+      const id = data?.user?.id
+      if (!id) return
+      supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', id)
+        .maybeSingle()
+        .then(({ data: p }) => setUsername(p?.username || ''))
+    })
+  }, [ready])
 
   useEffect(() => {
     let mounted = true
@@ -109,7 +126,9 @@ export default function ResetPassword() {
       }
 
       setMessage(
-        'Password updated successfully. Redirecting to sign in…'
+        username
+          ? `Password updated. Sign in with your username “${username}” and the new password…`
+          : 'Password updated successfully. Redirecting to sign in…'
       )
 
       await supabase.auth.signOut()
@@ -118,7 +137,7 @@ export default function ResetPassword() {
         navigate('/login', {
           replace: true,
         })
-      }, 1500)
+      }, username ? 3500 : 1500)
     } catch (err) {
       console.error(
         'Password update failed:',
@@ -160,12 +179,20 @@ export default function ResetPassword() {
       ) : !ready ? (
         <div className="flex flex-col gap-4">
           {error && <AuthNotice>{error}</AuthNotice>}
+          <p className="text-[13px] font-semibold leading-relaxed text-paper-dim">
+            Each link works once, and only the newest one works — asking again cancels the older emails. Ask for a new link, wait for the email, and open that one.
+          </p>
           <Link to="/forgot-password" className={authPrimaryButtonClass}>
             Request a new link
           </Link>
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
+          {username && (
+            <AuthNotice tone="success">
+              This is the account with the username <b>{username}</b>. After saving, sign in with this username.
+            </AuthNotice>
+          )}
           <AuthField label="New password">
             <input
               type="password"
