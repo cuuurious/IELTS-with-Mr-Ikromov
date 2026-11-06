@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IELTS Listening – Test 4</title>
+<style>
+:root{--red:#c8102e;--ink:#1a1a1a;--bg:#fff;--line:#c9c9c9;--soft:#f1f1ef;--ok:#1b7a3a;--bad:#b3261e;--accent:#1f5fbf}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);font-size:15px}
+header{position:fixed;top:0;left:0;right:0;height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:20}
+.logo{font-weight:900;color:var(--red);font-size:24px;letter-spacing:-1px}
+.hmid{font-size:13px;line-height:1.25;margin-left:12px;flex:1}
+.hmid b{display:block;font-size:14px}
+#audiostat{color:#555}
+.hbtn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px}
+main{padding:72px 16px 90px;max-width:960px;margin:0 auto}
+.banner{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:18px}
+.banner b{display:block}
+h3{margin:22px 0 4px;font-size:15px}
+.instr{margin:0 0 10px}
+.ptitle{font-weight:700;font-size:17px;margin:10px 0}
+.notes{margin:8px 0 6px}
+.notes .h{font-weight:700;margin:12px 0 4px}
+.notes .t{margin:6px 0}
+.notes .b{margin:6px 0 6px 18px;position:relative}.notes .b:before{content:"•";position:absolute;left:-14px}
+.notes .s{margin:6px 0 6px 38px;position:relative}.notes .s:before{content:"–";position:absolute;left:-14px}
+input.gap{width:140px;height:28px;border:1px solid #777;border-radius:3px;padding:0 6px;text-align:center;font-weight:700;font-size:14px;margin:0 4px;vertical-align:middle;background:#fff}
+input.gap::placeholder{color:#111;opacity:1}
+input.gap:focus{outline:2px solid var(--accent)}
+.q{margin:16px 0}.q .n{display:inline-block;min-width:22px;font-weight:700;border:1px solid transparent;padding:0 3px}
+.q.cur .n{border-color:var(--accent)}
+.opt{display:flex;align-items:center;gap:8px;margin:7px 0 7px 22px;cursor:pointer}
+.opt input{width:16px;height:16px}
+.zone{display:inline-flex;align-items:center;justify-content:center;min-width:150px;height:30px;border:1.5px dashed #555;border-radius:4px;font-weight:700;padding:0 8px;margin:0 6px;vertical-align:middle;background:#fff;cursor:pointer}
+.zone.filled{border-style:solid;background:#f7fbff}
+.zone.over{background:#e6f0ff}
+.zone.letter{min-width:56px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.chip{border:1px solid #666;border-radius:4px;padding:5px 10px;background:#fff;cursor:grab;user-select:none;font-size:14px}
+.chip.sel{outline:2px solid var(--accent);background:#eaf1ff}
+.chip.letter b{margin-right:6px}
+.drow{margin:12px 0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.drow .lab{min-width:170px}
+.mapwrap{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.mapwrap img{max-width:520px;width:100%;border:1px solid var(--line)}
+.helpline{font-size:12px;color:#666;margin:2px 0 8px}
+nav#bar{position:fixed;bottom:0;left:0;right:0;height:52px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:stretch;z-index:20}
+.pt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:14px;color:#444;padding:0 6px;border-right:1px solid #eee}
+.pt.act{flex:3;color:#000;font-weight:700;justify-content:flex-start;padding-left:14px}
+.pt .nums{display:none;gap:4px;flex-wrap:nowrap;font-weight:400}
+.pt.act .nums{display:flex}
+.pt .cnt{font-weight:400;font-size:12px}.pt.act .cnt{display:none}
+.nb{min-width:22px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;border:1px solid transparent;border-radius:2px;cursor:pointer;position:relative}
+.nb.done{font-weight:700;background:#e9f0fb}
+.nb.cur{border-color:var(--accent)}
+.nb.flag:after{content:"";position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%}
+.nb.ok{background:#dff3e5;color:var(--ok)}.nb.no{background:#fbe2e0;color:var(--bad)}
+#submit{width:64px;background:#eee;border:0;cursor:pointer;font-size:22px}
+.arrows{position:fixed;right:16px;bottom:70px;display:flex;gap:2px;z-index:15}
+.arrows button{width:44px;height:44px;border:0;background:#111;color:#fff;font-size:22px;cursor:pointer;border-radius:3px}
+.arrows button.dis{background:#ddd;color:#888}
+.overlay{position:fixed;inset:0;background:rgba(60,60,60,.93);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px}
+.overlay .play{margin-top:20px;background:#000;color:#fff;border:0;border-radius:4px;padding:12px 24px;font-size:16px;cursor:pointer}
+.modal{background:#fff;color:#111;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:8px;padding:24px;text-align:left}
+.score{font-size:40px;font-weight:800;margin:6px 0}
+table.res{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+table.res td,table.res th{border-bottom:1px solid #ddd;padding:5px 8px;text-align:left}
+td.ok{color:var(--ok);font-weight:700}td.no{color:var(--bad);font-weight:700}
+.fb{display:inline-block;margin-left:8px;font-size:13px;font-weight:700}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
+.locked input.gap{background:#f6f6f6}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:5px;padding:10px 18px;font-size:15px;cursor:pointer;margin:6px 6px 0 0}
+.btn.sec{background:#eee;color:#111}
+
+.side{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin:8px 0}.side>div{flex:1 1 260px;min-width:0}
+img.pic{max-width:100%;width:520px;border:1px solid var(--line)}
+table.tb{border-collapse:collapse;margin:10px 0;width:100%}
+table.tb td,table.tb th{border:1px solid #777;padding:6px 8px;vertical-align:top;text-align:left}
+table.tb th{background:#f3f3f1}
+table.form{max-width:760px}
+table.opt{width:auto;min-width:320px}
+.flow{max-width:560px;margin:8px 0}.flb{border:1px solid #444;padding:7px 9px;text-align:center}.arr{text-align:center;line-height:1.1}
+.cb{margin:3px 0 3px 12px;position:relative}.cb:before{content:"•";position:absolute;left:-11px}
+p.b{font-weight:700}p.c{text-align:center}p.i{font-style:italic}p.sub{font-weight:700}p.bh{font-weight:700;text-align:center}
+.ptitle.c{text-align:center}
+.nt{font-weight:700;text-align:center;margin-bottom:6px}
+.notes{border:1px solid #444;padding:8px 12px;margin:8px 0}
+.notes .gp{height:8px}
+.bl{letter-spacing:1px}
+.lines .drow{margin:8px 0}
+input.gap.short{width:64px}
+.gw{white-space:nowrap}
+@media(max-width:640px){.pt.act{flex:5}.pt:not(.act) .cnt{display:none}input.gap{width:110px}}
+
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}.stat{flex:1 1 90px;background:#f5f5f3;border:1px solid #ddd;border-radius:6px;padding:8px 10px;text-align:center}.stat b{display:block;font-size:22px}
+table.res td.pc{text-align:right;white-space:nowrap}
+.bar{display:inline-block;height:8px;background:#1b7a3a;border-radius:4px;vertical-align:middle;margin-left:6px}
+.qt{color:#666;font-size:12px}
+.res h4{margin:16px 0 4px}
+</style></head><body>
+<header><div class="logo">IELTS</div><div class="hmid"><b>MrIkromov's IELTS · Listening Test 4</b><span id="audiostat"></span></div><button class="hbtn" id="notesbtn">Notes</button></header>
+<main id="main"></main>
+<div class="arrows"><button id="prev">←</button><button id="next">→</button></div>
+<nav id="bar"></nav>
+<div class="overlay" id="start"><div style="font-size:64px">🎧</div><p style="max-width:640px">You will be listening to an audio recording during this test. You will not be permitted to pause or rewind the audio while answering the questions.</p><p>To continue, click Play.</p><button class="play" id="playbtn">▶ Play</button></div>
+<audio id="aud" preload="auto" src="/practice/listening-pretest/audio/test-04.mp3"></audio>
+<script>
+const TEST={"no": 4, "n": 49, "key": {"1": {"type": "gap", "accept": ["Jazz"], "qt": "Note completion"}, "2": {"type": "gap", "accept": ["Lake"], "qt": "Note completion"}, "3": {"type": "gap", "accept": ["250"], "qt": "Note completion"}, "4": {"type": "gap", "accept": ["pool"], "qt": "Note completion"}, "5": {"type": "gap", "accept": ["disco"], "qt": "Note completion"}, "6": {"type": "gap", "accept": ["bus"], "qt": "Note completion"}, "7": {"type": "gap", "accept": ["flowers"], "qt": "Note completion"}, "8": {"type": "gap", "accept": ["bread"], "qt": "Table completion"}, "9": {"type": "gap", "accept": ["ingredients"], "qt": "Table completion"}, "10": {"type": "gap", "accept": ["sailing"], "qt": "Table completion"}, "11": {"type": "gap", "accept": ["shorts"], "qt": "Table completion"}, "12": {"type": "gap", "accept": ["drums"], "qt": "Table completion"}, "13": {"type": "gap", "accept": ["deposit"], "qt": "Table completion"}, "14": {"type": "letter", "accept": "A", "qt": "Multiple choice"}, "15": {"type": "letter", "accept": "A", "qt": "Multiple choice"}, "16": {"type": "letter", "accept": "B", "qt": "Multiple choice"}, "17": {"type": "letter", "accept": "B", "qt": "Matching"}, "18": {"type": "letter", "accept": "C", "qt": "Matching"}, "19": {"type": "letter", "accept": "A", "qt": "Matching"}, "20": {"type": "letter", "accept": "B", "qt": "Matching"}, "21": {"type": "letter", "accept": "D", "qt": "Matching"}, "22": {"type": "letter", "accept": "D", "qt": "Matching"}, "23": {"type": "letter", "accept": "A", "qt": "Matching"}, "24": {"type": "pick", "g": 24, "idx": 0, "set": ["B", "D"], "qt": "Choose two letters"}, "25": {"type": "pick", "g": 24, "idx": 1, "set": ["B", "D"], "qt": "Choose two letters"}, "26": {"type": "pick", "g": 26, "idx": 0, "set": ["A", "E"], "qt": "Choose two letters"}, "27": {"type": "pick", "g": 26, "idx": 1, "set": ["A", "E"], "qt": "Choose two letters"}, "28": {"type": "pick", "g": 28, "idx": 0, "set": ["C", "E"], "qt": "Choose two letters"}, "29": {"type": "pick", "g": 28, "idx": 1, "set": ["C", "E"], "qt": "Choose two letters"}, "30": {"type": "letter", "accept": "H", "qt": "Matching"}, "31": {"type": "letter", "accept": "G", "qt": "Matching"}, "32": {"type": "letter", "accept": "D", "qt": "Matching"}, "33": {"type": "letter", "accept": "B", "qt": "Matching"}, "34": {"type": "letter", "accept": "E", "qt": "Matching"}, "35": {"type": "letter", "accept": "I", "qt": "Matching"}, "36": {"type": "letter", "accept": "C", "qt": "Matching"}, "37": {"type": "letter", "accept": "A", "qt": "Multiple choice"}, "38": {"type": "letter", "accept": "C", "qt": "Multiple choice"}, "39": {"type": "letter", "accept": "A", "qt": "Multiple choice"}, "40": {"type": "letter", "accept": "B", "qt": "Multiple choice"}, "41": {"type": "letter", "accept": "B", "qt": "Multiple choice"}, "42": {"type": "letter", "accept": "A", "qt": "Multiple choice"}, "43": {"type": "letter", "accept": "C", "qt": "Multiple choice"}, "44": {"type": "letter", "accept": "C", "qt": "Matching"}, "45": {"type": "letter", "accept": "D", "qt": "Matching"}, "46": {"type": "letter", "accept": "E", "qt": "Matching"}, "47": {"type": "letter", "accept": "H", "qt": "Matching"}, "48": {"type": "letter", "accept": "G", "qt": "Matching"}, "49": {"type": "letter", "accept": "A", "qt": "Matching"}}, "zg": {"17": "g1", "18": "g1", "19": "g1", "20": "g1", "21": "g1", "22": "g1", "23": "g1", "30": "g2", "31": "g2", "32": "g2", "33": "g2", "34": "g2", "35": "g2", "36": "g2", "44": "g3", "45": "g3", "46": "g3", "47": "g3", "48": "g3", "49": "g3"}, "reuse": ["g1"], "parts": [{"n": 1, "range": "1–13", "from": 1, "to": 13, "html": "<h3>Questions 1–7</h3><p class='instr'>Complete the notes below.</p><p class='instr'>Write <b>ONE WORD AND/OR A NUMBER</b> for each answer.</p><div class='notes'><div class='nt'>Wickham Summer School</div><div class='b'>The first week of August is recommended because of the <span class='gw' data-q='1'><input class='gap' data-q='1' placeholder='1' autocomplete='off' spellcheck='false'></span> festival in the town.</div><div class='b'>The man suggests staying in <span class='gw' data-q='2'><input class='gap' data-q='2' placeholder='2' autocomplete='off' spellcheck='false'></span> House.</div><div class='b'>A family room costs £ <span class='gw' data-q='3'><input class='gap' data-q='3' placeholder='3' autocomplete='off' spellcheck='false'></span></div><div class='b'>The price includes the use of the school <span class='gw' data-q='4'><input class='gap' data-q='4' placeholder='4' autocomplete='off' spellcheck='false'></span></div><div class='b'>Each week there’s a <span class='gw' data-q='5'><input class='gap' data-q='5' placeholder='5' autocomplete='off' spellcheck='false'></span> in the evening.</div><div class='b'>It’s easy to get to Wickham by <span class='gw' data-q='6'><input class='gap' data-q='6' placeholder='6' autocomplete='off' spellcheck='false'></span>.</div><div class='b'>There are good art courses, e.g. how to paint <span class='gw' data-q='7'><input class='gap' data-q='7' placeholder='7' autocomplete='off' spellcheck='false'></span></div></div><h3>Questions 8–13</h3><p class='instr'>Complete the table below.</p><p class='instr'>Write <b>ONE WORD ONLY</b> for each answer.</p><p class='ptitle c'>Courses for the family</p><table class='tb'><tr><th>Family member</th><th>Type of course</th><th>Notes</th></tr><tr><td>Sam</td><td>making <span class='gw' data-q='8'><input class='gap' data-q='8' placeholder='8' autocomplete='off' spellcheck='false'></span></td><td>all <span class='gw' data-q='9'><input class='gap' data-q='9' placeholder='9' autocomplete='off' spellcheck='false'></span> are included</td></tr><tr><td>Fiona</td><td><span class='gw' data-q='10'><input class='gap' data-q='10' placeholder='10' autocomplete='off' spellcheck='false'></span></td><td>should wear <span class='gw' data-q='11'><input class='gap' data-q='11' placeholder='11' autocomplete='off' spellcheck='false'></span></td></tr><tr><td>Joe</td><td>playing the <span class='gw' data-q='12'><input class='gap' data-q='12' placeholder='12' autocomplete='off' spellcheck='false'></span></td><td>must pay a <span class='gw' data-q='13'><input class='gap' data-q='13' placeholder='13' autocomplete='off' spellcheck='false'></span></td></tr></table>"}, {"n": 2, "range": "14–23", "from": 14, "to": 23, "html": "<h3>Questions 14–16</h3><p class='instr'>Choose the correct letter, <b>A</b>, <b>B</b> or <b>C</b>.</p><p class='ptitle c'>Desert Holidays</p><div class='q' data-q='14'><span class='n'>14</span> What first attracted Naomi to deserts?<label class='opt'><input type='radio' name='q14' value='A' data-q='14'> <b>A</b> a beautiful sight she once saw</label><label class='opt'><input type='radio' name='q14' value='B' data-q='14'> <b>B</b> hearing about her husband’s travels</label><label class='opt'><input type='radio' name='q14' value='C' data-q='14'> <b>C</b> an exciting event which happened to her</label></div><div class='q' data-q='15'><span class='n'>15</span> What does Naomi advise about travelling in the desert?<label class='opt'><input type='radio' name='q15' value='A' data-q='15'> <b>A</b> keep an open mind</label><label class='opt'><input type='radio' name='q15' value='B' data-q='15'> <b>B</b> take detailed maps</label><label class='opt'><input type='radio' name='q15' value='C' data-q='15'> <b>C</b> bring plenty of clothing</label></div><div class='q' data-q='16'><span class='n'>16</span> Naomi thinks the best thing about travelling in the same group for a long time is<label class='opt'><input type='radio' name='q16' value='A' data-q='16'> <b>A</b> the chance to exchange life experiences</label><label class='opt'><input type='radio' name='q16' value='B' data-q='16'> <b>B</b> the fun company in the evenings</label><label class='opt'><input type='radio' name='q16' value='C' data-q='16'> <b>C</b> the feeling of trust which builds up</label></div><h3>Questions 17–23</h3><p class='instr'>What can you do on holiday in the following deserts?</p><p class='instr'>Write the correct letter, <b>A</b>, <b>B</b>, <b>C</b> or <b>D</b>, next to questions 17–23.</p><div class='helpline'>Activities</div><div class='bank' data-bank='g1'><span class='chip' draggable='true' data-id='A' data-grp='g1'><b>A</b> stay in tented accommodation</span><span class='chip' draggable='true' data-id='B' data-grp='g1'><b>B</b> go horseback riding</span><span class='chip' draggable='true' data-id='C' data-grp='g1'><b>C</b> go mountain climbing</span><span class='chip' draggable='true' data-id='D' data-grp='g1'><b>D</b> take trips to see wildlife</span></div><div class='lines'><div class='drow q' data-q='17'><span class='n'>17</span><span class='lab'>Atacama <span class='zone letter' data-q='17' data-grp='g1'>17</span></span></div><div class='drow q' data-q='18'><span class='n'>18</span><span class='lab'>Skeleton Coast <span class='zone letter' data-q='18' data-grp='g1'>18</span></span></div><div class='drow q' data-q='19'><span class='n'>19</span><span class='lab'>Moroccan Sahara <span class='zone letter' data-q='19' data-grp='g1'>19</span></span></div><div class='drow q' data-q='20'><span class='n'>20</span><span class='lab'>Almeria <span class='zone letter' data-q='20' data-grp='g1'>20</span></span></div><div class='drow q' data-q='21'><span class='n'>21</span><span class='lab'>Gobi <span class='zone letter' data-q='21' data-grp='g1'>21</span></span></div><div class='drow q' data-q='22'><span class='n'>22</span><span class='lab'>Thar <span class='zone letter' data-q='22' data-grp='g1'>22</span></span></div><div class='drow q' data-q='23'><span class='n'>23</span><span class='lab'>Uluru-Kata <span class='zone letter' data-q='23' data-grp='g1'>23</span></span></div></div>"}, {"n": 3, "range": "24–36", "from": 24, "to": 36, "html": "<h3>Questions 24 and 25</h3><p class='instr'>Choose <b>TWO</b> letters, <b>A–E</b>.</p><p class=''>Which <b>TWO</b> reasons do the students give for choosing Green Mountain Park for their project?</p><div class='q' data-q='24'><label class='opt'><input type='checkbox' class='pick' value='A' data-g='24' data-max='2'> <b>A</b> They can apply their current skills to research this park</label><label class='opt'><input type='checkbox' class='pick' value='B' data-g='24' data-max='2'> <b>B</b> Visitor numbers to the park have been low</label><label class='opt'><input type='checkbox' class='pick' value='C' data-g='24' data-max='2'> <b>C</b> They have both visited the park in the past</label><label class='opt'><input type='checkbox' class='pick' value='D' data-g='24' data-max='2'> <b>D</b> There has been new publicity for the park</label><label class='opt'><input type='checkbox' class='pick' value='E' data-g='24' data-max='2'> <b>E</b> The park has benefited from investment</label></div><h3>Questions 26 and 27</h3><p class='instr'>Choose <b>TWO</b> letters, <b>A–E</b>.</p><p class=''>Which <b>TWO</b> things do the students say about the case study they read on Stonehaven Park?</p><div class='q' data-q='26'><label class='opt'><input type='checkbox' class='pick' value='A' data-g='26' data-max='2'> <b>A</b> It included a suggestion for managing the flow of people within a site</label><label class='opt'><input type='checkbox' class='pick' value='B' data-g='26' data-max='2'> <b>B</b> It highlighted the importance of educational materials for visitors</label><label class='opt'><input type='checkbox' class='pick' value='C' data-g='26' data-max='2'> <b>C</b> It promoted people’s need for recreation over the need for conservation</label><label class='opt'><input type='checkbox' class='pick' value='D' data-g='26' data-max='2'> <b>D</b> It presented the data in a way that was easy to understand</label><label class='opt'><input type='checkbox' class='pick' value='E' data-g='26' data-max='2'> <b>E</b> It was based on an area similar to Green Mountain Park</label></div><h3>Questions 28 and 29</h3><p class='instr'>Choose <b>TWO</b> letters, <b>A–E</b>.</p><p class=''>Which <b>TWO</b> problems did the students have with their questionnaire when they trialled it?</p><div class='q' data-q='28'><label class='opt'><input type='checkbox' class='pick' value='A' data-g='28' data-max='2'> <b>A</b> It took too long for users to complete</label><label class='opt'><input type='checkbox' class='pick' value='B' data-g='28' data-max='2'> <b>B</b> Some questions were hard for people to understand</label><label class='opt'><input type='checkbox' class='pick' value='C' data-g='28' data-max='2'> <b>C</b> The order of the questions could be improved</label><label class='opt'><input type='checkbox' class='pick' value='D' data-g='28' data-max='2'> <b>D</b> People were not willing to give some information online</label><label class='opt'><input type='checkbox' class='pick' value='E' data-g='28' data-max='2'> <b>E</b> There was not always enough space for people’s answers</label></div><h3>Questions 30–36</h3><p class='instr'>What is the students’ opinion of each of the following features of Green Mountain Park?</p><p class='instr'>Choose <b>SEVEN</b> answers from the box and write the correct letter, <b>A–I</b>, next to questions 30–36.</p><div class='helpline'>Opinions</div><div class='bank' data-bank='g2'><span class='chip' draggable='true' data-id='A' data-grp='g2'><b>A</b> They expected this to be more challenging</span><span class='chip' draggable='true' data-id='B' data-grp='g2'><b>B</b> They say this has been improved recently</span><span class='chip' draggable='true' data-id='C' data-grp='g2'><b>C</b> They think this presents a risk</span><span class='chip' draggable='true' data-id='D' data-grp='g2'><b>D</b> They disagree about the view here</span><span class='chip' draggable='true' data-id='E' data-grp='g2'><b>E</b> They disagree about how easy this is to get to</span><span class='chip' draggable='true' data-id='F' data-grp='g2'><b>F</b> They were both disappointed by the length of this</span><span class='chip' draggable='true' data-id='G' data-grp='g2'><b>G</b> They agree that a particular addition would be helpful</span><span class='chip' draggable='true' data-id='H' data-grp='g2'><b>H</b> They think this should be publicized more</span><span class='chip' draggable='true' data-id='I' data-grp='g2'><b>I</b> They disagree about how important this is</span></div><div class='lines'><div class='drow q' data-q='30'><span class='n'>30</span><span class='lab'>Loch Trail <span class='zone letter' data-q='30' data-grp='g2'>30</span></span></div><div class='drow q' data-q='31'><span class='n'>31</span><span class='lab'>Summit Trail <span class='zone letter' data-q='31' data-grp='g2'>31</span></span></div><div class='drow q' data-q='32'><span class='n'>32</span><span class='lab'>Heath Trail <span class='zone letter' data-q='32' data-grp='g2'>32</span></span></div><div class='drow q' data-q='33'><span class='n'>33</span><span class='lab'>Ridge Trail <span class='zone letter' data-q='33' data-grp='g2'>33</span></span></div><div class='drow q' data-q='34'><span class='n'>34</span><span class='lab'>Bird’s Eye Point <span class='zone letter' data-q='34' data-grp='g2'>34</span></span></div><div class='drow q' data-q='35'><span class='n'>35</span><span class='lab'>Café <span class='zone letter' data-q='35' data-grp='g2'>35</span></span></div><div class='drow q' data-q='36'><span class='n'>36</span><span class='lab'>Car park <span class='zone letter' data-q='36' data-grp='g2'>36</span></span></div></div>"}, {"n": 4, "range": "37–49", "from": 37, "to": 49, "html": "<h3>Questions 37–43</h3><p class='instr'>Choose the correct letter, <b>A</b>, <b>B</b> or <b>C</b>.</p><p class='ptitle c'>The benefits of singing</p><div class='q' data-q='37'><span class='n'>37</span> Scarlett and Flynn agree that the popularity of singing in choirs has increased due to<label class='opt'><input type='radio' name='q37' value='A' data-q='37'> <b>A</b> recent television publicity</label><label class='opt'><input type='radio' name='q37' value='B' data-q='37'> <b>B</b> news articles discussing the benefits</label><label class='opt'><input type='radio' name='q37' value='C' data-q='37'> <b>C</b> more opportunities</label></div><div class='q' data-q='38'><span class='n'>38</span> What is Flynn’s reaction to new research about singing and behavior?<label class='opt'><input type='radio' name='q38' value='A' data-q='38'> <b>A</b> He doesn’t agree with the way it was carried out</label><label class='opt'><input type='radio' name='q38' value='B' data-q='38'> <b>B</b> He doesn’t think there is enough evidence for its conclusions</label><label class='opt'><input type='radio' name='q38' value='C' data-q='38'> <b>C</b> He doesn’t recognize its claims from his own experience</label></div><div class='q' data-q='39'><span class='n'>39</span> In a workshop she attended, Scarlett found that<label class='opt'><input type='radio' name='q39' value='A' data-q='39'> <b>A</b> she enjoyed singing a range of songs</label><label class='opt'><input type='radio' name='q39' value='B' data-q='39'> <b>B</b> singing with others was easier than singing alone</label><label class='opt'><input type='radio' name='q39' value='C' data-q='39'> <b>C</b> she was a better singer than she had thought</label></div><div class='q' data-q='40'><span class='n'>40</span> Flynn was particularly impressed by a student presentation about<label class='opt'><input type='radio' name='q40' value='A' data-q='40'> <b>A</b> the way that children learn to stop</label><label class='opt'><input type='radio' name='q40' value='B' data-q='40'> <b>B</b> the effect of songs on the elderly</label><label class='opt'><input type='radio' name='q40' value='C' data-q='40'> <b>C</b> the differences between male and female singers</label></div><div class='q' data-q='41'><span class='n'>41</span> What surprised Scarlett in a lecture about music and the human race?<label class='opt'><input type='radio' name='q41' value='A' data-q='41'> <b>A</b> Music is found in all human cultures</label><label class='opt'><input type='radio' name='q41' value='B' data-q='41'> <b>B</b> Music occurs in a wide range of situations</label><label class='opt'><input type='radio' name='q41' value='C' data-q='41'> <b>C</b> There is evidence of music dating back thousands of years</label></div><div class='q' data-q='42'><span class='n'>42</span> What does Flynn say is unique about community choirs?<label class='opt'><input type='radio' name='q42' value='A' data-q='42'> <b>A</b> no special skill in singing is needed</label><label class='opt'><input type='radio' name='q42' value='B' data-q='42'> <b>B</b> there is no charge to join one</label><label class='opt'><input type='radio' name='q42' value='C' data-q='42'> <b>C</b> they create strong social bonds</label></div><div class='q' data-q='43'><span class='n'>43</span> What do Scarlett and Flynn agree about voice therapy?<label class='opt'><input type='radio' name='q43' value='A' data-q='43'> <b>A</b> It is only suitable for certain types of people</label><label class='opt'><input type='radio' name='q43' value='B' data-q='43'> <b>B</b> They are not certain of its benefits</label><label class='opt'><input type='radio' name='q43' value='C' data-q='43'> <b>C</b> Its popularity will increase in the future</label></div><h3>Questions 44–49</h3><p class='instr'>Which comment do Scarlett and Flynn make about each of the following claims?</p><p class='instr'>Choose <b>SIX</b> answers from the box and write the correct letter, <b>A–H</b>, next to questions 44–49.</p><div class='helpline'>Comments</div><div class='bank' data-bank='g3'><span class='chip' draggable='true' data-id='A' data-grp='g3'><b>A</b> They both think this is obvious</span><span class='chip' draggable='true' data-id='B' data-grp='g3'><b>B</b> Scarlett has never heard this claim before</span><span class='chip' draggable='true' data-id='C' data-grp='g3'><b>C</b> Flynn is doubtful about this</span><span class='chip' draggable='true' data-id='D' data-grp='g3'><b>D</b> They both decide to do further reading on this</span><span class='chip' draggable='true' data-id='E' data-grp='g3'><b>E</b> They agree that there is good evidence for this</span><span class='chip' draggable='true' data-id='F' data-grp='g3'><b>F</b> Flynn has done an experiment on this</span><span class='chip' draggable='true' data-id='G' data-grp='g3'><b>G</b> Neither of them is going to include this</span><span class='chip' draggable='true' data-id='H' data-grp='g3'><b>H</b> Scarlett does not think this is important</span></div><div class='lines'><div class='drow q' data-q='44'><span class='n'>44</span><span class='lab'>It improves sleep <span class='zone letter' data-q='44' data-grp='g3'>44</span></span></div><div class='drow q' data-q='45'><span class='n'>45</span><span class='lab'>It increases confidence <span class='zone letter' data-q='45' data-grp='g3'>45</span></span></div><div class='drow q' data-q='46'><span class='n'>46</span><span class='lab'>It reduces stress <span class='zone letter' data-q='46' data-grp='g3'>46</span></span></div><div class='drow q' data-q='47'><span class='n'>47</span><span class='lab'>It improves posture <span class='zone letter' data-q='47' data-grp='g3'>47</span></span></div><div class='drow q' data-q='48'><span class='n'>48</span><span class='lab'>It helps with concentrating <span class='zone letter' data-q='48' data-grp='g3'>48</span></span></div><div class='drow q' data-q='49'><span class='n'>49</span><span class='lab'>It increases happiness <span class='zone letter' data-q='49' data-grp='g3'>49</span></span></div></div>"}]};
+const $=s=>document.querySelector(s);
+const N=TEST.n;const ans={},flags={};let part=0,cur=1,submitted=false;
+const aud=$('#aud');
+// ---------- normalisation ----------
+function norm(s){s=(s||'').toLowerCase().replace(/[£$]/g,'').replace(/[.,;:!?]+$/,'').replace(/\s+/g,' ').trim();s=s.replace(/^(a|an|the)\s+/,'');return s}
+function isOK(q,v){
+  const k=TEST.key[q];
+  if(k.type==='gap'){const n=norm(v);if(!n)return false;if(k.all){return k.all.every(g=>g.some(a=>n.split(' ').includes(norm(a))||n.includes(norm(a))))}return k.accept.some(a=>norm(a)===n)}
+  if(k.type==='letter'){return (v||'')===k.accept}
+  if(k.type==='set'){return k.set.includes(v||'')}
+  if(k.type==='pick'){return false}
+  return false}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function render(){
+  const P=TEST.parts[part];
+  $('#main').innerHTML='<div class="banner"><b>Part '+P.n+'</b>Listen and answer questions '+P.range+'.</div>'+P.html;
+  restore();bindAll();renderBar();updateArrows();
+  if(submitted)decorate();
+  window.scrollTo(0,0)}
+function restore(){
+  document.querySelectorAll('input.gap').forEach(i=>{i.value=ans[i.dataset.q]||''});
+  document.querySelectorAll('input[type=radio]').forEach(i=>{i.checked=ans[i.dataset.q]===i.value});
+  document.querySelectorAll('input.pick').forEach(i=>{const a=ans['p'+i.dataset.g]||[];i.checked=a.includes(i.value)});
+  document.querySelectorAll('.zone').forEach(z=>{fillZone(z,ans[z.dataset.q])});
+  document.querySelectorAll('.chip').forEach(c=>{const used=!(TEST.reuse||[]).includes(c.dataset.grp)&&Object.entries(ans).some(([q,v])=>v===c.dataset.id&&zoneGrp(q)===c.dataset.grp);c.style.display=used?'none':''});
+}
+function zoneGrp(q){return (TEST.zg||{})[q]}
+function fillZone(z,id){z.textContent=id?id:z.dataset.q;z.classList.toggle('filled',!!id)}
+let selChip=null;
+function place(z,id){const q=z.dataset.q,grp=z.dataset.grp;
+  if(!(TEST.reuse||[]).includes(grp)){for(const k in ans){if(ans[k]===id&&zoneGrp(k)===grp)delete ans[k]}}
+  ans[q]=id;restore();renderBar()}
+function bindAll(){
+  document.querySelectorAll('input.gap').forEach(i=>{i.addEventListener('input',()=>{ans[i.dataset.q]=i.value;cur=+i.dataset.q;renderBar()});i.addEventListener('focus',()=>{cur=+i.dataset.q;renderBar()})});
+  document.querySelectorAll('input[type=radio]').forEach(i=>i.addEventListener('change',()=>{ans[i.dataset.q]=i.value;cur=+i.dataset.q;renderBar()}));
+  document.querySelectorAll('input.pick').forEach(i=>i.addEventListener('change',()=>{
+    const g=i.dataset.g;const all=[...document.querySelectorAll('input.pick[data-g="'+g+'"]')];
+    const on=all.filter(x=>x.checked);if(on.length>(+i.dataset.max||2)){i.checked=false;return}
+    ans['p'+g]=on.map(x=>x.value);renderBar()}));
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('dragstart',e=>{if(submitted){e.preventDefault();return}e.dataTransfer.setData('text/plain',c.dataset.grp+'|'+c.dataset.id)});
+    c.addEventListener('click',()=>{if(submitted)return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));selChip=c;c.classList.add('sel')})});
+  document.querySelectorAll('.zone').forEach(z=>{
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over')});
+    z.addEventListener('dragleave',()=>z.classList.remove('over'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');if(submitted)return;const [g,id]=e.dataTransfer.getData('text/plain').split('|');if(g===z.dataset.grp)place(z,id)});
+    z.addEventListener('click',()=>{if(submitted)return;cur=+z.dataset.q;
+      if(selChip&&selChip.dataset.grp===z.dataset.grp){place(z,selChip.dataset.id);selChip=null}
+      else if(ans[z.dataset.q]){delete ans[z.dataset.q];restore();renderBar()}
+      else renderBar()})});
+}
+// ---------- bar ----------
+function answered(q){
+  const k=TEST.key[q];
+  if(k.type==='pick'){const a=ans['p'+k.g]||[];return a.length>k.idx}
+  if(k.type==='none'&&!ans[q])return false
+  return !!(ans[q]&&String(ans[q]).trim())}
+function renderBar(){
+  const b=$('#bar');b.innerHTML='';
+  TEST.parts.forEach((P,i)=>{
+    const d=document.createElement('div');d.className='pt'+(i===part?' act':'');
+    const qs=[];for(let q=P.from;q<=P.to;q++)qs.push(q);
+    const n=qs.filter(answered).length;
+    d.innerHTML='<span>Part '+P.n+'</span><span class="cnt">'+n+' of '+(P.to-P.from+1)+'</span><span class="nums">'+qs.map(q=>'<span class="nb'+(answered(q)?' done':'')+(q===cur?' cur':'')+(flags[q]?' flag':'')+(res&&res[q]!==undefined&&res[q]!==null?(res[q]?' ok':' no'):'')+'" data-q="'+q+'">'+q+'</span>').join('')+'</span>';
+    d.addEventListener('click',e=>{const nb=e.target.closest('.nb');if(i!==part){part=i;cur=P.from;render()}if(nb){goTo(+nb.dataset.q)}});
+    b.appendChild(d)});
+  const s=document.createElement('button');s.id='submit';s.textContent='✔';s.title='Submit';s.onclick=askSubmit;b.appendChild(s)}
+function goTo(q){cur=q;renderBar();const el=document.querySelector('[data-q="'+q+'"],[data-q2="'+q+'"]');if(el){const t=el.closest('.q')||el;t.scrollIntoView({block:'center',behavior:'smooth'});const inp=t.querySelector('input.gap');if(inp&&!submitted)inp.focus()}}
+function updateArrows(){$('#prev').classList.toggle('dis',part===0&&cur<=1);$('#next').classList.toggle('dis',part===TEST.parts.length-1&&cur>=N)}
+$('#next').onclick=()=>{if(cur<N){const nq=cur+1;const P=TEST.parts[part];if(nq>P.to){part++;cur=nq;render()}else goTo(nq)}};
+$('#prev').onclick=()=>{if(cur>1){const nq=cur-1;const P=TEST.parts[part];if(nq<P.from){part--;cur=nq;render()}else goTo(nq)}};
+document.addEventListener('contextmenu',e=>{const nb=e.target.closest('.nb');if(nb){e.preventDefault();const q=nb.dataset.q;flags[q]=!flags[q];renderBar()}});
+// ---------- audio ----------
+$('#playbtn').onclick=()=>{$('#start').style.display='none';
+  aud.play().then(()=>{$('#audiostat').textContent='Audio is playing'}).catch(()=>{$('#audiostat').textContent='No audio file attached'});
+  aud.addEventListener('ended',()=>{$('#audiostat').textContent='Audio finished'})};
+aud.addEventListener('error',()=>{$('#audiostat').textContent='No audio file attached'});
+// ---------- submit / results ----------
+let res=null;
+function band(s){const t=[[39,9],[37,8.5],[35,8],[32,7.5],[30,7],[26,6.5],[23,6],[18,5.5],[16,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5]];for(const [m,b] of t)if(s>=m)return b;return 'below 2.5'}
+function score(){
+  const r={},det=[];
+  for(let q=1;q<=N;q++){const k=TEST.key[q];let ok=false,mine,corr;
+    if(k.type==='none'){mine=ans[q]||'—';ok=null;corr='(no key available)'}
+    else if(k.type==='pick'){const a=ans['p'+k.g]||[];const hit=a.filter(x=>k.set.includes(x)).length;ok=hit>k.idx;mine=a.join(' & ')||'—';corr=k.set.join(' & ')}
+    else{mine=ans[q]||'—';ok=isOK(q,ans[q]);corr=k.type==='gap'?k.accept[0]+(k.accept.length>1?'  (also: '+k.accept.slice(1).join(' / ')+')':''):(k.type==='set'?k.set.join(' / '):k.accept)}
+    r[q]=ok;det.push([q,mine,corr,ok])}
+  return {r,det}}
+function askSubmit(){
+  if(submitted){showResults();return}
+  const un=[];for(let q=1;q<=N;q++)if(!answered(q))un.push(q);
+  const o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="modal"><h2 style="margin-top:0">Submit your answers?</h2><p>'+(un.length?'You have not answered '+un.length+' question(s): '+un.join(', ')+'.':'You have answered all '+N+' questions.')+'</p><button class="btn" id="yes">Submit and check</button><button class="btn sec" id="no">Keep working</button></div>';
+  document.body.appendChild(o);$('#no').onclick=()=>o.remove();$('#yes').onclick=()=>{o.remove();doSubmit()}}
+function doSubmit(){submitted=true;aud.pause();document.body.classList.add('locked');
+  document.querySelectorAll('input').forEach(i=>i.disabled=true);
+  const s=score();res=s.r;window._det=s.det;showResults();render()}
+function showResults(){
+  const det=window._det;const scorable=det.filter(d=>d[3]!==null).length;const total=det.filter(d=>d[3]===true).length;
+  const wrong=det.filter(d=>d[3]===false&&d[1]!=='—'&&d[1]!=='').length;const blank=det.filter(d=>d[3]===false&&(d[1]==='—'||d[1]==='')).length;
+  const b40=Math.round(total*40/scorable);
+  const o=document.createElement('div');o.className='overlay';
+  const pct=(a,b)=>b?Math.round(100*a/b):0;const rng=a=>{const o=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;o.push(j>i?a[i]+'–'+a[j]:''+a[i]);i=j+1}return o.join(', ')};
+  const rowP=(label,n,m,sub)=>'<tr><td>'+label+(sub?' <span class="qt">'+sub+'</span>':'')+'</td><td class="pc"><b>'+n+' / '+m+'</b></td><td class="pc">'+pct(n,m)+'% <span class="bar" style="width:'+Math.round(pct(n,m)*0.7)+'px"></span></td></tr>';
+  const partRows=TEST.parts.map(P=>{const n=det.filter(d=>d[0]>=P.from&&d[0]<=P.to&&d[3]===true).length;const m=det.filter(d=>d[0]>=P.from&&d[0]<=P.to&&d[3]!==null).length;return rowP('Part '+P.n,n,m,'Q'+P.from+'–'+P.to)}).join('');
+  const types=[];det.forEach(d=>{const t=TEST.key[d[0]].qt||'Other';if(!types.includes(t))types.push(t)});
+  const typeRows=types.map(t=>{const ds=det.filter(d=>(TEST.key[d[0]].qt||'Other')===t&&d[3]!==null);const n=ds.filter(d=>d[3]===true).length;const qs=det.filter(d=>(TEST.key[d[0]].qt||'Other')===t).map(d=>d[0]);return rowP(t,n,ds.length,'Q'+rng(qs))}).join('');
+  const scoreLine=total+' / '+scorable;
+  const bandLine=(scorable===40?'':'<div style="color:#555">Scaled to 40: <b>'+b40+' / 40</b></div>')+'<div><b>Approx. band: '+band(b40)+'</b> (Academic Listening conversion)</div>';
+  o.innerHTML='<div class="modal"><div>Your result</div><div class="score">'+scoreLine+'</div>'+bandLine+
+   '<div class="stats"><div class="stat"><b style="color:var(--ok)">'+total+'</b>correct</div><div class="stat"><b style="color:var(--bad)">'+wrong+'</b>wrong</div><div class="stat"><b>'+blank+'</b>unanswered</div></div>'+
+   '<h4>Score by part</h4><table class="res">'+partRows+'</table>'+
+   '<h4>Score by question type</h4><table class="res">'+typeRows+'</table>'+
+   '<h4>All answers</h4><table class="res"><tr><th>Q</th><th>Type</th><th>Your answer</th><th>Correct answer</th><th></th></tr>'+det.map(d=>'<tr><td>'+d[0]+'</td><td class="qt">'+esc(TEST.key[d[0]].qt||'')+'</td><td>'+esc(String(d[1]))+'</td><td>'+esc(String(d[2]))+'</td><td class="'+(d[3]===null?'':(d[3]?'ok':'no'))+'">'+(d[3]===null?'–':(d[3]?'✔':'✘'))+'</td></tr>').join('')+'</table><button class="btn" id="rev">Review test</button><button class="btn sec" id="retry">Retake</button></div>';
+  document.body.appendChild(o);
+  $('#rev').onclick=()=>o.remove();$('#retry').onclick=()=>location.reload()}
+function decorate(){
+  document.querySelectorAll('[data-q]').forEach(el=>{});
+  const det=window._det;if(!det)return;
+  const P=TEST.parts[part];
+  det.filter(d=>d[0]>=P.from&&d[0]<=P.to).forEach(d=>{
+    const q=d[0];const k=TEST.key[q];
+    let host=document.querySelector('.q[data-q="'+q+'"]')||document.querySelector('.q[data-q2="'+q+'"]');
+    if(k.type==='pick'&&k.idx>0)return;if(k.type==='pick'){const a=ans['p'+k.g]||[];const hit=a.filter(x=>k.set.includes(x)).length;const sp0=document.createElement('span');sp0.className='fb '+(hit===k.set.length?'ok':'no');sp0.textContent=hit===k.set.length?'✔ both correct':'✘ '+hit+' of '+k.set.length+' · Answer: '+k.set.join(' & ');host.appendChild(sp0);return}
+    if(k.type==='none')return;
+    if(!host)return;
+    const sp=document.createElement('span');if(d[3]===null)return;sp.className='fb '+(d[3]?'ok':'no');
+    sp.textContent=d[3]?'✔':'✘ Answer: '+d[2];
+    const tgt=host.querySelector('input.gap,.zone')||host.querySelector('.n')||host;
+    if(tgt.parentNode&&(tgt.tagName==='INPUT'||tgt.classList.contains('zone')))tgt.insertAdjacentElement('afterend',sp);else host.appendChild(sp)})}
+$('#notesbtn').onclick=()=>{const o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="modal"><h3>Notes</h3><textarea id="nt" style="width:100%;height:220px"></textarea><br><button class="btn" id="cl">Close</button></div>';document.body.appendChild(o);$('#nt').value=window._notes||'';$('#cl').onclick=()=>{window._notes=$('#nt').value;o.remove()}};
+render();
+</script></body></html>
