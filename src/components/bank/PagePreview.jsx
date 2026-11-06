@@ -33,11 +33,7 @@ function HtmlPagePreview({ page, onClose }) {
   const [texts, setTexts] = useState(0)
 
   useEffect(() => {
-    fetch(page.url)
-      .then((r) => {
-        if (!r.ok) throw new Error('This page could not be opened.')
-        return r.text()
-      })
+    fetchPage(page.url)
       .then((t) => setHtml(withHelper(t)))
       .catch((e) => setError(e.message))
     const onMessage = (e) => {

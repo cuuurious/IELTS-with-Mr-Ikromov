@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
 import PageFrame from './PageFrame'
+import { fetchPage } from '../../lib/fetchPage'
 import WritingFeedback from './WritingFeedback'
 import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from '../../lib/workshopGate'
 
@@ -96,11 +97,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
 
   useEffect(() => {
     let cancelled = false
-    fetch(task.html_url)
-      .then((r) => {
-        if (!r.ok) throw new Error('The workshop file could not be opened.')
-        return r.text()
-      })
+    fetchPage(task.html_url)
       .then((text) => {
         if (cancelled) return
         rawRef.current = text
