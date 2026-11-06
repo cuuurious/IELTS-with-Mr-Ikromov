@@ -2,8 +2,19 @@ import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'ielts-mrikromov-theme'
 
+// Storage can be blocked (strict privacy settings, some in-app browsers);
+// reading it then throws and used to crash the whole page (Errors page,
+// 2026-11-05). Fall back to the device's light/dark setting.
+function readSaved() {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
 function getInitialTheme() {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = readSaved()
   if (saved === 'light' || saved === 'dark') return saved
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
@@ -13,7 +24,11 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(STORAGE_KEY, theme)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme)
+    } catch {
+      /* storage blocked: the theme just isn't remembered */
+    }
   }, [theme])
 
   return (

@@ -46,6 +46,11 @@ function isInAppBrowser() {
   return /Telegram|Instagram|FBAN|FBAV|Line\/|TikTok|Snapchat/i.test(ua)
 }
 
+function isNetworkProblem(err) {
+  const m = `${err?.name || ''} ${err?.message || err || ''}`
+  return /fetch|load failed|network|timed? ?out|HTTP 5\d\d|\b5\d\d\b|gateway|connection|aborted|ECONN/i.test(m)
+}
+
 function logProblem(stage, err) {
   const msg = `Speaking recorder (${stage}): ${err?.name ? `${err.name}: ` : ''}${err?.message || String(err)}`
   reportError(new Error(msg), '', { always: true })
@@ -118,13 +123,28 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
     }, 1000)
   }
 
+  // A save that fails on the internet (weak mobile data, a dropped
+  // connection, a Cloudflare 5xx) is tried again by itself twice before
+  // the student sees "Save again" (Errors page, Nov 2026: ~20 students hit
+  // "Failed to fetch" / "Load failed" / "HTTP 520" on save).
   const save = async (blob) => {
     setFinishing(true)
     try {
-      await onSaved(blob)
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          await onSaved(blob)
+          break
+        } catch (err) {
+          if (attempt >= 3 || !isNetworkProblem(err)) throw err
+          setNotice(`The internet dropped while saving — trying again (${attempt + 1} of 3)…`)
+          await new Promise((r) => setTimeout(r, attempt === 1 ? 1500 : 4000))
+        }
+      }
+      setNotice('')
       setUnsavedBlob(null)
       setError('')
     } catch (err) {
+      setNotice('')
       console.error('Speaking recording save error:', err)
       logProblem('save', err)
       setUnsavedBlob(blob)

@@ -56,6 +56,11 @@ export function reportError(error, extra = '', opts = {}) {
     if (!message) return
     if (!opts.always && IGNORE.some((re) => re.test(message))) return
     if (/chrome-extension:|moz-extension:|safari-extension:/i.test(stack)) return
+    // A copy of the site run on someone's own computer (127.0.0.1, …),
+    // or code a browser extension injected (only "<anonymous>" in the
+    // stack, none of our files): not errors in the real site.
+    if (/^(localhost|127\.|0\.0\.0\.0|192\.168\.)/.test(window.location.hostname)) return
+    if (/<anonymous>/.test(stack) && !/\/assets\/|\.jsx?[:?]/.test(stack)) return
 
     const key = `${message}|${stack.split('\n')[1] || ''}`
     if (seen.has(key) || sent >= MAX_PER_PAGE) return
