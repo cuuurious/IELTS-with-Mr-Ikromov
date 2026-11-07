@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
 import PageFrame from './PageFrame'
+import { createPortal } from 'react-dom'
+import { dropQueued, flushHandIns, isNetworkError, queueHandIn } from '../../lib/handinQueue'
 import { fetchPage } from '../../lib/fetchPage'
 import WritingFeedback from './WritingFeedback'
 import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from '../../lib/workshopGate'
@@ -45,6 +47,74 @@ var wsLast='';function wsProg(){if(!document.getElementById('ws-overlay'))return
 window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-open-workshop'&&window.openWorkshop){try{window.openWorkshop()}catch(_){}}});
 var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
 window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;if(t1()){var cf=document.getElementById('confirm');if(cf&&cf.classList.contains('show'))cf.classList.remove('show');else if(t1Res()&&window.backToEdit)window.backToEdit();setTimeout(ovTell,50);return}var hb=document.getElementById('hdrBack');var wv=document.getElementById('workshopView');if(hb&&wv&&!wv.classList.contains('hidden')){hb.click();setTimeout(ovTell,50);return}var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
+// Russian under the Uzbek on the Workshop word cards (2026-11-07; the site sends the words).
+var RU=null,ruT=0;
+function ruApply(){if(!RU)return;if(!document.getElementById('ielts-ru-st')){var st=document.createElement('style');st.id='ielts-ru-st';st.textContent='.ielts-ru{display:block;font-size:.74em;font-weight:700;color:#55607a;margin-top:3px;line-height:1.3}.ielts-ru b{font-size:.75em;font-weight:800;letter-spacing:.04em;background:rgba(85,96,122,.14);border-radius:5px;padding:0 4px;margin-right:5px}';document.head.appendChild(st)}
+ document.querySelectorAll('.ws-uz,.ws-uzb').forEach(function(el){if(el.querySelector('.ielts-ru'))return;var t=(el.textContent||'').trim();var r=RU[t];if(!r)return;var s=document.createElement('span');s.className='ielts-ru';s.setAttribute('lang','ru');s.innerHTML='<b>RU</b>';s.appendChild(document.createTextNode(r));el.appendChild(s)})}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-ru'&&e.data.map&&typeof e.data.map==='object'){RU=e.data.map;ruApply();new MutationObserver(function(){clearTimeout(ruT);ruT=setTimeout(ruApply,60)}).observe(document.body,{childList:true,subtree:true})}});
+// Before the page's own Submit: which questions are still empty, tap to go there (2026-11-07).
+function preSubmit(){
+var R=function(){try{if(typeof isAnswered==='function'){var L=typeof ALLQ!=='undefined'?ALLQ:(typeof allQuestions!=='undefined'?allQuestions:null);if(L)return {list:L.slice(),ok:function(n){return isAnswered(n)},go:function(n){try{scrollToQuestion(n)}catch(_){}}}}
+ if(typeof answered==='function'&&typeof TEST!=='undefined'&&TEST.key){var l=[];for(var k in TEST.key)if(+k)l.push(+k);return {list:l,ok:function(n){return answered(n)},go:function(n){try{goTo(n)}catch(_){}}}}}catch(_){}return null};
+var ask=typeof askSubmit==='function'?askSubmit:null,pass=false;
+if(!R())return;
+try{parent.postMessage({type:'ielts-has-submit'},'*')}catch(_){}
+var st=document.createElement('style');st.textContent='#ielts-pre{position:fixed;inset:0;z-index:2147483500;background:rgba(15,22,38,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#ielts-pre .bx{background:#fff;color:#17213a;border-radius:20px;max-width:440px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3)}#ielts-pre h3{margin:0 0 4px;font-size:20px}#ielts-pre p{margin:0 0 12px;color:#4a5570;font-size:15px}#ielts-pre .ns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;max-height:180px;overflow:auto}#ielts-pre .ns button{min-width:42px;height:38px;border-radius:12px;border:1.5px solid #f2b8c0;background:#fdecef;color:#b23a48;font-weight:800;font-size:15px;cursor:pointer}#ielts-pre .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}#ielts-pre .b1,#ielts-pre .b2{border:0;border-radius:14px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer}#ielts-pre .b1{background:#2456b0;color:#fff}#ielts-pre .b2{background:#efede6;color:#17213a}';document.head.appendChild(st);
+function sheet(info,el){var empty=info.list.filter(function(n){return !info.ok(n)}),tot=info.list.length;
+ var o=document.createElement('div');o.id='ielts-pre';
+ o.innerHTML='<div class="bx" role="dialog" aria-modal="true"><h3>'+(tot-empty.length)+' of '+tot+' answered</h3><p>'+(empty.length===1?'1 question is still empty. Tap it to go there.':empty.length+' questions are still empty. Tap a number to go there.')+'</p><div class="ns">'+empty.map(function(n){return '<button data-n="'+n+'">'+n+'</button>'}).join('')+'</div><div class="row"><button class="b2" data-x="submit">Submit anyway</button><button class="b1" data-x="back">Keep working</button></div></div>';
+ document.body.appendChild(o);
+ o.addEventListener('click',function(e){var b=e.target.closest('button');if(!b&&e.target===o){o.remove();return}if(!b)return;
+  if(b.dataset.n){o.remove();info.go(+b.dataset.n);return}
+  if(b.dataset.x==='back'){o.remove();return}
+  if(b.dataset.x==='submit'){o.remove();pass=true;
+   if(ask&&typeof doSubmit==='function'){try{doSubmit()}catch(_){}pass=false;return}
+   var c=window.confirm;window.confirm=function(){return true};try{el.click()}finally{window.confirm=c;pass=false}}})}
+document.addEventListener('click',function(e){if(pass)return;var el=e.target.closest&&e.target.closest('button,[role=button],a,div');if(!el)return;
+ var hit=el.id==='deliver-button'||(ask&&(el.onclick===ask||el.onclick===window.askSubmit));if(!hit)return;
+ if((typeof submitted!=='undefined'&&submitted)||(typeof resultsShown!=='undefined'&&resultsShown))return;
+ var info=R();if(!info)return;var empty=info.list.filter(function(n){return !info.ok(n)});if(!empty.length)return;
+ e.preventDefault();e.stopImmediatePropagation();sheet(info,el)},true)}
+// Listening pages: highlight words, like the real computer test (2026-11-07).
+function hlSetup(){
+if(!document.querySelector('audio'))return;
+if(typeof window.applyHL==='function'||typeof window.applyHighlight==='function'||document.getElementById('ielts-hlmenu'))return;
+var st=document.createElement('style');st.textContent='mark.ielts-hl{background:#ffe14d;color:inherit;border-radius:2px;padding:0;cursor:pointer}#ielts-hlmenu{position:fixed;z-index:2147483600;display:none;gap:4px;background:#1f2340;border-radius:10px;padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.25);transform:translateX(-50%)}#ielts-hlmenu button{border:0;background:transparent;color:#fff;font:600 14px system-ui,sans-serif;padding:7px 12px;border-radius:7px;cursor:pointer}#ielts-hlmenu button:hover{background:rgba(255,255,255,.15)}';document.head.appendChild(st);
+var menu=document.createElement('div');menu.id='ielts-hlmenu';document.body.appendChild(menu);
+var store=[],busy=false,pending=null;
+function skip(n){var e=n.parentNode;while(e&&e!==document.body){var t=e.nodeName;if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='SELECT'||t==='OPTION'||t==='BUTTON'||t==='AUDIO'||e.id==='ielts-hlmenu')return true;e=e.parentNode}return false}
+function nodes(){var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null),a=[],n,pos=0;while((n=w.nextNode())){if(skip(n))continue;a.push({n:n,s:pos});pos+=n.nodeValue.length}return {list:a,text:a.map(function(x){return x.n.nodeValue}).join('')}}
+function offset(all,node,off){if(node.nodeType!==3){var k=node.childNodes[off];if(k){var w=document.createTreeWalker(k,NodeFilter.SHOW_TEXT,null),f=k.nodeType===3?k:w.nextNode();if(f){node=f;off=0}}else{var w2=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,null),l=null,x;while((x=w2.nextNode()))l=x;if(l){node=l;off=l.nodeValue.length}}}
+ for(var i=0;i<all.list.length;i++)if(all.list[i].n===node)return all.list[i].s+off;return -1}
+function unwrap(){var ms=document.querySelectorAll('mark.ielts-hl');for(var i=0;i<ms.length;i++){var m=ms[i],p=m.parentNode;if(!p)continue;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);p.normalize()}}
+function apply(){busy=true;try{unwrap();
+ store.forEach(function(h,hi){var all=nodes();var at=all.text.indexOf(h.pre+h.t+h.post);var s=at>=0?at+h.pre.length:-1;
+  if(s<0){var best=-1,i=all.text.indexOf(h.t);while(i>=0){if(best<0||Math.abs(i-h.s)<Math.abs(best-h.s))best=i;i=all.text.indexOf(h.t,i+1)}s=best}
+  if(s<0)return;h.s=s;var e=s+h.t.length;
+  all.list.forEach(function(x){var a=Math.max(s,x.s),b=Math.min(e,x.s+x.n.nodeValue.length);if(a>=b)return;
+   var n=x.n;if(!n.parentNode)return;var ra=a-x.s,rb=b-x.s,mid=ra>0?n.splitText(ra):n;if(rb-ra<mid.nodeValue.length)mid.splitText(rb-ra);
+   var m=document.createElement('mark');m.className='ielts-hl';m.setAttribute('data-h',hi);mid.parentNode.insertBefore(m,mid);m.appendChild(mid)})})}catch(_){}
+ setTimeout(function(){busy=false},0)}
+function hide(){menu.style.display='none';pending=null}
+function show(x,y,below,html){menu.innerHTML=html;menu.style.display='flex';menu.style.left=Math.max(70,Math.min(innerWidth-70,x))+'px';menu.style.top=(below?y+8:Math.max(4,y-48))+'px'}
+var t=0;
+function onSel(){clearTimeout(t);t=setTimeout(function(){var s=getSelection();if(!s||s.isCollapsed||!s.rangeCount)return;var r=s.getRangeAt(0);var txt=r.toString();if(!txt.trim()||txt.length>600)return;
+ var a=r.startContainer.nodeType===1?r.startContainer:r.startContainer.parentNode;if(a&&a.closest&&a.closest('input,textarea,select,#ielts-hlmenu'))return;
+ var all=nodes(),s0=offset(all,r.startContainer,r.startOffset),e0=offset(all,r.endContainer,r.endOffset);if(s0<0||e0<=s0)return;
+ pending={s:s0,t:all.text.slice(s0,e0),pre:all.text.slice(Math.max(0,s0-24),s0),post:all.text.slice(e0,e0+24)};
+ var b=r.getBoundingClientRect(),touch=matchMedia&&matchMedia('(pointer: coarse)').matches;
+ show(b.left+b.width/2,touch?b.bottom:b.top,touch,'<button data-hl="add">Highlight</button>')},300)}
+document.addEventListener('selectionchange',onSel);document.addEventListener('mouseup',onSel);
+menu.addEventListener('mousedown',function(e){e.preventDefault()});
+menu.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var k=b.getAttribute('data-hl');
+ if(k==='add'&&pending){store.push(pending);try{getSelection().removeAllRanges()}catch(_){}apply()}
+ else if(k==='del'){store.splice(+b.getAttribute('data-i'),1);apply()}
+ else if(k==='clear'){store=[];apply()}
+ hide()});
+document.addEventListener('click',function(e){var m=e.target.closest&&e.target.closest('mark.ielts-hl');if(m){var s=getSelection();if(s&&!s.isCollapsed)return;var r=m.getBoundingClientRect();show(r.left+r.width/2,r.top,false,'<button data-hl="del" data-i="'+m.getAttribute('data-h')+'">Remove highlight</button><button data-hl="clear">Clear all</button>');return}
+ if(!(e.target.closest&&e.target.closest('#ielts-hlmenu')))setTimeout(function(){var s=getSelection();if(!s||s.isCollapsed)hide()},0)});
+document.addEventListener('scroll',function(){if(menu.style.display!=='none'&&!pending)hide()},true);
+var mt=0;new MutationObserver(function(){if(busy||!store.length)return;clearTimeout(mt);mt=setTimeout(function(){apply()},120)}).observe(document.body,{childList:true,subtree:true,characterData:true})}
 function small(){return window.innerWidth<760}
 function wsPhone(){if(document.getElementById('ielts-wsph'))return;var st=document.createElement('style');st.id='ielts-wsph';st.textContent='@media (max-width:759px){#wsOverlay.open{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;height:auto!important;max-height:none!important;z-index:2147483000;display:block!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}#wsOverlay.open .ws-body{flex:none!important;overflow:visible!important;height:auto!important;min-height:0}#wsOverlay .ws-top{position:sticky;top:0;z-index:6;background:#fff;padding:8px 10px!important;display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 8px;box-shadow:0 4px 10px -8px rgba(0,0,0,.35)}body.dark #wsOverlay .ws-top{background:#111827}#wsOverlay .ws-back{height:34px;padding:0 10px!important;font-size:.85rem!important;margin:0!important}#wsOverlay .ws-title{flex:1 1 0;min-width:0;font-size:1rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0!important}#wsOverlay .ws-title small{display:none!important}#wsOverlay .ws-tabs{flex:1 1 100%;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px!important;margin:0!important;padding:0 0 2px!important}#wsOverlay .ws-tab{flex:0 0 auto!important;width:auto!important;min-width:0!important;padding:6px 12px!important;font-size:.85rem!important;white-space:nowrap}#wsOverlay .ws-paused{display:none!important}#wsOverlay .ws-intro{font-size:.9rem!important;line-height:1.45;padding:10px 12px!important;margin-bottom:10px!important}#ws-overlay #ws-tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px!important;padding:8px 10px!important}#ws-overlay #ws-tabs .ws-tab{flex:0 0 auto!important;white-space:nowrap;padding:6px 12px!important;font-size:.85rem!important}#ws-overlay .ws-help{font-size:.9rem!important;line-height:1.45}.ws-bank{position:sticky!important;top:0;z-index:5;max-height:30vh;overflow-y:auto!important;background:#fff!important;box-shadow:0 8px 14px -10px rgba(0,0,0,.4)}.ws-bank .ws-chip{font-size:.9rem!important;padding:4px 10px!important;margin:3px!important}body.ielts-m .navbar>.ngroup,body.ielts-m .ngroup{min-width:0!important;flex:0 0 calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important;box-sizing:border-box}body.ielts-m .ngroup .ngt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}body.ielts-m .ngroup .nbtns{flex-wrap:wrap}}';document.head.appendChild(st);var nb=document.querySelector('.navbar');var cur=document.querySelector('.ngroup.cur');if(small()&&nb&&cur)try{nb.scrollLeft=cur.offsetLeft-8}catch(_){}}
 function fitTables(){if(!small())return;document.querySelectorAll('table').forEach(function(t){if(t.getAttribute('data-ielts-fit'))return;var p=t.parentElement;if(!p)return;if(t.scrollWidth<=p.clientWidth+2)return;t.setAttribute('data-ielts-fit','1');var w=document.createElement('div');w.className='ielts-swipe';w.style.cssText='overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:0 0 .5rem';var h=document.createElement('div');h.textContent='Swipe the table sideways \u2192';h.style.cssText='font-size:11px;font-weight:700;color:#92400e;margin:2px 0 4px';p.insertBefore(h,t);p.insertBefore(w,t);w.appendChild(t);var cols=0;t.querySelectorAll('tr').forEach(function(r){cols=Math.max(cols,r.children.length)});t.style.width='auto';t.style.minWidth=Math.min(Math.max(cols,2)*150,900)+'px';t.style.fontSize='.86rem';t.querySelectorAll('th,td').forEach(function(c){c.style.padding='.35rem .45rem'})})}
@@ -58,7 +128,7 @@ var siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=functi
 document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&(t.closest('.footer__navbtn')||t.closest('.footer .navbtn')))show(true)},true)}
 document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80);setTimeout(wsProg,120)},true);
-document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{wsPhone()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
+document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{wsPhone()}catch(_){}try{hlSetup()}catch(_){}try{preSubmit()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 document.addEventListener('drop',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!el.classList.contains('gap'))return;var d='';try{d=e.dataTransfer.getData('text/plain')||''}catch(_){}var p=d.split('|');if(p.length!==2||p[0].charAt(0)!=='g'||!p[1])return;e.preventDefault();e.stopPropagation();el.value=p[1];el.dispatchEvent(new Event('input',{bubbles:true}));try{el.focus()}catch(_){}},true);
 var chipSel=null;document.addEventListener('click',function(e){var t=e.target;var c=t&&t.closest&&t.closest('.chip');if(c&&c.dataset&&c.dataset.id){chipSel=c.dataset.id;return}if(chipSel&&t&&t.tagName==='INPUT'&&t.classList.contains('gap')&&!t.value){t.value=chipSel;t.dispatchEvent(new Event('input',{bubbles:true}))}chipSel=null},true);
 document.addEventListener('error',function(e){var a=e.target;if(!a||a.tagName!=='AUDIO')return;var n=+(a.getAttribute('data-ielts-retry')||0);var src=a.currentSrc||a.src;if(n>=3||!src)return;a.setAttribute('data-ielts-retry',String(n+1));setTimeout(function(){a.src=src.split('?')[0]+'?r='+(n+1);a.addEventListener('loadedmetadata',function(){var st=document.getElementById('audiostat');if(st&&/No audio/.test(st.textContent)){st.textContent='Audio ready';var sb=document.getElementById('start');if(sb&&a.paused&&!a.currentTime)sb.style.display=''}},{once:true});a.load()},1500*(n+1))},true);
@@ -93,6 +163,9 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
   const [check, setCheck] = useState(null) // Task 1 self-check: { got, tot }
+  const [hasSubmit, setHasSubmit] = useState(false) // the page has its own Submit
+  const [ask, setAsk] = useState(false) // 'Hand in without Submit?' sheet
+  const [receipt, setReceipt] = useState(null) // { at, score, max, attempt_no, pending }
   const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
   useEffect(() => {
     if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
@@ -118,6 +191,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     const onMessage = (e) => {
       const d = e.data
       if (d && d.type === 'ielts-workshop-score' && Number(d.max) > 0) setScore({ score: Number(d.score), max: Number(d.max), parts: Array.isArray(d.parts) ? d.parts.slice(0, 8) : [], qs: cleanQs(d.qs) })
+      if (d && d.type === 'ielts-has-submit') setHasSubmit(true)
       if (d && d.type === 'ielts-writing-check' && Number(d.tot) > 0) setCheck({ got: Number(d.got) || 0, tot: Number(d.tot) })
       if (d && d.type === 'ielts-workshop-text' && Array.isArray(d.texts)) setTexts(d.texts.slice(0, 4).map((t) => ({ id: String(t.id || '').slice(0, 40), text: String(t.text || '').slice(0, 20000) })))
     }
@@ -173,7 +247,13 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     onChanged?.()
   }
 
-  const handIn = async () => {
+  const handIn = async (force = false) => {
+    // The page's own Submit not pressed yet: nothing is checked (2026-11-07).
+    if (!force && !score && !isWriting && hasSubmit) {
+      setAsk(true)
+      return
+    }
+    setAsk(false)
     // Thematic Reading: the Workshop must be finished first (2026-11-05).
     if (!gate.complete) {
       setError(`Finish all parts of the Workshop first (${gate.label}). Then hand in.`)
@@ -182,7 +262,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     }
     setSaving(true)
     setError('')
-    const { data, error: rpcError } = await supabase.rpc('submit_homework_score', {
+    const args = {
       p_task_id: task.id,
       // Writing has no score: the teacher marks the essay itself.
       p_score: score && !isWriting ? score.score : null,
@@ -190,14 +270,28 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       p_details: texts.length || score?.parts?.length || score?.qs?.length || check
         ? { texts, parts: isWriting ? [] : score?.parts || [], qs: isWriting ? [] : score?.qs || [], ...(check ? { check } : {}) }
         : null,
-    })
+    }
+    const { data, error: rpcError } = await supabase.rpc('submit_homework_score', args).then(
+      (r) => r,
+      (err) => ({ data: null, error: err })
+    )
     setSaving(false)
     if (rpcError) {
+      // No internet: keep it on this device and send it later (2026-11-07).
+      if (isNetworkError(rpcError) && !isWriting) {
+        queueHandIn(args)
+        setDone({ attempt_no: 1, pending: true })
+        setReceipt({ at: new Date(), score: score?.score ?? null, max: score?.max ?? null, pending: true })
+        return
+      }
       setError(rpcError.message)
       return
     }
+    dropQueued(task.id)
     const row = Array.isArray(data) ? data[0] : data
     setDone(row || { attempt_no: 1 })
+    if (!isWriting) setReceipt({ at: new Date(), score: score?.score ?? null, max: score?.max ?? null, attempt_no: row?.attempt_no || 1 })
+    flushHandIns()
     onChanged?.()
     // Writing: the AI marks the essay (about a minute).
     const essayWords = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
@@ -205,7 +299,9 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   }
 
   const words = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
-  const status = done
+  const status = done?.pending
+    ? 'Saved on this device — it is sent as soon as the internet is back.'
+    : done
     ? done.attempt_no === 1
       ? 'Handed in. Your first try counts.'
       : 'Handed in as a retake. Your first try still counts.'
@@ -229,6 +325,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   }
 
   return (
+    <>
     <PageFrame
       title={task.title || 'Practice page'}
       kicker="Homework"
@@ -271,7 +368,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
           ) : (
             <button
               type="button"
-              onClick={handIn}
+              onClick={() => handIn()}
               disabled={saving || !html}
               title={status}
               className="focus-ring h-10 shrink-0 rounded-[12px] bg-saffron px-3.5 text-sm font-extrabold text-[#17213a] hover:brightness-105 disabled:opacity-50 sm:px-5"
@@ -282,6 +379,58 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
         </>
       }
     />
+    {ask && (
+      <Sheet
+        title="Press Submit in the page first"
+        text="You haven't pressed the page's own Submit yet, so your answers are not checked and no score is sent. Press Submit at the bottom of the page, then Hand in."
+        main="Go back to the page"
+        onMain={() => setAsk(false)}
+        other="Hand in without a score"
+        onOther={() => handIn(true)}
+      />
+    )}
+    {receipt && (
+      <Sheet
+        tone={receipt.pending ? 'amber' : 'good'}
+        title={receipt.pending ? 'Saved on this device' : receipt.max ? '✓ All answers saved' : '✓ Handed in'}
+        text={
+          receipt.pending
+            ? 'The internet dropped, so your work is kept on this phone/computer. It is sent automatically when the internet is back — keep the site open or open it again later.'
+            : `${receipt.score != null && receipt.max ? `Score ${receipt.score} / ${receipt.max}. ` : ''}Received at ${receipt.at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. ${receipt.attempt_no > 1 ? 'This was a retake — your first try still counts.' : 'Your teacher can see it now.'}`
+        }
+        main="Back to homework"
+        onMain={() => {
+          setReceipt(null)
+          leave()
+        }}
+        other="Stay on the page"
+        onOther={() => setReceipt(null)}
+      />
+    )}
+    </>
+  )
+}
+
+// A small card over the page: hand-in receipt / Submit reminder (2026-11-07).
+function Sheet({ title, text, main, onMain, other, onOther, tone }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4" style={{ background: 'rgba(15, 22, 38, 0.55)' }} role="dialog" aria-modal="true">
+      <div className="w-full max-w-[440px] rounded-[20px] bg-panel p-5 text-paper shadow-xl">
+        <p className={`font-brand text-[19px] font-semibold ${tone === 'good' ? 'text-sage' : tone === 'amber' ? 'text-amber' : 'text-paper'}`}>{title}</p>
+        <p className="mt-2 text-[15px] font-semibold leading-relaxed text-paper-dim">{text}</p>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          {other && (
+            <button type="button" onClick={onOther} className="focus-ring h-11 rounded-[14px] bg-panel-2 px-4 text-sm font-extrabold text-paper">
+              {other}
+            </button>
+          )}
+          <button type="button" onClick={onMain} className="focus-ring h-11 rounded-[14px] bg-brass px-4 text-sm font-extrabold text-onbrass">
+            {main}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }
 

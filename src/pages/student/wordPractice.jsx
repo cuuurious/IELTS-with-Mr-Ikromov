@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { RuLine } from '../../lib/russian'
 
 /*
  * WORD PRACTICE ENGINE (2026-10-06)
@@ -589,7 +590,10 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
               <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
                 {item.definition && <p className="text-[15px] leading-relaxed text-paper">{decodeHtml(item.definition)}</p>}
                 {item.uzbek_translation && (
-                  <p className="rounded-lg bg-panel/70 px-2.5 py-1 text-sm font-medium text-vocab">{decodeHtml(item.uzbek_translation)}</p>
+                  <p className="rounded-lg bg-panel/70 px-2.5 py-1 text-sm font-medium text-vocab">
+                    {decodeHtml(item.uzbek_translation)}
+                    <RuLine word={decodeHtml(item.word)} definition={item.definition} uzbek={item.uzbek_translation} />
+                  </p>
                 )}
                 <span className="mt-2 text-xs text-vocab">Which word is it? Flip to check.</span>
               </div>
@@ -602,7 +606,10 @@ export function Flashcards({ items, initialIndex = 0, onIndexChange, onStartTest
                 </div>
                 {item.definition && <p className="text-[15px] leading-relaxed text-paper">{decodeHtml(item.definition)}</p>}
                 {item.uzbek_translation && (
-                  <p className="w-fit rounded-lg bg-vocab-tint px-2.5 py-1 text-sm font-medium text-vocab">{decodeHtml(item.uzbek_translation)}</p>
+                  <p className="w-fit rounded-lg bg-vocab-tint px-2.5 py-1 text-sm font-medium text-vocab">
+                    {decodeHtml(item.uzbek_translation)}
+                    <RuLine word={decodeHtml(item.word)} definition={item.definition} uzbek={item.uzbek_translation} />
+                  </p>
                 )}
                 {item.example_sentence && (
                   <p className="border-l-2 border-[#F3D27A] pl-3 text-sm italic leading-relaxed text-paper-dim">
@@ -831,7 +838,10 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
           <div className="rounded-2xl bg-vocab-tint px-4 py-3 text-center">
             <p className="text-[15px] leading-relaxed text-paper">{q.meaning}</p>
             {q.definition && q.uzbek && q.meaning !== q.uzbek && picked && (
-              <p className="mt-1 text-xs font-medium text-vocab">{q.uzbek}</p>
+              <p className="mt-1 text-xs font-medium text-vocab">
+                {q.uzbek}
+                <RuLine word={q.word} definition={q.definition} uzbek={q.uzbek} />
+              </p>
             )}
           </div>
         )}
@@ -847,7 +857,12 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
         {q.kind === 'spell' && (
           <div className="flex flex-col gap-2 rounded-2xl bg-vocab-tint px-4 py-3">
             {q.definition && <p className="text-[15px] leading-relaxed text-paper">{q.definition}</p>}
-            {q.uzbek && <p className="text-sm font-medium text-vocab">{q.uzbek}</p>}
+            {q.uzbek && (
+              <p className="text-sm font-medium text-vocab">
+                {q.uzbek}
+                <RuLine word={q.word} definition={q.definition} uzbek={q.uzbek} />
+              </p>
+            )}
             <div className="flex items-center gap-2 text-xs text-vocab">
               <SpeakButton text={q.word} className="h-8 w-8" label="Hear the word" />
               {canSpeak() ? 'Listen, then type it' : 'Type the word'}
@@ -927,6 +942,7 @@ export function QuizRunner({ questions, initial, onSnapshot, onFinish, label }) 
               <span className="font-semibold text-paper">{q.word}</span>
               <SpeakButton text={q.word} className="h-7 w-7" />
               {q.uzbek && <span className="text-sm text-vocab">· {q.uzbek}</span>}
+              {q.uzbek && <RuLine word={q.word} definition={q.definition} uzbek={q.uzbek} className="text-sm" />}
             </div>
             {q.example && (
               <p className="text-sm italic leading-relaxed text-paper-dim">

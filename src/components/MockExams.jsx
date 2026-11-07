@@ -1543,7 +1543,15 @@ export function ExamTaker({
             Test submitted
           </span>
           <p className="mt-3 font-display text-lg text-paper">
-            Your answers have been recorded.
+            ✓ All your answers are saved.
+          </p>
+          {/* A clear receipt (2026-11-07): how many answered, and when. */}
+          <p className="mt-1 text-sm font-semibold text-paper">
+            {(() => {
+              const all = sections.flatMap((s) => s.questions)
+              const got = all.filter((q) => String(result.answers?.[q.id] ?? '').trim()).length
+              return `${got} of ${all.length} questions answered · received at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+            })()}
           </p>
           <p className="mt-1 text-sm text-mist">
             Your teacher will release your score once it's confirmed.

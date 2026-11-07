@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { RuLine } from '../../lib/russian'
 import { supabase } from '../../lib/supabaseClient'
 import { VocabArt } from '../../components/SkillArt'
 
@@ -142,9 +143,10 @@ export function WordOfTheDay({ onNavigate, className = '' }) {
                 aria-pressed={flipped}
                 className="focus-ring inline-flex h-9 items-center rounded-[10px] border border-line px-3 text-sm font-medium hover:bg-panel-2"
               >
-                {flipped ? word.uzbek_translation : 'Show in Uzbek'}
+                {flipped ? word.uzbek_translation : 'Show in Uzbek / Russian'}
               </button>
             )}
+            {flipped && <RuLine word={word.word} definition={word.definition} uzbek={word.uzbek_translation} className="w-full text-sm" />}
             <button
               type="button"
               onClick={() => onNavigate('wordlists')}

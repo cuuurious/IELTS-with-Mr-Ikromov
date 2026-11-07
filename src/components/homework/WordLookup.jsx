@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { RuLine } from '../../lib/russian'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -160,7 +161,10 @@ export function WordLookupArea({ source, enabled = true, children, className = '
               {card.status === 'ready' && (
                 <>
                   {card.info.uzbek_translation && (
-                    <p className="rounded-xl bg-vocab-tint px-3 py-2 text-[15px] font-extrabold text-vocab">{card.info.uzbek_translation}</p>
+                    <p className="rounded-xl bg-vocab-tint px-3 py-2 text-[15px] font-extrabold text-vocab">
+                      {card.info.uzbek_translation}
+                      <RuLine word={card.word} definition={card.info.definition} uzbek={card.info.uzbek_translation} className="mt-1 text-[14px]" />
+                    </p>
                   )}
                   {card.info.definition && <p className="text-sm leading-6 text-paper">{card.info.definition}</p>}
                   {card.info.example_sentence && <p className="text-[13px] italic leading-5 text-paper-dim">{card.info.example_sentence}</p>}

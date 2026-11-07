@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { workshopWords } from '../../lib/workshopGate'
+import { fetchRuMap, ruKey } from '../../lib/russian'
 
 /*
  * Full-screen frame for an interactive practice page (2026-11-05).
@@ -18,6 +20,30 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
   const { profile } = useAuth()
   const userRef = useRef(null)
   userRef.current = profile?.id || null
+
+  // Russian for the Workshop word cards (2026-11-07): looked up once,
+  // sent to the page when it is ready (and again if it reloads).
+  const ruRef = useRef(null)
+  useEffect(() => {
+    ruRef.current = null
+    const words = workshopWords(html || '')
+    if (!words.length) return undefined
+    let on = true
+    fetchRuMap(words.map((w) => ({ word: w.word, df: w.definition, uz: w.uzbek_translation }))).then((got) => {
+      if (!on) return
+      const map = {}
+      for (const w of words) {
+        const ru = got[ruKey(w.word)]
+        if (ru && w.uzbek_translation) map[w.uzbek_translation.trim()] = ru
+      }
+      if (!Object.keys(map).length) return
+      ruRef.current = map
+      frameRef.current?.contentWindow?.postMessage({ type: 'ielts-ru', map }, '*')
+    })
+    return () => {
+      on = false
+    }
+  }, [html])
   const overlayOpen = useRef(false)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
@@ -29,6 +55,7 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
     const onMessage = (e) => {
       if (e.source !== frameRef.current?.contentWindow) return
       if (e.data && e.data.type === 'ielts-overlay') overlayOpen.current = Boolean(e.data.open)
+      if (e.data && e.data.type === 'ielts-ready' && ruRef.current) e.source.postMessage({ type: 'ielts-ru', map: ruRef.current }, '*')
       // Writing Lab pages (2026-11-07): the sealed page can't keep its own
       // progress, so the site keeps it for this student on this device.
       const d = e.data

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RuLine } from '../../lib/russian'
 import { supabase } from '../../lib/supabaseClient'
 import { QuizRunner, ResultsPanel, SpeakButton, buildMixedQuestions } from './wordPractice'
 
@@ -128,7 +129,12 @@ export default function MyWords({ studentId, onExit }) {
                   ))}
                 </span>
               </div>
-              {w.uzbek_translation && <p className="w-fit rounded-xl bg-vocab-tint px-2.5 py-1 text-sm font-extrabold text-vocab">{w.uzbek_translation}</p>}
+              {w.uzbek_translation && (
+                <p className="w-fit rounded-xl bg-vocab-tint px-2.5 py-1 text-sm font-extrabold text-vocab">
+                  {w.uzbek_translation}
+                  <RuLine word={w.word} definition={w.definition} uzbek={w.uzbek_translation} />
+                </p>
+              )}
               {w.definition && <p className="text-sm leading-6 text-paper-dim">{w.definition}</p>}
               <div className="mt-auto flex items-center justify-between gap-2 pt-1">
                 <span className="truncate text-xs font-bold text-mist">{w.source || 'Saved word'}</span>

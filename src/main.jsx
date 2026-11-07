@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { startHandInSync } from './lib/handinQueue'
 import { installErrorReporter } from './lib/errorReporter'
 
 // Save unexpected errors so the teacher sees them (dashboard → Errors).
@@ -13,6 +14,8 @@ if (window.origin !== 'null') installErrorReporter()
 const inSandbox = window.origin === 'null'
 
 if (!inSandbox) {
+  // Hand-ins saved offline are sent when the internet is back (2026-11-07).
+  startHandInSync()
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <App />
