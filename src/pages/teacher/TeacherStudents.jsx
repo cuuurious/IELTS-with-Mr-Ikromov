@@ -1,4 +1,5 @@
 import { groupColour, groupDisplayName } from '../../lib/groupLook'
+import { daysToExam, formatExamDate } from '../../lib/examForecast'
 import { estimateBandFromPercent, formatBand } from '../../lib/ieltsBands'
 import { fetchAll } from '../../lib/fetchAll'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -12,6 +13,26 @@ import ParentReportLink from '../../components/ParentReportLink'
 import SharedLogins from '../../components/teacher/SharedLogins'
 import ResetStudentPasswordModal from '../../components/ResetStudentPasswordModal'
 import { useSessionState } from '../../lib/sessionState'
+
+// Exam countdown for the teacher (2026-11-07).
+function examText(st) {
+  const when = formatExamDate(st.exam_date)
+  if (st.exam_result != null && st.exam_result_for === st.exam_date) return `${when} · got ${Number(st.exam_result).toFixed(1)}`
+  const d = daysToExam(st.exam_date)
+  return d > 0 ? `${when} · ${d} day${d === 1 ? '' : 's'} left` : d === 0 ? `${when} · today` : `${when} · result not entered`
+}
+function examChip(st) {
+  if (!st.exam_date) return null
+  const d = daysToExam(st.exam_date)
+  const done = st.exam_result != null && st.exam_result_for === st.exam_date
+  if (done) return <span className="mt-1 inline-flex rounded-[10px] bg-panel-2 px-2 py-0.5 text-[12px] font-extrabold text-sage">Exam done · {Number(st.exam_result).toFixed(1)}</span>
+  if (d < 0) return null
+  return (
+    <span className={`mt-1 inline-flex rounded-[10px] px-2 py-0.5 text-[12px] font-extrabold ${d <= 14 ? 'bg-urgent-tint text-urgent' : 'bg-panel-2 text-paper'}`}>
+      {d === 0 ? 'Exam today' : `Exam in ${d} day${d === 1 ? '' : 's'}`}
+    </span>
+  )
+}
 
 export default function TeacherStudents({ onStartChat }) {
   const [students, setStudents] = useState([])
@@ -137,7 +158,7 @@ export default function TeacherStudents({ onStartChat }) {
         supabase
           .from('profiles')
           .select(
-            'id, full_name, username, contact_email, role, status, created_at, target_band, bio, avatar_url'
+            'id, full_name, username, contact_email, role, status, created_at, target_band, exam_date, exam_result, exam_result_for, bio, avatar_url'
           )
           .eq('role', 'student')
           .order('full_name', { ascending: true }),
@@ -712,7 +733,7 @@ export default function TeacherStudents({ onStartChat }) {
       .update({ status: 'approved' })
       .in('id', ids)
       .select(
-        'id, full_name, username, contact_email, role, status, created_at, target_band, bio, avatar_url'
+        'id, full_name, username, contact_email, role, status, created_at, target_band, exam_date, exam_result, exam_result_for, bio, avatar_url'
       )
 
     if (error) {
@@ -1032,6 +1053,7 @@ export default function TeacherStudents({ onStartChat }) {
                 @{student.username || 'student'}
                 {student.target_band != null && <> · target {formatTargetBand(student.target_band)}</>}
               </p>
+              {examChip(student)}
             </div>
             <button
               type="button"
@@ -1101,6 +1123,12 @@ export default function TeacherStudents({ onStartChat }) {
                   <TargetBandIcon value={student.target_band} className="h-4 w-4" />
                   {formatTargetBand(student.target_band)} — {getTargetBandInfo(student.target_band).label}
                 </span>
+              </div>
+            )}
+            {student.exam_date && (
+              <div className="flex justify-between gap-3">
+                <span className="text-mist">IELTS exam</span>
+                <span className="font-bold text-paper">{examText(student)}</span>
               </div>
             )}
           </div>

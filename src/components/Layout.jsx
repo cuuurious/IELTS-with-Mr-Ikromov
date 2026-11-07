@@ -6,6 +6,7 @@ import AccountSettingsModal from './AccountSettingsModal'
 import TargetBandModal from './TargetBandModal'
 import { formatTargetBand } from '../lib/targetBands'
 import TargetBandIcon from './TargetBandIcon'
+import ExamCountdownBar from './progress/ExamCountdownBar'
 
 /*
  * =============================================================
@@ -616,6 +617,8 @@ export default function Layout({
 
       <main className="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 xl:px-8 xl:py-7">
+          {/* Exam countdown on every student page (2026-11-07). */}
+          {!isTeacher && !isExaminer && <ExamCountdownBar onGo={goToTab} onSetTarget={() => setTargetOpen(true)} />}
           {pageTitle && !activeItem?.hideTitle && (
             // Registan look (2026-10-19): every page title sits on the same
             // lapis tile band as the Homes, so the whole site matches.

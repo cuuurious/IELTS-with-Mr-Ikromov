@@ -153,18 +153,51 @@ Deno.serve(async (req) => {
      */
     const { data: students, error: studentsError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, exam_date, target_band')
       .eq('role', 'student')
       .eq('status', 'approved')
 
     if (studentsError) throw studentsError
+
+    /*
+     * Exam countdown (2026-11-07): 30, 14, 7, 3 and 1 days before the
+     * exam date the student set, a firm countdown message replaces
+     * the usual nudge for that student.
+     */
+    const todayTashkent = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10)
+    const daysLeft = (d) =>
+      d ? Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${todayTashkent}T00:00:00Z`)) / 86400000) : null
+    const EXAM_DAYS = {
+      30: 'One month to your IELTS exam. From today: one task every day — no days off.',
+      14: 'Two weeks to your exam. Full timed tests now, and fix every mistake in your notebook.',
+      7: 'One week to your exam. No new material — timed practice and your notebook only.',
+      3: 'Three days to your exam. Short timed practice, sleep well, no all-nighters.',
+      1: 'Your exam is tomorrow. Light review only, sleep early, arrive early. You are ready — go and take it.',
+    }
+    const examRows = []
+    const examIds = new Set()
+    for (const st of students || []) {
+      const d = daysLeft(st.exam_date)
+      if (d != null && EXAM_DAYS[d]) {
+        examIds.add(st.id)
+        const target = st.target_band != null ? ` Target: ${Number(st.target_band).toFixed(1)}.` : ''
+        examRows.push({ user_id: st.id, type: 'exam_countdown', title: `${d} day${d === 1 ? '' : 's'} to your exam`, body: EXAM_DAYS[d] + target })
+      }
+    }
+    if (examRows.length) {
+      const { error: examError } = await supabase.from('notifications').insert(examRows)
+      if (examError) console.error('Failed to insert exam_countdown notifications:', examError)
+      for (const row of examRows) {
+        await sendPushToUsers(supabase, [row.user_id], row.title, row.body, '/app')
+      }
+    }
 
     const message =
       MOTIVATIONAL_MESSAGES[
         Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)
       ]
 
-    const dailyRows = (students || []).map((student) => ({
+    const dailyRows = (students || []).filter((student) => !examIds.has(student.id)).map((student) => ({
       user_id: student.id,
       type: 'daily_reminder',
       title: 'Stay consistent',
@@ -266,6 +299,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ok: true,
         studentsNudged: dailyRows.length,
+        examCountdowns: examRows.length,
         homeworksDueSoon: (dueSoon || []).length,
         deadlineNotified,
       }),

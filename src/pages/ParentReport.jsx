@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { daysToExam } from '../lib/examForecast'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { downloadParentReport } from '../lib/generateParentReport'
@@ -148,6 +149,16 @@ function SectionTitle({ children, sub }) {
   )
 }
 
+function examLine(st) {
+  if (!st?.exam_date) return ''
+  const when = new Date(`${st.exam_date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  if (st.exam_result != null && st.exam_result_for === st.exam_date) return `IELTS exam on ${when} · result: band ${Number(st.exam_result).toFixed(1)}`
+  const days = daysToExam(st.exam_date)
+  if (days > 0) return `IELTS exam on ${when} · ${days} day${days === 1 ? '' : 's'} left`
+  if (days === 0) return `IELTS exam today (${when})`
+  return `IELTS exam was on ${when}`
+}
+
 export default function ParentReport() {
   const { token } = useParams()
   const [state, setState] = useState('loading') // loading | ok | off | error
@@ -282,6 +293,8 @@ export default function ParentReport() {
           Progress report · {groups.length ? `Group ${groups.join(', ')} · ` : ''}
           {student.target_band ? `Target band ${student.target_band}` : 'IELTS preparation'}
         </p>
+        {/* Exam date / real result (2026-11-07, migration_116). */}
+        {examLine(student) && <p className="mt-1 text-[14px] font-extrabold text-white">{examLine(student)}</p>}
       </div>
       <button
         type="button"
