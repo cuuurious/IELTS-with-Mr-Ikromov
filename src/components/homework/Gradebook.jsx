@@ -236,35 +236,84 @@ function StudentGrades({ student, tasks, attempts, hwById, onClose, onBand }) {
           )}
           <WeakSpots userId={student.id} title="Weak spots by question type" emptyText="No scored Reading or Listening work yet." />
           <ul className="flex flex-col gap-2">
-            {rows.map(({ t, s, hw }) => {
-              const meta = taskMeta(t)
-              const pct = percentOf(s.first)
-              const tone = gradeTone(s.first ? pct ?? 100 : null)
-              const bestPct = percentOf(s.best)
-              return (
-                <li key={t.id} className="flex flex-wrap items-center gap-3 rounded-[16px] border border-line bg-panel px-3 py-2.5">
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${meta.tint} ${meta.text}`}>
-                    <SkillIcon skill={meta.skill} className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-paper">{taskTitle(t)}</p>
-                    <p className="truncate text-xs font-bold text-mist">
-                      {hw?.title}
-                      {s.tries > 1 && bestPct != null ? ` · best ${bestPct}% in ${s.tries} tries` : ''}
-                      {s.first?.late ? ' · late' : ''}
-                    </p>
-                  </div>
-                  <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
-                  {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
-                  {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} onBand={onBand} /> : <PageAnswer attemptId={s.first.id} onBand={onBand} writing={/\/writing\//.test(t.html_url || '')} />)}
-                </li>
-              )
-            })}
+            {rows.map(({ t, s, hw }) => (
+              <TaskResultRow key={t.id} t={t} s={s} sub={hw?.title} onBand={onBand} />
+            ))}
           </ul>
         </div>
       </div>
     </div>,
     document.body
+  )
+}
+
+// One task's result: skill, title, first-try grade (best if retaken),
+// and the student's work — recordings, writing, page answers.
+function TaskResultRow({ t, s, sub, onBand }) {
+  const meta = taskMeta(t)
+  const pct = percentOf(s.first)
+  const tone = gradeTone(s.first ? pct ?? 100 : null)
+  const bestPct = percentOf(s.best)
+  return (
+    <li className="flex flex-wrap items-center gap-3 rounded-[16px] border border-line bg-panel px-3 py-2.5">
+      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${meta.tint} ${meta.text}`}>
+        <SkillIcon skill={meta.skill} className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-extrabold text-paper">{taskTitle(t)}</p>
+        <p className="truncate text-xs font-bold text-mist">
+          {sub}
+          {s.tries > 1 && bestPct != null ? `${sub ? ' · ' : ''}best ${bestPct}% in ${s.tries} tries` : s.tries > 1 ? `${sub ? ' · ' : ''}${s.tries} tries` : ''}
+          {s.first?.late ? ' · late' : ''}
+        </p>
+      </div>
+      <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
+      {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
+      {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} onBand={onBand} /> : <PageAnswer attemptId={s.first.id} onBand={onBand} writing={/\/writing\//.test(t.html_url || '')} />)}
+    </li>
+  )
+}
+
+/*
+ * One student's in-site tasks of ONE homework (2026-11-07): shown in the
+ * submission window of the group table, so a homework made only of site
+ * tasks (a speaking test, a listening page…) is not an empty window.
+ */
+export function HomeworkResults({ homeworkId, studentId }) {
+  const [tasks, setTasks] = useState(null)
+  const [attempts, setAttempts] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      if (!homeworkId || !studentId) return setTasks([])
+      const { data: t } = await supabase.from('homework_tasks').select(`homework_id, ${TASK_SELECT}`).eq('homework_id', homeworkId).order('position')
+      if (cancelled) return
+      if (!t?.length) return setTasks([])
+      const { data: a } = await supabase
+        .from('homework_attempts')
+        .select('id, task_id, user_id, attempt_no, mode, submitted_at, score, max_score, band, late')
+        .in('task_id', t.map((x) => x.id))
+        .eq('user_id', studentId)
+        .not('submitted_at', 'is', null)
+      if (cancelled) return
+      setAttempts(a || [])
+      setTasks(t)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [homeworkId, studentId])
+
+  if (!tasks) return <p className="text-sm font-semibold text-mist">Loading the tasks…</p>
+  if (!tasks.length) return null
+  const onBand = (id, band) => setAttempts((prev) => prev.map((a) => (a.id === id ? { ...a, band } : a)))
+  return (
+    <ul className="flex flex-col gap-2">
+      {tasks.map((t) => (
+        <TaskResultRow key={t.id} t={t} s={summariseAttempts(attempts.filter((a) => a.task_id === t.id))} onBand={onBand} />
+      ))}
+    </ul>
   )
 }
 

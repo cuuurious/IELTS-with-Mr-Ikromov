@@ -43,7 +43,7 @@ function MonthStrip({ months }) {
   if (!months.length) return null
   return (
     <div className="rounded-[20px] border border-line bg-panel p-4">
-      <p className="mb-3 text-sm font-semibold text-paper">Month by month</p>
+      <p className="mb-3 text-[14px] font-extrabold text-paper">Month by month</p>
       <div className="flex items-end gap-2 overflow-x-auto pb-1">
         {months.map((m) => {
           const total = m.assigned || 0
@@ -103,7 +103,7 @@ function MonthSection({ token }) {
   return (
     <section className="flex flex-col gap-3 rounded-[24px] border border-line bg-panel p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="mr-auto text-xl font-semibold">{reportMonthLabel(data.month)}</h2>
+        <h2 className="mr-auto font-brand text-[19px] font-semibold">{reportMonthLabel(data.month)}</h2>
         {months.length > 1 && (
           <div className="flex flex-wrap gap-1.5">
             {months.slice(0, 6).map((m) => (
@@ -111,7 +111,7 @@ function MonthSection({ token }) {
                 key={m}
                 type="button"
                 onClick={() => setMonth(m)}
-                className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-bold ${m === data.month ? 'bg-brass text-onbrass' : 'bg-panel-2 text-paper-dim hover:text-paper'}`}
+                className={`focus-ring h-9 rounded-xl px-3 text-[12px] font-extrabold ${m === data.month ? 'bg-brass text-white' : 'bg-panel-2 text-paper-dim hover:text-paper'}`}
               >
                 {reportMonthLabel(m).split(' ')[0].slice(0, 3)}
               </button>
@@ -131,10 +131,19 @@ function formatDate(value) {
 
 function Stat({ label, value, hint, tone = '' }) {
   return (
-    <div className={`rounded-2xl border border-line p-4 ${tone || 'bg-panel'}`}>
-      <p className="text-xs text-mist">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tabular-nums text-paper">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-mist">{hint}</p>}
+    <div className={`rounded-[20px] border border-line p-4 ${tone || 'bg-panel'}`}>
+      <p className="text-[12px] font-extrabold text-mist">{label}</p>
+      <p className="mt-1 font-brand text-[28px] font-semibold tabular-nums leading-tight text-paper">{value}</p>
+      {hint && <p className="mt-0.5 text-[12px] font-semibold text-mist">{hint}</p>}
+    </div>
+  )
+}
+
+function SectionTitle({ children, sub }) {
+  return (
+    <div>
+      <h2 className="font-brand text-[19px] font-semibold text-paper">{children}</h2>
+      {sub && <p className="text-[13px] font-semibold text-mist">{sub}</p>}
     </div>
   )
 }
@@ -185,12 +194,17 @@ export default function ParentReport() {
       .catch(() => setState('error'))
   }, [token])
 
-  const shell = (children) => (
+  // 2026-11-07: same look as the rest of the site — lapis band on top,
+  // Unbounded headings, rounded cards, one saffron button.
+  const shell = (children, band = null) => (
     <div className="min-h-screen bg-ink text-paper">
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
-        <div className="flex items-center gap-2">
-          <img src="/mrikromov.jpg" alt="" className="h-8 w-8 rounded-lg object-cover" />
-          <p className="text-sm font-semibold text-paper">IELTS with Mr Ikromov</p>
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
+        <div className="registan-band rounded-[28px] px-5 py-6 sm:px-8 sm:py-8">
+          <div className="flex items-center gap-2.5">
+            <img src="/mrikromov.jpg" alt="" className="h-9 w-9 rounded-xl object-cover ring-2 ring-white/30" />
+            <p className="text-[14px] font-extrabold text-white/90">IELTS with Mr Ikromov</p>
+          </div>
+          {band}
         </div>
         {children}
       </div>
@@ -201,7 +215,7 @@ export default function ParentReport() {
   if (state === 'off') {
     return shell(
       <div className="rounded-[20px] border border-line bg-panel p-6">
-        <h1 className="text-2xl font-semibold">This link is no longer active</h1>
+        <h1 className="font-brand text-[22px] font-semibold">This link is no longer active</h1>
         <p className="mt-2 text-sm text-mist">Please ask the teacher for a new progress report link.</p>
       </div>
     )
@@ -209,9 +223,9 @@ export default function ParentReport() {
   if (state === 'error') {
     return shell(
       <div className="rounded-[20px] border border-line bg-panel p-6">
-        <h1 className="text-2xl font-semibold">Couldn&apos;t load the report</h1>
+        <h1 className="font-brand text-[22px] font-semibold">Couldn&apos;t load the report</h1>
         <p className="mt-2 text-sm text-mist">Please check the internet connection and try again.</p>
-        <button type="button" onClick={() => window.location.reload()} className="focus-ring mt-4 rounded-xl border border-line px-4 py-2 text-sm">
+        <button type="button" onClick={() => window.location.reload()} className="focus-ring mt-4 h-11 rounded-[14px] bg-saffron px-5 text-sm font-extrabold text-[#17213a]">
           Try again
         </button>
       </div>
@@ -253,50 +267,50 @@ export default function ParentReport() {
     ['Speaking', mocks.speaking],
   ].filter(([, band]) => band !== null && band !== undefined)
 
+  const band = (
+    <div className="mt-5 flex flex-wrap items-center gap-4">
+      {student.avatar_url ? (
+        <img src={student.avatar_url} alt="" className="h-16 w-16 rounded-[18px] object-cover ring-2 ring-white/30" />
+      ) : (
+        <div className="grid h-16 w-16 place-items-center rounded-[18px] bg-white/15 font-brand text-2xl font-semibold text-white">
+          {(student.full_name || '?').trim().charAt(0)}
+        </div>
+      )}
+      <div className="min-w-[180px] flex-1">
+        <h1 className="font-brand text-[24px] font-semibold leading-tight text-white sm:text-[30px]">{(student.full_name || 'Student').trim()}</h1>
+        <p className="mt-1 text-[14px] font-bold text-white/80">
+          Progress report · {groups.length ? `Group ${groups.join(', ')} · ` : ''}
+          {student.target_band ? `Target band ${student.target_band}` : 'IELTS preparation'}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={downloadPdf}
+        disabled={pdfBusy}
+        className="focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-saffron px-5 sm:w-auto text-sm font-extrabold text-[#17213a] hover:brightness-95 disabled:opacity-60"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3v12" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M5 21h14" />
+        </svg>
+        {pdfBusy ? 'Making PDF…' : 'Download PDF'}
+      </button>
+    </div>
+  )
+
   return shell(
     <>
-      <header className="flex flex-wrap items-center gap-4">
-        {student.avatar_url ? (
-          <img src={student.avatar_url} alt="" className="h-14 w-14 rounded-xl border border-line object-cover" />
-        ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-line bg-panel font-display text-xl">
-            {(student.full_name || '?').trim().charAt(0)}
-          </div>
-        )}
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold sm:text-3xl">{(student.full_name || 'Student').trim()}</h1>
-          <p className="text-sm text-mist">
-            Progress report · {groups.length ? `Group ${groups.join(', ')} · ` : ''}
-            {student.target_band ? `Target band ${student.target_band}` : 'IELTS preparation'}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={downloadPdf}
-          disabled={pdfBusy}
-          className="focus-ring ml-auto inline-flex items-center gap-2 rounded-xl bg-brass hover:bg-brass-dim px-4 py-2 text-sm font-semibold text-onbrass disabled:opacity-60"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 3v12" />
-            <path d="m7 10 5 5 5-5" />
-            <path d="M5 21h14" />
-          </svg>
-          {pdfBusy ? 'Making PDF…' : 'Download PDF'}
-        </button>
-      </header>
       {pdfError && <p className="-mt-3 text-sm text-coral">{pdfError}</p>}
 
       <MonthSection token={token} />
 
       <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">Homework</h2>
-          <p className="text-sm text-mist">
-            {homework.since
-              ? `Everything since joining the group in ${new Date(homework.since).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
-              : 'Recent homework'}
-          </p>
-        </div>
+        <SectionTitle
+          sub={homework.since ? `Everything since joining the group in ${new Date(homework.since).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}` : 'Recent homework'}
+        >
+          Homework
+        </SectionTitle>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Completed" value={rate === null ? '—' : `${rate}%`} hint={`${done} of ${assigned}`} tone="bg-reading-tint" />
           <Stat label="On time" value={Math.max(done - (homework.late || 0), 0)} />
@@ -340,7 +354,7 @@ export default function ParentReport() {
               <button
                 type="button"
                 onClick={() => setShowAllMonths((v) => !v)}
-                className="focus-ring self-center rounded-xl border border-line bg-panel px-4 py-2 text-sm font-medium text-paper hover:bg-panel-2"
+                className="focus-ring h-10 self-center rounded-[14px] border border-line bg-panel px-4 text-sm font-extrabold text-brass hover:bg-panel-2"
               >
                 {showAllMonths ? 'Show fewer months' : `Show earlier months (${historyByMonth.length - 2})`}
               </button>
@@ -350,7 +364,7 @@ export default function ParentReport() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Vocabulary</h2>
+        <SectionTitle>Vocabulary</SectionTitle>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Stat label="Words learned" value={words.words_learned || 0} hint={`of ${words.words_practised || 0} practised`} tone="bg-vocab-tint" />
           <Stat label="Quizzes (30 days)" value={(words.quizzes_30d || 0) + (words.reviews_30d || 0)} />
@@ -360,7 +374,7 @@ export default function ParentReport() {
 
       {mockEntries.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold">Latest mock exam results</h2>
+          <SectionTitle>Latest mock exam results</SectionTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {mockEntries.map(([label, band]) => (
               <Stat key={label} label={label} value={Number(band).toFixed(1)} hint="band" />
@@ -369,10 +383,11 @@ export default function ParentReport() {
         </section>
       )}
 
-      <p className="text-xs text-mist">
+      <p className="text-[12px] font-semibold text-mist">
         Updated {new Date(report.generated_at || Date.now()).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}.
         Questions? Contact the teacher directly.
       </p>
-    </>
+    </>,
+    band
   )
 }

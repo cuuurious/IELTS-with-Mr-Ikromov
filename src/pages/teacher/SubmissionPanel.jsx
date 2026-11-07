@@ -6,6 +6,7 @@ import AiFeedbackCard from '../../components/AiFeedbackCard'
 import { countWords } from '../../lib/writingMock'
 import Icon from '../../components/Icon'
 import SubmissionImage from '../../components/SubmissionImage'
+import { HomeworkResults } from '../../components/homework/Gradebook'
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 4
@@ -15,8 +16,12 @@ export default function SubmissionPanel({
   studentName,
   homeworkTitle,
   submission,
+  homeworkId,
+  studentId,
   onClose,
 }) {
+  const hwId = submission?.homework_id || homeworkId
+  const stId = submission?.student_id || studentId
   const [reEvaluating, setReEvaluating] = useState(false)
 
   /*
@@ -327,6 +332,18 @@ export default function SubmissionPanel({
                   <SkillAudioPlayer src={submission[key]} label={`Speaking — Part ${i + 1}`} />
                 </section>
               ) : null
+            )}
+
+            {/* TASKS ON THE SITE (2026-11-07): tests, speaking and pages
+                done inside the homework — scores, recordings, AI marking. */}
+            {hwId && stId && (
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-xl bg-accent" />
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">Tasks on the site</div>
+                </div>
+                <HomeworkResults homeworkId={hwId} studentId={stId} />
+              </section>
             )}
 
             {/* AI EVALUATION */}

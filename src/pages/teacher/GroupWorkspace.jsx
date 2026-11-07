@@ -2206,6 +2206,8 @@ export default function GroupWorkspace({ teacherId }) {
                                       homeworkTitle:
                                         hw.title,
                                       submission: sub,
+                                      homeworkId: hw.id,
+                                      studentId: student.id,
                                     })
                                   }
                                   aria-label={`${hw.title} — ${statusLabel}`}

@@ -210,7 +210,7 @@ export default function GroupHomeworkTable({ homeworks, roster, submissions, acc
                             <li key={st.id}>
                               <button
                                 type="button"
-                                onClick={() => onOpenSubmission({ studentName: st.full_name, homeworkTitle: h.title, submission: sub })}
+                                onClick={() => onOpenSubmission({ studentName: st.full_name, homeworkTitle: h.title, submission: sub, homeworkId: h.id, studentId: st.id })}
                                 className="focus-ring flex w-full items-center gap-2.5 rounded-[14px] bg-panel px-3 py-2 text-left transition hover:ring-1 hover:ring-line"
                               >
                                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-panel-2 text-xs font-extrabold text-paper-dim">
