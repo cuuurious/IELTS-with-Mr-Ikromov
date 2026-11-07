@@ -140,8 +140,13 @@ export default function HomeworkCard({
       ? homework.allowed_submission_types
       : ['image']
 
+  // 2026-11-07: a homework with tasks in the site needs NO pictures —
+  // finishing every task hands it in (and the server marks it done too,
+  // migration_115). The file box is only for homework without tasks.
+  const siteTasks = (homework.homework_tasks || []).length > 0
+
   const minFiles =
-    homework.min_submission_files ?? 1
+    siteTasks ? 0 : homework.min_submission_files ?? 1
 
   const maxFiles =
     homework.max_submission_files ?? 10
@@ -1539,7 +1544,6 @@ export default function HomeworkCard({
             studentId={studentId}
             onAllDone={() => {
               if (submission?.status === 'done' || isMockHomework || homework.enable_speaking) return
-              if ((homework.min_submission_files ?? 1) > 0) return
               doTaskSubmit()
             }}
           />
@@ -1694,7 +1698,7 @@ export default function HomeworkCard({
               NORMAL FILES
           ================================================= */}
 
-          {!isMockHomework && (
+          {!isMockHomework && !siteTasks && (
           <>
           <div
             {...dropProps}
