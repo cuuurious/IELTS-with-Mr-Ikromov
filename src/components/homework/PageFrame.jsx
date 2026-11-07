@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
 /*
  * Full-screen frame for an interactive practice page (2026-11-05).
@@ -14,6 +15,9 @@ import { useEffect, useRef, useState } from 'react'
 export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null }) {
   // `cover`: a panel shown over the page (e.g. AI feedback); Back closes it first.
   const frameRef = useRef(null)
+  const { profile } = useAuth()
+  const userRef = useRef(null)
+  userRef.current = profile?.id || null
   const overlayOpen = useRef(false)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
@@ -25,6 +29,29 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
     const onMessage = (e) => {
       if (e.source !== frameRef.current?.contentWindow) return
       if (e.data && e.data.type === 'ielts-overlay') overlayOpen.current = Boolean(e.data.open)
+      // Writing Lab pages (2026-11-07): the sealed page can't keep its own
+      // progress, so the site keeps it for this student on this device.
+      const d = e.data
+      if (d && (d.type === 'ielts-lab-load' || d.type === 'ielts-lab-save') && /^[a-z0-9-]{1,40}$/.test(String(d.id || ''))) {
+        const key = `ielts-lab:${userRef.current || 'guest'}:${d.id}`
+        if (d.type === 'ielts-lab-save') {
+          try {
+            if (typeof d.data === 'string' && d.data.length < 500000) localStorage.setItem(key, d.data)
+          } catch {
+            /* storage full or blocked */
+          }
+        } else {
+          let data = null
+          try {
+            data = localStorage.getItem(key)
+          } catch {
+            /* ignore */
+          }
+          const attr = document.documentElement.getAttribute('data-theme')
+          const dark = attr === 'dark' || (attr !== 'light' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+          e.source.postMessage({ type: 'ielts-lab-state', id: d.id, data, theme: dark ? 'dark' : 'light' }, '*')
+        }
+      }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
