@@ -1,3 +1,4 @@
+import './lib/storageGuard'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -5,17 +6,33 @@ import App from './App.jsx'
 import { installErrorReporter } from './lib/errorReporter'
 
 // Save unexpected errors so the teacher sees them (dashboard → Errors).
-installErrorReporter()
+if (window.origin !== 'null') installErrorReporter()
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// A practice page frame that got the site's own start page by mistake
+// (a missing page) must not start the whole site inside itself.
+const inSandbox = window.origin === 'null'
+
+if (!inSandbox) {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}
+
+// Reading navigator.serviceWorker throws inside sandboxed frames and in
+// some privacy modes.
+const swOk = (() => {
+  try {
+    return !inSandbox && 'serviceWorker' in navigator && Boolean(navigator.serviceWorker)
+  } catch {
+    return false
+  }
+})()
 
 // Register the service worker early so push notifications can be enabled
 // the moment a signed-in user opts in (from Account settings).
-if ('serviceWorker' in navigator) {
+if (swOk) {
   navigator.serviceWorker.register('/sw.js').catch((err) => console.error('SW register failed', err))
 }
 
@@ -52,7 +69,7 @@ if (navParam) {
   window.history.replaceState({}, '', url.pathname + url.search + url.hash)
 }
 
-if ('serviceWorker' in navigator) {
+if (swOk) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'push-navigate' && event.data.link) {
       deliverPushNavigation(event.data.link)

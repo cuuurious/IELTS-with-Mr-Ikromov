@@ -41,7 +41,7 @@ export function targets(q) {
 // One gap per phrase: a sentence of the model answer with the phrase's key word blanked.
 export function makeGaps(q) {
   const phrases = (q.model?.phrases || []).map(([p]) => String(p))
-  const sentences = String(q.model?.answer || '').split(/(?<=[.!?])\s+/)
+  const sentences = String(q.model?.answer || '').replace(/([.!?])\s+/g, '$1\u0001').split('\u0001')
   const gaps = []
   phrases.forEach((p) => {
     const k = keyWords(p)[0]

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { fetchPage } from '../../lib/fetchPage'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { cleanQs, withHelper } from '../homework/HtmlTask'
@@ -145,11 +146,7 @@ function NotebookPlayer({ page, onClose }) {
 
   useEffect(() => {
     let cancelled = false
-    fetch(page.url)
-      .then((r) => {
-        if (!r.ok) throw new Error('This page could not be opened.')
-        return r.text()
-      })
+    fetchPage(page.url)
       .then((t) => !cancelled && setHtml(withHelper(t)))
       .catch((e) => !cancelled && setError(e.message))
     return () => {

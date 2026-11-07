@@ -1,4 +1,5 @@
 import SkillAudioPlayer from './SkillAudioPlayer'
+import { isUserSideMicProblem, keepScreenOn, micErrorText } from '../lib/micHelp'
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 import { reportError } from '../lib/errorReporter'
@@ -73,6 +74,7 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
   const chunksRef = useRef([])
   const timerRef = useRef(null)
   const streamRef = useRef(null)
+  const wakeRef = useRef(null)
   const fileRef = useRef(null)
   const secondsRef = useRef(0)
   const previewRef = useRef(null)
@@ -197,6 +199,12 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
 
       recorder.onstop = async () => {
         clearInterval(timerRef.current)
+        try {
+          wakeRef.current?.release?.()
+        } catch {
+          /* ignore */
+        }
+        wakeRef.current = null
         stream.getTracks().forEach((t) => t.stop())
         streamRef.current = null
         mediaRecorderRef.current = null
@@ -243,8 +251,7 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
       stream.getAudioTracks().forEach((track) => {
         track.onended = () => {
           if (recorder.state !== 'inactive') {
-            stopReasonRef.current = 'The microphone stopped (a call, headphones or another app may have taken it).'
-            logProblem('track-ended', new Error(stopReasonRef.current))
+            stopReasonRef.current = 'The microphone stopped (a call, a locked screen or another app). Keep the screen on and stay on this page while recording.'
             setFinishing(true)
             try {
               recorder.stop()
@@ -256,6 +263,9 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
       })
 
       recorder.start(1000)
+      keepScreenOn().then((lock) => {
+        wakeRef.current = lock
+      })
       secondsRef.current = 0
       setSeconds(0)
       setRecording(true)
@@ -269,16 +279,8 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
       setPaused(false)
 
       const inApp = isInAppBrowser()
-      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
-        setError(
-          inApp
-            ? 'This app (Telegram/Instagram) blocks the microphone. Open the website in Chrome or Safari, or upload a voice memo below.'
-            : 'Microphone access was blocked. Allow the microphone for this site in your browser settings and try again.'
-        )
-      } else if (err?.name === 'NotFoundError') {
-        setError('No microphone was found. Connect one and try again, or upload a voice memo below.')
-      } else if (err?.name === 'NotReadableError') {
-        setError('Another app is using the microphone. Close it (or end the call) and try again.')
+      if (micErrorText(err)) {
+        setError(micErrorText(err))
       } else if (err?.name === 'NoMediaRecorder' || err?.name === 'NoMediaDevices') {
         setError(
           inApp
@@ -288,7 +290,8 @@ export default function AudioRecorder({ label, existingUrl, onSaved, onUpload, o
       } else {
         setError(err?.message || 'Could not start recording.')
       }
-      logProblem('start', err)
+      // A blocked or missing microphone is the student's setting, not a bug.
+      if (!isUserSideMicProblem(err)) logProblem('start', err)
     }
   }
 

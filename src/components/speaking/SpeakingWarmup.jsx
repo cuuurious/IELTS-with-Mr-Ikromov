@@ -377,7 +377,7 @@ function SavePhrases({ phrases, answer, topic }) {
   const [state, setState] = useState('')
   const save = async () => {
     setState('saving')
-    const sentences = String(answer || '').split(/(?<=[.!?])\s+/)
+    const sentences = String(answer || '').replace(/([.!?])\s+/g, '$1\u0001').split('\u0001')
     const rows = phrases.map(([p, m]) => {
       const key = String(p).replace(/\(.*?\)/g, '').trim().toLowerCase().split(' ')[0]
       const ex = sentences.find((x) => x.toLowerCase().includes(key)) || null

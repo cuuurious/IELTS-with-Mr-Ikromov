@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { keepScreenOn, micErrorText } from '../../lib/micHelp'
 import { supabase } from '../../lib/supabaseClient'
 import { LIMITS, SPEAKING_PARTS, buildSteps, fetchVoice, fmtTime, linesOf, loadSpeakingSet, modelFor, parseSpeakingUrl, setTitle, withMockPart1 } from '../../lib/speaking'
 import SpeakingFeedback, { MicIcon } from './SpeakingFeedback'
@@ -114,6 +115,8 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   const [showText, setShowText] = useState(true)
   const [attempt, setAttempt] = useState(null) // latest handed-in attempt (results)
   const [analyser, setAnalyser] = useState(null)
+  const wakeRef = useRef(null)
+  const startRef = useRef(null)
 
   const streamRef = useRef(null)
   const audioRef = useRef(null)
@@ -257,6 +260,12 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
     try {
+      wakeRef.current?.release?.()
+    } catch {
+      /* ignore */
+    }
+    wakeRef.current = null
+    try {
       ctxRef.current?.close()
     } catch {
       /* ignore */
@@ -329,14 +338,47 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
   }, [next])
 
   const startAnswer = useCallback(
-    (s) => {
+    (s, retry = false) => {
       const stream = streamRef.current
       if (!stream) {
         next()
         return
       }
-      const mime = pickMime()
-      const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream)
+      // Some browsers (Edge on Windows) refuse to start with a chosen
+      // format: try the browser's own format, then a fresh microphone.
+      const make = (st) => {
+        const mime = pickMime()
+        for (const opts of mime ? [{ mimeType: mime }, null] : [null]) {
+          try {
+            const r = opts ? new MediaRecorder(st, opts) : new MediaRecorder(st)
+            r.start(1000)
+            return r
+          } catch {
+            /* try the next way */
+          }
+        }
+        return null
+      }
+      let rec = make(stream)
+      if (!rec) {
+        navigator.mediaDevices
+          .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+          .then((fresh) => {
+            stream.getTracks().forEach((t) => t.stop())
+            streamRef.current = fresh
+            if (retry) throw new Error('rec')
+            startRef.current?.(s, true)
+          })
+          .catch(() => {
+            clearInterval(timerRef.current)
+            streamRef.current?.getTracks().forEach((t) => t.stop())
+            streamRef.current = null
+            setError('Recording could not start on this device. Close other apps that use the microphone (calls, Zoom, Telegram) or open the task in Google Chrome, then try again.')
+            setStage('error')
+          })
+        return
+      }
+      const mime = rec.mimeType
       chunksRef.current = []
       rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data)
       rec.onstop = () => {
@@ -354,7 +396,6 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
       startedAtRef.current = Date.now()
       setElapsed(0)
       setRecKey(s.key)
-      rec.start(1000)
       clearInterval(timerRef.current)
       timerRef.current = setInterval(() => {
         const e = (Date.now() - startedAtRef.current) / 1000
@@ -364,6 +405,7 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
     },
     [next, finishAnswer]
   )
+  startRef.current = startAnswer
 
   // Run each step when it comes up.
   useEffect(() => {
@@ -415,10 +457,14 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
       } catch {
         /* the level bars are optional */
       }
-    } catch {
-      setError('Allow the microphone, then press Start again. (In the browser bar: the lock or microphone icon → Allow.)')
+    } catch (err) {
+      setError(micErrorText(err) || 'Allow the microphone, then press Start again. (In the browser bar: the lock or microphone icon → Allow.)')
       return
     }
+    // Keep the screen on: a locked phone screen stops the microphone.
+    keepScreenOn().then((lock) => {
+      wakeRef.current = lock
+    })
     // Unlock audio on phones inside this tap.
     try {
       const a = audioRef.current

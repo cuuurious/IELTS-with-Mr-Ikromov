@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { fetchPage } from '../../lib/fetchPage'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { qtypeLabel } from '../../lib/questionTypes'
@@ -241,11 +242,7 @@ function BookPlayer({ item, studentId, onClose, onSaved }) {
 
   useEffect(() => {
     let cancelled = false
-    fetch(item.url)
-      .then((r) => {
-        if (!r.ok) throw new Error('This page could not be opened.')
-        return r.text()
-      })
+    fetchPage(item.url)
       .then((text) => !cancelled && setHtml(withHelper(text)))
       .catch((err) => !cancelled && setError(err.message))
     return () => {
