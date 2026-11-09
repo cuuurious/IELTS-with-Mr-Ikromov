@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { workshopWords } from '../../lib/workshopGate'
 import { fetchRuMap, ruKey } from '../../lib/russian'
+import { reportError } from '../../lib/errorReporter'
 
 /*
  * Full-screen frame for an interactive practice page (2026-11-05).
@@ -81,6 +82,11 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
       if (e.source !== frameRef.current?.contentWindow) return
       if (e.data && e.data.type === 'ielts-overlay') overlayOpen.current = Boolean(e.data.open)
       if (e.data && e.data.type === 'ielts-ready' && ruRef.current) e.source.postMessage({ type: 'ielts-ru', map: ruRef.current }, '*')
+      // Audio that would not start or load (HELPER's audio safety net).
+      if (e.data && e.data.type === 'ielts-audio-problem') {
+        const d = e.data
+        reportError({ message: `Listening audio (${String(d.kind).slice(0, 10)}): ${String(d.name).slice(0, 40)} ${String(d.msg).slice(0, 160)}`.trim(), stack: `audio file: ${String(d.src || '').slice(0, 80)}` }, '', { always: true })
+      }
       // Autosave: hand the saved answers back (or "nothing saved") when the
       // page is ready; keep new ones as the student works.
       // (Writing Lab pages keep their own progress, so they are left out.)
