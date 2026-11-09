@@ -255,6 +255,9 @@ function analyze(it,text,gid,inp,opts){
   const fg=figureCheck(text0,gid);
   const dm=(fg.length?[]:directionVsModel(it,text0));
   const st=styleCheck(text0);
+  // A chapter can add its own grammar rules (CHAPTER.grammar: [{re, msg, fix, why}]).
+  const cg=[];try{for(const r of ((typeof CHAPTER!=="undefined"&&CHAPTER.grammar)||[])){const re=new RegExp(r.re,"i");const mm=re.exec(text0);if(mm&&!g.some(y=>y.i===mm.index))cg.push({kind:"grammar",i:mm.index,len:mm[0].length,msg:r.msg,fix:r.fix||null,why:r.why||null})}}catch(e){}
+  g.push(...cg);
   // dedupe spelling vs grammar overlap
   items.push(...fg,...dm,...g,...sp.filter(x=>!g.some(y=>y.i===x.i)),...st);
   // positives
@@ -278,7 +281,10 @@ function checkText(it,text,gid){
   if(it.nums==="model"){const need=uniq(numsOf(it.model));const miss=need.filter(x=>!have.includes(x));
     if(miss.length>(it.missTol||0))issues.push("Missing figure(s): "+miss.join(", ")+". Use the figures from the facts.");
     const extra=have.filter(x=>!need.includes(x));if(extra.length)warns.push("Check the figure(s): "+extra.join(", "))}
-  else if(it.nums==="graph"){const meta=D.gmeta[gid];const al=meta.allowed||[];const known=have.filter(x=>al.includes(x));const mn=it.minNums==null?2:it.minNums;
+  else if(it.nums==="graph"){const meta=D.gmeta[gid];const al=meta.allowed||[];
+    // A graph in thousands: "24,000" is the same figure as "24 thousand".
+    if(/thousand/i.test(meta.unit||"")){for(let k=0;k<have.length;k++){const v=parseFloat(have[k]);if(v>=1000&&al.includes(String(v/1000)))have[k]=String(v/1000)}}
+    const known=have.filter(x=>al.includes(x));const mn=it.minNums==null?2:it.minNums;
     if(known.length<mn)issues.push("Use more figures and years from the graph: your sentence should include the start and the end of the change ("+mn+" figures or years).");
     // Figures that are not on the graph (differences between figures, like "by 8 million", are fine).
     const vals=[...new Set([].concat(...Object.values(meta.svals||{})).map(Number))],yrs=(meta.years||[]).map(Number),der=new Set();
@@ -292,7 +298,7 @@ function checkText(it,text,gid){
     if(tw.length&&!tw.some(w=>st.some(x=>x.slice(0,4)===w.slice(0,4))))issues.push("Write about this graph: "+meta.title.toLowerCase()+". Name what changed (for example ‘"+meta.title.toLowerCase()+"’).");
     // The unit: 20 million, not just 20.
     const u=String(meta.unit||"").toLowerCase();const need=/billion/.test(u)?[/\b(billion|bn)\b/,"billion"]:/million/.test(u)?[/\b(million|millions|mn|m)\b/,"million"]:/thousand/.test(u)?[/\b(thousand|thousands|k)\b/,"thousand"]:/%|per ?cent/.test(u)?[/%|\bper ?cent\b/,"%"]:null;
-    const figs=known.filter(x=>!/^(19|20)\d\d$/.test(x));
+    const tnums=numsOf(meta.title||"");const figs=known.filter(x=>!/^(19|20)\d\d$/.test(x)&&!tnums.includes(x));
     if(need&&figs.length){
       // Each figure needs its unit, unless the next figure carries it ("from 12 to 20 million").
       const re=/(\d+(?:\.\d+)?)(?!\d)/g;let m,miss=null;

@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const out = path.resolve(here, '../../public/practice/writing-lab')
-const NAMES = { 'wt1-ch04': 'task1-ch04' } // chapter id → page file name
+const NAMES = { 'wt1-ch03': 'task1-ch03', 'wt1-ch04': 'task1-ch04' } // chapter id → page file name
 
 const read = (f) => fs.readFileSync(path.join(here, f), 'utf8')
 const css = read('lab.css')

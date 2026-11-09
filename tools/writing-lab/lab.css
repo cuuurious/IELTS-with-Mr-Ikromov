@@ -192,3 +192,14 @@ textarea.no{border-color:var(--coral)}
   .chip{font-size:13px}
 }
 @media print{.steps,.irow,.blockbar,.nextbar{display:none}.sec{display:block!important}}
+
+/* added 2026-11-09 (Chapter 3): gaps, wider charts, chart marks, forecast shade */
+input.gap{font:inherit;font-weight:700;color:var(--paper);background:var(--panel2);border:0;border-bottom:2px solid var(--brass);border-radius:8px 8px 0 0;padding:2px 6px;margin:0 3px;max-width:100%;min-height:30px}
+input.gap:focus{outline:2px solid var(--brass);outline-offset:1px}
+input.gap.ok{border-bottom-color:var(--sage);background:var(--sageT)}
+input.gap.no{border-bottom-color:var(--coral);background:var(--coralT)}
+.q .p.gp{line-height:2.1}
+.gbox.wide{max-width:560px;margin:8px auto 0}
+.chart .shade{fill:var(--panel2);opacity:.85}
+.chart .mark circle{fill:var(--brass)}
+.chart .mark text{fill:var(--onbrass);font:800 10px "Nunito Sans",system-ui,sans-serif}
