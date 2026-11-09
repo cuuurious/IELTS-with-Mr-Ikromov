@@ -14,6 +14,29 @@ import { fetchRuMap, ruKey } from '../../lib/russian'
  * The page itself keeps its real-test look; on phones the helper in
  * HtmlTask.jsx switches it to Passage / Questions tabs.
  */
+/*
+ * AUTOSAVE (2026-11-09). Phones often reload a page left in the
+ * background (another app, another tab), and the student's answers were
+ * gone. The page (HELPER in HtmlTask.jsx) sends its answers here; they are
+ * kept on this device for this student for 3 days and handed back when the
+ * same page opens again. Handing in clears them (forgetAutosave).
+ */
+const AUTOSAVE_DAYS = 3
+function pageHash(html) {
+  let h = 5381
+  const s = String(html || '')
+  for (let i = 0; i < s.length; i += 1) h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  return `${s.length.toString(36)}-${(h >>> 0).toString(36)}`
+}
+const autosaveKey = (userId, html) => `ielts-autosave:${userId || 'guest'}:${pageHash(html)}`
+export function forgetAutosave(userId, html) {
+  try {
+    localStorage.removeItem(autosaveKey(userId, html))
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null }) {
   // `cover`: a panel shown over the page (e.g. AI feedback); Back closes it first.
   const frameRef = useRef(null)
@@ -44,6 +67,8 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
       on = false
     }
   }, [html])
+  const htmlRef = useRef(html)
+  htmlRef.current = html
   const overlayOpen = useRef(false)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
@@ -56,6 +81,31 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
       if (e.source !== frameRef.current?.contentWindow) return
       if (e.data && e.data.type === 'ielts-overlay') overlayOpen.current = Boolean(e.data.open)
       if (e.data && e.data.type === 'ielts-ready' && ruRef.current) e.source.postMessage({ type: 'ielts-ru', map: ruRef.current }, '*')
+      // Autosave: hand the saved answers back (or "nothing saved") when the
+      // page is ready; keep new ones as the student works.
+      // (Writing Lab pages keep their own progress, so they are left out.)
+      if (e.data && (e.data.type === 'ielts-ready' || e.data.type === 'ielts-autosave') && !String(htmlRef.current || '').includes('ielts-lab-load')) {
+        const key = autosaveKey(userRef.current, htmlRef.current)
+        if (e.data.type === 'ielts-ready') {
+          let data = ''
+          try {
+            const saved = JSON.parse(localStorage.getItem(key) || 'null')
+            if (saved && Date.now() - saved.at < AUTOSAVE_DAYS * 864e5) data = saved.data
+            else if (saved) localStorage.removeItem(key)
+          } catch {
+            /* ignore */
+          }
+          e.source.postMessage({ type: 'ielts-autosave-state', data }, '*')
+        } else {
+          try {
+            const data = typeof e.data.data === 'string' ? e.data.data : ''
+            if (!data) localStorage.removeItem(key)
+            else if (data.length < 400000) localStorage.setItem(key, JSON.stringify({ at: Date.now(), data }))
+          } catch {
+            /* storage full or blocked */
+          }
+        }
+      }
       // Writing Lab pages (2026-11-07): the sealed page can't keep its own
       // progress, so the site keeps it for this student on this device.
       const d = e.data

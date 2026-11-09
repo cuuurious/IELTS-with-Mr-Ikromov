@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
-import PageFrame from './PageFrame'
+import PageFrame, { forgetAutosave } from './PageFrame'
 import { createPortal } from 'react-dom'
 import { dropQueued, flushHandIns, isNetworkError, queueHandIn } from '../../lib/handinQueue'
 import { fetchPage } from '../../lib/fetchPage'
@@ -126,6 +126,23 @@ document.head.appendChild(st);document.body.classList.add('ielts-m');var bar=doc
 function show(q){document.body.classList.toggle('ielts-q',q);a.className=q?'':'on';b.className=q?'on':'';setTimeout(function(){try{fitTables()}catch(_){}},30)}a.onclick=function(){show(false)};b.onclick=function(){show(true)};show(false);
 var siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{if(this.closest&&this.closest('.passage-container')&&document.body.classList.contains('ielts-q'))show(false)}catch(_){}return siv.apply(this,arguments)};
 document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&(t.closest('.footer__navbtn')||t.closest('.footer .navbtn')))show(true)},true)}
+/* AUTOSAVE (2026-11-09): a phone may reload the page while the student is in another app or tab, and every answer was lost. The page cannot keep anything itself, so it sends its answers (and which Workshop step is open) to the site, and gets them back when it opens again. */
+var asOn=false,asT=0;function asFields(root){if(!root)return[];return Array.prototype.slice.call(root.querySelectorAll('input,select,textarea')).filter(function(el){var t=(el.type||'').toLowerCase();return t!=='hidden'&&t!=='file'&&t!=='button'&&t!=='submit'&&t!=='reset'&&t!=='range'&&!el.closest('#ielts-pre')&&!el.hasAttribute('data-noreport')})}
+function asOv(){return document.getElementById('ws-overlay')||document.getElementById('wsOverlay')}
+function asSig(el){return el.tagName+'|'+(el.type||'')+'|'+(el.name||el.id||el.getAttribute('data-q')||'')}
+function asVal(el){var t=(el.type||'').toLowerCase();return(t==='radio'||t==='checkbox')?(el.checked?1:0):String(el.value||'').slice(0,5000)}
+function asPack(list){return list.map(function(el){return[asSig(el),asVal(el)]})}
+function asSnap(){var ov=asOv();var main=asFields(document).filter(function(el){return!ov||!ov.contains(el)});var o={v:1,f:asPack(main)};if(ov&&ov.offsetWidth>0){var tabs=Array.prototype.slice.call(document.querySelectorAll('#ws-tabs .ws-tab'));var on=-1;tabs.forEach(function(b,i){if(b.classList.contains('on'))on=i});o.ws={tab:on,f:asPack(asFields(ov))}}return o}
+function asHas(o){var any=function(a){return a.some(function(x){return x[1]!==''&&x[1]!==0})};return any(o.f)||Boolean(o.ws)}
+function asSave(){if(!asOn)return;try{var o=asSnap();parent.postMessage({type:'ielts-autosave',data:asHas(o)?JSON.stringify(o):''},'*')}catch(_){}}
+function asLater(){if(!asOn)return;clearTimeout(asT);asT=setTimeout(asSave,700)}
+function asPut(list,saved){var n=0;list.forEach(function(el,i){var s=saved[i];if(!s||s[0]!==asSig(el))return;var t=(el.type||'').toLowerCase(),v=s[1];if(t==='radio'){if(v===1&&!el.checked){el.click();n++}}else if(t==='checkbox'){if(Boolean(v)!==el.checked){el.click();n++}}else if(typeof v==='string'&&v!==''&&el.value!==v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));n++}});return n}
+function asToast(){var t=document.createElement('div');t.textContent='Your answers were brought back.';t.setAttribute('style','position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2147483000;background:#17213a;color:#fff;font:700 14px/1.3 system-ui,sans-serif;padding:10px 16px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)');document.body.appendChild(t);setTimeout(function(){t.remove()},3200)}
+function asRestore(raw){var o=null;try{o=raw?JSON.parse(raw):null}catch(_){}if(!o||o.v!==1){asOn=true;return}setTimeout(function(){var n=0;try{n+=asPut(asFields(document).filter(function(el){var ov=asOv();return!ov||!ov.contains(el)}),o.f||[])}catch(_){}if(!o.ws){asOn=true;if(n)asToast();return}try{if(window.openWorkshop)window.openWorkshop();else{var b=document.getElementById('wsBtn');if(b)b.click()}}catch(_){}setTimeout(function(){try{var tabs=document.querySelectorAll('#ws-tabs .ws-tab');if(o.ws.tab>=0&&tabs[o.ws.tab]&&!tabs[o.ws.tab].classList.contains('on'))tabs[o.ws.tab].click()}catch(_){}setTimeout(function(){try{n+=asPut(asFields(asOv()),o.ws.f||[])}catch(_){}asOn=true;asToast()},300)},300)},450)}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-autosave-state')asRestore(e.data.data)});
+setTimeout(function(){asOn=true},6000);
+document.addEventListener('input',asLater,true);document.addEventListener('change',asLater,true);document.addEventListener('click',asLater,true);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')asSave()});window.addEventListener('pagehide',asSave);
 document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80);setTimeout(wsProg,120)},true);
 document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{wsPhone()}catch(_){}try{hlSetup()}catch(_){}try{preSubmit()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
@@ -288,6 +305,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       return
     }
     dropQueued(task.id)
+    forgetAutosave(studentId, html) // handed in: the next try starts clean
     const row = Array.isArray(data) ? data[0] : data
     setDone(row || { attempt_no: 1 })
     if (!isWriting) setReceipt({ at: new Date(), score: score?.score ?? null, max: score?.max ?? null, attempt_no: row?.attempt_no || 1 })

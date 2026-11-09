@@ -50,7 +50,7 @@ export default function SharedLogins() {
       {open && (
         <>
           <p className="text-[12px] font-semibold text-mist">
-            Each student account is open on one device at a time; signing in somewhere else signs the other device out. Many switches between different devices usually means the login is shared.
+            Each student account can be open on one phone and one computer at a time; signing in on a second phone (or a second computer) signs the old one out. Many switches between different phones or computers usually means the login is shared.
           </p>
           <ul className="flex flex-col gap-2">
             {rows.map((r) => {

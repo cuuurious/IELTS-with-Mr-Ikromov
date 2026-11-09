@@ -80,8 +80,36 @@ function reliableFetch(input, init = {}) {
   return fetch(input, init)
 }
 
+/*
+ * WRONG PHONE/PC CLOCK (2026-11-09). The server says when a sign-in token
+ * runs out as an exact time ("expires_at"). On a device whose clock is
+ * an hour or more fast, that time is already in the past the moment the
+ * token arrives, so the site renewed the token every ~30 seconds for
+ * hours (some students: 1,000+ renewals a morning) until the renewals
+ * tripped over each other and the student was thrown out. Here the
+ * end time is re-counted from this device's own clock (now + the
+ * token's lifetime), so a wrong clock no longer matters.
+ */
+async function clockSafeFetch(input, init) {
+  const res = await reliableFetch(input, init)
+  try {
+    const url = typeof input === 'string' ? input : input?.url || ''
+    if (!res.ok || !url.includes('/auth/v1/token')) return res
+    const data = await res.clone().json()
+    if (!data || typeof data.expires_in !== 'number') return res
+    data.expires_at = Math.floor(Date.now() / 1000) + data.expires_in
+    return new Response(JSON.stringify(data), {
+      status: res.status,
+      statusText: res.statusText,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch {
+    return res
+  }
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: { fetch: reliableFetch },
+  global: { fetch: clockSafeFetch },
 })
 
 // We authenticate with Supabase's email/password auth, but students and the

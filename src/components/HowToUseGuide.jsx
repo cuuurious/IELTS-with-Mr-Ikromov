@@ -1,508 +1,517 @@
-import { useState } from 'react'
-import Icon from './Icon'
+import { useEffect, useState } from 'react'
 
 /*
  * ================================================================
- * HOW TO USE — student onboarding guide, built from real screenshots
+ * HOW TO USE — the student guide (rewritten 2026-11-08)
  * ================================================================
- * Shared between StudentDashboard.jsx (its own 'howto' tab) and
- * TeacherDashboard.jsx (so a teacher can see exactly what students
- * see, and hand this same page to new students). Every screenshot
- * below is a real capture of the live site, supplied by Jasur and
- * saved to public/how-to-use/ — this component is just the
- * explanatory text wrapped around them.
+ * Used by StudentDashboard.jsx ('howto' tab) and TeacherDashboard.jsx,
+ * so a teacher sees exactly what students see.
  *
- * Section order (per Jasur): the general site walkthrough first
- * (signin → register → homework → wordlists → leaderboard →
- * groupchat → chats → account), then the Mock Test Center sections,
- * then Forgot Password last — it's a "good to know", not a numbered
- * first step, so it's deliberately de-emphasized at the very end.
+ * Four groups: Getting started · Every day · Your progress · Exams &
+ * help. Screenshots live in public/how-to-use/ (WebP). The new ones
+ * (v2-*) were taken from the current site with demo data; the sign-in,
+ * register, account and forgot-password pictures are the older real
+ * captures and still match those screens.
  *
- * A matching static HTML/PDF version of this same content lives in
- * scripts/how-to-use-pdf (see that folder) — keep both in sync when
- * this file changes, and when new screenshots are added, add both
- * the image file (public/how-to-use/) and a matching <Shot> here.
+ * "Save as PDF" prints this page (print styles below hide the rest of
+ * the site), so the PDF can never be out of date.
+ * When a screen changes, retake its picture and edit its section here.
  * ================================================================
  */
 
-const SECTIONS = [
-  { key: 'signin', label: 'Signing in' },
-  { key: 'register', label: 'Creating an account' },
-  { key: 'homework', label: 'Homework' },
-  { key: 'wordlists', label: 'Word Lists' },
-  { key: 'leaderboard', label: 'Leaderboard' },
-  { key: 'groupchat', label: 'Group Chat' },
-  { key: 'chats', label: 'Chats' },
-  { key: 'account', label: 'Account settings' },
-  { key: 'mock-overview', label: 'Mock Test Center — Overview' },
-  { key: 'mock-checkin', label: 'Mock Test Center — Take a Test' },
-  { key: 'mock-speaking', label: 'Mock Test Center — Speaking Exam' },
-  { key: 'mock-examiners', label: 'Mock Test Center — Message Examiners' },
-  { key: 'forgot-password', label: 'Forgot password' },
+const GROUPS = [
+  { key: 'start', n: 1, label: 'Getting started' },
+  { key: 'daily', n: 2, label: 'Every day' },
+  { key: 'progress', n: 3, label: 'Your progress' },
+  { key: 'help', n: 4, label: 'Exams & help' },
 ]
 
-// Static, literal class names (so Tailwind's scanner picks them up even
-// though they're chosen dynamically at runtime via this lookup table).
-const EYEBROW_STYLES = {
-  brass: 'text-brass',
-  lavender: 'text-lavender',
-  amber: 'text-amber',
+const SECTIONS = [
+  { id: 'signin', group: 'start', label: 'Sign in' },
+  { id: 'register', group: 'start', label: 'Create an account' },
+  { id: 'one-device', group: 'start', label: 'Phone + computer' },
+  { id: 'forgot-password', group: 'start', label: 'Forgot password' },
+  { id: 'home', group: 'daily', label: 'Home' },
+  { id: 'homework', group: 'daily', label: 'Homework' },
+  { id: 'practice', group: 'daily', label: 'Practice books' },
+  { id: 'writing-lab', group: 'daily', label: 'Writing Lab' },
+  { id: 'words', group: 'daily', label: 'Word lists' },
+  { id: 'my-progress', group: 'progress', label: 'My progress' },
+  { id: 'leaderboard', group: 'progress', label: 'Leaderboard' },
+  { id: 'coins', group: 'progress', label: 'Coins & rewards' },
+  { id: 'tests', group: 'help', label: 'Listening & Reading tests' },
+  { id: 'mock-center', group: 'help', label: 'Mock Test Center' },
+  { id: 'chats', group: 'help', label: 'Chats' },
+  { id: 'account', group: 'help', label: 'Account' },
+]
+
+// Picture sizes, so the page doesn't jump while pictures load.
+const DIMS = {
+  '01-signin': [1440, 900],
+  '02-register-top': [1440, 900],
+  '03-register-bottom': [1440, 900],
+  '09-account-settings': [1440, 900],
+  '10-account-settings-2': [1440, 900],
+  '11-account-settings-3': [1440, 900],
+  '16-forgot-password': [1440, 900],
+  '17-forgot-password-email': [1400, 668],
+  '18-forgot-password-newpassword': [1440, 900],
+  'v2-before-submit': [811, 795],
+  'v2-chats': [1334, 670],
+  'v2-coins': [1334, 670],
+  'v2-highlight': [811, 750],
+  'v2-home-phone': [811, 1275],
+  'v2-home': [1334, 787],
+  'v2-homework': [1334, 670],
+  'v2-leaderboard': [1334, 670],
+  'v2-practice': [1334, 670],
+  'v2-progress': [1334, 670],
+  'v2-receipt': [811, 480],
+  'v2-wordlists': [1334, 670],
+  'v2-writing-lab': [1366, 860],
 }
 
-const STEP_STYLES = {
-  brass: 'bg-brass/15 text-brass',
-  lavender: 'bg-lavender/15 text-lavender',
-  amber: 'bg-amber/15 text-amber',
-}
+const B = ({ children }) => <strong className="font-extrabold text-paper">{children}</strong>
 
-// WebP copies next to each PNG (2026-10-06): ~10× smaller; browsers
-// without WebP still get the PNG.
-function Shot({ src, alt, wide }) {
+function Shot({ src, alt, phone }) {
+  const [w, h] = DIMS[src.split('/').pop().replace(/\.webp$/, '')] || []
   return (
-    <picture>
-      <source srcSet={src.replace(/\.png$/, '.webp')} type="image/webp" />
-      <img
-        src={src}
-        alt={alt}
-        className={`w-full rounded-xl border border-line shadow-sm ${wide ? '' : 'max-w-[360px]'}`}
-        loading="lazy"
-        decoding="async"
-      />
-    </picture>
+    <img
+      src={src}
+      width={w}
+      height={h}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`guide-shot block h-auto rounded-[14px] border border-line bg-panel-2 w-full`}
+      style={{ maxWidth: phone ? 300 : 960 }}
+    />
   )
 }
 
-function Step({ n, children, accent = 'brass' }) {
+function Steps({ items }) {
   return (
-    <li className="flex gap-3.5">
-      <span
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${STEP_STYLES[accent] || STEP_STYLES.brass}`}
-      >
-        {n}
-      </span>
-      <span className="pt-0.5 text-base leading-7 text-paper">{children}</span>
-    </li>
+    <ol className="mt-4 space-y-3">
+      {items.map((t, i) => (
+        <li key={i} className="flex gap-3">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[12px] bg-panel-2 font-brand text-[13px] font-semibold text-brass">
+            {i + 1}
+          </span>
+          <span className="text-[15px] leading-7 text-paper-dim">{t}</span>
+        </li>
+      ))}
+    </ol>
   )
 }
 
-function GuideSection({ id, eyebrow, title, blurb, illustration, steps, tip, wide, accent = 'brass' }) {
+function Tip({ children, warn }) {
   return (
-    <section
-      id={id}
-      className="scroll-mt-24 rounded-2xl border border-line bg-panel shadow-sm"
+    <div
+      className="mt-5 rounded-[14px] px-4 py-3 text-[14px] leading-6 text-paper"
+      style={{
+        background: `color-mix(in srgb, var(--color-${warn ? 'coral' : 'brass'}) 9%, transparent)`,
+        boxShadow: `inset 3px 0 0 var(--color-${warn ? 'coral' : 'brass'})`,
+      }}
     >
-      <div
-        className={`grid gap-8 p-6 sm:p-8 lg:items-start ${
-          wide ? 'grid-cols-1' : 'lg:grid-cols-2'
-        }`}
-      >
-        <div className={wide ? 'order-2' : ''}>
-          <p
-            className={`font-mono text-xs font-semibold uppercase tracking-[0.14em] ${
-              EYEBROW_STYLES[accent] || EYEBROW_STYLES.brass
-            }`}
-          >
-            {eyebrow}
-          </p>
-          <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight text-paper sm:text-3xl">
-            {title}
-          </h2>
-          <p className="mt-2.5 text-base leading-7 text-paper-dim">{blurb}</p>
+      <span className={`font-extrabold ${warn ? 'text-coral' : 'text-brass'}`}>{warn ? 'Careful. ' : 'Tip. '}</span>
+      {children}
+    </div>
+  )
+}
 
-          <ol className="mt-6 space-y-4">{steps}</ol>
-
-          {tip && (
-            <div className="mt-6 rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-3.5 text-base leading-7 text-paper">
-              <span className="font-bold text-cyan">Tip. </span>
-              {tip}
-            </div>
+// One section: text first, pictures after. `side` puts one phone picture
+// beside the text on wide screens; `shots` go full width underneath.
+function Section({ id, title, intro, steps, tip, warn, side, shots, phones, cols }) {
+  const group = GROUPS.find((g) => g.key === SECTIONS.find((s) => s.id === id)?.group)
+  return (
+    <section id={id} style={{ scrollMarginTop: 150 }} className="guide-section rounded-[20px] border border-line bg-panel p-5 sm:p-7">
+      <div className={side ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start' : ''}>
+        <div className="min-w-0">
+          {group && (
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-mist">
+              {group.n} · {group.label}
+            </p>
           )}
+          <h2 className="mt-1 font-brand text-[20px] font-semibold leading-tight tracking-[-0.01em] text-paper sm:text-[24px]">{title}</h2>
+          {intro && <p className="mt-2 max-w-3xl text-[15px] leading-7 text-paper-dim">{intro}</p>}
+          {steps && <Steps items={steps} />}
+          {tip && <Tip warn={warn}>{tip}</Tip>}
         </div>
-
-        <div className={`flex flex-col gap-3 ${wide ? 'order-1' : 'lg:sticky lg:top-24'}`}>
-          {illustration}
-        </div>
+        {side && <div className="flex justify-center">{side}</div>}
       </div>
+      {phones && <div className="mt-6 flex flex-wrap justify-center gap-4 sm:justify-start">{phones}</div>}
+      {shots && <div className={`mt-6 grid gap-4 ${cols ? 'sm:grid-cols-2 lg:grid-cols-3' : ''}`}>{shots}</div>}
     </section>
   )
 }
 
-export default function HowToUseGuide() {
-  const [active, setActive] = useState('signin')
+function GroupHead({ g }) {
+  return (
+    <div id={`group-${g.key}`} style={{ scrollMarginTop: 150 }} className="guide-group flex items-center gap-3 pt-4">
+      <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-brass font-brand text-[15px] font-semibold text-onbrass">{g.n}</span>
+      <h2 className="font-brand text-[18px] font-semibold text-paper sm:text-[20px]">{g.label}</h2>
+    </div>
+  )
+}
 
-  const scrollTo = (key) => {
-    setActive(key)
-    document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+const PRINT_CSS = `
+@media print {
+  @page { margin: 14mm; }
+  body * { visibility: hidden !important; }
+  #howto-guide, #howto-guide * { visibility: visible !important; }
+  body > * header, body > * nav, body > * aside, .registan-band, section[aria-label="Exam countdown"] { display: none !important; }
+  main, main > div { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  #howto-guide .no-print { display: none !important; }
+  #howto-guide * { color: #111827 !important; background: transparent !important; box-shadow: none !important; }
+  #howto-guide .guide-section { border: 1px solid #d1d5db !important; margin-bottom: 8mm; }
+  #howto-guide .guide-group { break-after: avoid; }
+  #howto-guide .guide-shot { break-inside: avoid; max-height: 110mm; width: auto !important; max-width: 100% !important; border: 1px solid #d1d5db !important; }
+}
+`
+
+export default function HowToUseGuide() {
+  const [active, setActive] = useState(SECTIONS[0].id)
+
+  // Light up the menu chip of the section on screen.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      (entries) => {
+        const seen = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (seen[0]) setActive(seen[0].target.id)
+      },
+      { rootMargin: '-120px 0px -60% 0px' }
+    )
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById(s.id)
+      if (el) io.observe(el)
+    })
+    return () => io.disconnect()
+  }, [])
+
+  // Keep the active chip visible in the scrolling menu on phones.
+  useEffect(() => {
+    // Only the menu scrolls sideways; scrollIntoView here would also move the page.
+    const chip = document.getElementById(`chip-${active}`)
+    const row = chip?.parentElement
+    if (row) row.scrollTo({ left: chip.offsetLeft - row.clientWidth / 2 + chip.clientWidth / 2, behavior: 'smooth' })
+  }, [active])
+
+  const go = (id) => {
+    setActive(id)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const S = '/how-to-use/'
+
   return (
-    <div className="space-y-6">
-      {/* Header / intro card */}
-      <section className="relative overflow-hidden rounded-2xl border border-line bg-panel shadow-sm">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-16 h-72 w-72 rounded-xl bg-brass/10 hidden" />
-          <div className="absolute -bottom-28 -left-16 h-64 w-64 rounded-xl bg-sage/10 hidden" />
-        </div>
-        <div className="relative px-6 py-6 sm:px-8 sm:py-7">
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-brass">
-            New here?
-          </p>
-          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-tight text-paper">
-            How to use your portal
-          </h1>
-          <p className="mt-2.5 max-w-2xl text-base leading-7 text-paper-dim">
-            A full walkthrough of every part of the site, with real screenshots — signing in,
-            homework, word lists, the leaderboard, chat, and the Mock Test Center. Read it top to
-            bottom the first time, then come back to any section whenever you need a reminder.
-          </p>
-          <a
-            href="/how-to-use-ielts-portal.pdf"
-            download
-            className="focus-ring mt-5 inline-flex items-center gap-2 rounded-xl bg-brass px-4 py-2.5 text-sm font-semibold text-onbrass shadow-sm transition-colors hover:brightness-105"
+    <div id="howto-guide" className="space-y-5">
+      <style>{PRINT_CSS}</style>
+
+      {/* Intro + the four groups */}
+      <section className="rounded-[20px] border border-line bg-panel p-5 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-brand text-[20px] font-semibold text-paper sm:text-[24px]">Your site, step by step</h2>
+            <p className="mt-2 max-w-2xl text-[15px] leading-7 text-paper-dim">
+              Read it once from the top, then come back to any part when you need it. The pictures are from the real site.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="no-print focus-ring h-10 shrink-0 self-start rounded-[14px] border border-brass px-4 text-[14px] font-extrabold text-brass hover:bg-[color-mix(in_srgb,var(--color-brass)_10%,transparent)]"
           >
-            <Icon name="download" className="h-4 w-4" /> Download as PDF
-          </a>
+            Save as PDF
+          </button>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {GROUPS.map((g) => (
+            <div key={g.key} className="rounded-[14px] bg-panel-2 p-4">
+              <button type="button" onClick={() => go(`group-${g.key}`)} className="focus-ring flex items-center gap-2 rounded-[12px] text-left">
+                <span className="flex h-7 w-7 items-center justify-center rounded-[12px] bg-brass font-brand text-[13px] font-semibold text-onbrass">{g.n}</span>
+                <span className="text-[15px] font-extrabold text-paper">{g.label}</span>
+              </button>
+              <ul className="mt-2 space-y-1">
+                {SECTIONS.filter((s) => s.group === g.key).map((s) => (
+                  <li key={s.id}>
+                    <button type="button" onClick={() => go(s.id)} className="focus-ring rounded-[8px] text-left text-[14px] font-semibold text-paper-dim hover:text-brass">
+                      {s.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Section nav */}
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-line bg-panel p-3 shadow-sm">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => scrollTo(s.key)}
-            className={`focus-ring rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors ${
-              active === s.key
-                ? 'border-brass/50 bg-brass/15 text-brass'
-                : 'border-line text-mist hover:text-paper'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      {/* Section menu: sticks to the top while reading, swipes sideways on phones */}
+      <nav aria-label="Guide sections" className="no-print sticky z-30 -mx-1 rounded-[20px] border border-line bg-panel p-2" style={{ top: 81 }}>
+        <div className="relative flex gap-2 overflow-x-auto [scrollbar-width:none]">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              id={`chip-${s.id}`}
+              type="button"
+              onClick={() => go(s.id)}
+              className={`focus-ring shrink-0 whitespace-nowrap rounded-[12px] px-3 py-1.5 text-[13px] font-extrabold transition-colors ${
+                active === s.id ? 'bg-brass text-onbrass' : 'text-mist hover:bg-panel-2 hover:text-paper'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </nav>
 
-      <GuideSection
+      {/* ---------------- 1 · GETTING STARTED ---------------- */}
+      <GroupHead g={GROUPS[0]} />
+
+      <Section
         id="signin"
-        eyebrow="Step 1"
-        title="Signing in"
-        blurb="This is the first thing you'll see when you open the site."
-        illustration={<Shot src="/how-to-use/01-signin.png" alt="Sign in screen" wide />}
-        wide
+        title="Sign in"
+        intro="The first screen you see when you open the site."
         steps={[
-          <Step key={1} n={1}>
-            Enter the <strong className="text-paper">username</strong> and{' '}
-            <strong className="text-paper">password</strong> you picked when you created your
-            account.
-          </Step>,
-          <Step key={2} n={2}>
-            Tap <strong className="text-paper">Sign in</strong> to go straight to your dashboard.
-          </Step>,
-          <Step key={3} n={3}>
-            Don't have an account yet? Tap{' '}
-            <strong className="text-paper">Create an account</strong> below the form instead.
-          </Step>,
+          <>Type your <B>username</B> and <B>password</B>.</>,
+          <>Tap <B>Sign in</B>. You land on your Home page.</>,
+          <>No account yet? Tap <B>Create an account</B> under the form.</>,
         ]}
-        tip="Forgot your password? Ask your teacher to reset it for you."
+        shots={<Shot src={`${S}01-signin.webp`} alt="Sign in screen" />}
       />
 
-      <GuideSection
+      <Section
         id="register"
-        eyebrow="Step 2"
-        title="Creating an account"
-        blurb="New students register here — this is a one-time step."
-        illustration={
+        title="Create an account"
+        intro="You do this once, on your first day."
+        steps={[
+          <>Write your <B>full name</B>, pick a <B>username</B> and a <B>password</B>.</>,
+          <>Add a <B>recovery email</B>. It is the only way to reset your password yourself later.</>,
+          <>Choose the <B>group</B> your teacher told you and your <B>target band</B>, then tap <B>Create account</B>.</>,
+        ]}
+        tip="Your account opens after Mr Ikromov approves it. Tell him when you have signed up."
+        cols
+        shots={
           <>
-            <Shot src="/how-to-use/02-register-top.png" alt="Create account form, top" />
-            <Shot src="/how-to-use/03-register-bottom.png" alt="Create account form, bottom" />
+            <Shot src={`${S}02-register-top.webp`} alt="Create account form, top" />
+            <Shot src={`${S}03-register-bottom.webp`} alt="Create account form, bottom" />
           </>
         }
-        steps={[
-          <Step key={1} n={1}>
-            Fill in your <strong className="text-paper">full name</strong>, pick a{' '}
-            <strong className="text-paper">username</strong> and{' '}
-            <strong className="text-paper">password</strong>, and optionally add a{' '}
-            <strong className="text-paper">recovery email</strong> (only used if you forget your
-            password).
-          </Step>,
-          <Step key={2} n={2}>
-            Choose the <strong className="text-paper">group(s)</strong> your teacher told you to
-            join — up to 2 — and pick your{' '}
-            <strong className="text-paper">target IELTS band</strong>. You can change your target
-            band anytime later in Account Settings.
-          </Step>,
-          <Step key={3} n={3}>
-            Tap <strong className="text-paper">Create account</strong>.
-          </Step>,
-        ]}
-        tip="Your account can't log in until Mr Ikromov approves it — let him know once you've signed up."
       />
 
-      <GuideSection
-        id="homework"
-        eyebrow="Step 3"
-        title="Homework"
-        blurb="Your dashboard's Homework tab — every assignment your teacher posts shows up here."
-        illustration={<Shot src="/how-to-use/04-homework.png" alt="Homework tab" wide />}
-        wide
+      <Section
+        id="one-device"
+        title="One phone and one computer"
+        intro="Your account can be open on one phone and one computer at the same time, for example your own phone and a computer at the centre."
         steps={[
-          <Step key={1} n={1}>
-            Each card shows an assignment, when it was posted, and when it's due. A red{' '}
-            <strong className="text-paper">Incomplete</strong> badge means you haven't submitted
-            it yet.
-          </Step>,
-          <Step key={2} n={2}>
-            Tap a card to open it, read the instructions, and upload your work.
-          </Step>,
-          <Step key={3} n={3}>
-            The <strong className="text-paper">Current group</strong> and{' '}
-            <strong className="text-paper">Tasks</strong> numbers at the top just show how many
-            assignments are waiting for you.
-          </Step>,
+          <>Sign in on a <B>second phone</B> (or a second computer) and the old one is signed out within a minute.</>,
+          <>Signed out with a message about another device? Just sign in again on the device you are using now.</>,
+          <>If it happens and you didn&apos;t sign in anywhere else, change your password in <B>Account</B> and tell your teacher.</>,
         ]}
-        tip="Uploading a file doesn't submit it by itself — open the assignment and tap Submit when you're ready."
+        tip="Don't share your login. Your teacher sees when one account keeps switching between phones or computers."
+        warn
       />
 
-      <GuideSection
-        id="wordlists"
-        eyebrow="Step 4"
-        title="Word Lists"
-        blurb="Vocabulary sets your teacher builds for your class, grouped into units."
-        illustration={<Shot src="/how-to-use/05-wordlists.png" alt="Word Lists tab" wide />}
-        wide
-        steps={[
-          <Step key={1} n={1}>
-            Each unit shows how many items it has. Tap{' '}
-            <strong className="text-paper">Start practice</strong> on any unit to work through
-            its words.
-          </Step>,
-          <Step key={2} n={2}>
-            Come back and repeat a unit anytime your teacher resets it.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="leaderboard"
-        eyebrow="Step 5"
-        title="Leaderboard"
-        blurb="See how you're ranked against the rest of your group."
-        illustration={<Shot src="/how-to-use/06-leaderboard.png" alt="Leaderboard tab" wide />}
-        wide
-        steps={[
-          <Step key={1} n={1}>
-            Your position (1, 2, 3…) is based on tasks completed and your streak.
-          </Step>,
-          <Step key={2} n={2}>
-            The percentage and purple bar show your overall progress; the badges under each name
-            show tasks done (like 8/18) and a streak counter (<Icon name="flame" className="h-3.5 w-3.5" /> 2 days).
-          </Step>,
-          <Step key={3} n={3}>
-            Tap any student to see their progress in more detail.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="groupchat"
-        eyebrow="Step 6"
-        title="Group Chat"
-        blurb="Where your whole class talks together."
-        illustration={<Shot src="/how-to-use/07-groupchat.png" alt="Group Chat tab" wide />}
-        wide
-        steps={[
-          <Step key={1} n={1}>
-            The list on the left shows your groups — tap one to open its chat on the right.
-          </Step>,
-          <Step key={2} n={2}>
-            Use this for anything the whole class should see: questions about homework,
-            announcements from your teacher, and so on.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="chats"
-        eyebrow="Step 7"
-        title="Chats"
-        blurb="Private, one-on-one conversations — with your teacher or a classmate directly."
-        illustration={<Shot src="/how-to-use/08-chats.png" alt="Chats tab" wide />}
-        wide
-        steps={[
-          <Step key={1} n={1}>
-            Search for a person's name, or pick from your existing conversations on the left.
-          </Step>,
-          <Step key={2} n={2}>
-            Chat with them privately on the right — unlike Group Chat, no one else can see this
-            conversation.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="account"
-        eyebrow="Step 8"
-        title="Account settings"
-        blurb="Open this from the gear icon in the top bar."
-        illustration={
-          <>
-            <Shot src="/how-to-use/09-account-settings.png" alt="Account settings — profile" />
-            <Shot src="/how-to-use/10-account-settings-2.png" alt="Account settings — password and notifications" />
-            <Shot src="/how-to-use/11-account-settings-3.png" alt="Account settings — recovery email, target band, session" />
-          </>
-        }
-        steps={[
-          <Step key={1} n={1}>
-            Change your <strong className="text-paper">profile photo, username, full name, or
-            bio</strong> — each one saves separately with its own Save button next to it. Your
-            full name is what teachers and classmates see instead of your username.
-          </Step>,
-          <Step key={2} n={2}>
-            <strong className="text-paper">Change password</strong>: enter your current password,
-            then a new one (at least 6 characters) twice, and tap Update password.
-          </Step>,
-          <Step key={3} n={3}>
-            Turn on <strong className="text-paper">push notifications</strong> to get alerts for
-            new homework and deadlines even when the site isn't open, and connect{' '}
-            <strong className="text-paper">Telegram</strong> to also get a heads-up 5 minutes
-            before your speaking exam.
-          </Step>,
-          <Step key={4} n={4}>
-            Add a <strong className="text-paper">recovery email</strong> so a password-reset link
-            can reach you, and set your <strong className="text-paper">target band</strong> —
-            shown around the site, like the crown badge in the top bar.
-          </Step>,
-        ]}
-        tip="Log out signs you out of this device. Delete my account (in the danger zone) permanently removes your account — only use it if you're sure, it can't be undone."
-      />
-
-      <GuideSection
-        id="mock-overview"
-        eyebrow="Mock Test Center · Overview"
-        title="Mock Test Center"
-        blurb="A separate, full-screen space just for exams — tap 'Mock Test Center' on your dashboard to open it, away from the rest of the site."
-        illustration={<Shot src="/how-to-use/12-mocktestcenter-overview.png" alt="Mock Test Center Overview tab" wide />}
-        wide
-        accent="lavender"
-        steps={[
-          <Step key={1} n={1} accent="lavender">
-            <strong className="text-paper">Overview</strong> shows your Reading and Listening
-            results so far (or "No attempts yet" if you haven't sat one).
-          </Step>,
-          <Step key={2} n={2} accent="lavender">
-            Download a one-page <strong className="text-paper">score report</strong> PDF once you
-            have results, and see feedback once a Writing mock has been marked.
-          </Step>,
-          <Step key={3} n={3} accent="lavender">
-            Your <strong className="text-paper">target band</strong> is shown and changeable
-            here too. Use <strong className="text-paper">Exit to dashboard</strong> (top right)
-            to leave and go back to the regular site.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="mock-checkin"
-        eyebrow="Mock Test Center · Take a Test"
-        title="Starting a mock exam"
-        blurb="This is where you actually start a mock — a candidate check-in, just like a real IELTS test."
-        illustration={<Shot src="/how-to-use/13-mocktestcenter-checkin.png" alt="Mock Test Center check-in screen" wide />}
-        wide
-        accent="lavender"
-        steps={[
-          <Step key={1} n={1} accent="lavender">
-            Your teacher gives you a one-time <strong className="text-paper">access code</strong>{' '}
-            for each mock session.
-          </Step>,
-          <Step key={2} n={2} accent="lavender">
-            Enter your <strong className="text-paper">full name</strong> exactly as your teacher
-            has it, plus that code, then tap <strong className="text-paper">Continue</strong>.
-          </Step>,
-        ]}
-        tip="No code yet? Ask your teacher — every mock attempt needs one now, the same way a real IELTS test checks you in before you start."
-      />
-
-      <GuideSection
-        id="mock-speaking"
-        eyebrow="Mock Test Center · Speaking Exam"
-        title="Your speaking exam"
-        blurb="Shows your booked speaking exam slot once a speaking examiner has scheduled one."
-        illustration={<Shot src="/how-to-use/14-mocktestcenter-speaking.png" alt="Mock Test Center Speaking Exam tab" wide />}
-        wide
-        accent="lavender"
-        steps={[
-          <Step key={1} n={1} accent="lavender">
-            Once booked, you'll see the time and join link here, plus your band and feedback once
-            it's marked.
-          </Step>,
-          <Step key={2} n={2} accent="lavender">
-            Nothing booked yet? It'll say so, like in the screenshot above — message the speaking
-            examiner (next tab) to arrange a time.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
-        id="mock-examiners"
-        eyebrow="Mock Test Center · Message Examiners"
-        title="Messaging your examiners"
-        blurb="A direct line to your speaking and writing examiners, right from the Mock Test Center."
-        illustration={<Shot src="/how-to-use/15-mocktestcenter-examiners.png" alt="Mock Test Center Message Examiners tab" wide />}
-        wide
-        accent="lavender"
-        steps={[
-          <Step key={1} n={1} accent="lavender">
-            Pick an examiner from the list on the left, then type your message on the right.
-          </Step>,
-          <Step key={2} n={2} accent="lavender">
-            Use this to arrange a speaking exam time, ask about feedback, or any other question
-            for your examiners.
-          </Step>,
-        ]}
-      />
-
-      <GuideSection
+      <Section
         id="forgot-password"
-        eyebrow="Good to know"
         title="Forgot password"
-        blurb="Tap 'Forgot password?' on the sign in screen if you can't remember yours."
-        illustration={
+        intro="Tap “Forgot your password?” under the sign-in form."
+        steps={[
+          <>Type your <B>username</B> (best) or your recovery email and tap <B>Send reset link</B>.</>,
+          <>Open the email <B>Reset your password</B>. Open only the <B>newest</B> one: each new request cancels the older links. Check spam too.</>,
+          <>Type a new password twice and tap <B>Update password</B>, then sign in with it.</>,
+        ]}
+        tip="No recovery email on your account? The site can't send you a link. Message Mr Ikromov in Telegram and he will set a new password for you."
+        cols
+        shots={
           <>
-            <Shot src="/how-to-use/16-forgot-password.png" alt="Forgot password screen, showing the confirmation message after requesting a reset link" wide />
-            <Shot src="/how-to-use/17-forgot-password-email.png" alt="The password reset email" wide />
-            <Shot src="/how-to-use/18-forgot-password-newpassword.png" alt="Choose a new password screen" wide />
+            <Shot src={`${S}16-forgot-password.webp`} alt="Forgot password screen" />
+            <Shot src={`${S}17-forgot-password-email.webp`} alt="The reset email" />
+            <Shot src={`${S}18-forgot-password-newpassword.webp`} alt="Choose a new password" />
           </>
         }
-        wide
-        accent="amber"
-        steps={[
-          <Step key={1} n={1} accent="amber">
-            Enter the <strong className="text-paper">recovery email</strong> connected to your
-            account, then tap <strong className="text-paper">Send reset link</strong>. You'll see
-            a confirmation message once it's sent.
-          </Step>,
-          <Step key={2} n={2} accent="amber">
-            Check that email for a message titled <strong className="text-paper">Reset your
-            password</strong>, and click the <strong className="text-paper">Reset password</strong>{' '}
-            link inside it.
-          </Step>,
-          <Step key={3} n={3} accent="amber">
-            On the <strong className="text-paper">Choose a new password</strong> screen, type your
-            new password twice (at least 6 characters) and tap{' '}
-            <strong className="text-paper">Update password</strong>.
-          </Step>,
-          <Step key={4} n={4} accent="amber">
-            You'll be taken straight back to the <strong className="text-paper">Sign in</strong>{' '}
-            screen — sign in with your new password.
-          </Step>,
-        ]}
-        tip="This only works if you've already added a recovery email in Account Settings. If you haven't, ask your teacher to reset your password for you instead."
       />
 
-      <div className="rounded-2xl border border-line bg-panel px-5 py-4 text-center text-base text-paper-dim shadow-sm">
-        Still stuck on something? Message your teacher directly from{' '}
-        <strong className="text-paper">Chats</strong> — that's the fastest way to get help.
+      {/* ---------------- 2 · EVERY DAY ---------------- */}
+      <GroupHead g={GROUPS[1]} />
+
+      <Section
+        id="home"
+        title="Home"
+        intro="Everything for today on one page."
+        steps={[
+          <>The bar on top counts the <B>days to your exam</B> and shows your <B>target</B> and <B>forecast</B> band. Its button gives you the one thing to do next. Tap the number of days to set or change your exam date.</>,
+          <>The big card shows your <B>next homework</B>. A red line means a deadline passed: tap <B>Do it now</B>, you can still hand it in late.</>,
+          <><B>Today&apos;s plan</B> is a short list for today, like a 3-minute speaking warm-up. Tap <B>Start</B>.</>,
+          <><B>Band forecast</B> is your likely band from your recent scores. It gets more exact as you do more tasks.</>,
+        ]}
+        tip="After your real exam the bar asks for your result. Please add it: it helps your teacher a lot."
+        side={<Shot phone src={`${S}v2-home-phone.webp`} alt="Home page on a phone" />}
+        shots={<Shot src={`${S}v2-home.webp`} alt="Home page on a computer" />}
+      />
+
+      <Section
+        id="homework"
+        title="Homework"
+        intro="Every task your teacher sets. Use the chips on top: To do, Handed in, Missed, All."
+        steps={[
+          <>Tap a homework card to open it. Under <B>Do it here</B> you see each part with its own button: <B>Start</B> for a new one, <B>Again</B> to try once more.</>,
+          <>Tasks done on the site (tests, pages, speaking) mark themselves as done and send your score to your teacher. You don&apos;t upload anything.</>,
+          <>Your <B>first try</B> is the score that counts. Later tries are practice.</>,
+          <>In a practice page, finish all the parts and tap <B>Hand in</B> (top right). You get a <B>✓ All answers saved</B> message with the time it was received.</>,
+        ]}
+        tip="Internet cut out? Your work is kept on your phone and sent by itself when you are back online. Don't close the page before it says it is saved."
+        shots={<Shot src={`${S}v2-homework.webp`} alt="Homework card opened" />}
+      />
+
+      <Section
+        id="practice"
+        title="Practice books"
+        intro="Mr Ikromov's Reading and Listening pages, sorted by question type, to practise on your own."
+        steps={[
+          <><B>My weak spots</B> shows the question types where you lose the most points. Tap <B>Practise</B> to go straight to them.</>,
+          <>Switch between <B>Reading</B> and <B>Listening</B> on the shelf, then open a book.</>,
+          <>Every score is saved and appears in My progress.</>,
+        ]}
+        tip="Double-tap any word in a passage to see its meaning in Uzbek and Russian, and save it to My words."
+        shots={<Shot src={`${S}v2-practice.webp`} alt="Practice books" />}
+      />
+
+      <Section
+        id="writing-lab"
+        title="Writing Lab"
+        intro="Step-by-step Writing chapters your teacher gives as homework. A coach checks every sentence you write."
+        steps={[
+          <>Go through the parts at the top in order: <B>Learn</B> first, then the practice parts.</>,
+          <>Write your sentence and tap <B>Check</B>. The coach marks <B>Structure, Facts, Grammar and Spelling</B> and shows what to fix first.</>,
+          <>Stuck? Tap <B>Hint</B>. Fix it and check again until it is green.</>,
+          <>Your work is saved as you go. When you are happy, tap <B>Hand in</B>.</>,
+        ]}
+        shots={<Shot src={`${S}v2-writing-lab.webp`} alt="Writing Lab with the coach's feedback" />}
+      />
+
+      <Section
+        id="words"
+        title="Word lists & My words"
+        intro="Vocabulary from your teacher, plus the words you save yourself."
+        steps={[
+          <><B>Daily Marathon</B>: 15 words, one try each. Come back every day.</>,
+          <><B>My words</B>: the words you saved by double-tapping them in tests and books. Right answers come back later (tomorrow, in 3 days, in a week); wrong ones come back today.</>,
+          <>Word lists from your teacher appear below. Tap one to practise it.</>,
+          <>Tap <B>Show in Uzbek / Russian</B> on a word card to see the translation.</>,
+        ]}
+        shots={<Shot src={`${S}v2-wordlists.webp`} alt="Word lists page" />}
+      />
+
+      {/* ---------------- 3 · YOUR PROGRESS ---------------- */}
+      <GroupHead g={GROUPS[2]} />
+
+      <Section
+        id="my-progress"
+        title="My progress"
+        intro="Every score you get on the site, week by week."
+        steps={[
+          <>The top row shows tasks in the last 30 days, your average score, your days in a row and your strongest skill.</>,
+          <><B>Writing band</B> and <B>Speaking band</B> show your marked work over time and what to work on next.</>,
+          <><B>Last 10 weeks</B> shows if your Reading and Listening are going up.</>,
+        ]}
+        shots={<Shot src={`${S}v2-progress.webp`} alt="My progress" />}
+      />
+
+      <Section
+        id="leaderboard"
+        title="Leaderboard"
+        intro="A weekly race inside your group. A new season starts every week."
+        steps={[
+          <>Your place depends on homework handed in and your days in a row (🔥). Tap <B>How points work</B> to see the rules.</>,
+          <>Your own card shows your place and what to do to move up.</>,
+          <>The group that wins the week gets bonus coins for everyone in it.</>,
+        ]}
+        shots={<Shot src={`${S}v2-leaderboard.webp`} alt="Leaderboard" />}
+      />
+
+      <Section
+        id="coins"
+        title="Coins & rewards"
+        intro="You earn coins by doing your work well and on time, and spend them on real things."
+        steps={[
+          <>Earn coins for homework <B>on time</B>, several on-time homeworks <B>in a row</B>, high scores on your first try, good Writing or Speaking bands and your group winning the week.</>,
+          <>Spend them in the <B>Rewards shop</B> (books, notebooks and more) or on Mr Ikromov&apos;s video courses and mock exams.</>,
+          <>Ordering holds the coins. Mr Ikromov gives you the item in class. If he declines, the coins come back. Tap ☆ on a reward to save up for it: Home shows how many coins are left to go.</>,
+        ]}
+        shots={<Shot src={`${S}v2-coins.webp`} alt="Coins and rewards shop" />}
+      />
+
+      {/* ---------------- 4 · EXAMS & HELP ---------------- */}
+      <GroupHead g={GROUPS[3]} />
+
+      <Section
+        id="tests"
+        title="Listening & Reading tests"
+        intro="Full tests look like the real computer IELTS. A few helpers make practice easier."
+        steps={[
+          <><B>Highlight</B>: select words with your finger or mouse and tap <B>Highlight</B>. Tap a highlight to remove it, or <B>Clear all</B>.</>,
+          <>In Listening the audio plays <B>once</B>, like the real exam. You can&apos;t pause or rewind, so read the questions before each part starts.</>,
+          <>Before you submit, the site shows <B>how many questions you answered</B>. Tap a red number to go back to it, or <B>Submit anyway</B>.</>,
+          <>Then tap <B>Hand in</B>. The message <B>✓ All answers saved</B> with your score and the time means your teacher has it.</>,
+        ]}
+        phones={
+          <>
+            <Shot phone src={`${S}v2-highlight.webp`} alt="Highlight button on selected words" />
+            <Shot phone src={`${S}v2-before-submit.webp`} alt="Answered-questions check before submit" />
+            <Shot phone src={`${S}v2-receipt.webp`} alt="All answers saved message" />
+          </>
+        }
+      />
+
+      <Section
+        id="mock-center"
+        title="Mock Test Center"
+        intro="Full mock exams in a separate, full-screen space, just like test day. Open it from Mocks in the menu."
+        steps={[
+          <>Each mock needs a one-time <B>access code</B> from your teacher. Type your full name and the code to check in.</>,
+          <>Your Listening and Reading results appear in <B>Overview</B>, with a score report you can download. Writing and Speaking feedback appears there once they are marked.</>,
+          <>Your <B>speaking exam</B> time and join link show up once an examiner books you. You can message your examiners from the same place.</>,
+        ]}
+        tip="During a mock, stay on the page: leaving the exam screen is reported to your teacher."
+        warn
+      />
+
+      <Section
+        id="chats"
+        title="Chats"
+        intro="Group chat for your whole class, and private chats with your teacher or classmates."
+        steps={[
+          <><B>Group chat</B>: questions everyone can see, and announcements from your teacher.</>,
+          <><B>Chats</B>: search for a name and talk privately. Only the two of you see it.</>,
+        ]}
+        shots={<Shot src={`${S}v2-chats.webp`} alt="Chats page" />}
+      />
+
+      <Section
+        id="account"
+        title="Account"
+        intro="Tap your initials in the top-right corner, then Account settings."
+        steps={[
+          <>Change your <B>photo, name and bio</B>. Your full name is what teachers and classmates see.</>,
+          <>Change your <B>password</B> (at least 6 characters).</>,
+          <>Turn on <B>notifications</B> and connect <B>Telegram</B> for homework reminders and a message before your speaking exam.</>,
+          <>Add a <B>recovery email</B> and set your <B>target band</B>.</>,
+        ]}
+        tip="Delete my account removes everything for good. It can't be undone."
+        warn
+        cols
+        shots={
+          <>
+            <Shot src={`${S}09-account-settings.webp`} alt="Account settings, profile" />
+            <Shot src={`${S}10-account-settings-2.webp`} alt="Account settings, password and notifications" />
+            <Shot src={`${S}11-account-settings-3.webp`} alt="Account settings, recovery email and target band" />
+          </>
+        }
+      />
+
+      <div className="rounded-[20px] border border-line bg-panel px-5 py-4 text-center text-[15px] text-paper-dim">
+        Still stuck? Message your teacher in <B>Chats</B>. That is the fastest way to get help.
       </div>
     </div>
   )

@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 
 /*
- * ONE DEVICE AT A TIME (2026-11-06, migration_109). A student's account is
- * open on one device: signing in somewhere makes that device the account's
- * device, and any other device still open is signed out within a minute.
+ * ONE PHONE + ONE COMPUTER (2026-11-06, migration_109; since 2026-11-09,
+ * migration_120). A student's account can be open on one phone and one
+ * computer at the same time. Signing in on a second phone (or a second
+ * computer) takes that place, and the old one is signed out within a minute.
  * Teachers and examiners are not limited (the server only checks students).
  */
 
@@ -79,13 +80,13 @@ export function useDeviceGuard(profile, signOut) {
           KICKED,
           by === 'Mr Ikromov signed you out'
             ? 'Mr Ikromov signed your account out on all devices. Sign in again.'
-            : `Your account was opened on another device (${by}), so you were signed out here. One account is for one student — if this wasn’t you, sign in and tell Mr Ikromov.`
+            : `Your account was opened on another ${/^(iPhone|iPad|Android)/.test(by) ? 'phone' : 'computer'} (${by}), so you were signed out here. One account is for one student — if this wasn’t you, sign in and tell Mr Ikromov.`
         )
       } catch {
         /* ignore */
       }
       try {
-        await (outRef.current ? outRef.current() : supabase.auth.signOut())
+        await (outRef.current ? outRef.current() : supabase.auth.signOut({ scope: 'local' }))
       } finally {
         window.location.assign('/login')
       }

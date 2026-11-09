@@ -186,7 +186,7 @@ export function AuthProvider({ children }) {
             refreshErr
           )
 
-          await supabase.auth.signOut()
+          await supabase.auth.signOut({ scope: 'local' })
           setSession(null)
           setProfile(null)
           setAuthError('')
@@ -583,8 +583,13 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // 2026-11-09: 'local' = sign out THIS device only. The default
+  // ('global') ended the account's sessions on every device, so when the
+  // one-device check signed out a student's old phone, it also killed the
+  // computer they had just signed in on — and they were thrown out there
+  // too, again and again.
   const signOut = async () => {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     setSession(null)
     setProfile(null)
     setIsRecoveringPassword(false)
