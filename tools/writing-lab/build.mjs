@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const out = path.resolve(here, '../../public/practice/writing-lab')
-const NAMES = { 'wt1-ch03': 'task1-ch03', 'wt1-ch04': 'task1-ch04' } // chapter id → page file name
+const NAMES = { 'wt1-ch02': 'task1-ch02', 'wt1-ch03': 'task1-ch03', 'wt1-ch04': 'task1-ch04', 'wt1-ch05': 'task1-ch05', 'wt1-ch08': 'task1-ch08' } // chapter id → page file name
 
 const read = (f) => fs.readFileSync(path.join(here, f), 'utf8')
 const css = read('lab.css')
@@ -27,6 +27,7 @@ for (const file of fs.readdirSync(path.join(here, 'chapters'))) {
   const id = file.replace(/\.js$/, '')
   if (only && only !== id) continue
   const chapter = read(path.join('chapters', file))
+  if (chapter.includes('@retired')) continue // a hand-made page replaces this chapter
   const js = `${chapter}\n${coach}\n${ui}`
   // Old iPhones (iOS 15) stop the whole page on these patterns.
   if (/\(\?<[=!]/.test(js)) throw new Error(`${id}: look-behind pattern found — iOS 15 cannot run it`)

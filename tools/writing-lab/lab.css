@@ -203,3 +203,10 @@ input.gap.no{border-bottom-color:var(--coral);background:var(--coralT)}
 .chart .shade{fill:var(--panel2);opacity:.85}
 .chart .mark circle{fill:var(--brass)}
 .chart .mark text{fill:var(--onbrass);font:800 10px "Nunito Sans",system-ui,sans-serif}
+.gfig{margin:10px auto 12px;max-width:640px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px}
+.gfig img{display:block;width:100%;height:auto;border-radius:8px}
+.gfig figcaption{font-size:13px;color:#55607a;margin-top:6px;text-align:center}
+.figs{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.figs .gfig{margin:0;max-width:none}
+.figs.n1{grid-template-columns:minmax(0,640px);justify-content:center}
+.mist>div:only-child,.mist>div:last-child:nth-child(odd){grid-column:1/-1}

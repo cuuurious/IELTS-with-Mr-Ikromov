@@ -256,7 +256,7 @@ function analyze(it,text,gid,inp,opts){
   const dm=(fg.length?[]:directionVsModel(it,text0));
   const st=styleCheck(text0);
   // A chapter can add its own grammar rules (CHAPTER.grammar: [{re, msg, fix, why}]).
-  const cg=[];try{for(const r of ((typeof CHAPTER!=="undefined"&&CHAPTER.grammar)||[])){const re=new RegExp(r.re,"i");const mm=re.exec(text0);if(mm&&!g.some(y=>y.i===mm.index))cg.push({kind:"grammar",i:mm.index,len:mm[0].length,msg:r.msg,fix:r.fix||null,why:r.why||null})}}catch(e){}
+  const cg=[];try{for(const r of ((typeof CHAPTER!=="undefined"&&CHAPTER.grammar)||[])){const re=new RegExp(r.re,"i");const mm=re.exec(text0);if(mm&&!g.some(y=>y.i<mm.index+mm[0].length&&mm.index<y.i+(y.len||1)))cg.push({kind:"grammar",i:mm.index,len:mm[0].length,msg:r.msg,fix:r.fix||null,why:r.why||null})}}catch(e){}
   g.push(...cg);
   // dedupe spelling vs grammar overlap
   items.push(...fg,...dm,...g,...sp.filter(x=>!g.some(y=>y.i===x.i)),...st);
@@ -309,6 +309,10 @@ function checkText(it,text,gid){
         if(shared&&need[0].test(" "+shared[1]))continue;
         miss=m[1];break}
       if(miss)issues.push("Add the unit: "+miss+(need[1]==="%"?"%":" "+need[1])+" (the graph is in "+meta.unit+").")}}
+  // Paraphrase: do not copy the question (a long run of the same words).
+  if(it.copyOf){const ws=t=>norm(t).replace(/[^a-z0-9' -]/g," ").split(/\s+/).filter(Boolean);const a=ws(text),b=ws(it.copyOf);let best=0,at=0;
+    for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++){let k=0;while(i+k<a.length&&j+k<b.length&&a[i+k]===b[j+k])k++;if(k>best){best=k;at=i}}
+    if(best>=(it.copyMax||10))issues.push("You copied the question (‘"+a.slice(at,at+6).join(" ")+" …’). Change the verb and the topic words; keep only the place, the time and the units.")}
   if(it.overlap&&overlap(it.model,text)<it.overlap)issues.push("Your sentence is too different from the facts given. Keep the same information.");
   return {ok:issues.length===0,issues,warns}
 }

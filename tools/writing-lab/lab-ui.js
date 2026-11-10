@@ -159,11 +159,11 @@ function graphsUnit(si,ui,host,items){
   const regs=REG.filter(r=>r.step===si&&r.unit===ui);const wrap=document.createElement("div");wrap.appendChild(blockBar(regs));host.appendChild(wrap)}
 function writeUnit(si,ui,host,b,items){
   const card=document.createElement("div");card.className="card";
-  let h=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph);
+  let h=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph)+imgBox(b.img);
   if(b.worked)h+='<div class="wk"><span class="l">Worked example</span><br>'+b.worked[0]+"<br><b>→</b> "+b.worked[1]+"</div>";
   card.innerHTML=h;
   items.forEach((q,i)=>{const e=document.createElement("div");e.className="q";const pr=b.escape?esc(q.prompt):q.prompt;
-    e.innerHTML='<div class="p"><span class="num">'+(i+1)+".</span>"+pr+"</div>"+mkInput({key:b.key+"_"+i,step:si,unit:ui,rows:b.rows||2,model:q.model+(b.modelWhy&&q.why?"  (Mistake: "+q.why+")":""),n:q.n,hint:q.hint||b.hint,prompt:q.prompt,check:t=>analyze(q,t,null,null)});
+    e.innerHTML='<div class="p"><span class="num">'+(i+1)+".</span>"+pr+"</div>"+imgBox(q.img)+mkInput({key:b.key+"_"+i,step:si,unit:ui,rows:b.rows||2,model:q.model+(b.modelWhy&&q.why?"  (Mistake: "+q.why+")":""),n:q.n,hint:q.hint||b.hint,prompt:q.prompt,check:t=>analyze(q,t,null,null)});
     card.appendChild(e)});
   card.appendChild(blockBar(REG.filter(r=>r.step===si&&r.unit===ui&&r.key.startsWith(b.key+"_"))));host.appendChild(card)}
 function runSel(r,count){const v=r.ta.value;if(!v){r.fb.className="fb";r.ta.className="sel";setOk(r,false);return}
@@ -174,7 +174,7 @@ function runSel(r,count){const v=r.ta.value;if(!v){r.fb.className="fb";r.ta.clas
   r.fb.innerHTML='<div class="hd"><span class="vd">'+(ok?"✓ Correct":"✗ Not yet")+'</span></div><div class="body"><div class="it '+(ok?"praise":"structure")+'"><div>'+msg+"</div></div></div>";
   if(count)r.tried=true;setOk(r,ok);save()}
 function chooseUnit(si,ui,host,b,items){
-  const card=document.createElement("div");card.className="card";card.innerHTML=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph);
+  const card=document.createElement("div");card.className="card";card.innerHTML=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph)+imgBox(b.img);
   const regs=[];
   items.forEach((q,i)=>{const id="s"+(uid++);const reg={id,key:b.key+"_"+i,step:si,unit:ui,counted:true,ok:false,kind:"select",ans:q.ans,why:q.why,clue:q.clue,generic:!!b.generic,prompt:q.prompt};REG.push(reg);regs.push(reg);
     const d=document.createElement("div");d.className="q";
@@ -182,6 +182,8 @@ function chooseUnit(si,ui,host,b,items){
     card.appendChild(d)});
   card.appendChild(blockBar(regs));host.appendChild(card);
   regs.forEach(r=>{r.ta=card.querySelector("#"+r.id);r.fb=card.querySelector("#f"+r.id);r.wc=()=>{};r.ta.addEventListener("change",()=>{ST.saved[r.key]=r.ta.value;runSel(r,true)})})}
+const IMG="/practice/writing-lab/img/";
+function imgBox(x){if(!x)return "";return [].concat(x).map(o=>{o=typeof o==="string"?{src:o}:o;return '<figure class="gfig"><img loading="lazy" decoding="async" src="'+IMG+esc(o.src)+'" alt="'+esc(o.cap||"Graph")+'">'+(o.cap?"<figcaption>"+esc(o.cap)+"</figcaption>":"")+"</figure>"}).join("")}
 function graphBox(gid){if(!gid)return "";return [].concat(gid).map(g=>{const m=D.gmeta[g]||{};return '<div class="gbox wide">'+chartSVG(g)+'</div><div class="gcap">'+esc(m.title||"")+(m.unit?" ("+esc(m.unit)+")":"")+"</div>"}).join("")}
 /* gaps: one word (or a short phrase) in each ___ ; every gap must be right */
 const gnorm=t=>String(t||"").toLowerCase().replace(/[’‘]/g,"'").replace(/(\d),(?=\d{3}\b)/g,"$1").replace(/\s+/g," ").replace(/\s*%/g,"%").replace(/[.,;!]+$/,"").trim();
@@ -235,7 +237,7 @@ function build(){
         groups.forEach(g=>units.push({label:(g.label||"").replace(/^Structures? /,"").replace(/ ·.*/,""),title:g.label,render:(ui,h)=>graphsUnit(si,ui,h,g.items)}))}
       else if(b.type==="drills")D[b.data].forEach(d=>units.push({label:String(d.n),title:"Drill "+d.n,render:(ui,h)=>drillUnit(si,ui,h,d,b.key||"d")}));
       else if(b.type==="learn")units.push({label:"Learn",render:(ui,h)=>learnUnit(si,ui,h)});
-      else if(b.type==="html")units.push({label:b.label||"Info",inline:true,render:(ui,h)=>{const c=document.createElement("div");c.innerHTML=(b.title?'<h3 class="sub-h" style="font-size:16px;margin:18px 0 8px">'+b.title+"</h3>":"")+(b.graph?'<div class="card">'+graphBox(b.graph)+"</div>":"")+(b.html||"");h.appendChild(c)}});
+      else if(b.type==="html")units.push({label:b.label||"Info",inline:true,render:(ui,h)=>{const c=document.createElement("div");c.innerHTML=(b.title?'<h3 class="sub-h" style="font-size:16px;margin:18px 0 8px">'+b.title+"</h3>":"")+(b.graph?'<div class="card">'+graphBox(b.graph)+"</div>":"")+(b.img?'<div class="figs n'+[].concat(b.img).length+'">'+imgBox(b.img)+"</div>":"")+(b.html||"");h.appendChild(c)}});
       else if(b.type==="gaps")units.push({label:b.label||b.title,render:(ui,h)=>gapsUnit(si,ui,h,b,D[b.data])});
       else if(b.type==="write")units.push({label:b.label||b.title,render:(ui,h)=>writeUnit(si,ui,h,b,D[b.data])});
       else if(b.type==="choose")units.push({label:b.label||b.title,render:(ui,h)=>chooseUnit(si,ui,h,b,D[b.data])});

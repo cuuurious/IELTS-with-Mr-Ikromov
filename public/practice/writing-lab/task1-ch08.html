@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing Task 1 · Chapter 8 · Mr Ikromov's IELTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Writing Lab — shared look for every chapter (2026-11-07).
+   Same colours, shapes and fonts as ieltswithmrikromov.com:
+   lapis-to-turquoise band, Unbounded headings, Nunito Sans text,
+   rounded rectangles only (12 / 14 / 20 / 28 px), one saffron button. */
+:root{
+  --ink:#f6f5f1;--panel:#fff;--panel2:#efede6;--line:#e3dfd4;--paper:#17213a;--dim:#3a4560;--mist:#55607a;
+  --brass:#2456b0;--onbrass:#fff;--sage:#13807c;--sageT:#e2f2f0;--coral:#b23a48;--coralT:#f8e1e4;--amber:#9a5b12;--amberT:#fbefd9;
+  --saffron:#e6a33a;--onsaffron:#17213a;--band:#22489a;
+  --chipS:#dfe8fb;--chipSt:#1f4aa0;--chipV:#fbe0e6;--chipVt:#a02a44;--chipL:#fdf0d2;--chipLt:#8a5a0c;--chipN:#dcf3ef;--chipNt:#0f6b66;
+  --mark:#fff2b3;--shadow:0 1px 2px rgba(23,33,58,.06),0 6px 18px -10px rgba(23,33,58,.18);
+  --gUp:#13807c;--gDown:#b23a48;--gMix:#1f3a75;--g2:#c4622d;--grid:#e8e4da;--gtext:#55607a;
+}
+:root[data-theme="dark"]{
+  --ink:#0f1626;--panel:#172036;--panel2:#1e2944;--line:#2b3858;--paper:#eef0f6;--dim:#c6ccda;--mist:#a3abbf;
+  --brass:#7fa6f2;--onbrass:#0f1626;--sage:#7fd6d2;--sageT:#123a3c;--coral:#f29aa6;--coralT:#3e1c22;--amber:#f2c07a;--amberT:#3a2a12;
+  --saffron:#f0b95a;--band:#1b3570;
+  --chipS:#22335c;--chipSt:#b9cdf7;--chipV:#4a2230;--chipVt:#f5b8c6;--chipL:#453512;--chipLt:#f6d48b;--chipN:#153f3d;--chipNt:#9de3dc;
+  --mark:#5a4a12;--shadow:none;
+  --gUp:#5fd0c6;--gDown:#f08a99;--gMix:#a9bdf0;--g2:#f2a76b;--grid:#2b3858;--gtext:#a3abbf;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font:16px/1.55 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3,.brand{font-family:Unbounded,"Nunito Sans",system-ui,sans-serif;letter-spacing:-.01em}
+b,strong{font-weight:800}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+/* ---- band ---- */
+.band{color:#fff;background:var(--band);background-image:linear-gradient(115deg,var(--band) 0%,#1f6fae 55%,#1a9bb5 100%);border-radius:0 0 28px 28px;padding:22px 0 20px}
+.band .kick{font-size:13px;font-weight:800;opacity:.9;letter-spacing:.02em}
+.band h1{margin:6px 0 6px;font-size:28px;line-height:1.15;font-weight:600}
+.band p{margin:0;max-width:760px;font-size:15px;opacity:.92}
+.prog{display:flex;align-items:center;gap:12px;margin-top:14px}
+.prog .bar{flex:1;max-width:360px;height:10px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}
+.prog .bar i{display:block;height:100%;width:0;background:var(--saffron);border-radius:999px;transition:width .4s}
+.prog b{font-size:14px;white-space:nowrap}
+
+/* ---- step menu ---- */
+.steps{position:sticky;top:0;z-index:20;background:var(--ink);padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.steps .row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.steps .row::-webkit-scrollbar{display:none}
+.step{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:14px;padding:8px 14px;font-weight:800;font-size:14px}
+.step .no{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:8px;background:var(--panel2);font-size:12px}
+.step .ct{font-size:12px;color:var(--mist);font-weight:700}
+.step.on{background:var(--brass);color:var(--onbrass);border-color:var(--brass)}
+.step.on .no{background:rgba(255,255,255,.22)}.step.on .ct{color:inherit;opacity:.85}
+.step.full .ct{color:var(--sage)}.step.on.full .ct{color:inherit}
+
+main{padding:20px 0 40px}
+.sec-title{display:flex;align-items:baseline;gap:10px;margin:4px 0 6px}
+.sec-title h2{margin:0;font-size:21px;font-weight:600}
+.sec-title .n{font-family:Unbounded,sans-serif;font-size:13px;color:var(--brass);font-weight:600}
+.lead{color:var(--dim);margin:0 0 14px;font-size:15px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);margin:0 0 16px}
+.card h3{margin:0 0 4px;font-size:16px;font-weight:600}
+.card .ins{color:var(--dim);font-size:14px;margin-bottom:12px}
+.note{border-radius:14px;background:var(--panel2);padding:12px 14px;font-size:14.5px;color:var(--dim);margin:0 0 16px}
+.note b{color:var(--paper)}
+
+/* ---- sub menu (structures, drills) ---- */
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.sub{border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:6px 11px;font-weight:800;font-size:13px;display:flex;gap:6px;align-items:center}
+.sub small{color:var(--mist);font-weight:700}
+.sub.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);color:var(--brass)}
+.sub.full small{color:var(--sage)}
+.nums{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.nums .sub{min-width:42px;justify-content:center;font-family:Unbounded,sans-serif;font-weight:600}
+.nums .sub.seen:not(.on){background:var(--panel2)}
+
+/* ---- learn panel ---- */
+.lhd{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.lhd .big{font-family:Unbounded,sans-serif;font-size:30px;font-weight:600;color:var(--brass);line-height:1}
+.lhd h3{font-size:17px;margin:0}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+.chip{border-radius:12px;padding:4px 10px;font-weight:800;font-size:14px;white-space:pre}
+.chip.s{background:var(--chipS);color:var(--chipSt)}.chip.v{background:var(--chipV);color:var(--chipVt)}
+.chip.l{background:var(--chipL);color:var(--chipLt)}.chip.n{background:var(--chipN);color:var(--chipNt)}
+.chip.p{padding:4px 2px;color:var(--mist)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--mist);margin-bottom:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.two{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+.eg{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.eg .tg{flex:0 0 auto;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);background:var(--panel2);border-radius:8px;padding:2px 7px;height:fit-content;margin-top:2px}
+.eg.real .tg{background:var(--sageT);color:var(--sage)}
+.eg b{background:var(--chipL);color:var(--chipLt);border-radius:6px;padding:0 3px}
+.rule,.trap{border-radius:14px;padding:11px 13px;font-size:14.5px;margin-top:10px}
+.rule{background:var(--sageT)}.rule>b:first-child{color:var(--sage)}
+.trap{background:var(--coralT)}.trap>b:first-child{color:var(--coral)}
+.trap s{color:var(--coral)}
+.gbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.gcap{font-size:13px;color:var(--mist);margin:6px 2px 0}
+.gmodel{background:var(--panel2);border-radius:14px;padding:10px 12px;font-size:14.5px;margin-top:8px}
+.replay{margin-top:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:5px 11px;font-weight:800;font-size:13px}
+.yourturn{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.yourturn h4{margin:0 0 8px;font-size:15px;color:var(--sage)}
+
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.t th{text-align:left;background:var(--panel2);padding:9px 12px;font-weight:800}
+.t td{padding:9px 12px;border-top:1px solid var(--line)}
+.mist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mist .x,.mist .v{border-radius:14px;padding:10px 12px;font-size:14.5px}
+.mist .x{background:var(--coralT)}.mist .x s{color:var(--coral)}
+.mist .v{background:var(--sageT)}
+
+/* ---- charts ---- */
+svg.chart{display:block;width:100%;height:auto}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .axis{fill:var(--gtext);font-size:11px;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart .ln{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.chart .lbl{font-size:11.5px;font-weight:800;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart.draw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:dl 1.3s ease-out forwards}
+@keyframes dl{to{stroke-dashoffset:0}}
+.chart .key{font-size:11.5px;font-weight:700;fill:var(--paper);font-family:"Nunito Sans",system-ui,sans-serif}
+
+/* ---- graph exercise cards ---- */
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.gcard .gt{font-weight:800;font-size:15px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.gcard .gt i{font-style:normal;font-size:11px;font-weight:800;background:var(--panel2);color:var(--mist);border-radius:8px;padding:2px 7px}
+.gcard .gt span{font-weight:600;color:var(--mist);font-size:13px}
+
+/* ---- question rows ---- */
+.q{padding:12px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.q .p{font-size:15px;margin-bottom:8px}
+.q .p .num{font-weight:800;color:var(--brass);margin-right:6px}
+.q .p .tg{display:inline-block;font-size:11px;font-weight:800;background:var(--chipS);color:var(--chipSt);border-radius:8px;padding:1px 7px;margin-right:4px}
+.q .p .sm{font-size:13px;color:var(--mist)}
+.wk{border-radius:14px;background:var(--panel2);padding:10px 13px;font-size:14.5px;margin-bottom:6px}
+.wk .l{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mist)}
+select.sel{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--panel);color:var(--paper);min-width:150px}
+select.sel.ok{border-color:var(--sage);background:var(--sageT)}select.sel.no{border-color:var(--coral);background:var(--coralT)}
+
+/* ---- input + coach ---- */
+.iw{margin-top:6px}
+.iw .lab{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);margin-bottom:5px}
+textarea{width:100%;font:inherit;font-size:16px;line-height:1.5;color:var(--paper);background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;resize:vertical;min-height:62px;outline:none}
+textarea:focus{border-color:var(--brass)}
+textarea.ok{border-color:var(--sage);background:var(--sageT)}
+textarea.no{border-color:var(--coral)}
+.irow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:8px 16px;font-weight:800;font-size:14px;background:var(--brass);color:var(--onbrass)}
+.btn.ghost{background:var(--panel);color:var(--paper);border:1px solid var(--line)}
+.btn.go{background:var(--saffron);color:var(--onsaffron);padding:11px 20px;font-size:15px}
+.btn:disabled{opacity:.5;cursor:default}
+.wc{font-size:12.5px;color:var(--mist)}
+.done-tag{font-size:12.5px;font-weight:800;color:var(--sage)}
+.hint{display:none;margin-top:8px;border-radius:14px;background:var(--panel2);padding:10px 12px;font-size:14px}
+.hint.on{display:block}
+.fb{display:none;margin-top:10px;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.fb.on{display:block}
+.fb .hd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:9px 12px}
+.fb.good .hd{background:var(--sageT)}.fb.mid .hd{background:var(--amberT)}.fb.bad .hd{background:var(--coralT)}
+.fb .vd{font-weight:800}
+.fb.good .vd{color:var(--sage)}.fb.mid .vd{color:var(--amber)}.fb.bad .vd{color:var(--coral)}
+.meter{display:flex;gap:5px;flex-wrap:wrap}
+.meter span{font-size:12px;font-weight:800;border-radius:10px;padding:2px 8px;background:var(--panel)}
+.meter .ok{color:var(--sage)}.meter .no{color:var(--coral)}.meter .tip{color:var(--amber)}
+.fb .body{padding:10px 12px;background:var(--panel)}
+.ann{font-size:15px;line-height:1.7;margin-bottom:6px}
+.ann mark{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px;border-bottom:2px solid var(--amber)}
+.ann mark.facts,.ann mark.structure{border-bottom-color:var(--coral)}
+.grp{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mist);margin:10px 0 4px}
+.it{display:flex;gap:9px;padding:6px 0;font-size:14.5px}
+.it .k{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;border-radius:8px;padding:1px 7px;margin-right:6px;background:var(--panel2);color:var(--dim)}
+.it.structure .k,.it.facts .k{background:var(--coralT);color:var(--coral)}
+.it.grammar .k,.it.tense .k,.it.spelling .k{background:var(--amberT);color:var(--amber)}
+.it.style .k{background:var(--chipS);color:var(--chipSt)}
+.it.praise .k{background:var(--sageT);color:var(--sage)}
+.tryit{margin-top:3px;font-weight:800;color:var(--sage)}
+.why{margin-top:2px;color:var(--mist);font-size:13.5px}
+.mdl{margin-top:10px;border-radius:12px;background:var(--panel2);padding:9px 11px;font-size:14.5px}
+
+.blockbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.blockbar .score{font-weight:800;color:var(--dim);font-size:14px}
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}
+.foot{color:var(--mist);font-size:12.5px;text-align:center;padding:10px 18px 30px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;background:var(--paper);color:var(--ink);font-weight:800;border-radius:14px;padding:9px 16px;transition:.25s;pointer-events:none;z-index:50}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:760px){
+  .wrap{padding:0 14px}
+  .band{padding:16px 0 16px;border-radius:0 0 20px 20px}
+  .band h1{font-size:22px}
+  .band p{font-size:14px}
+  .two,.ggrid,.mist{grid-template-columns:1fr}
+  .card{padding:14px}
+  .step{padding:7px 11px;font-size:13px}
+  .sec-title h2{font-size:18px}
+  .chip{font-size:13px}
+}
+@media print{.steps,.irow,.blockbar,.nextbar{display:none}.sec{display:block!important}}
+
+/* added 2026-11-09 (Chapter 3): gaps, wider charts, chart marks, forecast shade */
+input.gap{font:inherit;font-weight:700;color:var(--paper);background:var(--panel2);border:0;border-bottom:2px solid var(--brass);border-radius:8px 8px 0 0;padding:2px 6px;margin:0 3px;max-width:100%;min-height:30px}
+input.gap:focus{outline:2px solid var(--brass);outline-offset:1px}
+input.gap.ok{border-bottom-color:var(--sage);background:var(--sageT)}
+input.gap.no{border-bottom-color:var(--coral);background:var(--coralT)}
+.q .p.gp{line-height:2.1}
+.gbox.wide{max-width:560px;margin:8px auto 0}
+.chart .shade{fill:var(--panel2);opacity:.85}
+.chart .mark circle{fill:var(--brass)}
+.chart .mark text{fill:var(--onbrass);font:800 10px "Nunito Sans",system-ui,sans-serif}
+.gfig{margin:10px auto 12px;max-width:640px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px}
+.gfig img{display:block;width:100%;height:auto;border-radius:8px}
+.gfig figcaption{font-size:13px;color:#55607a;margin-top:6px;text-align:center}
+.figs{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.figs .gfig{margin:0;max-width:none}
+.figs.n1{grid-template-columns:minmax(0,640px);justify-content:center}
+.mist>div:only-child,.mist>div:last-child:nth-child(odd){grid-column:1/-1}
+
+</style>
+</head>
+<body>
+<script>
+/* Writing Task 1 · Chapter 8 · Comparative sentence structures.
+   Written from Mr Ikromov's IELTS Writing Task 1 Course Book, Chapter 8 (Nov 2026):
+   the same structures, graphs, exercises and answers as the book. Graph pictures: public/practice/writing-lab/img/.
+   Build: node tools/writing-lab/build.mjs wt1-ch08  →  public/practice/writing-lab/task1-ch08.html */
+const CHAPTER={
+ id:"wt1-ch08",
+ kicker:"Writing Task 1 · Chapter 8",
+ title:"Seven ways to <span style=\"color:#ffd27a\">compare</span>",
+ lead:"A comparative task has no change over time: your language is the language of comparison. Learn the seven structures and how to show a big or a small gap. The Writing Coach checks the <b>structure</b>, the <b>figures</b>, the <b>grammar</b> and the <b>spelling</b>.",
+ footer:"Mr Ikromov's IELTS · Writing Task 1 · Chapter 8. The Writing Coach is a teaching tool: it finds common mistakes and explains them, but it is not an examiner. Compare with the model answer and ask your teacher.",
+ grammar:[
+  {re:"\\bmore (\\w+er) than\\b",msg:"Never more + -er: write cheaper than (not more cheaper).",fix:"cheaper than · more expensive than"},
+  {re:"\\b(?:is|are|was|were) (expensive|popular|important|common|expensive|famous|useful|interesting) than\\b",msg:"Use the comparative: more expensive than / more popular than.",fix:"more expensive than"},
+  {re:"\\b(?:higher|lower|bigger|smaller|greater|larger) than (men|women|boys|girls|males|females|adults|children)\\b",msg:"Compare the same things: higher than that of women (not higher than women).",fix:"higher than that of women"}
+ ],
+ steps:[
+  {no:"8.1",name:"The seven structures",title:"The seven structures",subnav:true,
+   lead:"Each structure uses one simple story (shorts $40, jeans $38) and a real graph.",
+   blocks:[
+    {type:"html",img:[{"src":"t56.webp","cap":"Task 56 · Tea and coffee imports of four countries, 2007"},{"src":"t57.webp","cap":"Task 57 · Soft drink and bottled water consumption, 2002"}],html:'<table class="t"><thead><tr><th>Structure</th><th>Pattern</th><th>Examples</th></tr></thead><tbody><tr><td><b>1</b> · comparative / superlative</td><td>X is more adj. than Y · Y is adj.+er than X · The cost of X is higher than that of Y</td><td>Shorts are more expensive than jeans. / Jeans are cheaper than shorts.<br><i>Task 57:</i> Americans drank almost twice as many litres of soft drinks as Australians.<br><i>Task 56:</i> The UK imported considerably more tea than the USA.<br><span class="sm">considerably / noticeably = a big difference · slightly = a small difference</span></td></tr><tr><td><b>2</b> · as … as</td><td>X is as adj. as Y · Y is not as adj. as X</td><td>John has $2 million and Mark has $2 million. John is as rich as Mark.<br><i>Task 57:</i> In Germany, soft drinks were not as popular as bottled water.<br><span class="sm">as … as for equal figures; not as … as for the smaller one</span></td></tr><tr><td><b>3</b> · while / whereas</td><td>While X + data, Y + data · X + data, whereas Y + data</td><td><i>Task 56:</i> While the UK imported 160,000 tonnes of tea, Canada imported only around 19,000 tonnes.<br><i>Task 57:</i> Germans drank 180 litres of water, whereas Americans drank about 50.<br><span class="sm">A comma comes between the two parts.</span></td></tr><tr><td><b>4</b> · compared to / as opposed to</td><td>X + data compared to Y + data · X + data as opposed to Y + data</td><td><i>Task 56:</i> Canada imported 80,000 tonnes of coffee compared to only around 19,000 tonnes of tea.<br><i>Task 52:</i> Girls under 6 consumed just 1,300 mg as opposed to 2,200 mg for boys of the same age.</td></tr><tr><td><b>5</b> · … followed by …</td><td>X + data, followed (closely / distantly) by Y + data and Z + data</td><td><i>Task 21:</i> In 2010, the USA gave $25 billion, followed distantly by the UK with $13 billion and Germany with $12 billion.<br><span class="sm">closely = small gap · distantly = big gap</span></td></tr><tr><td><b>6</b> · … making it + comparative</td><td>X + data, making it + (adv.) + comparative + than Y</td><td>The price of shorts is $40, making them more expensive than jeans, which cost $38.<br><i>Task 52:</i> Males aged 20–39 consumed 4,500 mg, making their intake almost double the recommended level of 2,200 mg.</td></tr><tr><td><b>7</b> · highest / lowest with respective figures</td><td>The figure for X and Y is highest / lowest, with respective figures of A and B</td><td><i>Task 50:</i> Action and sports games were the most popular, with respective figures of 43% and 20%.<br><span class="sm">Respectively only works when the order of the names matches the order of the numbers.</span></td></tr></tbody></table><div class="mist"><div class="x"><s>The number of men was higher than women.</s></div><div class="v">The proportion of men was higher than that of women.</div><div class="x"><s>Shorts are more cheaper than jeans.</s></div><div class="v">Jeans are cheaper than shorts. (never more + -er)</div><div class="x"><s>Shorts are expensive than jeans.</s></div><div class="v">Shorts are more expensive than jeans.</div></div>'},
+    {type:"write",data:"q8a",key:"q8a",label:"8A · Rewrite",title:"Try it 8A · Rewrite with the structure in brackets",ins:"Use the real data. Keep every figure.",hint:"Look at the structure table above: the words in brackets are the key words you must use."},
+    {type:"gaps",data:"q8b",key:"q8b",label:"8B · Big or small?",title:"Try it 8B · Big or small?",ins:"Add <b>considerably</b> or <b>slightly</b>."}]},
+  {no:"8.4",name:"Big & small gaps",title:"Big gaps and small gaps",subnav:true,
+   lead:"Say the size of the gap. <b>nowhere near / not nearly</b> = a BIG difference. <b>not quite / almost</b> = a SMALL difference.",
+   blocks:[
+    {type:"html",img:[{"src":"us-university.webp","cap":"Students studying six main subjects at a US university, 2010 (women = red, men = blue)"}],html:'<table class="t"><thead><tr><th>Gap</th><th>Structure</th><th>Example</th></tr></thead><tbody><tr><td><b>BIG</b></td><td>X is nowhere near as adjective as Y</td><td>The number of female students was nowhere near as big as that of their male counterparts, with respective figures of around 60 and a whopping 200.</td></tr><tr><td><b>BIG</b></td><td>X is not nearly as adjective as Y</td><td>The number of female economics students was not nearly as big as that of their male counterparts, with respective figures of close to 70 and 150.</td></tr><tr><td><b>SMALL</b></td><td>X is not quite as adjective as Y</td><td>The figure for female students of engineering was not quite as big as that of their male counterparts, accounting for about 52 and 54 respectively.</td></tr><tr><td><b>SMALL</b></td><td>X is almost as adjective as Y</td><td>The number of female engineering students was almost as big as that of their male counterparts, standing at close to 52 and 54 respectively.</td></tr></tbody></table><table class="t"><tbody><tr><td><b>As … as</b></td><td>A hot dog is not as expensive as a hamburger. = A hamburger is more expensive than a hot dog.</td></tr><tr><td><b>Respectively</b></td><td>The figures for male and female students studying engineering were the lowest, at around 55 and 52 respectively.</td></tr><tr><td><b>Followed by</b></td><td>Finance had the highest number of female students, followed closely by accounting.</td></tr><tr><td><b>Whereas</b></td><td>Overall, the number of male students in math, engineering and economics was bigger than that of females, whereas the reverse was true for accounting and marketing.</td></tr><tr><td><b>As opposed to</b></td><td>The figure for male students studying math was 200, as opposed to that for females, whose figure stood at around 60.</td></tr><tr><td><b>Making it</b></td><td>The figures for both male and female students of finance accounted for 200, making it the subject with the highest number of students of both genders in the chart.</td></tr></tbody></table>'},
+    {type:"write",data:"q8c",key:"q8c",label:"8C · How big is the gap?",title:"Try it 8C · How big is the gap?",ins:"Use the US university graph. Write one sentence for each pair with the structure shown. Use approximate figures.",hint:"The number of female … students was nowhere near / not nearly / not quite / almost as big as that of their male counterparts, with respective figures of … and …"}]},
+  {no:"8.H",name:"Homework",title:"Homework: build comparative sentences",subnav:true,
+   lead:"Every structure is shown twice below. Study the examples, then combine the facts. Each exercise tells you which structure to use.",
+   blocks:[
+    {type:"html",title:"Study first · two examples of every structure",html:'<table class="t"><thead><tr><th>Structure</th><th>Two sentences → one sentence</th></tr></thead><tbody><tr><td><b>1</b> · more … than / the largest</td><td>Doctors in the USA earned about $120,000. Doctors in Finland earned $50,000. → Doctors in the USA earned far more than doctors in Finland, at about $120,000 against $50,000.<br>The UK imported 160,000 tonnes of tea. This was the largest amount in the chart. → The UK imported the largest amount of tea, at 160,000 tonnes.</td></tr><tr><td><b>2</b> · as … as</td><td>62% of undergraduates and 63% of postgraduates were very satisfied with school rooms. → The proportion of undergraduates who were very satisfied with school rooms was almost as high as that of postgraduates (62% against 63%).<br>27% of men and 27% of women aged 35–44 did no exercise. → The proportion of men aged 35–44 who did no exercise was as high as that of women (27% in both cases).</td></tr><tr><td><b>3</b> · while / whereas</td><td>Urban participation in animated play stayed at 10%. Rural participation fell from 18% to 14%. → Whereas urban participation in animated play stayed at 10%, the rural figure fell from 18% to 14%.<br>Egypt used 82% of its water for agriculture. Canada used only 10%. → While Egypt used 82% of its water for agriculture, Canada used only 10%.</td></tr><tr><td><b>4</b> · compared to / as opposed to</td><td>Canada used 70% of its water for industry. Egypt used 10%. → Canada used 70% of its water for industry, compared to only 10% in Egypt.<br>South Africa exported 1,050 thousand tons of oranges. Egypt exported 900 thousand tons. → South Africa exported 1,050 thousand tons of oranges, compared to 900 thousand tons from Egypt.</td></tr><tr><td><b>5</b> · followed by</td><td>South Africa led orange exports. Egypt came second and the United States third. → South Africa led in orange exports, followed by Egypt and the United States.<br>Communication attracted the most optimism. Food quality came next, then health. → Communication attracted the most optimism, followed by food quality and health.</td></tr><tr><td><b>6</b> · making it</td><td>The USA paid doctors about $120,000 a year. This was almost twice the next-highest figure. → The USA paid doctors about $120,000 a year, making it almost twice as high as the next-highest figure.<br>The UK imported 160,000 tonnes of tea. The USA imported 120,000 tonnes. → The UK imported 160,000 tonnes of tea, making its figure considerably higher than that of the USA (120,000 tonnes).</td></tr><tr><td><b>7</b> · respectively</td><td>Czech doctors earned about $63,000. German doctors earned about $62,000. → Czech and German doctors earned about $63,000 and $62,000 respectively.<br>Germany gave $12 billion in 2010. Japan gave $11 billion. → Germany and Japan gave $12 billion and $11 billion respectively in 2010.</td></tr></tbody></table>'},
+    {type:"write",data:"q8h",key:"q8h",label:"8H · Seven structures",title:"Homework 8H · Build comparative sentences",ins:"Use the structure named. Combine the two facts into one sentence that compares. Keep the figures.",hint:"Use the key words of the structure: than · as … as · while / whereas · compared to · followed by · , making it · respectively."}]}
+ ]};
+const LEARN=[];const CHIPS={};const TRAP={};
+const P = (re,msg,fl)=>({re:new RegExp(re,fl||"i"),msg});
+const NOUNS="rise|increase|growth|fall|decline|drop|decrease|reduction|fluctuation|recovery|improvement|dip|surge|plunge|jump|climb|collapse|downturn|upturn";
+const VERBS="rose|risen|increased|grew|climbed|improved|went up|fell|decreased|declined|dropped|went down|reduced|recovered|fluctuated";
+const ADVL="dramatically|significantly|considerably|noticeably|markedly|slightly|minimally|negligibly|marginally|gradually|steadily|consistently|sharply|rapidly|quickly|slowly|substantially|moderately|mildly|wildly|steeply|swiftly|modestly|massively|hugely";
+const STRONG="surged|soared|rocketed|skyrocketed|plummeted|plunged|collapsed|edged up|edged down|crept up|inched up|dipped|more than doubled|doubled|tripled|halved|shot up";
+const PAT = {
+ thereWas:P("^there (?:was|were|has been|will be|is (?:expected|predicted|projected|likely) to be) (?:an?|some) (?:[a-z-]+ )*?(?:"+NOUNS+")\\b","Begin with There was a(n) + adjective + noun (for example There was a steady rise in …)."),
+ sawNoun:P("\\b(?:saw|sees|see|witnessed|witnesses|experienced|experiences|underwent|undergoes|recorded) (?:an?|some) (?:[a-z-]+ )*?(?:"+NOUNS+")\\b","Use X + saw / witnessed / experienced + a(n) adjective + noun."),
+ verbAdv:P("\\b(?:"+VERBS+")\\b(?: [\\w%.]+){0,8}? (?:"+ADVL+")\\b|\\b(?:"+ADVL+") (?:"+VERBS+")\\b|\\b(?:"+STRONG+")\\b","Use a verb + adverb (rose steadily, fell dramatically) or a strong verb (surged, plunged)."),
+ noThere:{re:/^there (was|were)\b|\b(was|were) (observed|seen)\b/i,not:true,msg:"This one needs a verb + adverb, not a noun. Start with the subject: X rose steadily …"},
+ future:P("\\b(?:will|(?:is|are) (?:predicted|expected|projected|forecast|set|likely|anticipated) to|(?:is|are) going to)\\b","These dates are in the future: use is predicted to / is expected to / will + verb."),
+ notFuture:{re:/\bwill\b|\b(is|are) (predicted|expected|projected|forecast|set) to\b/i,not:true,msg:"These dates are in the past: use the past simple (rose, fell, remained)."},
+ fluct:P("\\bfluctuat\\w*","The line goes up and down: use fluctuate (fluctuated wildly / mildly)."),
+ stable:P("\\b(?:remain\\w*|stay\\w*|stood|stable|stabili[sz]\\w*|unchanged|constant|level\\w* off|flat)\\b","The line is flat: use remained stable / stayed at + figure."),
+ connector:P("\\b(?:and then|then|this was followed by|followed by|continued|continuing|reaching|however|but|although|though|while|whereas|in contrast|after which|before \\w+ing|after \\w+ing)\\b","Join the two changes with a connector: and then · continued to · reaching · however · but · before falling · after which."),
+ p1:P("\\bsteady (?:climb|rise|increase|growth)|(?:climbed|rose|grew|increased) steadily|steadily (?:climbed|rose|grew|increased)","Use phrase 1: a steady climb (or climbed steadily)."),
+ p2:P("\\bspik\\w*|\\bshot up\\b","Use phrase 2: a spike (or spiked)."),
+ p3:P("\\bsharp (?:drop|fall|decline)|(?:dropped|fell|declined|plunged|plummeted) sharply|\\bplummet\\w*|\\bplung\\w*","Use phrase 3: a sharp drop (or dropped sharply)."),
+ p4:P("\\bpartial(?:ly)? recover\\w*|recover\\w* (?:partly|partially)|\\brecover\\w*","Use phrase 4: a partial recovery (or recovered partly)."),
+ p9:P("\\ball-time low|\\blowest\\b|\\ba low of\\b","Use phrase 9: an all-time low."),
+ p10:P("\\brapid (?:rise|increase|growth|climb)|(?:rise|rose|increase|grow|climb)\\w* rapidly|\\brapidly (?:rise|rising|increase|grow|climb)","Use phrase 10: a rapid rise (or rise rapidly)."),
+ p12:P("\\brecord high\\b|\\ball-time high\\b|\\bhighest\\b|\\bpeak\\w*","Use phrase 12: a record high."),
+ c1:P("\\b(?:more|less|fewer|higher|lower|greater|bigger|smaller|larger|cheaper|\\w+er)\\b[^.]*?\\bthan\\b|\\bthe (?:most|least|highest|lowest|largest|biggest|smallest)\\b","Use Structure 1: more / -er than (or the most / the highest)."),
+ c2:P("\\bas (?:\\w+ ){1,3}as\\b","Use Structure 2: as … as (as high as)."),
+ c3:P("^(?:while|whereas)\\b[^,]+,|,\\s*(?:while|whereas)\\b","Use Structure 3: While X …, Y … (or: X …, whereas Y …)."),
+ c4:P("\\b(?:compared (?:to|with)|as opposed to)\\b","Use Structure 4: compared to / as opposed to."),
+ c5:P("\\bfollowed (?:\\w+ )?by\\b","Use Structure 5: …, followed by …"),
+ c6:P(",\\s*making\\b","Use Structure 6: …, making it + comparative."),
+ c7:P("\\brespective(?:ly)?\\b","Use Structure 7: with respective figures of … / … respectively."),
+ opp:P("\\bas opposed to\\b","Use as opposed to."),
+ twice:P("\\btwice as (?:much|many|\\w+) (?:[\\w() ]+ )?as\\b","Use (nearly) twice as much … as …"),
+ nowhere:P("\\bnowhere near as\\b","Use nowhere near as … as (a big gap)."),
+ notNearly:P("\\bnot nearly as\\b","Use not nearly as … as (a big gap)."),
+ notQuite:P("\\bnot quite as\\b","Use not quite as … as (a small gap)."),
+ almostAs:P("\\balmost as\\b","Use almost as … as (a small gap).")
+};
+const D = {"gmeta": {}, "q8a": [{"prompt": "Task 56: UK tea 160,000 tonnes; USA tea 120,000 tonnes. <b>(while)</b>", "pats": ["c3"], "model": "While the UK imported 160,000 tonnes of tea, the USA imported 120,000 tonnes.", "nums": "model", "overlap": 0.4}, {"prompt": "Task 57: Italy water 122 litres; soft drinks 68 litres. <b>(nearly twice as … as)</b>", "pats": ["twice"], "model": "Italians drank nearly twice as much water (122 litres) as soft drinks (68 litres).", "nums": "model", "overlap": 0.4, "kw": [["nearly|almost", "Use nearly (122 is a little less than twice 68)."]]}, {"prompt": "Task 50: action games 43%; sports 20%. <b>(with respective figures of)</b>", "pats": ["c7"], "model": "Action and sports games were the most popular, with respective figures of 43% and 20%.", "nums": "model", "overlap": 0.4}, {"prompt": "Task 21: USA $25 billion; UK $13 billion; Germany $12 billion in 2010. <b>(followed distantly by)</b>", "pats": ["c5"], "model": "The USA gave $25 billion, followed distantly by the UK with $13 billion and Germany with $12 billion.", "nums": "model", "overlap": 0.4, "kw": [["distantly", "Use distantly: the gap is big."]], "missTol": 1}, {"prompt": "Task 52: boys under 6 consume 2,200 mg; girls under 6 consume 1,300 mg. <b>(as opposed to)</b>", "pats": ["opp"], "model": "Boys under 6 consumed 2,200 mg as opposed to 1,300 mg for girls of the same age.", "nums": "model", "overlap": 0.4, "missTol": 1}], "q8b": [{"text": "Shorts cost $40 and jeans $38. Shorts are ___ more expensive than jeans.", "ans": [["slightly"]], "why": "$2 is a small difference."}, {"text": "Canada imported 80,000 tonnes of coffee and 19,000 tonnes of tea. Coffee imports were ___ higher than tea imports.", "ans": [["considerably", "significantly", "much", "far", "noticeably"]], "why": "Four times bigger: a big difference."}], "q8c": [{"prompt": "Mathematics: women about 58, men about 200. <b>(nowhere near as)</b>", "pats": ["nowhere"], "model": "The number of female mathematics students was nowhere near as big as that of their male counterparts, with respective figures of around 58 and 200.", "nums": "model", "overlap": 0.3, "kw": [["math", "Name the subject: mathematics."]]}, {"prompt": "Economics: women about 72, men about 148. <b>(not nearly as)</b>", "pats": ["notNearly"], "model": "The number of female economics students was not nearly as big as that of their male counterparts, with respective figures of about 72 and 148.", "nums": "model", "overlap": 0.3, "kw": [["econom", "Name the subject: economics."]]}, {"prompt": "Accounting: women about 200, men about 170. <b>(Use men … not quite as)</b>", "pats": ["notQuite"], "model": "The number of male accounting students was not quite as big as that of their female counterparts, at around 170 and 200 respectively.", "nums": "model", "overlap": 0.3, "kw": [["accounting", "Name the subject: accounting."], ["\\bmale|\\bmen\\b", "Start with the men: the number of male accounting students …"]]}, {"prompt": "Engineering: women about 52, men about 55. <b>(almost as)</b>", "pats": ["almostAs"], "model": "The number of female engineering students was almost as big as that of their male counterparts, at about 52 and 55 respectively.", "nums": "model", "overlap": 0.3, "kw": [["engineer", "Name the subject: engineering."]]}], "q8h": [{"prompt": "<span class='tg'>Structure 1 · comparative / superlative</span> Salt intake for men aged 20–39 was 4,500 mg. For women aged 20–39 it was 3,100 mg. — Task 52", "pats": ["c1"], "model": "Salt intake for men aged 20–39 was considerably higher than that for women of the same age (4,500 mg against 3,100 mg).", "nums": "model", "overlap": 0.35, "missTol": 2}, {"prompt": "<span class='tg'>Structure 2 · as … as</span> In Germany, 88% of 25–34-year-olds had finished high school. In the USA the figure was also 88%. — Task 47", "pats": ["c2"], "model": "The proportion of young adults with a high school education in Germany was as high as that in the USA, at 88% in both.", "nums": "model", "overlap": 0.35}, {"prompt": "<span class='tg'>Structure 3 · While / whereas</span> The UK imported 160,000 tonnes of tea and 20,000 tonnes of coffee. Canada imported 80,000 tonnes of coffee and only about 19,000 tonnes of tea. — Task 56", "pats": ["c3"], "model": "While the UK imported 160,000 tonnes of tea and only 20,000 tonnes of coffee, Canada imported 80,000 tonnes of coffee and only about 19,000 tonnes of tea.", "nums": "model", "overlap": 0.4}, {"prompt": "<span class='tg'>Structure 4 · Compared to / as opposed to</span> Americans drank about 196 litres of soft drinks per person. The Japanese drank 45 litres. — Task 57", "pats": ["c4"], "model": "Americans drank about 196 litres of soft drinks per person, compared to only 45 litres in Japan.", "nums": "model", "overlap": 0.35}, {"prompt": "<span class='tg'>Structure 5 · … followed by …</span> Coal supplied 39% of Australia’s energy in 2008. Oil supplied 32.5% and gas 22.9%. — Task 43", "pats": ["c5"], "model": "Coal was the main source of energy in Australia in 2008 at 39%, followed by oil with 32.5% and gas with 22.9%.", "nums": "model", "overlap": 0.3, "missTol": 3}, {"prompt": "<span class='tg'>Structure 6 · … making it + comparative</span> 98% of younger South Koreans had finished high school. 43% of older South Koreans had. — Task 47", "pats": ["c6"], "model": "The figure for younger South Koreans was 98%, making it far higher than the figure for the older group, 43%.", "nums": "model", "overlap": 0.35}, {"prompt": "<span class='tg'>Structure 7 · highest / lowest with respective figures</span> The USA had the highest consumption of soft drinks, at about 196 litres. Japan had the lowest, at 45 litres. — Task 57", "pats": ["c7"], "model": "The USA and Japan had the highest and lowest consumption of soft drinks, at about 196 and 45 litres respectively.", "nums": "model", "overlap": 0.35}]};
+
+/* ================= WRITING COACH ENGINE (rule based) ================= */
+const STOP=new Set("the and for was were that with this from into have has had its their they them been being are but not all any also then than who which when while his her our your out can will would could should about over under between during after before".split(" "));
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function norm(t){return t.toLowerCase().replace(/[’‘]/g,"'").replace(/[–—]/g,"-").replace(/\$/g,"").replace(/(\d),(?=\d{3}\b)/g,"$1").replace(/\s+/g," ").trim().replace(/[.!]+$/,"")}
+function numsOf(t){return (norm(t).match(/\d+(?:\.\d+)?/g)||[]).map(x=>String(parseFloat(x)))}
+function toks(t){return (norm(t).match(/[a-z]+/g)||[]).filter(w=>w.length>2&&!STOP.has(w))}
+function overlap(model,stu){const m=toks(model),s=toks(stu);if(!m.length)return 1;let c=0;for(const w of m){if(s.some(x=>x.slice(0,4)===w.slice(0,4)))c++}return c/m.length}
+function uniq(a){return [...new Set(a)]}
+
+
+/* ---- direction lexicon ---- */
+const UP=/\b(ris(?:e|es|ing)|rose|risen|increas\w*|grew|grow\w*|climb\w*|jump\w*|surg\w*|soar\w*|improv\w*|rebound\w*|recover\w*|upward\w*|upturn|doubl\w*|tripl\w*|boom\w*|escalat\w*|skyrocket\w*|rocket\w*|upswing|gain\w*|bounc\w* back|pick\w* up|shot up|went up|go(?:es)? up|more popular|peak\w*)\b/gi;
+const DOWN=/\b(fall\w*|fell|fallen|drop\w*|declin\w*|decreas\w*|dip\w*|plung\w*|plummet\w*|collaps\w*|slump\w*|slid\w*|slip\w*|tumbl\w*|downward\w*|downturn|halv\w*|shr[ua]nk|shrink\w*|reduc\w*|went down|go(?:es)? down|sank|sink\w*|diminish\w*|dwindl\w*|less popular)\b/gi;
+function dirsOf(t){const out=[];const s=t.replace(/[’‘]/g,"'");const all=[];let m;
+  UP.lastIndex=0;DOWN.lastIndex=0;
+  while((m=UP.exec(s)))all.push([m.index,"U",m[0]]);
+  while((m=DOWN.exec(s)))all.push([m.index,"D",m[0]]);
+  all.sort((a,b)=>a[0]-b[0]);return all}
+
+/* ---- vocabulary for spelling guard ---- */
+const COMMON=("bought sold paid spent saw took gave made went came got given taken seen gone done lost won built broke chose brought held kept left lent met ran sent set sat stood told thought understood wore wrote drove flew fed felt found heard hit hurt knew led put read said sang sank spoke swam threw woke a able about above across after again against all almost along also although always among amount an and another any are around as at average back be became because become been before began behind being below best better between big both but by call came can cannot case change changed changes cent chart close come compared comparison completely consider continue continued could country data day days decade decades decline declined decrease decreased did different do does down downward dramatically during each early either end ended ending enough even ever every few fewer figure figures final first five for four from further future general given go good great greater group grew growth had half has have he her high higher highest his how however hundred if in increase increased increasing into is it its just keep kept known large larger last late later least less level levels like likely little long lot low lower lowest made main make many may mean million more most much must near nearly need never new next no not nothing number numbers of off often old on once one only open or other our out over own part past people per percent percentage period place point points proportion proportions rate rates rather reach reached real record remain remained remains rest result right rise rises rising rose same say second see seen set several she should show shown shows significantly since slight slightly small smaller so some start started still such take than that the their them then there these they third this those three through time to together too total toward towards two under until up upward us use used very was way we well were what when where which while who whole will with within without would year years yet you your "+
+"gradually steadily sharply rapidly dramatically considerably substantially noticeably significantly slightly marginally immediately suddenly sharply moderately approximately roughly around about nearly almost exactly precisely overall generally mainly mostly largely mainly respectively approximately "+
+"peak peaked peaking trough fluctuate fluctuated fluctuating fluctuation stable stabilise stabilised stabilize stabilized plateau leveled levelled remain remained remaining unchanged constant steady steadily surge surged soar soared plunge plunged plummet plummeted collapse collapsed slump slumped recover recovered recovery rebound rebounded jump jumped climb climbed dip dipped drop dropped fall fell fallen rise rose risen grow grew grown decline declined decrease decreased increase increased improve improved edge edged edges upward downward upturn downturn "+
+"proportion percentage amount number figure rate level total average majority minority quarter third half double doubled triple tripled twice thrice "+
+"government spending income expenditure consumption production sales exports imports revenue profit cost price prices unemployment employment population households household passengers visitors tourists students workers women men children adults young old female male people countries country company companies industry sector energy oil gas coal sugar rice wheat water electricity cars car train trains rail coach air travel transport transportation public private tonnes tons million billion thousand hundred dollars pounds euros january february march april may june july august september october november december monday tuesday wednesday thursday friday saturday sunday "+
+"former latter respectively whereas while although despite starting started reaching followed following preceded before after which that those these another second third fourth fifth sixth "+
+"line graph bar chart table pie diagram process map illustrates shows compares displays gives information summarises summarizes overview detail details highlight highlights feature features trend trends pattern patterns key main significant notable noticeable dramatic substantial considerable slight moderate gradual steady sharp rapid sudden marked").split(/\s+/);
+const MISSP={dramaticly:"dramatically",dramaticaly:"dramatically",sligthly:"slightly",slighty:"slightly",signifigant:"significant",signficant:"significant",significent:"significant",significantly:"significantly",increse:"increase",incresed:"increased",increasd:"increased",decrese:"decrease",decresed:"decreased",decreasd:"decreased",percentige:"percentage",precentage:"percentage",perecentage:"percentage",percantage:"percentage",porportion:"proportion",proportoin:"proportion",proporsion:"proportion",flucuate:"fluctuate",flactuate:"fluctuate",flucuated:"fluctuated",fluctuaded:"fluctuated",fluctation:"fluctuation",recieve:"receive",recieved:"received",occured:"occurred",occurence:"occurrence",beggining:"beginning",begining:"beginning",untill:"until",thier:"their",definately:"definitely",seperate:"separate",acheive:"achieve",acheived:"achieved",peeked:"peaked",peeked:"peaked",dropt:"dropped",plumet:"plummet",plumeted:"plummeted",plumetted:"plummeted",sharpley:"sharply",steadly:"steadily",stedily:"steadily",gradualy:"gradually",graduly:"gradually",rapidely:"rapidly",rapidlly:"rapidly",consideraly:"considerably",considerabley:"considerably",substantialy:"substantially",noticably:"noticeably",noticable:"noticeable",approximatly:"approximately",aproximately:"approximately",approximetely:"approximately",appoximately:"approximately",compair:"compare",comparision:"comparison",compaired:"compared",diffrence:"difference",diffrent:"different",diferent:"different",beacuse:"because",becuase:"because",becouse:"because",wich:"which",whitch:"which",whic:"which",wile:"while",whle:"while",teh:"the",adn:"and",alot:"a lot",tendancy:"tendency",stablised:"stabilised",stabalise:"stabilise",stabilize:"stabilize",statistcs:"statistics",statistc:"statistic",numbr:"number",nuber:"number",amoung:"among",amout:"amount",totall:"total",totaly:"totally",higest:"highest",lowset:"lowest",lowst:"lowest",higher:"higher",highr:"higher",hight:"height",increasse:"increase",decrasing:"decreasing",decresing:"decreasing",icrease:"increase",raise:"rise"};
+delete MISSP.significantly;delete MISSP.higher;delete MISSP.stabilize;delete MISSP.raise;delete MISSP.hight;
+let VOCAB=null;
+function buildVocab(D){
+  const set=new Set(COMMON.map(w=>w.toLowerCase()));
+  const feed=s=>{(String(s).toLowerCase().replace(/<[^>]+>/g," ").match(/[a-z]+/g)||[]).forEach(w=>set.add(w))};
+  try{
+    for(const k in D.gmeta){const m=D.gmeta[k];feed(m.title);feed(m.unit);(m.series||[]).forEach(feed);(m.sents||[]).forEach(feed)}
+    const walk=o=>{if(!o)return;if(typeof o==="string"){feed(o);return}if(Array.isArray(o)){o.forEach(walk);return}if(typeof o==="object"){for(const k in o){if(k==="graphs")continue;walk(o[k])}}};
+    for(const k in D){if(k!=="gmeta"&&k!=="graphs")walk(D[k])}
+  }catch(e){}
+  VOCAB=set;return set}
+function stems(w){const o=[w];
+  if(w.endsWith("ies"))o.push(w.slice(0,-3)+"y");
+  if(w.endsWith("es"))o.push(w.slice(0,-2));
+  if(w.endsWith("s"))o.push(w.slice(0,-1));
+  if(w.endsWith("ied"))o.push(w.slice(0,-3)+"y");
+  if(w.endsWith("ed")){o.push(w.slice(0,-2));o.push(w.slice(0,-1))}
+  if(w.endsWith("ing")){o.push(w.slice(0,-3));o.push(w.slice(0,-3)+"e")}
+  if(w.endsWith("ly")){o.push(w.slice(0,-2));o.push(w.slice(0,-3)+"y")}
+  if(w.endsWith("ally"))o.push(w.slice(0,-4));
+  if(w.endsWith("er"))o.push(w.slice(0,-2));
+  if(w.endsWith("est"))o.push(w.slice(0,-3));
+  if(w.endsWith("ment")||w.endsWith("ness"))o.push(w.slice(0,-4));
+  if(/(.)\1ing$/.test(w))o.push(w.slice(0,-4));
+  if(/(.)\1ed$/.test(w))o.push(w.slice(0,-3));
+  return o}
+function known(w){if(VOCAB.has(w))return true;return stems(w).some(s=>VOCAB.has(s))}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;const d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
+function nearWord(w){let best=null,bd=9;const lim=w.length>=8?2:1;
+  for(const v of VOCAB){if(v.length<4||Math.abs(v.length-w.length)>lim)continue;if(v[0]!==w[0]&&v[1]!==w[1])continue;const d=lev(w,v);if(d<bd&&d<=lim){bd=d;best=v}}
+  return best}
+
+/* ---- grammar rules (hard errors) ---- */
+const CHV="rose|rise|rises|risen|rising|increased?|increases|increasing|fell|fall|falls|fallen|falling|dropped|drops?|dropping|declined?|declines|declining|grew|grows?|growing|climbed|climbs?|climbing|dipped|dips?|decreased?|decreases|decreasing|jumped|jumps?|surged?|soared?|plunged?|plummeted|collapsed|improved?|slumped|recovered|rebounded|peaked";
+const SUBJ="figure|figures|number|numbers|amount|percentage|proportion|rate|level|price|cost|total|sales|production|consumption|it|they|exports|imports|spending|income|unemployment|population";
+const ADV="(?:\\w+ly\\s+)?";
+const RULES=[
+ {id:"followedNoArt",re:/\bfollowed by\s+(?:(slight|small|sharp|steady|gradual|dramatic|significant|considerable|rapid|noticeable|substantial|marginal|further|modest|steep|large|big|huge)\s+)?(rise|fall|drop|increase|decrease|decline|dip|jump|growth|recovery|plunge|surge|climb|reduction|slump|rebound)\b/gi,test:m=>true,fix:m=>"followed by "+(/^[aeiou]/i.test(m[1]||m[2])?"an ":"a ")+(m[1]?m[1]+" ":"")+m[2],msg:"Put a / an before the noun after ‘followed by’.",why:"This was followed by + a / an + (adjective) + noun: a fall, a sharp rise, an increase."},
+ {id:"rised",re:/\brised\b/gi,msg:"'rised' is not a word.",fix:"rose",why:"Rise is irregular: rise – rose – risen."},
+ {id:"falled",re:/\bfalled\b/gi,msg:"'falled' is not a word.",fix:"fell",why:"Fall is irregular: fall – fell – fallen."},
+ {id:"growed",re:/\bgrowed\b/gi,msg:"'growed' is not a word.",fix:"grew",why:"Grow is irregular: grow – grew – grown."},
+ {id:"raisedI",re:/\braised\s+(?=(?:to|from|slightly|sharply|steadily|significantly|dramatically|gradually|considerably|rapidly|noticeably)\b)/gi,test:(m,t,i)=>!/\b(?:was|were|been|be|being)\s$/i.test(t.slice(0,i)),msg:"'raised' needs an object (someone raises something). A figure on a graph rises by itself.",fix:"rose",why:"Raise (transitive) ≠ rise (intransitive). A line or figure ‘rose’."},
+ {id:"risen",re:/\brisen\b/gi,test:(m,t,i)=>{const pre=t.slice(0,i);return !/\b(?:has|have|had|having|been|be)\s$/i.test(pre)&&!/\b(?:has|have|had)\s\w+ly\s$/i.test(pre)},msg:"'risen' is the past participle: it needs has / have / had.",fix:"rose",why:"Past simple = rose. Perfect = has risen."},
+ {id:"fallen",re:/\bfallen\b/gi,test:(m,t,i)=>{const pre=t.slice(0,i);return !/\b(?:has|have|had|having|been|be)\s$/i.test(pre)&&!/\b(?:has|have|had)\s\w+ly\s$/i.test(pre)},msg:"'fallen' is the past participle: it needs has / have / had.",fix:"fell",why:"Past simple = fell. Perfect = has fallen."},
+ {id:"felt",re:new RegExp("\\b(?:"+SUBJ+")\\s+"+ADV+"(felt)\\b","gi"),grp:1,msg:"'felt' is from ‘feel’. The past of ‘fall’ is ‘fell’.",fix:"fell",why:"Fall – fell – fallen."},
+ {id:"svbase",re:new RegExp("\\b(?:figure|number|amount|percentage|proportion|rate|level|total|production|consumption)\\s+"+ADV+"(rise|increase|fall|drop|decline|decrease|grow|climb|dip|jump)(?=\\s+(?:to|from|by|slightly|sharply|steadily|gradually|significantly|dramatically|considerably|and|but|then)\\b)","gi"),grp:1,msg:"The verb is missing its ending (the sentence is in the past).",fix:"add -ed (or use rose / fell / grew)",why:"Task 1 about past years uses the past simple: increased, dropped, rose."},
+ {id:"aan1",re:/\ba\s+(?=(?:[aeiou]\w*|8\d*\b|11\b|18\b))(?!(?:uni\w*|use\w*|usual\w*|euro\w*|one\b|once\b|ubiq\w*|util\w*|uran\w*|ut\w*))(\S+)/gi,msg:"Use ‘an’ before a vowel sound.",fix:m=>"an "+m[1],why:"‘an’ goes before a vowel sound: an increase, an upward trend, an 8% rise."},
+ {id:"aan2",re:/\ban\s+(?!(?:[aeiou]|hour|honest|honou?r|heir|mp\b|8\b|8\d|11\b|18\b|x-))(\S+)/gi,msg:"Use ‘a’ before a consonant sound.",fix:m=>"a "+m[1],why:"‘a’ goes before a consonant sound: a rise, a decrease, a 20% fall."},
+ {id:"nofv",re:/\b(the (?:number|amount|percentage|proportion|figure|rate|level|price|cost|total) (?:of|for) (?:[^,.;()]{1,60}?)\s)(were|are|have)\b/gi,test:m=>!/\b(who|which|that|and|while|but|whereas|as|with|from|to)\b/i.test(m[1]),grp:2,msg:"‘The number of …’ takes a singular verb.",fix:m=>({were:"was",are:"is",have:"has"}[m[2].toLowerCase()]),why:"The head noun is ‘number / amount / percentage’: it is singular. The number of people WAS 5 million."},
+ {id:"plsv",re:/\b(figures|numbers|percentages|proportions|rates|levels)\s+(?:for [a-z ]{3,30}?\s)?(was|has|is)\b/gi,grp:2,msg:"The subject is plural, so the verb must be plural.",fix:m=>({was:"were",has:"have",is:"are"}[m[2].toLowerCase()]),why:"The figures WERE …, the numbers HAVE …"},
+ {id:"prepAt",re:new RegExp("\\b(?:rose|rise|increased?|fell|fall|dropped|drop|declined?|grew|climbed|dipped|decreased?|jumped|surged|soared|plunged|plummeted)\\s+"+ADV+"(at)\\s+(?=\\$?\\d)","gi"),grp:1,msg:"After a change verb use ‘to’ (the end figure) or ‘by’ (the size of the change), not ‘at’.",fix:"to",why:"rose TO 20 million (end point) · rose BY 5 million (amount). ‘stood at / peaked at’ describe a level."},
+ {id:"prepIn",re:new RegExp("\\b(?:rose|increased?|fell|dropped|declined?|grew|climbed|dipped|decreased?|jumped|surged|soared|plunged|plummeted)\\s+"+ADV+"(in|with|of)\\s+(?!(?:19|20)\\d\\d\\b)(?=\\$?\\d)","gi"),grp:1,msg:"Wrong preposition before a figure.",fix:"to (end figure) or by (amount)",why:"rose TO 20% · rose BY 5%. Use ‘in’ only with a year or month."},
+ {id:"nounBy",re:/\b(?:an?|the)\s+(?:\w+ly\s+|\w+\s+)?(increase|rise|fall|drop|decline|decrease|growth|dip|jump|surge)\s+(by)\b/gi,grp:2,msg:"After the noun ‘increase / rise / fall’ use ‘of’ (size) or ‘to’ (end figure).",fix:"of",why:"a rise OF 5% · a rise TO 20%. (The verb takes ‘by’: rose BY 5%.)"},
+ {id:"despOf",re:/\bdespite of\b/gi,msg:"Do not add ‘of’ after Despite.",fix:"Despite",why:"Despite = in spite of. Use only one of the two."},
+ {id:"despClause",re:new RegExp("\\bdespite\\s+(?:the\\s+)?(?:\\w+\\s+){0,5}?(?:"+SUBJ+")\\s+"+ADV+"(?:rose|fell|increased|decreased|dropped|declined|grew|climbed|dipped|jumped|surged|soared|plunged|plummeted|was|were)\\b","gi"),msg:"After Despite use -ing or a noun phrase, not a full clause with a verb.",fix:"Despite rising … / Despite a rise …",why:"Despite + noun/-ing. (Although + clause is the clause version.)"},
+ {id:"despV",re:/(^|[.!?]\s+)(despite)\s+(?=(?:rose|fell|increased|decreased|dropped|declined|grew|climbed|dipped|peaked|reached|jumped|surged)\b)/gi,grp:2,msg:"Despite + verb must be Despite + -ing.",fix:"Despite rising / falling …",why:"Despite + -ing / noun: Despite rising to 5%, the figure fell."},
+ {id:"runOn",re:new RegExp("(?:\\d|%|million|billion|thousand)\\s+(it|they)\\s+"+ADV+"(?:rose|fell|increased|decreased|dropped|declined|grew|climbed|dipped|jumped|surged|soared|plunged|plummeted|peaked|reached|remained)\\b","gi"),grp:1,msg:"Two clauses run together with no linking word or punctuation (run-on sentence).",fix:"add ‘and’ / ‘but’ / ‘, after which’ or start a new sentence",why:"Join two changes with a linking word (Structures 1, 4, 9) or use a full stop."},
+ {id:"afterV",re:/(^|[.!?]\s+)(after)\s+(?=(?:rose|fell|increased|decreased|dropped|declined|grew|climbed|dipped|peaked|reached)\b)/gi,grp:2,msg:"After + verb must be After + -ing.",fix:"After rising / falling …",why:"After + -ing: After rising to 4,000, the figure fell."},
+ {id:"whichIng",re:/\bwhich\s+(reaching|rising|falling|leaving|bringing|standing|dropping|increasing|decreasing)\b/gi,msg:"Do not put ‘which’ before an -ing form.",fix:m=>m[1],why:"either ‘, which reached …’ or ‘, reaching …’, never ‘which reaching’."},
+ {id:"commaReached",re:/,\s+(reached|hit|brought|left)\s+(?=(?:\d|\$|a\s|an\s|its\b|the\s))/gi,test:(m,t,i)=>!/\b(?:and|but)\s*$/i.test(t.slice(Math.max(0,i-5),i)),grp:1,msg:"A verb after a comma needs a subject or ‘and’. For one subject, use -ing.",fix:m=>({reached:"reaching",hit:"hitting",brought:"bringing",left:"leaving"}[m[1].toLowerCase()]),why:"…rose in 2000, REACHING 200 tons (Structure 5)."},
+ {id:"reachTo",re:/\breach(?:ed|es|ing)?\s+(to)\b/gi,grp:1,msg:"‘reach’ takes the figure directly, without ‘to’.",fix:"(delete ‘to’)",why:"reached 200 tons · rose to 200 tons."},
+ {id:"riseUp",re:/\b(?:rose|rise|rising|rises|fell|fall|falling|falls|raised)\s+(up|down)\b/gi,grp:1,msg:"‘up / down’ is not needed after rise or fall.",fix:"(delete)",why:"rose already means ‘went up’."},
+ {id:"moreHigher",re:/\b(more|most)\s+(higher|lower|bigger|larger|highest|lowest|smaller|better|worse)\b/gi,msg:"Do not use ‘more/most’ with -er / -est words.",fix:m=>m[2],why:"higher (not more higher); the highest (not the most highest)."},
+ {id:"advAdj",re:/\ba\s+(significantly|dramatically|sharply|slightly|steadily|gradually|considerably|rapidly|noticeably|substantially|suddenly|moderately)\s+(?=(?:rise|fall|increase|drop|decline|decrease|dip|jump|growth|surge|peak)\b)/gi,grp:1,msg:"Before a noun use an adjective, not an adverb.",fix:m=>m[1].replace(/ly$/,"").replace(/ical$/,"ic").replace(/^significant$/,"significant"),why:"a significant rise (noun phrase) · rose significantly (verb + adverb)."},
+ {id:"adjAdv",re:new RegExp("\\b(?:rose|increased|fell|decreased|dropped|declined|grew|climbed|dipped|jumped|surged|soared|plunged)\\s+(slight|sharp|steady|gradual|dramatic|significant|considerable|rapid|noticeable|substantial|sudden|marked|moderate)\\b(?!ly)(?!\\s+(?:rise|fall|increase|drop|decline|decrease|dip|jump|growth|change|peak))","gi"),grp:1,msg:"After a verb use an adverb (-ly), not an adjective.",fix:m=>m[1]+"ly",why:"rose slightly · a slight rise."},
+ {id:"yearThe",re:/\bin the\s+((?:19|20)\d\d)\b/gi,msg:"No ‘the’ before a year.",fix:m=>"in "+m[1],why:"in 2005 (not in the 2005)."},
+ {id:"yearOn",re:/\b(on|at)\s+((?:19|20)\d\d)\b/gi,grp:1,msg:"Use ‘in’ with a year.",fix:"in",why:"in 2005 · in July · on Monday · at the end of 2005."},
+ {id:"betweenTo",re:/\bbetween\s+(?:19|20)\d\d\s+(to|-|until)\s+(?:19|20)\d\d/gi,grp:1,msg:"between … AND …; from … TO …",fix:"and",why:"between 2000 and 2005 · from 2000 to 2005."},
+ {id:"fromAnd",re:/\bfrom\s+(?:19|20)\d\d\s+(and)\s+(?:19|20)\d\d/gi,grp:1,msg:"from … TO …; between … AND …",fix:"to",why:"from 2000 to 2005 · between 2000 and 2005."},
+ {id:"plNum",re:/\b\d+(?:\.\d+)?\s+(millions|thousands|billions|hundreds)\b/gi,grp:1,msg:"After a number, million / thousand / hundred are singular.",fix:m=>m[1].slice(0,-1),why:"5 million people (but millions of people)."},
+ {id:"percents",re:/\bpercents\b/gi,msg:"‘percent’ has no plural -s.",fix:"percent",why:"20 percent · 20%."},
+ {id:"amtCount",re:/\b(amount of)\s+(?=(?:people|students|cars|computers|items|visitors|passengers|men|women|children|workers|tourists|companies|households|goods|products|jobs|houses|tourists)\b)/gi,grp:1,msg:"Use ‘number of’ with countable nouns.",fix:"number of",why:"the NUMBER of people · the AMOUNT of money."},
+ {id:"numUncount",re:/\b(number of)\s+(?=(?:money|oil|sugar|water|electricity|energy|rice|coal|gas|rain|traffic|pollution|waste|income|revenue|spending)\b)/gi,grp:1,msg:"Use ‘amount of’ with uncountable nouns.",fix:"amount of",why:"the AMOUNT of oil · the NUMBER of barrels."},
+ {id:"lessCount",re:/\bless\s+(?=(?:people|students|cars|computers|visitors|passengers|men|women|children|workers|tourists|items|households)\b)/gi,msg:"Use ‘fewer’ with countable nouns.",fix:"fewer",why:"fewer people · less money."},
+ {id:"dbl",re:/\b(\w+)\s+\1\b/gi,test:m=>!/^\d+$/.test(m[1])&&!/^(had|that)$/i.test(m[1]),msg:"A word is repeated.",fix:m=>m[1],why:"Read your sentence aloud: you wrote the same word twice."},
+ {id:"spB",re:/\s+([,.;:])/g,test:(m,t,i)=>i>0,grp:0,msg:"No space before a comma or full stop.",fix:m=>m[1],why:"Punctuation touches the word before it."},
+ {id:"spA",re:/,(?=[A-Za-z])/g,msg:"Put a space after a comma.",fix:", ",why:"Comma + space: 2000, the figure …"},
+ {id:"month",re:/\b(?:in|by|from|until|during|of|since)\s+(january|february|april|june|july|august|september|october|november|december)\b/g,grp:1,msg:"Months start with a capital letter.",fix:m=>m[1][0].toUpperCase()+m[1].slice(1),why:"July, September, December."},
+ {id:"i",re:/\bi\b(?!\.)/g,msg:"‘I’ is always a capital letter.",fix:"I",why:"I"}
+];
+/* informal / style tips (not errors) */
+const STYLE=[
+ {id:"goUp",re:/\b(?:go(?:es|ing)?|went|gone)\s+(up|down)\b/gi,msg:"‘go up / go down’ is informal.",fix:"rise / increase · fall / decrease",why:"Academic Task 1 uses rise, increase, fall, decline."},
+ {id:"alot",re:/\b(a lot of|lots of|loads of)\b/gi,msg:"‘a lot of’ is informal.",fix:"a large number of · a great deal of · a high proportion of",why:"Be precise and formal."},
+ {id:"big",re:/\b(big|huge)\s+(?=(?:rise|increase|fall|drop|decrease|decline|change|jump)\b)/gi,msg:"‘big’ is vague.",fix:"considerable · significant · dramatic",why:"Use a precise adjective."},
+ {id:"kids",re:/\b(kids|stuff|things|guys|bunch)\b/gi,msg:"Informal word.",fix:"children · items · people",why:"Avoid casual words in academic writing."},
+ {id:"get",re:/\b(got|gets|getting)\b(?!\s+(?:to|back))/gi,msg:"‘get / got’ is informal for a change.",fix:"reached · rose to · fell to",why:"Use a precise verb."},
+ {id:"very",re:/\bvery\s+(?=(?:high|low|big|small|large|good|bad|sharp|slight|fast|quick))/gi,msg:"‘very + adjective’ is weak.",fix:"a single strong word: huge → ‘substantial’; very sharp → ‘dramatic’",why:"Better vocabulary gains marks for Lexical Resource."},
+ {id:"cont",re:/\b(?:\w+n't|it's|that's|there's|they're|we're|I'm|can't|won't)\b/gi,msg:"Avoid contractions in academic writing.",fix:"do not · it is · cannot",why:"Formal register."},
+ {id:"pct",re:/\d\s+%/g,msg:"Write the % sign next to the number.",fix:"20%",why:"No space between the number and %."}
+];
+
+/* ---- sentence-level checks (functions) ---- */
+function sentences(t){
+  const out=[];const re=/[.!?]\s+(?=[A-Z"“])/g;let last=0,m;const cut=[];
+  while((m=re.exec(t)))cut.push([last,m.index+1]),last=m.index+m[0].length;
+  cut.push([last,t.length]);
+  for(const [a,b] of cut){const raw=t.slice(a,b);const txt=raw.trim();if(txt.length>2&&/[a-z]/i.test(txt))out.push({txt,i:a+raw.indexOf(txt),raw})}
+  return out}
+const INTRO=/^(after|before|despite|while|although|though|whereas|starting|when|as|since|given)\b/i;
+
+function grammarCheck(text){
+  const items=[];
+  const add=(kind,i,len,msg,fix,why)=>items.push({kind,i,len,msg,fix,why});
+  // regex rules
+  for(const r of RULES){
+    const re=new RegExp(r.re.source,r.re.flags.includes("g")?r.re.flags:r.re.flags+"g");let m;
+    while((m=re.exec(text))){
+      if(m[0].length===0){re.lastIndex++;continue}
+      if(r.test&&!r.test(m,text,m.index))continue;
+      let i=m.index,len=m[0].length;
+      if(r.grp){ // highlight the group only
+        const g=r.grp===0?m[0]:m[r.grp];if(g===undefined)continue;
+        const off=m[0].indexOf(g,r.id==="nofv"?m[1].length:0);i=m.index+(off<0?0:off);len=g.length;if(r.id==="spB"){i=m.index;len=m[0].length}}
+      const fix=typeof r.fix==="function"?r.fix(m):r.fix;
+      add("grammar",i,len,r.msg,fix,r.why)}
+  }
+  // sentence-level
+  for(const s of sentences(text)){
+    const t=s.txt;
+    if(/^[a-z]/.test(t)){const w0=(t.match(/^[a-z]+/)||[t[0]])[0];add("grammar",s.i,w0.length,"A sentence starts with a capital letter.",w0[0].toUpperCase()+w0.slice(1),"Capital letter at the start.")}
+    const words=t.split(/\s+/).length;
+    // intro phrase needs comma
+    if(INTRO.test(t)&&!t.replace(/(\d),(?=\d)/g,"$1").includes(",")&&words>6){const mm=t.match(/^(\S+(?:\s+\S+){1,6}?)\s+(?:the|it|this|that|there|they|[a-z]+'s)\b/i);
+      add("grammar",s.i,Math.min(t.length,mm?mm[1].length:t.split(" ").slice(0,3).join(" ").length),"Put a comma after the introductory phrase.","…, (comma) before the main clause","An opening phrase (After rising…, Despite…, While …, Starting at…) is followed by a comma.")}
+    // comma before 'after which'
+    const am=t.match(/[a-z0-9%]\s+(after which)\b/i);if(am){const i=s.i+t.indexOf(am[1],am.index);add("grammar",i,am[1].length,"Put a comma before ‘after which’.",", after which","…in 2001, after which it …")}
+    // comma splice: full clause , it/the X change-verb
+    if(!INTRO.test(t)||/^starting at/i.test(t)===false){
+      const cs=t.match(new RegExp("^(?!(?:after|before|despite|while|although|though|whereas|starting|when|as|since|from|in|by|over|between|during|at|with)\\b)[^,]{10,},\\s+((?:it|this|that)|(?:the|its)\\s+[a-z' ]{3,40}?)\\s+"+ADV+"(?:"+CHV+")\\b","i"));
+      if(cs){const i=s.i+t.indexOf(",");add("grammar",i,1,"Two full clauses cannot be joined by a comma (comma splice).","use ‘and’ / ‘but’ / ‘, after which’ / ‘.’ instead of the comma","A comma cannot join two independent sentences. Use a linking word (Structures 1, 4, 9) or start a new sentence.")}}
+    // while + same direction
+  }
+  // tense warning (soft, but listed as grammar-hint)
+  const yrs=(text.match(/\b(19|20)\d\d\b/g)||[]).map(Number);
+  if(yrs.length&&Math.max(...yrs)<=2024){
+    const m=text.match(new RegExp("\\b(?:"+SUBJ+")\\s+"+ADV+"(rises|falls|increases|decreases|drops|declines|grows|reaches|climbs|dips|jumps|peaks|remains)\\b","i"));
+    if(m)add("tense",text.indexOf(m[1],m.index),m[1].length,"The years are in the past, so use the past simple.","rose · fell · increased · reached","Describing 2000–2020 data: past simple (rose, fell). Present simple is for facts that are true now.")}
+  items.sort((a,b)=>a.i-b.i);
+  // remove overlapping duplicates
+  const out=[];let end=-1;for(const it of items){if(it.i>=end){out.push(it);end=it.i+it.len}else if(it.kind==="grammar"&&out.length&&out[out.length-1].len<=it.len){}}
+  return out}
+
+function styleCheck(text){
+  const items=[];
+  for(const r of STYLE){const re=new RegExp(r.re.source,r.re.flags.includes("g")?r.re.flags:r.re.flags+"g");let m;
+    while((m=re.exec(text))){if(!m[0])continue;
+      if(r.id==="cont"&&/'s$/i.test(m[0])&&!/^(it|that|there)'s$/i.test(m[0]))continue;
+      items.push({kind:"style",i:m.index,len:m[0].length,msg:r.msg,fix:r.fix,why:r.why})}}
+  // repeated change verbs
+  const dirs=dirsOf(text).filter(d=>!/peak/i.test(d[2]));const cnt={};
+  for(const d of dirs){const k=d[2].toLowerCase().replace(/(ed|ing|s|d)$/,"");cnt[k]=(cnt[k]||[]);cnt[k].push(d)}
+  for(const k in cnt)if(cnt[k].length>=2){const d=cnt[k][1];items.push({kind:"style",i:d[0],len:d[2].length,msg:"You used ‘"+d[2].toLowerCase()+"’ twice.",fix:"use a synonym: "+(d[1]==="U"?"rose · climbed · grew · went up to":"fell · dropped · declined · dipped"),why:"Varying vocabulary raises your Lexical Resource score."})}
+  const words=text.trim().split(/\s+/).length;
+  if(words>45)items.push({kind:"style",i:0,len:0,msg:"This sentence is very long ("+words+" words).",fix:"split it into two sentences",why:"Aim for 20–35 words per sentence so the reader does not get lost."});
+  if(!/[.!?]\s*$/.test(text.trim()))items.push({kind:"style",i:Math.max(0,text.trimEnd().length-1),len:1,msg:"End the sentence with a full stop.",fix:".",why:"Punctuation is part of accuracy."});
+  return items}
+
+function spellCheck(text){
+  const items=[];const re=/[A-Za-z][A-Za-z'’-]*/g;let m;const sents=sentences(text);
+  while((m=re.exec(text))){const raw=m[0];const w=raw.toLowerCase().replace(/['’]s$/,"");
+    if(w.length<4)continue;
+    if(MISSP[w]){items.push({kind:"spelling",i:m.index,len:raw.length,msg:"Spelling: ‘"+raw+"’",fix:MISSP[w],why:"Correct spelling: "+MISSP[w]+".",hard:true});continue}
+    if(known(w))continue;
+    // capitalised word inside a sentence = a name
+    const atStart=sents.some(s=>s.i===m.index);
+    if(/^[A-Z]/.test(raw)&&!atStart)continue;
+    if(w.includes("-"))continue;
+    const near=nearWord(w);
+    if(near)items.push({kind:"spelling",i:m.index,len:raw.length,msg:"Possible spelling mistake: ‘"+raw+"’",fix:near,why:"Check the spelling. Did you mean ‘"+near+"’?",hard:false})}
+  return items}
+
+/* ---- figures & years ---- */
+function yearValues(meta){
+  const yv={};if(!meta||!meta.years||!meta.svals)return yv;
+  for(const s in meta.svals){meta.svals[s].forEach((v,idx)=>{const y=String(meta.years[idx]);(yv[y]=yv[y]||new Set()).add(String(parseFloat(v)))})}
+  return yv}
+function figureCheck(text,gid){
+  const items=[];const meta=gid&&D.gmeta[gid];const yv=yearValues(meta);
+  const n=norm(text);const pairs=[];
+  const re=/(\d+(?:\.\d+)?)\s*(?:%|percent|per cent|million|billion|thousand|tonnes|tons|m\b|k\b)?\s*(?:million|billion|thousand|tonnes|tons)?\s+(?:in|by|at the end of|during)\s+((?:19|20)\d\d)\b/g;let m;
+  while((m=re.exec(n))){pairs.push({v:String(parseFloat(m[1])),y:m[2],i:m.index,end:m.index+m[0].length})}
+  if(meta&&Object.keys(yv).length){
+    const allowed=new Set(meta.allowed||[]);
+    for(const p of pairs){
+      if(!yv[p.y])continue;
+      if(allowed.has(p.v)&&!yv[p.y].has(p.v)){
+        const real=[...yv[p.y]].join(" / ");
+        const i=text.toLowerCase().indexOf(p.y,Math.max(0,text.toLowerCase().indexOf(p.v)));
+        items.push({kind:"facts",i:Math.max(0,i),len:4,msg:"Check the figure for "+p.y+": you wrote "+p.v+", but the graph shows "+real+" in "+p.y+".",fix:"read the graph at "+p.y,why:"Each figure belongs to one year. Put your finger on the year, then read up to the line."})}}}
+  // direction vs numbers
+  for(let k=0;k+1<pairs.length;k++){
+    const a=pairs[k],b=pairs[k+1];if(a.y===b.y)continue;
+    const between=n.slice(a.end,b.i);const d=dirsOf(between).filter(x=>!/peak/i.test(x[2]));
+    if(!d.length)continue;
+    const real=parseFloat(b.v)>parseFloat(a.v)?"U":parseFloat(b.v)<parseFloat(a.v)?"D":"";
+    if(real&&d.every(x=>x[1]!==real)){items.push({kind:"facts",i:Math.max(0,text.toLowerCase().indexOf(d[0][2].toLowerCase())),len:d[0][2].length,msg:"Direction check: "+a.v+" ("+a.y+") → "+b.v+" ("+b.y+") is a "+(real==="U"?"rise":"fall")+", but you wrote ‘"+d[0][2]+"’.",fix:real==="U"?"rose · increased · climbed":"fell · dropped · declined",why:"Compare the two figures first, then choose the verb."})}}
+  // 'from A to B' with a verb before
+  const fm=n.match(/\b(\w+(?:\s+\w+){0,2}?)\s+from\s+\$?(\d+(?:\.\d+)?)\S*(?:\s+\w+){0,3}?\s+to\s+\$?(\d+(?:\.\d+)?)/);
+  if(fm){const a=parseFloat(fm[2]),b=parseFloat(fm[3]);const d=dirsOf(fm[1]);const real=b>a?"U":b<a?"D":"";
+    if(real&&d.length&&d.every(x=>x[1]!==real)&&!(a>=1900&&a<=2100&&b>=1900&&b<=2100))items.push({kind:"facts",i:Math.max(0,text.toLowerCase().indexOf(d[0][2].toLowerCase())),len:d[0][2].length,msg:"Direction check: from "+fm[2]+" to "+fm[3]+" is a "+(real==="U"?"rise":"fall")+", but you wrote ‘"+d[0][2]+"’.",fix:real==="U"?"rose · increased":"fell · dropped",why:"Compare the two figures first, then choose the verb."})}
+  return items}
+function directionVsModel(it,text){
+  const items=[];if(!it.model)return items;
+  const m=new Set(dirsOf(it.model).filter(x=>!/peak/i.test(x[2])).map(x=>x[1]));
+  const sd=dirsOf(text).filter(x=>!/peak/i.test(x[2]));if(!m.size||!sd.length)return items;
+  if(sd.every(x=>!m.has(x[1])))items.push({kind:"facts",i:sd[0][0],len:sd[0][2].length,msg:"Direction check: the facts show "+(m.has("U")?"an increase":"a decrease")+", but you wrote ‘"+sd[0][2]+"’.",fix:m.has("U")?"rose · increased · climbed":"fell · dropped · declined",why:"Re-read the facts. The direction of the verb must match the numbers."});
+  return items}
+
+/* ---- main analyser ---- */
+function analyze(it,text,gid,inp,opts){
+  opts=opts||{};
+  const base=inp?checkGraphItem(it,inp,text):checkText(it,text,gid);
+  const items=[];const praise=[];
+  const structure=[],facts=[];
+  for(const s of base.issues){
+    if(/^(Missing figure|Use more figures|Your sentence is too different|The figure|Write about this graph|Add the unit)/.test(s))facts.push({kind:"facts",msg:s,why:"Use the figures and years from the graph or the facts. Accuracy of data is part of Task Achievement.",fix:null});
+    else structure.push({kind:"structure",msg:s,why:null,fix:null})}
+  for(const s of base.warns||[])facts.push({kind:"warn",msg:s,why:"This figure is not in the data. Check it before you continue.",fix:null});
+  const nn=it.n||(inp&&it.n);
+  if(structure.length&&nn&&LEARN[nn-1]){const L=LEARN[nn-1];structure[0].fix=L.f.replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ");structure[0].why="Structure "+nn+" · "+L.rule.replace(/<[^>]+>/g,"")}
+  items.push(...structure,...facts);
+  const text0=text;
+  const g=grammarCheck(text0);
+  const sp=spellCheck(text0);
+  const fg=figureCheck(text0,gid);
+  const dm=(fg.length?[]:directionVsModel(it,text0));
+  const st=styleCheck(text0);
+  // A chapter can add its own grammar rules (CHAPTER.grammar: [{re, msg, fix, why}]).
+  const cg=[];try{for(const r of ((typeof CHAPTER!=="undefined"&&CHAPTER.grammar)||[])){const re=new RegExp(r.re,"i");const mm=re.exec(text0);if(mm&&!g.some(y=>y.i<mm.index+mm[0].length&&mm.index<y.i+(y.len||1)))cg.push({kind:"grammar",i:mm.index,len:mm[0].length,msg:r.msg,fix:r.fix||null,why:r.why||null})}}catch(e){}
+  g.push(...cg);
+  // dedupe spelling vs grammar overlap
+  items.push(...fg,...dm,...g,...sp.filter(x=>!g.some(y=>y.i===x.i)),...st);
+  // positives
+  if(!structure.length&&(it.pats||(inp&&inp.pats)||[]).length){praise.push(nn&&LEARN[nn-1]?"Structure "+nn+" ("+LEARN[nn-1].t.replace(/<[^>]+>/g,"")+") is built correctly.":"The required structure is correct.")}
+  const nums=uniq(numsOf(text0));if(nums.length>=2&&!facts.length)praise.push("You included the key figures"+(/\b(19|20)\d\d\b/.test(text0)?" and the years":"")+".");
+  if(/\b(slightly|sharply|steadily|gradually|dramatically|significantly|considerably|rapidly|noticeably|substantially|marginally|moderately)\b/i.test(text0)||/\b(slight|sharp|steady|gradual|dramatic|significant|considerable|rapid|noticeable|substantial|marginal)\s+(rise|fall|increase|drop|decline|decrease|dip|jump|growth|recovery)/i.test(text0))praise.push("Good vocabulary: you described HOW the change happened (adverb / adjective).");
+  if(!g.length&&!sp.some(x=>x.hard))praise.push("No grammar errors found in the rules I check.");
+  if(/\b(whereas|although|however|in contrast|by contrast|respectively)\b/i.test(text0))praise.push("Nice linking words.");
+  const hard=items.filter(x=>["structure","facts","grammar","tense"].includes(x.kind)||(x.kind==="spelling"&&x.hard));
+  const ok=hard.length===0&&base.ok;
+  return {ok,items,praise,hard:hard.length,base}}
+
+/* ---- original text check helpers (kept) ---- */
+function checkText(it,text,gid){
+  const n=norm(text),issues=[],warns=[];
+  if(n.split(" ").length<4){return {ok:false,issues:["Write a full sentence."],warns}}
+  for(const name of (it.pats||[])){const p=PAT[name];if(!p)continue;const hit=p.re.test(n);if(p.not?hit:!hit)issues.push(p.msg)}
+  for(const [re,msg] of (it.forbid||[])){if(new RegExp(re,"i").test(n))issues.push(msg)}
+  for(const [re,msg] of (it.kw||[])){if(Array.isArray(re)){}else if(!new RegExp(re,"i").test(n))issues.push(msg)}
+  const have=uniq(numsOf(text));
+  if(it.nums==="model"){const need=uniq(numsOf(it.model));const miss=need.filter(x=>!have.includes(x));
+    if(miss.length>(it.missTol||0))issues.push("Missing figure(s): "+miss.join(", ")+". Use the figures from the facts.");
+    const extra=have.filter(x=>!need.includes(x));if(extra.length)warns.push("Check the figure(s): "+extra.join(", "))}
+  else if(it.nums==="graph"){const meta=D.gmeta[gid];const al=meta.allowed||[];
+    // A graph in thousands: "24,000" is the same figure as "24 thousand".
+    if(/thousand/i.test(meta.unit||"")){for(let k=0;k<have.length;k++){const v=parseFloat(have[k]);if(v>=1000&&al.includes(String(v/1000)))have[k]=String(v/1000)}}
+    const known=have.filter(x=>al.includes(x));const mn=it.minNums==null?2:it.minNums;
+    if(known.length<mn)issues.push("Use more figures and years from the graph: your sentence should include the start and the end of the change ("+mn+" figures or years).");
+    // Figures that are not on the graph (differences between figures, like "by 8 million", are fine).
+    const vals=[...new Set([].concat(...Object.values(meta.svals||{})).map(Number))],yrs=(meta.years||[]).map(Number),der=new Set();
+    for(const a of vals)for(const b of vals){der.add(String(+Math.abs(a-b).toFixed(2)));if(b)der.add(String(+(a/b).toFixed(2)))}
+    for(const a of yrs)for(const b of yrs)der.add(String(Math.abs(a-b)));
+    const unk=have.filter(x=>!al.includes(x)&&!der.has(x));
+    if(unk.length)issues.push("The figure "+unk.join(", ")+" is not on the graph. Read the figure at that year again.");
+    // The right graph: name what changed.
+    const tw=toks([meta.title].concat(meta.series||[]).join(" ")).filter(w=>!/^(number|amount|figure|total|sold|used|made|level)/.test(w));
+    const st=toks(text);
+    if(tw.length&&!tw.some(w=>st.some(x=>x.slice(0,4)===w.slice(0,4))))issues.push("Write about this graph: "+meta.title.toLowerCase()+". Name what changed (for example ‘"+meta.title.toLowerCase()+"’).");
+    // The unit: 20 million, not just 20.
+    const u=String(meta.unit||"").toLowerCase();const need=/billion/.test(u)?[/\b(billion|bn)\b/,"billion"]:/million/.test(u)?[/\b(million|millions|mn|m)\b/,"million"]:/thousand/.test(u)?[/\b(thousand|thousands|k)\b/,"thousand"]:/%|per ?cent/.test(u)?[/%|\bper ?cent\b/,"%"]:null;
+    const tnums=numsOf(meta.title||"");const figs=known.filter(x=>!/^(19|20)\d\d$/.test(x)&&!tnums.includes(x));
+    if(need&&figs.length){
+      // Each figure needs its unit, unless the next figure carries it ("from 12 to 20 million").
+      const re=/(\d+(?:\.\d+)?)(?!\d)/g;let m,miss=null;
+      while((m=re.exec(n))){const v=String(parseFloat(m[1]));if(/^(19|20)\d\d$/.test(m[1])||!figs.includes(v))continue;
+        const after=n.slice(m.index+m[1].length,m.index+m[1].length+14);
+        if(need[0].test(after.replace(/^\s*/," ").slice(0,need[1]==="%"?3:14)))continue;
+        const shared=n.slice(m.index+m[1].length).match(/^\s*(?:to|and|-|–)\s*\d+(?:\.\d+)?\s*(\S+)/);
+        if(shared&&need[0].test(" "+shared[1]))continue;
+        miss=m[1];break}
+      if(miss)issues.push("Add the unit: "+miss+(need[1]==="%"?"%":" "+need[1])+" (the graph is in "+meta.unit+").")}}
+  // Paraphrase: do not copy the question (a long run of the same words).
+  if(it.copyOf){const ws=t=>norm(t).replace(/[^a-z0-9' -]/g," ").split(/\s+/).filter(Boolean);const a=ws(text),b=ws(it.copyOf);let best=0,at=0;
+    for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++){let k=0;while(i+k<a.length&&j+k<b.length&&a[i+k]===b[j+k])k++;if(k>best){best=k;at=i}}
+    if(best>=(it.copyMax||10))issues.push("You copied the question (‘"+a.slice(at,at+6).join(" ")+" …’). Change the verb and the topic words; keep only the place, the time and the units.")}
+  if(it.overlap&&overlap(it.model,text)<it.overlap)issues.push("Your sentence is too different from the facts given. Keep the same information.");
+  return {ok:issues.length===0,issues,warns}
+}
+function checkGraphItem(it,inp,text){
+  const r=checkText({pats:inp.pats,nums:it.nums,minNums:inp.minNums},text,it.graph);
+  const n=norm(text);
+  if(it.kw){for(const [a,b] of it.kw){if(!new RegExp("\\b("+a+")\\b","i").test(n)||!new RegExp("\\b("+b+")\\b","i").test(n)){r.issues.push("Mention both lines of the graph by name.");r.ok=false}}}
+  if(it.bigger&&r.ok){
+    const big=it.kw[0][0],sm=it.kw[0][1];const ib=n.search(new RegExp("\\b("+big+")\\b","i")),is=n.search(new RegExp("\\b("+sm+")\\b","i"));
+    if(/with the latter\b/.test(n)){if(!(ib>is)){r.issues.push("Check the bigger change: the latter is the second line you mention.")}}
+    else if(/with the former\b/.test(n)){if(!(ib<is)){r.issues.push("Check the bigger change: the former is the first line you mention. Which line changed more?")}}
+    else{const m=n.match(/with (?:the \w+ for|that for|those for) ([a-z ]+?) seeing/);if(m&&!new RegExp("\\b("+big+")\\b","i").test(m[1]))r.issues.push("Check which line changed more.")}
+    r.ok=r.issues.length===0}
+  return r}
+
+/* ================= WRITING LAB — screen (shared by every chapter) =================
+   2026-11-07. Needs from the chapter file: CHAPTER, LEARN, CHIPS, TRAP, PAT, D
+   (LEARN / CHIPS / TRAP may be empty when a chapter has no "learn" block).
+   Block types: learn · graphs · drills · write · choose · gaps · html.
+   Needs from coach.js: analyze, buildVocab, esc.
+   Inside the website the page sits in a sealed frame: progress is kept by
+   the site (ielts-lab-save / ielts-lab-load messages) and the score goes to
+   the homework ("Hand in"). Opened on its own, it keeps progress in the browser. */
+(function(){
+const $=(s,e)=>(e||document).querySelector(s),$$=(s,e)=>[...(e||document).querySelectorAll(s)];
+const inFrame=(()=>{try{return window.parent!==window}catch(e){return true}})();
+const CH=CHAPTER;
+let ST={v:1,saved:{},ok:{},tries:{},seen:{},step:0,unit:{}};
+const REG=[];let uid=0;
+
+/* ---------- saving ---------- */
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>{const data=JSON.stringify(ST);
+  if(inFrame){try{parent.postMessage({type:"ielts-lab-save",id:CH.id,data},"*")}catch(e){}}
+  try{localStorage.setItem("ielts-lab:"+CH.id,data)}catch(e){}},400)}
+function restore(data){if(!data)return;try{const o=JSON.parse(data);if(o&&o.v===1){ST=Object.assign(ST,o);applyState()}}catch(e){}}
+
+/* ---------- theme ---------- */
+function setTheme(t){document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light")}
+setTheme(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches&&!inFrame?"dark":"light");
+
+/* ---------- charts drawn from the numbers ---------- */
+function niceTicks(lo,hi){const span=hi-lo||1;const raw=span/4;const p=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=raw)||p*10;
+  const a=Math.floor(lo/st)*st,b=Math.ceil(hi/st)*st;const t=[];for(let v=a;v<=b+1e-9;v+=st)t.push(+v.toFixed(6));return t}
+function fmt(v){return Number.isInteger(v)?String(v):String(+v.toFixed(2))}
+function disp(v){const t=fmt(v);return Math.abs(v)>=10000?t.replace(/\B(?=(\d{3})+(?!\d))/g,","):t}
+function chartSVG(gid){
+  const m=D.gmeta[gid];if(!m||!m.svals||!Object.keys(m.svals).length)return "";
+  const series=Object.entries(m.svals),years=m.years;const all=[].concat(...series.map(s=>s[1]));
+  let lo=Math.min(...all),hi=Math.max(...all);const pad=(hi-lo)*.12||1;lo=Math.max(lo>=0?0:-Infinity,lo-pad);hi=hi+pad;
+  const ticks=m.ticks||niceTicks(lo,hi);lo=ticks[0];hi=ticks[ticks.length-1];
+  const W=340,H=210,L=42,R=14,T=16,B=26;const x=i=>L+(W-L-R)*i/(years.length-1),y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const allowed=new Set(m.allowed||[]);const multi=series.length>1;
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.title)+'">';
+  if(m.shadeFrom!=null){const x0=x(m.shadeFrom);s+='<rect class="shade" x="'+x0+'" y="'+T+'" width="'+(W-R-x0)+'" height="'+(H-T-B)+'"/><text class="axis" x="'+((x0+W-R)/2)+'" y="'+(T+10)+'" text-anchor="middle">'+esc(m.shadeLabel||"forecast")+'</text>'}
+  for(const t of ticks)s+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(t)+'" y2="'+y(t)+'"/><text class="axis" x="'+(L-6)+'" y="'+(y(t)+4)+'" text-anchor="end">'+(t>=10000?(t/1000)+"k":fmt(t))+'</text>';
+  const every=m.xEvery||1;years.forEach((yr,i)=>{if(i%every===0)s+='<text class="axis" x="'+x(i)+'" y="'+(H-7)+'" text-anchor="middle">'+yr+'</text>'});
+  series.forEach(([name,vals],si)=>{
+    const up=vals.every((v,i)=>i===0||v>=vals[i-1]),down=vals.every((v,i)=>i===0||v<=vals[i-1]);
+    const col=multi?(si===0?"var(--gUp)":(series.length===2&&/^(var\(--gUp\))$/.test("var(--gUp)")&&vals[vals.length-1]<vals[0]?"var(--gDown)":"var(--g2)")):(up?"var(--gUp)":down?"var(--gDown)":"var(--gMix)");
+    const d=vals.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+    s+='<path class="ln" pathLength="1" d="'+d+'" stroke="'+col+'"/>';
+    vals.forEach((v,i)=>{s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="3.6" fill="'+col+'"/>';
+      if(!m.noLabels&&(m.labelAt?m.labelAt.includes(i):allowed.has(fmt(v)))&&(!multi||i===0||i===vals.length-1))s+='<text class="lbl" x="'+x(i)+'" y="'+(y(v)-8)+'" text-anchor="middle" fill="'+col+'">'+disp(v)+'</text>'});
+    if(multi&&name){const ky=T+4+si*16;s+='<line x1="'+(L+8)+'" x2="'+(L+24)+'" y1="'+ky+'" y2="'+ky+'" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/><text class="key" x="'+(L+30)+'" y="'+(ky+4)+'">'+esc(name)+'</text>'}
+  });
+  (m.marks||[]).forEach(k=>{const v=series[0][1][k.i],cx=x(k.i),cy=Math.min(H-B-10,Math.max(T+10,y(v)+(k.below?20:-30)));s+='<g class="mark"><circle cx="'+cx+'" cy="'+cy+'" r="9"/><text x="'+cx+'" y="'+(cy+3.5)+'" text-anchor="middle">'+esc(k.t)+'</text></g>'});
+  return s+"</svg>"}
+function animate(el){const c=$("svg.chart",el);if(!c)return;c.classList.remove("draw");void c.getBoundingClientRect();c.classList.add("draw")}
+
+/* ---------- inputs ---------- */
+function plain(h){return String(h||"").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").replace(/&rarr;/g,"→").replace(/&hellip;/g,"…").replace(/&ndash;/g,"–").replace(/&amp;/g,"&")}
+function hintHTML(n,hint){if(hint)return hint;if(!n||!LEARN[n-1])return "Write one clear sentence. Keep every figure.";const L=LEARN[n-1];
+  return '<b>Structure '+n+'</b> · '+L.t+'<div class="chiprow">'+CHIPS[n].map(c=>'<span class="chip '+c[1]+'">'+esc(c[0])+"</span>").join("")+'</div><div>'+L.rule+"</div>"}
+function mkInput(spec){
+  const id="i"+(uid++);
+  const reg={id,key:spec.key,step:spec.step,unit:spec.unit,counted:spec.counted!==false,ok:false,tries:0,check:spec.check,model:spec.model,n:spec.n,hint:spec.hint,prompt:spec.prompt||"",kind:"write"};
+  REG.push(reg);
+  return '<div class="iw" id="w'+id+'">'+(spec.label?'<div class="lab">'+spec.label+"</div>":"")+
+    '<textarea id="'+id+'" data-noreport="1" rows="'+(spec.rows||2)+'" placeholder="Write your sentence here…" spellcheck="false" autocomplete="off" autocapitalize="sentences"></textarea>'+
+    '<div class="irow"><button class="btn" data-a="check">Check</button><button class="btn ghost" data-a="hint">Hint</button><span class="wc" id="wc'+id+'"></span><span class="done-tag" id="dt'+id+'"></span></div>'+
+    '<div class="hint" id="h'+id+'"></div><div class="fb" id="f'+id+'"></div></div>'}
+const KIND={structure:"Structure",facts:"Facts",warn:"Check",grammar:"Grammar",tense:"Tense",spelling:"Spelling",style:"Style"};
+const isHard=x=>["structure","facts","grammar","tense","warn"].includes(x.kind)||(x.kind==="spelling"&&x.hard);
+function annotate(text,items){const sp=items.filter(x=>x.len>0&&x.kind!=="warn").slice().sort((a,b)=>a.i-b.i);let out="",pos=0;
+  for(const s of sp){if(s.i<pos)continue;out+=esc(text.slice(pos,s.i))+'<mark class="'+s.kind+'" title="'+esc(s.msg)+'">'+esc(text.slice(s.i,s.i+s.len))+"</mark>";pos=s.i+s.len}
+  return out+esc(text.slice(pos))}
+function itemHTML(x){return '<div class="it '+x.kind+'"><div><span class="k">'+(KIND[x.kind]||"")+"</span>"+esc(x.msg)+(x.fix?'<div class="tryit">Try: '+esc(x.fix)+"</div>":"")+(x.why?'<div class="why">'+esc(x.why)+"</div>":"")+"</div></div>"}
+function fbHTML(r,text,reg){
+  const hard=r.items.filter(isHard),soft=r.items.filter(x=>!isHard(x)&&(x.kind==="spelling"||x.kind==="style"));
+  const has=k=>r.items.some(x=>(k==="grammar"?["grammar","tense"].includes(x.kind):x.kind===k)&&(k!=="spelling"||x.hard));
+  const verdict=r.ok?(soft.length?"✓ Correct — now polish it":"✓ Excellent! Accurate and correct"):(hard.length<=1?"Almost there — fix 1 thing":"Keep going — "+hard.length+" things to fix");
+  const m=(l,bad)=>'<span class="'+(bad?"no":"ok")+'">'+(bad?"✗ ":"✓ ")+l+"</span>";
+  let h='<div class="hd"><span class="vd">'+verdict+'</span><div class="meter">'+m("Structure",has("structure"))+m("Facts",has("facts")||r.items.some(x=>x.kind==="warn"))+m("Grammar",has("grammar"))+m("Spelling",has("spelling"))+'</div></div><div class="body">';
+  h+='<div class="ann">'+annotate(text,r.items)+"</div>";
+  if(hard.length)h+='<div class="grp">Fix these first</div>'+hard.map(itemHTML).join("");
+  if(soft.length)h+='<div class="grp">Polish</div>'+soft.map(itemHTML).join("");
+  if(r.praise.length)h+='<div class="grp">What you did well</div>'+r.praise.map(p=>'<div class="it praise"><div><span class="k">Good</span>'+esc(p)+"</div></div>").join("");
+  if(reg.model){const show=r.ok||reg.tries>=2;h+=show?'<div class="mdl"><b>Model answer:</b> '+esc(reg.model)+"</div>":'<div class="irow"><button class="btn ghost" data-a="model">Show model answer</button><span class="wc">or try once more first</span></div>'}
+  return h+"</div>"}
+function runCheck(reg,count){
+  const t=(reg.ta.value||"").trim();
+  if(!t){reg.fb.className="fb";reg.ta.className="";setOk(reg,false);return}
+  if(count){reg.tries=(reg.tries||0)+1;ST.tries[reg.key]=reg.tries}
+  let r;try{r=reg.check(t)}catch(e){r={ok:false,items:[{kind:"structure",msg:"The checker had a problem with this sentence. Try writing it again."}],praise:[]}}
+  reg.ta.className=r.ok?"ok":"no";
+  const hardN=r.items.filter(isHard).length;
+  reg.fb.className="fb on "+(r.ok?"good":hardN<=1?"mid":"bad");reg.fb.innerHTML=fbHTML(r,t,reg);
+  const was=reg.ok;setOk(reg,r.ok);if(r.ok&&!was&&count&&reg.counted)toast(reg.tries===1?"Correct on the first try!":"Correct — well done!");
+  save()}
+function setOk(reg,ok){reg.ok=ok;if(ok)ST.ok[reg.key]=1;else delete ST.ok[reg.key];const dt=document.getElementById("dt"+reg.id);if(dt)dt.textContent=ok&&reg.counted?"✓ Done":"";
+  if(reg.kind==="select"){}progress()}
+function bindInputs(root){
+  for(const reg of REG){if(reg.kind!=="write"||reg.bound)continue;reg.ta=document.getElementById(reg.id);if(!reg.ta)continue;reg.bound=true;reg.fb=document.getElementById("f"+reg.id);
+    const wc=document.getElementById("wc"+reg.id);reg.wc=()=>{const w=(reg.ta.value.trim().match(/\S+/g)||[]).length;wc.textContent=w?w+" words":""};
+    reg.ta.addEventListener("input",()=>{ST.saved[reg.key]=reg.ta.value;reg.wc();if(reg.ok){setOk(reg,false);reg.ta.className=""}save();sendTexts()});
+    reg.ta.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();runCheck(reg,true)}});
+    document.getElementById("w"+reg.id).addEventListener("click",e=>{const a=e.target.closest("[data-a]");if(!a)return;
+      if(a.dataset.a==="check")runCheck(reg,true);
+      else if(a.dataset.a==="hint"){const h=document.getElementById("h"+reg.id);h.innerHTML=hintHTML(reg.n,reg.hint);h.classList.toggle("on")}
+      else if(a.dataset.a==="model"){reg.tries=Math.max(reg.tries,2);runCheck(reg,false)}})}}
+
+/* ---------- progress + score for the site ---------- */
+let lastPost="";
+function progress(){
+  const counted=REG.filter(r=>r.counted),ok=counted.filter(r=>r.ok).length,tot=counted.length;
+  $("#pbar").style.width=(tot?100*ok/tot:0)+"%";$("#pnum").textContent=ok+" / "+tot+" done";
+  const parts=[];
+  CH.steps.forEach((s,si)=>{const rs=counted.filter(r=>r.step===si),o=rs.filter(r=>r.ok).length;const b=$("#st"+si);
+    if(b){b.querySelector(".ct").textContent=rs.length?o+"/"+rs.length:"";b.classList.toggle("full",rs.length>0&&o===rs.length)}
+    if(rs.length)parts.push({label:s.name,score:o,max:rs.length});
+    (s._units||[]).forEach((u,ui)=>{const rr=counted.filter(r=>r.step===si&&r.unit===ui),oo=rr.filter(r=>r.ok).length;const c=$("#u"+si+"_"+ui);
+      if(c){const sm=c.querySelector("small");if(sm)sm.textContent=rr.length?oo+"/"+rr.length:"";c.classList.toggle("full",rr.length>0&&oo===rr.length)}})});
+  const k=ok+"/"+tot;if(inFrame&&k!==lastPost){lastPost=k;try{parent.postMessage({type:"ielts-workshop-score",score:ok,max:tot,parts:parts.slice(0,8),qs:[]},"*")}catch(e){}}}
+let textT=null;
+function sendTexts(){if(!inFrame)return;clearTimeout(textT);textT=setTimeout(()=>{
+  const lines=REG.filter(r=>r.kind==="write"&&r.counted&&(r.ta&&r.ta.value.trim())).map(r=>(r.ok?"✓ ":"✗ ")+plain(r.prompt).slice(0,90)+"\n   "+r.ta.value.trim());
+  if(lines.length)try{parent.postMessage({type:"ielts-workshop-text",texts:[{id:"sentences",text:(CH.kicker+" — the student's sentences\n\n"+lines.join("\n")).slice(0,20000)}]},"*")}catch(e){}},900)}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove("on"),2000)}
+
+/* ---------- blocks ---------- */
+function blockBar(regs){
+  const bar=document.createElement("div");bar.className="blockbar";
+  bar.innerHTML='<button class="btn">Check all</button><button class="btn ghost">Clear</button><span class="score"></span>';
+  const upd=()=>{bar.querySelector(".score").textContent=regs.filter(r=>r.ok).length+" / "+regs.length+" correct"};
+  bar.children[0].onclick=()=>{regs.forEach(r=>{if(r.kind==="select")runSel(r,true);else if(r.kind==="gap")runGap(r,true);else if((r.ta.value||"").trim())runCheck(r,true)});upd()};
+  bar.children[1].onclick=()=>{if(!confirm("Clear your answers in this exercise?"))return;regs.forEach(r=>{if(r.kind==="select"){r.ta.value="";r.ta.className="sel"}else if(r.kind==="gap"){r.ta.value="[]";r.ins.forEach(x=>{x.className="gap"});r.fb.className="fb"}else{r.ta.value="";r.ta.className="";r.fb.className="fb";r.wc()}delete ST.saved[r.key];delete ST.tries[r.key];r.tries=0;setOk(r,false)});save();upd()};
+  return bar}
+function learnUnit(si,ui,host){
+  const card=document.createElement("div");card.className="card";
+  card.innerHTML='<div class="nums" id="lnums"></div><div id="lpanel"></div>';host.appendChild(card);
+  const nums=$("#lnums",card);nums.innerHTML=LEARN.map(L=>'<button class="sub" data-n="'+L.n+'">'+L.n+"</button>").join("");
+  const GENERIC=CH.learnPatterns||{};
+  const panels={};
+  LEARN.forEach(L=>{const n=L.n;const m=D.gmeta[L.g]||{};const div=document.createElement("div");div.style.display="none";
+    const egs=(L.eg||[]).map(x=>'<div class="eg"><span class="tg">Example</span><span>'+x+"</span></div>").join("")+(L.real||[]).map(x=>'<div class="eg real"><span class="tg">Real task</span><span>'+x+"</span></div>").join("");
+    const it={pats:GENERIC[n]||[],n,nums:"graph",minNums:(CH.overviewStructures||[]).includes(n)?0:2};
+    div.innerHTML='<div class="lhd"><div class="big">'+n+'</div><h3>'+L.t+'</h3></div><div class="chiprow">'+CHIPS[n].map(c=>'<span class="chip '+c[1]+'">'+esc(c[0])+"</span>").join("")+'</div>'+
+      '<div class="legend"><span><i style="background:var(--chipSt)"></i>subject</span><span><i style="background:var(--chipVt)"></i>change / verb</span><span><i style="background:var(--chipLt)"></i>key linking words</span><span><i style="background:var(--chipNt)"></i>-ing / noun phrase</span></div>'+
+      '<div class="two"><div>'+egs+'<div class="rule"><b>Rule.</b> '+L.rule+'</div><div class="trap"><b>Trap.</b> '+TRAP[n]+'</div></div>'+
+      '<div><div class="gbox">'+chartSVG(L.g)+'</div><div class="gcap">'+esc(m.title||"")+(m.unit?" ("+esc(m.unit)+")":"")+'</div><div class="gmodel">'+((m.sents||[])[L.s]||"")+'</div><button class="replay">▶ Replay the line</button></div></div>'+
+      '<div class="yourturn"><h4>Your turn · write your own Structure '+n+' sentence about this graph</h4>'+mkInput({key:"turn"+n,step:si,unit:ui,counted:false,n,check:t=>analyze(it,t,L.g,null),model:(m.sents||[])[L.s]})+"</div>";
+    $("#lpanel",card).appendChild(div);panels[n]=div;$(".replay",div).onclick=()=>animate(div)});
+  const show=n=>{ST.seen[n]=1;$$(".sub",nums).forEach(b=>{b.classList.toggle("on",+b.dataset.n===n);b.classList.toggle("seen",!!ST.seen[b.dataset.n])});for(const k in panels)panels[k].style.display=+k===n?"":"none";animate(panels[n]);save()};
+  nums.onclick=e=>{const b=e.target.closest(".sub");if(b)show(+b.dataset.n)};
+  card._show=show;setTimeout(()=>show(1),0)}
+function graphsUnit(si,ui,host,items){
+  const grid=document.createElement("div");grid.className="ggrid";
+  items.forEach(it=>{const m=D.gmeta[it.graph];const c=document.createElement("div");c.className="gcard";
+    let h='<div class="gt"><i>'+it.graph+"</i>"+esc(m.title)+' <span>('+esc(m.unit)+')</span></div><div class="gbox">'+chartSVG(it.graph)+"</div>";
+    it.inputs.forEach((inp,j)=>{h+=mkInput({key:"g"+it.graph+"_"+j,step:si,unit:ui,label:inp.label,model:inp.model,n:it.n,hint:inp.hint||it.hint,prompt:m.title+(inp.label?" · "+plain(inp.label):""),check:t=>analyze(it,t,it.graph,inp)})});
+    c.innerHTML=h;grid.appendChild(c)});
+  host.appendChild(grid);
+  const regs=REG.filter(r=>r.step===si&&r.unit===ui);const wrap=document.createElement("div");wrap.appendChild(blockBar(regs));host.appendChild(wrap)}
+function writeUnit(si,ui,host,b,items){
+  const card=document.createElement("div");card.className="card";
+  let h=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph)+imgBox(b.img);
+  if(b.worked)h+='<div class="wk"><span class="l">Worked example</span><br>'+b.worked[0]+"<br><b>→</b> "+b.worked[1]+"</div>";
+  card.innerHTML=h;
+  items.forEach((q,i)=>{const e=document.createElement("div");e.className="q";const pr=b.escape?esc(q.prompt):q.prompt;
+    e.innerHTML='<div class="p"><span class="num">'+(i+1)+".</span>"+pr+"</div>"+imgBox(q.img)+mkInput({key:b.key+"_"+i,step:si,unit:ui,rows:b.rows||2,model:q.model+(b.modelWhy&&q.why?"  (Mistake: "+q.why+")":""),n:q.n,hint:q.hint||b.hint,prompt:q.prompt,check:t=>analyze(q,t,null,null)});
+    card.appendChild(e)});
+  card.appendChild(blockBar(REG.filter(r=>r.step===si&&r.unit===ui&&r.key.startsWith(b.key+"_"))));host.appendChild(card)}
+function runSel(r,count){const v=r.ta.value;if(!v){r.fb.className="fb";r.ta.className="sel";setOk(r,false);return}
+  const answers=[].concat(r.ans).map(String);const ok=answers.includes(v);r.ta.className="sel "+(ok?"ok":"no");
+  r.fb.className="fb on "+(ok?"good":"bad");let msg;
+  if(r.generic)msg=ok?"Yes — "+esc(v)+"."+(r.why?" "+r.why:""):(r.tried?"The answer is <b>"+answers.map(esc).join("</b> or <b>")+"</b>."+(r.why?" "+r.why:""):(r.clue||"Look again and try once more."));
+  else{const L=LEARN[r.ans-1];msg=ok?"Yes — Structure "+r.ans+": "+esc(plain(L.t)):"Look again at the linking words. "+(r.tried?"The answer is Structure "+r.ans+": "+esc(plain(L.t))+".":"Try once more.")}
+  r.fb.innerHTML='<div class="hd"><span class="vd">'+(ok?"✓ Correct":"✗ Not yet")+'</span></div><div class="body"><div class="it '+(ok?"praise":"structure")+'"><div>'+msg+"</div></div></div>";
+  if(count)r.tried=true;setOk(r,ok);save()}
+function chooseUnit(si,ui,host,b,items){
+  const card=document.createElement("div");card.className="card";card.innerHTML=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph)+imgBox(b.img);
+  const regs=[];
+  items.forEach((q,i)=>{const id="s"+(uid++);const reg={id,key:b.key+"_"+i,step:si,unit:ui,counted:true,ok:false,kind:"select",ans:q.ans,why:q.why,clue:q.clue,generic:!!b.generic,prompt:q.prompt};REG.push(reg);regs.push(reg);
+    const d=document.createElement("div");d.className="q";
+    d.innerHTML='<div class="p"><span class="num">'+(i+1)+".</span>"+(b.generic?q.prompt:esc(q.prompt))+'</div><select class="sel" id="'+id+'" data-noreport="1"><option value="">'+(b.generic?(b.pick||"Choose"):(b.label||"Choose"))+"…</option>"+(q.options||b.options||[]).map(x=>"<option>"+esc(String(x))+"</option>").join("")+'</select><div class="fb" id="f'+id+'"></div>';
+    card.appendChild(d)});
+  card.appendChild(blockBar(regs));host.appendChild(card);
+  regs.forEach(r=>{r.ta=card.querySelector("#"+r.id);r.fb=card.querySelector("#f"+r.id);r.wc=()=>{};r.ta.addEventListener("change",()=>{ST.saved[r.key]=r.ta.value;runSel(r,true)})})}
+const IMG="/practice/writing-lab/img/";
+function imgBox(x){if(!x)return "";return [].concat(x).map(o=>{o=typeof o==="string"?{src:o}:o;return '<figure class="gfig"><img loading="lazy" decoding="async" src="'+IMG+esc(o.src)+'" alt="'+esc(o.cap||"Graph")+'">'+(o.cap?"<figcaption>"+esc(o.cap)+"</figcaption>":"")+"</figure>"}).join("")}
+function graphBox(gid){if(!gid)return "";return [].concat(gid).map(g=>{const m=D.gmeta[g]||{};return '<div class="gbox wide">'+chartSVG(g)+'</div><div class="gcap">'+esc(m.title||"")+(m.unit?" ("+esc(m.unit)+")":"")+"</div>"}).join("")}
+/* gaps: one word (or a short phrase) in each ___ ; every gap must be right */
+const gnorm=t=>String(t||"").toLowerCase().replace(/[’‘]/g,"'").replace(/(\d),(?=\d{3}\b)/g,"$1").replace(/\s+/g," ").replace(/\s*%/g,"%").replace(/[.,;!]+$/,"").trim();
+function runGap(r,count){const vals=r.ins.map(x=>x.value);const any=vals.some(v=>v.trim());
+  if(!any){r.fb.className="fb";r.ins.forEach(x=>x.className="gap");setOk(r,false);return}
+  if(count){r.tries=(r.tries||0)+1;ST.tries[r.key]=r.tries}
+  let right=r.ans.map((alts,k)=>alts.map(gnorm).includes(gnorm(vals[k])));
+  // Some items have answers that must go together (between … and / from … to).
+  if(r.combos){const hit=r.combos.find(c=>c.every((w,k)=>gnorm(vals[k])===gnorm(w)));right=hit?right.map(()=>true):right.map((x,k)=>x&&r.combos.some(c=>gnorm(c[k])===gnorm(vals[k])&&c.some((w,j)=>j!==k&&gnorm(vals[j])===gnorm(w))))}
+  const ok=right.every(Boolean);
+  r.ins.forEach((x,k)=>x.className="gap "+(right[k]?"ok":"no"));
+  const show=!ok&&(r.tries||0)>=2;
+  r.fb.className="fb on "+(ok?"good":"bad");
+  r.fb.innerHTML='<div class="hd"><span class="vd">'+(ok?"✓ Correct":right.some(Boolean)?"Almost — check the red gap":"✗ Not yet")+'</span></div>'+((ok&&r.why)||show?'<div class="body"><div class="it '+(ok?"praise":"structure")+'"><div>'+(show?"Answer: <b>"+r.ans.map(a=>a.map(esc).join(" / ")).join("</b> … <b>")+"</b>. ":"")+(r.why?esc(r.why):"")+"</div></div></div>":"");
+  const was=r.ok;setOk(r,ok);if(ok&&!was&&count)toast(r.tries===1?"Correct on the first try!":"Correct — well done!");save()}
+function gapsUnit(si,ui,host,b,items){
+  const card=document.createElement("div");card.className="card";card.innerHTML=(b.title?"<h3>"+b.title+"</h3>":"")+(b.ins?'<div class="ins">'+b.ins+"</div>":"")+graphBox(b.graph);
+  const regs=[];
+  items.forEach((q,i)=>{const id="g"+(uid++);const parts=q.text.split(/_{3,}/);const ans=q.ans.map(a=>[].concat(a));
+    const reg={id,key:b.key+"_"+i,step:si,unit:ui,counted:true,ok:false,kind:"gap",ans,combos:q.combos,why:q.why,prompt:q.text.replace(/_{3,}/g,"___"),tries:0};REG.push(reg);regs.push(reg);
+    const w=Math.max(4,...ans.map(a=>Math.max(...a.map(x=>x.length))));
+    let html=esc(parts[0]);for(let k=1;k<parts.length;k++)html+='<input class="gap" data-noreport="1" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:'+Math.min(24,w+3)+'ch" aria-label="gap '+k+'">'+esc(parts[k]);
+    const d=document.createElement("div");d.className="q";
+    d.innerHTML='<div class="p gp"><span class="num">'+(i+1)+".</span><span>"+html+'</span></div><div class="irow"><button class="btn" data-a="check">Check</button><span class="done-tag" id="dt'+id+'"></span></div><div class="fb" id="f'+id+'"></div>';
+    card.appendChild(d);
+    reg.ins=[...d.querySelectorAll("input.gap")];
+    reg.ta={get value(){return JSON.stringify(reg.ins.map(x=>x.value))},set value(v){let a=[];try{a=JSON.parse(v||"[]")}catch(e){}reg.ins.forEach((x,k)=>{x.value=a[k]||""})},set className(c){}};
+    reg.fb=d.querySelector(".fb");reg.wc=()=>{};
+    reg.ins.forEach((x,k)=>{x.addEventListener("input",()=>{ST.saved[reg.key]=reg.ta.value;if(reg.ok)setOk(reg,false);x.className="gap";save()});
+      x.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(k<reg.ins.length-1)reg.ins[k+1].focus();else runGap(reg,true)}})});
+    d.querySelector("[data-a=check]").onclick=()=>runGap(reg,true)});
+  card.appendChild(blockBar(regs));host.appendChild(card)}
+function drillUnit(si,ui,host,d,bkey){
+  writeUnit(si,ui,host,{key:bkey+d.n,title:"Drill "+d.n+" · "+d.title,ins:d.formula+" — "+d.rule,worked:d.worked},d.items)}
+
+/* ---------- page ---------- */
+function build(){
+  document.title=CH.title.replace(/<[^>]+>/g,"")+" · "+CH.kicker+" · Mr Ikromov's IELTS";
+  document.body.innerHTML='<header class="band"><div class="wrap"><div class="kick">'+CH.kicker+'</div><h1>'+CH.title+'</h1><p>'+CH.lead+'</p><div class="prog"><div class="bar"><i id="pbar"></i></div><b id="pnum"></b></div></div></header>'+
+    '<nav class="steps"><div class="wrap"><div class="row" id="steps"></div></div></nav><main class="wrap" id="main"></main><div class="foot">'+(CH.footer||"")+'</div><div id="toast"></div>';
+  const nav=$("#steps"),main=$("#main");
+  CH.steps.forEach((s,si)=>{
+    nav.insertAdjacentHTML("beforeend",'<button class="step" id="st'+si+'" data-i="'+si+'"><span class="no">'+s.no+"</span>"+s.name+' <span class="ct"></span></button>');
+    const sec=document.createElement("section");sec.className="sec";sec.id="sec"+si;sec.style.display="none";
+    sec.innerHTML='<div class="sec-title"><span class="n">'+s.no+"</span><h2>"+s.title+"</h2></div>"+(s.lead?'<p class="lead">'+s.lead+"</p>":"")+(s.note?'<div class="note">'+s.note+"</div>":"");
+    main.appendChild(sec);
+    // units: each shown on its own (sub menu) when the step has more than one
+    const units=[];
+    for(const b of s.blocks){
+      if(b.type==="graphs"){const groups=[];for(const it of D[b.data]){let g=groups.find(x=>x.k===it.group);if(!g){g={k:it.group,label:it.groupLabel,items:[]};groups.push(g)}g.items.push(it)}
+        groups.forEach(g=>units.push({label:(g.label||"").replace(/^Structures? /,"").replace(/ ·.*/,""),title:g.label,render:(ui,h)=>graphsUnit(si,ui,h,g.items)}))}
+      else if(b.type==="drills")D[b.data].forEach(d=>units.push({label:String(d.n),title:"Drill "+d.n,render:(ui,h)=>drillUnit(si,ui,h,d,b.key||"d")}));
+      else if(b.type==="learn")units.push({label:"Learn",render:(ui,h)=>learnUnit(si,ui,h)});
+      else if(b.type==="html")units.push({label:b.label||"Info",inline:true,render:(ui,h)=>{const c=document.createElement("div");c.innerHTML=(b.title?'<h3 class="sub-h" style="font-size:16px;margin:18px 0 8px">'+b.title+"</h3>":"")+(b.graph?'<div class="card">'+graphBox(b.graph)+"</div>":"")+(b.img?'<div class="figs n'+[].concat(b.img).length+'">'+imgBox(b.img)+"</div>":"")+(b.html||"");h.appendChild(c)}});
+      else if(b.type==="gaps")units.push({label:b.label||b.title,render:(ui,h)=>gapsUnit(si,ui,h,b,D[b.data])});
+      else if(b.type==="write")units.push({label:b.label||b.title,render:(ui,h)=>writeUnit(si,ui,h,b,D[b.data])});
+      else if(b.type==="choose")units.push({label:b.label||b.title,render:(ui,h)=>chooseUnit(si,ui,h,b,D[b.data])});
+    }
+    s._units=units;
+    const tabs=units.filter(u=>!u.inline);
+    const sub=document.createElement("div");sub.className="subnav";if(s.subnav&&tabs.length>1)sec.appendChild(sub);
+    const host=document.createElement("div");sec.appendChild(host);
+    units.forEach((u,ui)=>{const box=document.createElement("div");box.className="unit";box.dataset.u=ui;u.render(ui,box);host.appendChild(box);u.box=box;
+      if(s.subnav&&!u.inline&&tabs.length>1)sub.insertAdjacentHTML("beforeend",'<button class="sub" id="u'+si+'_'+ui+'" data-u="'+ui+'">'+esc(u.label)+" <small></small></button>")});
+    if(s.subnav&&tabs.length>1){sub.onclick=e=>{const b=e.target.closest(".sub");if(b)showUnit(si,+b.dataset.u,true)}}
+    const nb=document.createElement("div");nb.className="nextbar";
+    nb.innerHTML=(si>0?'<button class="btn ghost" data-go="'+(si-1)+'">← '+CH.steps[si-1].name+"</button>":"<span></span>")+(si<CH.steps.length-1?'<button class="btn go" data-go="'+(si+1)+'">Next: '+CH.steps[si+1].name+" →</button>":'<span class="wc">This is the last step. Check your progress at the top.</span>');
+    nb.onclick=e=>{const b=e.target.closest("[data-go]");if(b){showStep(+b.dataset.go);window.scrollTo(0,0)}};sec.appendChild(nb);
+  });
+  nav.onclick=e=>{const b=e.target.closest(".step");if(b){showStep(+b.dataset.i);window.scrollTo(0,0)}};
+  bindInputs();buildVocab(D);
+}
+function showUnit(si,ui,scroll){const s=CH.steps[si];if(!s.subnav)return;ST.unit[si]=ui;
+  s._units.forEach((u,k)=>{if(u.inline)return;u.box.style.display=k===ui?"":"none";const b=$("#u"+si+"_"+k);if(b)b.classList.toggle("on",k===ui)});
+  $$("svg.chart",s._units[ui].box).forEach(c=>{c.classList.remove("draw");void c.getBoundingClientRect();c.classList.add("draw")});
+  if(scroll){const t=$("#sec"+si);window.scrollTo({top:Math.max(0,t.getBoundingClientRect().top+window.scrollY-70)})}save()}
+function showStep(si){ST.step=si;CH.steps.forEach((s,k)=>{$("#sec"+k).style.display=k===si?"":"none";$("#st"+k).classList.toggle("on",k===si)});
+  const b=$("#st"+si);if(b&&b.scrollIntoView)b.scrollIntoView({block:"nearest",inline:"center"});
+  const s=CH.steps[si];if(s.subnav){const first=Math.max(0,s._units.findIndex(u=>!u.inline));let u=ST.unit[si];if(u==null||!s._units[u]||s._units[u].inline)u=first;showUnit(si,u,false)}save()}
+function applyState(){
+  for(const r of REG){const v=ST.saved[r.key];if(v==null||!r.ta)continue;r.ta.value=v;r.tries=ST.tries[r.key]||0;
+    if(r.kind==="select"){if(v)runSel(r,false)}else if(r.kind==="gap"){r.tries=ST.tries[r.key]||0;if(ST.ok[r.key])runGap(r,false)}else{r.wc();if(ST.ok[r.key]){r.ta.className="ok";setOk(r,true)}}}
+  showStep(Math.min(ST.step||0,CH.steps.length-1));progress();sendTexts()}
+
+build();
+// load saved progress: from the site (in the frame) or from this browser
+let got=false;
+window.addEventListener("message",e=>{const d=e.data;if(!d||d.type!=="ielts-lab-state"||d.id!==CH.id)return;if(d.theme)setTheme(d.theme);if(!got){got=true;restore(d.data);if(!d.data)fallback()}});
+function fallback(){try{restore(localStorage.getItem("ielts-lab:"+CH.id))}catch(e){}}
+showStep(0);progress();
+if(inFrame){try{parent.postMessage({type:"ielts-lab-load",id:CH.id},"*")}catch(e){}setTimeout(()=>{if(!got){got=true;fallback()}},900)}else{got=true;fallback()}
+})();
+
+</script>
+</body>
+</html>
