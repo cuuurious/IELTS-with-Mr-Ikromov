@@ -11,21 +11,6 @@ export default function NotificationBell({ profile }) {
   const [loading, setLoading] = useState(false)
   const boxRef = useRef(null)
 
-  // The redesigned Layout renders a mobile top bar and a desktop top
-  // bar at the same time (CSS just shows/hides whichever one matches
-  // the viewport — both stay mounted), so this component now mounts
-  // TWICE at once for the same signed-in user. Two mounts used to
-  // both call supabase.channel(`notifications-${profile.id}`) with
-  // the exact same topic name — Supabase's realtime client treats
-  // that as the SAME channel, so the second mount's .on(...) call
-  // landed on a channel the first mount had already .subscribe()'d,
-  // which throws ("cannot add postgres_changes callback ... after
-  // subscribe()") and crashed the whole app for every signed-in user.
-  // A random suffix, generated once per mount, gives each instance
-  // its own independent channel instead.
-  const instanceIdRef = useRef(
-    Math.random().toString(36).slice(2, 10)
-  )
 
   /*
    * ============================================================
@@ -33,10 +18,10 @@ export default function NotificationBell({ profile }) {
    * ============================================================
    */
 
-  const load = async () => {
+  const load = async ({ quiet = false } = {}) => {
     if (!profile?.id) return
 
-    setLoading(true)
+    if (!quiet) setLoading(true)
 
     const { data, error } = await supabase
       .from('notifications')
@@ -57,101 +42,50 @@ export default function NotificationBell({ profile }) {
       setItems(data || [])
     }
 
-    setLoading(false)
+    if (!quiet) setLoading(false)
   }
 
   /*
    * ============================================================
-   * INITIAL LOAD + REALTIME
+   * INITIAL LOAD + CHECK EVERY MINUTE
    * ============================================================
+   *
+   * DISK (2026-11-10): this used to keep a live database feed
+   * (postgres_changes) open in every tab of every signed-in user. While
+   * even one such feed is open, Supabase reads the database's change
+   * log several times a second and checks every change against every
+   * listener; it was most of the database's work (13 million reads)
+   * and drained the Disk IO budget. A small indexed check once a
+   * minute (and when the tab comes back) costs almost nothing, and a
+   * new notification still shows up within a minute. Only the bell
+   * that is actually on screen checks (Layout mounts two: phone bar +
+   * desktop bar).
    */
 
   useEffect(() => {
-    if (!profile?.id) return
+    if (!profile?.id) return undefined
 
     load()
 
-    const channel = supabase
-      .channel(`notifications-${profile.id}-${instanceIdRef.current}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${profile.id}`,
-        },
-        (payload) => {
-          if (!payload?.new) return
+    const onScreen = () =>
+      document.visibilityState === 'visible' &&
+      (!boxRef.current || boxRef.current.offsetParent !== null)
 
-          /*
-           * Only unread notifications belong
-           * in the notification drawer.
-           */
-          if (payload.new.read) return
+    const tick = () => {
+      if (onScreen()) load({ quiet: true })
+    }
 
-          setItems((previous) => {
-            /*
-             * Prevent duplicate realtime rows.
-             */
-            if (
-              previous.some(
-                (item) =>
-                  item.id === payload.new.id
-              )
-            ) {
-              return previous
-            }
-
-            return [
-              payload.new,
-              ...previous,
-            ].slice(0, 30)
-          })
-        }
-      )
-      // A notification removed in the database (its chat message was
-      // deleted) or changed (the message was edited) disappears /
-      // updates here straight away (2026-10-07). Realtime can't filter
-      // DELETE events by user, and they only carry the id, so the id is
-      // matched against this list.
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'notifications' },
-        (payload) => {
-          const id = payload?.old?.id
-          if (!id) return
-          setItems((previous) => previous.filter((item) => item.id !== id))
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${profile.id}`,
-        },
-        (payload) => {
-          const row = payload?.new
-          if (!row?.id) return
-          setItems((previous) =>
-            row.read
-              ? previous.filter((item) => item.id !== row.id)
-              : previous.map((item) => (item.id === row.id ? { ...item, ...row } : item))
-          )
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(
-            'Notification realtime connected'
-          )
-        }
-      })
+    const timer = setInterval(tick, 60000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', tick)
 
     return () => {
-      supabase.removeChannel(channel)
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', tick)
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

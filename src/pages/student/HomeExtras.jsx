@@ -82,6 +82,34 @@ export function WordOfTheDay({ onNavigate, className = '' }) {
 
     const withWord = (query) => query.not('word', 'is', null).neq('word', '')
 
+    // DISK (2026-11-10): the two lookups below check every word against
+    // the student's groups, and ran on every visit to Home (16,000 times
+    // so far). Today's word is now kept in this browser until the day
+    // changes, so it is fetched once a day.
+    const cacheKey = `ielts-wotd:${dayNumber()}`
+    try {
+      const saved = JSON.parse(localStorage.getItem(cacheKey) || 'null')
+      if (saved && saved.word) {
+        setWord(saved)
+        return () => {
+          cancelled = true
+        }
+      }
+    } catch {
+      /* no storage: just fetch */
+    }
+
+    const remember = (w) => {
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('ielts-wotd:') && k !== cacheKey)
+          .forEach((k) => localStorage.removeItem(k))
+        if (w) localStorage.setItem(cacheKey, JSON.stringify(w))
+      } catch {
+        /* ignore */
+      }
+    }
+
     const load = async () => {
       try {
         const { count, error: countError } = await withWord(
@@ -103,6 +131,7 @@ export function WordOfTheDay({ onNavigate, className = '' }) {
           .range(n, n)
         if (error) throw error
 
+        remember(data?.[0] || null)
         if (!cancelled) setWord(data?.[0] || null)
       } catch {
         if (!cancelled) setWord(null)
