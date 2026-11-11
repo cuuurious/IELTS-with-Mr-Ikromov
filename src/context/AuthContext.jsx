@@ -57,6 +57,24 @@ function withTimeout(promise, ms, message) {
 // click, so it failed the exact same way forever. Recognizing this
 // specific case lets loadProfile() force one real token refresh before
 // giving up.
+// 2026-11-11: only these mean the sign-in is really over. A refresh that
+// failed because the connection dropped (timeout, "Failed to fetch",
+// Supabase's AuthRetryableFetchError) used to sign the student out too —
+// and then they couldn't sign back in until the connection returned
+// ("it logs me out and doesn't work for 10 minutes").
+function isDeadRefreshToken(err) {
+  if (!err) return false
+  if (err.name === 'AuthRetryableFetchError') return false
+  const message = String(err.message || '').toLowerCase()
+  if (/taking too long|failed to fetch|load failed|network|timeout|timed out|aborted/.test(message)) return false
+  return (
+    /refresh token|invalid grant|session.*(not found|expired)|already used|revoked/.test(message) ||
+    err.status === 400 ||
+    err.status === 401 ||
+    err.status === 403
+  )
+}
+
 function isAuthTokenError(err) {
   const message = String(err?.message || '').toLowerCase()
 
@@ -182,6 +200,12 @@ export function AuthProvider({ children }) {
           await fetchProfileRow(userId)
           return
         } catch (refreshErr) {
+          // Could not reach Supabase: keep the student signed in and fall
+          // through to the "connection" handling below (it keeps the page
+          // on screen and tries again by itself when the connection is back).
+          if (!isDeadRefreshToken(refreshErr)) {
+            err = refreshErr
+          } else {
           // The refresh token is dead too — there is no session left
           // to recover, so land the person on the login screen instead
           // of a "Try again" button that can never succeed.
@@ -200,6 +224,7 @@ export function AuthProvider({ children }) {
           setProfile(null)
           setAuthError('')
           return
+          }
         }
       }
 
@@ -602,6 +627,26 @@ export function AuthProvider({ children }) {
       throw error
     }
   }
+
+  // 2026-11-11: when the profile could not load because the connection
+  // dropped, try again by itself — every 15 seconds, and straight away
+  // when the browser says the connection is back — instead of leaving the
+  // student on an error screen until they press Try again.
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!authError || !userId || profile) return undefined
+    const retry = () => {
+      if (document.visibilityState === 'visible') loadProfile(userId)
+    }
+    const timer = setInterval(retry, 15000)
+    window.addEventListener('online', retry)
+    window.addEventListener('ielts-connection-restored', retry)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('online', retry)
+      window.removeEventListener('ielts-connection-restored', retry)
+    }
+  }, [authError, session?.user?.id, profile, loadProfile])
 
   // 2026-11-09: 'local' = sign out THIS device only. The default
   // ('global') ended the account's sessions on every device, so when the
