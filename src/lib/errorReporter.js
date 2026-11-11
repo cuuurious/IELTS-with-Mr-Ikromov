@@ -52,7 +52,11 @@ export function reportError(error, extra = '', opts = {}) {
       (error && (error.message || error.reason?.message)) || (typeof error === 'string' ? error : String(error)),
       1000
     )
-    const stack = clip(error?.stack || error?.reason?.stack || extra || '', 4000)
+    // opts.signedOut: the session is already gone, so the row is sent
+    // without a user id (the database only accepts a user id from that
+    // user) and the id is written into the details instead.
+    const who = opts.signedOut && currentUser.id ? `\nuser: ${currentUser.id} (${currentUser.role || '?'})` : ''
+    const stack = clip((error?.stack || error?.reason?.stack || extra || '') + who, 4000)
     if (!message) return
     if (!opts.always && IGNORE.some((re) => re.test(message))) return
     if (/chrome-extension:|moz-extension:|safari-extension:/i.test(stack)) return
@@ -70,7 +74,7 @@ export function reportError(error, extra = '', opts = {}) {
     supabase
       .from('client_errors')
       .insert({
-        user_id: currentUser.id,
+        user_id: opts.signedOut ? null : currentUser.id,
         role: currentUser.role,
         message,
         stack,
@@ -86,6 +90,18 @@ export function reportError(error, extra = '', opts = {}) {
 export function installErrorReporter() {
   if (installed || typeof window === 'undefined') return
   installed = true
+
+  // 2026-11-11: how long this device could not reach the database
+  // (sent once it can again — see supabaseClient.js).
+  window.addEventListener('ielts-connection-restored', (event) => {
+    const s = event.detail?.seconds || 0
+    const span = s >= 120 ? `${Math.round(s / 60)} min` : `${s} s`
+    reportError(
+      { message: `Connection: could not reach the database for ${span}, then it came back`, stack: `browser said online=${event.detail?.online}` },
+      '',
+      { always: true }
+    )
+  })
 
   window.addEventListener('error', (event) => {
     // Resource load errors (an <img> 404) have no `error` object — skip.

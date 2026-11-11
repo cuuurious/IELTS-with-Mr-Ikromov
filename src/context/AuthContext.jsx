@@ -8,6 +8,7 @@ import {
   useRef,
 } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { reportError } from '../lib/errorReporter'
 
 const AuthContext = createContext(null)
 
@@ -73,6 +74,9 @@ export function AuthProvider({ children }) {
   // Latest profile, readable from inside the auth listener below
   // (which is created once and would otherwise see a stale value).
   const profileRef = useRef(null)
+  // True while the person themselves is signing out (2026-11-11), so a
+  // sign-out that the person did NOT ask for can be reported.
+  const manualSignOutRef = useRef(false)
   profileRef.current = profile
   const [loading, setLoading] = useState(true)
   // Set whenever the initial session check or a profile fetch fails
@@ -185,8 +189,13 @@ export function AuthProvider({ children }) {
             'Session refresh failed — signing out:',
             refreshErr
           )
-
+          manualSignOutRef.current = true
           await supabase.auth.signOut({ scope: 'local' })
+          reportError(
+            { message: `Signed out: the session could not be renewed (${String(refreshErr?.message || refreshErr).slice(0, 160)})` },
+            '',
+            { always: true, signedOut: true }
+          )
           setSession(null)
           setProfile(null)
           setAuthError('')
@@ -317,6 +326,17 @@ export function AuthProvider({ children }) {
 
         setIsRecoveringPassword(false)
         setSession(sess)
+
+        if (event === 'SIGNED_OUT') {
+          if (!manualSignOutRef.current && profileRef.current?.id) {
+            reportError(
+              { message: 'Signed out: Supabase ended the session (the sign-in could not be renewed)' },
+              '',
+              { always: true, signedOut: true }
+            )
+          }
+          manualSignOutRef.current = false
+        }
 
         /*
          * event === 'INITIAL_SESSION' fires immediately on every single
@@ -589,6 +609,7 @@ export function AuthProvider({ children }) {
   // computer they had just signed in on — and they were thrown out there
   // too, again and again.
   const signOut = async () => {
+    manualSignOutRef.current = true
     await supabase.auth.signOut({ scope: 'local' })
     setSession(null)
     setProfile(null)

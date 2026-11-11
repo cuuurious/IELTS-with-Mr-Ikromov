@@ -1032,17 +1032,34 @@ Deno.serve(async (req) => {
       try {
         // Transcribe a few at a time.
         const transcripts = []
+        const transcribeErrors = []
         for (let i = 0; i < answers.length; i += 5) {
           const chunk = answers.slice(i, i + 5)
           const texts = await Promise.all(
             chunk.map((a) =>
-              transcribeAudio(openaiKey, a.url, `answer-${i}`).catch(() => '')
+              transcribeAudio(openaiKey, a.url, `answer-${i}`).catch((err) => {
+                // 2026-11-11: a failed transcription used to look exactly
+                // like silence ("No speech was heard"), even when the real
+                // cause was the OpenAI account running out of credits.
+                transcribeErrors.push(String(err?.message || err))
+                return ''
+              })
             )
           )
           chunk.forEach((a, j) => transcripts.push({ key: a.key, text: (texts[j] || '').trim() }))
         }
 
         if (!transcripts.some((t) => t.text)) {
+          const why = transcribeErrors.join(' | ')
+          if (/credit|quota|billing|insufficient/i.test(why)) {
+            throw new Error('AI marking is paused: the OpenAI account has no credits left. Mr Ikromov needs to top it up, then press Try again. (The recordings are fine.)')
+          }
+          if (/api key|incorrect api|unauthori[sz]ed|invalid_api_key/i.test(why)) {
+            throw new Error('AI marking is paused: the OpenAI key is not working. Mr Ikromov needs to check it. (The recordings are fine.)')
+          }
+          if (transcribeErrors.length >= transcripts.length && why) {
+            throw new Error(`The recordings could not be sent for marking: ${why.slice(0, 200)}`)
+          }
           throw new Error('No speech was heard in the recordings. Check the microphone and try again.')
         }
 

@@ -90,8 +90,32 @@ function reliableFetch(input, init = {}) {
  * end time is re-counted from this device's own clock (now + the
  * token's lifetime), so a wrong clock no longer matters.
  */
+// CONNECTION WATCH (2026-11-11): students said the site "logs out and
+// doesn't work for ~10 minutes", but the server saw nothing wrong — the
+// requests weren't reaching it. When requests to the database start
+// failing and later get through again, this tells the error reporter how
+// long the gap was, so the Errors page shows it.
+let downSince = 0
+
 async function clockSafeFetch(input, init) {
-  const res = await reliableFetch(input, init)
+  let res
+  try {
+    res = await reliableFetch(input, init)
+  } catch (err) {
+    if (err?.name !== 'AbortError' && !downSince) downSince = Date.now()
+    throw err
+  }
+  if (downSince) {
+    const seconds = Math.round((Date.now() - downSince) / 1000)
+    downSince = 0
+    if (seconds >= 20) {
+      try {
+        window.dispatchEvent(new CustomEvent('ielts-connection-restored', { detail: { seconds, online: navigator.onLine } }))
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   try {
     const url = typeof input === 'string' ? input : input?.url || ''
     if (!res.ok || !url.includes('/auth/v1/token')) return res

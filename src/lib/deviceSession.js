@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
+import { reportError } from './errorReporter'
 
 /*
  * ONE PHONE + ONE COMPUTER (2026-11-06, migration_109; since 2026-11-09,
@@ -75,6 +76,7 @@ export function useDeviceGuard(profile, signOut) {
       if (stopped || error || typeof data !== 'string' || !data.startsWith('other:')) return
       stopped = true
       const by = data.slice(6)
+      reportError({ message: `Signed out: phone + computer rule (taken over by ${by})` }, '', { always: true })
       try {
         window.localStorage.setItem(
           KICKED,
