@@ -682,8 +682,9 @@ export default function SpeakingTask({ task, studentId, onClose, onChanged, prev
                 </button>
               </section>
 
+              {/* Part 2 cue card: bg-[#ffffff], not bg-white, so it stays a white card in dark mode (2026-11-11) — the dark theme turns .bg-white dark and hid the dark text. */}
               {(step.type === 'cue' || (step.type === 'answer' && step.long) || (step.type === 'say' && partNow === 2 && steps[idx - 1]?.type === 'cue')) && c.part2?.cue && (
-                <section className="flex flex-col gap-3 rounded-[20px] border-2 border-paper/80 bg-white p-5 text-[#17213a]">
+                <section className="flex flex-col gap-3 rounded-[20px] border-2 border-paper/80 bg-[#ffffff] p-5 text-[#17213a]">
                   <p className="text-[18px] font-extrabold leading-snug">{c.part2.cue}</p>
                   <div>
                     <p className="text-[14px] font-bold">You should say:</p>
