@@ -570,7 +570,7 @@ function noteAnalyze(text,g,which){
   const t=text.trim(),items=[],praise=[];
   if(t.split(/\s+/).length<2)return {ok:false,items:[{kind:"structure",msg:"Write short notes, for example: ‘Germany: up · Chile: up · Iceland: down’.",why:"Notes help you plan before you write the sentence."}],praise:[],hard:1};
   if(which==="trend"){
-    const d=dset(t);
+    const d=dset(t);if(/\bup\b|\u2191/i.test(t))d.add("U");if(/\bdown\b|\u2193/i.test(t))d.add("D");
     if(!d.has("U")&&!d.has("D")&&!d.has("S"))items.push({kind:"structure",msg:"Say for each item: up, down or stable.",fix:"X: up · Y: down · Z: stable"});
     else praise.push("You noted the direction of the changes.");
     if(/\d/.test(t))items.push({kind:"facts",msg:"No figures, even in notes. Just up / down / stable.",why:"Train yourself to see the general trend."});

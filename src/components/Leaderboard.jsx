@@ -14,6 +14,14 @@ import Icon from './Icon'
 // used elsewhere in this file's categoryFor-style language.
 const WORDLIST_PASS_THRESHOLD = 70
 
+// 2026-11-11 (Mr Ikromov's choice): the ranking counts only the homework
+// and word lists given in the last 14 days. It used to count everything
+// ever given, so a group with old September word lists showed "8/14
+// tasks" and an 8% average for brand-new work. A word list given again
+// (completion_reset_at) counts from that date.
+const LEADERBOARD_DAYS = 14
+const leaderboardSince = () => new Date(Date.now() - LEADERBOARD_DAYS * 24 * 60 * 60 * 1000)
+
 export default function Leaderboard({
   groupId,
   highlightStudentId,
@@ -488,9 +496,11 @@ export default function Leaderboard({
        * ========================================================
        */
 
+      const since = leaderboardSince()
       let homeworkQuery = supabase
         .from('homeworks')
         .select('id, title, due_date, created_at, group_id')
+        .gte('created_at', since.toISOString())
 
       if (requestedGroup !== 'all') {
         homeworkQuery = homeworkQuery.eq(
@@ -597,10 +607,19 @@ export default function Leaderboard({
         (homework) => homework.id
       )
 
-      const { data: wordlistsRaw, error: wordlistsError } =
+      const { data: wordlistsAll, error: wordlistsError } =
         wordlistsResult
 
       if (wordlistsError) throw wordlistsError
+
+      // Only word lists given (or given again) in the last 14 days.
+      const wordlistsRaw = (wordlistsAll || []).filter((wordlist) => {
+        const given = Math.max(
+          new Date(wordlist.created_at || 0).getTime(),
+          new Date(wordlist.completion_reset_at || 0).getTime()
+        )
+        return given >= since.getTime()
+      })
 
       const wordlistGroupIds = (wordlist) =>
         (wordlist.wordlist_groups || []).map(
@@ -1307,7 +1326,7 @@ export default function Leaderboard({
             <div className="rounded-[20px] border border-line bg-panel px-5 pb-0 pt-5">
               <div className="mb-4 flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold text-paper">Top of the {groupId === 'all' ? 'school' : 'group'}</p>
-                <p className="text-xs text-mist">Most homework handed in</p>
+                <p className="text-xs text-mist">Most homework handed in · last 2 weeks</p>
               </div>
               <div className="mx-auto grid max-w-sm grid-cols-3 items-end gap-2">
                 {podium.map((student) => {
