@@ -86,6 +86,19 @@ export default function Login() {
           Forgot your password?
         </Link>
       </form>
+
+      {/* Entry test for people who are not students yet (2026-11-11):
+          no account needed; they type the code Mr Ikromov gives them. */}
+      <Link
+        to="/entry"
+        className="focus-ring mt-4 flex items-center justify-between gap-3 rounded-[14px] border border-line bg-panel-2 px-4 py-3 text-left hover:border-brass"
+      >
+        <span>
+          <span className="block text-[15px] font-extrabold text-paper">Not a student yet? Take the free entry test</span>
+          <span className="block text-[13px] font-semibold text-mist">Find your IELTS level in 35 minutes. No account needed — ask Mr Ikromov for the test code.</span>
+        </span>
+        <span className="text-[20px] font-extrabold text-brass" aria-hidden="true">→</span>
+      </Link>
     </AuthShell>
   )
 }
