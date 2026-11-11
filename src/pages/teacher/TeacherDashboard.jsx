@@ -27,6 +27,7 @@ const PendingApprovals = lazyWithReload(() => import('./PendingApprovals'))
 const PrivateChats = lazyWithReload(() => import('../../components/PrivateChats'))
 const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
 const TeacherLeaderboards = lazyWithReload(() => import('./TeacherLeaderboards'))
+const EntryTests = lazyWithReload(() => import('../../components/teacher/EntryTests'))
 const TeacherWordlists = lazyWithReload(() => import('./TeacherWordlists'))
 const AiGradingSettings = lazyWithReload(() => import('./AiGradingSettings'))
 const TeacherAccounts = lazyWithReload(() => import('./TeacherAccounts'))
@@ -194,6 +195,11 @@ export default function TeacherDashboard() {
       if (link === '/app') {
         setTab('groups')
       }
+
+      // Telegram / bell: "Entry test: <name> — band 5.5" (migration_124).
+      if (link === 'entry-tests') {
+        setTab('entry-tests')
+      }
     }
 
     window.addEventListener(
@@ -269,6 +275,8 @@ export default function TeacherDashboard() {
       title: 'More',
       items: [
         { key: 'students', label: 'Students', icon: IconStudents, subtitle: 'Student accounts, groups and targets.' },
+        // New people's level test on /entry, no account (2026-11-11).
+        { key: 'entry-tests', label: 'Entry tests', icon: IconStudents, subtitle: 'The level test new people take on /entry without an account: today’s code, results and who to call.' },
         { key: 'plans', label: 'Course Plans', icon: IconHomework, subtitle: 'Each course lesson by lesson: slides, class files and the homework that posts itself after class.' },
         { key: 'wordlists', label: 'Word Lists', icon: IconWordlist, subtitle: 'Vocabulary sets your students review and get tested on, by group.' },
         // All teaching files in one place — uploaded here or forwarded
@@ -455,6 +463,7 @@ export default function TeacherDashboard() {
       {tab === 'bank' && <PracticeBank />}
       {tab === 'review' && <ReviewQueue />}
       {tab === 'class' && <ClassScreen />}
+      {tab === 'entry-tests' && <EntryTests />}
 
       {tab === 'howto' && <HowToUseGuide />}
       </Suspense>

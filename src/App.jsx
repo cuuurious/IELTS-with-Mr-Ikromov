@@ -22,6 +22,7 @@ const ForgotPassword = lazyWithReload(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazyWithReload(() => import('./pages/ResetPassword'))
 const Register = lazyWithReload(() => import('./pages/Register'))
 const ParentReport = lazyWithReload(() => import('./pages/ParentReport'))
+const EntryTest = lazyWithReload(() => import('./pages/EntryTest'))
 
 function Gate() {
   const {
@@ -211,6 +212,12 @@ export default function App() {
           <Route
             path="/report/:token"
             element={<ParentReport />}
+          />
+
+          {/* Entry test for new students — public, no account (2026-11-11) */}
+          <Route
+            path="/entry"
+            element={<EntryTest />}
           />
 
           {/* Unknown routes */}
