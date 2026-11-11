@@ -3,14 +3,20 @@ import { supabase } from '../../lib/supabaseClient'
 import { WEEKDAYS, hhmm, lessonDay, lessonTime, slidesHref, tashkentDate } from '../../lib/courses'
 import AttendanceModal from './AttendanceModal'
 import LessonStatsModal from './LessonStatsModal'
+import LessonHomeworkModal from './LessonHomeworkModal'
 
 /*
  * A group's course (2026-11-02, migration_88): which course it follows,
  * lesson days and times, and the lesson timeline. Each lesson's homework
  * is posted by itself when the lesson ends; the teacher can post early,
  * move a lesson (holiday — later lessons shift) or switch auto-posting off.
+ *
+ * 2026-11-11: "Edit homework" on every lesson. Before it is posted it
+ * changes that lesson's homework for this group only (LessonHomeworkModal:
+ * title, text, tasks, extra files); after it is posted it opens the
+ * group page's normal Edit homework window (onEditHomework).
  */
-export default function GroupCoursePanel({ groupId, accent, onPosted }) {
+export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHomework }) {
   const [course, setCourse] = useState(undefined) // undefined loading, null none, false not set up
   const [plans, setPlans] = useState([])
   const [lessons, setLessons] = useState([])
@@ -23,6 +29,18 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
   const [marking, setMarking] = useState(null) // lesson being marked
   const [stats, setStats] = useState({}) // group_lesson_id -> group_lesson_stats row (migration_91)
   const [statsFor, setStatsFor] = useState(null) // lesson whose stats window is open
+  const [changing, setChanging] = useState(null) // planned lesson whose homework is being changed
+
+  const editPosted = async (l) => {
+    setBusy(`edit${l.id}`)
+    const { data, error: e } = await supabase.from('homeworks').select('*').eq('id', l.homework_id).maybeSingle()
+    setBusy('')
+    if (e || !data) {
+      setError(e?.message || 'That homework was deleted.')
+      return
+    }
+    onEditHomework?.(data)
+  }
 
   const load = async () => {
     const [c, p] = await Promise.all([
@@ -190,9 +208,19 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
                 </button>
               )}
               {l.status === 'posted' ? (
-                <span className="rounded-lg bg-reading-tint px-2 py-1 text-[12px] font-extrabold text-reading">{l.homework_id ? 'Homework posted' : 'Done'}</span>
+                l.homework_id && onEditHomework ? (
+                  <button type="button" disabled={busy} onClick={() => editPosted(l)} title="Change this homework or add files and tasks" className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[10px] bg-reading-tint px-2.5 text-[12px] font-extrabold text-reading hover:brightness-95 disabled:opacity-50">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                    {busy === `edit${l.id}` ? 'Opening…' : 'Posted · Edit'}
+                  </button>
+                ) : (
+                  <span className="rounded-lg bg-reading-tint px-2 py-1 text-[12px] font-extrabold text-reading">{l.homework_id ? 'Homework posted' : 'Done'}</span>
+                )
               ) : (
                 <span className="flex gap-1.5">
+                  <button type="button" onClick={() => setChanging(l)} title="Change this lesson's homework for this group, add tasks or files" className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold ${['homework_title', 'homework_text', 'tasks', 'extra'].some((k) => k in (l.override || {})) ? 'bg-vocab-tint text-vocab' : 'border border-line bg-panel text-paper hover:bg-panel-2'}`}>
+                    {['homework_title', 'homework_text', 'tasks', 'extra'].some((k) => k in (l.override || {})) ? 'Homework changed' : 'Edit homework'}
+                  </button>
                   {!past && (
                     <button type="button" disabled={busy} onClick={() => act(`move${l.id}`, () => supabase.rpc('postpone_group_lesson', { p_group_lesson_id: l.id }))} title="Holiday or no class: this and later lessons move to the next lesson day" className="focus-ring h-8 rounded-[10px] border border-line bg-panel px-2.5 text-[12px] font-extrabold text-paper hover:bg-panel-2 disabled:opacity-50">
                       {busy === `move${l.id}` ? '…' : 'No class'}
@@ -218,6 +246,9 @@ export default function GroupCoursePanel({ groupId, accent, onPosted }) {
           <span className="text-sm font-extrabold text-reading">Course finished. Next: {plans.find((p) => p.id === plan.next_plan_id)?.title}</span>
           <button type="button" onClick={() => setEditing({ suggest: plan.next_plan_id })} className="focus-ring h-9 rounded-[12px] bg-reading px-3 text-[13px] font-extrabold text-white">Start it</button>
         </div>
+      )}
+      {changing && (
+        <LessonHomeworkModal lesson={changing} planId={changing.plan_id} onClose={() => setChanging(null)} onSaved={load} />
       )}
       {statsFor && (
         <LessonStatsModal

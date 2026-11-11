@@ -1613,7 +1613,7 @@ export default function GroupWorkspace({ teacherId }) {
           {groupTab === 'course' && !groupDataLoading && activeGroup && <GroupTools groupId={activeGroup} groupName={groupDisplayName(groups.find((g) => g.id === activeGroup)?.name || '')} />}
 
           {groupTab === 'course' && !groupDataLoading && activeGroup && (
-            <GroupCoursePanel groupId={activeGroup} accent={getGroupAccent(activeGroup)} onPosted={() => loadGroupData()} />
+            <GroupCoursePanel groupId={activeGroup} accent={getGroupAccent(activeGroup)} onPosted={() => loadGroupData()} onEditHomework={setEditingHomework} />
           )}
 
           {groupTab === 'students' && !groupDataLoading && activeGroup && (
