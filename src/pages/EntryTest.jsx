@@ -11,7 +11,7 @@ import AuthShell, { AuthField, AuthNotice, authInputClass, authPrimaryButtonClas
  *    /entry?code=1234), name, phone, target band, exam date, how they
  *    heard about the center.
  * 2. Listening Part 2 (10 questions, the recording plays once).
- * 3. Reading Passage 2 of a full test (13 questions, 20 minutes; the
+ * 3. Reading Passage 1 of a full test (13 questions, 20 minutes; the
  *    other two passages and the workshops are hidden).
  * 4. Result: estimated band and level. The teacher gets a Telegram
  *    message and sees everything in the "Entry tests" tab.
@@ -23,7 +23,7 @@ import AuthShell, { AuthField, AuthNotice, authInputClass, authPrimaryButtonClas
 
 const STORE = 'ielts-entry-test'
 const READING_SECONDS = 20 * 60
-const RANGE = { listening: [11, 20], reading: [14, 26] }
+const RANGE = { listening: [11, 20], reading: [1, 13] }
 
 const HEARD = ['Instagram', 'Telegram', 'A friend or family', 'A current student', 'Google', 'Other']
 const TARGETS = ['5.0', '5.5', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0']
@@ -44,19 +44,29 @@ const saveState = (s) => {
   }
 }
 
-// Only Passage 2 is shown, its questions are the only ones counted, the
-// workshops are hidden and the timer starts at the time left.
+// 2026-11-12: Passage 1 (questions 1–13, the easiest passage) is shown,
+// its questions are the only ones counted, the workshops are hidden and
+// the timer starts at the time left. When the answers are handed in, the
+// result is sent to the site straight away and the page's own result
+// window (correct answers, "Start again") is never shown.
 const readingPatch = (secondsLeft) => `
-<style>.ngroup:not([data-i="1"]),.mtab.wk,.nprog,#wsOverlay,#partScores,#bandDisplay,.navpart:not(:nth-of-type(2)),.ai-locate-btn,#testTimer{display:none!important}</style>
+<style>.ngroup:not([data-i="0"]),.mtab.wk,.nprog,#wsOverlay,#partScores,#bandDisplay,.navpart:not(:nth-of-type(1)),.ai-locate-btn,#testTimer{display:none!important}#submissionModal{visibility:hidden!important}</style>
 <script>(function(){
-try{for(var i=QS.length-1;i>=0;i--){if(QS[i].part!==2)QS.splice(i,1)}
-secondsLeft=${Math.max(0, Math.round(secondsLeft))};showPart(1);renderTimer();updateAll();
+try{for(var i=QS.length-1;i>=0;i--){if(QS[i].part!==1)QS.splice(i,1)}if(typeof ALLQ!=='undefined'){for(var k=ALLQ.length-1;k>=0;k--){if(ALLQ[k]>13)ALLQ.splice(k,1)}}
+secondsLeft=${Math.max(0, Math.round(secondsLeft))};showPart(0);renderTimer();updateAll();
 var hc=document.querySelector('.header__candidate');if(hc)hc.textContent='Entry test · Reading';document.title='Entry test · Reading';}catch(e){console.error('entry patch',e)}
+var orig=showSubmissionModal;
+showSubmissionModal=function(){try{orig()}catch(_){}try{var r=evaluate(),ok=0;for(var j=0;j<r.length;j++){if(r[j].ok)ok++}window.reportScore(ok,r.length)}catch(_){}};
 window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-entry-submit'){try{showSubmissionModal()}catch(_){}}});
 })();</script>`
 
+// Listening: no result window with the answers and no "Retake" — the
+// result goes to the site straight away and the next part opens.
 const listeningPatch = `
-<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-entry-submit'){try{if(!submitted)doSubmit()}catch(_){}}});</script>`
+<script>(function(){
+try{showResults=function(){var d=window._det||[],ok=0,all=0;for(var i=0;i<d.length;i++){if(d[i][3]!==null&&d[i][3]!==undefined){all++;if(d[i][3]===true)ok++}}try{window.reportScore(ok,all)}catch(_){}}}catch(e){console.error('entry patch',e)}
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-entry-submit'){try{if(!submitted)doSubmit()}catch(_){}}});
+})();</script>`
 
 const addPatch = (html, patch) => (/<\/body>/i.test(html) ? html.replace(/<\/body>(?![\s\S]*<\/body>)/i, `${patch}</body>`) : html + patch)
 
@@ -188,7 +198,7 @@ function SectionFrame({ state, section, onDone }) {
           <p className="truncate text-[12px] font-semibold text-mist">
             {section === 'listening'
               ? 'Press play once — the recording is not repeated. Press Submit when it ends.'
-              : 'Read the passage and answer questions 14–26.'}
+              : 'Read the passage and answer questions 1–13.'}
           </p>
         </div>
         {left != null && (

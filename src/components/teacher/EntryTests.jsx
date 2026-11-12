@@ -17,7 +17,7 @@ const testName = (url = '') => {
   const m = /listening\/part-2\/test-(\d+)/.exec(url)
   if (m) return `Listening Part 2 · Test ${m[1]}`
   const r = /reading-full\/test-(\d+)/.exec(url)
-  return r ? `Reading Test ${Number(r[1])} · Passage 2` : url
+  return r ? `Reading Test ${Number(r[1])} · Passage 1` : url
 }
 
 function Wrong({ qs }) {
@@ -114,8 +114,21 @@ export default function EntryTests() {
     setCode(s?.code || '')
     setRows(data || [])
   }
+  // 2026-11-12: results appear by themselves — the list checks again
+  // every 15 seconds while this tab is open (and when you come back to it).
   useEffect(() => {
     load()
+    const tick = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    const timer = setInterval(tick, 15000)
+    document.addEventListener('visibilitychange', tick)
+    window.addEventListener('focus', tick)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', tick)
+      window.removeEventListener('focus', tick)
+    }
   }, [])
 
   const newCode = async () => {
