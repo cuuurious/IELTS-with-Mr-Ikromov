@@ -271,6 +271,13 @@ export async function loadQuestionGroups(supabase, sectionIds) {
   }
 }
 
+// A "choose TWO/THREE" question covers two or three numbers (21–23).
+function lastNumber(qs, questionIndexById) {
+  const last = qs[qs.length - 1]
+  const extra = last.type === 'multi_select' ? Math.max(1, Number(last.points) || 1) - 1 : 0
+  return questionIndexById[last.id] + extra
+}
+
 /**
  * Split a section's questions into display groups.
  * Returns [{ key, questions, from, to, title, instruction, family,
@@ -368,7 +375,7 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
         questions: qs,
         family: run.family,
         from: questionIndexById[qs[0].id],
-        to: questionIndexById[qs[qs.length - 1].id],
+        to: lastNumber(qs, questionIndexById),
         title: g.title || run.title,
         // The stored instruction already says what a shared stem would
         // ("Which paragraph contains…"), so don't print it twice.
@@ -407,7 +414,7 @@ export function buildQuestionGroups(questions, questionIndexById, { groups = [],
       questions: qs,
       family: run.family,
       from: questionIndexById[qs[0].id],
-      to: questionIndexById[qs[qs.length - 1].id],
+      to: lastNumber(qs, questionIndexById),
       title: run.title,
       instruction: allText,
       prompts,

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { fetchAll } from '../../lib/fetchAll'
 import { safeFileName } from '../../lib/storageKey'
+import MockFromFiles from '../../components/teacher/MockFromFiles'
 import { formatTargetBand } from '../../lib/targetBands'
 import { estimateBandFromPercent, roundOverallBand, formatBand } from '../../lib/ieltsBands'
 import { downloadScoreReport } from '../../lib/generateScoreReport'
@@ -830,6 +831,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
    */
   const [fullMockSets, setFullMockSets] = useState([])
   const [fullMockModal, setFullMockModal] = useState(null) // { mode: 'create' } | { mode: 'edit', set }
+  const [fromFilesOpen, setFromFilesOpen] = useState(false) // 2026-11-16: new full mock from HTML pages
   const [fullMockModalSaving, setFullMockModalSaving] = useState(false)
   const [fullMockModalError, setFullMockModalError] = useState('')
 
@@ -6095,19 +6097,27 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 <div className="flex flex-col gap-5">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm text-mist max-w-lg">
-                      What students actually sit: one Listening exam, one Reading exam and one
-                      Writing exam bundled together, taken in that order with an instructions +
-                      confirm screen between each — same shape as the real test. Build the
-                      individual Listening/Reading/Writing exams first (the tabs to the left),
-                      then bundle them here.
+                      What students actually sit: Listening, Reading and Writing in that order,
+                      like the real test. The quickest way: <b className="text-paper">New full mock from files</b> —
+                      drop your Listening and Reading test pages and the Writing tasks, and the
+                      site builds everything in one go.
                     </p>
-                    <button
-                      type="button"
-                      onClick={openCreateFullMock}
-                      className="focus-ring shrink-0 rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors"
-                    >
-                      + Add full mock
-                    </button>
+                    <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFromFilesOpen(true)}
+                        className="focus-ring rounded-[14px] bg-saffron px-4 py-2.5 text-sm font-extrabold text-[#17213a] shadow-sm"
+                      >
+                        New full mock from files
+                      </button>
+                      <button
+                        type="button"
+                        onClick={openCreateFullMock}
+                        className="focus-ring rounded-[14px] border border-line px-4 py-2.5 text-sm font-semibold text-paper hover:border-brass"
+                      >
+                        Join exams already on the site
+                      </button>
+                    </div>
                   </div>
 
                   {fullMockSets.length === 0 ? (
@@ -6246,6 +6256,22 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
           error={readingWizardError}
           onCancel={() => setReadingWizard(null)}
           onSave={saveReadingWizard}
+        />
+      )}
+
+      {fromFilesOpen && (
+        <MockFromFiles
+          profileId={profile.id}
+          defaultTitle={`Full Mock ${fullMockSets.length + 1}`}
+          listeningExams={rlExams.filter((e) => e.module === 'listening' && bankOf(e) === 'mock')}
+          readingExams={rlExams.filter((e) => e.module === 'reading' && bankOf(e) === 'mock')}
+          writingExams={writingExams}
+          onClose={() => setFromFilesOpen(false)}
+          onDone={() => {
+            reloadRlExams()
+            reloadWritingExams()
+            reloadFullMockSets()
+          }}
         />
       )}
 
