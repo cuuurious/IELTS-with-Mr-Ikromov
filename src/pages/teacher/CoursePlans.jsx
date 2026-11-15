@@ -8,6 +8,7 @@ import { SkillIcon } from '../../components/SkillArt'
 import { uploadMaterial } from '../../lib/materials'
 import { TASK_KINDS, taskMeta } from '../../lib/homeworkTasks'
 import { slidesHref } from '../../lib/courses'
+import { LessonPageEditor, LessonPageView, pageHasContent } from '../../components/lessons/LessonPage'
 
 /*
  * COURSE PLANS (2026-11-02, migration_88).
@@ -231,6 +232,7 @@ function PlanEditor({ plan: initial, plans, onBack }) {
                   planTitle={plan.title}
                   onClose={() => setOpenId(null)}
                   onSaved={(row) => setLessons((prev) => prev.map((x) => (x.id === row.id ? row : x)))}
+                  onPageSaved={(page) => setLessons((prev) => prev.map((x) => (x.id === l.id ? { ...x, page } : x)))}
                   onRemove={() => removeLesson(l)}
                 />
               ) : (
@@ -267,6 +269,7 @@ function LessonRow({ lesson: l, onOpen }) {
         {!empty && l.goal && <span className="block truncate text-[13px] font-semibold text-mist">{l.goal}</span>}
       </span>
       <span className="hidden shrink-0 flex-wrap gap-1.5 text-[11px] font-extrabold sm:flex">
+        {pageHasContent(l.page) && <span className="rounded-lg bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] px-2 py-0.5 text-brass">Lesson page</span>}
         {l.slides_url && <span className="rounded-lg bg-speaking-tint px-2 py-0.5 text-speaking">Slides</span>}
         {(l.materials || []).length > 0 && <span className="rounded-lg bg-panel-2 px-2 py-0.5 text-paper-dim">{l.materials.length} class file{l.materials.length === 1 ? '' : 's'}</span>}
         {tasks.map((t, i) => {
@@ -280,8 +283,10 @@ function LessonRow({ lesson: l, onOpen }) {
   )
 }
 
-function LessonEditor({ lesson, planTitle, onClose, onSaved, onRemove }) {
+function LessonEditor({ lesson, planTitle, onClose, onSaved, onPageSaved, onRemove }) {
   const { profile } = useAuth()
+  const [pageMode, setPageMode] = useState(null) // 'edit' | 'show'
+  const blocks = Array.isArray(lesson.page) ? lesson.page.length : 0
   const [f, setF] = useState({
     title: lesson.title || '',
     goal: lesson.goal || '',
@@ -342,6 +347,31 @@ function LessonEditor({ lesson, planTitle, onClose, onSaved, onRemove }) {
         <input value={f.title} onChange={(e) => set({ title: e.target.value })} placeholder={`Lesson ${lesson.number} title (e.g. Reading: True / False / Not Given)`} className={`${input} font-brand text-[16px]`} />
       </div>
       <textarea value={f.goal} onChange={(e) => set({ goal: e.target.value })} rows={2} placeholder="Goal: what students can do after this lesson" className={input} />
+
+      {/* Lesson page (2026-11-15, migration_128) */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[16px] border border-brass/30 bg-[color-mix(in_srgb,var(--color-brass)_7%,var(--color-panel))] p-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-extrabold text-brass">Lesson page</p>
+          <p className="text-[12px] font-semibold text-paper-dim">
+            {blocks ? `${blocks} block${blocks === 1 ? '' : 's'}. ` : 'Empty. '}
+            Your own page for this lesson: drag in files, paste text and pictures, or add from the Library. Show it on the board; students of the group can open it after the lesson starts.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {blocks > 0 && (
+            <button type="button" onClick={() => setPageMode('show')} className="focus-ring h-10 rounded-[14px] border border-line bg-panel px-3.5 text-[13px] font-extrabold text-paper">Show</button>
+          )}
+          <button type="button" onClick={() => setPageMode('edit')} className="focus-ring h-10 rounded-[14px] bg-brass px-3.5 text-[13px] font-extrabold text-onbrass">
+            {blocks ? 'Edit page' : 'Build the page'}
+          </button>
+        </div>
+      </div>
+      {pageMode === 'edit' && (
+        <LessonPageEditor lesson={{ ...lesson, title: f.title || lesson.title }} planTitle={planTitle} onClose={() => setPageMode(null)} onSaved={onPageSaved} />
+      )}
+      {pageMode === 'show' && (
+        <LessonPageView title={f.title || lesson.title || `Lesson ${lesson.number}`} subtitle={`${planTitle} · Lesson ${lesson.number}`} page={lesson.page} onClose={() => setPageMode(null)} onEdit={() => setPageMode('edit')} />
+      )}
 
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Slides */}

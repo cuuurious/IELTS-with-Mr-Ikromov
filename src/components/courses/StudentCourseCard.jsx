@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { lessonDay, lessonTime, slidesHref } from '../../lib/courses'
+import { LessonPageLoader } from '../lessons/LessonPage'
 
 /*
  * "My course" for students (2026-11-02, migration_88): where the group is
@@ -11,6 +12,7 @@ export default function StudentCourseCard({ groupId }) {
   const [rows, setRows] = useState(null)
   const [open, setOpen] = useState(false)
   const [missed, setMissed] = useState({}) // lesson number -> 'absent' | 'late' | …
+  const [reading, setReading] = useState(null) // lesson whose page is open (migration_128)
 
   useEffect(() => {
     if (!groupId) return undefined
@@ -66,7 +68,7 @@ export default function StudentCourseCard({ groupId }) {
       {had.length > 0 && (
         <div className="flex flex-col gap-2 p-4">
           <p className="text-[13px] font-extrabold text-paper-dim">
-            {missedCount ? `You missed ${missedCount} lesson${missedCount === 1 ? '' : 's'} — study the slides.` : 'Missed a lesson? Study the slides.'}
+            {missedCount ? `You missed ${missedCount} lesson${missedCount === 1 ? '' : 's'} — study the lesson and slides.` : 'Missed a lesson? Open the lesson and its slides.'}
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {recent.map((r) => (
@@ -79,12 +81,17 @@ export default function StudentCourseCard({ groupId }) {
                     {missed[r.number] === 'absent' && <span className="ml-1.5 rounded-md bg-urgent-tint px-1.5 py-0.5 text-[11px] font-extrabold text-coral">Missed</span>}
                   </span>
                 </span>
+                {r.has_page && r.plan_id && (
+                  <button type="button" onClick={() => setReading(r)} className="focus-ring shrink-0 rounded-[12px] bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] px-3 py-1.5 text-[13px] font-extrabold text-brass">
+                    Lesson
+                  </button>
+                )}
                 {r.slides_url ? (
                   <a href={slidesHref(r.slides_url, r.slides_name)} target="_blank" rel="noreferrer" className="focus-ring shrink-0 rounded-[12px] bg-speaking-tint px-3 py-1.5 text-[13px] font-extrabold text-speaking">
                     Slides
                   </a>
                 ) : (
-                  <span className="shrink-0 text-[12px] font-bold text-mist">No slides</span>
+                  !r.has_page && <span className="shrink-0 text-[12px] font-bold text-mist">No slides</span>
                 )}
               </li>
             ))}
@@ -96,6 +103,7 @@ export default function StudentCourseCard({ groupId }) {
           )}
         </div>
       )}
+      {reading && <LessonPageLoader planId={reading.plan_id} number={reading.number} onClose={() => setReading(null)} />}
     </section>
   )
 }

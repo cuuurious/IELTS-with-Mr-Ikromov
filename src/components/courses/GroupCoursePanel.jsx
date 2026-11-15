@@ -4,6 +4,7 @@ import { WEEKDAYS, hhmm, lessonDay, lessonTime, slidesHref, tashkentDate } from 
 import AttendanceModal from './AttendanceModal'
 import LessonStatsModal from './LessonStatsModal'
 import LessonHomeworkModal from './LessonHomeworkModal'
+import { LessonPageEditor, LessonPageView, pageHasContent } from '../lessons/LessonPage'
 
 /*
  * A group's course (2026-11-02, migration_88): which course it follows,
@@ -30,6 +31,7 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
   const [stats, setStats] = useState({}) // group_lesson_id -> group_lesson_stats row (migration_91)
   const [statsFor, setStatsFor] = useState(null) // lesson whose stats window is open
   const [changing, setChanging] = useState(null) // planned lesson whose homework is being changed
+  const [pageFor, setPageFor] = useState(null) // { number, mode: 'show' | 'edit' } lesson page (migration_128)
 
   const editPosted = async (l) => {
     setBusy(`edit${l.id}`)
@@ -56,7 +58,7 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
     if (c.data) {
       const [l, t] = await Promise.all([
         supabase.from('group_lessons').select('*').eq('group_id', groupId).eq('plan_id', c.data.plan_id).order('number'),
-        supabase.from('plan_lessons').select('number, title, slides_url, slides_name, materials').eq('plan_id', c.data.plan_id),
+        supabase.from('plan_lessons').select('*').eq('plan_id', c.data.plan_id),
       ])
       setLessons(l.data || [])
       setTitles(Object.fromEntries((t.data || []).map((r) => [r.number, r])))
@@ -161,6 +163,11 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
             return (
               <span key={l.id} className="flex flex-wrap items-center gap-2 text-sm font-bold text-paper">
                 Lesson {l.number}: {t.title || 'not written yet'} · {hhmm(l.starts_at)}
+                {t.id && (
+                  <button type="button" onClick={() => setPageFor({ number: l.number, mode: pageHasContent(t.page) ? 'show' : 'edit' })} className="focus-ring rounded-lg bg-brass px-2 py-0.5 text-[12px] font-extrabold text-onbrass">
+                    {pageHasContent(t.page) ? 'Show lesson page' : 'Build lesson page'}
+                  </button>
+                )}
                 {t.slides_url && <a href={slidesHref(t.slides_url, t.slides_name)} target="_blank" rel="noreferrer" className="rounded-lg bg-speaking-tint px-2 py-0.5 text-[12px] font-extrabold text-speaking">Slides</a>}
                 {(t.materials || []).map((m, i) => (
                   <a key={i} href={slidesHref(m.url, m.name)} target="_blank" rel="noreferrer" className="rounded-lg bg-panel px-2 py-0.5 text-[12px] font-extrabold text-brass">{m.name}</a>
@@ -185,6 +192,16 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
               <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl font-brand text-[14px] font-semibold ${l.status === 'posted' ? 'bg-reading text-white' : isNext ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>{l.number}</span>
               <span className="w-36 shrink-0 whitespace-nowrap text-[13px] font-bold text-mist">{lessonDay(l.starts_at)} · {hhmm(l.starts_at)}</span>
               <span className={`min-w-0 flex-1 truncate text-sm font-extrabold ${t.title ? 'text-paper' : 'text-mist'}`}>{t.title || 'Not written yet'}</span>
+              {t.id && (
+                <button
+                  type="button"
+                  onClick={() => setPageFor({ number: l.number, mode: pageHasContent(t.page) ? 'show' : 'edit' })}
+                  title={pageHasContent(t.page) ? 'Show this lesson’s page on the board' : 'Build this lesson’s page'}
+                  className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold ${pageHasContent(t.page) ? 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))] text-brass' : 'border border-dashed border-line text-mist hover:text-paper'}`}
+                >
+                  {pageHasContent(t.page) ? 'Lesson page' : '+ Page'}
+                </button>
+              )}
               {started && stats[l.id] && (
                 <button
                   type="button"
@@ -246,6 +263,23 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
           <span className="text-sm font-extrabold text-reading">Course finished. Next: {plans.find((p) => p.id === plan.next_plan_id)?.title}</span>
           <button type="button" onClick={() => setEditing({ suggest: plan.next_plan_id })} className="focus-ring h-9 rounded-[12px] bg-reading px-3 text-[13px] font-extrabold text-white">Start it</button>
         </div>
+      )}
+      {pageFor && titles[pageFor.number] && pageFor.mode === 'show' && (
+        <LessonPageView
+          title={titles[pageFor.number].title || `Lesson ${pageFor.number}`}
+          subtitle={`${plan?.title || 'Course'} · Lesson ${pageFor.number}`}
+          page={titles[pageFor.number].page}
+          onClose={() => setPageFor(null)}
+          onEdit={() => setPageFor({ ...pageFor, mode: 'edit' })}
+        />
+      )}
+      {pageFor && titles[pageFor.number] && pageFor.mode === 'edit' && (
+        <LessonPageEditor
+          lesson={titles[pageFor.number]}
+          planTitle={plan?.title}
+          onClose={() => setPageFor(null)}
+          onSaved={(page) => setTitles((prev) => ({ ...prev, [pageFor.number]: { ...prev[pageFor.number], page } }))}
+        />
       )}
       {changing && (
         <LessonHomeworkModal lesson={changing} planId={changing.plan_id} onClose={() => setChanging(null)} onSaved={load} />
