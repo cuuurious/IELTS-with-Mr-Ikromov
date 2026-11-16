@@ -584,6 +584,7 @@ export function ExamTaker({
   }, [sections])
 
   const jumpToQuestion = (questionId) => {
+    setMobilePane('questions')
     const idx = sectionIdxByQuestionId[questionId]
     if (idx !== undefined && idx !== activeSectionIdx) setActiveSectionIdx(idx)
     setCurrentQuestionId(questionId)
@@ -732,6 +733,10 @@ export function ExamTaker({
   // existed when the interval was created.
   // ------------------------------------------------------------------
   const [audioEndedBySection, setAudioEndedBySection] = useState({})
+  // One continuous recording (full mocks from a single file): its play state
+  // is shown on every Part. Phones show the Reading passage OR the questions.
+  const [audioStatus, setAudioStatus] = useState('ready')
+  const [mobilePane, setMobilePane] = useState('passage')
   const audioEndedBySectionRef = useRef(audioEndedBySection)
   useEffect(() => {
     audioEndedBySectionRef.current = audioEndedBySection
@@ -781,7 +786,7 @@ export function ExamTaker({
     // looking at the part that just ended; never yanks them off a part
     // they switched to on purpose.
     const idx = sections.findIndex((s) => s.id === sectionId)
-    if (idx !== -1 && idx === activeSectionIdx && idx + 1 < sections.length) {
+    if (idx !== -1 && idx === activeSectionIdx && idx + 1 < sections.length && sections.filter((x) => x.audio_url).length > 1) {
       setActiveSectionIdx(idx + 1)
       setCurrentQuestionId(null)
     }
@@ -1713,10 +1718,10 @@ export function ExamTaker({
           </div>
         )}
         <div className="flex min-h-14 items-center justify-between gap-3 pl-4 pr-2">
-          <div className="flex min-w-0 items-center gap-6">
-            <span className="shrink-0 select-none text-[20px] font-bold leading-none tracking-tight">Mr Ikromov</span>
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+            <span className="shrink-0 select-none text-[16px] font-bold leading-none tracking-tight sm:text-[20px]">Mr Ikromov</span>
             <div className="min-w-0 leading-tight">
-              <p className="truncate font-semibold">{exam.title}</p>
+              <p className="hidden truncate font-semibold sm:block">{exam.title}</p>
               <p
                 className={`flex items-center gap-1.5 text-[15px] tabular-nums ${timerClass}`}
                 style={{ color: timerColor }}
@@ -1735,7 +1740,7 @@ export function ExamTaker({
                   onClick={() => setChromePanel((p) => (p === 'signal' ? null : 'signal'))}
                   title="Connection"
                   aria-expanded={chromePanel === 'signal'}
-                  className={`focus-ring relative flex h-14 w-14 items-center justify-center hover:bg-black/5 ${chromePanel === 'signal' ? 'bg-black/5' : ''}`}
+                  className={`focus-ring relative flex h-12 w-10 items-center justify-center sm:h-14 sm:w-14 hover:bg-black/5 ${chromePanel === 'signal' ? 'bg-black/5' : ''}`}
                 >
                   <Icon name="wifi" className="h-6 w-6" />
                   {(!isOnline || saveFailing) && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
@@ -1762,7 +1767,7 @@ export function ExamTaker({
                   onClick={() => setChromePanel((p) => (p === 'bell' ? null : 'bell'))}
                   title="Notifications"
                   aria-expanded={chromePanel === 'bell'}
-                  className={`focus-ring relative flex h-14 w-14 items-center justify-center hover:bg-black/5 ${chromePanel === 'bell' ? 'bg-black/5' : ''}`}
+                  className={`focus-ring relative flex h-12 w-10 items-center justify-center sm:h-14 sm:w-14 hover:bg-black/5 ${chromePanel === 'bell' ? 'bg-black/5' : ''}`}
                 >
                   <Icon name="bell" className="h-6 w-6" />
                   {notices.length > noticesSeen && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#b23a22]" aria-hidden />}
@@ -1794,7 +1799,7 @@ export function ExamTaker({
                 onClick={() => setSettingsOpen((o) => !o)}
                 title="Settings"
                 aria-expanded={settingsOpen}
-                className={`focus-ring flex h-14 w-14 items-center justify-center hover:bg-black/5 ${settingsOpen ? 'bg-black/5' : ''}`}
+                className={`focus-ring flex h-12 w-10 items-center justify-center sm:h-14 sm:w-14 hover:bg-black/5 ${settingsOpen ? 'bg-black/5' : ''}`}
               >
                 <Icon name="menu" className="h-6 w-6" />
               </button>
@@ -1878,7 +1883,7 @@ export function ExamTaker({
               onClick={() => setNotesOpen((o) => !o)}
               title="Notes"
               aria-pressed={notesOpen}
-              className={`focus-ring flex h-14 w-14 items-center justify-center ${notesOpen ? 'bg-black/5' : 'hover:bg-black/5'}`}
+              className={`focus-ring flex h-12 w-10 items-center justify-center sm:h-14 sm:w-14 ${notesOpen ? 'bg-black/5' : 'hover:bg-black/5'}`}
             >
               <Icon name="notes" className="h-6 w-6" />
             </button>
@@ -2074,6 +2079,23 @@ export function ExamTaker({
               onFocusCapture={trackCurrentQuestion}
               onMouseDownCapture={trackCurrentQuestion}
             >
+              <div className="sticky top-0 z-10 flex gap-1 border-b border-black/10 bg-panel p-1.5 lg:hidden" role="tablist" aria-label="Passage or questions">
+                {[
+                  ['passage', 'Passage'],
+                  ['questions', 'Questions'],
+                ].map(([k, l]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    role="tab"
+                    aria-selected={mobilePane === k}
+                    onClick={() => setMobilePane(k)}
+                    className={`focus-ring flex-1 rounded-[6px] py-2 text-sm font-semibold ${mobilePane === k ? 'bg-[#418ec8] text-white' : 'text-paper'}`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
               <div
                 className="flex flex-col gap-5 lg:h-full lg:flex-row lg:gap-0"
                 style={{ '--split': `${splitPct}%` }}
@@ -2082,7 +2104,7 @@ export function ExamTaker({
                     below the exam bar and scrolling on its own (real exam
                     layout), title in bold at the top of it. Its width is
                     set by the ↔ handle between the panes. */}
-                <div className="px-4 pb-8 pt-4 lg:h-full lg:w-[var(--split)] lg:shrink-0 lg:overflow-y-auto lg:overscroll-contain">
+                <div className={`${mobilePane === 'passage' ? '' : 'hidden'} px-4 pb-8 pt-4 lg:block lg:h-full lg:w-[var(--split)] lg:shrink-0 lg:overflow-y-auto lg:overscroll-contain`}>
                   <p
                     className="mb-4 font-bold leading-tight"
                     style={{ fontSize: `${1.1 * activeFontScale}rem`, ...(sectionThemeStyle ? { color: activeTheme.text } : {}) }}
@@ -2149,7 +2171,7 @@ export function ExamTaker({
                     <Icon name="arrows-h" className="h-4 w-4" />
                   </span>
                 </div>
-                <div className="min-w-0 flex-1 px-4 pb-24 pt-4 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pl-[17px] lg:pr-2">
+                <div className={`${mobilePane === 'questions' ? '' : 'hidden'} min-w-0 flex-1 px-4 pb-24 pt-4 lg:block lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pl-[17px] lg:pr-2`}>
                   {questionsList}
                 </div>
               </div>
@@ -2181,9 +2203,13 @@ export function ExamTaker({
             )}
 
             {exam.module === 'listening' && section.audio_url && !untimed && (
-              <div className="mb-4">
+              <div
+                className={`mb-4 ${sections.filter((x) => x.audio_url).length === 1 ? 'sticky top-0 z-10 -mx-4 border-b border-black/10 px-4 py-2' : ''}`}
+                style={sections.filter((x) => x.audio_url).length === 1 ? { backgroundColor: activeTheme?.bg || 'var(--color-panel)' } : undefined}
+              >
                 <SectionAudioPlayer
                   url={section.audio_url}
+                  onStatus={setAudioStatus}
                   autoStart={(() => {
                     const prevAudio = sections.slice(0, sIdx).reverse().find((s) => s.audio_url)
                     return prevAudio ? Boolean(audioEndedBySection[prevAudio.id]) : false
@@ -2200,6 +2226,35 @@ export function ExamTaker({
               </div>
             )}
 
+            {/* One recording for the whole test: Parts without their own
+                recording still show where it is, so the student never
+                wonders whether it is playing. */}
+            {exam.module === 'listening' && !section.audio_url && !untimed && sections.filter((x) => x.audio_url).length === 1 && (
+              <div
+                className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b border-black/10 px-4 py-2 text-xs font-medium text-mist"
+                style={{ backgroundColor: activeTheme?.bg || 'var(--color-panel)' }}
+              >
+                {audioStatus === 'playing' && (
+                  <span>
+                    <span aria-hidden><Icon name="speaker" className="h-3.5 w-3.5" /></span> Audio is playing
+                  </span>
+                )}
+                {audioStatus === 'done' && <span>Audio has finished</span>}
+                {audioStatus === 'ready' && (
+                  <>
+                    <span>The recording has not started yet.</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSectionIdx(Math.max(0, sections.findIndex((x) => x.audio_url)))}
+                      className="focus-ring rounded-xl bg-brass px-3 py-1 text-xs font-bold text-onbrass"
+                    >
+                      Go to the recording
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
             {questionsList}
           </div>
         )
@@ -2208,7 +2263,7 @@ export function ExamTaker({
           {/* ← / → : previous / next question, across parts — the real
               exam's two square arrow buttons, bottom-right. */}
           {flatQuestions.length > 0 && (
-            <div className="pointer-events-none absolute bottom-2 right-4 z-10 flex gap-[3px]">
+            <div className="pointer-events-none absolute bottom-2 right-4 z-10 hidden gap-[3px] sm:flex">
               <button
                 type="button"
                 onClick={() => stepQuestion(-1)}
@@ -2447,7 +2502,7 @@ function PartNavigator({ sections, activeIdx, answers, flags, currentQuestionId,
 // "Played" state. The volume slider moved into the ☰ Settings panel
 // (see EXAM_THEMES block below) alongside the other display controls,
 // rather than sitting in this line the real exam doesn't show it in.
-function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused = false, autoStart = false, startAt = 0, onProgress }) {
+function SectionAudioPlayer({ url, onEnded, onStatus, alreadyEnded = false, volume, paused = false, autoStart = false, startAt = 0, onProgress }) {
   const audioRef = useRef(null)
   const seekedRef = useRef(false)
   const lastReportRef = useRef(-1)
@@ -2456,6 +2511,11 @@ function SectionAudioPlayer({ url, onEnded, alreadyEnded = false, volume, paused
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
+
+  useEffect(() => {
+    onStatus?.(status)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   // Teacher pause (migration_62) stops the recording where it is; resume
   // carries on from the same second — the only way this player is ever

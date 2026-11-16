@@ -16,6 +16,7 @@ import { estimateBandFromPercent, roundOverallBand, formatBand } from '../lib/ie
 import { downloadScoreReport } from '../lib/generateScoreReport'
 import ThemeToggle from './ThemeToggle'
 import FrozenAttemptReview from './FrozenAttemptReview'
+import { Explanation } from './MockExplanation'
 import WritingReviewModal from './writing/WritingReviewModal'
 import SpeakingComments from './SpeakingComments'
 import ResultCoach from './ResultCoach'
@@ -724,6 +725,7 @@ export default function MockTestCenter({ onExit }) {
                                           <span className="text-mist"> (also: {r.accepted_answers.join(', ')})</span>
                                         )}
                                       </p>
+                                      <Explanation en={r.explanation_en} uz={r.explanation_uz} ru={r.explanation_ru} />
                                     </div>
                                   ))}
                                 </div>

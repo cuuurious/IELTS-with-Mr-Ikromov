@@ -685,3 +685,5 @@ export async function saveImportedExam(supabase, { parsed, title, userId, audioF
 }
 
 export { uploadBlob, dataUrlToBlob }
+
+export { clean, line, inlineText, bodyLines, promptFromBody, gapKind, matchKind }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { cleanPrompt } from './exam/questionGroups'
+import { Explanation, Transcript } from './MockExplanation'
 
 /*
  * Frozen real-interface review of a graded attempt — one of the ~15
@@ -69,9 +70,10 @@ export default function FrozenAttemptReview({ attemptId, examTitle, onClose }) {
   rows.forEach((r) => {
     const key = r.section_title || '—'
     if (!sectionByTitle[key]) {
-      sectionByTitle[key] = { title: key, questions: [] }
+      sectionByTitle[key] = { title: key, questions: [], transcript: null }
       sections.push(sectionByTitle[key])
     }
+    if (r.section_transcript && !sectionByTitle[key].transcript) sectionByTitle[key].transcript = r.section_transcript
     sectionByTitle[key].questions.push(r)
   })
 
@@ -124,6 +126,7 @@ export default function FrozenAttemptReview({ attemptId, examTitle, onClose }) {
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brass font-mono">
                   {section.title}
                 </p>
+                <Transcript lines={section.transcript} />
 
                 {section.questions.map((q) => {
                   runningNumber += 1
@@ -163,6 +166,8 @@ export default function FrozenAttemptReview({ attemptId, examTitle, onClose }) {
                               <span className="text-sage">{q.correct_answer}</span>
                             </p>
                           )}
+
+                          <Explanation en={q.explanation_en} uz={q.explanation_uz} ru={q.explanation_ru} />
                         </div>
                       </div>
                     </div>

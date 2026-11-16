@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useFileDrop, DropOverlay } from '../../lib/useFileDrop'
+import FullMockFromFile from './FullMockFromFile'
 import { parseMockHtml, combineListeningParts, saveImportedExam, uploadBlob } from '../../lib/mockHtmlImport'
 
 /*
@@ -185,6 +186,7 @@ export default function MockFromFiles({ profileId, listeningExams = [], readingE
   const [error, setError] = useState('')
   const [active, setActive] = useState(true)
   const [done, setDone] = useState(false)
+  const [whole, setWhole] = useState(true) // one "Full Mock Test" file per mock (default)
 
   const readFiles = async (files, which) => {
     setError('')
@@ -297,6 +299,8 @@ export default function MockFromFiles({ profileId, listeningExams = [], readingE
     }
   }
 
+  if (whole) return <FullMockFromFile profileId={profileId} onClose={onClose} onDone={onDone} onBack={() => setWhole(false)} />
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="New full mock">
       <div className="flex max-h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-panel shadow-xl sm:rounded-[28px]">
@@ -315,6 +319,9 @@ export default function MockFromFiles({ profileId, listeningExams = [], readingE
         ) : (
           <>
             <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 sm:px-5">
+              <button type="button" onClick={() => setWhole(true)} className="focus-ring self-start text-[12px] font-extrabold text-brass">
+                ← Add whole “Full Mock Test” files instead
+              </button>
               <label className="block">
                 <span className="text-sm font-extrabold text-paper">Name of the full mock</span>
                 <input
