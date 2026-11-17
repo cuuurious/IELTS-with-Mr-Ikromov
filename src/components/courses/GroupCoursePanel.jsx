@@ -4,6 +4,7 @@ import { WEEKDAYS, hhmm, lessonDay, lessonTime, slidesHref, tashkentDate } from 
 import AttendanceModal from './AttendanceModal'
 import LessonStatsModal from './LessonStatsModal'
 import LessonHomeworkModal from './LessonHomeworkModal'
+import RepracticeCard from './RepracticeCard'
 import { LessonPageEditor, LessonPageView, pageHasContent } from '../lessons/LessonPage'
 
 /*
@@ -32,6 +33,7 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
   const [statsFor, setStatsFor] = useState(null) // lesson whose stats window is open
   const [changing, setChanging] = useState(null) // planned lesson whose homework is being changed
   const [pageFor, setPageFor] = useState(null) // { number, mode: 'show' | 'edit' } lesson page (migration_128)
+  const [asked, setAsked] = useState({}) // group_lesson_id -> names of students who asked for it (migration_132)
 
   const editPosted = async (l) => {
     setBusy(`edit${l.id}`)
@@ -61,6 +63,16 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
         supabase.from('plan_lessons').select('*').eq('plan_id', c.data.plan_id),
       ])
       setLessons(l.data || [])
+      // Students asking for a locked lesson (migration_132) — quiet before it is run.
+      const plannedIds = (l.data || []).filter((x) => x.status === 'planned').map((x) => x.id)
+      if (plannedIds.length) {
+        const { data: asks, error: asksError } = await supabase.from('lesson_requests').select('group_lesson_id, profiles(full_name)').in('group_lesson_id', plannedIds)
+        const map = {}
+        if (!asksError) (asks || []).forEach((r) => { (map[r.group_lesson_id] ||= []).push(r.profiles?.full_name || 'A student') })
+        setAsked(map)
+      } else {
+        setAsked({})
+      }
       setTitles(Object.fromEntries((t.data || []).map((r) => [r.number, r])))
       // Attendance counts (migration_89) — quietly empty before it is run.
       const startedIds = (l.data || []).filter((x) => new Date(x.starts_at).getTime() <= Date.now()).map((x) => x.id)
@@ -192,6 +204,11 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
               <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl font-brand text-[14px] font-semibold ${l.status === 'posted' ? 'bg-reading text-white' : isNext ? 'bg-brass text-onbrass' : 'bg-panel text-paper-dim'}`}>{l.number}</span>
               <span className="w-36 shrink-0 whitespace-nowrap text-[13px] font-bold text-mist">{lessonDay(l.starts_at)} · {hhmm(l.starts_at)}</span>
               <span className={`min-w-0 flex-1 truncate text-sm font-extrabold ${t.title ? 'text-paper' : 'text-mist'}`}>{t.title || 'Not written yet'}</span>
+              {l.status === 'planned' && asked[l.id]?.length > 0 && (
+                <span title={asked[l.id].join(', ')} className="rounded-lg bg-saffron/25 px-2 py-1 text-[12px] font-extrabold text-amber">
+                  {asked[l.id].length} asked
+                </span>
+              )}
               {t.id && (
                 <button
                   type="button"
@@ -243,9 +260,15 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
                       {busy === `move${l.id}` ? '…' : 'No class'}
                     </button>
                   )}
-                  {(isNext || past) && <button type="button" disabled={busy} onClick={() => act(`post${l.id}`, () => supabase.rpc('post_group_lesson', { p_group_lesson_id: l.id, p_force: false }))} className="focus-ring h-8 rounded-[10px] bg-brass px-2.5 text-[12px] font-extrabold text-onbrass disabled:opacity-50">
-                    {busy === `post${l.id}` ? 'Posting…' : 'Post homework now'}
-                  </button>}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => act(`post${l.id}`, () => supabase.rpc('post_group_lesson', { p_group_lesson_id: l.id, p_force: false }))}
+                    title="Unlock this lesson for the whole group: students see its homework and materials now"
+                    className={`focus-ring h-8 rounded-[10px] px-2.5 text-[12px] font-extrabold disabled:opacity-50 ${isNext || past ? 'bg-brass text-onbrass' : 'border border-brass/50 bg-panel text-brass hover:bg-panel-2'}`}
+                  >
+                    {busy === `post${l.id}` ? 'Opening…' : 'Open lesson now'}
+                  </button>
                 </span>
               )}
             </li>
@@ -258,6 +281,7 @@ export default function GroupCoursePanel({ groupId, accent, onPosted, onEditHome
           {showAll ? 'Show fewer' : `Show all ${lessons.length} lessons`}
         </button>
       )}
+      <RepracticeCard groupId={groupId} />
       {!next && lessons.length > 0 && plan?.next_plan_id && (
         <div className="mx-5 mb-4 flex flex-wrap items-center gap-3 rounded-[14px] bg-reading-tint px-4 py-3">
           <span className="text-sm font-extrabold text-reading">Course finished. Next: {plans.find((p) => p.id === plan.next_plan_id)?.title}</span>
