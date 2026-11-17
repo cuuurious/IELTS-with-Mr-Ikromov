@@ -19,32 +19,6 @@ import { SkillIcon } from './SkillArt'
  * of Take a Test, so the whole flow still feels like the real exam.
  */
 
-const GENERIC_TITLE = /^(part|section|passage|reading passage|listening part)\s*\d+\b|^part\s*\d+\s*questions/i
-
-function snippet(text, n = 90) {
-  const t = (text || '').replace(/\s+/g, ' ').trim()
-  return t.length > n ? `${t.slice(0, n).trimEnd()}…` : t
-}
-
-function SkillLine({ skill, label, children }) {
-  const tone = {
-    listening: 'bg-listening-tint text-listening',
-    reading: 'bg-reading-tint text-reading',
-    writing: 'bg-writing-tint text-writing',
-  }[skill]
-  return (
-    <div className="flex items-start gap-3">
-      <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tone}`} title={label}>
-        <SkillIcon skill={skill} className="h-4 w-4" />
-      </span>
-      <div className="min-w-0 flex-1 text-sm leading-relaxed text-slate-700">
-        <span className="font-semibold text-slate-900">{label}</span>
-        {children}
-      </div>
-    </div>
-  )
-}
-
 export default function MockLibrary({
   selfId,
   fullMockSets,
@@ -81,17 +55,10 @@ export default function MockLibrary({
       return
     }
     let cancelled = false
-    const objectiveIds = fullMockSets.flatMap((s) => [s.listening_exam_id, s.reading_exam_id]).filter(Boolean)
-    const writingIds = fullMockSets.map((s) => s.writing_exam_id).filter(Boolean)
-
     const load = async () => {
-      const [sectionsRes, writingRes, attemptsRes] = await Promise.all([
-        objectiveIds.length
-          ? supabase.from('mock_sections').select('exam_id, title, order_index').in('exam_id', objectiveIds)
-          : { data: [] },
-        writingIds.length
-          ? supabase.from('writing_mock_exams').select('id, task1_prompt, task2_prompt').in('id', writingIds)
-          : { data: [] },
+      // Students only see the mock's NAME here — never which passages,
+      // parts or Writing tasks are inside (Jasur, 2026-11-17).
+      const [attemptsRes] = await Promise.all([
         supabase
           .from('full_mock_attempts')
           .select('id, set_id, stage, started_at, completed_at, listening_attempt_id, reading_attempt_id, writing_attempt_id')
@@ -111,8 +78,8 @@ export default function MockLibrary({
       ])
       if (cancelled) return
       setDetails({
-        sections: sectionsRes.data || [],
-        writing: writingRes.data || [],
+        sections: [],
+        writing: [],
         attempts,
         objective: objectiveRes.data || [],
         writingResults: writingResultsRes.data || [],
@@ -153,16 +120,7 @@ export default function MockLibrary({
             writing: released(finished.writing_attempt_id, writingResultById, 'examiner_band'),
           }
         : null
-      const searchText = [
-        set.title,
-        ...reading.map((r) => r.title),
-        ...listening.map((l) => l.title),
-        writing?.task1_prompt,
-        writing?.task2_prompt,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
+      const searchText = String(set.title || '').toLowerCase()
       return { set, listening, reading, writing, finished, bands, inProgress: unfinishedSetIds.includes(set.id), searchText }
     })
   }, [details, fullMockSets, unfinishedSetIds])
@@ -189,7 +147,7 @@ export default function MockLibrary({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search a topic, e.g. Mars"
+          placeholder="Search by name"
           aria-label="Search mocks"
           className="h-10 w-full rounded-lg border border-slate-300 px-3.5 text-sm placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 sm:w-64"
         />
@@ -232,10 +190,8 @@ export default function MockLibrary({
         <p className="mt-5 text-sm text-slate-400">No mocks match that.</p>
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {visible.map(({ set, listening, reading, writing, finished, bands, inProgress }) => {
+          {visible.map(({ set, finished, bands, inProgress }) => {
             const status = statusForSet(set.id)
-            const topicPassages = reading.filter((r) => r.title && !GENERIC_TITLE.test(r.title.trim()))
-            const topicParts = listening.filter((l) => l.title && !GENERIC_TITLE.test(l.title.trim()))
             return (
               <article key={set.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -254,39 +210,10 @@ export default function MockLibrary({
                   )}
                 </div>
 
-                <div className="flex flex-col gap-2.5">
-                  {set.listening_exam_id && (
-                    <SkillLine skill="listening" label="Listening">
-                      {' · '}
-                      {listening.length ? `${listening.length} ${listening.length === 1 ? 'part' : 'parts'}` : '4 parts'}
-                      {topicParts.length > 0 && `: ${topicParts.map((p) => p.title).join(', ')}`}
-                    </SkillLine>
-                  )}
-                  {set.reading_exam_id && (
-                    <SkillLine skill="reading" label="Reading">
-                      {topicPassages.length ? (
-                        <ol className="mt-0.5 list-inside list-decimal text-slate-700">
-                          {topicPassages.map((p) => (
-                            <li key={p.title} className="truncate">{p.title}</li>
-                          ))}
-                        </ol>
-                      ) : (
-                        ` · ${reading.length || 3} passages`
-                      )}
-                    </SkillLine>
-                  )}
-                  {set.writing_exam_id && (
-                    <SkillLine skill="writing" label="Writing">
-                      {writing ? (
-                        <span className="mt-0.5 block">
-                          {writing.task1_prompt && <span className="block truncate">Task 1: {snippet(writing.task1_prompt, 70)}</span>}
-                          {writing.task2_prompt && <span className="block truncate">Task 2: {snippet(writing.task2_prompt, 70)}</span>}
-                        </span>
-                      ) : (
-                        ' · Task 1 and Task 2'
-                      )}
-                    </SkillLine>
-                  )}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+                  {set.listening_exam_id && <span className="inline-flex items-center gap-1.5"><SkillIcon skill="listening" className="h-4 w-4" />Listening</span>}
+                  {set.reading_exam_id && <span className="inline-flex items-center gap-1.5"><SkillIcon skill="reading" className="h-4 w-4" />Reading</span>}
+                  {set.writing_exam_id && <span className="inline-flex items-center gap-1.5"><SkillIcon skill="writing" className="h-4 w-4" />Writing</span>}
                 </div>
 
                 {finished && (

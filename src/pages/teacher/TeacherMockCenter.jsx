@@ -3396,6 +3396,22 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
     setFullMockModal({ mode: 'create' })
   }
 
+  // Quick rename right in the Full Mocks list (2026-11-17).
+  const [renamingSetId, setRenamingSetId] = useState(null)
+  const [renameSetValue, setRenameSetValue] = useState('')
+  const saveSetRename = async (set) => {
+    const next = renameSetValue.trim()
+    setRenamingSetId(null)
+    if (!next || next === set.title) return
+    const { error } = await supabase.from('full_mock_sets').update({ title: next }).eq('id', set.id)
+    if (error) {
+      console.error('Could not rename full mock:', error)
+      window.alert('Could not rename: ' + error.message)
+      return
+    }
+    await reloadFullMockSets()
+  }
+
   const openEditFullMock = (set) => {
     setFullMockModalError('')
     setFullMockModal({ mode: 'edit', set })
@@ -6138,7 +6154,22 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                             className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-line last:border-b-0"
                           >
                             <div className="min-w-0">
-                              <p className="font-medium text-paper truncate">{set.title}</p>
+                              {renamingSetId === set.id ? (
+                                <input
+                                  autoFocus
+                                  value={renameSetValue}
+                                  onChange={(e) => setRenameSetValue(e.target.value)}
+                                  onBlur={() => saveSetRename(set)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') e.currentTarget.blur()
+                                    if (e.key === 'Escape') setRenamingSetId(null)
+                                  }}
+                                  className="focus-ring w-64 max-w-full rounded-xl border border-line bg-panel px-3 py-1.5 text-sm font-medium text-paper"
+                                  aria-label="Mock name"
+                                />
+                              ) : (
+                                <p className="font-medium text-paper truncate">{set.title}</p>
+                              )}
                               <p className="text-xs text-mist font-mono mt-0.5 truncate">
                                 Listening: {listeningExam?.title || '—'} · Reading:{' '}
                                 {readingExam?.title || '—'} · Writing: {writingExam?.title || '—'}
@@ -6157,6 +6188,18 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                                 title="Click to toggle whether students can see this"
                               >
                                 {set.is_active ? 'Published' : 'Draft'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setRenameSetValue(set.title || '')
+                                  setRenamingSetId(set.id)
+                                }}
+                                className="focus-ring text-xs font-semibold rounded-xl border border-line text-mist px-2.5 py-1 hover:border-brass/50 hover:text-brass transition-colors"
+                              >
+                                Rename
                               </button>
 
                               <button
