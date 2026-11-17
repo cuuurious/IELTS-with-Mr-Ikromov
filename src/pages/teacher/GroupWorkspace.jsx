@@ -18,6 +18,7 @@ import Icon from '../../components/Icon'
 import GroupHomeworkTable from '../../components/groups/GroupHomeworkTable'
 import GroupStudentsTab from '../../components/groups/GroupStudentsTab'
 import WeakSpotSuggest from '../../components/groups/WeakSpotSuggest'
+import TelegramGroupLink from '../../components/groups/TelegramGroupLink'
 
 export default function GroupWorkspace({ teacherId }) {
   const [groups, setGroups] = useState([])
@@ -1486,6 +1487,8 @@ export default function GroupWorkspace({ teacherId }) {
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">
+
+                    <TelegramGroupLink groupId={activeGroup} teacherId={teacherId} />
 
                     <button
                       type="button"
