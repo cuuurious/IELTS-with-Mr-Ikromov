@@ -374,6 +374,22 @@ export default function MockExams({ selfId }) {
 // time left (and auto-submit early or late). Returns serverNow - Date.now()
 // in ms (midpoint of the round trip), or 0 if server_now() isn't
 // reachable. Also used by WritingMockExam.jsx.
+// Like fetchServerClockOffset, but returns null when the server could not be
+// reached, so a caller can tell "clock is right" (0) from "not measured".
+export async function fetchServerClockOffsetStrict() {
+  try {
+    const sentAt = Date.now()
+    const { data, error } = await supabase.rpc('server_now')
+    const receivedAt = Date.now()
+    if (error || !data) return null
+    const serverMs = new Date(Array.isArray(data) ? data[0] : data).getTime()
+    if (!Number.isFinite(serverMs)) return null
+    return Math.round(serverMs - (sentAt + receivedAt) / 2)
+  } catch {
+    return null
+  }
+}
+
 export async function fetchServerClockOffset() {
   try {
     const sentAt = Date.now()

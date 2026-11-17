@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { MIN_WORDS, countWords, formatClock } from '../lib/writingMock'
 import { readSession, writeSession } from '../lib/sessionState'
-import { fetchServerClockOffset } from './MockExams'
+import { fetchServerClockOffsetStrict } from './MockExams'
 import Icon from './Icon'
 
 const AUTOSAVE_MS = 5000
@@ -274,20 +274,34 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
   const clockOffsetRef = useRef(0)
   const [clockReady, setClockReady] = useState(false)
   const serverNow = () => Date.now() + clockOffsetRef.current
+  // Measured again every 2 minutes, and retried until it works (2026-11-17):
+  // one failed measurement used to leave the whole test on the student's own
+  // clock, so a fast or slow device clock cut the time short or stretched it.
   useEffect(() => {
     let cancelled = false
-    fetchServerClockOffset().then((offset) => {
+    let timer = null
+    const measure = async (tries) => {
+      const offset = await fetchServerClockOffsetStrict()
       if (cancelled) return
-      clockOffsetRef.current = offset
-      setClockReady(true)
-    })
+      if (offset !== null) {
+        clockOffsetRef.current = offset
+        setClockReady(true)
+        timer = setTimeout(() => measure(0), 120_000)
+      } else {
+        timer = setTimeout(() => measure(tries + 1), tries < 3 ? 2000 : 10_000)
+      }
+    }
+    measure(0)
     return () => {
       cancelled = true
+      if (timer) clearTimeout(timer)
     }
   }, [])
 
+  // At least 1 second until the server clock is known, so a wrong device
+  // clock can't flash "time is up" and lock the essay box on start.
   const [remaining, setRemaining] = useState(() =>
-    Math.max(0, Math.round((deadlineMs - (pausedAt ?? Date.now())) / 1000))
+    Math.max(1, Math.round((deadlineMs - (pausedAt ?? Date.now())) / 1000))
   )
 
   const [submitting, setSubmitting] = useState(false)
@@ -343,7 +357,7 @@ export function WritingTaker({ exam, attempt, onDone, onMinimize }) {
 
     const tick = () => {
       const left = Math.max(0, Math.round((deadlineMs - serverNow()) / 1000))
-      setRemaining(left)
+      setRemaining(clockReady ? left : Math.max(1, left))
 
       // Don't auto-submit off the local clock before the server offset is
       // known (2026-10-06) — a fast laptop clock could end the test early.
