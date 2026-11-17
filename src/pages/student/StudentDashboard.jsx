@@ -1,4 +1,5 @@
 import StudentCourseCard from '../../components/courses/StudentCourseCard'
+import StudentLessonTimeline from '../../components/courses/StudentLessonTimeline'
 import {
   Suspense,
   useEffect,
@@ -173,6 +174,11 @@ export default function StudentDashboard() {
   // Homework page filter (2026-10-06): open work first, newest deadline
   // order; "Done" and "Missed" tucked behind their own chips.
   const [homeworkFilter, setHomeworkFilter] = useState('todo')
+  // "By lesson" view (2026-11-17, migration_131): on by default when the
+  // group follows a course; the plain list is one tap away.
+  const [lessonView, setLessonView] = useState(true)
+  const [lessonCount, setLessonCount] = useState(0)
+  const showLessons = lessonView && lessonCount > 0
   const homeworkStateById = useMemo(() => {
     const now = new Date()
     return Object.fromEntries(homeworks.map((h) => [h.id, homeworkState(h, submissions[h.id], now)]))
@@ -549,6 +555,7 @@ if (link.startsWith('homework:')) {
   }
 
   setTab('homework')
+  setLessonView(false)
 
   // Give React a moment to switch groups/tabs and load the
   // homework list, then scroll to and briefly highlight the
@@ -905,6 +912,7 @@ const messageId = linkParts[2] || null
             onOpenMockCenter={() => setMockCenterOpen(true)}
             onOpenHomework={(homeworkId) => {
               setTab('homework')
+              setLessonView(false)
               setHomeworkFilter('all')
               // Wait for the Homework tab to render, then bring the
               // card into view (HomeworkCard rows carry this id).
@@ -932,6 +940,44 @@ const messageId = linkParts[2] || null
             {/* Where the group is in its course + slides of past lessons (migration_88). */}
             {activeGroup && <StudentCourseCard groupId={activeGroup} />}
 
+            {activeGroup && lessonCount > 0 && (
+              <div className="inline-flex rounded-xl border border-line bg-panel p-1" role="tablist" aria-label="Homework view">
+                {[[true, 'By lesson'], [false, 'All homework']].map(([val, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    role="tab"
+                    aria-selected={lessonView === val}
+                    onClick={() => setLessonView(val)}
+                    className={`focus-ring rounded-[10px] px-3.5 py-1.5 text-sm font-extrabold transition-colors ${lessonView === val ? 'bg-brass text-onbrass' : 'text-paper-dim hover:text-paper'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {activeGroup && (
+              <StudentLessonTimeline
+                key={activeGroup}
+                groupId={activeGroup}
+                homeworks={homeworks}
+                stateById={homeworkStateById}
+                visible={showLessons}
+                onLoaded={setLessonCount}
+                renderHomework={(homework) => (
+                  <div id={`homework-${homework.id}`}>
+                    <HomeworkCard
+                      homework={homework}
+                      submission={submissions[homework.id]}
+                      studentId={profile.id}
+                      onChange={updateSubmission}
+                    />
+                  </div>
+                )}
+              />
+            )}
+
             {myGroups.length === 0 && (
               <div className="rounded-[20px] border border-dashed border-line bg-panel/80 px-6 py-12 sm:py-14 text-center">
                 <div className="mx-auto h-14 w-14 rounded-2xl border border-brass-dim/25 bg-brass/10 flex items-center justify-center text-brass text-2xl">
@@ -948,7 +994,7 @@ const messageId = linkParts[2] || null
               </div>
             )}
 
-            {myGroups.length > 0 && (
+            {myGroups.length > 0 && !showLessons && (
               <>
                 {/* Summary + filter (2026-10-06): what's left to do at a
                     glance, then only the cards that matter right now. */}
