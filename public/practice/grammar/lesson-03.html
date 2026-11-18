@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grammar Lesson 3 · Future Forms · MrIkromov's IELTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --lapis:#1e3f8f; --blue:#2456b0; --turq:#12a5a3; --saffron:#e6a33a; --saffron-d:#c98a22;
+  --ink:#1b2433; --muted:#5b6678; --bg:#f3f6fb; --card:#ffffff; --line:#dbe3f0;
+  --ok:#1f9d63; --okbg:#e6f6ee; --bad:#d64545; --badbg:#fdeaea; --shown:#2456b0; --shownbg:#e8effc;
+  --soft:#eef3fc; --soft2:#e9f8f7;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.6}
+h1,h2,h3,h4{font-family:"Unbounded","Nunito Sans",system-ui,sans-serif;line-height:1.2;margin:0}
+.wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+
+/* ---------- band ---------- */
+.band{background:linear-gradient(120deg,var(--lapis) 0%,var(--blue) 48%,var(--turq) 100%);color:#fff;border-radius:0 0 28px 28px;padding:26px 0 30px}
+.brand-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;font-size:14px;opacity:.95}
+.brand{font-family:"Unbounded",sans-serif;font-weight:600;background:rgba(255,255,255,.16);padding:6px 14px;border-radius:12px;letter-spacing:.2px}
+.crumb{background:rgba(255,255,255,.12);padding:6px 12px;border-radius:12px}
+.band h1{font-size:clamp(28px,5vw,44px);margin:22px 0 8px;font-weight:700}
+.sub{margin:0;max-width:720px;font-size:17px;opacity:.95}
+.band-meta{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.score{background:rgba(255,255,255,.15);border-radius:14px;padding:10px 16px;min-width:200px}
+.score span{font-size:12px;text-transform:uppercase;letter-spacing:.8px;opacity:.85;display:block}
+.score b{font-family:"Unbounded",sans-serif;font-size:20px}
+.score .bar{height:6px;background:rgba(255,255,255,.25);border-radius:6px;margin-top:6px;overflow:hidden}
+.score .bar i{display:block;height:100%;width:0;background:var(--saffron);border-radius:6px;transition:width .4s}
+
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-weight:700;border:0;border-radius:14px;padding:9px 18px;cursor:pointer;text-decoration:none;display:inline-block;transition:transform .08s,box-shadow .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-cta{background:var(--saffron);color:#2a1b00;padding:12px 24px;box-shadow:0 4px 14px rgba(230,163,58,.4)}
+.btn-cta:hover{background:#f0b04a}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--lapis)}
+.btn-ghost{background:var(--soft);color:var(--lapis)}
+.btn-ghost:hover{background:#dde8fa}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav .wrap{padding:0 20px}
+.nav .links{display:flex;gap:6px;overflow-x:auto;padding:8px 0 10px;scrollbar-width:thin}
+.nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-weight:700;font-size:14px;padding:6px 12px;border-radius:12px}
+.nav a:hover{background:var(--soft);color:var(--lapis)}
+.nav a.on{background:var(--blue);color:#fff}
+
+/* ---------- sections & cards ---------- */
+main{padding:30px 0 60px}
+section{margin:0 0 46px}
+section>h2{font-size:clamp(22px,3.4vw,30px);color:var(--lapis);margin-bottom:6px}
+.kicker{display:inline-block;background:var(--soft2);color:#0b6f6d;font-weight:800;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:12px;margin-bottom:10px}
+.lead{color:var(--muted);margin:6px 0 18px;max-width:780px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 24px;margin:16px 0;box-shadow:0 1px 2px rgba(20,40,90,.04)}
+.card h3{font-size:18px;color:var(--lapis);margin-bottom:12px}
+.card h4{font-size:15px;margin:16px 0 6px;color:var(--blue)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.two,.three{grid-template-columns:1fr}}
+.stripe-blue{border-top:5px solid var(--blue)} .stripe-turq{border-top:5px solid var(--turq)} .stripe-saf{border-top:5px solid var(--saffron)} .stripe-lap{border-top:5px solid var(--lapis)}
+
+/* ---------- tables ---------- */
+.tblwrap{overflow-x:auto;margin:10px 0}
+table.ft{border-collapse:separate;border-spacing:0;width:100%;font-size:15.5px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ft th{background:var(--soft);color:var(--lapis);text-align:left;padding:9px 12px;font-weight:800;border-bottom:1px solid var(--line)}
+.ft td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.ft tr:last-child td{border-bottom:0}
+.ft td:first-child{font-weight:700;color:var(--ink);background:#fafcff;white-space:nowrap}
+.ft b{color:var(--lapis)}
+td.num{text-align:right;font-weight:800;color:var(--lapis)}
+
+/* ---------- uses / examples ---------- */
+.use{display:flex;gap:14px;margin:14px 0;align-items:flex-start}
+.use .letter{flex:0 0 32px;height:32px;border-radius:12px;background:var(--blue);color:#fff;font-weight:800;display:grid;place-items:center;font-family:"Unbounded",sans-serif;font-size:14px}
+.use.t .letter{background:var(--turq)} .use.s .letter{background:var(--saffron);color:#2a1b00}
+.use p{margin:0 0 4px}
+.eg{margin:4px 0 0;padding:0;list-style:none}
+.eg li{padding:5px 12px;margin:4px 0;background:var(--soft);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;font-style:italic}
+.eg li small{font-style:normal;color:var(--muted)}
+.eg li b{font-style:normal;color:var(--lapis);background:#fff7e6;padding:0 3px;border-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{background:#fff7e6;border:1px solid #f1d9a8;color:#6b4a0a;border-radius:12px;padding:3px 12px;font-size:14.5px;font-weight:700}
+.chip.b{background:var(--soft);border-color:#c9d8f3;color:var(--lapis)}
+.chip.t{background:var(--soft2);border-color:#bfe6e4;color:#0b6f6d}
+
+/* ---------- notes ---------- */
+.note,.warn,.tip{border-radius:14px;padding:12px 16px;margin:14px 0;font-size:16px}
+.note{background:var(--shownbg);border:1px solid #c9d8f3}
+.warn{background:#fff6e5;border:1px solid #f1d9a8}
+.tip{background:var(--soft2);border:1px solid #bfe6e4}
+.note b.h,.warn b.h,.tip b.h{display:block;font-family:"Unbounded",sans-serif;font-size:12px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px}
+.note b.h{color:var(--lapis)} .warn b.h{color:#8a5a00} .tip b.h{color:#0b6f6d}
+details.card summary{cursor:pointer;font-weight:800;color:var(--lapis)}
+
+/* frequency scale */
+.scale{display:flex;border-radius:14px;overflow:hidden;margin:12px 0;font-size:14px;font-weight:800;text-align:center}
+.scale div{flex:1;padding:10px 4px;color:#fff}
+.scale small{display:block;font-weight:600;opacity:.9}
+.s1{background:#1e3f8f}.s2{background:#2456b0}.s3{background:#2f7fb8}.s4{background:#1f98ad}.s5{background:#12a5a3}.s6{background:#60b9a4}
+@media(max-width:560px){.scale{flex-wrap:wrap}.scale div{flex:1 0 33%}}
+
+/* compare table highlights */
+.cmp td:first-child{white-space:normal}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.pair{grid-template-columns:1fr}}
+.pair>div{background:var(--soft);border-radius:14px;padding:10px 14px}
+.pair h5{margin:0 0 4px;font-family:"Unbounded",sans-serif;font-size:13px;color:var(--lapis)}
+
+/* wrong / right */
+.mist{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;margin:8px 0}
+@media(max-width:700px){.mist{grid-template-columns:1fr}}
+.mist .x,.mist .v{padding:7px 12px;border-radius:10px;font-size:15.5px}
+.mist .x{background:var(--badbg);color:#8a1f1f;text-decoration:line-through;text-decoration-color:rgba(214,69,69,.6)}
+.mist .v{background:var(--okbg);color:#14663f}
+
+/* ---------- exercises ---------- */
+.ex-card{background:var(--card);border:2px solid #cfdcf5;border-radius:20px;padding:20px 22px;margin:22px 0}
+.ex-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.ex-num{background:var(--blue);color:#fff;font-weight:800;font-size:12px;letter-spacing:.6px;text-transform:uppercase;padding:5px 12px;border-radius:12px}
+.ex-title{font-size:17px;color:var(--lapis)}
+.ex-ins{margin:6px 0 12px;color:var(--muted);font-size:16px}
+.wordbox{background:#fff7e6;border:1px dashed #e0b866;border-radius:12px;padding:8px 14px;margin:0 0 12px;font-weight:700;color:#6b4a0a}
+.ex-list{display:grid;grid-template-columns:1fr;gap:4px}
+.ex-item{display:flex;gap:10px;padding:6px 8px;border-radius:12px;align-items:baseline;flex-wrap:wrap}
+.ex-item:nth-child(odd){background:#fafcff}
+.ex-no{flex:0 0 28px;color:var(--blue);font-weight:800;text-align:right}
+.ex-line{flex:1 1 280px;line-height:1.9}
+.ex-par .ex-item{display:block;line-height:2.2;padding:10px 14px;background:#fafcff}
+input.gap{font:inherit;border:0;border-bottom:2px solid #9db6e6;background:#f3f7ff;border-radius:8px 8px 0 0;padding:1px 8px;margin:0 3px;color:var(--lapis);font-weight:700;text-align:center;max-width:100%}
+input.gap:focus{outline:0;border-bottom-color:var(--blue);background:#e8f0ff}
+input.gap.ok,select.ok{background:var(--okbg);border-color:var(--ok);color:#14663f}
+input.gap.bad,select.bad{background:var(--badbg);border-color:var(--bad);color:#8a1f1f}
+input.gap.shown,select.shown{background:var(--shownbg);border-color:var(--shown);color:var(--lapis)}
+select.sel{font:inherit;font-weight:700;border:2px solid #cfdcf5;border-radius:12px;padding:2px 8px;background:#fff;color:var(--lapis);margin:0 3px;max-width:100%}
+.ch-q{display:flex;gap:10px;width:100%}
+.choice{display:block}
+.ch-opts{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px 38px}
+.ch-opt{display:flex;gap:8px;align-items:center;border:2px solid #dbe3f0;border-radius:12px;padding:6px 12px;cursor:pointer;background:#fff;font-size:16px}
+.ch-opt:hover{border-color:var(--blue)}
+.ch-opt input{accent-color:var(--blue)}
+.ch-letter{font-weight:800;color:var(--blue)}
+.ch-opt.ok{background:var(--okbg);border-color:var(--ok)} .ch-opt.bad{background:var(--badbg);border-color:var(--bad)} .ch-opt.shown{background:var(--shownbg);border-color:var(--shown)}
+.ch-expl{display:none;margin:4px 0 4px 38px;font-size:15px;color:var(--muted)}
+.ch-expl.on{display:block}
+.blank{color:var(--blue);font-weight:800}
+.ex-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.ex-result{font-family:"Unbounded",sans-serif;font-weight:700;color:var(--lapis);font-size:16px}
+.ex-result.perfect{color:var(--ok)}
+
+
+/* ---------- speaking / writing ---------- */
+.task{border-left:6px solid var(--turq);background:#fff;border-radius:0 20px 20px 0;padding:16px 22px;margin:16px 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task h3{font-size:16px;color:#0b6f6d;margin-bottom:8px}
+.task ul{margin:6px 0 6px 18px;padding:0}
+.task li{margin:3px 0}
+.pill{display:inline-block;background:var(--soft2);color:#0b6f6d;font-weight:800;font-size:12px;padding:2px 10px;border-radius:12px;margin-right:6px}
+textarea#writeBox{width:100%;min-height:210px;font:inherit;border:2px solid #cfdcf5;border-radius:14px;padding:14px;resize:vertical}
+textarea#writeBox:focus{outline:0;border-color:var(--blue)}
+.checklist{list-style:none;padding:0;margin:8px 0}
+.checklist li{padding:4px 0}
+.checklist input{accent-color:var(--turq);margin-right:8px}
+#wordCount{font-weight:800;color:var(--lapis)}
+
+/* ---------- summary ---------- */
+.summary{background:linear-gradient(120deg,var(--lapis),var(--blue) 55%,var(--turq));color:#fff;border-radius:28px;padding:26px 28px}
+.summary h2{color:#fff}
+.summary table{width:100%;border-collapse:collapse;margin-top:12px;background:rgba(255,255,255,.1);border-radius:14px;overflow:hidden}
+.summary td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.18)}
+.summary td.num{color:#ffe2a8}
+.summary .tot{font-family:"Unbounded",sans-serif;font-size:22px;margin-top:14px}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:30px 20px 50px}
+footer b{color:var(--lapis)}
+
+@media print{.nav,.band-meta,.ex-bar,.btn{display:none!important}body{background:#fff;font-size:14px}.card,.ex-card{break-inside:avoid;box-shadow:none}}
+
+
+/* =================== v2 ADDITIONS =================== */
+/* ---------- HUD in the sticky nav ---------- */
+.hud{display:flex;align-items:center;gap:10px;padding:8px 0 2px;flex-wrap:wrap}
+.hud-i{display:flex;align-items:center;gap:6px;background:var(--soft);border-radius:12px;padding:4px 12px;font-weight:800;color:var(--lapis);position:relative;font-size:15px}
+.hud-i b{font-family:"Unbounded",sans-serif;font-size:15px}
+.hud-i.hot{background:#fff0d6;color:#8a5a00;animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 0 rgba(230,163,58,.0)}to{box-shadow:0 0 0 4px rgba(230,163,58,.35)}}
+.hud-lv{flex:1 1 150px;min-width:140px;max-width:300px;font-size:13px;font-weight:800;color:var(--lapis)}
+.hud-lv .bar{height:7px;background:#dbe3f0;border-radius:7px;overflow:hidden;margin-top:3px}
+.hud-lv .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--turq),var(--saffron));border-radius:7px;transition:width .4s}
+.hud-snd{font:inherit;border:0;background:var(--soft);border-radius:12px;padding:4px 10px;cursor:pointer;font-size:16px;margin-left:auto}
+.hud-snd:hover{background:#dde8fa}
+.xp-pop{position:absolute;right:-6px;top:-6px;font-weight:800;color:var(--ok);font-size:15px;animation:pop .9s ease-out forwards;pointer-events:none}
+@keyframes pop{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-26px)}}
+
+/* confetti */
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti i{position:absolute;top:-20px;border-radius:2px;opacity:.95;animation:fall 2s linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(720deg);opacity:.9}}
+
+/* ---------- plain-words boxes, formulas, ask lines ---------- */
+.plain{display:flex;gap:12px;align-items:flex-start;background:#fff7e6;border:1px solid #f1d9a8;border-radius:16px;padding:12px 16px;margin:12px 0;font-size:16.5px}
+.plain .em{font-size:26px;line-height:1}
+.plain b.h{display:block;font-family:"Unbounded",sans-serif;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:#8a5a00;margin-bottom:2px}
+.ask{margin:2px 0 6px;font-size:15.5px;color:#0b6f6d;font-weight:700}
+.ask::before{content:"🤔 Ask yourself: ";font-weight:800}
+.fm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px}
+.fm .t{padding:8px 14px;border-radius:12px;font-weight:800;color:#fff;font-size:15.5px}
+.fm .p{font-weight:800;color:var(--muted);font-size:20px}
+.fm .t1{background:var(--lapis)} .fm .t2{background:var(--turq)} .fm .t3{background:var(--saffron);color:#2a1b00} .fm .t4{background:#7a8bb0}
+.fm small{flex-basis:100%;color:var(--muted);font-size:14px}
+.tl{margin:8px 0 4px;background:var(--soft);border-radius:16px;padding:6px 10px}
+.tl svg{width:100%;height:auto;display:block}
+.tl-l{font:800 11px "Unbounded",sans-serif;fill:#5b6678;letter-spacing:.6px}
+.tl-now{fill:#1e3f8f}
+.tl-t{font:700 13px "Nunito Sans",sans-serif;fill:#1b2433}
+.mnem{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.mnem>div{flex:1 1 200px;background:var(--soft2);border:1px solid #bfe6e4;border-radius:14px;padding:10px 14px;font-size:16px}
+.mnem b.h{display:block;font-family:"Unbounded",sans-serif;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:#0b6f6d;margin-bottom:2px}
+.slots{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0;font-weight:700}
+.slots span{padding:6px 12px;background:var(--soft);border-radius:12px;color:var(--lapis)}
+.slots .slot{background:#fff7e6;border:2px dashed #e0b866;color:#6b4a0a}
+.slots .lab{background:transparent;color:var(--muted);font-weight:600;font-size:14px;padding:0}
+
+/* ---------- time-machine tabs ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.tabs button{font:inherit;font-weight:800;border:2px solid #cfdcf5;background:#fff;color:var(--lapis);border-radius:14px;padding:8px 16px;cursor:pointer}
+.tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tabs button[data-tab=continuous].on{background:var(--turq);border-color:var(--turq)}
+.tabs button[data-tab=perfect].on{background:var(--saffron);border-color:var(--saffron);color:#2a1b00}
+.tabs button[data-tab=perfcont].on{background:var(--lapis);border-color:var(--lapis)}
+.pane{display:none;background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 22px;margin:10px 0 16px}
+.pane.on{display:block;animation:fadein .25s}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.pane h3{font-size:18px;color:var(--lapis);margin-bottom:6px}
+.pane .words{font-size:17.5px;margin:6px 0}
+
+/* ---------- helper ---------- */
+.helper{background:#fff;border:2px solid #cfdcf5;border-radius:20px;padding:18px 20px;margin:12px 0}
+.h-q{font-weight:800;font-size:18px;color:var(--lapis);margin-bottom:12px}
+.h-btns{display:flex;gap:10px}
+.h-res{border-radius:16px;padding:14px 18px;color:#fff;margin-bottom:10px}
+.h-res span{font-size:13px;opacity:.9}
+.h-res b{display:block;font-family:"Unbounded",sans-serif;font-size:20px;margin:2px 0 6px}
+.h-res p{margin:2px 0}
+.h-res .h-x{background:rgba(255,255,255,.18);border-radius:10px;padding:6px 10px;margin-top:8px}
+.h-res .h-x b{display:inline;font-size:inherit;font-family:inherit}
+.c-blue{background:var(--blue)} .c-turq{background:var(--turq)} .c-saf{background:var(--saffron);color:#2a1b00} .c-lap{background:var(--lapis)} .c-mute{background:#7a8bb0}
+.h-warn{font-size:15px;color:#8a5a00;background:#fff6e5;border-radius:12px;padding:8px 12px;margin:8px 0}
+
+/* ---------- game exercises ---------- */
+.ex-card.complete{border-color:var(--ok);box-shadow:0 0 0 3px rgba(31,157,99,.15)}
+.hintbox{display:none;background:#fff7e6;border:1px dashed #e0b866;border-radius:12px;padding:8px 14px;margin:0 0 12px;font-size:15.5px;color:#6b4a0a}
+.hintbox.on{display:block;animation:fadein .2s}
+.ex-result{font-size:15px}
+.ex-result.perfect{color:var(--ok)}
+.bank{display:flex;flex-wrap:wrap;gap:8px;background:#fff7e6;border:1px dashed #e0b866;border-radius:14px;padding:10px 12px;margin:0 0 12px}
+.bank-chip{font:inherit;font-weight:800;border:0;background:#fff;color:#6b4a0a;border-radius:12px;padding:5px 14px;cursor:pointer;box-shadow:0 1px 0 #e0b866;border:1px solid #f1d9a8}
+.bank-chip:hover{background:#ffeec9}
+.bank-chip:active{transform:translateY(1px)}
+input.gap.nudge,.nudge{animation:nudge .5s}
+@keyframes nudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pickgrp{display:inline-flex;gap:6px;flex-wrap:wrap;vertical-align:middle;margin:0 4px}
+button.pick{font:inherit;font-weight:800;border:2px solid #cfdcf5;background:#fff;color:var(--lapis);border-radius:12px;padding:2px 12px;cursor:pointer;transition:transform .08s}
+button.pick:hover:not(:disabled){border-color:var(--blue);background:var(--soft);transform:translateY(-1px)}
+button.pick.ok{background:var(--okbg);border-color:var(--ok);color:#14663f;opacity:1}
+button.pick.bad{background:var(--badbg);border-color:var(--bad);color:#8a1f1f;text-decoration:line-through;opacity:1}
+button.pick.shown{background:var(--shownbg);border-color:var(--shown);color:var(--lapis);opacity:1}
+button.pick:disabled{cursor:default;opacity:.55}
+button.ch-opt{font:inherit;text-align:left;cursor:pointer}
+button.ch-opt:disabled{cursor:default;opacity:.6}
+button.ch-opt.ok,button.ch-opt.bad,button.ch-opt.shown{opacity:1}
+.ch-opts.nudge,.pickgrp.nudge{animation:nudge .5s}
+
+/* tiles */
+.tile-item{display:block;padding:10px 12px}
+.tile-q{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+.tile-clue{color:var(--muted);font-size:15px}
+.tile-ans{min-height:50px;border:2px dashed #b9cbef;background:#f6f9ff;border-radius:14px;padding:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tile-ans.empty::before{content:"Tap the tiles below in order…";color:#8a99b5;font-size:14.5px;padding:0 8px}
+.tile-ans.ok{background:var(--okbg);border:2px solid var(--ok)} .tile-ans.bad{background:var(--badbg);border:2px solid var(--bad);animation:nudge .45s} .tile-ans.shown{background:var(--shownbg);border:2px solid var(--shown)}
+.tile-bank{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:40px}
+button.tile{font:inherit;font-weight:800;border:0;border-radius:12px;padding:7px 14px;background:var(--blue);color:#fff;cursor:pointer;box-shadow:0 2px 0 var(--lapis);transition:transform .08s}
+button.tile:hover:not(:disabled){transform:translateY(-2px)}
+button.tile:disabled{cursor:default}
+.tile-ans .tile{background:#fff;color:var(--lapis);box-shadow:0 2px 0 #b9cbef;border:1px solid #cfdcf5}
+.tile-ans.ok .tile{background:#fff;color:#14663f;box-shadow:0 2px 0 var(--ok);border-color:var(--ok)}
+
+/* match */
+.match{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+@media(max-width:700px){.match{grid-template-columns:1fr}}
+.m-left,.m-right{display:flex;flex-direction:column;gap:8px}
+.m-right{flex-direction:row;flex-wrap:wrap;align-content:flex-start}
+button.m-row{font:inherit;text-align:left;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:2px solid #dbe3f0;background:#fff;border-radius:14px;padding:8px 12px;cursor:pointer;color:var(--ink)}
+button.m-row:hover{border-color:var(--blue)}
+button.m-row.pending,button.m-chip.pending{border-color:var(--saffron);background:#fff7e6;box-shadow:0 0 0 3px rgba(230,163,58,.3)}
+.m-text{flex:1 1 200px}
+.m-slot{font-weight:800;color:var(--lapis);border-radius:10px;padding:0 8px}
+button.m-row.ok{background:var(--okbg);border-color:var(--ok)} button.m-row.ok .m-slot{color:#14663f}
+button.m-row.shown{background:var(--shownbg);border-color:var(--shown)}
+button.m-row.bad{background:var(--badbg);border-color:var(--bad);animation:nudge .45s}
+button.m-chip{font:inherit;font-weight:800;border:2px solid #cfdcf5;background:var(--soft);color:var(--lapis);border-radius:12px;padding:6px 12px;cursor:pointer}
+button.m-chip:hover:not(:disabled){border-color:var(--blue)}
+button.m-chip.used{opacity:.35;text-decoration:line-through;cursor:default}
+button.m-chip.bad{background:var(--badbg);border-color:var(--bad);animation:nudge .45s}
+
+/* memory */
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:760px){.mem{grid-template-columns:repeat(2,1fr)}}
+button.mc{font:inherit;border:0;background:none;padding:0;cursor:pointer;perspective:700px;min-height:96px}
+.mc-in{position:relative;display:block;width:100%;height:100%;min-height:96px;transition:transform .45s;transform-style:preserve-3d}
+.mc.open .mc-in{transform:rotateY(180deg)}
+.mc-back,.mc-front{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:14px;padding:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.mc-back{background:linear-gradient(135deg,var(--blue),var(--turq));color:#fff;font:800 28px "Unbounded",sans-serif}
+.mc-front{transform:rotateY(180deg);background:#fff;border:2px solid #cfdcf5;font-weight:800;color:var(--lapis);font-size:14px;line-height:1.3}
+.mc.def .mc-front{font-weight:600;color:var(--ink);font-size:13px}
+.mc.match .mc-front{background:var(--okbg);border-color:var(--ok)}
+.mc.miss .mc-front{background:var(--badbg);border-color:var(--bad)}
+.mc.shown .mc-front{background:var(--shownbg);border-color:var(--shown)}
+.mem-info{margin-top:10px;font-weight:800;color:var(--lapis)}
+
+/* dice */
+.dice-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.dicebox{flex:1 1 260px;min-height:46px;background:#fff7e6;border:2px dashed #e0b866;border-radius:14px;padding:10px 16px;font-weight:800;color:#6b4a0a}
+.dicebox.pop{animation:fadein .3s}
+
+/* summary extras */
+.summary td.st{color:#ffe2a8;letter-spacing:2px;white-space:nowrap}
+.summary .xp{margin-top:6px;opacity:.95;font-weight:800}
+
+@media print{.hud,.hint,.hintbox,.helper,.confetti{display:none!important}}
+
+.review{display:none;background:#fff;color:var(--ink);border-radius:18px;padding:14px 20px;margin-top:14px}
+.review.on{display:block}
+.review h4{font-size:14px;color:var(--lapis);margin:14px 0 4px}
+.review ul{margin:0;padding-left:18px}
+.review li{margin:3px 0;font-size:15.5px}
+.review li span{color:var(--muted)}
+.review li b{color:#14663f}
+
+input.gap.wide{display:block;width:100%;max-width:100%;text-align:left;margin:6px 0 0;padding:6px 10px;font-size:16px}
+.ex-card.quick{border-style:dashed;border-color:var(--turq);background:#f7fdfd}
+.ex-card.quick .ex-num{background:var(--turq)}
+.badge{display:inline-block;font:800 11px "Unbounded",sans-serif;letter-spacing:.5px;text-transform:uppercase;padding:2px 9px;border-radius:10px;margin-left:8px;vertical-align:middle}
+.badge.core{background:#e6f6ee;color:#14663f}
+.badge.less{background:#eef0f5;color:#5b6678}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:10px 0}
+.flow>div{flex:1 1 150px;background:var(--soft);border:1px solid #c9d8f3;border-radius:14px;padding:8px 12px;font-size:15px}
+.flow>div b{display:block;color:var(--lapis)}
+.flow .go{flex:0 0 auto;align-self:center;background:none;border:0;padding:0;font-weight:800;color:var(--muted)}
+.exam{background:#f3efff;border:1px solid #d9cffa;border-radius:14px;padding:10px 14px;margin:14px 0;font-size:15.5px}
+.exam b.h{display:block;font-family:"Unbounded",sans-serif;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:#5b3fb0;margin-bottom:2px}
+.minpair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+@media(max-width:700px){.minpair{grid-template-columns:1fr}}
+.minpair>div{border-radius:14px;padding:8px 14px;font-size:16px}
+.minpair .a{background:var(--soft);border:1px solid #c9d8f3} .minpair .b{background:var(--soft2);border:1px solid #bfe6e4}
+.minpair small{display:block;color:var(--muted)}
+.tt{width:100%}
+
+/* ---- v4: one-hour plan, optional practice ---- */
+.ex-time{margin-left:auto;font-size:12px;font-weight:700;color:var(--ink2,#46526b);background:#eef3fb;padding:5px 11px;border-radius:12px;white-space:nowrap}
+.plan{margin:16px 0 18px;padding:14px 18px;border-radius:20px;background:#fff7e6;border:1.5px solid #f0d49a;font-size:15px;line-height:1.55}
+details.more{margin:26px 0 8px;border:2px dashed #b9c8e6;border-radius:20px;background:#f7f9fd;padding:0}
+details.more>summary.more-sum{cursor:pointer;list-style:none;padding:16px 20px;border-radius:20px;display:block;font-size:16px;line-height:1.45}
+details.more>summary.more-sum::-webkit-details-marker{display:none}
+details.more>summary.more-sum::before{content:"＋ ";color:#2456b0;font-weight:800}
+details.more[open]>summary.more-sum::before{content:"－ "}
+details.more>summary.more-sum span{display:block;margin-top:2px;font-size:13.5px;color:#5a6580;font-weight:600}
+details.more .more-body{padding:4px 16px 16px}
+
+/* ---- v4: pages ---- */
+.page{display:none}
+.page.on{display:block}
+.pagetime{display:inline-block;margin:0 0 14px;padding:6px 14px;border-radius:12px;background:#eef3fb;color:#2456b0;font-weight:700;font-size:13.5px}
+.pager{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:34px 0 10px;padding:18px 20px;border-radius:20px;background:#fff;border:1.5px solid #dbe4f3}
+.pager-msg{flex:1 1 240px;font-size:15px;color:#46526b;text-align:center;line-height:1.45}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);opacity:0;pointer-events:none;background:#1e3f8f;color:#fff;padding:13px 20px;border-radius:14px;font-weight:700;font-size:14.5px;max-width:92vw;text-align:center;transition:.25s;z-index:99}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---- v4: golden page tabs ---- */
+.tabbar{margin:12px 0 4px;padding:0}
+.tabbar .links{display:flex;flex-wrap:wrap;gap:5px;overflow:visible;padding:0;justify-content:flex-start}
+.tabbar .links a{white-space:nowrap;text-decoration:none;font-family:inherit;font-weight:800;font-size:12px;padding:4px 9px;border-radius:8px;color:#4a3304;background:linear-gradient(180deg,#fbd98a,#f2bd54);border:1px solid #e6a33a;box-shadow:0 1px 0 #c88a22}
+.tabbar .links a:hover{background:linear-gradient(180deg,#fde29d,#f5c561);color:#4a3304}
+.tabbar .links a.on{background:linear-gradient(180deg,#ffb92e,#e6891a);color:#fff;border-color:#1e3f8f;box-shadow:0 1px 0 #1e3f8f;text-shadow:0 1px 0 rgba(0,0,0,.18)}
+.tabbar .links a.done::after{content:" ✓";font-weight:900}
+@media(max-width:640px){.tabbar{margin:10px 0 2px}.tabbar .links{gap:3px}.tabbar .links a{font-size:10.5px;padding:3px 6px;border-radius:7px}}
+
+</style>
+</head>
+<body>
+<header class="band">
+ <div class="wrap">
+  <div class="brand-row"><span class="brand">MrIkromov's IELTS</span><span class="crumb">Grammar · Lesson 3 of 30</span></div>
+  <div class="tabbar"><div class="links"><a href="#goals">Overview</a><a href="#will">Future simple</a><a href="#going">Be going to</a><a href="#compare">Which form?</a><a href="#clauses">Time clauses</a><a href="#cont">Future continuous</a><a href="#perf">Future perfect</a><a href="#allfuture">All the future forms</a><a href="#mistakes">Mistakes & rewriting</a><a href="#words">Word power</a><a href="#speaking">Speaking</a><a href="#writing">Writing</a><a href="#summary">My score</a></div></div>
+  <h1>Future Forms</h1>
+  <p class="sub">Future simple · be going to · present continuous and present simple for the future · future continuous · future perfect · future perfect continuous · time clauses — with prepositions, common mistakes and speaking tasks.</p>
+  <div class="band-meta">
+   <div class="score"><span>Your score</span><b id="scoreNum">0 / 0</b><div class="bar"><i id="scoreBar"></i></div></div>
+   <a class="btn btn-cta" href="#will">Start the lesson</a>
+  </div>
+ </div>
+</header>
+<nav class="nav"><div class="wrap">
+ <div class="hud">
+  <div class="hud-i" title="Experience points">⭐ <b id="xpNum">0</b></div>
+  <div class="hud-i" id="streakBox" title="Right first time in a row">🔥 <b id="streakNum">0</b></div>
+  <div class="hud-lv"><span id="lvName">Rookie</span><div class="bar"><i id="lvBar"></i></div></div>
+  <button class="hud-snd" id="sndBtn" type="button" aria-label="Sound on or off" aria-pressed="false">🔇</button>
+ </div>
+</div></nav>
+<main><div class="wrap">
+<section id="goals" data-title="Overview">
+ <span class="kicker">Lesson 3 · Tenses</span>
+ <h2>What you will learn</h2>
+ <p class="lead">English has no single future tense. Instead we choose a form according to what we want to say: a prediction, a plan, an arrangement, a decision made right now, an action in progress later, or something finished by a future deadline. Learn one angle per tab and you will choose quickly and correctly.</p>
+ <div class="plan" id="timePlan"></div>
+<div class="tl" data-tlj='{"now":200,"m":[{"t":"dot","x":320,"l":"will / going to","c":"blue"},{"t":"bar","x":380,"x2":470,"l":"will be doing","c":"turq"},{"t":"dot","x":520,"l":"will have done","c":"saf"}]}'></div>
+<div class="tblwrap"><table class="ft"><tr><th>Form</th><th>Pattern</th><th>The idea in plain words</th></tr><tr><td><b>Future simple</b></td><td>will + verb</td><td>a prediction, a decision made now, a promise or offer</td></tr><tr><td><b>be going to</b></td><td>am / is / are going to + verb</td><td>a plan, or a prediction from evidence</td></tr><tr><td><b>Present continuous</b></td><td>am / is / are + -ing</td><td>a fixed arrangement in the near future</td></tr><tr><td><b>Present simple</b></td><td>leaves · starts</td><td>a timetable or programme</td></tr><tr><td><b>Future continuous</b></td><td>will be + -ing</td><td>in progress at a future time, or a routine / arrangement</td></tr><tr><td><b>Future perfect</b></td><td>will have + participle</td><td>finished before a future time</td></tr><tr><td><b>Future perfect continuous</b></td><td>will have been + -ing</td><td>how long, up to a future time</td></tr></table></div>
+<div class="plain"><span class="em">🧭</span><div><b class="h">In plain words</b>Ask yourself first: <b>Is it a plan I made earlier (going to)? A decision now (will)? A diary entry (present continuous)? A timetable (present simple)?</b> Then, only if needed, add the “in progress” or “finished by” angle.</div></div>
+<div class="exam"><b class="h">IELTS tip</b>Speaking Part 3 questions about the future (“How will cities change?”) invite <b>will</b> + opinion language (<i>I believe, probably, I doubt whether</i>). Task 2 conclusions often use <b>will</b> for predictions.</div>
+<div class="card stripe-lap">
+<h3>How the lesson works</h3>
+<ul><li>Each tab is one topic: read it, then do the exercises under it.</li><li>The numbered <b>exercises</b> are the main path (about 40 minutes).</li><li><b>More practice</b> boxes are optional and not counted in your score.</li><li>At the end open <b>Show my mistakes and the correct answers</b>.</li></ul>
+</div>
+</section>
+
+<section id="will" data-title="Future simple">
+ <span class="kicker">Part 1</span>
+ <h2>Future simple: will</h2>
+ <p class="lead">The tense of predictions, instant decisions, promises and offers.</p>
+<div class="tl" data-tlj='{"now":200,"m":[{"t":"dot","x":400,"l":"will happen","c":"blue"}]}'></div>
+<div class="plain"><span class="em">🔮</span><div><b class="h">In plain words</b>will = <b>“this is what I think or decide now.”</b> It does not say that a plan already exists.</div></div>
+<div class="card stripe-blue">
+<h3>Form</h3>
+<div class="fm"><span class="t t1">subject</span><span class="p">+</span><span class="t t2">will</span><span class="p">+</span><span class="t t3">basic verb</span></div>
+<div class="tblwrap"><table class="ft"><tr><th></th><th>Affirmative</th><th>Negative</th><th>Question</th><th>Short answers</th></tr><tr><td>all subjects</td><td>He <b>will</b> call<br><small>(’ll)</small></td><td>He <b>won't</b> call<br><small>(will not)</small></td><td><b>Will</b> he call?</td><td>Yes, he <b>will</b>.<br>No, he <b>won't</b>.</td></tr></table></div>
+</div>
+<div class="card stripe-blue">
+<h3>Uses</h3>
+<p style="margin:0 0 8px;color:var(--muted);font-size:15px"><span class="badge core" style="margin-left:0">core</span> learn these first · <span class="badge less" style="margin-left:0">less common</span> learn these second</p>
+<div class="use"><span class="letter">a</span><div><p><b>Predictions based on opinion</b><span class="badge core">core</span></p><div class="ask">Do you think / believe / expect it will happen?</div><ul class="eg"><li>His parents think he <b>will become</b> an artist one day.</li><li>Perhaps the new rules <b>will reduce</b> pollution. <small>(words that go with will: <b>think, believe, expect, be sure, be afraid, probably, perhaps, certainly</b>)</small></li><li>In 2050 there <b>will be</b> colonies on Mars.</li></ul></div></div>
+<div class="use"><span class="letter">b</span><div><p><b>On-the-spot decisions and offers</b><span class="badge core">core</span></p><div class="ask">Are you deciding or offering at this very moment?</div><ul class="eg"><li>It's your birthday, so <b>I'll pay</b> for lunch. <small>(offer)</small></li><li>I'll take this one. <small>(decision)</small></li></ul></div></div>
+<div class="use"><span class="letter">c</span><div><p><b>Promises, threats, warnings, requests and hopes</b><span class="badge core">core</span></p><div class="ask">Are you promising, warning or asking?</div><ul class="eg"><li>I promise I <b>won't tell</b> anyone. <small>(promise)</small></li><li>Stop talking or <b>I'll send</b> you out. <small>(threat)</small></li><li>Factories must stop polluting or we <b>won't be able</b> to breathe. <small>(warning)</small></li><li>I hope pollution levels <b>will drop</b> soon. <small>(hope)</small></li><li><b>Will you</b> open the door, please? <small>(request)</small></li></ul></div></div>
+<div class="use"><span class="letter">d</span><div><p><b>Things that will definitely happen and we cannot control</b><span class="badge core">core</span></p><div class="ask">Is it simply going to happen, whatever we do?</div><ul class="eg"><li>The temperature <b>will reach</b> 40°C tomorrow.</li><li>Winter <b>will set</b> in early this year.</li></ul></div></div>
+<div class="use"><span class="letter">e</span><div><p><b>Refusing: won't</b><span class="badge less">less common</span></p><div class="ask">Does someone refuse to do something?</div><ul class="eg"><li>I've talked to Sue, but she <b>won't listen</b>. <small>(= she refuses to listen)</small></li></ul></div></div>
+</div>
+<div class="card stripe-turq">
+<h3>Will, shall and won't</h3>
+<ul><li><b>Will you…?</b> = request: <i>Will you open the door?</i></li><li><b>Shall I…?</b> = offer: <i>Shall I give you a hand?</i></li><li><b>Shall we…?</b> = suggestion: <i>Shall we wait until the rain stops?</i></li><li><b>What shall I…?</b> = asking for instructions or suggestions.</li></ul>
+</div>
+<div class="card stripe-turq">
+<h3>Will in real conversation</h3>
+<div class="tblwrap"><table class="ft"><tr><th>Situation</th><th>What you say</th><th>Why will?</th></tr><tr><td>A friend has a heavy bag</td><td>“Give it to me — <b>I'll carry</b> it.”</td><td>an offer made at this moment</td></tr><tr><td>The phone rings while you are cooking</td><td>“I'll get it!”</td><td>a decision made on the spot</td></tr><tr><td>A child asks if you will be late</td><td>“I <b>won't be</b> long, I promise.”</td><td>a promise</td></tr><tr><td>Talking about 2050</td><td>“I think robots <b>will do</b> most routine jobs.”</td><td>an opinion about the future</td></tr></table></div>
+</div>
+<div class="card stripe-saf">
+<h3>Words that signal a prediction with will</h3>
+<div class="chips"><span class="chip b">I think</span><span class="chip b">I believe</span><span class="chip b">I expect</span><span class="chip b">I'm sure</span><span class="chip b">I'm afraid</span><span class="chip b">I doubt whether</span><span class="chip b">probably</span><span class="chip b">perhaps</span><span class="chip b">certainly</span><span class="chip b">definitely</span><span class="chip b">no doubt</span></div>
+<p>In the exam, begin a prediction with one of these. It sounds natural and shows you know that the future is an opinion: <i>I'm fairly sure public transport will become free in some cities.</i></p>
+</div>
+<div class="chips"><span class="chip">tomorrow</span><span class="chip">the day after tomorrow</span><span class="chip">next week / month / year</span><span class="chip">tonight</span><span class="chip">soon</span><span class="chip">in a week / month / year</span><span class="chip">probably</span><span class="chip">perhaps</span></div>
+<div class="plain"><span class="em">💡</span><div><b class="h">Guessing about now</b>will can also guess about the present: <i>That will be the postman.</i> <i>They will have arrived by now.</i> (More in the extra box.)</div></div>
+<div class="card stripe-saf"><h3>Typical mistakes</h3><div class="mist"><div class="x">I will to call you.</div><div class="v">I will <b>call</b> you.</div><div class="x">He will comes tomorrow.</div><div class="v">He will <b>come</b> tomorrow.</div><div class="x">I think it doesn't will work.</div><div class="v">I think it <b>won't</b> work.</div></div></div>
+<div data-ex="qc1"></div>
+<div data-ex="e1"></div>
+<div data-ex="x1"></div>
+<details class="more" data-more>
+ <summary class="more-sum"></summary>
+ <div class="more-body">
+<div data-ex="x2"></div>
+ </div>
+</details>
+</section>
+
+<section id="going" data-title="Be going to">
+ <span class="kicker">Part 2</span>
+ <h2>Be going to</h2>
+ <p class="lead">For plans already made and for predictions you can see coming.</p>
+<div class="plain"><span class="em">🎯</span><div><b class="h">In plain words</b>be going to = <b>“I have already decided”</b> or <b>“I can see it is about to happen.”</b></div></div>
+<div class="card stripe-blue">
+<h3>Form</h3>
+<div class="fm"><span class="t t1">am / is / are</span><span class="p">+</span><span class="t t2">going to</span><span class="p">+</span><span class="t t3">basic verb</span></div>
+<div class="tblwrap"><table class="ft"><tr><th></th><th>Affirmative</th><th>Negative</th><th>Question</th><th>Short answers</th></tr><tr><td>I / he / she / it / we / you / they</td><td>I <b>am going to</b> stay</td><td>She <b>isn't going to</b> stay</td><td><b>Is</b> she <b>going to</b> stay?</td><td>Yes, I <b>am</b>.<br>No, she <b>isn't</b>.</td></tr></table></div>
+</div>
+<div class="card stripe-blue">
+<h3>Uses</h3>
+<p style="margin:0 0 8px;color:var(--muted);font-size:15px"><span class="badge core" style="margin-left:0">core</span> learn these first · <span class="badge less" style="margin-left:0">less common</span> learn these second</p>
+<div class="use"><span class="letter">a</span><div><p><b>Plans, intentions and ambitions</b><span class="badge core">core</span></p><div class="ask">Did you decide this before you speak?</div><ul class="eg"><li>I'm going to employ two more staff.</li><li>I'm going to become a famous violinist one day. <small>(ambition)</small></li><li>Now that they have won the lottery, they <b>are going to buy</b> a big house.</li></ul></div></div>
+<div class="use"><span class="letter">b</span><div><p><b>Actions you have already decided to do soon</b><span class="badge core">core</span></p><div class="ask">Have you made up your mind, but not necessarily fixed the time?</div><ul class="eg"><li>They <b>are going to get married</b> in three months. <small>(they have decided it)</small></li></ul></div></div>
+<div class="use"><span class="letter">c</span><div><p><b>Predictions based on evidence</b><span class="badge core">core</span></p><div class="ask">Can you see or know something that shows what will happen?</div><ul class="eg"><li>Look at the clouds! It <b>is going to rain</b>.</li><li>The acrobat <b>is going to walk</b> along the tightrope.</li></ul></div></div>
+</div>
+<div class="card stripe-turq">
+<h3>Two ideas: the plan and the evidence</h3>
+<div class="tblwrap"><table class="ft"><tr><th>Plan (already decided)</th><th>Evidence (I can see it)</th></tr><tr><td>I'm going to apply for a scholarship.</td><td>Look at the queue — we're going to be late.</td></tr><tr><td>She's going to study law.</td><td>He's driving too fast. He's going to crash.</td></tr><tr><td>They're going to build a new library.</td><td>The sky is black. It's going to pour.</td></tr></table></div>
+</div>
+<div class="mnem"><div><b class="h">will + opinion</b>I think / I believe — no evidence needed</div><div><b class="h">going to + evidence or plan</b>I can see it / I have decided</div></div>
+<div class="card stripe-turq">
+<h3>Two helpful notes</h3>
+<ul><li>A common pattern: <b>be going to</b> for the plan, then <b>will</b> for details and comments. <i>I'm going to have a party next week. I'll invite all my friends.</i></li><li>With verbs of movement (<b>go, come</b>), we prefer the present continuous: <i>Sam is going to the market. Sheila is coming for tea.</i></li></ul>
+</div>
+<div class="card stripe-saf"><h3>Typical mistakes</h3><div class="mist"><div class="x">I am going to travelling.</div><div class="v">I am going to <b>travel</b>.</div><div class="x">She going to leave.</div><div class="v">She <b>is</b> going to leave.</div></div></div>
+<div data-ex="e2"></div>
+</section>
+
+<section id="compare" data-title="Which form?">
+ <span class="kicker">Part 3</span>
+ <h2>Will, going to, present continuous, present simple</h2>
+ <p class="lead">These four can all talk about the future. The difference is the angle: decision, plan, arrangement or timetable.</p>
+<p style="margin:6px 0 0;font-weight:800;color:var(--lapis)">Same verb, two ideas:</p>
+<div class="minpair"><div class="a"><b>I'll meet you at six.</b><small>will: a decision made now</small></div><div class="b"><b>I'm meeting Tom at six.</b><small>present continuous: already arranged</small></div></div>
+<div class="card stripe-blue">
+<h3>Quick decision table</h3>
+<div class="tblwrap"><table class="ft"><tr><th>The speaker says…</th><th>Use</th><th>Example</th></tr><tr><td>“I decide <b>now</b>” / offer / promise</td><td><b>will</b></td><td>I'll carry that for you.</td></tr><tr><td>“I decided <b>before</b>” (a plan)</td><td><b>be going to</b></td><td>I'm going to study medicine.</td></tr><tr><td>“It is <b>in my diary</b>” (person + time/place arranged)</td><td><b>present continuous</b></td><td>He is leaving for Amsterdam in an hour.</td></tr><tr><td>“A <b>timetable</b> says so”</td><td><b>present simple</b></td><td>The film starts in ten minutes.</td></tr><tr><td>“I <b>think / believe</b>” (opinion)</td><td><b>will</b></td><td>I think prices will rise.</td></tr><tr><td>“I can <b>see</b> it coming” (evidence)</td><td><b>be going to</b></td><td>Look out! You're going to fall.</td></tr></table></div>
+</div>
+<div class="card stripe-turq">
+<h3>More ways to talk about the future</h3>
+<div class="tblwrap"><table class="ft"><tr><th>Expression</th><th>Meaning</th><th>Example</th></tr><tr><td><b>be about to</b> + verb</td><td>very soon, almost now</td><td>The lecture <b>is about to</b> begin.</td></tr><tr><td><b>be due to</b> + verb</td><td>expected by a timetable</td><td>The train <b>is due to</b> arrive at six.</td></tr><tr><td><b>be likely to</b> + verb</td><td>probable</td><td>Prices <b>are likely to</b> rise.</td></tr><tr><td><b>be bound to</b> + verb</td><td>certain; sure to happen</td><td>He <b>is bound to</b> pass.</td></tr><tr><td><b>be set to</b> + verb</td><td>ready and expected to</td><td>The company <b>is set to</b> expand.</td></tr><tr><td><b>be on the point of</b> + -ing</td><td>at the very moment before</td><td>She <b>was on the point of</b> leaving.</td></tr></table></div>
+<p>These are not in the basic forms, but they make an IELTS answer sound more natural and give you grammar range.</p>
+</div>
+<div class="exam"><b class="h">IELTS tip</b>In Writing Task 1 projections (“The population will reach…”) use <b>will</b>; for official plans use <b>is expected to / is projected to</b> — but know the basic forms first.</div>
+<div data-ex="e3"></div>
+ <div class="card stripe-saf"><h3>The future in the past</h3><p>Use these patterns for plans, hopes and intentions that did <b>not</b> happen, or that were still in the future at a past moment.</p><ul><li><b>was / were going to · was to · was about to · was due to</b> + verb: <i>Mr Simon was going to resign, but the manager offered him a better salary.</i> (he did not resign)</li><li><b>was on the point of</b> + -ing: <i>They were on the point of leaving when the phone rang.</i> (they did not leave)</li></ul></div>
+ <div class="card stripe-blue"><h3>Formal: be to + infinitive</h3><p><b>be to</b> is formal and typical of news reports: <i>The President is to visit Poland next Monday.</i> Together with <b>be sure to / be certain to / be bound to</b> (certainty) and verbs such as <b>decide, plan, intend, arrange, mean + to</b> (plans: <i>We intend to buy a bigger flat</i>) it widens your range.</p></div>
+ <div data-ex="e15"></div>
+</section>
+
+<section id="clauses" data-title="Time clauses">
+ <span class="kicker">Part 4</span>
+ <h2>After when, if, until… no will</h2>
+ <p class="lead">One of the most common mistakes: using will after a time word.</p>
+<div class="plain"><span class="em">⛔</span><div><b class="h">The rule</b>After <b>while, before, after, until / till, as, unless, when, whenever, if, once, as soon as, as long as, by the time, in case, on condition that, suppose</b> we use the <b>present simple</b> (or present perfect) — even though the meaning is future.</div></div>
+<div class="card stripe-blue">
+<h3>Examples</h3>
+<div class="tblwrap"><table class="ft"><tr><th>Wrong</th><th>Right</th></tr><tr><td>I'll wait until you will finish.</td><td>I'll wait until you <b>finish / have finished</b>.</td></tr><tr><td>Call me as soon as you will get back.</td><td>Call me as soon as you <b>get</b> back.</td></tr><tr><td>If it will rain, we'll stay in.</td><td>If it <b>rains</b>, we'll stay in.</td></tr></table></div>
+</div>
+<div class="card stripe-turq">
+<h3>But: when and if as question words</h3>
+<ul><li><b>when</b> as a question word / in a noun clause takes the future: <i>When will they get married? I'm not sure when they will visit us.</i> BUT time word: <i>He'll call us when he gets there.</i></li><li><b>if (= whether)</b> after <i>I don't know, I wonder, I doubt</i> takes the future: <i>I doubt whether she will pass.</i> BUT: <i>If you call her, give her my regards.</i></li></ul>
+</div>
+<div data-ex="qc2"></div>
+<div data-ex="e4"></div>
+<div data-ex="x5"></div>
+</section>
+
+<section id="cont" data-title="Future continuous">
+ <span class="kicker">Part 5</span>
+ <h2>Future continuous</h2>
+ <p class="lead">An action in progress at a future moment, or something that will happen anyway.</p>
+<div class="tl" data-tlj='{"now":200,"m":[{"t":"bar","x":340,"x2":460,"l":"will be skiing","c":"turq"},{"t":"line","x":400,"c":"saf"}]}'></div>
+<div class="plain"><span class="em">🎬</span><div><b class="h">In plain words</b>Future continuous = <b>“at that future time it will be in progress.”</b></div></div>
+<div class="card stripe-blue">
+<h3>Form</h3>
+<div class="fm"><span class="t t1">will</span><span class="p">+</span><span class="t t2">be</span><span class="p">+</span><span class="t t3">verb-ing</span></div>
+<div class="tblwrap"><table class="ft"><tr><th></th><th>Affirmative</th><th>Negative</th><th>Question</th><th>Short answers</th></tr><tr><td>all subjects</td><td>He <b>will be working</b></td><td>He <b>won't be working</b></td><td><b>Will</b> he be working?</td><td>Yes, he <b>will</b>.<br>No, he <b>won't</b>.</td></tr></table></div>
+</div>
+<div class="card stripe-blue">
+<h3>Uses</h3>
+<p style="margin:0 0 8px;color:var(--muted);font-size:15px"><span class="badge core" style="margin-left:0">core</span> learn these first · <span class="badge less" style="margin-left:0">less common</span> learn these second</p>
+<div class="use"><span class="letter">a</span><div><p><b>An action in progress at a stated future time</b><span class="badge core">core</span></p><div class="ask">Can you picture it happening at that time?</div><ul class="eg"><li>This time next week, <b>I'll be skiing</b> in Austria.</li></ul></div></div>
+<div class="use"><span class="letter">b</span><div><p><b>Something that will happen as a result of a routine or arrangement</b><span class="badge core">core</span></p><div class="ask">Will it happen anyway, as part of your normal plans?</div><ul class="eg"><li>I'll be seeing them at the meeting anyway. <small>(so I can pass on the message)</small></li></ul></div></div>
+<div class="use"><span class="letter">c</span><div><p><b>Polite questions about someone's plans</b><span class="badge core">core</span></p><div class="ask">Do you want to know if your request fits their plans?</div><ul class="eg"><li><b>Will you be going</b> to the shops later? Could you get me a sandwich?</li><li><b>Will you be using</b> the photocopier for long?</li></ul></div></div>
+</div>
+<div class="card stripe-saf"><h3>Typical mistakes</h3><div class="mist"><div class="x">This time tomorrow I am lying on a beach.</div><div class="v">This time tomorrow I <b>will be lying</b> on a beach.</div></div></div>
+<div data-ex="e5"></div>
+<div data-ex="e6"></div>
+</section>
+
+<section id="perf" data-title="Future perfect">
+ <span class="kicker">Part 6</span>
+ <h2>Future perfect and future perfect continuous</h2>
+ <p class="lead">Finished by a future deadline, or how long up to a future time.</p>
+<div class="tl" data-tlj='{"now":200,"m":[{"t":"bar","x":260,"x2":420,"l":"will have been working","c":"lap"},{"t":"dot","x":450,"l":"by 4 p.m.","c":"saf"}]}'></div>
+<div class="plain"><span class="em">🏁</span><div><b class="h">In plain words</b>Future perfect = <b>“it will be done by then.”</b> Future perfect continuous = <b>“by then it will have been going on for…”</b></div></div>
+<div class="card stripe-blue">
+<h3>Form</h3>
+<div class="fm"><span class="t t1">will have</span><span class="p">+</span><span class="t t3">past participle</span><span class="p">·</span><span class="t t1">will have been</span><span class="p">+</span><span class="t t3">verb-ing</span></div>
+<div class="tblwrap"><table class="ft"><tr><th></th><th>Future perfect</th><th>Future perfect continuous</th></tr><tr><td>affirmative</td><td>They <b>will have finished</b></td><td>I <b>will have been working</b></td></tr><tr><td>negative</td><td>They <b>won't have finished</b></td><td>I <b>won't have been working</b></td></tr><tr><td>question</td><td><b>Will</b> they <b>have finished</b>?</td><td><b>Will</b> you <b>have been working</b>?</td></tr></table></div>
+</div>
+<div class="card stripe-blue">
+<h3>Uses</h3>
+<p style="margin:0 0 8px;color:var(--muted);font-size:15px"><span class="badge core" style="margin-left:0">core</span> learn these first · <span class="badge less" style="margin-left:0">less common</span> learn these second</p>
+<div class="use"><span class="letter">a</span><div><p><b>Future perfect: finished before a stated future time</b><span class="badge core">core</span></p><div class="ask">Will it be complete by then?</div><ul class="eg"><li>They <b>will have finished</b> their meeting by four o'clock.</li><li>I <b>will have tidied</b> up by the time you get back.</li><li>She <b>won't have completed</b> the report until / till five o'clock. <small>(until / till only in negative sentences — positive: <b>by</b>)</small></li></ul></div></div>
+<div class="use"><span class="letter">b</span><div><p><b>Future perfect continuous: the duration up to a future time</b><span class="badge core">core</span></p><div class="ask">Do you stress how long, with by … for?</div><ul class="eg"><li>By the time Rick retires, he <b>will have been working</b> for the same company for thirty years.</li><li>By the time they reach York, they <b>will have been travelling</b> for four hours.</li></ul></div></div>
+</div>
+<div class="chips"><span class="chip">by</span><span class="chip">by the time</span><span class="chip">before</span><span class="chip">by then</span><span class="chip">until / till (negative)</span><span class="chip">by … for</span></div>
+<div class="card stripe-turq">
+<h3>Note</h3>
+<p>After <b>by the time, until, before</b> we use the <b>present simple</b> because they introduce time clauses. The clause can come first or second: <i>I will have tidied up by the time you get back. / By the time you get back, I will have tidied up.</i></p>
+</div>
+<div class="card stripe-saf"><h3>Typical mistakes</h3><div class="mist"><div class="x">I will have finished until Friday.</div><div class="v">I will have finished <b>by</b> Friday.</div><div class="x">By the time he will arrive, we will have left.</div><div class="v">By the time he <b>arrives</b>, we will have left.</div></div></div>
+<div data-ex="qc3"></div>
+<div data-ex="e7"></div>
+<div data-ex="e8"></div>
+<details class="more" data-more>
+ <summary class="more-sum"></summary>
+ <div class="more-body">
+<div data-ex="x8"></div>
+ </div>
+</details>
+</section>
+
+<section id="allfuture" data-title="All the future forms">
+ <span class="kicker">Part 7</span>
+ <h2>All the future forms together</h2>
+ <p class="lead">Choose the form by the idea, not by the time word.</p>
+<div class="tblwrap"><table class="ft"><tr><th>Idea</th><th>Form</th></tr><tr><td>opinion, decision now, offer, promise</td><td>will</td></tr><tr><td>plan; evidence</td><td>be going to</td></tr><tr><td>fixed arrangement</td><td>present continuous</td></tr><tr><td>timetable</td><td>present simple</td></tr><tr><td>in progress later; routine; polite question</td><td>will be -ing</td></tr><tr><td>finished by a time</td><td>will have + participle</td></tr><tr><td>how long up to a time</td><td>will have been -ing</td></tr></table></div>
+<div data-ex="e9"></div>
+<div data-ex="e10"></div>
+<details class="more" data-more>
+ <summary class="more-sum"></summary>
+ <div class="more-body">
+<div data-ex="x3"></div>
+<div data-ex="x7"></div>
+<div data-ex="e13"></div>
+<div data-ex="x4"></div>
+ </div>
+</details>
+</section>
+
+<section id="mistakes" data-title="Mistakes & rewriting">
+ <span class="kicker">Part 8</span>
+ <h2>Mistakes</h2>
+ <p class="lead">The most frequent future mistakes in learner English.</p>
+<div class="card stripe-saf"><h3>Frequent mistakes</h3><div class="mist"><div class="x">I'll call you when I will arrive.</div><div class="v">I'll call you when I <b>arrive</b>.</div><div class="x">This time tomorrow I am lying on the beach.</div><div class="v">This time tomorrow I <b>will be lying</b> on the beach.</div><div class="x">I will have finished until six.</div><div class="v">I will have finished <b>by</b> six.</div><div class="x">I think he doesn't come.</div><div class="v">I think he <b>won't</b> come.</div></div></div>
+<div data-ex="e11"></div>
+<div data-ex="e14"></div>
+</section>
+
+<section id="words" data-title="Word power">
+ <span class="kicker">Part 9</span>
+ <h2>Word power: prepositions</h2>
+ <p class="lead">Prepositions that often appear in plans, requests and everyday arrangements.</p>
+<div class="card stripe-blue">
+<h3>Verb / adjective + preposition</h3>
+<div class="tblwrap"><table class="ft"><tr><th>Expression</th><th>Example</th></tr><tr><td><b>ask about</b> sth / <b>ask sb for</b> sth</td><td>Ask about the price. Ask Katie for the address.</td></tr><tr><td><b>engaged to</b> sb / <b>engaged in</b> sth · <b>married to</b> sb</td><td>She is engaged to an architect. He is engaged in research.</td></tr><tr><td><b>brilliant / good / bad at</b> sth · <b>weak in</b> sth</td><td>I'm brilliant at maths but weak in history.</td></tr><tr><td><b>borrow</b> sth <b>from</b> sb · <b>explain</b> sth <b>to</b> sb</td><td>Stuart borrowed a suit from Andrew.</td></tr><tr><td><b>interested in</b> · <b>invite sb to</b> · <b>laugh at</b> · <b>listen to</b> · <b>look at</b></td><td>They laughed at the teacher. Listen to your parents.</td></tr></table></div>
+</div>
+<div data-ex="e12"></div>
+<details class="more" data-more>
+ <summary class="more-sum"></summary>
+ <div class="more-body">
+<div data-ex="x6"></div>
+ </div>
+</details>
+</section>
+
+<section id="speaking" data-title="Speaking">
+ <span class="kicker">Part 10</span>
+ <h2>Speaking: plans and predictions</h2>
+ <p class="lead">Work in pairs. First speak, then (if you like) write your best sentences.</p>
+<div class="task"><h3>Task 1 · My plans <span class="pill">be going to / present continuous</span></h3><p>Ask your partner about their plans. Use the prompts.</p><div class="dice-row"><button class="btn btn-ghost" type="button" data-dice="f1" data-out="dice1">🎲 Pick a question</button><div class="dicebox" id="dice1">Press the button for a random question!</div></div></div>
+<div class="task"><h3>Task 2 · Predictions <span class="pill">will + opinion</span></h3><p>Make predictions and agree or disagree: <i>I think… / I doubt whether… / Perhaps…</i></p><div class="dice-row"><button class="btn btn-ghost" type="button" data-dice="f2" data-out="dice2">🎲 Pick a topic</button><div class="dicebox" id="dice2">Press the button for a random topic!</div></div></div>
+<div class="task"><h3>Task 3 · By the time I am 35… <span class="pill">future perfect</span></h3><p>Tell your partner what you hope you will have done by the time you are thirty-five, and what you will have been doing for ten years.</p></div>
+</section>
+
+<section id="writing" data-title="Writing">
+ <span class="kicker">Part 11</span>
+ <h2>Writing task</h2>
+ <p class="lead">Write about the future of your city or your own life.</p>
+<div class="task"><h3>Task 1 · My city in 2050 <span class="pill">120–150 words</span></h3><p>Write a short article: <b>My city in 2050</b>. Use a prediction, a plan, an arrangement and a deadline.</p><ul class="checklist"><li><label><input type="checkbox"> predictions with <b>will</b> and an opinion phrase</label></li><li><label><input type="checkbox"> a plan with <b>be going to</b></label></li><li><label><input type="checkbox"> a <b>future continuous</b> (this time in 2050…)</label></li><li><label><input type="checkbox"> a <b>future perfect</b> with by / by the time</label></li><li><label><input type="checkbox"> no will after when / if / until</label></li></ul><textarea id="writeBox" placeholder="Start writing here…"></textarea><p style="margin:6px 0 0"><span id="wordCount">0 words</span> — show your text to your teacher for feedback.</p></div>
+</section>
+<section id="summary" data-title="My score">
+ <div class="summary">
+  <h2>My lesson score</h2>
+  <p style="margin:6px 0 0;opacity:.95">Finish the main-path exercises — then come back here to see your stars and your score. Anything under 80% is worth a second try! The optional “More practice” boxes are not counted here.</p>
+  <table><tbody id="summaryBody"></tbody></table>
+  <div class="xp">⭐ <span id="summaryXP">0 XP</span></div>
+  <button class="btn btn-cta" id="reviewBtn" type="button" style="margin-top:14px">Show my mistakes and the correct answers</button>
+  <div class="review" id="reviewBox"><div id="reviewBody"></div></div>
+  <div class="tot">Total: <span id="summaryTotal">0 / 0</span></div>
+ </div>
+</section>
+
+</div></main>
+<footer>
+ <b>MrIkromov's IELTS</b> · Grammar Lesson 3 · Future Forms<br>
+ Instagram @ustoz_jasur · Telegram @TeamMrIkromov
+</footer>
+<script>
+/* Lesson 3 – Future forms: main-path exercises (own wording, B2 / IELTS level, natural collocations). */
+const EX = {
+
+e1:{ type:"gap", tip:"Predictions based on what we think, believe or expect → will / won't + basic verb. Hope, expect, believe, probably, I'm sure, I'm afraid often come with will.", title:"Predictions about the future: will", ins:"Put the verb into the future simple (will / won't + verb).",
+ items:[
+  {t:"Many analysts believe that renewable energy ___ (overtake) fossil fuels by 2050.", a:"will overtake"},
+  {t:"I'm afraid the negotiations ___ (not/reach) a conclusion this week.", a:["won't reach","will not reach"]},
+  {t:"Experts expect global temperatures ___ (continue) to rise, and sea levels ___ (probably/rise) with them.", a:[["to continue"],["will probably rise"]]},
+  {t:"In the year 2100, most people ___ (live) in cities, and traffic ___ (be) controlled by artificial intelligence.", a:[["will live"],["will be"]]},
+  {t:"The government is sure that unemployment ___ (fall) once the new factory opens.", a:"will fall"},
+  {t:"I hope the weather ___ (improve) before the weekend.", a:"will improve"},
+  {t:"Perhaps the new regulations ___ (reduce) air pollution in the long term.", a:"will reduce"},
+  {t:"Without drastic action, wildlife populations ___ (not/recover).", a:["won't recover","will not recover"]}
+ ]},
+
+e2:{ type:"gap", tip:"will = a decision made now (offer, promise, request) or a prediction from opinion. be going to = a plan already made, or a prediction from evidence you can see now.", title:"Will or going to?", ins:"Put the verb into will or be going to. Think about plan, decision, or evidence.",
+ items:[
+  {t:"A: Why are you buying all that paint? B: I ___ (redecorate) the living room this weekend.", a:["am going to redecorate","'m going to redecorate"]},
+  {t:"A: The printer has jammed again. B: Don't worry, I ___ (fix) it.", a:["will fix","'ll fix"]},
+  {t:"Look at those storm clouds! It ___ (pour) with rain in a minute.", a:["is going to pour","'s going to pour"]},
+  {t:"A: I can't carry all these files. B: I ___ (give) you a hand.", a:["will give","'ll give"]},
+  {t:"She has finally decided: she ___ (apply) for a master's degree in Finance.", a:["is going to apply","'s going to apply"]},
+  {t:"I promise I ___ (not/tell) anyone your secret.", a:["won't tell","will not tell"]},
+  {t:"Careful! You ___ (spill) that coffee all over the keyboard!", a:["are going to spill","'re going to spill"]},
+  {t:"A: What are your plans for the summer? B: We ___ (spend) a month backpacking through Vietnam.", a:["are going to spend","'re going to spend"]},
+  {t:"A: It's very hot in here. B: I ___ (open) a window.", a:["will open","'ll open"]},
+  {t:"The company has announced that it ___ (cut) 500 jobs next year.", a:["is going to cut","'s going to cut"]}
+ ]},
+
+e3:{ type:"choice", tip:"Arrangement with a time and a place already fixed → present continuous. Timetable or programme → present simple. Plan or intention → be going to. Decision now, offer, promise → will.", title:"Will, going to, present continuous or present simple?", ins:"Choose A, B or C.",
+ items:[
+  {q:"The conference ___ at nine o'clock on Monday and ends on Wednesday.", o:["starts","is starting","will start"], a:0, e:"A timetable or programme: present simple."},
+  {q:"I've bought the tickets, so we ___ to Istanbul on Friday.", o:["will fly","are flying","fly"], a:1, e:"A fixed arrangement: present continuous."},
+  {q:"A: I can't find my passport. B: Calm down. I ___ you look for it.", o:["will help","am helping","help"], a:0, e:"An offer made at the moment of speaking: will."},
+  {q:"He has decided that he ___ a restaurant when he graduates.", o:["opens","is going to open","will open"], a:1, e:"An intention already decided: be going to."},
+  {q:"The last train to Tashkent ___ at 11.45 p.m.", o:["leaves","is going to leave","will be leaving"], a:0, e:"Timetable."},
+  {q:"I think the economy ___ slowly next year.", o:["is recovering","will recover","recovers"], a:1, e:"An opinion about the future: will."},
+  {q:"Sam ___ for a job interview at three tomorrow. He has already confirmed the time.", o:["is going","goes","will go"], a:0, e:"Arranged and confirmed: present continuous."},
+  {q:"Look at the way he's driving! He ___ an accident.", o:["will cause","is going to cause","causes"], a:1, e:"Evidence you can see: be going to."}
+ ]},
+
+e4:{ type:"gap", tip:"After when, while, before, after, until, as soon as, if, unless, by the time, once, in case, as long as → present simple (or present perfect), NOT will.", title:"Time clauses: no will after when, if, until…", ins:"Put the verb in brackets into the correct form (present simple, present perfect or will).",
+ items:[
+  {t:"I'll call you as soon as I ___ (arrive) at the airport.", a:"arrive"},
+  {t:"We won't start the meeting until everyone ___ (take) a seat.", a:["takes","has taken"]},
+  {t:"By the time the council ___ (make) a decision, the park ___ (close).", a:[["makes"],["will have closed","will close"]]},
+  {t:"If the weather ___ (not/improve), the festival ___ (be) cancelled.", a:[["doesn't improve","does not improve"],["will be"]]},
+  {t:"Take an umbrella in case it ___ (rain).", a:"rains"},
+  {t:"I don't know when the results ___ (be) published.", a:"will be"},
+  {t:"I doubt whether he ___ (accept) the offer.", a:"will accept"},
+  {t:"You can borrow my laptop as long as you ___ (promise) to look after it.", a:"promise"}
+ ]},
+
+e5:{ type:"gap", tip:"Future continuous = will be + -ing: in progress at a future time, or happening as part of a routine or arrangement. Will + basic verb is for a decision made now.", title:"Future continuous or future simple?", ins:"Put the verb into the future continuous or the future simple.",
+ items:[
+  {t:"This time next week I ___ (lie) on a beach in Bali.", a:["will be lying","'ll be lying"]},
+  {t:"Don't ring Anna at nine; she ___ (have) her piano lesson then.", a:["will be having","'ll be having"]},
+  {t:"A: Can you give this file to Mike? B: I ___ (see) him at the meeting anyway, so I'll give it to him.", a:["will be seeing","'ll be seeing"]},
+  {t:"A: I need to speak to the director. B: I'm sorry, she ___ (not/be) back until Thursday. I ___ (pass) on the message.", a:[["won't be","will not be"],["will pass","'ll pass"]]},
+  {t:"By this time tomorrow, the candidates ___ (sit) their final paper.", a:["will be sitting","'ll be sitting"]},
+  {t:"I can't stay on the phone; I ___ (pick) up the children at four.", a:["will be picking","'ll be picking"]}
+ ]},
+
+e6:{ type:"tiles", tip:"Polite questions about someone's plans: Will you be + -ing …? It checks whether your request fits their plans.", title:"Polite questions about plans", ins:"Build each polite question. Tap the tiles in the right order.",
+ items:[
+  {q:"You want your friend to buy you a sandwich. (go to the shops)", a:["Will you be going to the shops later?","Will you be going to the shops?"], e:"Will you be + -ing …?"},
+  {q:"You want to borrow your friend's bicycle. (use it)", a:["Will you be using your bicycle this afternoon?","Will you be using your bicycle today?"], e:"Will you be using …?"},
+  {q:"You want your friend to give a letter to Jeff. (see him)", a:["Will you be seeing Jeff soon?","Will you be seeing Jeff today?"], e:"Will you be seeing …?"},
+  {q:"You want your friend to post a letter. (pass the post office)", a:["Will you be passing the post office today?","Will you be passing the post office later?"], e:"Will you be passing …?"}
+ ]},
+
+e7:{ type:"gap", tip:"Future perfect = will have + past participle: finished before a future time (by, by then, by the time). Future perfect continuous = will have been + -ing: how long, up to a future time (by … for).", title:"Future perfect and future perfect continuous", ins:"Put the verb into the future perfect or the future perfect continuous.",
+ items:[
+  {t:"By three o'clock she ___ (study) for six hours.", a:"will have been studying"},
+  {t:"By the end of next month, Sam ___ (finish) the project.", a:"will have finished"},
+  {t:"He ___ (not/start) painting the kitchen before Tuesday.", a:["won't have started","will not have started"]},
+  {t:"By the time she arrives in Paris, she ___ (travel) for four hours.", a:"will have been travelling"},
+  {t:"I hope I ___ (buy) my own flat by the time I'm thirty-five.", a:"will have bought"},
+  {t:"By Saturday, Lisa ___ (diet) for two weeks.", a:"will have been dieting"},
+  {t:"By the time the exam starts, they ___ (learn) everything on the syllabus.", a:"will have learned"},
+  {t:"By next June, the firm ___ (operate) in this city for fifty years.", a:["will have been operating","will have operated"]}
+ ]},
+
+e8:{ type:"pick", tip:"In progress at a future time (this time tomorrow) → will be doing. Finished before a future time (by + time) → will have done. Duration up to a future time (by … for) → will have been doing.", title:"Which future form?", ins:"Tap the best form.",
+ items:[
+  {t:"This time tomorrow I ___ in a meeting.", o:["will be sitting","will have sat","will have been sitting"], a:"will be sitting"},
+  {t:"By Friday the builders ___ the roof.", o:["will be repairing","will have repaired","will have been repairing"], a:"will have repaired"},
+  {t:"By next month he ___ for this firm for ten years.", o:["will work","will be working","will have been working"], a:"will have been working"},
+  {t:"Don't call at eight. We ___ dinner.", o:["will have had","will be having","will have been having"], a:"will be having"},
+  {t:"By the time you read this letter, I ___ the country.", o:["will have left","will be leaving","will have been leaving"], a:"will have left"},
+  {t:"At four o'clock she ___ for six hours without a break.", o:["will have worked","will be working","will have been working"], a:"will have been working"}
+ ]},
+
+e9:{ type:"gap", tip:"Decide for each gap: plan or evidence? decision now? timetable or arrangement? in progress at a time? finished by a time? how long?", title:"Mixed future forms: a conversation", ins:"Put the verbs into the correct future form.",
+ items:[
+  {t:"Kevin: Shall we go to the beach tomorrow? Ruth: I 1) ___ (work) in the morning, but I 2) ___ (phone) you when I finish. Kevin: Shall we ask Ben and Linda to come? Ruth: Good idea. I 3) ___ (see) Linda at work, so I 4) ___ (ask) her then. Kevin: If they want to come, I 5) ___ (pick) you up from work. Ruth: Great! This time tomorrow we 6) ___ (swim) in the sea!", a:[["am working","'m working"],["will phone","'ll phone"],["will be seeing","'ll be seeing","am seeing","'m seeing"],["will ask","'ll ask"],["will pick","'ll pick"],["will be swimming","'ll be swimming"]]},
+  {t:"My parents have been married for almost thirty years. This time next month they 1) ___ (celebrate) their anniversary. They 2) ___ (live) in the same house for twenty-five years by Thursday, and by the time my father is sixty, he 3) ___ (work) for the same company for forty years.", a:[["will be celebrating","'ll be celebrating"],["will have been living","will have lived"],["will have been working","will have worked"]]}
+ ]},
+
+e10:{ type:"choice", tip:"Ask: plan/evidence? arrangement? timetable? progress? finished by? duration?", title:"Mixed review: choose the correct answer", ins:"Choose A, B or C.",
+ items:[
+  {q:"‘Can you give Steve a message for me?’ ‘Certainly. I ___ him at work later today.’", o:["will be seeing","will have seen","will have been seeing"], a:0, e:"Part of a routine: future continuous."},
+  {q:"‘You've been working hard all day.’ ‘Yes. At three o'clock I ___ for six hours.’", o:["will be studying","will have been studying","will have studied"], a:1, e:"Duration up to a future time."},
+  {q:"‘Sarah has gone to the cinema to see that film again.’ ‘After this time she ___ it five times!’", o:["will have seen","will have been seeing","will be seeing"], a:0, e:"A number of times: future perfect."},
+  {q:"‘John has an exam tomorrow.’ ‘Yes. At this time tomorrow he ___ the exam.’", o:["will have been sitting","will be sitting","has sat"], a:1, e:"In progress at a future time."},
+  {q:"I'll lend you the money as soon as I ___ my salary.", o:["will get","get","am getting"], a:1, e:"Present simple after as soon as."},
+  {q:"The government ___ new measures next week; the details have been announced.", o:["introduces","is introducing","will introduce"], a:1, e:"A fixed arrangement: present continuous."},
+  {q:"I ___ the report by Friday, I promise.", o:["will have finished","finish","am finishing"], a:0, e:"Finished before a future time."},
+  {q:"Look at that crack! The dam ___ burst.", o:["will","is going to","is bursting"], a:1, e:"Evidence now."}
+ ]},
+
+e11:{ type:"gap", wide:true, tip:"Typical problems: present continuous for a future arrangement instead of the simple; will after when / if / until; will vs. going to; by vs until; future perfect with until in a positive sentence.", title:"Find and fix the mistake", ins:"Each sentence has one mistake. Type the whole sentence correctly.",
+ items:[
+  {t:"This time tomorrow, John is lying on the beach. → ___", a:["This time tomorrow, John will be lying on the beach.","This time tomorrow, John is going to be lying on the beach."]},
+  {t:"I'll call you when I will arrive. → ___", a:"I'll call you when I arrive."},
+  {t:"She will have finished the report until six o'clock. → ___", a:"She will have finished the report by six o'clock."},
+  {t:"I don't know if it will be ready before he'll come. → ___", a:"I don't know if it will be ready before he comes."},
+  {t:"The train will leaving at nine. → ___", a:["The train leaves at nine.","The train will leave at nine."]}
+ ]},
+
+e12:{ type:"pick", tip:"ask ABOUT sth / ask sb FOR sth · engaged TO sb / engaged IN sth · married TO sb · good/brilliant/bad AT · weak IN · borrow FROM · explain TO · interested IN · invite sb TO · laugh AT · listen TO · look AT.", title:"Prepositions: tap the right one", ins:"Tap the correct preposition.",
+ items:[
+  {t:"I'm not interested ___ team sports.", o:["in","on","at"], a:"in"},
+  {t:"Did you ask Katie ___ Joe's new address?", o:["for","about","to"], a:"for"},
+  {t:"Stuart borrowed a suit ___ Andrew for the wedding.", o:["from","to","of"], a:"from"},
+  {t:"I wish I were brilliant ___ English.", o:["in","at","with"], a:"at"},
+  {t:"How can I explain this mess ___ my parents?", o:["to","at","with"], a:"to"},
+  {t:"They invited Adam ___ their house for dinner.", o:["at","to","in"], a:"to"},
+  {t:"The boys laughed ___ their teacher when he tripped.", o:["to","at","of"], a:"at"},
+  {t:"You should listen ___ your parents' advice.", o:["to","at","for"], a:"to"},
+  {t:"She is engaged ___ a young architect.", o:["to","in","with"], a:"to"},
+  {t:"He is weak ___ maths but strong in languages.", o:["at","in","on"], a:"in"}
+ ]},
+
+e13:{ type:"tiles", tip:"Decide the form first, then build it. Question word + will / going to; negative with won't; future continuous = will be + -ing.", title:"Build the sentence", ins:"Tap the tiles in the right order.",
+ items:[
+  {q:"Plan: she / apply / a scholarship (going to)", a:["She is going to apply for a scholarship.","She's going to apply for a scholarship."], e:"Plan: be going to + basic verb."},
+  {q:"Prediction (opinion): prices / rise / next year", a:["I think prices will rise next year.","Prices will rise next year."], e:"Opinion: will + basic verb."},
+  {q:"Question about arrangement: you / meet / the director / tomorrow", a:["Are you meeting the director tomorrow?"], e:"Present continuous for an arrangement."},
+  {q:"Deadline: by Friday / we / finish / the survey", a:["By Friday we will have finished the survey.","We will have finished the survey by Friday."], e:"Future perfect + by."},
+  {q:"In progress: this time tomorrow / he / fly / to Dubai", a:["This time tomorrow he will be flying to Dubai.","He will be flying to Dubai this time tomorrow."], e:"Future continuous."}
+ ]},
+
+e14:{ type:"gap", wide:true, tip:"Use the key word. Patterns: be going to · by the time + present simple · will have been + -ing · as soon as.", title:"Say it another way", ins:"Complete the second sentence so that it means the same as the first. Use two to five words.",
+ items:[
+  {t:"I intend to open a café. (GOING) → I ___ open a café.", a:["am going to","'m going to"]},
+  {t:"The train arrives at 6.15 according to the timetable. (DUE) → The train ___ arrive at 6.15.", a:["is due to"]},
+  {t:"I'll phone you immediately after I get home. (SOON) → I'll phone you ___ I get home.", a:["as soon as"]},
+  {t:"Perhaps they will win. (PROBABLY) → They ___ win.", a:["will probably"]},
+  {t:"She started teaching in 2005; in 2025 she will have taught for twenty years. (BEEN) → In 2025 she ___ for twenty years.", a:["will have been teaching"]}
+ ]},
+
+e15:{ type:"gap", tip:"Future in the past: was / were going to, was about to, was due to, was on the point of + -ing. They show a plan or an almost-moment that did not happen.", title:"Plans that did not happen: the future in the past", ins:"Complete each sentence with a suitable future-in-the-past expression (was going to, was about to, was due to, was on the point of).",
+ items:[
+  {t:"The manager ___ resign, but the board offered her a better contract.", a:["was going to","was about to"]},
+  {t:"We ___ leave the house when the phone rang.", a:["were about to","were going to"]},
+  {t:"The flight ___ land at six, but it was delayed by fog.", a:["was due to","was to","was going to"]},
+  {t:"They ___ sign the contract when the director changed his mind.", a:["were about to","were going to"]},
+  {t:"I ___ tell you the news, but I forgot.", a:["was going to","was about to"]},
+  {t:"The company ___ closing down when a buyer appeared.", a:["was on the point of"]}
+ ]}
+};
+
+/* Lesson 3 – quick checks + optional extras. */
+Object.assign(EX,{
+qc1:{ quick:true, type:"pick", title:"Quick check: will or going to?", tip:"will = decision now / opinion; going to = plan or evidence.", ins:"Four quick questions before the exercises.",
+ items:[
+  {t:"“Look at the clouds! It ___ rain.” Which?",o:["will","is going to"],a:"is going to"},
+  {t:"“It's cold in here.” “I ___ close the window.”",o:["will","am going to"],a:"will"},
+  {t:"Which expression often goes with will? ___",o:["I think","I have decided"],a:"I think"},
+  {t:"“I'm meeting Anna at six.” This is a ___",o:["fixed arrangement","timetable"],a:"fixed arrangement"}
+ ]},
+qc2:{ quick:true, type:"pick", title:"Quick check: after time words", tip:"No will after when, if, until, as soon as…", ins:"Four quick questions before the exercises.",
+ items:[
+  {t:"Which is correct? ___",o:["I'll call you when I arrive.","I'll call you when I will arrive."],a:"I'll call you when I arrive."},
+  {t:"Which is correct? ___",o:["If it will rain, we'll stay in.","If it rains, we'll stay in."],a:"If it rains, we'll stay in."},
+  {t:"“I don't know when he ___.” Which is correct?",o:["will come","comes"],a:"will come"},
+  {t:"The bus ___ at 7.30. (timetable)",o:["leaves","is leaving"],a:"leaves"}
+ ]},
+qc3:{ quick:true, type:"pick", title:"Quick check: future continuous and perfect", tip:"will be -ing = in progress · will have + participle = finished by · will have been -ing = how long.", ins:"Four quick questions before the exercises.",
+ items:[
+  {t:"“This time next week I'll be skiing.” Will the skiing be in progress? ___",o:["Yes","No"],a:"Yes"},
+  {t:"“By six I'll have finished.” Is the action complete by six? ___",o:["Yes","No"],a:"Yes"},
+  {t:"“By June she will have been teaching for 20 years.” This stresses ___",o:["duration","a single event"],a:"duration"},
+  {t:"Time words for the future perfect: ___",o:["by, by the time, before","yesterday, ago"],a:"by, by the time, before"}
+ ]},
+x1:{ extra:true, type:"pick", tip:"Will you…? = request · Shall I…? = offer · Shall we…? = suggestion · won't = refuse.", title:"Will, shall, won't", ins:"Tap the best word.",
+ items:[
+  {t:"___ I carry that bag for you? (offer)",o:["Shall","Will"],a:"Shall"},
+  {t:"___ you open the window, please? (request)",o:["Shall","Will"],a:"Will"},
+  {t:"___ we have lunch outside? (suggestion)",o:["Shall","Will"],a:"Shall"},
+  {t:"I've asked him three times, but he ___ listen. (refuses)",o:["won't","shan't"],a:"won't"},
+  {t:"‘What ___ I do with these letters?’ ‘Put them on my desk.’",o:["shall","will"],a:"shall"},
+  {t:"___ you help me with this essay? (request)",o:["Shall","Will"],a:"Will"}
+ ]},
+x2:{ extra:true, type:"pick", tip:"will / will be / will have can talk about a guess about the present or past: That will be the postman. He'll have arrived by now.", title:"Guessing about now", ins:"Tap the best form.",
+ items:[
+  {t:"(The doorbell rings.) “That ___ the postman.”",o:["will be","will have been"],a:"will be"},
+  {t:"“Where's Dad?” “He ___ in the garden, I expect.”",o:["will be","has"],a:"will be"},
+  {t:"“It's nine o'clock. They ___ home by now.”",o:["will have arrived","will arrive"],a:"will have arrived"},
+  {t:"“Anna isn't answering.” “She ___ asleep.”",o:["will be","will have been"],a:"will be"}
+ ]},
+x3:{ extra:true, type:"gap", tip:"Decide which form each gap needs.", title:"A letter about holiday plans", ins:"Put the verbs into the correct future form.",
+ items:[
+  {t:"This time next week I 1) ___ (buy) presents for my family. I 2) ___ (get) everything in one day so that I can relax afterwards. On Christmas Day I 3) ___ (stay) at home, but two days later I 4) ___ (fly) to Rome. By the end of January I 5) ___ (visit) five countries!", a:[["will be buying","'ll be buying"],["am going to get","'m going to get","will get","'ll get"],["am staying","'m staying","am going to stay","'m going to stay"],["am flying","'m flying"],["will have visited","'ll have visited"]]}
+ ]},
+x4:{ extra:true, type:"gap", tip:"Use be going to for each plan.", title:"Cliff's business plans", ins:"Use the prompts: Cliff ___ (…).",
+ items:[
+  {t:"advertise in newspapers: Cliff ___ advertise in newspapers.",a:["is going to","'s going to"]},
+  {t:"equip the office with computers: He ___ equip the office with computers.",a:["is going to","'s going to"]},
+  {t:"move to bigger premises: He ___ move to bigger premises.",a:["is going to","'s going to"]},
+  {t:"open an office abroad: He ___ open an office abroad.",a:["is going to","'s going to"]}
+ ]},
+x5:{ extra:true, type:"pick", tip:"by = not later than · until = up to · before = earlier than.", title:"by, until, before", ins:"Tap the best word.",
+ items:[
+  {t:"I'll have finished the essay ___ Friday.",o:["by","until"],a:"by"},
+  {t:"She won't have finished ___ five o'clock.",o:["until","by"],a:"until"},
+  {t:"We'll have left ___ you arrive.",o:["before","until"],a:"before"},
+  {t:"I'll wait ___ you come back.",o:["until","by"],a:"until"},
+  {t:"By the time he ___, we'll have gone. (arrive)",o:["arrives","will arrive"],a:"arrives"},
+  {t:"The report must be ready ___ Monday morning.",o:["by","until"],a:"by"}
+ ]},
+x6:{ extra:true, type:"memory", tip:"Match each expression with its meaning.", title:"Memory game: prepositions", ins:"Flip two cards at a time.",
+ pairs:[["ask about","question or talk about a topic"],["ask for","request something"],["engaged to","promised to marry"],["engaged in","busy with an activity"],["borrow from","take for a short time"],["explain to","make something clear for someone"],["laugh at","find someone funny, often unkindly"],["listen to","pay attention to sounds or words"]]},
+x7:{ extra:true, type:"gap", tip:"Decide: decision, plan, arrangement, evidence.", title:"Short dialogues", ins:"Put the verbs into the correct future form.",
+ items:[
+  {t:"A: Why are you buying flour and eggs? B: Because I ___ (make) a cake.",a:["am going to make","'m going to make"]},
+  {t:"A: I've decided what to buy Mum for her birthday. B: Really? What ___ you ___ (buy)?",a:[["are"],["going to buy"]]},
+  {t:"A: I'm exhausted. B: Me too. I wonder if David ___ (come) to help tonight.",a:["will come"]},
+  {t:"A: What are you doing tonight? B: I ___ (probably/watch) TV after dinner.",a:["will probably watch","'ll probably watch"]}
+ ]},
+x8:{ extra:true, type:"gap", tip:"By the time … + present simple; main clause with will have + participle.", title:"What will you have done by then?", ins:"Complete with the future perfect.",
+ items:[
+  {t:"By the time I'm thirty, I ___ (graduate), ___ (start) a career and ___ (travel) to ten countries.",a:[["will have graduated"],["will have started"],["will have travelled","will have traveled"]]},
+  {t:"By the end of the year, the company ___ (double) its profits.",a:"will have doubled"}
+ ]}
+});
+
+window.LESSON_DICE={
+ f1:["What are you doing this weekend?","What are you going to do after the lesson?","What are you going to study next year?","Where are you going on your next holiday?","Who are you meeting tomorrow?","What are you going to buy next month?"],
+ f2:["Will people still use cash in 2050?","Will robots do most jobs?","Will English remain the world's main language?","Will cities be greener?","Will students still go to university?","Will we live on other planets?"]
+};
+
+</script>
+<script>
+/* Lesson engine v2 – game-style exercises: instant feedback, XP, streak, levels, stars, confetti, hints.
+   Unit types: gap, pick, choice, tiles, match, memory. Also: timelines, tabs, tense helper, dice cards. */
+(function(){
+  "use strict";
+
+  /* ---------- answer normaliser: accepts contractions and full forms ---------- */
+  var HAS_WORDS = {been:1,just:1,already:1,never:1,ever:1,gone:1,lost:1,finished:1,done:1,left:1,broken:1,taken:1,made:1,seen:1,eaten:1,written:1};
+  function norm(s){
+    s = String(s||"").toLowerCase().replace(/[’‘`´]/g,"'").replace(/[.!?,;]+$/,"").replace(/\s+/g," ").trim();
+    s = s.replace(/\bcan't\b/g,"cannot").replace(/\bwon't\b/g,"will not").replace(/\bshan't\b/g,"shall not");
+    s = s.replace(/n't\b/g," not").replace(/'m\b/g," am").replace(/'re\b/g," are").replace(/'ve\b/g," have").replace(/'ll\b/g," will").replace(/'d\b/g," would");
+    s = s.replace(/'s ([a-z]+)/g,function(_,w){
+      if(/ing$/.test(w)) return " is "+w;
+      if(HAS_WORDS[w] || /(ed|en)$/.test(w)) return " has "+w;
+      return " is "+w;
+    });
+    return s.replace(/\s+/g," ").trim();
+  }
+  function variants(a){ return (Array.isArray(a)?a:[a]).map(norm); }
+  function plain(s){ return String(s).toLowerCase().replace(/[’‘`´]/g,"'").replace(/[.,!?;:]/g,"").replace(/\s+/g," ").trim(); }
+
+  /* ---------- helpers ---------- */
+  function el(tag, cls, html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function shuffleNot(a){ var b=shuffle(a), n=0; while(n++<8 && b.every(function(x,i){return x===a[i];}) && a.length>1) b=shuffle(a); return b; }
+  function arr(a){ return Array.isArray(a)?a:[a]; }
+
+  /* ---------- game state ---------- */
+  var HUD = {xp:0, streak:0, sound:false, won:false};
+  var S = {};                 // exercise id -> {units, xp, celebrated, host, res, stars}
+  var LEVELS = [["Rookie",0],["Explorer",20],["Skilled",40],["Expert",65],["Grammar Master",90]];
+
+  /* ---------- sound (off by default) ---------- */
+  var AC=null;
+  function tone(freq,dur,type,when,vol){
+    if(!HUD.sound) return;
+    try{
+      AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+      var o=AC.createOscillator(), g=AC.createGain(), t0=AC.currentTime+(when||0);
+      o.type=type||"sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(vol||0.08,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  function beep(kind){
+    if(kind==="ok"){ tone(660,.12,"sine",0); tone(880,.16,"sine",.1); }
+    else if(kind==="bad"){ tone(200,.18,"triangle",0,.07); }
+    else if(kind==="win"){ [523,659,784,1047].forEach(function(f,i){ tone(f,.2,"sine",i*.11); }); }
+    else if(kind==="flip"){ tone(440,.05,"sine",0,.04); }
+  }
+
+  /* ---------- confetti ---------- */
+  function confetti(big){
+    var n = big? 120 : 46, box=el("div","confetti"), cols=["#e6a33a","#12a5a3","#2456b0","#1e3f8f","#1f9d63","#f0b04a"];
+    for(var i=0;i<n;i++){
+      var p=el("i"); p.style.left=(Math.random()*100)+"%"; p.style.background=cols[i%cols.length];
+      p.style.setProperty("--dx",(Math.random()*160-80)+"px"); p.style.animationDelay=(Math.random()*.4)+"s";
+      p.style.animationDuration=(1.4+Math.random()*1.2)+"s"; p.style.width=(6+Math.random()*7)+"px"; p.style.height=(8+Math.random()*9)+"px";
+      box.appendChild(p);
+    }
+    document.body.appendChild(box); setTimeout(function(){ if(box.parentNode) box.parentNode.removeChild(box); },3200);
+  }
+  function xpPop(n){
+    var h=document.getElementById("xpNum"); if(!h) return;
+    var p=el("span","xp-pop","+"+n); h.parentNode.appendChild(p); setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); },900);
+  }
+
+  /* ---------- scoring ---------- */
+  function exStats(id){
+    var s=S[id], ok=0, first=0, done=0, shown=0;
+    s.units.forEach(function(u){ if(u.ok) ok++; if(u.ok && u.tries===0) first++; if(u.ok||u.shown) done++; if(u.shown) shown++; });
+    return {ok:ok, first:first, done:done, shown:shown, total:s.units.length};
+  }
+  function starsFor(st){ if(st.shown) return 0; var p=st.first/st.total; return p>=1?3: p>=.7?2: p>=.4?1:0; }
+  function starStr(n){ return "★★★".slice(0,n)+"☆☆☆".slice(0,3-n); }
+
+  function report(id,u,ok){
+    if(u.ok||u.shown) return;
+    if(ok){
+      u.ok=true;
+      var gain;
+      if(u.tries===0){ HUD.streak++; gain=10+Math.min(5,HUD.streak-1); } else { HUD.streak=0; gain=5; }
+      u.xp=gain; S[id].xp+=gain; HUD.xp+=gain; xpPop(gain); beep("ok");
+    } else { u.tries++; HUD.streak=0; beep("bad"); }
+    refresh(id);
+  }
+
+  function refresh(id){
+    var s=S[id], st=exStats(id);
+    if(s.res){
+      var txt = st.shown? "answers shown" : (st.ok+" / "+st.total);
+      if(!st.shown && st.done===st.total) txt += "  "+starStr(starsFor(st));
+      s.res.textContent=txt; s.res.className="ex-result"+((!st.shown&&st.ok===st.total)?" perfect":"");
+    }
+    s.host.classList.toggle("complete", st.done===st.total && !st.shown);
+    if(st.ok===st.total && !st.shown && !s.celebrated){ s.celebrated=true; confetti(false); beep("win"); }
+    updateAll();
+  }
+
+  function label(ex){ return ex.quick?"Quick check": ex.extra?"Extra "+ex.n : "Exercise "+ex.n; }
+  var RATE={gap:15,pick:8,choice:12,tiles:30,match:12,memory:15};
+  function exSecs(id){ var ex=EX[id], st=S[id]; var n=st?st.units.length:0; return n*(ex.wide?45:(RATE[ex.type]||15)); }
+  function minsTxt(sec){ var m=Math.round(sec/60); return m<1?"under 1 min":"about "+m+" min"; }
+  var pagesHook=null;
+  var ORD=null;
+  function order(id){ if(!ORD){ ORD={}; [].slice.call(document.querySelectorAll("[data-ex]")).forEach(function(h,i){ ORD[h.getAttribute("data-ex")]=i; }); } return ORD[id]; }
+  function lessonTotals(){
+    var ok=0,t=0; Object.keys(S).forEach(function(id){ if(EX[id].extra) return; var st=exStats(id); t+=st.total; ok+=st.ok; });
+    return {ok:ok,t:t,pct:t?Math.round(100*ok/t):0};
+  }
+  function updateAll(){
+    var L=lessonTotals();
+    var q=function(i){ return document.getElementById(i); };
+    if(q("scoreNum")) q("scoreNum").textContent=L.ok+" / "+L.t; window.__ieltsExplicitScore=true; try{ if(window.reportScore&&L.t>0){ var allDone=true, first=0; Object.keys(S).forEach(function(id){ if(EX[id].extra) return; var s2=exStats(id); if(s2.done<s2.total) allDone=false; first+=s2.first; }); if(allDone) window.reportScore(first,L.t); } }catch(e){}
+    if(q("scoreBar")) q("scoreBar").style.width=L.pct+"%";
+    if(q("xpNum")) q("xpNum").textContent=HUD.xp;
+    if(q("streakNum")) q("streakNum").textContent=HUD.streak;
+    var qs=q("streakBox"); if(qs) qs.classList.toggle("hot",HUD.streak>=3);
+    var li=0; LEVELS.forEach(function(l,i){ if(L.pct>=l[1]) li=i; });
+    var nxt=LEVELS[li+1], cur=LEVELS[li];
+    if(q("lvName")) q("lvName").textContent=cur[0];
+    if(q("lvBar")) q("lvBar").style.width=(nxt? Math.round(100*(L.pct-cur[1])/(nxt[1]-cur[1])) : 100)+"%";
+    var sum=q("summaryBody");
+    if(sum){
+      var rows="";
+      var xo=0,xt=0;
+      Object.keys(S).map(function(id){return id;}).sort(function(a,b){return order(a)-order(b);}).forEach(function(id){
+        var st=exStats(id), ex=EX[id], c;
+        if(ex.extra){ xo+=st.ok; xt+=st.total; return; }
+        if(st.shown) c="answers shown"; else if(!st.ok && !st.done) c="–"; else c=st.ok+" / "+st.total;
+        var stars=(!st.shown && st.done===st.total)? starStr(starsFor(st)) : "";
+        rows += "<tr><td>"+label(ex)+"</td><td>"+esc(ex.title)+"</td><td class='st'>"+stars+"</td><td class='num'>"+c+"</td></tr>";
+      });
+      if(xt && xo) rows += "<tr><td>Extra</td><td>More practice (optional) — all exercises you tried</td><td class='st'></td><td class='num'>"+xo+" / "+xt+"</td></tr>";
+      sum.innerHTML=rows;
+      var tot=q("summaryTotal"); if(tot) tot.textContent=L.ok+" / "+L.t+"  ("+L.pct+"%)";
+      var xs=q("summaryXP"); if(xs) xs.textContent=HUD.xp+" XP · "+cur[0];
+    }
+    var rv=q("reviewBody");
+    if(rv){
+      var html="";
+      Object.keys(S).sort(function(a,b){return order(a)-order(b);}).forEach(function(id){
+        var miss=S[id].units.filter(function(u){ return u.meta && (!u.ok || u.tries>0); });
+        if(!miss.length) return;
+        html+="<h4>"+label(EX[id])+" · "+esc(EX[id].title)+"</h4><ul>";
+        miss.forEach(function(u){ html+="<li><span>"+esc(u.meta.q)+"</span> → <b>"+esc(u.meta.a)+"</b></li>"; });
+        html+="</ul>";
+      });
+      rv.innerHTML=html||"<p>Nothing to review yet — or you got everything right first time. 🎉</p>";
+    }
+    if(L.t && L.ok===L.t && !HUD.won){ HUD.won=true; confetti(true); beep("win"); }
+    if(pagesHook) pagesHook();
+  }
+
+  /* ---------- exercise builder ---------- */
+  function build(id, host){
+    var ex = EX[id]; if(!ex) return;
+    var units=[]; S[id]={units:units, xp:0, celebrated:false, host:host, res:null};
+    host.classList.add("ex-card"); host.id="ex-"+id; if(ex.quick) host.classList.add("quick");
+    var head=el("div","ex-head");
+    head.appendChild(el("span","ex-num",label(ex)));
+    head.appendChild(el("h4","ex-title",esc(ex.title)));
+    host.appendChild(head);
+    host.appendChild(el("p","ex-ins",esc(ex.ins)));
+    var hint=null;
+    if(ex.tip){ hint=el("div","hintbox","<b>💡 Hint</b> "+esc(ex.tip)); host.appendChild(hint); }
+
+    var body=el("div","ex-body"); host.appendChild(body);
+    var ctx={ex:ex,id:id,units:units,body:body,host:host,inputs:[],lastInput:null};
+    var T=ex.type;
+    if(T==="gap") buildGap(ctx);
+    else if(T==="pick") buildPick(ctx);
+    else if(T==="choice") buildChoice(ctx);
+    else if(T==="tiles") buildTiles(ctx);
+    else if(T==="match") buildMatch(ctx);
+    else if(T==="memory") buildMemory(ctx);
+
+    var bar=el("div","ex-bar");
+    var bCheck=el("button","btn btn-primary","Check all"), bHint=el("button","btn btn-ghost","💡 Hint"),
+        bReset=el("button","btn btn-ghost","↺ Try again");
+    var res=el("span","ex-result",""); S[id].res=res;
+    if(T!=="match" && T!=="memory") bar.appendChild(bCheck);
+    if(hint) bar.appendChild(bHint);
+    bar.appendChild(bReset); bar.appendChild(res);
+    host.appendChild(bar);
+
+    bCheck.onclick=function(){ units.forEach(function(u){ if(!u.ok&&!u.shown) u.check(true); }); };
+    bHint.onclick=function(){ hint.classList.toggle("on"); };
+    bReset.onclick=function(){
+      HUD.xp=Math.max(0,HUD.xp-S[id].xp); S[id].xp=0; S[id].celebrated=false;
+      units.forEach(function(u){ u.ok=false; u.shown=false; u.tries=0; u.xp=0; u.reset(); });
+      if(ctx.afterReset) ctx.afterReset();
+      refresh(id);
+    };
+    S[id].reset=bReset.onclick;
+  }
+  function newUnit(){ return {ok:false,shown:false,tries:0,xp:0}; }
+
+  /* ---------- gap: type the answer; Enter or leaving the box checks it ---------- */
+  function buildGap(ctx){
+    var ex=ctx.ex, id=ctx.id, units=ctx.units;
+    var single = ex.items.length===1 && Array.isArray(ex.items[0].a) && Array.isArray(ex.items[0].a[0]);
+    if(ex.box){
+      var chips=el("div","bank");
+      ex.box.split("·").forEach(function(w){
+        w=w.trim(); var c=el("button","bank-chip",esc(w)); c.type="button";
+        c.addEventListener("mousedown",function(e){ e.preventDefault(); });
+        c.onclick=function(){
+          var t=ctx.lastInput;
+          if(!t || t.disabled){ t=ctx.inputs.filter(function(i){return !i.disabled && !i.value;})[0] || ctx.inputs.filter(function(i){return !i.disabled;})[0]; }
+          if(t){ t.value=w; t.dispatchEvent(new Event("input")); t.focus(); t._u.check(); }
+        };
+        chips.appendChild(c);
+      });
+      ctx.body.appendChild(chips);
+    }
+    var list=el("div", single?"ex-par":"ex-list"); ctx.body.appendChild(list);
+    ex.items.forEach(function(it,idx){
+      var row=el("div","ex-item"), multi=Array.isArray(it.a)&&Array.isArray(it.a[0]), answers=multi?it.a:[it.a];
+      if(!single) row.appendChild(el("span","ex-no",(idx+1)+"."));
+      var line=el("span","ex-line"), parts=it.t.split("___"), k=0;
+      parts.forEach(function(p,i){
+        p.split("\n").forEach(function(seg,si){ if(si>0) line.appendChild(document.createElement("br")); line.appendChild(document.createTextNode(seg)); });
+        if(i<parts.length-1){
+          var vs0=arr(answers[i]), inp=document.createElement("input");
+          inp.type="text"; inp.autocomplete="off"; inp.autocapitalize="off"; inp.spellcheck=false; inp.className="gap";
+          inp.size=Math.max(6,Math.min(22,Math.max.apply(null,vs0.map(function(x){return x.length;}))+3)); if(ex.wide){ inp.className="gap wide"; inp.size=60; }
+          line.appendChild(inp); ctx.inputs.push(inp);
+          var vs=variants(answers[i]), u=newUnit(); inp._u=u;
+          u.check=function(bulk){
+            if(u.ok||u.shown) return;
+            if(!inp.value.trim()){ if(bulk){ inp.classList.add("nudge"); setTimeout(function(){inp.classList.remove("nudge");},600);} return; }
+            var good=vs.indexOf(norm(inp.value))>-1;
+            inp.classList.remove("bad");
+            if(good){ inp.classList.add("ok"); inp.disabled=true; }
+            else { inp.classList.add("bad"); }
+            report(id,u,good);
+          };
+          u.show=function(){ inp.value=vs0[0]; inp.classList.remove("ok","bad"); inp.classList.add("shown"); inp.disabled=true; u.shown=true; };
+          u.reset=function(){ inp.value=""; inp.disabled=false; inp.classList.remove("ok","bad","shown"); };
+          u.meta={q:it.t.replace(/___/g,"…"),a:vs0[0]}; if(single) u.meta.q="Gap "+(ctx.inputs.length);
+          units.push(u);
+          (function(inp,u){
+            inp.addEventListener("keydown",function(e){
+              if(e.key==="Enter"){ e.preventDefault(); u.check();
+                var all=ctx.inputs, at=all.indexOf(inp), nx=all.slice(at+1).concat(all.slice(0,at)).filter(function(x){return !x.disabled;})[0];
+                if(nx && u.ok) nx.focus(); }
+            });
+            inp.addEventListener("input",function(){ inp.classList.remove("bad"); });
+            inp.addEventListener("change",function(){ u.check(); });
+            inp.addEventListener("focus",function(){ ctx.lastInput=inp; });
+          })(inp,u);
+        }
+      });
+      row.appendChild(line); list.appendChild(row);
+    });
+    function units_(){ return units; }
+    units_();
+  }
+
+  /* ---------- pick: tap the right word inside the sentence ---------- */
+  function buildPick(ctx){
+    var ex=ctx.ex, id=ctx.id, list=el("div","ex-list"); ctx.body.appendChild(list);
+    ex.items.forEach(function(it,idx){
+      var row=el("div","ex-item"); row.appendChild(el("span","ex-no",(idx+1)+"."));
+      var line=el("span","ex-line"), parts=it.t.split("___"), grp=el("span","pickgrp"), btns=[], u=newUnit();
+      line.appendChild(document.createTextNode(parts[0])); line.appendChild(grp); line.appendChild(document.createTextNode(parts[1]||""));
+      it.o.forEach(function(o){
+        var b=el("button","pick",esc(o)); b.type="button";
+        b.onclick=function(){
+          if(u.ok||u.shown||b.disabled) return;
+          var good=(o===it.a);
+          if(good){ b.classList.add("ok"); btns.forEach(function(x){ x.disabled=true; }); }
+          else { b.classList.add("bad"); b.disabled=true; }
+          report(id,u,good);
+        };
+        grp.appendChild(b); btns.push(b);
+      });
+      u.check=function(bulk){ /* nothing to evaluate: picks are checked instantly */ if(bulk && !u.ok && !u.shown){ grp.classList.add("nudge"); setTimeout(function(){grp.classList.remove("nudge");},600);} };
+      u.show=function(){ btns.forEach(function(b){ b.disabled=true; if(b.textContent===it.a){ b.classList.remove("bad"); b.classList.add("shown"); } }); u.shown=true; };
+      u.reset=function(){ btns.forEach(function(b){ b.disabled=false; b.className="pick"; }); };
+      u.meta={q:it.t.replace(/___/g,"…"),a:it.a};
+      ctx.units.push(u); row.appendChild(line); list.appendChild(row);
+    });
+  }
+
+  /* ---------- choice: A / B / C buttons with an explanation ---------- */
+  function buildChoice(ctx){
+    var ex=ctx.ex, id=ctx.id, list=el("div","ex-list"); ctx.body.appendChild(list);
+    ex.items.forEach(function(it,idx){
+      var row=el("div","ex-item choice"), q=el("div","ch-q"), u=newUnit();
+      q.appendChild(el("span","ex-no",(idx+1)+"."));
+      q.appendChild(el("span","ex-line", /^\d+$/.test(it.q)? "" : esc(it.q).replace(/___/g,"<span class='blank'>……</span>")));
+      row.appendChild(q);
+      var opts=el("div","ch-opts"), btns=[];
+      var expl=el("div","ch-expl","");
+      it.o.forEach(function(o,i){
+        var b=el("button","ch-opt","<span class='ch-letter'>"+"ABC"[i]+"</span><span class='ch-text'>"+esc(o)+"</span>"); b.type="button";
+        b.onclick=function(){
+          if(u.ok||u.shown||b.disabled) return;
+          var good=(i===it.a);
+          if(good){ b.classList.add("ok"); btns.forEach(function(x){ x.disabled=true; }); if(it.e){ expl.textContent="✓ "+it.e; expl.className="ch-expl on"; } }
+          else { b.classList.add("bad"); b.disabled=true; }
+          report(id,u,good);
+        };
+        opts.appendChild(b); btns.push(b);
+      });
+      row.appendChild(opts); row.appendChild(expl);
+      u.check=function(bulk){ if(bulk && !u.ok && !u.shown){ opts.classList.add("nudge"); setTimeout(function(){opts.classList.remove("nudge");},600);} };
+      u.show=function(){ btns.forEach(function(b,i){ b.disabled=true; if(i===it.a){ b.classList.remove("bad"); b.classList.add("shown"); } }); if(it.e){ expl.textContent=it.e; expl.className="ch-expl on"; } u.shown=true; };
+      u.reset=function(){ btns.forEach(function(b){ b.disabled=false; b.className="ch-opt"; }); expl.className="ch-expl"; expl.textContent=""; };
+      u.meta={q:(/^\d+$/.test(it.q)?"Question "+it.q:it.q),a:it.o[it.a]+(it.e?"  ("+it.e+")":"")};
+      ctx.units.push(u); list.appendChild(row);
+    });
+  }
+
+  /* ---------- tiles: build the sentence ---------- */
+  function buildTiles(ctx){
+    var ex=ctx.ex, id=ctx.id, list=el("div","ex-list"); ctx.body.appendChild(list);
+    ex.items.forEach(function(it,idx){
+      var row=el("div","ex-item tile-item"), u=newUnit();
+      var words=it.a[0].split(" "), accepted=it.a.map(plain);
+      var label=el("div","tile-q"); label.appendChild(el("span","ex-no",(idx+1)+"."));
+      label.appendChild(el("span","tile-clue","Use: <b>"+esc(it.q)+"</b>")); row.appendChild(label);
+      var ans=el("div","tile-ans"), bank=el("div","tile-bank"), msg=el("div","ch-expl","");
+      row.appendChild(ans); row.appendChild(bank); row.appendChild(msg);
+      var tiles=words.map(function(w,i){
+        var txt = (i===0 && w!=="I" && !/^I['’]/.test(w))? w.charAt(0).toLowerCase()+w.slice(1) : w;
+        var t=el("button","tile",esc(txt)); t.type="button"; t.setAttribute("data-pos",i); t._w=w; t._in=false; return t;
+      });
+      var order=shuffleNot(tiles), placed=[];
+      function render(){
+        ans.innerHTML=""; bank.innerHTML="";
+        placed.forEach(function(t){ ans.appendChild(t); });
+        order.forEach(function(t){ if(placed.indexOf(t)<0) bank.appendChild(t); });
+        ans.classList.toggle("empty",!placed.length);
+      }
+      function tryCheck(){
+        if(placed.length!==words.length) return;
+        var s=plain(placed.map(function(t){return t._w;}).join(" ")), good=accepted.indexOf(s)>-1;
+        if(good){ ans.classList.remove("bad"); ans.classList.add("ok"); placed.forEach(function(t){ t.disabled=true; }); if(it.e){ msg.textContent="✓ "+it.e; msg.className="ch-expl on"; } }
+        else { ans.classList.add("bad"); }
+        report(id,u,good);
+      }
+      tiles.forEach(function(t){
+        t.onclick=function(){
+          if(u.ok||u.shown) return;
+          var at=placed.indexOf(t);
+          if(at>-1){ placed.splice(at,1); ans.classList.remove("bad"); } else { placed.push(t); }
+          render(); tryCheck();
+        };
+      });
+      u.check=function(bulk){ if(u.ok||u.shown) return; if(placed.length===words.length) tryCheck(); else if(bulk){ ans.classList.add("nudge"); setTimeout(function(){ans.classList.remove("nudge");},600);} };
+      u.show=function(){ placed=tiles.slice(); render(); tiles.forEach(function(t){t.disabled=true;}); ans.classList.remove("bad"); ans.classList.add("shown"); if(it.e){ msg.textContent=it.e; msg.className="ch-expl on"; } u.shown=true; };
+      u.reset=function(){ placed=[]; order=shuffleNot(tiles); tiles.forEach(function(t){t.disabled=false;}); ans.className="tile-ans"; msg.className="ch-expl"; msg.textContent=""; render(); };
+      u.meta={q:"Use: "+it.q,a:it.a[0]};
+      render(); ctx.units.push(u); list.appendChild(row);
+    });
+  }
+
+  /* ---------- match: tap a sentence, then its label ---------- */
+  function buildMatch(ctx){
+    var ex=ctx.ex, id=ctx.id, wrap=el("div","match"), colL=el("div","m-left"), colR=el("div","m-right");
+    wrap.appendChild(colL); wrap.appendChild(colR); ctx.body.appendChild(wrap);
+    var pend=null, rows=[], chips=[];
+    function clearPend(){ if(pend){ pend.node.classList.remove("pending"); pend=null; } }
+    function attempt(ri,ci){
+      var u=ctx.units[ri], it=ex.items[ri], chip=chips[ci], row=rows[ri];
+      if(u.ok||u.shown||chip.used) { clearPend(); return; }
+      var good=(chip.label===it.a); clearPend();
+      if(good){ lock(ri,ci,"ok"); report(id,u,true); }
+      else { row.classList.add("bad"); chip.node.classList.add("bad"); setTimeout(function(){ row.classList.remove("bad"); chip.node.classList.remove("bad"); },550); report(id,u,false); }
+    }
+    function lock(ri,ci,cls){
+      var row=rows[ri], chip=chips[ci]; chip.used=true; chip.node.disabled=true; chip.node.classList.add("used");
+      row.classList.add(cls); row.querySelector(".m-slot").textContent=chip.label; row.setAttribute("data-done","1"); chip._row=ri;
+    }
+    ex.items.forEach(function(it,ri){
+      var u=newUnit(), row=el("button","m-row","<span class='ex-no'>"+(ri+1)+".</span><span class='m-text'>"+esc(it.t)+"</span><span class='m-slot'></span>"); row.type="button";
+      row.setAttribute("data-i",ri); rows.push(row); colL.appendChild(row);
+      row.onclick=function(){
+        if(u.ok||u.shown) return;
+        if(pend && pend.side==="R"){ attempt(ri,pend.idx); return; }
+        clearPend(); pend={side:"L",idx:ri,node:row}; row.classList.add("pending");
+      };
+      u.check=function(){};
+      u.show=function(){ var ci=chips.findIndex(function(c){return c.label===it.a;}); chips[ci].node.classList.remove("bad"); lock(ri,ci,"shown"); u.shown=true; };
+      u.reset=function(){ row.className="m-row"; row.removeAttribute("data-done"); row.querySelector(".m-slot").textContent=""; };
+      u.meta={q:it.t,a:it.a};
+      ctx.units.push(u);
+    });
+    shuffleNot(ex.o.slice()).forEach(function(lab,ci){
+      var b=el("button","m-chip",esc(lab)); b.type="button"; b.setAttribute("data-label",lab);
+      var c={label:lab,node:b,used:false}; chips.push(c); colR.appendChild(b);
+      b.onclick=function(){
+        if(c.used) return;
+        if(pend && pend.side==="L"){ attempt(pend.idx,ci); return; }
+        clearPend(); pend={side:"R",idx:ci,node:b}; b.classList.add("pending");
+      };
+    });
+    ctx.afterReset=function(){ clearPend(); chips.forEach(function(c){ c.used=false; c.node.disabled=false; c.node.className="m-chip"; }); };
+  }
+
+  /* ---------- memory: flip cards ---------- */
+  function buildMemory(ctx){
+    var ex=ctx.ex, id=ctx.id, grid=el("div","mem"); ctx.body.appendChild(grid);
+    var cards=[], open=[], busy=false, pairs=ex.pairs;
+    pairs.forEach(function(pp){ var u=newUnit(); u.meta={q:pp[0],a:pp[1]}; u.check=function(){}; u.show=function(){}; u.reset=function(){}; ctx.units.push(u); });
+    var info=el("div","mem-info",""); ctx.body.appendChild(info);
+    function deal(){
+      grid.innerHTML=""; cards=[]; open=[];
+      var all=[]; pairs.forEach(function(p,i){ all.push({pair:i,txt:p[0],kind:"term"}); all.push({pair:i,txt:p[1],kind:"def"}); });
+      shuffle(all).forEach(function(d){
+        var c=el("button","mc "+d.kind,"<span class='mc-in'><span class='mc-back'>?</span><span class='mc-front'>"+esc(d.txt)+"</span></span>"); c.type="button";
+        c.setAttribute("data-pair",d.pair); c._d=d; c._done=false;
+        c.onclick=function(){ flip(c); };
+        grid.appendChild(c); cards.push(c);
+      });
+    }
+    function flip(c){
+      if(busy||c._done||c.classList.contains("open")) return;
+      c.classList.add("open"); open.push(c); beep("flip");
+      if(open.length===2){
+        var a=open[0], b=open[1], pi=a._d.pair;
+        if(a._d.pair===b._d.pair){
+          a._done=b._done=true; a.classList.add("match"); b.classList.add("match"); open=[];
+          report(id,ctx.units[pi],true);
+          var left=ctx.units.filter(function(u){return !u.ok&&!u.shown;}).length;
+          info.textContent=left? (left+" pairs to find") : "All pairs found!";
+        } else {
+          busy=true; ctx.units[a._d.pair].tries++; ctx.units[b._d.pair].tries++; HUD.streak=0; beep("bad");
+          a.classList.add("miss"); b.classList.add("miss"); updateAll();
+          setTimeout(function(){ [a,b].forEach(function(x){ x.classList.remove("open","miss"); }); open=[]; busy=false; },900);
+        }
+      }
+    }
+    ctx.afterShow=function(){ cards.forEach(function(c){ if(!c._done){ c.classList.add("open","shown"); c._done=true; } }); info.textContent="Answers shown"; };
+    ctx.afterReset=function(){ deal(); info.textContent=pairs.length+" pairs to find"; };
+    deal(); info.textContent=pairs.length+" pairs to find";
+  }
+
+  /* ---------- timelines (SVG) ---------- */
+  function timeline(kind){
+    var W=600,H=120,y=62,nowX=300;
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="timeline: '+kind+'">';
+    svg+='<line x1="24" y1="'+y+'" x2="578" y2="'+y+'" stroke="#9db6e6" stroke-width="3"/>';
+    svg+='<path d="M578 '+(y-7)+' L590 '+y+' L578 '+(y+7)+' Z" fill="#9db6e6"/>';
+    svg+='<text x="24" y="104" class="tl-l">PAST</text><text x="'+nowX+'" y="104" text-anchor="middle" class="tl-l tl-now">NOW</text><text x="576" y="104" text-anchor="end" class="tl-l">FUTURE</text>';
+    var NOW='<line x1="'+nowX+'" y1="'+(y-26)+'" x2="'+nowX+'" y2="'+(y+14)+'" stroke="#1e3f8f" stroke-width="4" stroke-linecap="round"/>';
+    if(kind==="simple"){
+      [60,120,180,240,360,420,480,540].forEach(function(x){ svg+='<circle cx="'+x+'" cy="'+y+'" r="9" fill="#2456b0"/>'; });
+      svg+='<circle cx="'+nowX+'" cy="'+y+'" r="9" fill="#2456b0"/>'+NOW;
+      svg+='<text x="150" y="30" text-anchor="middle" class="tl-t">again and again</text><text x="450" y="30" text-anchor="middle" class="tl-t">again and again</text>';
+    } else if(kind==="continuous"){
+      svg+='<rect x="238" y="'+(y-11)+'" width="124" height="22" rx="11" fill="#12a5a3"/>'+NOW;
+      svg+='<text x="300" y="30" text-anchor="middle" class="tl-t">in progress around now</text>';
+      svg+='<line x1="486" y1="'+y+'" x2="486" y2="'+(y-30)+'" stroke="#12a5a3" stroke-width="3"/><path d="M486 '+(y-30)+' L514 '+(y-24)+' L486 '+(y-18)+' Z" fill="#12a5a3"/>';
+      svg+='<text x="486" y="'+(y+26)+'" text-anchor="middle" class="tl-t">arranged</text>';
+    } else if(kind==="perfect"){
+      svg+='<circle cx="110" cy="'+y+'" r="9" fill="#e6a33a"/>';
+      svg+='<path d="M110 '+(y-12)+' Q205 '+(y-62)+' '+(nowX-6)+' '+(y-14)+'" fill="none" stroke="#e6a33a" stroke-width="4" stroke-linecap="round"/>';
+      svg+='<path d="M'+(nowX-6)+' '+(y-14)+' l-11 -2 m11 2 l-3 -11" fill="none" stroke="#e6a33a" stroke-width="4" stroke-linecap="round"/>'+NOW;
+      svg+='<text x="110" y="'+(y+28)+'" text-anchor="middle" class="tl-t">it happened / started</text><text x="'+nowX+'" y="22" text-anchor="middle" class="tl-t">…and it matters NOW</text>';
+    } else {
+      svg+='<rect x="96" y="'+(y-11)+'" width="'+(nowX-96)+'" height="22" rx="11" fill="#1e3f8f"/>'+NOW;
+      svg+='<text x="198" y="'+(y-22)+'" text-anchor="middle" class="tl-t">the activity goes on (how long?)</text>';
+    }
+    return svg+"</svg>";
+  }
+
+  var TLC={blue:"#2456b0",turq:"#12a5a3",saf:"#e6a33a",lap:"#1e3f8f",red:"#c0392b",grey:"#8a96ad"};
+  function tlSpec(sp){
+    var W=600,H=130,y=70,nowX=(sp.now==null?300:sp.now), c=function(k){ return TLC[k]||TLC.blue; };
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="timeline">';
+    svg+='<line x1="24" y1="'+y+'" x2="578" y2="'+y+'" stroke="#9db6e6" stroke-width="3"/><path d="M578 '+(y-7)+' L590 '+y+' L578 '+(y+7)+' Z" fill="#9db6e6"/>';
+    svg+='<text x="24" y="116" class="tl-l">PAST</text><text x="576" y="116" text-anchor="end" class="tl-l">FUTURE</text>';
+    if(sp.now!==false){ svg+='<text x="'+nowX+'" y="116" text-anchor="middle" class="tl-l tl-now">NOW</text><line x1="'+nowX+'" y1="'+(y-26)+'" x2="'+nowX+'" y2="'+(y+14)+'" stroke="#1e3f8f" stroke-width="4" stroke-linecap="round"/>'; }
+    (sp.m||[]).forEach(function(m){
+      var col=c(m.c), lab=m.l?esc(m.l):"";
+      if(m.t==="dot"){ svg+='<circle cx="'+m.x+'" cy="'+y+'" r="9" fill="'+col+'"/>'; if(lab) svg+='<text x="'+m.x+'" y="'+(y+30)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+      else if(m.t==="bar"){ svg+='<rect x="'+m.x+'" y="'+(y-11)+'" width="'+(m.x2-m.x)+'" height="22" rx="11" fill="'+col+'"/>'; if(lab) svg+='<text x="'+((m.x+m.x2)/2)+'" y="'+(y-22)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+      else if(m.t==="arrow"){ svg+='<line x1="'+m.x+'" y1="'+y+'" x2="'+m.x+'" y2="'+(y-30)+'" stroke="'+col+'" stroke-width="3"/><path d="M'+m.x+' '+(y-30)+' L'+(m.x+28)+' '+(y-24)+' L'+m.x+' '+(y-18)+' Z" fill="'+col+'"/>'; if(lab) svg+='<text x="'+m.x+'" y="'+(y+28)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+      else if(m.t==="curve"){ var mid=(m.x+m.x2)/2; svg+='<path d="M'+m.x+' '+(y-12)+' Q'+mid+' '+(y-64)+' '+(m.x2-6)+' '+(y-14)+'" fill="none" stroke="'+col+'" stroke-width="4" stroke-linecap="round"/><path d="M'+(m.x2-6)+' '+(y-14)+' l-11 -2 m11 2 l-3 -11" fill="none" stroke="'+col+'" stroke-width="4" stroke-linecap="round"/>'; if(lab) svg+='<text x="'+mid+'" y="'+(y-60)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+      else if(m.t==="line"){ svg+='<line x1="'+m.x+'" y1="'+(y-26)+'" x2="'+m.x+'" y2="'+(y+14)+'" stroke="'+col+'" stroke-width="4" stroke-linecap="round"/>'; if(lab) svg+='<text x="'+m.x+'" y="'+(y-32)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+      else if(m.t==="x"){ svg+='<path d="M'+(m.x-8)+' '+(y-8)+' l16 16 m0 -16 l-16 16" stroke="'+col+'" stroke-width="4" stroke-linecap="round"/>'; if(lab) svg+='<text x="'+m.x+'" y="'+(y+30)+'" text-anchor="middle" class="tl-t">'+lab+'</text>'; }
+    });
+    return svg+"</svg>";
+  }
+
+  /* ---------- tense helper ---------- */
+  var HELP = {
+    q1:{q:"Is it a habit, a general fact, a timetable or a permanent situation?", y:"r_simple", n:"q2"},
+    q2:{q:"Is it happening now or around now, is it changing, or is it a fixed arrangement?", y:"r_cont", n:"q3"},
+    q3:{q:"Does it connect the past to now (an experience, a result you can see, unfinished time, for / since)?", y:"q4", n:"r_past"},
+    q4:{q:"Do you stress how long, or the activity itself (a long activity, annoyance, a visible result of an activity)?", y:"r_pc", n:"r_pp"},
+    r_simple:{r:"Present simple",c:"blue",x:"Lena <b>teaches</b> chemistry. · The bus <b>leaves</b> at nine.",w:"Habits, facts, permanent states, timetables, instructions, commentary and stories."},
+    r_cont:{r:"Present continuous",c:"turq",x:"Lena <b>is teaching</b> a class now. · We <b>'re moving</b> next week.",w:"Now, temporary, changing, or a fixed arrangement."},
+    r_pp:{r:"Present perfect",c:"saf",x:"Lena <b>has taught</b> here for ten years. · I <b>'ve typed</b> four reports.",w:"Past + now: experience, result, number, unfinished time."},
+    r_pc:{r:"Present perfect continuous",c:"lap",x:"Lena <b>has been marking</b> tests all evening.",w:"Duration up to now, or an activity with a visible result."},
+    r_past:{r:"Not a present form – it is the past simple",c:"mute",x:"She <b>took</b> twenty photos yesterday.",w:"A finished time in the past. You will meet this tense in Lesson 2."}
+  };
+  function helper(host){
+    var out=el("div","helper"); host.appendChild(out);
+    function show(k){
+      var h=HELP[k]; out.innerHTML="";
+      if(h.q){
+        out.appendChild(el("div","h-q",esc(h.q)));
+        var row=el("div","h-btns"), y=el("button","btn btn-primary","Yes"), n=el("button","btn btn-ghost","No");
+        y.onclick=function(){ show(h.y); }; n.onclick=function(){ show(h.n); }; row.appendChild(y); row.appendChild(n); out.appendChild(row);
+      } else {
+        out.appendChild(el("div","h-res c-"+h.c,"<span>Use the</span><b>"+h.r+"</b><p>"+h.w+"</p><p class='h-x'>"+h.x+"</p>"));
+        if(k!=="r_past") out.appendChild(el("p","h-warn","⚠ Careful: state verbs (know, like, want, need…) do not take continuous forms."));
+        var again=el("button","btn btn-ghost","↺ Ask again"); again.onclick=function(){ show("q1"); }; out.appendChild(again);
+      }
+    }
+    show("q1");
+  }
+
+  /* ---------- boot ---------- */
+  document.addEventListener("DOMContentLoaded", function(){
+    var _n=0,_e=0;
+    document.querySelectorAll("[data-ex]").forEach(function(h){ var x=EX[h.getAttribute("data-ex")]; if(x){ x.extra=!!h.closest(".more"); if(x.extra) x.n=++_e; else if(x.quick) x.n="Q"; else x.n=++_n; } });
+    document.querySelectorAll("[data-ex]").forEach(function(h){ build(h.getAttribute("data-ex"), h); });
+    var coreSec=0, extraSec=0;
+    document.querySelectorAll("[data-ex]").forEach(function(h){ var id=h.getAttribute("data-ex"); if(!S[id]) return; var sc=exSecs(id);
+      var hd=h.querySelector(".ex-head"); if(hd) hd.appendChild(el("span","ex-time","⏱ "+minsTxt(sc)));
+      if(EX[id].extra) extraSec+=sc; else coreSec+=sc; });
+    document.querySelectorAll("[data-more]").forEach(function(d){
+      var hs=d.querySelectorAll("[data-ex]"), sc=0; [].forEach.call(hs,function(h){ sc+=exSecs(h.getAttribute("data-ex")); });
+      var sm=d.querySelector(".more-sum"); if(sm) sm.innerHTML="<b>More practice on this part</b> <span>optional · "+hs.length+(hs.length===1?" exercise":" exercises")+" · "+minsTxt(sc)+" · for homework or extra time</span>";
+    });
+    var tp=document.getElementById("timePlan");
+    if(tp){ var cm=Math.round(coreSec/60), em=Math.round(extraSec/60), words=0;
+      document.querySelectorAll("main .wrap > section").forEach(function(sc){ if(/^(speak|writ|summary|task|class)/.test(sc.id)) return; var c=sc.cloneNode(true);
+        [].forEach.call(c.querySelectorAll(".ex-card,details.more,.pager,.pagetime,.plan"),function(n){ n.parentNode.removeChild(n); }); words+=(c.textContent.match(/\S+/g)||[]).length; });
+      var rm=Math.max(5,Math.round(words/230));
+      tp.innerHTML="<b>⏱ Your hour:</b> about "+rm+" min reading + about "+cm+" min of exercises (the main path) = about "+(rm+cm)+" minutes. The folded “More practice” boxes add about "+em+" more minutes — optional, for homework or when you want extra training. They do not count in your lesson score."; }
+    document.querySelectorAll("[data-tl]").forEach(function(h){ h.innerHTML=timeline(h.getAttribute("data-tl")); });
+    document.querySelectorAll("[data-tlj]").forEach(function(h){ try{ h.innerHTML=tlSpec(JSON.parse(h.getAttribute("data-tlj"))); }catch(e){ h.innerHTML=""; } });
+    document.querySelectorAll("[data-helper]").forEach(helper);
+    updateAll();
+
+    /* tabs */
+    document.querySelectorAll("[data-tabs]").forEach(function(box){
+      var btns=[].slice.call(box.querySelectorAll("[data-tab]")), panes=[].slice.call(box.querySelectorAll("[data-pane]"));
+      function go(k){ btns.forEach(function(b){ b.classList.toggle("on",b.getAttribute("data-tab")===k); b.setAttribute("aria-selected",b.getAttribute("data-tab")===k); });
+        panes.forEach(function(p){ p.classList.toggle("on",p.getAttribute("data-pane")===k); }); }
+      btns.forEach(function(b){ b.onclick=function(){ go(b.getAttribute("data-tab")); }; });
+      go(btns[0].getAttribute("data-tab"));
+    });
+
+    /* dice cards for the speaking tasks */
+    var DICE={
+      d1:["wake up before 7","walk or take a bus to class","have breakfast at home","watch films in English","call a friend in the evening","go to bed after midnight","go to the cinema","buy magazines","watch quiz shows","listen to the radio","phone your friends","play computer games"].map(function(a){return "How often do you "+a+"?";}),
+      d2:["Bananas grow on trees.","Spiders are insects.","Rice grows in cold climates.","Whales are fish.","The sun sets in the west.","Chicks hatch from eggs."],
+      d3:["The water is cold. (switch on the heater)","The fridge is empty. (do the shopping)","It's raining. (bring an umbrella)","The cat is hungry. (feed it)","The bedroom is a mess. (tidy it)","The room is dark. (change the bulb)"]
+    };
+    if(window.LESSON_DICE) Object.keys(window.LESSON_DICE).forEach(function(k){ DICE[k]=window.LESSON_DICE[k]; });
+    document.querySelectorAll("[data-dice]").forEach(function(b){
+      var k=b.getAttribute("data-dice"), out=document.getElementById(b.getAttribute("data-out")), last=-1;
+      b.addEventListener("click",function(){
+        var i; do{ i=Math.floor(Math.random()*DICE[k].length); }while(i===last && DICE[k].length>1); last=i;
+        out.textContent=DICE[k][i]; out.classList.remove("pop"); void out.offsetWidth; out.classList.add("pop"); beep("flip");
+      });
+    });
+
+    var rb=document.getElementById("reviewBtn"), rbox=document.getElementById("reviewBox");
+    if(rb&&rbox) rb.addEventListener("click",function(){ var on=rbox.classList.toggle("on"); rb.textContent=on?"Hide the review":"Show my mistakes and the correct answers"; });
+
+    /* sound toggle */
+    var sb=document.getElementById("sndBtn");
+    if(sb) sb.addEventListener("click",function(){ HUD.sound=!HUD.sound; sb.textContent=HUD.sound?"🔊":"🔇"; sb.setAttribute("aria-pressed",HUD.sound); if(HUD.sound) beep("ok"); });
+
+    /* ---------- pages: one topic at a time ---------- */
+    var main=document.querySelector("main .wrap"), PAGES=[], curP=null, TEACHER=false, active=0;
+    var navLinks=[].slice.call(document.querySelectorAll(".tabbar .links a"));
+    var titleOf={}; navLinks.forEach(function(a){ titleOf[a.getAttribute("href").slice(1)]=a.textContent; });
+    [].slice.call(main.children).filter(function(n){ return n.tagName==="SECTION"; }).forEach(function(sec){
+      if(sec.id){ curP=document.createElement("div"); curP.className="page"; curP.setAttribute("data-page",sec.id); main.insertBefore(curP,sec);
+        PAGES.push({id:sec.id, el:curP, title:titleOf[sec.id]||sec.id, ids:[]}); }
+      if(curP) curP.appendChild(sec);
+    });
+    PAGES.forEach(function(p){
+      [].forEach.call(p.el.querySelectorAll("[data-ex]"),function(h){ var id=h.getAttribute("data-ex"); if(EX[id] && !EX[id].extra && S[id]) p.ids.push(id); });
+      var sc=0; p.ids.forEach(function(id){ sc+=exSecs(id); });
+      p.mins=Math.round(sc/60);
+      if(p.ids.length){ var pt=el("div","pagetime","⏱ Exercises on this page: "+minsTxt(sc)+(p.ids.length?" · "+p.ids.length+(p.ids.length===1?" exercise":" exercises"):"")); p.el.insertBefore(pt,p.el.firstChild); }
+      var bar=el("div","pager"); p.bar=bar; p.el.appendChild(bar);
+    });
+    function pStat(p){ var ans=0,tot=0; p.ids.forEach(function(id){ S[id].units.forEach(function(u){ tot++; if(u.ok||u.tries>0||u.shown) ans++; }); }); return {ans:ans,tot:tot,done:ans>=tot}; }
+    function unlocked(){ return PAGES.length-1; }
+    var toastEl=null, toastT=null;
+    function toast(msg){ if(!toastEl){ toastEl=el("div","toast"); document.body.appendChild(toastEl); } toastEl.textContent=msg; toastEl.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.classList.remove("on"); },3200); }
+    function go(i,noScroll){
+      var u=unlocked();
+      if(i>u){ var st=pStat(PAGES[u]); toast("Finish the exercises on “"+PAGES[u].title+"” first — "+(st.tot-st.ans)+" item"+(st.tot-st.ans===1?"":"s")+" still to answer."); return; }
+      active=i; PAGES.forEach(function(p,k){ p.el.classList.toggle("on",k===i); });
+      if(!noScroll){ var top=main.getBoundingClientRect().top+window.scrollY-70; window.scrollTo(0,Math.max(0,top)); }
+      pagesHook();
+      var cur=navLinks.filter(function(a){ return a.getAttribute("href")==="#"+PAGES[i].id; })[0];
+      if(cur && cur.scrollIntoView) { try{ cur.scrollIntoView({block:"nearest",inline:"center"}); }catch(e){} }
+    }
+    pagesHook=function(){
+      if(!PAGES.length) return;
+      var u=unlocked();
+      navLinks.forEach(function(a){ var id=a.getAttribute("href").slice(1), k=-1; PAGES.forEach(function(p,j){ if(p.id===id) k=j; });
+        if(k<0) return; a.classList.toggle("on",k===active); a.classList.toggle("done", pStat(PAGES[k]).tot>0 && pStat(PAGES[k]).done); });
+      PAGES.forEach(function(p,k){
+        var st=pStat(p), bar=p.bar; bar.innerHTML="";
+        if(k>0){ var b=el("button","btn btn-ghost","← "+PAGES[k-1].title); b.type="button"; b.onclick=function(){ go(k-1); }; bar.appendChild(b); }
+        var msg=el("div","pager-msg");
+        if(k<PAGES.length-1){
+          var nx=PAGES[k+1];
+          msg.innerHTML = st.tot ? (st.done? "✓ All exercises on this page answered — well done!" : "Exercises answered on this page: <b>"+st.ans+" / "+st.tot+"</b>") : "";
+          bar.appendChild(msg);
+          var n=el("button","btn btn-cta","Next: "+nx.title+" →"); n.type="button"; n.onclick=function(){ go(k+1); }; bar.appendChild(n);
+        } else bar.appendChild(msg);
+      });
+    };
+    navLinks.forEach(function(a){ a.addEventListener("click",function(e){ var id=a.getAttribute("href").slice(1); for(var k=0;k<PAGES.length;k++) if(PAGES[k].id===id){ e.preventDefault(); go(k); return; } }); });
+    [].forEach.call(document.querySelectorAll("a.btn[href^='#']"),function(a){ a.addEventListener("click",function(e){ var id=a.getAttribute("href").slice(1); for(var k=0;k<PAGES.length;k++) if(PAGES[k].id===id){ e.preventDefault(); go(k); return; } }); });
+    window.__go=go; window.__pages=function(){ return {active:active, unlocked:unlocked(), n:PAGES.length}; };
+    go(0,true);
+
+    /* word counter for the writing task */
+    var ta=document.getElementById("writeBox"), wc=document.getElementById("wordCount");
+    if(ta&&wc){ ta.addEventListener("input", function(){ var n=(ta.value.trim().match(/\S+/g)||[]).length; wc.textContent=n+" words"; }); }
+  });
+
+  window.__norm = norm; window.__S = S; window.__HUD = HUD;
+})();
+
+</script>
+</body>
+</html>

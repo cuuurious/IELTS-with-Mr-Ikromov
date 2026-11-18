@@ -15,6 +15,7 @@ export const COVER = {
   listening: { shades: ['#1f4e8c', '#2a5fa8', '#1d6a9a', '#38428f'] },
   writing: { shades: ['#9a5b12', '#b8641a', '#8a4d1f', '#a8702a'] },
   speaking: { shades: ['#6a3f99', '#7b4bb0', '#5a3685', '#83509e'] },
+  workshop: { shades: ['#2f7d4f', '#3a8a5a', '#276b45', '#3f7f3a'] }, // Grammar
 }
 export const skillShade = (skill, i = 0) => {
   const c = COVER[skill] || COVER.reading
@@ -57,6 +58,14 @@ export function coverCode(name, types) {
   return tail.length > 14 ? tail.split(/\s+/).map((w) => w[0]).join('').slice(0, 4).toUpperCase() : tail
 }
 
+// Grammar books (2026-11-18): the cover shows "Lessons 1–7", the line under it the theme.
+const GRAMMAR_PARTS = {
+  'Lessons 1–7': 'Tenses and verb forms',
+  'Lessons 8–14': 'Modals, passive, conditionals and wishes',
+  'Lessons 15–20': 'Clauses, reported speech and emphasis',
+  'Lessons 21–30': 'Nouns, articles, adjectives, prepositions and review',
+}
+
 // "Thematic Reading · Note Completion" → { book, short }; listening parts
 // get "Questions 11–20" underneath.
 export function splitSet(name) {
@@ -74,6 +83,7 @@ export function splitSet(name) {
     const sp = { 'Parts 2 & 3': 'Cue card + discussion · 8–9 min', 'Part 1': 'Familiar topics · 4–5 min', 'Part 2': 'Cue card · 3–4 min', 'Part 3': 'Discussion · 4–5 min' }[short]
     return { book, short, subtitle: sp || short }
   }
+  if (book === 'Grammar') return { book, short, subtitle: GRAMMAR_PARTS[short] || short }
   if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
 }
@@ -81,6 +91,7 @@ export function splitSet(name) {
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
   if (!unit && skill === 'writing') unit = /^Writing Task 1/.test(name) ? 'reports' : 'essays'
+  if (!unit && skill === 'workshop') unit = 'lessons'
   if (!unit && (/^Full (Reading|Listening) Tests/.test(name) || skill === 'speaking')) unit = 'tests'
   return (
     <button
