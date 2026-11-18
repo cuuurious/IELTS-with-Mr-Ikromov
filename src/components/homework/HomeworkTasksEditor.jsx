@@ -34,6 +34,8 @@ const PAGE_TILES = [
   { id: 'writing-1', skill: 'writing', book: 'Writing Task 1', label: 'Writing Task 1', unit: 'reports', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
+  // Mr Ikromov's 30 grammar lessons (migration 134) live in the bank as skill 'workshop'.
+  { id: 'grammar', skill: 'workshop', label: 'Grammar lesson', unit: 'lessons', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
 ]
 const inBook = (t, collection) => {
   const book = String(collection || '').split(' · ')[0]
