@@ -261,6 +261,28 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     return () => clearInterval(t)
   }, [fbStatus, fb?.id, onChanged])
 
+  // The teacher's AI-feedback switch for this task (migration 136). Unknown
+  // or not set up yet counts as ON, so nothing changes before the migration.
+  const aiOnRef = useRef(null)
+  const [aiOn, setAiOn] = useState(null)
+  useEffect(() => {
+    if (!isWriting || !task.id) return undefined
+    let cancelled = false
+    supabase
+      .from('homework_tasks')
+      .select('ai_feedback')
+      .eq('id', task.id)
+      .maybeSingle()
+      .then(({ data, error: e }) => {
+        const on = e || !data ? true : data.ai_feedback !== false
+        aiOnRef.current = on
+        if (!cancelled) setAiOn(on)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isWriting, task.id])
+
   const runMarking = async (attemptId, results) => {
     const ctx = writingContext(rawRef.current, task.html_url)
     setFb({ id: attemptId, results: { ...results, ai: { status: 'processing', task: ctx.task } } })
@@ -319,14 +341,16 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     onChanged?.()
     // Writing: the AI marks the essay (about a minute).
     const essayWords = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
-    if (isWriting && row?.id && essayWords >= 20) runMarking(row.id, { texts, ...(check ? { check } : {}) })
+    if (isWriting && row?.id && essayWords >= 20 && aiOnRef.current !== false) runMarking(row.id, { texts, ...(check ? { check } : {}) })
   }
 
   const words = texts.length ? texts[0].text.trim().split(/\s+/).filter(Boolean).length : 0
   const status = done?.pending
     ? 'Saved on this device — it is sent as soon as the internet is back.'
     : done
-    ? done.attempt_no === 1
+    ? isWriting && aiOn === false
+      ? 'Handed in. Your teacher will read your essay and send feedback.'
+      : done.attempt_no === 1
       ? 'Handed in. Your first try counts.'
       : 'Handed in as a retake. Your first try still counts.'
     : isWriting

@@ -32,6 +32,8 @@ export default function AssignPagesModal({ pages, onClose, onDone, initialGroups
   const [note, setNote] = useState('')
   const [due, setDue] = useState('next') // 'next' | 'none' | datetime-local string
   const [telegram, setTelegram] = useState(true)
+  const [aiWriting, setAiWriting] = useState(false)
+  const hasWriting = pages.some((p) => /\/practice\/writing\//.test(p.url || ''))
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -89,7 +91,12 @@ export default function AssignPagesModal({ pages, onClose, onDone, initialGroups
         if (error) throw error
         await saveHomeworkTasks(
           hw.id,
-          pages.map((p) => ({ kind: 'html', html_url: p.url, title: shortTitle(p.title) }))
+          pages.map((p) => ({
+            kind: 'html',
+            html_url: p.url,
+            title: shortTitle(p.title),
+            ai_feedback: aiWriting && /\/practice\/writing\//.test(p.url || ''),
+          }))
         )
         notifyGroup({ groupId: gid, type: 'homework_new', title: 'New homework posted', body: hw.title, link: `homework:${hw.id}` })
         if (telegram && g?.telegram_chat_id) postHomeworkToTelegram(hw.id, 'post')
@@ -192,6 +199,12 @@ export default function AssignPagesModal({ pages, onClose, onDone, initialGroups
                 <input type="checkbox" checked={telegram} onChange={(e) => setTelegram(e.target.checked)} className="h-4 w-4 accent-brass" />
                 Also post in each group’s Telegram chat (if connected)
               </label>
+              {hasWriting && (
+                <label className="flex items-center gap-2 text-sm font-bold text-paper">
+                  <input type="checkbox" checked={aiWriting} onChange={(e) => setAiWriting(e.target.checked)} className="h-4 w-4 accent-brass" />
+                  AI feedback on the Writing pages (students see it after hand-in)
+                </label>
+              )}
             </div>
             <div className="flex gap-2 border-t border-line px-5 py-4">
               <button type="button" onClick={give} disabled={busy || !chosen.size} className="focus-ring h-11 flex-1 rounded-[14px] bg-saffron px-5 text-sm font-extrabold text-[#17213a] disabled:opacity-50">

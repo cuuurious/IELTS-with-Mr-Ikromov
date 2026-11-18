@@ -8,6 +8,7 @@ import TeacherBand from './TeacherBand'
 import { SkillIcon } from '../SkillArt'
 import { TASK_KINDS, TASK_SELECT, gradeLabel, gradeTone, percentOf, summariseAttempts, taskMeta, taskTitle } from '../../lib/homeworkTasks'
 import WeakSpots from '../WeakSpots'
+import { markWriting, writingContext } from '../../lib/writingAi'
 
 /*
  * GRADEBOOK (2026-11-02) — every in-site homework task of a group:
@@ -439,7 +440,7 @@ function TaskResultRow({ t, s, sub, name, onBand }) {
       </div>
       <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-extrabold ${tone.bg} ${tone.text}`}>{s.first ? gradeLabel(s.first) : 'Not done'}</span>
       {t.kind === 'shadowing' && s.first && <ShadowingTakes attemptId={s.first.id} />}
-      {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} onBand={onBand} /> : <PageAnswer attemptId={s.first.id} onBand={onBand} writing={/\/writing\//.test(t.html_url || '')} />)}
+      {t.kind === 'html' && s.first && (/^speaking:/.test(t.html_url || '') ? <SpeakingAnswer attemptId={s.first.id} url={t.html_url} onBand={onBand} /> : <PageAnswer attemptId={s.first.id} onBand={onBand} writing={/\/writing\//.test(t.html_url || '')} htmlUrl={t.html_url} />)}
     </li>
   )
 }
@@ -550,9 +551,30 @@ function SpeakingAnswer({ attemptId, url, onBand }) {
 
 // What the student typed on a practice page (Writing pages) and the
 // page's own part scores — loaded when the teacher opens it (2026-11-02).
-function PageAnswer({ attemptId, onBand, writing = false }) {
+function PageAnswer({ attemptId, onBand, writing = false, htmlUrl = '' }) {
   const [open, setOpen] = useState(false)
   const [res, setRes] = useState(undefined)
+  const [marking, setMarking] = useState(false)
+  const [markError, setMarkError] = useState('')
+  // The teacher asks the AI to mark this essay now (saved on the attempt, the student sees it too).
+  const markNow = async () => {
+    setMarking(true)
+    setMarkError('')
+    try {
+      const html = await fetch(htmlUrl).then((r) => r.text())
+      const ctx = writingContext(html, htmlUrl)
+      const out = await markWriting(attemptId, ctx)
+      if (out.error) setMarkError(out.error)
+      const { data } = await supabase.from('homework_attempts').select('results').eq('id', attemptId).maybeSingle()
+      if (data?.results) {
+        setRes(data.results)
+        onBand?.(attemptId, data.results.teacher?.band ?? data.results.ai?.overall_band ?? null)
+      }
+    } catch (e) {
+      setMarkError(e?.message || 'Marking failed.')
+    }
+    setMarking(false)
+  }
   const toggle = async () => {
     setOpen((v) => !v)
     if (res !== undefined) return
@@ -592,6 +614,14 @@ function PageAnswer({ attemptId, onBand, writing = false }) {
                 onBand?.(attemptId, next.teacher?.band ?? next.ai?.overall_band ?? null)
               }}
             />
+          )}
+          {writing && res?.texts?.length > 0 && res?.ai?.status !== 'processing' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={markNow} disabled={marking} className="focus-ring h-9 rounded-[12px] bg-writing px-3 text-[13px] font-extrabold text-white disabled:opacity-60">
+                {marking ? 'Marking… (about a minute)' : res?.ai?.status === 'done' ? 'Mark again with AI' : 'Mark with AI'}
+              </button>
+              {markError && <span className="text-xs font-bold text-coral">{markError}</span>}
+            </div>
           )}
           {res?.ai && <WritingFeedback results={res} teacher />}
           {!res?.ai && (res?.texts || []).map((t) => (

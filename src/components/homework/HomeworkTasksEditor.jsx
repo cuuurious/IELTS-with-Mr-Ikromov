@@ -92,6 +92,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
     setAdding(null)
   }
   const remove = (i) => onChange(tasks.filter((_, j) => j !== i))
+  const setAi = (i, on) => onChange(tasks.map((x, j) => (j === i ? { ...x, ai_feedback: on } : x)))
   const move = (i, d) => {
     const j = i + d
     if (j < 0 || j >= tasks.length) return
@@ -159,6 +160,13 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-extrabold text-paper">{taskTitle(t)}</p>
                   <p className={`text-xs font-extrabold ${meta.text}`}>{meta.label}</p>
+                  {t.kind === 'html' && /\/practice\/writing\//.test(t.html_url || '') && (
+                    <label className="mt-1.5 flex w-fit cursor-pointer items-center gap-2 text-xs font-extrabold text-paper-dim">
+                      <input type="checkbox" checked={!!t.ai_feedback} onChange={(e) => setAi(i, e.target.checked)} className="h-4 w-4 accent-[var(--color-writing)]" />
+                      AI feedback for students
+                      <span className="font-semibold text-mist">{t.ai_feedback ? '— marks each essay after hand-in' : '— off, you mark it'}</span>
+                    </label>
+                  )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-mist hover:bg-panel-2 disabled:opacity-30">↑</button>

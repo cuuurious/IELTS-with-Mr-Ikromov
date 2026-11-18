@@ -24,7 +24,7 @@ export function taskMeta(task) {
   return TASK_KINDS[task?.kind] || TASK_KINDS.reading
 }
 
-export const TASK_SELECT = 'id, position, kind, exam_id, wordlist_id, html_url, title, shadowing_clip_id'
+export const TASK_SELECT = 'id, position, kind, exam_id, wordlist_id, html_url, title, shadowing_clip_id, ai_feedback'
 
 export function taskTitle(task) {
   return task.title || TASK_KINDS[task.kind]?.label || 'Task'
@@ -88,8 +88,14 @@ export async function saveHomeworkTasks(homeworkId, tasks, previous = []) {
       title: t.title || null,
       shadowing_clip_id: t.shadowing_clip_id || null,
     }
+    // AI feedback switch (Writing pages, migration 136). Only sent when the
+    // caller knows the value, so a list loaded without it never resets it.
+    if (t.ai_feedback !== undefined) row.ai_feedback = !!t.ai_feedback
     const { error } = t.id
-      ? await supabase.from('homework_tasks').update({ position: i, title: row.title }).eq('id', t.id)
+      ? await supabase
+          .from('homework_tasks')
+          .update({ position: i, title: row.title, ...(row.ai_feedback !== undefined ? { ai_feedback: row.ai_feedback } : {}) })
+          .eq('id', t.id)
       : await supabase.from('homework_tasks').insert(row)
     if (error) throw error
   }
