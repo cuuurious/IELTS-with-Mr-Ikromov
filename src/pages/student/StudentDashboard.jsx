@@ -24,7 +24,7 @@ import LoadingScreen from '../../components/LoadingScreen'
 import HomeworkCard from './HomeworkCard'
 import StudentHome from './StudentHome'
 import NotificationSetupGate from '../../components/NotificationSetupGate'
-import { useSessionState } from '../../lib/sessionState'
+import { useSessionState, writeSession } from '../../lib/sessionState'
 import { homeworkState } from '../../lib/skills'
 
 const GroupChats = lazyWithReload(() => import('../../components/GroupChats'))
@@ -704,6 +704,9 @@ const messageId = linkParts[2] || null
         items: [
           { key: 'group-chat', label: 'Group chat', icon: IconGroupChat },
           { key: 'chats', label: 'Chats', icon: IconChat },
+          // Opens the Mock Test Center on its Speaking Exam screen: book a free
+          // speaking slot, or message the speaking / writing examiner.
+          { key: 'examiners', label: 'Examiners', icon: IconChat, subtitle: 'Book a speaking slot or message an examiner.' },
         ],
       },
       {
@@ -789,6 +792,14 @@ const messageId = linkParts[2] || null
       // open it and leave `tab` exactly where it was, so exiting the
       // portal lands back on whatever section was open before.
       if (nextTab === 'mock-center') {
+        setMockCenterOpen(true)
+        return
+      }
+
+      // "Examiners" is a shortcut into the Mock Test Center's Speaking Exam
+      // screen (free slots + message the examiners), not a tab of its own.
+      if (nextTab === 'examiners') {
+        writeSession(`ielts:${profile?.id}:mockCenter:section`, 'speaking')
         setMockCenterOpen(true)
         return
       }

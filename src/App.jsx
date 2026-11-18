@@ -16,8 +16,9 @@ import { useDeviceGuard } from './lib/deviceSession'
 // examiner dashboards unless they are an examiner.
 const StudentDashboard = lazyWithReload(() => import('./pages/student/StudentDashboard'))
 const TeacherDashboard = lazyWithReload(() => import('./pages/teacher/TeacherDashboard'))
-const SpeakingExaminerDashboard = lazyWithReload(() => import('./pages/examiner/SpeakingExaminerDashboard'))
-const WritingExaminerDashboard = lazyWithReload(() => import('./pages/examiner/WritingExaminerDashboard'))
+// One router for both examiner roles: an account can be speaking, writing or
+// both (migration 135), and with both it shows a Speaking / Writing switch.
+const ExaminerRouter = lazyWithReload(() => import('./pages/examiner/ExaminerRouter'))
 const ForgotPassword = lazyWithReload(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazyWithReload(() => import('./pages/ResetPassword'))
 const Register = lazyWithReload(() => import('./pages/Register'))
@@ -97,11 +98,9 @@ function Gate() {
   const Dashboard =
     profile.role === 'teacher'
       ? TeacherDashboard
-      : profile.role === 'speaking_examiner'
-        ? SpeakingExaminerDashboard
-        : profile.role === 'writing_examiner'
-          ? WritingExaminerDashboard
-          : StudentDashboard
+      : profile.role === 'speaking_examiner' || profile.role === 'writing_examiner'
+        ? ExaminerRouter
+        : StudentDashboard
 
   return (
     <ChunkErrorBoundary>

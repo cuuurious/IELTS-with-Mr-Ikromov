@@ -45,6 +45,9 @@ export default function TeacherAccounts({ currentTeacherId }) {
   const [error, setError] = useState('')
   const [busyAction, setBusyAction] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
+  // examiner_skills (migration 135): which skills each examiner account has,
+  // { userId: ['speaking', 'writing'] }. One account can be both.
+  const [skillsByUser, setSkillsByUser] = useState({})
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [newFullName, setNewFullName] = useState('')
@@ -75,6 +78,13 @@ export default function TeacherAccounts({ currentTeacherId }) {
       setStaff(data || [])
     }
 
+    const { data: skillRows } = await supabase.from('examiner_skills').select('user_id, skill')
+    const map = {}
+    ;(skillRows || []).forEach((r) => {
+      ;(map[r.user_id] = map[r.user_id] || []).push(r.skill)
+    })
+    setSkillsByUser(map)
+
     setLoading(false)
   }
 
@@ -83,6 +93,29 @@ export default function TeacherAccounts({ currentTeacherId }) {
   }, [])
 
   const otherStaff = staff.filter((s) => s.id !== currentTeacherId)
+
+  // Tick / untick Speaking and Writing on an examiner account.
+  const toggleSkill = async (member, skill) => {
+    const current = skillsByUser[member.id] || [member.role === 'speaking_examiner' ? 'speaking' : 'writing']
+    const next = current.includes(skill) ? current.filter((x) => x !== skill) : [...current, skill]
+    if (next.length === 0) {
+      setError('An examiner needs at least one role: speaking or writing.')
+      return
+    }
+    setError('')
+    setBusyAction(`skills-${member.id}`)
+    const { error: rpcError } = await supabase.rpc('set_examiner_roles', {
+      p_user: member.id,
+      p_speaking: next.includes('speaking'),
+      p_writing: next.includes('writing'),
+    })
+    setBusyAction('')
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+    await loadStaff()
+  }
 
   const resetAddForm = () => {
     setNewFullName('')
@@ -363,7 +396,7 @@ export default function TeacherAccounts({ currentTeacherId }) {
                     <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-full font-brand text-lg font-bold ${tone.tint}`}>{initials}</div>
                     <div className="min-w-0">
                       <div className="line-clamp-2 text-[15px] font-extrabold leading-snug text-paper">{member.full_name || member.username}</div>
-                      <span className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-extrabold ${tone.tint}`}>{meta.label}</span>
+                      <span className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-xs font-extrabold ${tone.tint}`}>{(skillsByUser[member.id] || []).length > 1 ? 'Speaking + Writing examiner' : meta.label}</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 text-[13px]">
@@ -372,6 +405,31 @@ export default function TeacherAccounts({ currentTeacherId }) {
                       <div className="flex justify-between gap-3"><span className="text-mist">Email</span><span className="truncate font-bold text-paper">{member.contact_email}</span></div>
                     )}
                   </div>
+                  {(member.role === 'speaking_examiner' || member.role === 'writing_examiner') && (
+                    <div className="rounded-[14px] bg-panel-2 p-3">
+                      <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-mist">Examines</p>
+                      <div className="flex flex-wrap gap-x-5 gap-y-2">
+                        {[
+                          { key: 'speaking', label: 'Speaking' },
+                          { key: 'writing', label: 'Writing' },
+                        ].map((sk) => {
+                          const current = skillsByUser[member.id] || [member.role === 'speaking_examiner' ? 'speaking' : 'writing']
+                          return (
+                            <label key={sk.key} className="flex cursor-pointer items-center gap-2 text-sm font-bold text-paper">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-brass"
+                                checked={current.includes(sk.key)}
+                                disabled={busyAction === `skills-${member.id}`}
+                                onChange={() => toggleSkill(member, sk.key)}
+                              />
+                              {sk.label}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <button
                     type="button"
                     disabled={busyAction === `delete-${member.id}`}

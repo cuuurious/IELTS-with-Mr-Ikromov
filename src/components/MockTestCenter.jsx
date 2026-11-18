@@ -22,6 +22,7 @@ import SpeakingComments from './SpeakingComments'
 import ResultCoach from './ResultCoach'
 import { readSession, useSessionState, writeSession } from '../lib/sessionState'
 import { cleanPrompt } from './exam/questionGroups'
+import StudentSpeakingBooking from './booking/StudentSpeakingBooking'
 
 /*
  * ================================================================
@@ -91,6 +92,8 @@ export default function MockTestCenter({ onExit }) {
   const [essayReviewId, setEssayReviewId] = useState(null)
   const [slots, setSlots] = useState([])
   const [examiners, setExaminers] = useState([])
+  // examiner_skills (migration 135): { examinerId: ['speaking','writing'] } — one account can be both.
+  const [examinerSkills, setExaminerSkills] = useState({})
   const [loading, setLoading] = useState(true)
 
   const [targetSaving, setTargetSaving] = useState(false)
@@ -248,6 +251,7 @@ export default function MockTestCenter({ onExit }) {
         { data: attemptRows, error: attemptsError },
         { data: slotRows, error: slotsError },
         { data: examinerRows, error: examinersError },
+        { data: skillRows },
       ] = await Promise.all([
         supabase
           .from('mock_attempts')
@@ -270,6 +274,7 @@ export default function MockTestCenter({ onExit }) {
           .from('profiles')
           .select('id, full_name, username, role')
           .in('role', ['speaking_examiner', 'writing_examiner']),
+        supabase.from('examiner_skills').select('user_id, skill'),
       ])
 
       if (attemptsError) console.error('Failed to load mock attempts:', attemptsError)
@@ -330,6 +335,11 @@ export default function MockTestCenter({ onExit }) {
       setWritingReviews(reviews)
       setSlots(slotRows || [])
       setExaminers(examinerRows || [])
+      const skillMap = {}
+      ;(skillRows || []).forEach((r) => {
+        ;(skillMap[r.user_id] = skillMap[r.user_id] || []).push(r.skill)
+      })
+      setExaminerSkills(skillMap)
       setLoading(false)
     }
 
@@ -517,8 +527,17 @@ export default function MockTestCenter({ onExit }) {
   }
 
   const upcomingSlot = slots.find((s) => s.status === 'scheduled')
-  const speakingExaminer = examiners.find((e) => e.role === 'speaking_examiner')
-  const writingExaminer = examiners.find((e) => e.role === 'writing_examiner')
+  // Re-read this student's speaking sessions (after a booking is cancelled or
+  // an examiner accepts a request).
+  const refreshSlots = async () => {
+    if (!profile?.id) return
+    const { data } = await supabase
+      .from('mock_speaking_slots')
+      .select('*')
+      .eq('student_id', profile.id)
+      .order('scheduled_at', { ascending: false })
+    setSlots(data || [])
+  }
 
   // Locked, full-screen exam mode — see the EXAM LOCKDOWN note on
   // `examActive` above. No header, no section tabs, no "Exit to
@@ -859,8 +878,13 @@ export default function MockTestCenter({ onExit }) {
 
           {!loading && section === 'speaking' && (
             <div className="flex flex-col gap-4">
+              <StudentSpeakingBooking
+                selfId={profile.id}
+                hasUpcomingSlot={Boolean(upcomingSlot && new Date(upcomingSlot.scheduled_at) > new Date())}
+                onChanged={refreshSlots}
+              />
               {slots.length === 0 ? (
-                <EmptyState icon="people" title="No speaking exam booked yet" text="Message the speaking examiner to arrange a time." />
+                <EmptyState icon="people" title="No speaking exam booked yet" text="Pick a free time above, or message an examiner." />
               ) : (
                 slots.map((slot) => {
                   const d = new Date(slot.scheduled_at)
@@ -948,8 +972,8 @@ export default function MockTestCenter({ onExit }) {
           {!loading && section === 'examiners' && (
             <ExaminerMessages
               selfId={profile.id}
-              speakingExaminer={speakingExaminer}
-              writingExaminer={writingExaminer}
+              examiners={examiners}
+              skillsById={examinerSkills}
             />
           )}
         </div>
@@ -1132,8 +1156,14 @@ function ScoreCard({ label, stats }) {
   )
 }
 
-function ExaminerMessages({ selfId, speakingExaminer, writingExaminer }) {
-  const options = [speakingExaminer, writingExaminer].filter(Boolean)
+function examinerLabel(examiner, skillsById) {
+  const skills = skillsById[examiner.id] || [examiner.role === 'speaking_examiner' ? 'speaking' : 'writing']
+  if (skills.includes('speaking') && skills.includes('writing')) return 'Speaking & Writing examiner'
+  return skills.includes('speaking') ? 'Speaking examiner' : 'Writing examiner'
+}
+
+function ExaminerMessages({ selfId, examiners, skillsById }) {
+  const options = examiners
   const [activeId, setActiveId] = useState(options[0]?.id || null)
 
   const active = options.find((o) => o.id === activeId) || null
@@ -1162,7 +1192,7 @@ function ExaminerMessages({ selfId, speakingExaminer, writingExaminer }) {
           >
             <p>{examiner.full_name || examiner.username}</p>
             <p className="text-[10px] uppercase tracking-wide font-mono mt-0.5 opacity-70">
-              {examiner.role === 'speaking_examiner' ? 'Speaking examiner' : 'Writing examiner'}
+              {examinerLabel(examiner, skillsById)}
             </p>
           </button>
         ))}

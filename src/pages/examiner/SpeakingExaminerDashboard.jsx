@@ -13,6 +13,7 @@ import { SkillIcon } from '../../components/SkillArt'
 import SpeakingExaminerHome from './SpeakingExaminerHome'
 import { Card, Avatar } from './ExaminerHomeParts'
 import SpeakingComments from '../../components/SpeakingComments'
+import ExaminerAvailability from '../../components/booking/ExaminerAvailability'
 
 /*
  * ================================================================
@@ -373,6 +374,7 @@ export default function SpeakingExaminerDashboard() {
           { key: 'home', label: 'Home', icon: IconHome, hideTitle: true },
           { key: 'students', label: 'Students', icon: IconStudents },
           { key: 'timetable', label: 'Timetable', icon: IconMockExam },
+          { key: 'availability', label: 'Free time', icon: IconMockExam },
           { key: 'chats', label: 'Chats', icon: IconChat },
         ],
       },
@@ -400,6 +402,16 @@ export default function SpeakingExaminerDashboard() {
             onScore={openScoreModal}
             onNavigate={setTab}
           />
+        )}
+
+        {tab === 'availability' && (
+          <section className="space-y-4">
+            <p className="max-w-2xl text-sm text-mist">
+              Open the hours you are free as small slots. Students see which are free and which are taken, and ask for one;
+              you accept or decline here. An accepted request goes straight onto your timetable.
+            </p>
+            <ExaminerAvailability examinerId={profile.id} onChanged={loadAll} />
+          </section>
         )}
 
         {tab === 'students' && (
