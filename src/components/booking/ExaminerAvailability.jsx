@@ -36,6 +36,13 @@ function readLink() {
 export default function ExaminerAvailability({ examinerId, onChanged }) {
   const [slots, setSlots] = useState([])
   const [requests, setRequests] = useState([])
+  const [receiptUrls, setReceiptUrls] = useState({})
+  const showReceipt = async (req) => {
+    if (receiptUrls[req.id]) return setReceiptUrls((p) => ({ ...p, [req.id]: '' }))
+    const { data, error: e } = await supabase.storage.from('speaking-receipts').createSignedUrl(req.receipt_path, 600)
+    if (e || !data?.signedUrl) return setError('The receipt could not be opened.')
+    setReceiptUrls((p) => ({ ...p, [req.id]: data.signedUrl }))
+  }
   const [slotById, setSlotById] = useState({})
   const [students, setStudents] = useState({})
   const [loading, setLoading] = useState(true)
@@ -255,6 +262,20 @@ export default function ExaminerAvailability({ examinerId, onChanged }) {
                     {slot ? `${dayLabel(new Date(slot.starts_at))}, ${timeLabel(slot.starts_at)} (${slot.duration_minutes} min)` : '—'}
                   </p>
                 </div>
+                {req.receipt_path ? (
+                  <div className="flex flex-col gap-2 rounded-[14px] bg-panel-2 p-3">
+                    <button type="button" onClick={() => showReceipt(req)} className="focus-ring h-9 w-fit rounded-xl border border-line bg-panel px-3 text-[13px] font-extrabold text-brass">
+                      {receiptUrls[req.id] ? 'Hide receipt' : 'Show payment receipt'}
+                    </button>
+                    {receiptUrls[req.id] && (
+                      <a href={receiptUrls[req.id]} target="_blank" rel="noreferrer">
+                        <img src={receiptUrls[req.id]} alt="Payment receipt" className="max-h-80 rounded-xl border border-line object-contain" />
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs font-bold text-mist">No receipt attached.</p>
+                )}
                 <input
                   value={links[req.id] ?? readLink()}
                   onChange={(e) => setLinks((p) => ({ ...p, [req.id]: e.target.value }))}
