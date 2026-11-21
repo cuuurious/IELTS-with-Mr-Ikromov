@@ -48,6 +48,10 @@ export default function TeacherAccounts({ currentTeacherId }) {
   // examiner_skills (migration 135): which skills each examiner account has,
   // { userId: ['speaking', 'writing'] }. One account can be both.
   const [skillsByUser, setSkillsByUser] = useState({})
+  // examiner_payout_details (migration 139): the admin sees each examiner's card. { userId: row }
+  const [cardsByUser, setCardsByUser] = useState({})
+  const [shownCard, setShownCard] = useState('')
+  const [copiedCard, setCopiedCard] = useState('')
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [newFullName, setNewFullName] = useState('')
@@ -84,6 +88,13 @@ export default function TeacherAccounts({ currentTeacherId }) {
       ;(map[r.user_id] = map[r.user_id] || []).push(r.skill)
     })
     setSkillsByUser(map)
+
+    const { data: cardRows } = await supabase.from('examiner_payout_details').select('user_id, card_number, card_holder, card_type, updated_at')
+    const cards = {}
+    ;(cardRows || []).forEach((r) => {
+      cards[r.user_id] = r
+    })
+    setCardsByUser(cards)
 
     setLoading(false)
   }
@@ -428,6 +439,45 @@ export default function TeacherAccounts({ currentTeacherId }) {
                           )
                         })}
                       </div>
+                    </div>
+                  )}
+                  {(member.role === 'speaking_examiner' || member.role === 'writing_examiner') && (
+                    <div className="rounded-[14px] bg-panel-2 p-3">
+                      <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-mist">Payment card</p>
+                      {cardsByUser[member.id] ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-mono text-sm font-bold tracking-wider text-paper">
+                              {shownCard === member.id
+                                ? cardsByUser[member.id].card_number.replace(/(.{4})/g, '$1 ').trim()
+                                : `•••• •••• •••• ${cardsByUser[member.id].card_number.slice(-4)}`}
+                            </p>
+                            <p className="truncate text-xs font-bold text-mist">{cardsByUser[member.id].card_type} · {cardsByUser[member.id].card_holder}</p>
+                          </div>
+                          <div className="flex shrink-0 gap-1.5">
+                            <button type="button" onClick={() => setShownCard(shownCard === member.id ? '' : member.id)} className="focus-ring h-8 rounded-[10px] border border-line bg-panel px-2.5 text-xs font-extrabold text-brass">
+                              {shownCard === member.id ? 'Hide' : 'Show'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(cardsByUser[member.id].card_number)
+                                  setCopiedCard(member.id)
+                                  setTimeout(() => setCopiedCard(''), 1800)
+                                } catch {
+                                  setShownCard(member.id)
+                                }
+                              }}
+                              className="focus-ring h-8 rounded-[10px] border border-line bg-panel px-2.5 text-xs font-extrabold text-brass"
+                            >
+                              {copiedCard === member.id ? 'Copied ✓' : 'Copy'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs font-bold text-mist">Not added yet. The examiner adds it in their own settings.</p>
+                      )}
                     </div>
                   )}
                   <button

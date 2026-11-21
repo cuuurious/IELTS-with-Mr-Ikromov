@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import TargetBandIcon from './TargetBandIcon'
+import ExaminerPayoutCard from './ExaminerPayoutCard'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -1193,6 +1194,10 @@ const deleteAccount = async () => {
               : 'Save recovery email'}
           </button>
         </form>
+
+        {(profile?.role === 'speaking_examiner' || profile?.role === 'writing_examiner') && profile?.id && (
+          <ExaminerPayoutCard userId={profile.id} />
+        )}
 
         {profile?.role === 'student' && (
           <div className="flex flex-col gap-3 pt-4 border-t border-line">

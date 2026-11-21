@@ -1162,6 +1162,8 @@ function examinerLabel(examiner, skillsById) {
   return skills.includes('speaking') ? 'Speaking examiner' : 'Writing examiner'
 }
 
+import ExaminerPayInfo from './booking/ExaminerPayInfo'
+
 function ExaminerMessages({ selfId, examiners, skillsById }) {
   const options = examiners
   const [activeId, setActiveId] = useState(options[0]?.id || null)
@@ -1199,6 +1201,7 @@ function ExaminerMessages({ selfId, examiners, skillsById }) {
       </div>
 
       <section className="flex-1 min-w-0 p-3">
+        {active && <ExaminerPayInfo examinerId={active.id} />}
         {active && (
           <Chat
             selfId={selfId}
