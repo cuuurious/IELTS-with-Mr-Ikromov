@@ -84,13 +84,14 @@ export function splitSet(name) {
     return { book, short, subtitle: sp || short }
   }
   if (book === 'Grammar') return { book, short, subtitle: GRAMMAR_PARTS[short] || short }
+  if (book === 'Task 2 Lessons') return { book, short, subtitle: 'Essay types, planning, introductions and more' }
   if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
 }
 
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
-  if (!unit && skill === 'writing') unit = /^Writing Task 1/.test(name) ? 'reports' : 'essays'
+  if (!unit && skill === 'writing') unit = /^Task 2 Lessons/.test(name) ? 'lessons' : /^Writing Task 1/.test(name) ? 'reports' : 'essays'
   if (!unit && skill === 'workshop') unit = 'lessons'
   if (!unit && (/^Full (Reading|Listening) Tests/.test(name) || skill === 'speaking')) unit = 'tests'
   return (

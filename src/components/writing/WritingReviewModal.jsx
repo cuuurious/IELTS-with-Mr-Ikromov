@@ -193,6 +193,28 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
   const student = attempt ? people[attempt.student_id] : null
   const essay = attempt ? attempt[`task${task}_text`] || '' : ''
   const words = countWords(essay)
+  // Copy the whole essay in one tap (examiners and teachers; 2026-11-21).
+  const [copied, setCopied] = useState(false)
+  const copyEssay = async () => {
+    try {
+      await navigator.clipboard.writeText(essay)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = essay
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try {
+        document.execCommand('copy')
+      } catch {
+        /* nothing more to try */
+      }
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
   const minWords = task === 1 ? 150 : 250
   const prompt = exam ? exam[`task${task}_prompt`] : ''
   const tasks = attempt ? [1, 2].filter((t) => attempt[`task${t}_text`]) : []
@@ -288,8 +310,15 @@ export default function WritingReviewModal({ attemptId, role = 'examiner', initi
                 ) : (
                   <span className="text-sm font-semibold text-paper">Task {task}</span>
                 )}
-                <span className={`text-[13px] ${words < minWords ? 'font-medium text-urgent' : 'text-mist'}`}>
-                  {words} words{words < minWords ? ` · under the ${minWords}-word minimum` : ` · minimum ${minWords}`}
+                <span className="flex items-center gap-3">
+                  <span className={`text-[13px] ${words < minWords ? 'font-medium text-urgent' : 'text-mist'}`}>
+                    {words} words{words < minWords ? ` · under the ${minWords}-word minimum` : ` · minimum ${minWords}`}
+                  </span>
+                  {role !== 'student' && essay && (
+                    <button type="button" onClick={copyEssay} className="focus-ring h-8 rounded-[10px] border border-line bg-panel px-3 text-[13px] font-extrabold text-brass hover:bg-panel-2">
+                      {copied ? 'Copied ✓' : 'Copy essay'}
+                    </button>
+                  )}
                 </span>
               </div>
 

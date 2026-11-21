@@ -33,10 +33,28 @@ const PAGE_TILES = [
   { id: 'listening-full', skill: 'listening', book: FULL_LISTENING, label: 'Full listening test', unit: 'tests', tint: 'bg-listening-tint', text: 'text-listening', hideEmpty: true },
   { id: 'writing-1', skill: 'writing', book: 'Writing Task 1', label: 'Writing Task 1', unit: 'reports', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
+  { id: 'task2-lessons', skill: 'writing', book: 'Task 2 Lessons', label: 'Task 2 lesson', unit: 'lessons', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
   // Mr Ikromov's 30 grammar lessons (migration 134) live in the bank as skill 'workshop'.
-  { id: 'grammar', skill: 'workshop', label: 'Grammar lesson', unit: 'lessons', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
+  { id: 'grammar', skill: 'workshop', book: 'Grammar', label: 'Grammar lesson', unit: 'lessons', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
 ]
+// Every bank row (skill, collection). The bank is over 1,000 rows, and one
+// request returns at most 1,000, so read it page by page.
+async function loadBankRows() {
+  const rows = []
+  for (let from = 0; from < 20000; from += 1000) {
+    const { data, error } = await supabase
+      .from('materials')
+      .select('id, skill, collection')
+      .not('collection', 'is', null)
+      .order('id')
+      .range(from, from + 999)
+    if (error) return { data: rows, error }
+    rows.push(...(data || []))
+    if (!data || data.length < 1000) break
+  }
+  return { data: rows, error: null }
+}
 const inBook = (t, collection) => {
   const book = String(collection || '').split(' · ')[0]
   if (t.book) return book === t.book
@@ -68,7 +86,7 @@ export default function HomeworkTasksEditor({ groupId, tasks, onChange }) {
         ? supabase.from('wordlists').select('id, title, created_at').eq('group_id', groupId).order('created_at', { ascending: false })
         : supabase.from('wordlists').select('id, title, created_at').order('created_at', { ascending: false }),
       supabase.from('shadowing_clips').select('id, title, created_at').order('created_at', { ascending: false }),
-      supabase.from('materials').select('skill, collection').not('collection', 'is', null),
+      loadBankRows(),
     ]).then(([b, w, c, m]) => {
       if (cancelled) return
       const counts = {}

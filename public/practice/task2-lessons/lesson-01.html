@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing Task 2 · Lesson 1 · MrIkromov's IELTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Writing Lab — shared look for every chapter (2026-11-07).
+   Same colours, shapes and fonts as ieltswithmrikromov.com:
+   lapis-to-turquoise band, Unbounded headings, Nunito Sans text,
+   rounded rectangles only (12 / 14 / 20 / 28 px), one saffron button. */
+:root{
+  --ink:#f6f5f1;--panel:#fff;--panel2:#efede6;--line:#e3dfd4;--paper:#17213a;--dim:#3a4560;--mist:#55607a;
+  --brass:#2456b0;--onbrass:#fff;--sage:#13807c;--sageT:#e2f2f0;--coral:#b23a48;--coralT:#f8e1e4;--amber:#9a5b12;--amberT:#fbefd9;
+  --saffron:#e6a33a;--onsaffron:#17213a;--band:#22489a;
+  --chipS:#dfe8fb;--chipSt:#1f4aa0;--chipV:#fbe0e6;--chipVt:#a02a44;--chipL:#fdf0d2;--chipLt:#8a5a0c;--chipN:#dcf3ef;--chipNt:#0f6b66;
+  --mark:#fff2b3;--shadow:0 1px 2px rgba(23,33,58,.06),0 6px 18px -10px rgba(23,33,58,.18);
+  --gUp:#13807c;--gDown:#b23a48;--gMix:#1f3a75;--g2:#c4622d;--grid:#e8e4da;--gtext:#55607a;
+}
+:root[data-theme="dark"]{
+  --ink:#0f1626;--panel:#172036;--panel2:#1e2944;--line:#2b3858;--paper:#eef0f6;--dim:#c6ccda;--mist:#a3abbf;
+  --brass:#7fa6f2;--onbrass:#0f1626;--sage:#7fd6d2;--sageT:#123a3c;--coral:#f29aa6;--coralT:#3e1c22;--amber:#f2c07a;--amberT:#3a2a12;
+  --saffron:#f0b95a;--band:#1b3570;
+  --chipS:#22335c;--chipSt:#b9cdf7;--chipV:#4a2230;--chipVt:#f5b8c6;--chipL:#453512;--chipLt:#f6d48b;--chipN:#153f3d;--chipNt:#9de3dc;
+  --mark:#5a4a12;--shadow:none;
+  --gUp:#5fd0c6;--gDown:#f08a99;--gMix:#a9bdf0;--g2:#f2a76b;--grid:#2b3858;--gtext:#a3abbf;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font:19px/1.55 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3,.brand{font-family:Unbounded,"Nunito Sans",system-ui,sans-serif;letter-spacing:-.01em}
+b,strong{font-weight:800}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+/* ---- band ---- */
+.band{color:#fff;background:var(--band);background-image:linear-gradient(115deg,var(--band) 0%,#1f6fae 55%,#1a9bb5 100%);border-radius:0 0 28px 28px;padding:22px 0 20px}
+.band .kick{font-size:15.3px;font-weight:800;opacity:.9;letter-spacing:.02em}
+.band h1{margin:6px 0 6px;font-size:33px;line-height:1.15;font-weight:600}
+.band p{margin:0;max-width:760px;font-size:17.7px;opacity:.92}
+.prog{display:flex;align-items:center;gap:12px;margin-top:14px}
+.prog .bar{flex:1;max-width:360px;height:10px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}
+.prog .bar i{display:block;height:100%;width:0;background:var(--saffron);border-radius:999px;transition:width .4s}
+.prog b{font-size:16.5px;white-space:nowrap}
+
+/* ---- step menu ---- */
+.steps{position:sticky;top:0;z-index:20;background:var(--ink);padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.steps .row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.steps .row::-webkit-scrollbar{display:none}
+.step{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:14px;padding:8px 14px;font-weight:800;font-size:16.5px}
+.step .no{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:8px;background:var(--panel2);font-size:14.2px}
+.step .ct{font-size:14.2px;color:var(--mist);font-weight:700}
+.step.on{background:var(--brass);color:var(--onbrass);border-color:var(--brass)}
+.step.on .no{background:rgba(255,255,255,.22)}.step.on .ct{color:inherit;opacity:.85}
+.step.full .ct{color:var(--sage)}.step.on.full .ct{color:inherit}
+
+main{padding:20px 0 40px}
+.sec-title{display:flex;align-items:baseline;gap:10px;margin:4px 0 6px}
+.sec-title h2{margin:0;font-size:24.8px;font-weight:600}
+.sec-title .n{font-family:Unbounded,sans-serif;font-size:15.3px;color:var(--brass);font-weight:600}
+.lead{color:var(--dim);margin:0 0 14px;font-size:17.7px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);margin:0 0 16px}
+.card h3{margin:0 0 4px;font-size:18.9px;font-weight:600}
+.card .ins{color:var(--dim);font-size:16.5px;margin-bottom:12px}
+.note{border-radius:14px;background:var(--panel2);padding:12px 14px;font-size:17.1px;color:var(--dim);margin:0 0 16px}
+.note b{color:var(--paper)}
+
+/* ---- sub menu (structures, drills) ---- */
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.sub{border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:6px 11px;font-weight:800;font-size:15.3px;display:flex;gap:6px;align-items:center}
+.sub small{color:var(--mist);font-weight:700}
+.sub.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);color:var(--brass)}
+.sub.full small{color:var(--sage)}
+.nums{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.nums .sub{min-width:42px;justify-content:center;font-family:Unbounded,sans-serif;font-weight:600}
+.nums .sub.seen:not(.on){background:var(--panel2)}
+
+/* ---- learn panel ---- */
+.lhd{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.lhd .big{font-family:Unbounded,sans-serif;font-size:35.4px;font-weight:600;color:var(--brass);line-height:1}
+.lhd h3{font-size:20.1px;margin:0}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+.chip{border-radius:12px;padding:4px 10px;font-weight:800;font-size:16.5px;white-space:pre}
+.chip.s{background:var(--chipS);color:var(--chipSt)}.chip.v{background:var(--chipV);color:var(--chipVt)}
+.chip.l{background:var(--chipL);color:var(--chipLt)}.chip.n{background:var(--chipN);color:var(--chipNt)}
+.chip.p{padding:4px 2px;color:var(--mist)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:14.8px;color:var(--mist);margin-bottom:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.two{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+.eg{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:17.7px}
+.eg .tg{flex:0 0 auto;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);background:var(--panel2);border-radius:8px;padding:2px 7px;height:fit-content;margin-top:2px}
+.eg.real .tg{background:var(--sageT);color:var(--sage)}
+.eg b{background:var(--chipL);color:var(--chipLt);border-radius:6px;padding:0 3px}
+.rule,.trap{border-radius:14px;padding:11px 13px;font-size:17.1px;margin-top:10px}
+.rule{background:var(--sageT)}.rule>b:first-child{color:var(--sage)}
+.trap{background:var(--coralT)}.trap>b:first-child{color:var(--coral)}
+.trap s{color:var(--coral)}
+.gbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.gcap{font-size:15.3px;color:var(--mist);margin:6px 2px 0}
+.gmodel{background:var(--panel2);border-radius:14px;padding:10px 12px;font-size:17.1px;margin-top:8px}
+.replay{margin-top:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:5px 11px;font-weight:800;font-size:15.3px}
+.yourturn{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.yourturn h4{margin:0 0 8px;font-size:17.7px;color:var(--sage)}
+
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:17.1px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.t th{text-align:left;background:var(--panel2);padding:9px 12px;font-weight:800}
+.t td{padding:9px 12px;border-top:1px solid var(--line)}
+.mist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mist .x,.mist .v{border-radius:14px;padding:10px 12px;font-size:17.1px}
+.mist .x{background:var(--coralT)}.mist .x s{color:var(--coral)}
+.mist .v{background:var(--sageT)}
+
+/* ---- charts ---- */
+svg.chart{display:block;width:100%;height:auto}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .axis{fill:var(--gtext);font-size:13px;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart .ln{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.chart .lbl{font-size:13.6px;font-weight:800;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart.draw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:dl 1.3s ease-out forwards}
+@keyframes dl{to{stroke-dashoffset:0}}
+.chart .key{font-size:13.6px;font-weight:700;fill:var(--paper);font-family:"Nunito Sans",system-ui,sans-serif}
+
+/* ---- graph exercise cards ---- */
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.gcard .gt{font-weight:800;font-size:17.7px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.gcard .gt i{font-style:normal;font-size:13px;font-weight:800;background:var(--panel2);color:var(--mist);border-radius:8px;padding:2px 7px}
+.gcard .gt span{font-weight:600;color:var(--mist);font-size:15.3px}
+
+/* ---- question rows ---- */
+.q{padding:12px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.q .p{font-size:17.7px;margin-bottom:8px}
+.q .p .num{font-weight:800;color:var(--brass);margin-right:6px}
+.q .p .tg{display:inline-block;font-size:13px;font-weight:800;background:var(--chipS);color:var(--chipSt);border-radius:8px;padding:1px 7px;margin-right:4px}
+.q .p .sm{font-size:15.3px;color:var(--mist)}
+.wk{border-radius:14px;background:var(--panel2);padding:10px 13px;font-size:17.1px;margin-bottom:6px}
+.wk .l{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mist)}
+select.sel{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--panel);color:var(--paper);min-width:150px}
+select.sel.ok{border-color:var(--sage);background:var(--sageT)}select.sel.no{border-color:var(--coral);background:var(--coralT)}
+
+/* ---- input + coach ---- */
+.iw{margin-top:6px}
+.iw .lab{font-size:14.2px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);margin-bottom:5px}
+textarea{width:100%;font:inherit;font-size:18.9px;line-height:1.5;color:var(--paper);background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;resize:vertical;min-height:62px;outline:none}
+textarea:focus{border-color:var(--brass)}
+textarea.ok{border-color:var(--sage);background:var(--sageT)}
+textarea.no{border-color:var(--coral)}
+.irow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:8px 16px;font-weight:800;font-size:16.5px;background:var(--brass);color:var(--onbrass)}
+.btn.ghost{background:var(--panel);color:var(--paper);border:1px solid var(--line)}
+.btn.go{background:var(--saffron);color:var(--onsaffron);padding:11px 20px;font-size:17.7px}
+.btn:disabled{opacity:.5;cursor:default}
+.wc{font-size:14.8px;color:var(--mist)}
+.done-tag{font-size:14.8px;font-weight:800;color:var(--sage)}
+.hint{display:none;margin-top:8px;border-radius:14px;background:var(--panel2);padding:10px 12px;font-size:16.5px}
+.hint.on{display:block}
+.fb{display:none;margin-top:10px;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.fb.on{display:block}
+.fb .hd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:9px 12px}
+.fb.good .hd{background:var(--sageT)}.fb.mid .hd{background:var(--amberT)}.fb.bad .hd{background:var(--coralT)}
+.fb .vd{font-weight:800}
+.fb.good .vd{color:var(--sage)}.fb.mid .vd{color:var(--amber)}.fb.bad .vd{color:var(--coral)}
+.meter{display:flex;gap:5px;flex-wrap:wrap}
+.meter span{font-size:14.2px;font-weight:800;border-radius:10px;padding:2px 8px;background:var(--panel)}
+.meter .ok{color:var(--sage)}.meter .no{color:var(--coral)}.meter .tip{color:var(--amber)}
+.fb .body{padding:10px 12px;background:var(--panel)}
+.ann{font-size:17.7px;line-height:1.7;margin-bottom:6px}
+.ann mark{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px;border-bottom:2px solid var(--amber)}
+.ann mark.facts,.ann mark.structure{border-bottom-color:var(--coral)}
+.grp{font-size:13.6px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mist);margin:10px 0 4px}
+.it{display:flex;gap:9px;padding:6px 0;font-size:17.1px}
+.it .k{display:inline-block;font-size:13px;font-weight:800;text-transform:uppercase;border-radius:8px;padding:1px 7px;margin-right:6px;background:var(--panel2);color:var(--dim)}
+.it.structure .k,.it.facts .k{background:var(--coralT);color:var(--coral)}
+.it.grammar .k,.it.tense .k,.it.spelling .k{background:var(--amberT);color:var(--amber)}
+.it.style .k{background:var(--chipS);color:var(--chipSt)}
+.it.praise .k{background:var(--sageT);color:var(--sage)}
+.tryit{margin-top:3px;font-weight:800;color:var(--sage)}
+.why{margin-top:2px;color:var(--mist);font-size:15.9px}
+.mdl{margin-top:10px;border-radius:12px;background:var(--panel2);padding:9px 11px;font-size:17.1px}
+
+.blockbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.blockbar .score{font-weight:800;color:var(--dim);font-size:16.5px}
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}
+.foot{color:var(--mist);font-size:14.8px;text-align:center;padding:10px 18px 30px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;background:var(--paper);color:var(--ink);font-weight:800;border-radius:14px;padding:9px 16px;transition:.25s;pointer-events:none;z-index:50}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:760px){
+  .wrap{padding:0 14px}
+  .band{padding:16px 0 16px;border-radius:0 0 20px 20px}
+  .band h1{font-size:26px}
+  .band p{font-size:16.5px}
+  .two,.ggrid,.mist{grid-template-columns:1fr}
+  .card{padding:14px}
+  .step{padding:7px 11px;font-size:15.3px}
+  .sec-title h2{font-size:21.2px}
+  .chip{font-size:15.3px}
+}
+@media print{.steps,.irow,.blockbar,.nextbar{display:none}.sec{display:block!important}}
+
+.gimg{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;text-align:center}
+.gimg img{max-width:100%;height:auto;max-height:340px}
+.ovl{display:grid;grid-template-columns:1fr;gap:16px}
+.ovc{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.ovc .gt{font-weight:800;font-size:17.7px;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ovc .gt i{font-style:normal;font-size:14.2px;font-weight:800;background:var(--brass);color:var(--onbrass);border-radius:8px;padding:2px 9px}
+.ovc .gt span{font-weight:600;color:var(--mist);font-size:14.8px}
+.iw+.iw{margin-top:12px}
+.iw .lab.s0{color:var(--brass)}.iw .lab.s1{color:#6d4bc2}.iw .lab.s2{color:var(--amber)}.iw .lab.s3{color:var(--sage)}
+:root[data-theme="dark"] .iw .lab.s1{color:#c3b0f5}
+.clue{font-size:15.9px;color:var(--dim);margin:6px 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 12px}
+.three .card{margin:0}
+.phg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.phg .card{margin:0}
+.sub-h{font-size:18.9px;margin:18px 0 8px}
+.sent{border-radius:14px;padding:12px 14px;font-size:17.7px}
+.sent .st{font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.sent.s1{background:var(--chipS);border:1px solid color-mix(in srgb,var(--chipSt) 35%,transparent)}.sent.s1 .st{color:var(--chipSt)}
+mark.t{background:var(--mark);color:inherit;border-radius:5px;padding:0 3px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);margin:6px 0 12px;border-radius:12px;overflow:hidden;font-size:14.8px;font-weight:800;text-align:center;color:#fff}
+.scale span{padding:7px 2px}.scale span:nth-child(1){background:#7aa7b0}.scale span:nth-child(2){background:#4f98a6}.scale span:nth-child(3){background:#2f7f8e}.scale span:nth-child(4){background:#1f6573}.scale span:nth-child(5){background:#134a58}
+.fstack{display:grid;gap:8px;margin:0 0 12px}
+.fs{display:flex;gap:12px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 14px}
+.fs>b{flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:var(--brass);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Unbounded,sans-serif}
+.fs .ff{font-weight:800;font-size:17.1px}.fs .fe{font-size:17.7px}
+.fstack.small .fs{padding:7px 12px}.fstack.small .fs>b{width:26px;height:26px;font-size:14.2px}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
+.fc{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:8px 10px;font-size:15.3px;display:flex;gap:8px;align-items:flex-start}
+.fc b{flex:0 0 auto;background:var(--brass);color:#fff;border-radius:7px;padding:0 7px;font-family:Unbounded,sans-serif;font-size:14.2px}
+.rule{background:var(--panel2)}
+.gapgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.q.g .p{line-height:2.1}
+input.gap{font:inherit;border:0;border-bottom:2px solid var(--line);background:transparent;color:inherit;text-align:center;padding:0 2px;margin:0 3px;outline:none;border-radius:4px 4px 0 0}
+input.gap:focus{border-bottom-color:var(--brass);background:var(--panel2)}
+input.gap.ok{border-bottom-color:var(--sage);background:var(--sageT)}
+input.gap.no{border-bottom-color:var(--coral);background:var(--coralT)}
+@media (max-width:760px){.three,.phg,.gapgrid{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr 1fr}}
+.seg{border-radius:14px;padding:11px 14px;font-size:17.7px;margin:0 0 8px;border:1px solid var(--line);background:var(--panel)}
+.seg .st{font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.seg.l{background:var(--chipL)}.seg.l .st{color:var(--chipLt)}
+.seg.s{background:var(--chipS)}.seg.s .st{color:var(--chipSt)}
+.seg.n{background:var(--chipN)}.seg.n .st{color:var(--chipNt)}
+.seg.v{background:var(--chipV)}.seg.v .st{color:var(--chipVt)}
+.q .num:empty{display:none}
+</style>
+</head>
+<body>
+<script>
+(function(){
+const CH={id:"wt2-l01",kicker:"Writing Task 2 · Lesson 1",title:'Essay types and the <span style="color:#ffd27a">discussion introduction</span>',
+lead:"Part 1: essay types. Part 2: plan a discussion essay (ideas + structure), then use one formula to write the introduction for any discussion topic."};
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const KEY="ielts-lab:"+CH.id;
+let ST={step:0,unit:{},ok:{},saved:{}};
+try{const r=localStorage.getItem(KEY);if(r)ST=Object.assign(ST,JSON.parse(r))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");
+
+/* ---------- content */
+const TYPES=["Opinion","Discussion","Advantages / Disadvantages","Problem / Solution","Two-part question"];
+const TYPEROWS=[
+["Opinion","“To what extent do you agree or disagree?”","Give <b>one clear position</b> and defend it.","Intro + 2 body paragraphs + conclusion"],
+["Discussion","“Discuss both views and give your opinion.”","Explain <b>both views</b>, then <b>give your own opinion</b>.","Intro + view 1 + view 2 + conclusion"],
+["Advantages / Disadvantages","“What are the advantages and disadvantages…?” / “Do the advantages outweigh the disadvantages?”","Discuss <b>both sides</b>; if “outweigh”, say which is stronger.","Intro + advantages + disadvantages + conclusion"],
+["Problem / Solution","“What problems does this cause? What can be done?”","Explain <b>problems or causes</b>, then <b>solutions</b>.","Intro + problems + solutions + conclusion"],
+["Two-part question","Two direct questions: “Why is this happening? Is it positive or negative?”","<b>Answer both questions</b>, one per body paragraph.","Intro + answer 1 + answer 2 + conclusion"]];
+const TYPEQ=[
+["“To what extent do you agree or disagree with this statement?”",0,"“Agree or disagree” asks for one clear position."],
+["“Some people think … Others believe … Discuss both views and give your opinion.”",1,"Two views plus “give your opinion” = Discussion."],
+["“What are the advantages and disadvantages of this trend?”",2,"Both words are in the question."],
+["“Do you think the advantages outweigh the disadvantages?”",2,"Still advantages / disadvantages, but you must say which side is stronger."],
+["“What problems does this cause and what can be done to solve them?”",3,"Problems first, then solutions."],
+["“Why do people choose to live abroad? Is this a positive or negative development?”",4,"Two direct questions: answer both."],
+["“Some people think money is the best gift. Others disagree. What is your opinion?”",1,"Two views are given and you are asked for your opinion: a Discussion essay."],
+["“Do you agree or disagree?”",0,"One position, defended throughout."]];
+const PLAN=[["Introduction","Debate sentence + your position."],["Body 1","The view you support less: 2 reasons + example."],["Body 2","Your own view: 2 reasons + example."],["Conclusion","Sum up the debate + repeat your position."]];
+const PLANQ=[
+["Gives two reasons for the view you support less",1],
+["Gives two reasons and an example for your own view",2],
+["Opens with “There is a debate over…”",0],
+["Sums up the debate and repeats your position",3],
+["Starts with “Admittedly,…” or “To start, some argue that…”",1],
+["Starts with “I, however, share the view that…”",2]];
+const REASONS=["money","health","safety","time","skills","society","environment","technology"];
+const OPS=[
+["A · Just answer","In my opinion, cars still remain the most effective way to travel around cities.","Short and clear. Good when time is tight."],
+["B · Answer + reason","In my opinion, cars still remain the most effective way to travel around cities as they are safer and offer comfort.","Adds the reason you will develop in Body 2."],
+["C · Concession + reason","In my opinion, while bicycles have some benefits, cars still remain the most effective way to travel around cities as they are safer and offer comfort.","The most natural: admits the other side, then takes a stand."]];
+const KINDS=[
+["1 · Clear side","You have <b>two strong reasons</b> for one view and the other view is weaker. The safest choice.","I tend to agree with the latter view. · I personally share the former view.","E05 · E03 · E26","Body 2 is your strongest paragraph."],
+["2 · Clear side + concession","The other view has <b>real merit</b>, but you still prefer yours. Sounds fair and clear: a good default.","Though / While / Even though there is some truth to the former view, I strongly agree with the latter.","E04 · E06 · E31","Body 1 shows the merit, Body 2 shows why you still prefer your side."],
+["3 · Clear side + reason","You want to <b>preview your main reason</b> in the introduction.","In my view, … , for we cannot dismiss …  · I support …, as …","E13 · E19","The reason becomes the topic of Body 2."],
+["4 · Balanced","<b>Both</b> factors are truly needed and you can treat them <b>equally</b>.","To my mind, both factors have an equal say in … · Both are equally important, for one cannot exist without the other.","E39 · E24 · E29","Both bodies are equally strong. Weaker if the reasons are thin."],
+["5 · It depends","The answer is <b>different for different people or situations</b>.","In my mind, whether … or … depends largely on the circumstances.","E20 · E21","Body 1 and Body 2 show the situations when each view works."],
+["6 · New position","<b>Neither</b> view solves the problem; you propose a third idea. Risky: use only with clear reasons.","I am in favor of targeting all these aspects in equal measure. · It is time we abandoned … and embraced …","E16 · E12","Both bodies explain why each view alone is not enough."]];
+const OPQ=[
+["You have two strong reasons for one side; the other side is weak.",0],
+["The other side has real merit, but you still prefer yours.",1],
+["You want to preview your main reason in the introduction.",2],
+["Both factors are truly needed and you will treat them equally.",3],
+["The answer is different for different people or situations.",4],
+["You think neither view solves the problem and have another idea.",5]];
+const QUICK=[
+["I tend to agree with the latter view.","Your side = the second view. Short and common in our sample essays."],
+["Though there is some truth to the former view, I strongly agree with the latter.","Concession + position."],
+["To my mind, both factors are equally important.","Balanced. Only if your essay really treats both sides equally."]];
+const WHS=[
+["whether","Is it true / should it happen? A <b>yes–no</b> question: ban or not, good or bad, still needed or not.","whether violent films and computer games should be banned (T44)","Safest choice: it fits almost any “should we…?” or “is it…?” question."],
+["who","<b>Responsibility</b>: who pays, who is punished, who should act.","who should be responsible for people’s diet (T41)","The two groups name different people or groups."],
+["when","<b>Time or age</b>: the best age, stage or moment.","when children should start school (T42)","The groups disagree about early / late."],
+["how","<b>The way</b> something is done, or <b>how much / how useful</b>.","how minor offenders should be punished (T59)","The groups suggest different methods."],
+["which","<b>Choosing one</b> from named options.","which is better for a country’s culture, foreign or local films (T50)","The groups pick different options (cars or bicycles)."],
+["what","A <b>factor, reason or purpose</b>: what matters most, what makes something happen.","what matters most for success in life (T51)","The groups name different factors."],
+["where","A <b>place or direction</b>: where money or effort should go.","where sports funding should go (T49)","The groups want the money spent in different places."]];
+const WHSETS=[
+["Practice 1",[
+["T41 · Some say individuals should take care of their own diet, others say governments should make sure citizens eat healthily.",1,"They name different people responsible: “who”."],
+["T42 · Some say children should start school very early, others say they should wait until they are older.",2,"Early or late: “when”."],
+["T46 · Some say children who commit crimes should be punished, others say their parents should be.",1,"Children or parents: “who”."],
+["T49 · Some say sports money should go to facilities for top athletes, others say to facilities for ordinary people.",6,"Where the money goes: “where”."]]],
+["Practice 2",[
+["T44 · Some say violent films and games should be banned, others say they are harmless relaxation.",0,"Ban or not: “whether”."],
+["T50 · Some say importing foreign films is good for a country’s culture, others say local films are better.",4,"Foreign or local: “which”."],
+["T51 · Some say hard work and determination bring success, others say other factors matter more.",5,"Different factors: “what”."],
+["T59 · Some say all lawbreakers should go to prison, others say minor offenders should do community service.",3,"Different ways to punish: “how”."]]],
+["Practice 3",[
+["T52 · Some say governments should ban dangerous sports, others say people should be free to choose.",0,"Ban or not: “whether”."],
+["T54 · Some say education should prepare people to benefit society, others say it should help personal ambitions.",5,"Different purposes: “what”."],
+["T57 · Some say the government should support artists, others say that is a waste of money.",0,"Support or not: “whether”."],
+["T58 · Some say a university degree is best for a good job, others say skills and experience are.",4,"Degree or skills: “which”."]]]];
+const WHOPT=["whether","who","when","how","which","what","where"];
+
+
+const EXAMPLES=[
+{src:"E06",prompt:"Some people encourage young children to leave their parents’ house as soon as they become adults while others say children should stay at their parents’ house as long as possible. Discuss both views and give your opinion.",
+ parts:[["s","1 · Debate sentence","There is a debate over when young people should leave the family home, with some suggesting they should move out as soon as they become adults and others saying they should stay with their parents for as long as possible."],["n","2 · Opinion (C)","While there are clear upsides to children continuing to live with their parents past 18, I am in favor of encouraging them to leave their parents’ house."]],
+ orig:"People are divided as to whether children should move out on their own once they reach the age of adulthood, with some suggesting they should stay with their parents. While there are clear upsides to children continuing to live with their parents past 18, I am in favor of encouraging them to leave their parents’ house.",
+ notes:["<b>when</b> is the wh-word: the debate is about the age.","Both views are kept in the same order as the question.","The opinion admits an upside of the other side first (concession)."],
+ q:["Which wh-word fits “leave home early or late”?",["which","who","when","how"],2,"The debate is about timing, so “when”."]},
+{src:"E05",prompt:"Some people think that international competitive sports such as football bring conflict between people of different age groups and nationalities. Others think the sport is helping reach understanding between people and nations. Discuss both views and give your opinion.",
+ parts:[["s","1 · Debate sentence","There is a debate over whether international competitive sports create conflict or understanding among nations, with some saying they cause tension between nationalities and age groups and others arguing that they foster intercultural understanding."],["n","2 · Opinion (quick)","I tend to agree with the latter view."]],
+ orig:"While some reckon international competitive sports can be a source of tension among different nations as well as young and old people, others maintain they can foster intercultural understanding. I tend to agree with the latter view.",
+ notes:["<b>whether … or …</b> puts both views inside the debate subject.","“Create conflict” and “foster understanding” paraphrase the question.","“The latter view” = the second view."],
+ q:["What does “the latter view” mean here?",["Sport brings conflict","Sport brings understanding"],1,"“The latter” is the second view: sport fosters understanding."]},
+{src:"E39",prompt:"Some people think that good teamwork makes a company successful, others think that good leadership is the reason behind the success of a company. Discuss both sides and give your opinion.",
+ parts:[["s","1 · Debate sentence","There is a debate over what makes a company successful, with some saying good teamwork is the key and others arguing that outstanding leadership is."],["n","2 · Opinion (balanced)","To my mind, both factors have an equal say in the success of a company."]],
+ orig:"The question of what drives a company successful is intriguing to employees and employers alike. While some attribute it to good collaboration among the workers of an organization, others ascribe it to having an outstanding leader. To my mind, both factors have an equal say in the success of a company.",
+ notes:["<b>what</b> works when the debate is about a factor or reason.","Because the opinion is balanced, the body paragraphs must give both sides equal space.","The teacher’s original has a hook sentence first; the formula needs none."],
+ q:["Which wh-word fits “what makes a company successful”?",["what","who","whether"],0,"The debate is about which factor matters: “what”."]},
+{src:"E13",prompt:"Governments in many countries have recently introduced special taxes on foods and beverages with high levels of sugar. Some think these taxes are a good idea while others disagree. Discuss both views and give your opinion.",
+ parts:[["s","1 · Debate sentence","There is a debate over whether sugary foods and drinks should be taxed, with some saying such taxes are a good idea and others arguing that they are not."],["n","2 · Opinion (B)","In my view, some amount of taxing should be exercised towards sugary products, for we cannot dismiss the scientific evidence on the implications of excessive sugar consumption."]],
+ orig:"Food items high in sugar have long been linked to a range of health problems like diabetes and obesity, thus some governments have imposed taxes on these foods. Some people, however, do not entirely support this measure while others argue that taxing sugar-rich products is effective. In my view, some amount of taxing should be exercised towards sugary products, for we cannot dismiss the scientific evidence on the implications of excessive sugar consumption.",
+ notes:["<b>whether</b> works for any “good idea or not?” question.","The question’s long background sentence is not repeated: the debate sentence covers it.","The opinion ends with <b>for</b> + a reason, which prepares Body 2."],
+ q:["Which opinion level is used?",["A · just answer","B · answer + reason","C · concession + reason"],1,"The writer gives a stand and a reason (“for we cannot dismiss…”), with no concession."]},
+{src:"E26",prompt:"Because of modern technology, some people believe that it is no longer necessary for people to learn handwriting skills, but others believe that handwriting is still an important skill. Discuss both views and give your opinion.",
+ parts:[["s","1 · Debate sentence","There is a debate over whether handwriting is still an essential skill in today’s technological world, with some saying it is becoming obsolete and others arguing that it is still relevant."],["n","2 · Opinion (B)","I share the view that it is here to stay."]],
+ orig:"People fall into two camps as to whether handwriting is an essential skill in today’s technological world. While there are reasons to believe that handwriting is somewhat obsolete, I share the view that it is here to stay.",
+ notes:["The debate sentence keeps the question’s main idea: technology and handwriting.","“Obsolete” and “still relevant” are synonyms for “no longer necessary” and “still important”.","One short opinion sentence is enough."],
+ q:["Which wh-word fits “handwriting is still necessary or not”?",["whether","who","how"],0,"A yes / no debate uses “whether”."]}];
+const TOPICS=[{"n": 1, "tn": 41, "prompt": "Some people believe that it is the responsibility of individuals to take care of their own health and diet. Others, however, believe that governments should ensure that their citizens have a healthy diet. Discuss both views and give your opinion.", "hint": "Wh-word to try: “who”. Subject of the debate: who is responsible for diet. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over who should be responsible for people's diet, with some saying individuals should look after their own well-being and others arguing that governments should make sure citizens eat healthily. While the former view has some merit, I tend to agree with the latter."], "wh": "who", "kw": ["citiz", "ensur", "gover", "healt", "howev", "indiv", "respo"]}, {"n": 2, "tn": 42, "prompt": "Some people believe that children should start school at a very early age, while others think they should not go to school until they are older. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “when”. Subject of the debate: the best age to start school. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over when children should start school, with some saying they should begin at a very early age and others arguing that they should wait until they are older. While the former view has some merit, I tend to agree with the latter."], "wh": "when", "kw": ["child", "early", "older", "schoo", "start", "until"]}, {"n": 3, "tn": 43, "prompt": "Some people believe that manufacturers and supermarkets should reduce the amount of packaging used for goods, while others argue that consumers should avoid buying products with excessive packaging. Discuss both views and give your opinion.", "hint": "Wh-word to try: “who”. Subject of the debate: who should reduce packaging. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over who should cut down on packaging, with some saying manufacturers and supermarkets should use less of it and others arguing that consumers should avoid products with too much packaging. While the former view has some merit, I tend to agree with the latter."], "wh": "who", "kw": ["amoun", "avoid", "buyin", "consu", "exces", "goods", "manuf", "packa", "produ", "reduc", "super"]}, {"n": 4, "tn": 44, "prompt": "Films and computer games containing violence are popular. Some people believe that they negatively affect society and should be banned, while others consider them harmless forms of relaxation. Discuss both views and give your opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: banning violent films and games. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether violent films and computer games should be banned, with some saying they harm society and others arguing that they are harmless relaxation. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["affec", "banne", "compu", "consi", "conta", "films", "forms", "games", "harml", "negat", "popul", "relax", "socie", "viole"]}, {"n": 5, "tn": 45, "prompt": "Some people believe that robots are extremely important for humanity’s future development, while others think that they are dangerous and have negative effects on society. Discuss both views and give your opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: robots: helpful or dangerous. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether robots are good for humanity, with some saying they are essential for future development and others arguing that they are dangerous and harm society. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["dange", "devel", "effec", "extre", "futur", "human", "impor", "negat", "robot", "socie"]}, {"n": 6, "tn": 46, "prompt": "Some people believe that children who commit crimes should be punished, while others think that their parents should be punished instead. Discuss both views and give your opinion.", "hint": "Wh-word to try: “who”. Subject of the debate: who is punished for children's crimes. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over who should be punished when children commit crimes, with some saying the children themselves and others arguing that the parents should bear the punishment. While the former view has some merit, I tend to agree with the latter."], "wh": "who", "kw": ["child", "commi", "crime", "inste", "paren", "punis"]}, {"n": 7, "tn": 47, "prompt": "Some people believe that a country can be economically successful while also maintaining a clean environment, whereas others believe that these two objectives are incompatible. Discuss both views and give your opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: a rich country and a clean environment. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether a country can be both economically successful and environmentally clean, with some saying it can and others arguing that the two goals are incompatible. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["clean", "count", "econo", "envir", "incom", "maint", "objec", "succe", "where"]}, {"n": 8, "tn": 48, "prompt": "Some people think that parents should read or tell stories to their children. Others believe that parents do not need to do this, as children can read books or watch TV and movies by themselves. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: reading stories to children. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether mothers and fathers ought to read or tell stories to their kids, with some saying they should and others arguing that it is unnecessary as children can read or watch by themselves. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["books", "child", "movie", "paren", "stori", "thems", "watch"]}, {"n": 9, "tn": 49, "prompt": "Some people think that governments should spend more money on sports facilities for top athletes, while others argue that this money should be spent on sports facilities for ordinary people. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “where”. Subject of the debate: who sports money is for. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over where sports funding should go (T49), with some saying governments should spend more on facilities for top athletes and others arguing that the money should go to facilities for ordinary people. While the former view has some merit, I tend to agree with the latter."], "wh": "where", "kw": ["athle", "facil", "gover", "money", "ordin", "spend", "spent", "sport"]}, {"n": 10, "tn": 50, "prompt": "Some people think that it is good for a country’s culture to import foreign films and TV programmes. Others think that it is better to produce them locally. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: foreign or local films. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether a country should bring in overseas films and TV programmes or produce them locally, with some saying importing is good for its culture and others arguing that local production is better. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["bette", "count", "cultu", "films", "forei", "impor", "local", "produ", "progr"]}, {"n": 11, "tn": 51, "prompt": "Hard work and determination are the main requirements for success in life. Others believe that other factors are more important. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “what”. Subject of the debate: what makes people successful. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over what matters most for success in life, with some saying hard work and determination and others arguing that other factors count for more. While the former view has some merit, I tend to agree with the latter."], "wh": "what", "kw": ["deter", "facto", "impor", "requi", "succe"]}, {"n": 12, "tn": 52, "prompt": "Some people think that governments should ban dangerous sports, while others believe that people should have the freedom to participate in any sport or activity. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: banning dangerous sports. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether dangerous sports should be banned, with some saying governments should ban them and others arguing that people should be free to take part in any activity. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["activ", "dange", "freed", "gover", "parti", "sport"]}, {"n": 13, "tn": 53, "prompt": "Some people think that secondary school students should study international news as one of their subjects, while others believe that this is a waste of valuable school time. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: international news at school. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether high school pupils should learn about world news, with some saying it should be a school subject and others arguing that it wastes valuable school time. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["inter", "schoo", "secon", "stude", "study", "subje", "valua", "waste"]}, {"n": 14, "tn": 54, "prompt": "Some people believe that the purpose of education is to prepare individuals to be beneficial members of society, while others say that its purpose is to help individuals achieve their personal ambitions. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “what”. Subject of the debate: the purpose of education. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over what the purpose of education is, with some saying it is to prepare people to benefit society and others arguing that it is to let individuals pursue their own goals. While the former view has some merit, I tend to agree with the latter."], "wh": "what", "kw": ["achie", "ambit", "benef", "educa", "indiv", "membe", "perso", "prepa", "purpo", "socie"]}, {"n": 15, "tn": 55, "prompt": "Some people say that the increasing business and cultural contact between countries is a positive development, while others think that many countries will lose their national identities as a result. Discuss both views and give your opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: contact between countries. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether growing closer commercial and cultural ties between nations are a good thing, with some saying it is positive and others arguing that countries will lose their national identities. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["betwe", "busin", "conta", "count", "cultu", "devel", "ident", "incre", "natio", "posit", "resul"]}, {"n": 16, "tn": 56, "prompt": "Some people think that in modern society, individuals are becoming more dependent on each other, while others believe that individuals are becoming more independent of one another. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: dependent or independent people. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether people in modern society are becoming more dependent on or more independent of one another, with some saying dependence is growing and others arguing that independence is. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["anoth", "becom", "depen", "indep", "indiv", "moder", "socie"]}, {"n": 17, "tn": 57, "prompt": "Some people think that the government should provide financial support to artists, such as musicians, painters and poets. Others believe that this is a waste of money. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “whether”. Subject of the debate: state support for artists. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over whether the government should financially support artists, with some saying it should and others arguing that it is a waste of money. While the former view has some merit, I tend to agree with the latter."], "wh": "whether", "kw": ["artis", "finan", "gover", "money", "music", "paint", "poets", "provi", "suppo", "waste"]}, {"n": 18, "tn": 58, "prompt": "Some people think having a university degree is the best way to secure a good job. However, others believe skills and experience are more important. Discuss both sides and give your opinion.", "hint": "Wh-word to try: “what”. Subject of the debate: degree or skills. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over which route is most likely to land a good job, with some saying a university degree and others arguing that skills and experience matter more. While the former view has some merit, I tend to agree with the latter."], "wh": "what", "kw": ["degre", "exper", "havin", "howev", "impor", "secur", "sides", "skill", "unive"]}, {"n": 19, "tn": 59, "prompt": "Some people think that all lawbreakers should be sent to prison, while others believe that there are better alternatives for those who commit minor crimes, such as making them do community service. Discuss both views and give your own opinion.", "hint": "Wh-word to try: “how”. Subject of the debate: how to punish minor crimes. Frame: There is a debate over … , with some saying … and others arguing ….", "model": ["There is a debate over how minor offenders should be punished, with some saying all lawbreakers should go to prison and others arguing that alternatives such as community service are better. While the former view has some merit, I tend to agree with the latter."], "wh": "how", "kw": ["alter", "bette", "commi", "commu", "crime", "lawbr", "makin", "minor", "priso", "servi"]}];
+
+/* ---------- checker ---------- */
+const OPIN=/\b(i\s+(?:\w+\s+){0,2}(?:tend|agree|side|share|believe|support|favou?r|lean|would argue|am in favou?r|am of the opinion|prefer|personally|strongly|am inclined|am convinced|subscribe)|in my (?:view|opinion|mind)|to my mind|to my way of thinking|as far as i am concerned|personally|my own view)/i;
+const VIEWS=/\bsome\b[^.]*\b(others?|however|while|whereas)\b|\b(while|though|although|whereas)\b[^.]*\bothers?\b|\bwhether\b[^.]*\bor\b|\b(divided|two camps|debate|not everyone)\b/i;
+const ANNOUNCE=/\b(this essay|in this essay|the following essay|i will (?:discuss|talk|write|explain|argue)|will discuss)\b/i;
+const W=t=>(t.toLowerCase().match(/[a-z']+/g)||[]);
+function run(a,b){let best=0;for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++)if(a[i]===b[j]){let k=0;while(i+k<a.length&&j+k<b.length&&a[i+k]===b[j+k])k++;if(k>best)best=k}return best}
+function checkIntro(text,tp){
+  const w=W(text),n=w.length,ss=text.split(/(?<=[.!?])\s+/).filter(s=>s.trim().length>1),last=ss[ss.length-1]||"";
+  const kwHit=tp.kw.filter(k=>text.toLowerCase().includes(k)).length,cp=run(w,W(tp.prompt));
+  const c=[
+   {k:"views",ok:VIEWS.test(text),crit:1,label:"Both views",bad:"I cannot see both views. Use a frame such as “While some … , others …” or “Whether … or …”.",good:"Both views are signalled."},
+   {k:"opinion",ok:OPIN.test(text),crit:1,label:"Opinion",bad:"I cannot find your opinion. Add a sentence such as “I tend to agree with the latter view.”",good:"Your opinion is stated."},
+   {k:"last",ok:OPIN.test(last),crit:0,label:"Opinion last",bad:"Put your opinion in the last sentence of the introduction.",good:"The opinion comes last."},
+   {k:"copy",ok:cp<7,crit:1,label:"Own words",bad:"You copied "+cp+" words in a row from the question. Paraphrase with synonyms.",good:"Written in your own words."},
+   {k:"topic",ok:kwHit>=2,crit:1,label:"On topic",bad:"The introduction should mention the topic of this question. Check the two views again.",good:"The topic is clear."},
+   {k:"len",ok:n>=28&&n<=80,crit:0,label:"Length",bad:n<28?"A bit short ("+n+" words). Aim for 30–70 words.":"A bit long ("+n+" words). Aim for 30–70 words.",good:n+" words: a good length."},
+   {k:"sent",ok:ss.length>=2&&ss.length<=3,crit:0,label:"2–3 sentences",bad:ss.length<2?"Split it: views in one sentence, opinion in another.":"Too many sentences: keep to two or three.",good:ss.length+" sentences."},
+   {k:"ann",ok:!ANNOUNCE.test(text),crit:0,label:"No announcing",bad:"Skip “In this essay I will …”. Go straight to the views.",good:"No announcing."}];
+  const crit=c.filter(x=>x.crit),okc=crit.filter(x=>x.ok).length,tips=c.filter(x=>!x.crit&&!x.ok).length;
+  const v=okc===crit.length&&tips===0?"good":okc===crit.length?"mid":"bad";
+  return {c,v,okc,tips,n}}
+function fbHTML(r){
+  const vd={good:"Well done! Your introduction works.",mid:"Nearly there: polish these points.",bad:"Not yet. Fix the red points and check again."}[r.v];
+  return '<div class="hd"><span class="vd">'+vd+'</span><span class="meter">'+r.c.map(x=>'<span class="'+(x.ok?"ok":(x.crit?"no":"tip"))+'">'+(x.ok?"✓ ":"✗ ")+x.label+'</span>').join("")+'</span></div><div class="body">'+
+  r.c.filter(x=>!x.ok).map(x=>'<div class="it '+(x.crit?"structure":"style")+'"><div><span class="k">'+(x.crit?"must fix":"tip")+'</span>'+esc(x.bad)+'</div></div>').join("")+
+  r.c.filter(x=>x.ok).map(x=>'<div class="it praise"><div><span class="k">ok</span>'+esc(x.good)+'</div></div>').join("")+'</div>'}
+
+/* ---------- component builders ---------- */
+let REG=[];
+function selQ(key,label,opts,ans,expl,num){
+  REG.push({key,kind:"sel",ans,expl});
+  return '<div class="q" data-key="'+key+'"><div class="p"><span class="num">'+num+'</span>'+label+'</div><select class="sel" data-key="'+key+'"><option value="">Choose…</option>'+opts.map((o,i)=>'<option value="'+i+'">'+esc(o)+'</option>').join("")+'</select><div class="fb" id="fb_'+key+'"></div></div>'}
+function writeQ(key,tp){
+  REG.push({key,kind:"write",tp});
+  return '<div class="iw"><div class="lab">Your introduction</div><textarea id="ta_'+key+'" placeholder="Write 2 sentences: the debate sentence + your opinion…"></textarea><div class="irow"><button class="btn go" data-act="check" data-key="'+key+'">Check my introduction</button><button class="btn ghost" data-act="hint" data-key="'+key+'">Hint</button><button class="btn ghost" data-act="model" data-key="'+key+'">Show model (one possible answer)</button><span class="wc" id="wc_'+key+'"></span><span class="done-tag" id="dn_'+key+'"></span></div><div class="hint" id="hint_'+key+'">'+esc(tp.hint)+'</div><div class="fb" id="fb_'+key+'"></div><div class="mdl" id="md_'+key+'" style="display:none"><b>Model introduction'+(tp.model.length>1?"s":"")+':</b>'+tp.model.map(m=>'<div style="margin-top:6px">'+esc(m)+'</div>').join("")+'</div></div>'}
+const seg=(c,l,t)=>'<div class="seg '+c+'"><div class="st">'+l+'</div>'+esc(t)+'</div>';
+
+/* ---------- steps */
+const steps=[];
+const ex=(a,b,c)=>'<tr><td>'+a+'</td><td>'+b+'</td>'+(c?'<td>'+c+'</td>':'')+'</tr>';
+steps.push({label:"Essay types",html:()=>{
+ let h='<div class="sec-title"><span class="n">PART 1</span><h2>The five Task 2 essay types</h2></div><p class="lead">The <b>last line of the question</b> tells you the type, not the topic. Read it first.</p>';
+ h+='<div class="card"><table class="t"><tr><th>Type</th><th>Instruction line looks like…</th><th>What you must do</th><th>Plan</th></tr>'+TYPEROWS.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>').join("")+'</table><div class="rule"><b>Today:</b> the Discussion essay. Two views are given, you explain both and give your opinion.</div></div>';
+ h+='<div class="card"><h3>Name the type</h3><div class="ins">Choose the essay type for each instruction line.</div>'+TYPEQ.map((q,i)=>selQ("ty"+i,esc(q[0]),TYPES,q[1],q[2],i+1)).join("")+'</div>';
+ return h}});
+steps.push({label:"Planning",html:()=>{
+ let h='<div class="sec-title"><span class="n">PART 2 · A</span><h2>Planning a discussion essay</h2></div><p class="lead">Planning has two jobs: <b>1. generate ideas</b> (about 3 minutes), then <b>2. fix the structure</b>. Write notes, not sentences.</p>';
+ h+='<div class="card"><h3>1 · Idea generation</h3><div class="seg s"><div class="st">Example question</div>Some people believe that in a city the best way to travel is by car, while others argue that bicycles are better. Discuss both views and give your opinion.</div>';
+ h+='<div class="fstack"><div class="fs"><b>1</b><div><div class="ff">Turn each view into a “Why?” question</div><div class="fe">Why do some people believe cars are best? Why do others think bicycles are better?</div></div></div><div class="fs"><b>2</b><div><div class="ff">Choose your position</div><div class="fe">Take the side where you have <b>two strong reasons</b>. It does not have to be your real belief.</div></div></div><div class="fs"><b>3</b><div><div class="ff">Find two reasons for each side</div><div class="fe">Stuck? Ask about: '+REASONS.map(r=>'<span class="chip p">'+r+'</span>').join(" ")+'</div></div></div><div class="fs"><b>4</b><div><div class="ff">Add one example for each side</div><div class="fe">A country, a famous person, a situation, or your own experience.</div></div></div></div>';
+ h+='<table class="t" style="margin-top:12px"><tr><th>My position</th><th>Other view (Body 1)</th><th>My view (Body 2)</th></tr><tr><td><b>Cars are better</b></td><td>bikes avoid traffic jams<br>bikes are cheap</td><td>cars are safe<br>cars are comfortable</td></tr></table>';
+ h+='<div class="note"><b>Tips:</b> spend no more than 3–5 minutes · 3–4 words per note · give the other side <b>two short reasons</b>, not a full essay · choose your side by the reasons you can explain, not by your feelings · never choose “both” unless both sides really have equal strength.</div></div>';
+ h+='<div class="card"><h3>2 · Essay structure: four paragraphs</h3><table class="t"><tr><th>Paragraph</th><th>Its job</th><th>Starts like this</th></tr>'+
+  ex("<b>Introduction</b>","Debate sentence (both views) + your position. 2 sentences.","“There is a debate over…”")+
+  ex("<b>Body 1</b>","The view you support <b>less</b>. Two reasons, one example. Be fair.","“To start, …” · “Admittedly, …” · “On the one hand, some argue that…”")+
+  ex("<b>Body 2</b>","<b>Your</b> view. Two reasons, one example. Make it the strongest paragraph.","“I, however, share the view that…” · “Having said that, I …”")+
+  ex("<b>Conclusion</b>","Sum up the debate and repeat your position. 1–2 sentences.","“In conclusion, although … , I …”")+'</table>';
+ h+='<div class="rule"><b>Why this order?</b> The other side comes first, so your own view is the <b>last</b> thing the examiner reads. Each body paragraph: topic sentence → reason 1 + example → reason 2 (“Besides, …”, “Furthermore, …”).</div></div>';
+ h+='<div class="card"><h3>Which paragraph does each job?</h3><div class="ins">Match each job to the paragraph.</div>'+PLANQ.map((q,i)=>selQ("pl"+i,esc(q[0]),PLAN.map(p=>p[0]),q[1],"This is the job of "+PLAN[q[1]][0]+".",i+1)).join("")+'</div>';
+ return h}});
+steps.push({label:"Introduction formula",html:()=>{
+ let h='<div class="sec-title"><span class="n">PART 2 · B</span><h2>One formula for any discussion introduction</h2></div><p class="lead">Two sentences: <b>1 the debate</b> + <b>2 your opinion</b>. The first sentence works for every question.</p>';
+ h+='<div class="card"><div class="chiprow"><span class="chip s">There is a debate over</span><span class="chip p">+</span><span class="chip s">wh-word + subject</span><span class="chip p">+ , with</span><span class="chip s">some saying … and others arguing …</span></div>';
+ h+='<div class="eg real" style="margin-top:12px"><span class="tg">1</span><span>There is a debate over <b>which transport</b> is best to travel in a city, <b>with</b> some saying cars are the optimal transport and others arguing that bicycles are better.</span></div>';
+ h+='<div class="fstack"><div class="fs"><b>1</b><div><div class="ff">Find the subject of the debate</div><div class="fe">What are the two groups arguing about? Say it in a few words with a wh-word.</div></div></div><div class="fs"><b>2</b><div><div class="ff">Add both views with “with”</div><div class="fe">“…, with some saying … and others arguing …” Keep the order of the question. Use synonyms; do not copy.</div></div></div></div>';
+ h+='<div class="rule"><b>How to choose the wh-word:</b> ask “What question are the two groups answering?” Then pick the word that starts that question. In doubt, use <b>whether</b>.</div><table class="t" style="margin-top:12px"><tr><th>Wh-word</th><th>Use it when the debate is about…</th><th>Examples</th><th>Clue</th></tr>'+WHS.map(w=>'<tr><td><b>'+w[0]+'</b></td><td>'+w[1]+'</td><td>'+w[2]+'</td><td>'+w[3]+'</td></tr>').join("")+'</table>';
+ h+=WHSETS.map((st,si)=>'<div class="card" style="margin:14px 0 0"><h3>'+st[0]+': choose the wh-word</h3><div class="ins">Read the two views and choose the wh-word for “There is a debate over …”.</div>'+st[1].map((q,i)=>selQ("wh"+si+"_"+i,esc(q[0]),WHOPT,q[1],q[2],i+1)).join("")+'</div>').join("");
+ h+='<div class="note"><b>Verbs after “some … others …”:</b> saying · arguing · believing · claiming · suggesting · maintaining · holding that</div></div>';
+ h+='<div class="card"><h3>Sentence 2 · Six kinds of opinion (and when each is good)</h3><div class="ins">Your opinion sentence can take different forms. Choose by asking: <b>how strong are my reasons for each side?</b></div><table class="t"><tr><th>Kind</th><th>Good when…</th><th>Frame</th><th>Seen in</th><th>Effect on your essay</th></tr>'+KINDS.map(k=>'<tr><td><b>'+k[0]+'</b></td><td>'+k[1]+'</td><td>'+esc(k[2])+'</td><td>'+k[3]+'</td><td>'+k[4]+'</td></tr>').join("")+'</table><div class="rule"><b>Default for most questions:</b> kind 2 (concession). It shows you understood both views and still gives a clear position.</div></div>';
+ h+='<div class="card"><h3>Which kind of opinion fits?</h3><div class="ins">Read the situation and choose the kind of opinion.</div>'+OPQ.map((q,i)=>selQ("op"+i,esc(q[0]),KINDS.map(k=>k[0]),q[1],"This situation calls for: "+KINDS[q[1]][0]+".",i+1)).join("")+'</div>';
+ h+='<div class="card"><h3>How detailed? Three levels</h3><table class="t"><tr><th>Level</th><th>Example</th><th>Note</th></tr>'+OPS.map(o=>ex("<b>"+o[0]+"</b>",esc(o[1]),o[2])).join("")+'</table><div class="trap"><b>Avoid:</b> <s>In this essay I will discuss both views and give my opinion.</s> Do not announce your essay, and do not copy the question word for word.</div></div>';
+ return h}});
+steps.push({label:"5 examples",subnav:true,units:EXAMPLES.map((e,i)=>({label:"Example "+(i+1),html:()=>{
+ let h='<div class="card"><div class="lhd"><div class="big">'+(i+1)+'</div><div><h3>Example '+(i+1)+'</h3><div class="ins" style="margin:0">Formula applied to a real in-class essay question</div></div></div><div class="seg s" style="margin-bottom:10px"><div class="st">Question</div>'+esc(e.prompt)+'</div>';
+ h+=e.parts.map(p=>seg(p[0],p[1],p[2])).join("");
+ h+='<div class="grp">What to notice</div>'+e.notes.map(n=>'<div class="it praise"><div><span class="k">note</span>'+n+'</div></div>').join("");
+ h+='<div class="note" style="margin-top:10px"><b>Original introduction from the sample essay:</b><br><i>'+esc(e.orig)+'</i></div>';
+ h+='<div class="yourturn"><h4>Quick check</h4>'+selQ("ex"+i,e.q[0],e.q[1],e.q[2],e.q[3],"")+'</div></div>';
+ return h}}))});
+steps.push({label:"Practice",subnav:true,units:TOPICS.map(t=>({label:"Topic "+t.n,html:()=>{
+ return '<div class="card"><div class="lhd"><div class="big">'+t.n+'</div><div><h3>Write the introduction</h3><div class="ins" style="margin:0">Debate sentence + opinion. 30–70 words.</div></div></div><div class="seg s" style="margin-bottom:10px"><div class="st">Question</div>'+esc(t.prompt)+'</div><div class="note"><b>Before you write:</b> What are they arguing about? Which wh-word fits? Which side is yours?</div>'+writeQ("wr"+t.n,t)+'</div>'}}))});
+
+/* ---------- build ---------- */
+function build(){
+ REG=[];
+ document.body.innerHTML='<header class="band"><div class="wrap"><div class="kick">'+CH.kicker+'</div><h1>'+CH.title+'</h1><p>'+CH.lead+'</p><div class="prog"><div class="bar"><i id="pbar"></i></div><b id="pnum"></b></div></div></header><nav class="steps"><div class="wrap"><div class="row" id="steps"></div></div></nav><main class="wrap" id="main"></main><div class="foot">MrIkromov’s IELTS · Instagram @ustoz_jasur · Telegram @TeamMrIkromov</div><div id="toast"></div>';
+ const st=$("#steps"),mn=$("#main");
+ steps.forEach((s,si)=>{
+  const b=document.createElement("button");b.className="step";b.id="st"+si;b.innerHTML='<span class="no">'+(si+1)+'</span>'+s.label+'<span class="ct" id="ct'+si+'"></span>';b.onclick=()=>showStep(si);st.appendChild(b);
+  const sec=document.createElement("section");sec.id="sec"+si;sec.style.display="none";
+  if(s.subnav){
+   sec.innerHTML='<div class="sec-title"><span class="n">'+(si===3?"PART 2 · C":"PART 2 · D")+'</span><h2>'+(si===3?"Five worked examples":"Your turn: write the introduction")+'</h2></div><p class="lead">'+(si===3?"Same formula, five different questions. Colour shows the job of each sentence.":"Write your own introduction and the checker will give feedback. Topics 1–19 come from your practice bank.")+'</p><div class="legend"><span><i style="background:var(--chipS)"></i>views</span><span><i style="background:var(--chipN)"></i>opinion</span></div><div class="nums" id="nv'+si+'"></div><div id="uv'+si+'"></div>';
+   mn.appendChild(sec);
+   const nv=$("#nv"+si,sec),uv=$("#uv"+si,sec);
+   s.units.forEach((u,ui)=>{const nb=document.createElement("button");nb.className="sub";nb.id="u"+si+"_"+ui;nb.textContent=ui+1;nb.onclick=()=>showUnit(si,ui);nv.appendChild(nb);const bx=document.createElement("div");bx.innerHTML=u.html();bx.style.display="none";u.box=bx;uv.appendChild(bx)});
+  }else{sec.innerHTML=s.html();mn.appendChild(sec)}
+ });
+ wire();applyState()}
+function showStep(si){ST.step=si;steps.forEach((s,k)=>{$("#sec"+k).style.display=k===si?"":"none";$("#st"+k).classList.toggle("on",k===si)});if(steps[si].subnav)showUnit(si,Math.min(ST.unit[si]||0,steps[si].units.length-1));window.scrollTo({top:0});save()}
+function showUnit(si,ui){ST.unit[si]=ui;steps[si].units.forEach((u,k)=>{u.box.style.display=k===ui?"":"none";$("#u"+si+"_"+k).classList.toggle("on",k===ui)});save()}
+function stepKeys(si){const s=steps[si];const root=s.subnav?$("#sec"+si):$("#sec"+si);return $$("[data-key]",root).map(e=>e.dataset.key).filter((v,i,a)=>a.indexOf(v)===i&&REG.some(r=>r.key===v))}
+function progress(){let tot=REG.length,done=REG.filter(r=>ST.ok[r.key]).length;$("#pbar").style.width=Math.round(done/tot*100)+"%";$("#pnum").textContent=done+" / "+tot+" done";
+ steps.forEach((s,si)=>{const ks=stepKeys(si),d=ks.filter(k=>ST.ok[k]).length;const c=$("#ct"+si);if(c){c.textContent=d+"/"+ks.length;$("#st"+si).classList.toggle("full",ks.length>0&&d===ks.length)}})}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1600)}
+function wire(){
+ $$("select.sel").forEach(el=>el.addEventListener("change",()=>runSel(el.dataset.key,true)));
+ $$("textarea").forEach(ta=>ta.addEventListener("input",()=>{const k=ta.id.slice(3);ST.saved[k]=ta.value;wc(k);save()}));
+ document.body.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const k=b.dataset.key,a=b.dataset.act;
+  if(a==="hint")$("#hint_"+k).classList.toggle("on");
+  if(a==="model")$("#md_"+k).style.display="";
+  if(a==="check")runWrite(k)})}
+function wc(k){const ta=$("#ta_"+k),n=(ta.value.match(/\S+/g)||[]).length;$("#wc_"+k).textContent=n+" words"}
+function runSel(k,say){const r=REG.find(x=>x.key===k),el=$('select[data-key="'+k+'"]'),fb=$("#fb_"+k);if(el.value==="")return;const ok=+el.value===r.ans;el.className="sel "+(ok?"ok":"no");
+ fb.className="fb on "+(ok?"good":"bad");fb.innerHTML='<div class="hd"><span class="vd">'+(ok?"Correct! ":"Not quite. Try again.")+'</span></div>'+(ok?'<div class="body">'+esc(r.expl)+'</div>':"");
+ ST.saved[k]=el.value;if(ok){ST.ok[k]=1}else delete ST.ok[k];if(say)save();progress()}
+function runWrite(k){const r=REG.find(x=>x.key===k),ta=$("#ta_"+k);if(!ta.value.trim()){toast("Write your introduction first");return}
+ const res=checkIntro(ta.value,r.tp),fb=$("#fb_"+k);fb.className="fb on "+res.v;fb.innerHTML=fbHTML(res);ta.className=res.v==="good"?"ok":(res.v==="bad"?"no":"");
+ if(res.v!=="bad"){ST.ok[k]=1;$("#dn_"+k).textContent="✓ done";$("#md_"+k).style.display=""}else{delete ST.ok[k];$("#dn_"+k).textContent=""}
+ save();progress()}
+function applyState(){
+ REG.forEach(r=>{const v=ST.saved[r.key];if(v==null)return;if(r.kind==="sel"){const el=$('select[data-key="'+r.key+'"]');el.value=v;runSel(r.key,false)}else{const ta=$("#ta_"+r.key);ta.value=v;wc(r.key);if(ST.ok[r.key]){$("#dn_"+r.key).textContent="✓ done"}}});
+ showStep(Math.min(ST.step||0,steps.length-1));progress()}
+build();
+})();
+
+</script>
+</body>
+</html>
