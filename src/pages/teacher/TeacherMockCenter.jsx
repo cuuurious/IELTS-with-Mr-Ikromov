@@ -614,6 +614,8 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
   const { profile } = useAuth()
   // Which tab you're on is remembered across a refresh (lib/sessionState.js).
   const [section, setSection] = useSessionState(`ielts:${profile?.id}:teacherMock:section`, 'progress')
+  // Results tab (2026-11-23): "Release students who finished everything".
+  const [needSpeaking, setNeedSpeaking] = useState(true)
   // Home's "Waiting for you" links open straight onto the right tab.
   useEffect(() => {
     if (initialSection) setSection(initialSection)
@@ -4368,6 +4370,30 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                 onConfirm: () => releaseItems(items),
               })
             }
+            // Students who finished every section: a result for Listening, Reading
+            // and Writing (and Speaking, unless the box is unticked) — already
+            // released or waiting here with a real score. Their waiting results
+            // can be released together, and nobody else is touched.
+            const doneStudentIds = new Set(
+              rows
+                .filter((r) => {
+                  const hasReading = r.readingAttempts.some((a) => a.released_at || !isEmptyAttempt(a))
+                  const hasListening = r.listeningAttempts.some((a) => a.released_at || !isEmptyAttempt(a))
+                  const hasWriting = r.writingReviews.some((w) => w.examiner_reviewed_at)
+                  const hasSpeaking = r.speakingSlots.some((s) => s.status === 'completed' && s.examiner_band != null)
+                  return hasReading && hasListening && hasWriting && (!needSpeaking || hasSpeaking)
+                })
+                .map((r) => r.student.id)
+            )
+            const doneGroups = pendingRelease.filter((g) => doneStudentIds.has(g.student.id))
+            const doneItems = doneGroups.flatMap((g) => g.items).filter((it) => !it.empty)
+            const releaseDone = () =>
+              setConfirmDialog({
+                title: `Release results of ${doneGroups.length} student${doneGroups.length === 1 ? '' : 's'} who finished everything?`,
+                message: `${doneItems.length} waiting result${doneItems.length === 1 ? '' : 's'} (Listening, Reading, Writing${needSpeaking ? ', Speaking' : ''}) will be shown to ${doneGroups.length} student${doneGroups.length === 1 ? '' : 's'}, with their marks and feedback. Students who have not finished every section are not touched.`,
+                confirmLabel: `Release ${doneItems.length}`,
+                onConfirm: () => releaseItems(doneItems),
+              })
             const pill = (active) =>
               `focus-ring rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-brass text-onbrass' : 'text-mist hover:text-paper'}`
             return (
@@ -4444,6 +4470,19 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                         </button>
                       </>
                     )}
+                    <label className="flex items-center gap-1.5 self-center text-xs font-semibold text-mist">
+                      <input type="checkbox" checked={needSpeaking} onChange={(e) => setNeedSpeaking(e.target.checked)} className="h-4 w-4 accent-[var(--color-brass)]" />
+                      Speaking too
+                    </label>
+                    <button
+                      type="button"
+                      disabled={releasing || doneItems.length === 0}
+                      onClick={releaseDone}
+                      className="focus-ring rounded-xl border border-brass/40 bg-panel text-brass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-panel-2 disabled:opacity-40"
+                      title="Release the waiting results of students who finished all sections"
+                    >
+                      Release finished students ({doneGroups.length})
+                    </button>
                     <button
                       type="button"
                       disabled={releasing || scoredItems.length === 0}
