@@ -37,6 +37,9 @@ const PAGE_TILES = [
   { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
   // Mr Ikromov's 30 grammar lessons (migration 134) live in the bank as skill 'workshop'.
   { id: 'grammar', skill: 'workshop', book: 'Grammar', label: 'Grammar lesson', unit: 'lessons', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
+  // Vocabulary for IELTS and the Advanced book (migration 141), also skill 'workshop'.
+  { id: 'vocab', skill: 'workshop', book: 'Vocabulary for IELTS', label: 'Vocabulary unit', unit: 'units', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
+  { id: 'vocab-adv', skill: 'workshop', book: 'Vocabulary for IELTS Advanced', label: 'Vocabulary Advanced unit', unit: 'units', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
 ]
 // Every bank row (skill, collection). The bank is over 1,000 rows, and one
 // request returns at most 1,000, so read it page by page.

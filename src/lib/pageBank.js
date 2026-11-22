@@ -19,8 +19,9 @@ export const BANK_SKILLS = [
   { value: 'writing', label: 'Writing' },
   { value: 'speaking', label: 'Speaking' },
   // Grammar (2026-11-18): Mr Ikromov's 30 grammar lessons. Stored with the
-  // existing 'workshop' skill value, which nothing else used.
-  { value: 'workshop', label: 'Grammar' },
+  // existing 'workshop' skill value, which nothing else used. Since 2026-11-23
+  // the Vocabulary for IELTS books share this tab.
+  { value: 'workshop', label: 'Grammar & Vocabulary' },
 ]
 // "Workshops" was its own shelf until 2026-11-05; every Reading page has
 // its Workshop built in, so it was always empty and is gone.

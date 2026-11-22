@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing Task 2 · Lesson 8 · Positive or negative body paragraphs · MrIkromov's IELTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Writing Lab — shared look for every chapter (2026-11-07).
+   Same colours, shapes and fonts as ieltswithmrikromov.com:
+   lapis-to-turquoise band, Unbounded headings, Nunito Sans text,
+   rounded rectangles only (12 / 14 / 20 / 28 px), one saffron button. */
+:root{
+  --ink:#f6f5f1;--panel:#fff;--panel2:#efede6;--line:#e3dfd4;--paper:#17213a;--dim:#3a4560;--mist:#55607a;
+  --brass:#2456b0;--onbrass:#fff;--sage:#13807c;--sageT:#e2f2f0;--coral:#b23a48;--coralT:#f8e1e4;--amber:#9a5b12;--amberT:#fbefd9;
+  --saffron:#e6a33a;--onsaffron:#17213a;--band:#22489a;
+  --chipS:#dfe8fb;--chipSt:#1f4aa0;--chipV:#fbe0e6;--chipVt:#a02a44;--chipL:#fdf0d2;--chipLt:#8a5a0c;--chipN:#dcf3ef;--chipNt:#0f6b66;
+  --mark:#fff2b3;--shadow:0 1px 2px rgba(23,33,58,.06),0 6px 18px -10px rgba(23,33,58,.18);
+  --gUp:#13807c;--gDown:#b23a48;--gMix:#1f3a75;--g2:#c4622d;--grid:#e8e4da;--gtext:#55607a;
+}
+:root[data-theme="dark"]{
+  --ink:#0f1626;--panel:#172036;--panel2:#1e2944;--line:#2b3858;--paper:#eef0f6;--dim:#c6ccda;--mist:#a3abbf;
+  --brass:#7fa6f2;--onbrass:#0f1626;--sage:#7fd6d2;--sageT:#123a3c;--coral:#f29aa6;--coralT:#3e1c22;--amber:#f2c07a;--amberT:#3a2a12;
+  --saffron:#f0b95a;--band:#1b3570;
+  --chipS:#22335c;--chipSt:#b9cdf7;--chipV:#4a2230;--chipVt:#f5b8c6;--chipL:#453512;--chipLt:#f6d48b;--chipN:#153f3d;--chipNt:#9de3dc;
+  --mark:#5a4a12;--shadow:none;
+  --gUp:#5fd0c6;--gDown:#f08a99;--gMix:#a9bdf0;--g2:#f2a76b;--grid:#2b3858;--gtext:#a3abbf;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font:19px/1.55 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3,.brand{font-family:Unbounded,"Nunito Sans",system-ui,sans-serif;letter-spacing:-.01em}
+b,strong{font-weight:800}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+/* ---- band ---- */
+.band{color:#fff;background:var(--band);background-image:linear-gradient(115deg,var(--band) 0%,#1f6fae 55%,#1a9bb5 100%);border-radius:0 0 28px 28px;padding:22px 0 20px}
+.band .kick{font-size:15.3px;font-weight:800;opacity:.9;letter-spacing:.02em}
+.band h1{margin:6px 0 6px;font-size:33px;line-height:1.15;font-weight:600}
+.band p{margin:0;max-width:760px;font-size:17.7px;opacity:.92}
+.prog{display:flex;align-items:center;gap:12px;margin-top:14px}
+.prog .bar{flex:1;max-width:360px;height:10px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}
+.prog .bar i{display:block;height:100%;width:0;background:var(--saffron);border-radius:999px;transition:width .4s}
+.prog b{font-size:16.5px;white-space:nowrap}
+
+/* ---- step menu ---- */
+.steps{position:sticky;top:0;z-index:20;background:var(--ink);padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.steps .row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.steps .row::-webkit-scrollbar{display:none}
+.step{flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:14px;padding:8px 14px;font-weight:800;font-size:16.5px}
+.step .no{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:8px;background:var(--panel2);font-size:14.2px}
+.step .ct{font-size:14.2px;color:var(--mist);font-weight:700}
+.step.on{background:var(--brass);color:var(--onbrass);border-color:var(--brass)}
+.step.on .no{background:rgba(255,255,255,.22)}.step.on .ct{color:inherit;opacity:.85}
+.step.full .ct{color:var(--sage)}.step.on.full .ct{color:inherit}
+
+main{padding:20px 0 40px}
+.sec-title{display:flex;align-items:baseline;gap:10px;margin:4px 0 6px}
+.sec-title h2{margin:0;font-size:24.8px;font-weight:600}
+.sec-title .n{font-family:Unbounded,sans-serif;font-size:15.3px;color:var(--brass);font-weight:600}
+.lead{color:var(--dim);margin:0 0 14px;font-size:17.7px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);margin:0 0 16px}
+.card h3{margin:0 0 4px;font-size:18.9px;font-weight:600}
+.card .ins{color:var(--dim);font-size:16.5px;margin-bottom:12px}
+.note{border-radius:14px;background:var(--panel2);padding:12px 14px;font-size:17.1px;color:var(--dim);margin:0 0 16px}
+.note b{color:var(--paper)}
+
+/* ---- sub menu (structures, drills) ---- */
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.sub{border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:6px 11px;font-weight:800;font-size:15.3px;display:flex;gap:6px;align-items:center}
+.sub small{color:var(--mist);font-weight:700}
+.sub.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);color:var(--brass)}
+.sub.full small{color:var(--sage)}
+.nums{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.nums .sub{min-width:42px;justify-content:center;font-family:Unbounded,sans-serif;font-weight:600}
+.nums .sub.seen:not(.on){background:var(--panel2)}
+
+/* ---- learn panel ---- */
+.lhd{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.lhd .big{font-family:Unbounded,sans-serif;font-size:35.4px;font-weight:600;color:var(--brass);line-height:1}
+.lhd h3{font-size:20.1px;margin:0}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+.chip{border-radius:12px;padding:4px 10px;font-weight:800;font-size:16.5px;white-space:pre}
+.chip.s{background:var(--chipS);color:var(--chipSt)}.chip.v{background:var(--chipV);color:var(--chipVt)}
+.chip.l{background:var(--chipL);color:var(--chipLt)}.chip.n{background:var(--chipN);color:var(--chipNt)}
+.chip.p{padding:4px 2px;color:var(--mist)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:14.8px;color:var(--mist);margin-bottom:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.two{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+.eg{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:17.7px}
+.eg .tg{flex:0 0 auto;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);background:var(--panel2);border-radius:8px;padding:2px 7px;height:fit-content;margin-top:2px}
+.eg.real .tg{background:var(--sageT);color:var(--sage)}
+.eg b{background:var(--chipL);color:var(--chipLt);border-radius:6px;padding:0 3px}
+.rule,.trap{border-radius:14px;padding:11px 13px;font-size:17.1px;margin-top:10px}
+.rule{background:var(--sageT)}.rule>b:first-child{color:var(--sage)}
+.trap{background:var(--coralT)}.trap>b:first-child{color:var(--coral)}
+.trap s{color:var(--coral)}
+.gbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.gcap{font-size:15.3px;color:var(--mist);margin:6px 2px 0}
+.gmodel{background:var(--panel2);border-radius:14px;padding:10px 12px;font-size:17.1px;margin-top:8px}
+.replay{margin-top:8px;border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:12px;padding:5px 11px;font-weight:800;font-size:15.3px}
+.yourturn{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.yourturn h4{margin:0 0 8px;font-size:17.7px;color:var(--sage)}
+
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:17.1px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.t th{text-align:left;background:var(--panel2);padding:9px 12px;font-weight:800}
+.t td{padding:9px 12px;border-top:1px solid var(--line)}
+.mist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mist .x,.mist .v{border-radius:14px;padding:10px 12px;font-size:17.1px}
+.mist .x{background:var(--coralT)}.mist .x s{color:var(--coral)}
+.mist .v{background:var(--sageT)}
+
+/* ---- charts ---- */
+svg.chart{display:block;width:100%;height:auto}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .axis{fill:var(--gtext);font-size:13px;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart .ln{fill:none;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.chart .lbl{font-size:13.6px;font-weight:800;font-family:"Nunito Sans",system-ui,sans-serif}
+.chart.draw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:dl 1.3s ease-out forwards}
+@keyframes dl{to{stroke-dashoffset:0}}
+.chart .key{font-size:13.6px;font-weight:700;fill:var(--paper);font-family:"Nunito Sans",system-ui,sans-serif}
+
+/* ---- graph exercise cards ---- */
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.gcard .gt{font-weight:800;font-size:17.7px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.gcard .gt i{font-style:normal;font-size:13px;font-weight:800;background:var(--panel2);color:var(--mist);border-radius:8px;padding:2px 7px}
+.gcard .gt span{font-weight:600;color:var(--mist);font-size:15.3px}
+
+/* ---- question rows ---- */
+.q{padding:12px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.q .p{font-size:17.7px;margin-bottom:8px}
+.q .p .num{font-weight:800;color:var(--brass);margin-right:6px}
+.q .p .tg{display:inline-block;font-size:13px;font-weight:800;background:var(--chipS);color:var(--chipSt);border-radius:8px;padding:1px 7px;margin-right:4px}
+.q .p .sm{font-size:15.3px;color:var(--mist)}
+.wk{border-radius:14px;background:var(--panel2);padding:10px 13px;font-size:17.1px;margin-bottom:6px}
+.wk .l{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mist)}
+select.sel{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--panel);color:var(--paper);min-width:150px}
+select.sel.ok{border-color:var(--sage);background:var(--sageT)}select.sel.no{border-color:var(--coral);background:var(--coralT)}
+
+/* ---- input + coach ---- */
+.iw{margin-top:6px}
+.iw .lab{font-size:14.2px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mist);margin-bottom:5px}
+textarea{width:100%;font:inherit;font-size:18.9px;line-height:1.5;color:var(--paper);background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;resize:vertical;min-height:62px;outline:none}
+textarea:focus{border-color:var(--brass)}
+textarea.ok{border-color:var(--sage);background:var(--sageT)}
+textarea.no{border-color:var(--coral)}
+.irow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:8px 16px;font-weight:800;font-size:16.5px;background:var(--brass);color:var(--onbrass)}
+.btn.ghost{background:var(--panel);color:var(--paper);border:1px solid var(--line)}
+.btn.go{background:var(--saffron);color:var(--onsaffron);padding:11px 20px;font-size:17.7px}
+.btn:disabled{opacity:.5;cursor:default}
+.wc{font-size:14.8px;color:var(--mist)}
+.done-tag{font-size:14.8px;font-weight:800;color:var(--sage)}
+.hint{display:none;margin-top:8px;border-radius:14px;background:var(--panel2);padding:10px 12px;font-size:16.5px}
+.hint.on{display:block}
+.fb{display:none;margin-top:10px;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.fb.on{display:block}
+.fb .hd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:9px 12px}
+.fb.good .hd{background:var(--sageT)}.fb.mid .hd{background:var(--amberT)}.fb.bad .hd{background:var(--coralT)}
+.fb .vd{font-weight:800}
+.fb.good .vd{color:var(--sage)}.fb.mid .vd{color:var(--amber)}.fb.bad .vd{color:var(--coral)}
+.meter{display:flex;gap:5px;flex-wrap:wrap}
+.meter span{font-size:14.2px;font-weight:800;border-radius:10px;padding:2px 8px;background:var(--panel)}
+.meter .ok{color:var(--sage)}.meter .no{color:var(--coral)}.meter .tip{color:var(--amber)}
+.fb .body{padding:10px 12px;background:var(--panel)}
+.ann{font-size:17.7px;line-height:1.7;margin-bottom:6px}
+.ann mark{background:var(--mark);color:inherit;border-radius:4px;padding:0 2px;border-bottom:2px solid var(--amber)}
+.ann mark.facts,.ann mark.structure{border-bottom-color:var(--coral)}
+.grp{font-size:13.6px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mist);margin:10px 0 4px}
+.it{display:flex;gap:9px;padding:6px 0;font-size:17.1px}
+.it .k{display:inline-block;font-size:13px;font-weight:800;text-transform:uppercase;border-radius:8px;padding:1px 7px;margin-right:6px;background:var(--panel2);color:var(--dim)}
+.it.structure .k,.it.facts .k{background:var(--coralT);color:var(--coral)}
+.it.grammar .k,.it.tense .k,.it.spelling .k{background:var(--amberT);color:var(--amber)}
+.it.style .k{background:var(--chipS);color:var(--chipSt)}
+.it.praise .k{background:var(--sageT);color:var(--sage)}
+.tryit{margin-top:3px;font-weight:800;color:var(--sage)}
+.why{margin-top:2px;color:var(--mist);font-size:15.9px}
+.mdl{margin-top:10px;border-radius:12px;background:var(--panel2);padding:9px 11px;font-size:17.1px}
+
+.blockbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.blockbar .score{font-weight:800;color:var(--dim);font-size:16.5px}
+.nextbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}
+.foot{color:var(--mist);font-size:14.8px;text-align:center;padding:10px 18px 30px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;background:var(--paper);color:var(--ink);font-weight:800;border-radius:14px;padding:9px 16px;transition:.25s;pointer-events:none;z-index:50}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:760px){
+  .wrap{padding:0 14px}
+  .band{padding:16px 0 16px;border-radius:0 0 20px 20px}
+  .band h1{font-size:26px}
+  .band p{font-size:16.5px}
+  .two,.ggrid,.mist{grid-template-columns:1fr}
+  .card{padding:14px}
+  .step{padding:7px 11px;font-size:15.3px}
+  .sec-title h2{font-size:21.2px}
+  .chip{font-size:15.3px}
+}
+@media print{.steps,.irow,.blockbar,.nextbar{display:none}.sec{display:block!important}}
+
+.gimg{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;text-align:center}
+.gimg img{max-width:100%;height:auto;max-height:340px}
+.ovl{display:grid;grid-template-columns:1fr;gap:16px}
+.ovc{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.ovc .gt{font-weight:800;font-size:17.7px;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ovc .gt i{font-style:normal;font-size:14.2px;font-weight:800;background:var(--brass);color:var(--onbrass);border-radius:8px;padding:2px 9px}
+.ovc .gt span{font-weight:600;color:var(--mist);font-size:14.8px}
+.iw+.iw{margin-top:12px}
+.iw .lab.s0{color:var(--brass)}.iw .lab.s1{color:#6d4bc2}.iw .lab.s2{color:var(--amber)}.iw .lab.s3{color:var(--sage)}
+:root[data-theme="dark"] .iw .lab.s1{color:#c3b0f5}
+.clue{font-size:15.9px;color:var(--dim);margin:6px 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 12px}
+.three .card{margin:0}
+.phg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.phg .card{margin:0}
+.sub-h{font-size:18.9px;margin:18px 0 8px}
+.sent{border-radius:14px;padding:12px 14px;font-size:17.7px}
+.sent .st{font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.sent.s1{background:var(--chipS);border:1px solid color-mix(in srgb,var(--chipSt) 35%,transparent)}.sent.s1 .st{color:var(--chipSt)}
+mark.t{background:var(--mark);color:inherit;border-radius:5px;padding:0 3px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);margin:6px 0 12px;border-radius:12px;overflow:hidden;font-size:14.8px;font-weight:800;text-align:center;color:#fff}
+.scale span{padding:7px 2px}.scale span:nth-child(1){background:#7aa7b0}.scale span:nth-child(2){background:#4f98a6}.scale span:nth-child(3){background:#2f7f8e}.scale span:nth-child(4){background:#1f6573}.scale span:nth-child(5){background:#134a58}
+.fstack{display:grid;gap:8px;margin:0 0 12px}
+.fs{display:flex;gap:12px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 14px}
+.fs>b{flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:var(--brass);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Unbounded,sans-serif}
+.fs .ff{font-weight:800;font-size:17.1px}.fs .fe{font-size:17.7px}
+.fstack.small .fs{padding:7px 12px}.fstack.small .fs>b{width:26px;height:26px;font-size:14.2px}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
+.fc{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:8px 10px;font-size:15.3px;display:flex;gap:8px;align-items:flex-start}
+.fc b{flex:0 0 auto;background:var(--brass);color:#fff;border-radius:7px;padding:0 7px;font-family:Unbounded,sans-serif;font-size:14.2px}
+.rule{background:var(--panel2)}
+.gapgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.q.g .p{line-height:2.1}
+input.gap{font:inherit;border:0;border-bottom:2px solid var(--line);background:transparent;color:inherit;text-align:center;padding:0 2px;margin:0 3px;outline:none;border-radius:4px 4px 0 0}
+input.gap:focus{border-bottom-color:var(--brass);background:var(--panel2)}
+input.gap.ok{border-bottom-color:var(--sage);background:var(--sageT)}
+input.gap.no{border-bottom-color:var(--coral);background:var(--coralT)}
+@media (max-width:760px){.three,.phg,.gapgrid{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr 1fr}}
+.seg{border-radius:14px;padding:11px 14px;font-size:17.7px;margin:0 0 8px;border:1px solid var(--line);background:var(--panel)}
+.seg .st{font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.seg.l{background:var(--chipL)}.seg.l .st{color:var(--chipLt)}
+.seg.s{background:var(--chipS)}.seg.s .st{color:var(--chipSt)}
+.seg.n{background:var(--chipN)}.seg.n .st{color:var(--chipNt)}
+.seg.v{background:var(--chipV)}.seg.v .st{color:var(--chipVt)}
+.q .num:empty{display:none}
+
+.seg.p{background:#efe6f7}.seg.p .st{color:#6b3fa0}.seg textarea{width:100%;box-sizing:border-box}
+select.sel{max-width:100%;width:100%;white-space:normal}</style>
+</head>
+<body>
+<script>
+(function(){
+const CH={id:"wt2-l08-body-posneg",kicker:"Writing Task 2 · Lesson 8 · Positive or negative body paragraphs",title:'How to write <span style="color:#ffd27a">strong body paragraphs</span> for positive or negative development essays',
+lead:"Learn from your teacher’s own sample essays: give the other side fairly, then give your own side with fully developed ideas. Then practise on 10 questions."};
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const KEY="ielts-lab:"+CH.id;
+let ST={step:0,unit:{},ok:{},saved:{}};
+try{const r=localStorage.getItem(KEY);if(r)ST=Object.assign(ST,JSON.parse(r))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+if(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark");
+
+/* ---------- content */
+const TOPICS=[{"n": 1, "q": "Today, more people are putting their personal information, such as their addresses, telephone numbers, and credit card details, online to carry out daily activities such as banking, shopping, and socializing. Is this a positive or negative development?", "op": "Negative", "mine": ["Data can be stolen → hackers use cards and addresses → fraud and identity theft", "Companies collect and sell data → targeted advertising and surveillance → loss of privacy"], "oth": ["Online services save time → banking and shopping at home → convenience and efficiency", "Details are stored → faster checkout and quicker access to services → smoother daily life"], "m1": "Admittedly, entering personal details online can make everyday life easier in some ways. The main advantage is convenience, since people can pay bills, order goods and transfer money from the comfort of their homes. This is because they no longer have to queue in banks or travel to shops. As a result, a great deal of time and effort is saved. Besides, many websites store customers’ addresses and card numbers, which means checkout is much faster the next time. In this way, routine tasks become smoother and people can enjoy a more efficient daily life.", "m2": "I, however, regard the sharing of private data online as largely a change for the worse. The main danger is theft. Hackers can break into websites and steal addresses and card details, because online security is often weak. As a result, victims may lose money or even have their identity stolen, which is very hard to repair. Another concern is loss of privacy. Companies collect and sell personal information, which allows them to send targeted advertising and to track what people do. This means that ordinary users are constantly watched, so their private lives are no longer private.", "pat": "A"}, {"n": 2, "q": "These days, young people prefer to spend their leisure time in shopping centers instead of doing organized activities, such as sports or music. Do you think it is a negative or positive development?", "op": "Negative", "mine": ["Teenagers miss sports and music → no skills, teamwork or fitness → health and talents are neglected", "Malls encourage spending → advertising tempts young people to buy → materialism and debt"], "oth": ["Malls are safe and social → teenagers meet friends in a controlled place → relaxation and social contact", "Shopping is a break from study → time to relax → less stress"], "m1": "To start, it is worth acknowledging that shopping centers offer teenagers some advantages. They are safe and well-lit places where young people can meet their friends under supervision. This is because security guards and cameras make a mall more controlled than the street. As a result, teenagers can relax and enjoy social contact without risk. Furthermore, a trip to the shops gives students a break from their studies. Since young people spend long hours at school and on homework, spending free time this way helps them relax, which leads to less stress.", "m2": "However, I believe that replacing organized activities with shopping is damaging. The first problem is that teenagers miss out on sports and music. This is because they spend their free time walking around shops instead of training or practicing. As a result, they gain no new skills, teamwork or fitness, and their health and talents are neglected. Another issue is that malls push teenagers to spend more. Shop adverts tempt young customers into buying things they do not need, which means many develop materialistic habits. In the long run, this can lead to debt and poor money management.", "pat": "B"}, {"n": 3, "q": "Space travel has been possible for some time, and some people believe that space tourism could be developed in the future. Do you think this would be a positive or negative development?", "op": "Positive", "mine": ["Space tourism could fund research → income supports technology → scientific advances for everyone", "It gives a new industry and jobs → engineers and tourism staff are needed → economic growth"], "oth": ["Rockets cause pollution → launches release gases and damage the atmosphere → more climate harm", "Only the rich can afford it → money goes to a luxury, not urgent problems → deepens inequality"], "m1": "Admittedly, there are some serious objections to tourist flights into space. One concern is pollution. Rocket launches release large amounts of gases that damage the atmosphere, so more frequent flights would add to climate problems. This is because every launch burns huge quantities of fuel. As a result, space tourism could worsen global warming. Another objection is inequality. Only wealthy people can afford a ticket, which means that large sums of money go to a luxury rather than to urgent problems such as hunger or disease. In this way, the gap between rich and poor may deepen.", "m2": "Despite these concerns, I regard space tourism as a change for the better. To begin with, it could pay for scientific research. The income from ticket sales would support the development of new technology, since space agencies are short of funds. As a result, discoveries made for tourism could later benefit everyone, for example in medicine and communication. Furthermore, a new industry would create jobs. Engineers, pilots and tourism staff would all be needed, which means more employment and economic growth in many countries.", "pat": "A"}, {"n": 4, "q": "In some countries, governments have attempted to reduce traffic by imposing congestion charges during rush hour. Is this a positive or negative development?", "op": "Positive", "mine": ["Charges reduce rush-hour traffic → drivers avoid peak times or use public transport → less congestion", "Money funds public transport → income is reinvested → better services and cleaner air"], "oth": ["Poorer drivers pay a larger share of income → they cannot avoid the charge → unfair", "Businesses and shops in the centre lose customers → people avoid the zone → local economy suffers"], "m1": "To begin with, congestion charges raise some fair concerns. The most obvious one is that they are unfair to poorer drivers. A fixed fee takes a larger share of a low income, so people with little money cannot easily avoid it. As a result, the charge feels like a penalty for being poor. Besides, shops and businesses in the city center may suffer. This is because many people avoid the charged zone, which means fewer customers walk through their doors. In turn, the local economy could weaken.", "m2": "I, however, believe that charging drivers at peak hours is a change for the better. The main benefit is less traffic. Because drivers must pay to enter busy areas, many avoid rush hour or switch to public transport. As a result, roads become less crowded and journeys are quicker. Another advantage is the money raised. The income can be reinvested in buses and trains, which means better services for everyone. In this way, cities also enjoy cleaner air.", "pat": "A"}, {"n": 5, "q": "In many parts of the world, some famous people are considered role models, and they have an increasing influence on young people. Is this a positive or negative development?", "op": "Negative", "mine": ["Fame is often about looks and wealth → youngsters want quick success → unrealistic expectations", "Celebrities' mistakes are copied → risky behavior and extreme diets spread → harm to followers"], "oth": ["Successful people inspire hard work → young people see that effort pays off → ambition and discipline", "Celebrities can promote good causes → charity and healthy living reach millions → positive behavior"], "m1": "To start, celebrities can have a positive influence on young people. Successful athletes and actors show that hard work pays off. This is because their fame usually follows years of training and effort. As a result, many teenagers become more ambitious and disciplined. In addition, famous people often support good causes. When a star promotes charity or a healthy lifestyle, the message reaches millions of followers, which encourages positive behavior on a large scale.", "m2": "I, on the other hand, think that the growing influence of celebrities is a change for the worse. The main problem is unrealistic expectations. Fame today is often linked to looks and wealth, so youngsters begin to dream of quick success without real effort. As a result, they may feel disappointed or ignore their studies. Another problem is imitation. Followers copy their idols’ mistakes, which means risky behavior and extreme diets can spread quickly. This is because young people trust the people they admire, so their health may suffer.", "pat": "B"}, {"n": 6, "q": "In the modern world, it is possible to shop, work, and communicate with people via the internet and live without any face-to-face contact with others. Is this a positive or negative development?", "op": "Negative", "mine": ["People may feel lonely → online contact is shallow → anxiety and depression", "Social skills weaken → less practice in face-to-face talk → trouble in relationships and teamwork"], "oth": ["Everything can be done from home → work, shopping and communication save time → convenience and flexibility", "Technology helps those who cannot leave home → disabled or remote people stay connected → greater inclusion"], "m1": "Admittedly, living without face-to-face contact has some advantages. The main one is convenience. Since work, shopping and communication can all be done from home, people save a great deal of time. As a result, they enjoy more flexibility in their daily routines. Another benefit is inclusion. Technology helps those who cannot leave their homes, such as disabled people or those in remote villages, to stay connected. This is because online tools give them access to services and conversations that were once out of reach, which leads to greater participation in society.", "m2": "I, however, believe that a life without personal contact is largely a change for the worse. The main danger is loneliness. Online communication tends to be shallow, because people cannot see real expressions or share a physical space. As a result, many feel anxious or even depressed. Another problem is that social skills weaken. People who rarely talk face to face have less practice, which means they find it harder to build relationships and to work in a team. In the long term, this can damage communities.", "pat": "A"}, {"n": 7, "q": "Many people no longer read newspapers or watch TV news programmes. Instead, they get news about the world from the Internet. Is this a positive or negative development?", "op": "Positive", "mine": ["News is instant and free → people check updates anytime → better informed", "Many sources and viewpoints → users compare reports → wider understanding"], "oth": ["Fake news spreads → anyone can post without checking → confusion and mistrust", "Algorithms show what we like → people see one viewpoint → division and echo chambers"], "m1": "To begin with, getting news online has serious drawbacks. The main one is fake news. Since anyone can post a story without checking the facts, false information spreads quickly. As a result, readers can become confused and lose trust in the media. Besides, websites and apps use algorithms that show people what they already like. This is because the more users click on a topic, the more of it they see. Consequently, many only hear one viewpoint, which leads to division and echo chambers.", "m2": "I, however, consider the shift to online news a change for the better. First, news is instant and usually free. People can check the latest updates at any time of day, because stories appear online within minutes, so they are better informed than readers of yesterday’s paper. Furthermore, the internet offers many sources and viewpoints. This means users can compare different reports on the same event. As a result, they gain a wider understanding of world affairs, provided they choose their sources carefully.", "pat": "B"}, {"n": 8, "q": "In many countries today, people can buy a wider range of household goods, such as microwaves, televisions, and rice cookers, than ever before. Is this a positive or negative development?", "op": "Positive", "mine": ["Appliances save time and effort → cooking and cleaning are quicker → more free time", "More choice and competition → better products at lower prices → higher living standards"], "oth": ["Consumerism grows → people buy things they do not need → debt and waste", "Discarded electronics create waste → landfills and pollution → environmental damage"], "m1": "Admittedly, a wider choice of goods has some downsides. The first is consumerism. When shops offer so many products, people are tempted to buy things they do not need. This is because advertising makes new models look essential. As a result, many households fall into debt and throw away items that still work. Another concern is waste. Discarded electronics end up in landfills, where they release harmful substances, which means pollution and damage to the environment.", "m2": "I, on the other hand, think this development is a change for the better. The main advantage is that appliances save time and effort. Washing and cooking are much quicker with a microwave or washing machine, so people gain more free time. Besides, greater choice means competition between producers. This is because companies must offer better products at lower prices to win customers. As a result, ordinary families enjoy a higher standard of living.", "pat": "B"}, {"n": 9, "q": "Many supermarkets are selling more and more products that are imported from other countries instead of selling food that is locally sourced. Is this a positive or negative development?", "op": "Positive", "mine": ["Imports create a competitive market → local farmers must improve quality and price → higher consumer satisfaction", "Foreign produce is easy to find → no travel needed to try other cultures’ food → new experiences at little effort"], "oth": ["Local farmers lose out → foreign producers have better technology and market access → farmers go out of business and unemployment rises", "Imported food costs more → processing, packaging and shipping add costs → poor value for money"], "m1": "To start, a growing reliance on imported food does have costs. The most serious is the harm to local farmers. Foreign producers often have better technology and easier access to world markets, so they can sell more cheaply. As a result, many local farmers lose customers and go out of business, which pushes up unemployment in rural areas. Besides, imported food can be poor value for money. This is because processing, packaging and shipping add extra costs, which are passed on to the shopper.", "m2": "I, however, see the sale of imported produce as a change for the better. One benefit is a more competitive market. Local farmers must now compete with overseas suppliers, so they try to improve the quality and price of their products. As a result, shoppers are more satisfied. Another benefit is variety. Foreign produce is easy to find in the supermarket, which means people can taste dishes from other cultures without travelling. In this way, new experiences are available with very little effort.", "pat": "A"}, {"n": 10, "q": "Modern cultures around the world have become similar when compared to the past. Is it a positive or negative development?", "op": "Positive", "mine": ["Cultures become alike → people accept each other → better mutual understanding", "Shared beliefs and priorities → people from different backgrounds cooperate better → higher workplace productivity"], "oth": ["Dominant cultures replace minority ones → unique traditions disappear → people lose their identity", "People follow the same trends → creativity and novelty decline → a uniform, less rich world"], "m1": "Admittedly, cultures becoming alike has some drawbacks. The main one is loss of identity. Dominant cultures, especially those of the West, replace minority ones, so unique traditions slowly disappear. This is because young people copy what they see in films and on social media. As a result, communities risk losing their sense of who they are. Another issue is a decline in creativity. When people follow the same trends, they produce fewer original ideas, which leads to a uniform and less colorful world.", "m2": "Despite this, I believe that the growing similarity between cultures is a change for the better. The main reason is better mutual understanding. As people accept each other’s customs, they become more alike in their views. This means that old misunderstandings fade, since people who share habits find it easier to communicate. Another benefit is productivity at work. Staff in multinational companies share similar beliefs and priorities, so they cooperate more smoothly. As a result, the company produces more.", "pat": "A"}];
+const DATA={"EX": [{"src": "Marriage in the thirties", "q": "Today, most people get married and give birth in their thirties rather than when they are younger. Is this a positive or negative development?", "op": "Negative", "b1": [["Admittedly, delayed marriage can have some positive implications for both individuals and society.", "T"], ["On an individual level, postponing marriage affords people time to build financial security.", "C"], ["When financially secure, people have the means to cater to the needs of their family and future children.", "E"], ["In this sense, people are less likely to suffer financially if they start a family in their thirties.", "R"], ["From a social standpoint, delayed marriages could diminish divorce rate.", "B"], ["This is because most people become emotionally mature and tolerant as they grow older, so they are less prone to marital conflicts and divorce.", "E"]], "b2": [["I, however, believe starting a family in one’s thirties is generally a negative trend.", "T"], ["The main consequence of this trend would be unfavorable demographic changes such as falling birth rates.", "C"], ["This is simply because couples tend to have a lower chance of having children in their older ages, which could result in a major decline in a country’s population.", "E"], ["Germany and Japan are some countries where declining birth rates and population crisis can be partly linked to delayed marriage.", "X"], ["If this trend persists, it can eventually lead to labor crisis, which could hinder economic growth.", "R"], ["Another downside is lack of care in old age.", "B"], ["When people start a family and have children in their thirties, they will not have adult children to care for them in their old ages.", "E"], ["As a result, they will have to continue working past the retirement age.", "R"]], "note": "Look at the first idea in Body 2: a short argument (“falling birth rates”) becomes a full idea in four steps: claim → why → example → result."}, {"src": "Online currencies", "q": "Online currencies have become more common in recent years. Is this a positive or negative development?", "op": "Positive", "b1": [["It can be argued that the growing popularity of online currencies is unfavorable.", "T"], ["The main issue with them is their volatility.", "C"], ["Since the value of an online currency is not determined by any bank or governing authority and also because it is highly sensitive to economic and political factors, it can make the global financial market unstable.", "E"], ["For instance, banning of Bitcoin in China was followed by a major drop in its price, which meant substantial losses for many multinational companies and hedge funds holding their earning in cryptocurrency as well as individual investors.", "X"], ["In this regard, this form of currency can not only be a risky investment, but also contribute to financial instability.", "Z"]], "b2": [["Despite having some downsides, the ever-increasing use of online currencies is largely a positive trend.", "T"], ["The primary advantage of this medium of exchange is security.", "C"], ["Unlike with fiat money, transactions made with cryptocurrencies are more secure seeing as they can be tracked by everyone.", "E"], ["Such transparency ensures that there is limited risk of fraud.", "R"], ["More important is individual freedom that cryptocurrencies confer to individuals.", "B"], ["The fact that digital currencies are decentralized means neither banks nor governments can withhold them in case of malicious lawsuits and political conflicts.", "E"], ["Therefore, individuals have more autonomy and access to their personal holdings with online currencies than they do with traditional ones.", "R"]], "note": "Body 1 develops ONE idea fully (claim, reason, example, closing sentence). Body 2 develops two ideas. A paragraph can have one deep idea or two shorter ones."}, {"src": "Western clothes", "q": "In many countries, people now wear western clothes such as suits and jeans rather than traditional clothing. Is this a positive or negative development?", "op": "Positive", "b1": [["At the outset, there are some valid concerns over this rising trend of wearing modern, western outfits.", "T"], ["The most concerning aspect of this phenomenon is loss of cultural values.", "C"], ["Because traditional clothes are representative of our cultural identity, less common use of this type of clothes is likely to lead to the disappearance of our cultural norms.", "E"], ["Popularity of western attire might also spell doom for local businesses that specialize in making of traditional items of clothing.", "B"], ["As more and more people purchase modern outfits, there will be less of market available to domestic manufacturers.", "E"], ["This is further compounded by the idea that the skill of traditional clothes making might be lost as a result of the trend in question.", "R"]], "b2": [["I, on the other hand, see the growing popularity of western clothes as a positive turn of events.", "T"], ["The main reason here is practicality.", "C"], ["Most western clothes tend to be flexible and durable compared with traditional ones due to the fact that the former is made of synthetic fabric, which is known for being elastic and long-lasting.", "E"], ["A western coat with several layers of coating is clearly superior to a single-layered quill Uzbek chapan.", "X"], ["Besides, western outfits are preferable as far as professional representation is concerned.", "B"], ["This can be reflected in the instance of white-collar workers who tend to wear a black suit and a white shirt, as opposed to blue collar workers wear jeans and a T-shirt.", "X"]], "note": "The writer names the idea (“practicality”), explains it with facts about fabric, and proves it with a comparison (coat vs chapan). The second idea is introduced with “Besides”."}, {"src": "Air travel", "q": "Some people believe that there will be a reduction in air travel in the future. Do you think that this trend is a positive or negative development?", "op": "Negative", "b1": [["To start, one cannot dismiss some positive changes that would follow once people travelled less frequently.", "T"], ["The most immediate benefit would be to the environment.", "C"], ["Air travel has received a bad press for being detrimental to the environment since it requires substantially more fuel than the other forms of transport and is responsible for massive greenhouse gas emissions annually.", "E"], ["For this reason, environmentalists are adamant that these problems will be remedied at once if there is a move away from travelling by air.", "R"], ["A fall in migration patterns is also argued to be one other positive outcome of reduced air travel.", "B"], ["It is a well-known fact that human migration to far-off destinations accelerated with the instant availability of airlines, so one can expect migration rates to fall back down to more acceptable levels once air travel falls out of favor.", "E"]], "b2": [["That said, I consider that the infrequent use of airlines to travel is, on the whole, a negative development.", "T"], ["First, industries that rely on air transportation such as tourism and delivery will suffer.", "C"], ["This is because these two industries, in particular, owe their success to air travel, without which people would be less encouraged to take long trips and international delivery would be less practical.", "E"], ["Other major industries that branch out from these fields such as hotel business and international wholesale would not be as successful as these services bank on the availability of airlines.", "R"], ["Furthermore, a reduction in airline use is likely to lead to major setbacks in business operations.", "B"], ["Most people who go on business trips generally prefer air transportation for its convenience and comfort: once this travel option is made unavailable, fewer people will be interested in travelling for business purposes.", "E"]], "note": "The result sentence (“Other major industries… would not be as successful”) shows that the effect spreads: not only tourism suffers, but hotels and wholesale too. A good result goes one step further than the claim."}, {"src": "Fame online", "q": "Nowadays, the internet and television have given ordinary people a chance to become famous. Is this a positive or negative development?", "op": "Positive", "b1": [["Admittedly, the fact that everyday people can become instantly famous on some platforms such as the Internet and TV is undesirable in some ways.", "T"], ["For a start, it promotes a rather skewed idea of success.", "C"], ["When people with no expertise or decent education background rise to fame through the Internet, it creates the impression that one can become successful without a school degree and hard work.", "E"], ["As a result, more and more teenagers, who are often easily influenced by celebrities, quit school and bet their entire future on becoming internet famous.", "R"], ["Even if they make it in the world of fame, their success is often short-lived.", "B"], ["This is because one’s success on the Internet and TV hinges on their talent and creativity level, which tend to vary over time.", "E"]], "b2": [["I, on the other hand, see this change in a more positive light.", "T"], ["The main reason is because the Internet and TV allow common men to make a fortune with minimal effort.", "C"], ["YouTube content creators such as PewDiePie and Ninja, who come from underprivileged families, now make millions with the means of the Internet using their limited skillset.", "X"], ["Were it not for the Internet, these people would have a slim chance of succeeding in life.", "R"], ["This phenomenon has also helped level the playing field.", "B"], ["In the past, people mostly became famous through connections like family and friends.", "E"], ["However, now everyone has equal chances to rise to fame thanks to the Internet and TV as long as they are talented and creative.", "R"]], "note": "Here the example comes right after the claim (real names, real numbers), and the result (“Were it not for the Internet…”) shows what would happen without it. Examples can come before or after the explanation."}], "G": {"picks": [{"src": "Online currencies", "arg": "Online currencies are secure.", "topic": "Body 2 · my side (positive)", "opts": ["Online currencies are secure. They are very secure and safe to use. Nobody can say they are not secure.", "The primary advantage of this medium of exchange is security. Unlike with fiat money, transactions made with cryptocurrencies can be tracked by everyone. Such transparency ensures that there is limited risk of fraud.", "Online currencies are secure. I have a friend who bought Bitcoin last year and he is very happy with it.", "Online currencies are modern. Many people talk about them on the internet and on TV."], "ans": 1, "fb": ["The idea is only repeated in new words. Where is the explanation (why) and the result?", "", "A personal story is not an explanation. Say WHY they are secure and what follows.", "This is not the argument. The idea must stay on “secure” and explain it."]}, {"src": "Marriage in the thirties", "arg": "Late marriage leads to falling birth rates.", "topic": "Body 2 · my side (negative)", "opts": ["The main consequence of this trend would be unfavorable demographic changes such as falling birth rates. This is because couples tend to have a lower chance of having children in their older ages. If this trend persists, it can lead to a labor crisis and hinder economic growth.", "Late marriage causes falling birth rates. Birth rates are falling in many places in the world.", "Late marriage is bad. It is bad for everyone and for the country.", "Late marriage means falling birth rates, so people should marry earlier, and the government must make a law."], "ans": 0, "fb": ["", "This only repeats the argument with facts. It does not explain why, and there is no result.", "Too vague: “bad” explains nothing. Say what exactly happens and why.", "It jumps to a solution. First explain WHY late marriage lowers birth rates, then show the result."]}, {"src": "Air travel", "arg": "Less air travel will hurt tourism and delivery.", "topic": "Body 2 · my side (negative)", "opts": ["Tourism and delivery will suffer. Hotels are also important. I like flying very much.", "Tourism and delivery will suffer a lot. It will be very bad for the economy of every country.", "Industries that rely on air transportation such as tourism and delivery will suffer. This is because they owe their success to air travel, without which people would take fewer long trips and international delivery would be less practical. As a result, hotels and wholesalers that depend on them would also do worse.", "Air travel is expensive, so tourism and delivery will not suffer."], "ans": 2, "fb": ["Not a full idea: it lists facts but gives no reason and no result.", "The sentence is vague. “Very bad” says nothing: explain WHY and show what happens next.", "", "This is the opposite of the argument (“will not suffer”)."]}], "w1": {"src": "Living alone", "kind": "mine", "tag": "Body 2 · my view", "q": "More people live alone today than they did in the past. Is this a positive or negative development?", "stance": "The writer’s opinion: negative. Turn the two arguments below into fully developed ideas.", "ch": ["People living alone lack companionship and help → nobody to talk to or support them → loneliness, anxiety and stress", "Nobody looks after them in old age → they have to cope on their own → serious health and care problems"], "model": "However, I would contend that the growing popularity of living alone is generally a negative phenomenon. People living independently are bound to experience a lack of companionship and help. This is because no one is around to talk to or to support them when problems arise. As a result, loneliness, anxiety and stress can follow. Another problem is that there may be nobody to look after them in old age. When they are older and weaker, they will have to cope on their own, which can lead to serious health and care problems."}, "w2": {"src": "Living longer", "kind": "other", "tag": "Body 1 · the other view", "q": "In most parts of the world people are living longer. Is this a positive or negative development?", "stance": "The writer’s opinion: negative, but Body 1 gives the positive arguments fairly.", "ch": ["Older people stay in the workforce → companies keep workers with years of experience → a stronger economy", "Elderly people support their families → wisdom and experience make them good counselors and babysitters → comfort for working parents"], "model": "To start, living longer can be advantageous in several ways. From an economic point of view, more people can stay in the workforce for as long as their health allows. This is because many people now stay healthy for longer. This means that companies keep workers with many years of experience, which strengthens the economy. Besides, elderly people support their families in various ways. Their wisdom and experience make them good counselors, and they can look after grandchildren. As a result, young parents with full-time jobs have valuable and unconditional support at home."}}};
+/* ---------- checker */
+const EXPL=/\b(because|since|this is why|due to|in other words|that is|this is|which means|owing to|this can be attributed|more specifically|as it|as they|as the|for the reason|seeing as|so that|whereas)\b/i;
+const RESU=/\b(as a result|therefore|thus|consequently|this leads|leads to|this means|which means|in turn|hence|results in|resulting|means that|so they|so it|so that|so the|so people|so everyone|and this|gives? rise|causing|as such|in this way|for this reason|this tends|this creates|which leads|which makes|which causes|which results|which can|which may|so )\b/i;
+const ADD=/\b(furthermore|moreover|besides|in addition|another|also|what is more|beyond this|apart from|on top of|more than|one other|finally|firstly|secondly|adding to this|second|next)\b/i;
+const OTHER_START=/^\s*(to begin with|to start|admittedly|it is (worth|true|important|essential|often|argued|said|clear)|on the one hand|some|many|critics|there (are|is)|it can be argued|one should|first|firstly|at first|supporters|opponents|those who)/i;
+const MINE_START=/^\s*(having said that|however|that said|despite|nevertheless|even so|on the other hand|in my (view|mind|opinion)|to my (mind|way of thinking)|personally|i\b|my )/i;
+const W=t=>(t.toLowerCase().match(/[a-z']+/g)||[]);
+function run(a,b){let best=0;for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++)if(a[i]===b[j]){let k=0;while(i+k<a.length&&j+k<b.length&&a[i+k]===b[j+k])k++;if(k>best)best=k}return best}
+const nw=t=>(t.match(/\S+/g)||[]).length;
+const chainText=c=>c.replace(/→/g," ");
+const stem=s=>[...new Set((s.toLowerCase().match(/[a-z]+/g)||[]).filter(w=>w.length>=5).map(w=>w.slice(0,5)))];
+function checkBody5(text,tp){
+  const w=W(text),n=w.length,ss=text.split(/(?<=[.!?])\s+/).filter(s=>s.trim().length>1);
+  const first=ss[0]||"",mine=tp.kind==="mine";
+  const kwList=tp.kw||stem(tp.ch.join(" "));
+  const kwHit=kwList.filter(k=>text.toLowerCase().includes(k)).length;
+  const cp=Math.max(run(w,W(chainText(tp.ch[0]))),run(w,W(chainText(tp.ch[1]))));
+  const hasI=/\b(i|my|we|me)\b/i.test(first);
+  const c=[
+   mine?{ok:MINE_START.test(first)&&hasI,crit:1,label:"Topic sentence",bad:"Start Body 2 with a turn to YOUR view: “Having said that, I…”, “However, I…”, “Despite this, I…”.",good:"Your topic sentence turns to your view."}
+       :{ok:!hasI,crit:1,label:"Topic sentence",bad:"Start Body 1 with the other view, without “I”: “To begin with, …”, “Admittedly, …”, “It is worth considering why some people…”.",good:"Your topic sentence introduces the other view."},
+   {ok:ss.length>=5,crit:1,label:"5+ sentences",bad:"A full body paragraph has a topic sentence and two ideas, each explained: about 5–8 sentences.",good:ss.length+" sentences."},
+   {ok:EXPL.test(text),crit:1,label:"Explanation",bad:"Explain WHY: “This is because…”, “In other words,…”.",good:"You explain."},
+   {ok:RESU.test(text),crit:1,label:"Result",bad:"Show the RESULT: “As a result,…”, “This means that…”.",good:"You show results."},
+   {ok:ADD.test(text),crit:1,label:"Second idea",bad:"Start your second idea with “Besides,…”, “Another reason is…”, “Furthermore,…” or “Finally,…”.",good:"You link to a second idea."},
+   {ok:cp<9,crit:1,label:"Own words",bad:"You copied "+cp+" words in a row from the ideas. Use your own words.",good:"Written in your own words."},
+   {ok:kwHit>=3,crit:1,label:"On idea",bad:"Develop the two ideas shown. Use their key words or synonyms.",good:"Develops the ideas."},
+   {ok:n>=45&&n<=190,crit:0,label:"Length",bad:n<45?"A bit short ("+n+" words). A body paragraph is about 70–120 words.":"A bit long ("+n+" words). Aim for 70–120 words.",good:n+" words: a good length."},
+   {ok:text.indexOf("→")<0,crit:0,label:"Full sentences",bad:"Replace the arrows with full sentences.",good:"Full sentences."}].filter(x=>!(x.ok&&!x.crit&&!x.bad));
+  const crit=c.filter(x=>x.crit),okc=crit.filter(x=>x.ok).length,tips=c.filter(x=>!x.crit&&!x.ok).length;
+  return {c,v:okc===crit.length&&tips===0?"good":okc>=crit.length-1?"mid":"bad"}}
+function checkBody(t,tp){return checkBody5(t,tp)}
+function fbHTML(r,done){
+  const vd={good:done||"Well done!",mid:"Nearly there: add the missing move.",bad:"Not yet. Fix the red points and check again."}[r.v];
+  return '<div class="hd"><span class="vd">'+vd+'</span><span class="meter">'+r.c.map(x=>'<span class="'+(x.ok?"ok":(x.crit?"no":"tip"))+'">'+(x.ok?"✓ ":"✗ ")+x.label+'</span>').join("")+'</span></div><div class="body">'+
+  r.c.filter(x=>!x.ok).map(x=>'<div class="it '+(x.crit?"structure":"style")+'"><div><span class="k">'+(x.crit?"must fix":"tip")+'</span>'+esc(x.bad)+'</div></div>').join("")+
+  r.c.filter(x=>x.ok).map(x=>'<div class="it praise"><div><span class="k">ok</span>'+esc(x.good)+'</div></div>').join("")+'</div>'}
+
+/* ---------- builders */
+let REG=[];
+function selQ(key,label,opts,ans,expl,num){
+  REG.push({key,kind:"sel",ans,expl});
+  return '<div class="q" data-key="'+key+'"><div class="p"><span class="num">'+num+'</span>'+label+'</div><select class="sel" data-key="'+key+'"><option value="">Choose…</option>'+opts.map((o,i)=>'<option value="'+i+'">'+esc(o)+'</option>').join("")+'</select><div class="fb" id="fb_'+key+'"></div></div>'}
+function rng(seed){let h=2166136261;for(const c of seed){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return((h>>>0)%100000)/100000}}
+function shuf(a,seed){const r=rng(seed),b=a.map((x,i)=>i);for(let i=b.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function selS(key,label,opts,ans,expl,num){const p=shuf(opts,key);return selQ(key,label,p.map(i=>opts[i]),p.indexOf(ans),expl,num)}
+function pickQ(key,g,num){
+  REG.push({key,kind:"sel",ans:g.ans,fbs:g.fb});
+  return '<div class="q" data-key="'+key+'"><div class="p"><span class="num">'+num+'</span><b>'+g.label+'</b> · choose the best sentence</div><select class="sel" data-key="'+key+'"><option value="">Choose…</option>'+g.opts.map((o,i)=>'<option value="'+i+'">'+esc(o)+'</option>').join("")+'</select><div class="fb" id="fb_'+key+'"></div></div>'}
+function writeQ(key,tp){
+  REG.push({key,kind:"write",tp});
+  return '<div class="iw"><div class="lab">Your body paragraph</div><textarea id="ta_'+key+'" placeholder="Write your body paragraph (70–120 words)" style="min-height:230px"></textarea><div class="irow"><button class="btn go" data-act="check" data-key="'+key+'">Check my paragraph</button><button class="btn ghost" data-act="hint" data-key="'+key+'">Hint</button><button class="btn ghost" data-act="model" data-key="'+key+'">Show model</button><span class="wc" id="wc_'+key+'"></span><span class="done-tag" id="dn_'+key+'"></span></div><div class="hint" id="hint_'+key+'">'+tp.hint+'</div><div class="fb" id="fb_'+key+'"></div><div class="mdl" id="md_'+key+'" style="display:none"><b>Model paragraph:</b><div style="margin-top:6px">'+esc(tp.model)+'</div></div></div>'}
+const seg=(c,l,t)=>'<div class="seg '+c+'"><div class="st">'+l+'</div>'+esc(t)+'</div>';
+const legend='<div class="legend"><span><i style="background:#efe6f7"></i>topic sentence / closing</span><span><i style="background:var(--chipS)"></i>idea</span><span><i style="background:var(--chipV)"></i>explain</span><span><i style="background:var(--chipN)"></i>result</span><span><i style="background:var(--chipL)"></i>example (optional)</span></div>';
+
+
+
+/* ---------- steps */
+const steps=[];
+const CC={T:["p","Topic sentence"],C:["s","First idea"],B:["s","Second idea"],E:["v","Explain"],R:["n","Result"],X:["l","Example"],Z:["p","Closing"]};
+const cparts=parts=>'<div class="cp">'+parts.map(p=>'<span class="seg '+CC[p[1]][0]+'" style="display:inline-block;margin:3px 4px 3px 0;padding:6px 10px"><span class="st" style="display:block">'+CC[p[1]][1]+'</span>'+esc(p[0])+'</span>').join("")+'</div>';
+const HINT={other:'<b>Plan:</b> Topic sentence (<b>To start, / Admittedly,</b> the other side, no “I”) → Idea 1: claim, <b>This is because…</b>, <b>As a result…</b> → <b>Another… / Besides, / Moreover,</b> Idea 2 → explain and result. (70–120 words)',
+ mine:'<b>Plan:</b> Topic sentence (<b>I, however, believe… / That said, I…</b>) → Idea 1: claim, <b>This is because…</b>, <b>As a result…</b> → <b>Besides, / Another reason is… / Furthermore,</b> Idea 2 → explain and result. (70–120 words)'};
+const ideasBox=(ch,label)=>'<div style="margin-top:6px">'+ch.map((c,i)=>'<span class="seg v" style="display:block;margin:4px 0;padding:6px 10px"><span class="st" style="display:block">'+label+' · Idea '+(i+1)+'</span>'+esc(c)+'</span>').join("")+'</div>';
+const EXC=DATA.EX,G=DATA.G;
+const OPW={Positive:"Positive (a change for the better)",Negative:"Negative (a change for the worse)"};
+steps.push({label:"1 Learn",html:()=>{
+ const e1=EXC[0];
+ let h='<div class="sec-title"><span class="n">STEP 1</span><h2>Learn: body paragraphs for “positive or negative development?” essays</h2></div>';
+ h+='<div class="card"><h3>1 · The essay map</h3><p class="lead">Your teacher’s sample essays have <b>two body paragraphs</b>: first the <b>side I do NOT choose</b> (fairly), then <b>my side</b>.</p><table class="t"><tr><th>Paragraph</th><th>Its job</th><th>It starts with…</th></tr>'
+ +'<tr><td><b>Introduction</b></td><td>Paraphrase + my position (Lesson 7)</td><td>It has become common to… I believe it is a change for the worse.</td></tr>'
+ +'<tr><td><b>Body 1</b><br>the other side</td><td>Give the arguments for the side I did not choose: one or two ideas. No “I”.</td><td>Admittedly, … · To start, … · At the outset, …</td></tr>'
+ +'<tr><td><b>Body 2</b><br>my side</td><td>Give my arguments: two ideas. Stronger and clear.</td><td>I, however, believe … · Despite this, I … · That said, I consider …</td></tr>'
+ +'<tr><td><b>Conclusion</b></td><td>Repeat my position and sum up (Lesson 9)</td><td>In conclusion, …</td></tr></table>'+legend+'</div>';
+ h+='<div class="card"><h3>2 · Topic sentences from the samples</h3><table class="t"><tr><th>Body 1 · the other side (no “I”)</th><th>Body 2 · my side (“I” + turn word)</th></tr>'
+ +'<tr><td>Admittedly, delayed marriage can have some positive implications for both individuals and society.</td><td>I, however, believe starting a family in one’s thirties is generally a negative trend.</td></tr>'
+ +'<tr><td>It can be argued that the growing popularity of online currencies is unfavorable.</td><td>Despite having some downsides, the ever-increasing use of online currencies is largely a positive trend.</td></tr>'
+ +'<tr><td>At the outset, there are some valid concerns over this rising trend of wearing modern, western outfits.</td><td>I, on the other hand, see the growing popularity of western clothes as a positive turn of events.</td></tr>'
+ +'<tr><td>To start, one cannot dismiss some positive changes that would follow once people travelled less frequently.</td><td>That said, I consider that the infrequent use of airlines to travel is, on the whole, a negative development.</td></tr>'
+ +'<tr><td>Admittedly, the fact that everyday people can become instantly famous on the Internet and TV is undesirable in some ways.</td><td>I, on the other hand, see this change in a more positive light.</td></tr></table></div>';
+ h+='<div class="card"><h3>3 · The key skill: turn an argument into a developed idea</h3><p class="lead">An <b>argument</b> is only a few words (“security”, “falling birth rates”). A <b>developed idea</b> answers three questions. Add the question words and you never run out of things to write.</p><table class="t"><tr><th>Question</th><th>What you write</th><th>Phrases from the samples</th></tr>'
+ +'<tr><td><b>What?</b></td><td><b>Claim:</b> name the argument in one sentence.</td><td>The main advantage is … · The most concerning aspect is … · The primary advantage of … is … · One downside is …</td></tr>'
+ +'<tr><td><b>Why?</b></td><td><b>Explain:</b> the reason or the way it works.</td><td>This is because … · Since … · Unlike with …, … · That is, …</td></tr>'
+ +'<tr><td><b>So what?</b></td><td><b>Result:</b> what happens because of it, one step further.</td><td>As a result, … · Therefore, … · Such transparency ensures that … · If this trend persists, …</td></tr>'
+ +'<tr><td><b>Example?</b><br>(optional)</td><td><b>Example:</b> a real country, company or person.</td><td>Germany and Japan are … · For instance, … · Take … as an example</td></tr></table></div>';
+ const LAD=[["Level 1 · Argument only","Online currencies are secure.","This is only a claim. A paragraph with ten of these would stay empty."],["Level 2 · + Explain (Why?)","The primary advantage of this medium of exchange is security. Unlike with fiat money, transactions made with cryptocurrencies are more secure seeing as they can be tracked by everyone.","Better: now the reader knows why."],["Level 3 · + Result (So what?)","The primary advantage of this medium of exchange is security. Unlike with fiat money, transactions made with cryptocurrencies are more secure seeing as they can be tracked by everyone. Such transparency ensures that there is limited risk of fraud.","Fully developed: claim → why → result. This is the real sample paragraph."]];
+ h+='<div class="card"><h3>4 · From an argument to a fully developed idea</h3><p class="lead">One argument from your teacher’s sample essay, built in three levels.</p>'+LAD.map((r,i)=>'<div class="seg '+["s","v","n"][i]+'" style="margin:6px 0"><div class="st">'+r[0]+'</div>'+esc(r[1])+'<div style="font-size:14px;margin-top:4px;color:#445">▸ '+esc(r[2])+'</div></div>').join("")+'<div class="note"><b>Rule:</b> every idea needs at least <b>Claim + Why</b>. Strong ideas also show a <b>Result</b>.</div></div>';
+ const ST7=[["1 · Topic sentence","Say the main idea of the paragraph. Body 1: the other side. Body 2: my side.","Admittedly, … · To start, … · I, however, believe … · That said, I consider …"],
+ ["2 · Claim (first idea)","Name your first idea in one sentence.","The main issue is … · The primary advantage is … · The most concerning aspect is …"],
+ ["3 · Explain","Say why or how.","This is because … · Since … · That is, … · In other words, …"],
+ ["4 · Result","Show what happens because of it.","As a result, … · Therefore, … · This means that … · In this way, …"],
+ ["5 · Example (optional)","A short, specific example. You can skip it.","… such as … · For instance, … · Germany and Japan are …"],
+ ["6 · Second idea","Start a new idea with a link. Repeat steps 2–4 in a shorter form.","Another downside is … · More important is … · Besides, … · Furthermore, … · A fall in … is also argued to be …"],
+ ["7 · Closing (optional)","One sentence that sums up. No new idea.","In this regard, … · In this sense, …"]];
+ h+='<div class="card"><h3>5 · Build a paragraph in order: seven steps</h3><table class="t"><tr><th>Step</th><th>What you do</th><th>Phrases from the samples</th></tr>'+ST7.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join("")+'</table><div class="grp">Real Body 2 · '+e1.src+'</div>'+cparts(e1.b2)+'<div class="note">'+esc(e1.note)+'</div></div>';
+ h+='<div class="card"><h3>6 · Body 1 and Body 2: what is different?</h3><table class="t"><tr><th></th><th>Body 1 · the other side</th><th>Body 2 · my side</th></tr>'
+ +'<tr><td><b>Voice</b></td><td>Neutral: “it can be argued”, “one cannot dismiss”</td><td>Personal and firm: “I believe”, “I consider”</td></tr>'
+ +'<tr><td><b>Turn</b></td><td>Starts with “Admittedly / To start”</td><td>“I, however, / That said, / Despite this” turns away</td></tr>'
+ +'<tr><td><b>Ideas</b></td><td>The real arguments of the other side</td><td>My arguments, the ones that decide my position</td></tr></table></div>';
+ h+='<div class="card"><h3>7 · Do and don’t</h3><table class="t"><tr><th>Do ✓</th><th>Don’t ✗</th></tr><tr><td>Give two ideas in each body paragraph (or one idea in depth).<br>Explain every idea: “This is because…”<br>Show a result: “As a result…”<br>Turn clearly in Body 2: “I, however, believe…”.</td><td>Don’t write “I think” in Body 1.<br>Don’t just repeat the argument in new words.<br>Don’t list ideas without explaining them.<br>Don’t copy the ideas word for word.</td></tr></table></div>';
+ return h}});
+steps.push({label:"2 Examples",html:()=>{
+ let h='<div class="sec-title"><span class="n">STEP 2</span><h2>Five real examples</h2></div><p class="lead">Read each pair of paragraphs from the sample essays. Every part has a job.</p>'+legend;
+ h+=EXC.map((x,i)=>'<div class="card"><h3>Example '+(i+1)+' · '+x.src+'</h3><div class="seg s"><div class="st">Question</div>'+esc(x.q)+'</div><div class="grp">Body 1 · the other side</div>'+cparts(x.b1)+'<div class="grp">Body 2 · my side</div>'+cparts(x.b2)+'<div class="note">'+esc(x.note)+'</div></div>').join("");
+ return h}});
+steps.push({label:"3 Guided practice",html:()=>{
+ let h='<div class="sec-title"><span class="n">STEP 3</span><h2>Guided practice</h2></div><p class="lead">Part A: choose the fully developed idea. Part B: turn two arguments into developed ideas. Everything comes from the sample essays.</p>';
+ h+='<div class="card"><h3>Part A · Choose the fully developed idea</h3>'+G.picks.map((g,i)=>'<div class="seg p"><div class="st">'+g.src+' · the argument</div><b>'+esc(g.arg)+'</b> '+esc(g.topic.split(". ")[0])+'</div>'+pickQ("GP"+(i+1),{label:"Idea "+(i+1),opts:g.opts,ans:g.ans,fb:g.fb},i+1)).join("")+'</div>';
+ [G.w1,G.w2].forEach((w,i)=>{
+  const tp=Object.assign({},w,{hint:HINT[w.kind]});
+  h+='<div class="card"><h3>Part B'+(i+1)+' · '+w.tag+' · '+w.src+'</h3><div class="seg s"><div class="st">Question</div>'+esc(w.q)+'</div><div class="seg" style="background:var(--card2,#f4f1ea);border-left:5px solid #2f6fd0"><div class="st">Remember</div><b>'+esc(w.stance)+'</b>'+ideasBox(w.ch,w.kind==="mine"?"My side":"Other side")+'</div>'+writeQ("GW"+(i+1),tp)+'</div>';});
+ return h}});
+steps.push({label:"4 Practice tests",subnav:true,units:TOPICS.map(t=>({label:"Topic "+t.n,html:()=>{
+ const t1={kind:"other",ch:t.oth,model:t.m1,q:t.q,hint:HINT.other},t2={kind:"mine",ch:t.mine,model:t.m2,q:t.q,hint:HINT.mine};
+ let h='<div class="card"><div class="lhd"><div class="big">'+t.n+'</div><div><h3>Write two body paragraphs 🌱</h3><div class="ins" style="margin:0">Body 1 gives the other side. Body 2 gives my side. Develop every argument: claim, why, result. Earn a ⭐ for both!</div></div></div><div class="seg s" style="margin-bottom:10px"><div class="st">Question</div>'+esc(t.q)+'</div>'
+ +'<div class="seg" style="background:var(--card2,#f4f1ea);border-left:5px solid #2f6fd0"><div class="st">My opinion</div><b>'+esc(OPW[t.op])+'</b></div></div>'
+ +'<div class="card"><h3>Body 1 · the other side</h3>'+ideasBox(t.oth,"Other side")+writeQ("B1_"+t.n,t1)+'</div>'
+ +'<div class="card"><h3>Body 2 · my side</h3>'+ideasBox(t.mine,"My side")+writeQ("B2_"+t.n,t2)+'</div>';
+ return h}}))});
+
+/* ---------- build */
+function build(){
+ REG=[];
+ document.body.innerHTML='<header class="band"><div class="wrap"><div class="kick">'+CH.kicker+'</div><h1>'+CH.title+'</h1><p>'+CH.lead+'</p><div class="prog"><div class="bar"><i id="pbar"></i></div><b id="pnum"></b></div></div></header><nav class="steps"><div class="wrap"><div class="row" id="steps"></div></div></nav><main class="wrap" id="main"></main><div class="foot">MrIkromov’s IELTS · Instagram @ustoz_jasur · Telegram @TeamMrIkromov</div><div id="toast"></div>';
+ const st=$("#steps"),mn=$("#main");
+ steps.forEach((s,si)=>{
+  const b=document.createElement("button");b.className="step";b.id="st"+si;b.innerHTML=s.label+'<span class="ct" id="ct'+si+'"></span>';b.onclick=()=>showStep(si);st.appendChild(b);
+  const sec=document.createElement("section");sec.id="sec"+si;sec.style.display="none";
+  if(s.subnav){
+   sec.innerHTML='<div class="sec-title"><span class="n">STEP 4</span><h2>Practice tests · 10 questions</h2></div><p class="lead">Use what you learned. For each question, write two body paragraphs: the other side, then your side. Earn a ⭐ for each!</p><div class="nums" id="nv'+si+'"></div><div id="uv'+si+'"></div>';
+   mn.appendChild(sec);
+   const nv=$("#nv"+si,sec),uv=$("#uv"+si,sec);
+   s.units.forEach((u,ui)=>{const nb=document.createElement("button");nb.className="sub";nb.id="u"+si+"_"+ui;nb.textContent=ui+1;nb.onclick=()=>showUnit(si,ui);nv.appendChild(nb);const bx=document.createElement("div");bx.innerHTML=u.html();bx.style.display="none";u.box=bx;uv.appendChild(bx)});
+  }else{sec.innerHTML=s.html();mn.appendChild(sec)}
+ });
+ wire();applyState()}
+function showStep(si){ST.step=si;steps.forEach((s,k)=>{$("#sec"+k).style.display=k===si?"":"none";$("#st"+k).classList.toggle("on",k===si)});if(steps[si].subnav)showUnit(si,Math.min(ST.unit[si]||0,steps[si].units.length-1));window.scrollTo({top:0});save()}
+function showUnit(si,ui){ST.unit[si]=ui;steps[si].units.forEach((u,k)=>{u.box.style.display=k===ui?"":"none";$("#u"+si+"_"+k).classList.toggle("on",k===ui)});save()}
+function stepKeys(si){const root=$("#sec"+si);return $$("[data-key]",root).map(e=>e.dataset.key).filter((v,i,a)=>a.indexOf(v)===i&&REG.some(r=>r.key===v))}
+function progress(){let tot=REG.length,done=REG.filter(r=>ST.ok[r.key]).length;$("#pbar").style.width=Math.round(done/tot*100)+"%";$("#pnum").textContent=done+" / "+tot+" done";
+ steps.forEach((s,si)=>{const ks=stepKeys(si),d=ks.filter(k=>ST.ok[k]).length;const c=$("#ct"+si);if(c){c.textContent=ks.length?d+"/"+ks.length:"";$("#st"+si).classList.toggle("full",ks.length>0&&d===ks.length)}});stars()}
+const CHEER=["Great job! 🎉","Excellent! ⭐","You nailed it! 💪","Superb idea! 🚀","Well done! 👏"];
+function cheer(){toast(CHEER[Math.floor(Math.random()*CHEER.length)])}
+function stars(){let n=0;TOPICS.forEach((t,ui)=>{const a=ST.ok["B1_"+t.n]&&ST.ok["B2_"+t.n];n+=a?1:0;const el=document.getElementById("u3_"+ui);if(el)el.textContent=(ui+1)+(a?" ⭐":"")});const p=document.getElementById("pnum");if(p)p.textContent+="  ·  ⭐ "+n+"/"+TOPICS.length}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1600)}
+function wire(){
+ $$("select.sel").forEach(el=>el.addEventListener("change",()=>runSel(el.dataset.key,true)));
+ $$("textarea").forEach(ta=>ta.addEventListener("input",()=>{const id=ta.id;if(id.startsWith("ta_")){const k=id.slice(3);ST.saved[k]=ta.value;wc(k)}else{ST.saved[id]=ta.value}save()}));
+ document.body.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const k=b.dataset.key,a=b.dataset.act;
+  if(a==="hint")$("#hint_"+k).classList.toggle("on");
+  if(a==="model")$("#md_"+k).style.display="";
+  if(a==="check")runWrite(k);
+})}
+function wc(k){const ta=$("#ta_"+k),n=nw(ta.value);$("#wc_"+k).textContent=n+" words"}
+function runSel(k,say){const r=REG.find(x=>x.key===k),el=$('select[data-key="'+k+'"]'),fb=$("#fb_"+k);if(el.value==="")return;const ok=+el.value===r.ans;el.className="sel "+(ok?"ok":"no");
+ const msg=r.fbs?r.fbs[+el.value]:(ok?r.expl:"");
+ fb.className="fb on "+(ok?"good":"bad");fb.innerHTML='<div class="hd"><span class="vd">'+(ok?"Correct! ":"Not quite. ")+'</span></div><div class="body">'+esc(msg||"")+'</div>';
+ ST.saved[k]=el.value;if(ok){ST.ok[k]=1}else delete ST.ok[k];if(say)save();progress()}
+function runWrite(k){const r=REG.find(x=>x.key===k),ta=$("#ta_"+k);if(!ta.value.trim()){toast("Write your paragraph first");return}
+ const res=checkBody(ta.value,r.tp),fb=$("#fb_"+k);fb.className="fb on "+res.v;fb.innerHTML=fbHTML(res,"Well done! This is a developed body paragraph.");ta.className=res.v==="good"?"ok":(res.v==="bad"?"no":"");
+ if(res.v!=="bad"){if(!ST.ok[k])cheer();ST.ok[k]=1;$("#dn_"+k).textContent="✓ done";$("#md_"+k).style.display=""}else{delete ST.ok[k];$("#dn_"+k).textContent=""}
+ save();progress()}
+function applyState(){
+ REG.forEach(r=>{if(r.kind==="sel"){const v=ST.saved[r.key];if(v==null)return;const el=$('select[data-key="'+r.key+'"]');el.value=v;runSel(r.key,false)}
+  else if(r.kind==="write"){const v=ST.saved[r.key];if(v==null)return;const ta=$("#ta_"+r.key);ta.value=v;wc(r.key);{const pv=ST.saved["pl_"+r.key],pe=$("#pl_"+r.key);if(pv!=null&&pe)pe.value=pv}if(ST.ok[r.key])$("#dn_"+r.key).textContent="✓ done"}
+});
+ showStep(Math.min(ST.step||0,steps.length-1));progress()}
+build();window.__T=TOPICS;window.runWrite=runWrite;
+})();
+
+</script>
+</body>
+</html>
