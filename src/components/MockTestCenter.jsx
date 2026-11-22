@@ -373,6 +373,19 @@ export default function MockTestCenter({ onExit }) {
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
   }, [attempts, examsById])
 
+  // Per-part scores (2026-11-23): load each released attempt's breakdown as
+  // soon as the list shows, so "Part 1 8/10" can appear without opening it.
+  useEffect(() => {
+    attemptsWithModule.forEach((a) => {
+      if (!a.released_at || breakdowns[a.id]) return
+      setBreakdowns((prev) => (prev[a.id] ? prev : { ...prev, [a.id]: { loading: true, error: '', rows: null } }))
+      supabase.rpc('get_mock_answer_breakdown', { p_attempt_id: a.id }).then(({ data, error }) => {
+        setBreakdowns((prev) => ({ ...prev, [a.id]: { loading: false, error: error?.message || '', rows: data || [] } }))
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attemptsWithModule])
+
   // "Just like a real exam" results, added 2026-09-26: one band per
   // skill plus a combined overall band, using whichever data is already
   // release-gated above rather than re-deriving anything. Reading/
@@ -699,6 +712,8 @@ export default function MockTestCenter({ onExit }) {
                             </span>
                           </div>
 
+                          <PartScores rows={bd?.rows} />
+
                           <div className="flex items-center gap-3 mt-2">
                             <button
                               type="button"
@@ -846,6 +861,14 @@ export default function MockTestCenter({ onExit }) {
                         </div>
                         {review.released_at != null ? (
                           <>
+                            <CriteriaChips
+                              items={[
+                                ['Task response', review.ta_band],
+                                ['Coherence & cohesion', review.cc_band],
+                                ['Lexical resource', review.lr_band],
+                                ['Grammar & accuracy', review.gra_band],
+                              ]}
+                            />
                             {review.examiner_feedback && (
                               <p className="whitespace-pre-wrap rounded-[14px] bg-panel px-4 py-3 text-sm leading-6 text-paper">{review.examiner_feedback}</p>
                             )}
@@ -946,6 +969,16 @@ export default function MockTestCenter({ onExit }) {
                               </span>
                               <span className="text-sm font-extrabold text-paper">Your speaking band</span>
                             </div>
+                          )}
+                          {slot.released_at != null && (
+                            <CriteriaChips
+                              items={[
+                                ['Fluency & coherence', slot.fc_band],
+                                ['Lexical resource', slot.lr_band],
+                                ['Grammar & accuracy', slot.gra_band],
+                                ['Pronunciation', slot.pron_band],
+                              ]}
+                            />
                           )}
                           {slot.released_at != null && slot.examiner_feedback && (
                             <p className="whitespace-pre-wrap rounded-[14px] bg-panel px-4 py-3 text-sm leading-6 text-paper">{slot.examiner_feedback}</p>
@@ -1126,6 +1159,47 @@ function BandGauge({ skill, label, band, target }) {
         </text>
       </svg>
       <p className={`text-xs font-semibold ${tone.text}`}>{label}</p>
+    </div>
+  )
+}
+
+// Criteria marks an examiner gave (2026-11-23): four small tiles, shown only
+// when at least one mark exists. Used for Writing and Speaking once released.
+function CriteriaChips({ items }) {
+  const shown = items.filter(([, v]) => v != null && v !== '')
+  if (shown.length === 0) return null
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {shown.map(([label, value]) => (
+        <div key={label} className="rounded-[14px] bg-panel px-3 py-2.5 text-center">
+          <p className="font-brand text-[20px] font-semibold leading-none text-paper">{formatBand(Number(value))}</p>
+          <p className="mt-1.5 text-[11px] font-extrabold leading-tight text-paper-dim">{label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Score of each part (Listening Parts 1–4, Reading passages) from the
+// answer breakdown of a released attempt.
+function PartScores({ rows }) {
+  if (!rows || rows.length === 0) return null
+  const parts = []
+  rows.forEach((r) => {
+    const title = r.section_title || 'Questions'
+    let p = parts.find((x) => x.title === title)
+    if (!p) parts.push((p = { title, right: 0, total: 0 }))
+    p.total += 1
+    if (r.is_correct) p.right += 1
+  })
+  if (parts.length < 2) return null
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {parts.map((p) => (
+        <span key={p.title} className="rounded-lg bg-panel px-2.5 py-1 text-[11px] font-extrabold text-paper-dim">
+          {p.title} <span className="text-paper">{p.right}/{p.total}</span>
+        </span>
+      ))}
     </div>
   )
 }
