@@ -491,7 +491,7 @@ export default function MockTestCenter({ onExit }) {
    * band as-is, no estimation. generateScoreReport.js clearly labels
    * which is which in the PDF itself.
    */
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = async (format = 'pdf') => {
     setReportGenerating(true)
     setReportError('')
     try {
@@ -504,6 +504,8 @@ export default function MockTestCenter({ onExit }) {
       await downloadScoreReport({
         studentName: profile?.full_name || profile?.username,
         targetBand: profile?.target_band,
+        avatarUrl: profile?.avatar_url,
+        format,
         skills: {
           listening: latestAttemptByModule.listening
             ? {
@@ -793,19 +795,28 @@ export default function MockTestCenter({ onExit }) {
                     Score report
                   </p>
                   <p className="text-sm text-mist mt-1">
-                    Download a one-page PDF combining your Listening, Reading, Writing and
-                    Speaking results so far.
+                    Download your results as a report form (PDF), or save it as an image to share.
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleDownloadReport}
-                    disabled={reportGenerating}
-                    className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50"
-                  >
-                    {reportGenerating ? 'Generating…' : 'Download score report'}
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReport('png')}
+                      disabled={reportGenerating}
+                      className="focus-ring rounded-xl border border-line text-sm font-semibold px-4 py-2 hover:bg-panel-2 transition-colors disabled:opacity-50"
+                    >
+                      Save as image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReport('pdf')}
+                      disabled={reportGenerating}
+                      className="focus-ring rounded-xl bg-brass text-onbrass text-sm font-semibold px-4 py-2 shadow-sm hover:bg-brass-dim transition-colors disabled:opacity-50"
+                    >
+                      {reportGenerating ? 'Generating…' : 'Download score report'}
+                    </button>
+                  </div>
                   {reportError && <p className="text-coral text-xs mt-2 max-w-xs">{reportError}</p>}
                 </div>
               </div>
