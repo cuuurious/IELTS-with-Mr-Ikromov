@@ -96,6 +96,7 @@ export function splitSet(name) {
   if (book === 'Grammar') return { book, short, subtitle: GRAMMAR_PARTS[short] || short }
   if (book === 'Vocabulary for IELTS') return { book, short, subtitle: VOCAB_PARTS[short] || short }
   if (book === 'Vocabulary for IELTS Advanced') return { book, short, subtitle: VOCAB_ADV_PARTS[short] || short }
+  if (book === 'Task 1 Lessons') return { book, short, subtitle: 'Charts, maps and processes, step by step' }
   if (book === 'Task 2 Lessons') return { book, short, subtitle: 'Essay types, planning, introductions and more' }
   if (book === 'Writing Task 1') return { book, short, subtitle: `${short} · 20 min · 150 words` }
   return { book, short, subtitle: part ? `Questions ${(part[1] - 1) * 10 + 1}–${part[1] * 10}` : short }
@@ -103,7 +104,7 @@ export function splitSet(name) {
 
 export function BookCoverCard({ name, types, count, skill, index, onClick, unit, footer, compact = false }) {
   const { subtitle } = splitSet(name)
-  if (!unit && skill === 'writing') unit = /^Task 2 Lessons/.test(name) ? 'lessons' : /^Writing Task 1/.test(name) ? 'reports' : 'essays'
+  if (!unit && skill === 'writing') unit = /^Task [12] Lessons/.test(name) ? 'lessons' : /^Writing Task 1/.test(name) ? 'reports' : 'essays'
   if (!unit && skill === 'workshop') unit = /^Vocabulary/.test(name) ? 'units' : 'lessons'
   if (!unit && (/^Full (Reading|Listening) Tests/.test(name) || skill === 'speaking')) unit = 'tests'
   return (

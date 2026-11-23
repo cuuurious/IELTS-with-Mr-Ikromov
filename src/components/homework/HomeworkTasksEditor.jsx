@@ -33,6 +33,7 @@ const PAGE_TILES = [
   { id: 'listening-full', skill: 'listening', book: FULL_LISTENING, label: 'Full listening test', unit: 'tests', tint: 'bg-listening-tint', text: 'text-listening', hideEmpty: true },
   { id: 'writing-1', skill: 'writing', book: 'Writing Task 1', label: 'Writing Task 1', unit: 'reports', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
+  { id: 'task1-lessons', skill: 'writing', book: 'Task 1 Lessons', label: 'Task 1 lesson', unit: 'lessons', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'task2-lessons', skill: 'writing', book: 'Task 2 Lessons', label: 'Task 2 lesson', unit: 'lessons', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
   // Mr Ikromov's 30 grammar lessons (migration 134) live in the bank as skill 'workshop'.
