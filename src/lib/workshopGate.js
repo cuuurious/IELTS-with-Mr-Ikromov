@@ -12,7 +12,8 @@ import { useEffect, useState } from 'react'
  * closes the page half-way keeps the parts already finished.
  */
 
-export const needsWorkshop = (url, html) => /\/practice\/reading\//.test(url || '') && /id=["']ws-overlay["']/.test(html || '')
+// Thematic Reading pages (#ws-overlay) and Full Reading Tests (#wsOverlay, one Workshop per passage, 2026-11-23).
+export const needsWorkshop = (url, html) => /\/practice\/reading(-full)?\//.test(url || '') && /id=["']ws-?[oO]verlay["']/.test(html || '')
 
 const keyFor = (url, studentId) => `ielts:workshop:${studentId || 'me'}:${url}`
 

@@ -35,7 +35,8 @@ const PAGE_TILES = [
   { id: 'writing-2', skill: 'writing', book: 'Writing Task 2', label: 'Writing Task 2', unit: 'essays', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'task1-lessons', skill: 'writing', book: 'Task 1 Lessons', label: 'Task 1 lesson', unit: 'lessons', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
   { id: 'task2-lessons', skill: 'writing', book: 'Task 2 Lessons', label: 'Task 2 lesson', unit: 'lessons', tint: 'bg-writing-tint', text: 'text-writing', hideEmpty: true },
-  { id: 'speaking', skill: 'speaking', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
+  { id: 'speaking', skill: 'speaking', notBook: 'Shadowing Studio', label: 'Speaking test', unit: 'tests', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
+  { id: 'shadowing', skill: 'speaking', book: 'Shadowing Studio', label: 'Shadowing video', unit: 'videos', tint: 'bg-speaking-tint', text: 'text-speaking', hideEmpty: true },
   // Mr Ikromov's 30 grammar lessons (migration 134) live in the bank as skill 'workshop'.
   { id: 'grammar', skill: 'workshop', book: 'Grammar', label: 'Grammar lesson', unit: 'lessons', tint: 'bg-[color-mix(in_srgb,var(--color-brass)_12%,var(--color-panel))]', text: 'text-brass', hideEmpty: true },
   // Vocabulary for IELTS and the Advanced book (migration 141), also skill 'workshop'.

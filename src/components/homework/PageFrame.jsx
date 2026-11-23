@@ -38,7 +38,7 @@ export function forgetAutosave(userId, html) {
   }
 }
 
-export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null }) {
+export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null, mic = false }) {
   // `cover`: a panel shown over the page (e.g. AI feedback); Back closes it first.
   const frameRef = useRef(null)
   const { profile } = useAuth()
@@ -260,7 +260,8 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
             data-ielts-page="1"
             title={title || 'Practice page'}
             srcDoc={html}
-            sandbox="allow-scripts allow-forms allow-modals allow-popups"
+            sandbox={mic ? 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin' : 'allow-scripts allow-forms allow-modals allow-popups'}
+            allow={mic ? 'microphone; autoplay; fullscreen' : undefined}
             className="block h-full w-full"
           />
         ) : (

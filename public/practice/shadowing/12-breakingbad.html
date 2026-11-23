@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12 · Shadowing · Breaking Bad · MrIkromov's IELTS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f6f5f1;--panel:#fff;--panel2:#efede6;--line:#e3dfd4;--paper:#17213a;--dim:#3a4560;--mist:#55607a;--brass:#2456b0;--sage:#13807c;--sageT:#e2f2f0;--coral:#b23a48;--saffron:#e6a33a;--band:#22489a;--shadow:0 1px 2px rgba(23,33,58,.06),0 8px 22px -12px rgba(23,33,58,.25)}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font:16px/1.55 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,.brand{font-family:Unbounded,"Nunito Sans",system-ui,sans-serif;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:0 18px}
+.band{flex:0 0 auto;color:#fff;background:var(--band) linear-gradient(115deg,var(--band) 0%,#1f6fae 55%,#1a9bb5 100%);border-radius:0 0 22px 22px;padding:12px 0 12px}
+.kick{font-size:13px;font-weight:800;opacity:.9}
+.band h1{margin:4px 0 4px;font-size:22px;line-height:1.15;font-weight:600}
+.tag{display:inline-block;background:#ffd27a;color:#2b1a00;font-weight:800;border-radius:999px;padding:3px 12px;font-size:13px}
+.src{font-weight:800;font-size:14px;margin-left:6px;color:#fff;opacity:.95}
+.dots{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.dot{width:24px;height:24px;border-radius:9px;border:0;background:rgba(255,255,255,.22);color:#fff;font-weight:800;font-size:12px}
+.dot.done{background:#7fe0b4;color:#073b25}.dot.cur{outline:3px solid #ffd27a;outline-offset:1px}
+main{padding:20px 0 50px}
+html,body{height:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+main{flex:1;min-height:0;padding:14px 0 0}
+.stage{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;height:100%;min-height:0}
+.leftcol{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.leftcol>.card:first-child{flex:none}
+.leftscroll{flex:1;min-height:0;overflow-y:auto;padding:0 4px 24px 0;overscroll-behavior:contain}
+.rightcol{min-height:0;overflow-y:auto;padding:0 4px 30px 0;overscroll-behavior:contain}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(178,58,72,.55)}100%{box-shadow:0 0 0 14px rgba(178,58,72,0)}}
+.btn.rec.live{animation:pl 1.1s infinite}
+.card.tight{padding:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+video{width:100%;border-radius:14px;background:#000;display:block;aspect-ratio:16/9}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--paper);border-radius:14px;padding:9px 15px;font-weight:800;font-size:14px}
+.btn:hover{border-color:var(--brass)}.btn.pri{background:var(--brass);color:#fff;border-color:var(--brass)}
+.btn.go{background:var(--saffron);color:#17213a;border-color:var(--saffron)}.btn.rec{background:var(--coral);color:#fff;border-color:var(--coral)}
+.btn.ok{background:var(--sage);color:#fff;border-color:var(--sage)}.btn.big{padding:13px 22px;font-size:16px;border-radius:16px}
+.btn:disabled{opacity:.4;cursor:default}
+.speed{display:flex;gap:6px;align-items:center;font-weight:800;font-size:13px;color:var(--mist)}
+.speed button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:5px 11px;font-weight:800;color:var(--paper)}
+.speed button.on{background:var(--brass);color:#fff;border-color:var(--brass)}
+.lno{font-family:Unbounded,sans-serif;font-size:13px;color:var(--brass);font-weight:600}
+.rounds{display:flex;gap:6px;margin:10px 0 14px}
+.rd{flex:1;border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:8px 6px;font-weight:800;font-size:13px;color:var(--mist);text-align:center}
+.rd.on{background:var(--brass);color:#fff;border-color:var(--brass)}
+.spk{font-weight:800;color:var(--brass);font-size:14px;margin-bottom:2px}
+.say{font-size:25px;line-height:1.4;font-weight:700;margin:2px 0 10px;transition:filter .3s}
+.say.blur .ut{filter:blur(9px)}.say.blur{cursor:pointer;user-select:none}.say .ut{transition:filter .3s}
+.say .aside{color:var(--mist);font-style:italic;font-weight:600}
+.say .w{border-radius:7px;padding:0 2px;transition:background .12s,color .12s}
+.say .w.ph{box-shadow:inset 0 -3px 0 #f0c76a}
+
+.hint{color:var(--dim);font-size:14.5px;margin:0 0 4px}
+.warn{background:#fbefd9;color:#9a5b12;border-radius:14px;padding:9px 12px;font-size:13.5px;margin-top:10px;display:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:6px}
+.deck{display:flex;flex-direction:column;gap:10px}
+.deck .pc{width:100%;min-height:150px}
+.deck .pc .in{min-height:150px}
+.deck .pc .f{font-size:28px;align-items:center;text-align:center;font-family:Unbounded,"Nunito Sans",sans-serif;font-weight:600}
+.deck .pc .f small{font-size:13px;margin-top:8px}
+.deck .pc .b{font-size:21px;align-items:center;text-align:center;line-height:1.35}
+.deck .nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.deck .nav b{font-size:14px;color:var(--mist)}
+.pc{perspective:700px;border:0;background:none;padding:0;text-align:left;min-height:86px}
+.pc .in{position:relative;height:100%;min-height:86px;transition:transform .45s;transform-style:preserve-3d}
+.pc.flip .in{transform:rotateY(180deg)}
+.pc .f,.pc .b{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:12px 13px;display:flex;flex-direction:column;justify-content:center}
+.pc .f{background:#fdf0d2;color:#6b4300;font-weight:800;font-size:16px;border:1px solid #f0d9a0}
+.pc .f small{font-weight:700;font-size:11.5px;opacity:.7;margin-top:3px}
+.pc .b{background:#dfe8fb;color:#1f3f86;transform:rotateY(180deg);font-weight:700;font-size:14.5px;border:1px solid #b9cdf7}
+h2{font-size:20px;font-weight:600;margin:0 0 4px}
+.fin{display:none;text-align:center;background:var(--sageT);border-color:var(--sage)}
+.fin.on{display:block}.fin h2{font-size:24px}
+.chk{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+.chk .row{margin-top:10px}
+.chk .sc{display:inline-block;font-weight:800;border-radius:999px;padding:3px 12px;font-size:13px;color:#fff}
+.chk .tw{font-size:19px;line-height:1.6;font-weight:700;margin:8px 0}
+.chk .tw span{border-radius:6px;padding:0 3px}
+.chk .ok{background:#d6f3e4;color:#0b5a37}.chk .no{background:#ffd9d9;color:#8a1b1b;text-decoration:underline wavy #c33}.chk .cl{background:#fff0c2;color:#7a5200}
+.chk .hd{font-size:14.5px;color:var(--dim);margin:4px 0 0}
+.chk .leg{font-size:12.5px;color:var(--mist);margin-top:6px}
+.mine .it{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.mine .it:first-of-type{border-top:0}
+.mine .it .n{font-family:Unbounded,sans-serif;font-size:12px;color:var(--brass);min-width:56px;padding-top:8px}
+.mine .it .tx{flex:1;font-size:14.5px;color:var(--dim)}
+.foot{color:var(--mist);font-size:12.5px;margin-top:26px;text-align:center}
+
+@media(max-width:900px){
+ main{padding:8px 0 0}
+ .wrap{padding:0 10px}
+ .stage{display:flex;flex-direction:column;gap:10px;height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:40px;-webkit-overflow-scrolling:touch}
+ .stage>*{flex:none}
+ .leftcol,.leftscroll,.rightcol{display:contents}
+ .leftcol>.card:first-child{order:0;position:sticky;top:0;z-index:20;padding:8px;margin:0;box-shadow:0 6px 14px -8px rgba(23,33,58,.4)}
+ .leftcol video{max-height:27vh;width:100%;margin:0 auto;border-radius:10px}
+ .leftcol .row{margin-top:6px;gap:6px}
+ .leftcol .btn{padding:6px 10px;font-size:13px}
+ .leftcol .row{flex-wrap:nowrap;justify-content:space-between}.speed{font-size:0;gap:4px}.speed button{padding:5px 8px;font-size:12px}#runall{margin-left:0!important;padding:6px 9px;font-size:12.5px;white-space:nowrap}
+ #focus{order:1}
+ .rightcol>.card:nth-child(2){order:2}
+ #reccard{order:3}
+ .rightcol>.card:nth-child(3){order:4}
+ #minecard{order:5}
+ #fin{order:6}
+ .rightcol>.card:nth-child(5){order:7}
+ .foot{order:8}
+ .card{margin-bottom:0}
+ .say{font-size:22px}
+ .band{padding:8px 0}.band h1{font-size:17px;margin:2px 0}.band .kick{display:none}.src{display:none}
+ .dots{margin-top:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.dot{flex:0 0 auto}
+ .btn.big{padding:11px 16px;font-size:15px}
+ .deck .pc,.deck .pc .in{min-height:120px}.deck .pc .f{font-size:23px}.deck .pc .b{font-size:18px}
+}
+</style></head><body>
+<header class="band"><div class="wrap">
+ <div class="top"><div><div class="kick">MrIkromov's IELTS · Shadowing</div>
+ <h1>№ 12 · Breaking Bad <span class="tag">TV series</span> <span class="src">Breaking Bad (Sony Pictures Television)</span></h1></div></div>
+ <div class="dots" id="dots"></div>
+</div></header>
+<main><div class="wrap" style="height:100%"><div class="stage">
+  <div class="leftcol">
+   <div class="card">
+    <video id="v" controls preload="metadata" playsinline></video>
+    <div class="row"><div class="speed">Speed <button data-s=".7">Slow</button><button data-s=".85">Easy</button><button data-s="1" class="on">Normal</button></div>
+    <button class="btn go" id="runall" style="margin-left:auto">▶ Play the whole scene</button></div>
+   </div>
+   <div class="leftscroll">
+   <div class="card" id="reccard">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="lno" id="reclbl">Record yourself</div><div class="mist" id="recstat" style="font-weight:800;font-size:13px;color:var(--mist)"></div></div>
+    <p class="hint" style="margin:4px 0 0">Say the line out loud. We write down what we hear and check your words.</p>
+    <div class="row" id="racts"></div>
+    <div class="warn" id="warn"></div>
+    <div class="chk" id="chk" style="display:none"></div>
+   </div>
+   <div class="card tight mine" id="minecard" style="display:none"><div class="lno" style="margin-bottom:4px">My recordings</div><div id="mine"></div></div>
+   </div>
+  </div>
+  <div class="rightcol" id="rightcol">
+   <div class="card" id="focus">
+    <div class="lno" id="lno"></div>
+    <div class="spk" id="spk"></div>
+    <div class="say" id="say"></div>
+    <div class="rounds" id="rounds"><button class="rd" data-r="0">👂 Listen: text visible</button><button class="rd" data-r="1">🗣 Shadow: text hidden</button></div>
+    <div class="row" id="acts" style="margin-top:0"></div>
+    <p class="hint" id="hint" style="margin-top:10px;margin-bottom:0"></p>
+   </div>
+   <div class="card tight"><div class="lno" style="margin-bottom:8px">Key phrases <span style="font-weight:600;color:var(--mist)">· tap an underlined phrase in the text to open its card</span></div><div id="cards"></div></div>
+   <div class="card tight" style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap">
+     <button class="btn" id="prev">← Previous</button>
+     <button class="btn ok" id="got">✓ Got it</button>
+     <button class="btn pri" id="next">Next →</button>
+   </div>
+   <div class="card fin" id="fin"><h2>🎉 All lines done!</h2><p class="hint">Now the real test: play the whole scene and speak along without looking at the text.</p><div class="row" style="justify-content:center"><button class="btn go big" id="runall2">▶ Play the whole scene</button></div></div>
+   <div class="card"><h2>Phrase bank</h2><p class="hint" style="margin-bottom:8px">All key phrases from this scene, one by one. Say what it means, then tap the card to check.</p><div id="bank" style="max-width:640px;margin:0 auto"></div></div>
+   <div class="foot">Video: “Shadowing For Dummies”; source: Breaking Bad (Sony Pictures Television). Used here for private study. · Instagram @ustoz_jasur · Telegram @TeamMrIkromov</div>
+  </div>
+</div></div></main>
+<script>
+(function(){var v=document.getElementById("v");if(!v)return;
+var note=document.createElement("div");note.style.cssText="display:none;padding:10px 14px;margin:0 0 8px;border-radius:10px;background:#ffd9d9;color:#6b0000;font:600 14px system-ui,sans-serif";v.parentNode.insertBefore(note,v);
+v.addEventListener("error",function(){note.style.display="block";note.textContent="The video could not be loaded. Check your internet connection and open the page again."},{once:true});
+v.src="https://grdfwleehlgoooizyowz.supabase.co/storage/v1/object/public/shadowing/12_BreakingBad.mp4";})();
+</script>
+<script>
+(function(){
+"use strict";
+// [text, practiceStart, practiceEnd, fullStart, fullEnd, phrases]
+const L=[["Skyler: Walt, I've said it before. If you are in danger, we go to the police. (Oh, no...)", 5.5, 52.0, 568.0, 575.5, [["I've said it before", "present perfect: repeating a point"], ["If you are in danger, we go...", "zero conditional: a firm rule"], ["go to the police", "report to the authorities"]]], ["Walter: I don't wanna hear about the police!\nSkyler: I do not say that lightly.", 52.0, 79.0, 575.5, 580.0, [["I don't wanna hear", "wanna = want to (spoken)"], ["I do not say that lightly", "I am serious (full form for emphasis)"], ["lightly", "without much thought"]]], ["Skyler: I know what it could do to this family...", 79.0, 96.5, 580.0, 583.0, [["what it could do to...", "embedded question + modal"], ["I know...", "calm, serious tone"]]], ["Skyler: But if it's the only real choice we have...", 96.5, 110.5, 583.0, 585.5, [["the only real choice", "a choice with no alternative"], ["But if...", "unfinished conditional"]]], ["Skyler: If it's either that or you getting shot when you open your front door...\nWalter: I don't wanna hear...", 110.5, 139.0, 585.5, 590.5, [["either that or...", "two options"], ["you getting shot", "possessive-less gerund: 'you' + -ing"], ["when you open", "when + present simple"]]], ["Walter: About the police.\nSkyler: You're not some hardened criminal, Walt.", 139.0, 158.0, 590.5, 593.5, [["hardened criminal", "a very experienced criminal"], ["not some...", "denies a label"]]], ["Skyler: You are in over your head. That's what we tell them and that's the truth.\nWalter: No, it's not the truth.", 158.0, 197.0, 593.5, 600.0, [["in over your head", "in a situation too difficult for you"], ["That's what we tell them", "cleft: the plan"]]], ["Skyler: A school teacher, cancer, desperate for money...", 197.0, 216.5, 600.0, 603.0, [["desperate for money", "needing money badly"], ["A school teacher, cancer, desperate for money", "a list without verbs: building a reason"]]], ["Walter: Okay, we're done here.\nSkyler: Roped into working for... unable to even quit!", 216.5, 236.0, 603.0, 606.5, [["we're done here", "this conversation is over"], ["roped into", "forced or tricked into"], ["unable to even quit", "cannot even stop"]]], ["Skyler: You told me that yourself, Walt.", 236.0, 249.0, 606.5, 608.5, [["yourself", "emphasis: you said it, not me"], ["You told me", "past simple"]]], ["Skyler: Jesus, what was I thinking?", 249.0, 267.5, 608.5, 611.5, [["what was I thinking?", "rhetorical question about a mistake"], ["Jesus,", "exclamation of frustration"]]], ["Skyler: Walt, please, let's both of us stop trying to justify this whole thing and admit you're in danger.", 267.5, 318.0, 611.5, 620.0, [["let's both of us", "both of us together"], ["stop trying to justify", "stop + -ing"], ["admit", "accept that something is true"]]], ["Walter: Who are you talking to right now?", 318.0, 342.5, 620.0, 624.0, [["Who are you talking to?", "preposition at the end"], ["right now", "at this moment"]]], ["Walter: Who is it you think you see?", 342.5, 371.0, 624.0, 629.0, [["Who is it you think you see?", "cleft question"], ["you think you see", "embedded clause"]]], ["Walter: Do you know how much I make a year?", 371.0, 387.5, 629.0, 631.5, [["how much I make", "indirect question"], ["a year", "per year"]]], ["Walter: I mean... even if I told you, you wouldn't believe it...", 387.5, 404.0, 631.5, 634.5, [["even if I told you", "second conditional, unreal"], ["you wouldn't believe it", "would: hypothetical result"]]], ["Walter: Do you know what would happen if I suddenly decided to stop going into work?", 404.0, 425.0, 634.5, 638.0, [["what would happen if...", "second conditional"], ["stop going into work", "stop + -ing"], ["suddenly decided", "adverb + past simple"]]], ["Walter: A business big enough that it could be listed on the NASDAQ goes belly up.", 425.0, 452.0, 638.0, 642.5, [["goes belly up", "fails completely, goes bankrupt"], ["big enough that...", "adjective + enough + that"], ["listed on", "included on a stock market"]]], ["Walter: Disappears. It ceases to exist without me.", 452.0, 475.0, 642.5, 646.0, [["ceases to exist", "stops existing (formal)"], ["without me", "depends on me"]]], ["Walter: No, you clearly don't know who you're talking to, so let me clue you in.", 475.0, 502.5, 646.0, 650.5, [["clue you in", "give you information"], ["clearly don't know", "obviously you do not know"], ["let me + base verb", "offering to do something"]]], ["Walter: I am not in danger, Skyler. I am the danger.", 502.5, 529.0, 650.5, 655.0, [["I am not in danger... I am the danger", "contrast: powerful parallel structure"], ["I am the danger.", "stress 'the'"]]], ["Walter: A guy opens his door and gets shot and you think that of me? No.", 529.0, 550.5, 655.0, 659.0, [["you think that of me?", "disbelief"], ["A guy opens his door...", "simple present for a general example"]]], ["Walter: I am the one who knocks!", 550.5, 568.0, 659.0, 661.8, [["I am the one who...", "cleft: identity and power"], ["knocks", "hits a door to request entry"]]]];
+const KEY="shadow_breakingbad_studio_v1";const SPEAKERS=["Skyler", "Walter"];
+const $=id=>document.getElementById(id);
+const V=$("v");
+let curR=null,lineOn=false,scene=false,idx=0,round=0,speed=1,token=0,done=new Array(L.length).fill(false),peek=false;
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(Array.isArray(s)&&s.length===L.length)done=s;}catch(e){}
+const rep=()=>{try{window.__ieltsExplicitScore=true;if(window.reportScore)window.reportScore(done.filter(Boolean).length,L.length);}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(done));}catch(e){}rep();};setTimeout(rep,0);
+const recs={};let mr=null,stream=null,chunks=[],recI=-1;
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---- word timing ---- */
+let WT=[],WS=[];   // WT: cumulative end fractions per word
+function words(txt){return txt.split(/\s+/).filter(Boolean);}
+function times(i){
+  const l=L[i],sp=split(l[0]),w=words(sp[1]);
+  const wt=w.map(function(x){const core=x.replace(/[^A-Za-z0-9']/g,"").length;return Math.max(2,core)+(/[,.;:?!…]$/.test(x)?2.2:0);});
+  const tot=wt.reduce(function(a,b){return a+b},0);let c=0;return wt.map(function(x){c+=x;return c/tot;});
+}
+function span(i){const l=L[i];const sp=l[6]||[l[3],l[4]];return sp;}
+function wordAt(i,t){
+  const sp=span(i),f=(t-sp[0])/Math.max(.3,sp[1]-sp[0]);
+  if(f<0)return -1;const w=times(i);for(let k=0;k<w.length;k++){if(f<=w[k])return k;}return w.length-1;
+}
+let lastW=-2;
+function paint(k){}
+
+/* ---- playback of one line (looping or once) ---- */
+function stopAll(){token++;scene=false;lineOn=false;curR=null;V.pause();}
+function playLine(i,loop,cb){
+  scene=false;lineOn=true;curR=[Math.max(0,span(i)[0]-0.2),span(i)[1]+0.25];
+  const my=++token,sp=span(i),s=Math.max(0,sp[0]-0.2),e=sp[1]+0.25;
+  V.currentTime=s;V.playbackRate=speed;V.play().catch(function(){});
+  (function tick(){
+    if(my!==token)return;
+    if(V.currentTime>=e||V.ended){
+      if(loop){V.currentTime=s;paint(-1);V.play().catch(function(){});}
+      else{V.pause();lineOn=false;if(cb)cb();return;}
+    }
+    paint(wordAt(i,V.currentTime));
+    requestAnimationFrame(tick);
+  })();
+}
+function playMine(i,cb){const r=recs[i];if(!r)return;const a=new Audio(r.url);a.onended=function(){if(cb)cb()};a.play().catch(function(){});}
+
+/* ---- rendering ---- */
+function split(t){for(let k=0;k<SPEAKERS.length;k++){const p=SPEAKERS[k]+": ";if(t.indexOf(p)===0)return [SPEAKERS[k],t.slice(p.length)];}return ["",t];}
+function phraseParts(p){
+  return p.split(/…|\.\.\.|\s\/\s|\([^)]*\)/).map(function(x){return x.replace(/\s*\+.*$/,"").replace(/[?.,!]+$/,"").replace(/^[?.,!\s]+/,"").trim();})
+   .filter(function(x){return x.length>=2;}).map(function(x){
+    const src=x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/\b(someone|somebody|something)\b/gi,"\\S+(?:\\s\\S+)?");
+    return new RegExp("(^|[^A-Za-z0-9])("+src+")(?![A-Za-z0-9])","i");});
+}
+function findPhrase(re,text){const m=re.exec(text);return m?[m.index+m[1].length,m.index+m[1].length+m[2].length]:null;}
+function hl(text,ph){
+  const rng=[];
+  ph.forEach(function(p,n){phraseParts(p[0]).forEach(function(re){const m=findPhrase(re,text);if(m)rng.push([m[0],m[1],n]);});});
+  let out="",pos=0,aside=false;
+  text.split(/(\s+)/).forEach(function(tok){
+    if(/^\s+$/.test(tok)||tok===""){out+=tok;pos+=tok.length;return;}
+    const s=pos,e=pos+tok.length;pos=e;
+    if(tok.charAt(0)==="(")aside=true;
+    const r=rng.filter(function(r){return s<r[1]&&e>r[0];})[0];
+    out+='<span class="w'+(r?" ph":"")+(aside?" aside":"")+'"'+(r?' data-p="'+r[2]+'" style="cursor:pointer"':"")+'>'+esc(tok)+"</span>";
+    if(/\)[^\w]*$/.test(tok))aside=false;
+  });return out;
+}
+function render(){
+  const l=L[idx];
+  $("lno").textContent="Line "+(idx+1)+" of "+L.length;
+  $("spk").style.display="none";
+  const say=$("say");
+  say.innerHTML=l[0].split("\n").map(split).map(function(p){return (p[0]?'<div class="spk" style="margin:6px 0 0">'+esc(p[0])+':</div>':'')+'<div class="ut">'+hl(p[1],l[5])+'</div>';}).join("");
+  say.className="say"+(round===1&&!peek&&!scene?" blur":"");lastW=-2;
+  document.querySelectorAll(".rd").forEach(function(b){b.classList.toggle("on",+b.dataset.r===round)});
+  const hints=["Listen. The line repeats on its own. Notice the rhythm and where the voice goes up and down.","Speak together with the video. The text is hidden: tap it to peek if you get lost."];
+  $("hint").textContent=hints[round];
+  const a=$("acts");a.innerHTML="";
+  const pb=document.createElement("button");pb.className="btn pri big";pb.textContent="▶ Play this line";
+  pb.onclick=function(){playLine(idx,true)};a.appendChild(pb);
+  const sb=document.createElement("button");sb.className="btn";sb.textContent="■ Stop";sb.onclick=stopAll;a.appendChild(sb);
+  const r=$("racts");r.innerHTML="";
+  const rb=document.createElement("button");rb.className="btn rec big"+(mr?" live":"");rb.textContent=mr?"■ Stop recording":"● Record line "+(idx+1);
+  rb.onclick=function(){startRec(idx)};r.appendChild(rb);
+  const hm=document.createElement("button");hm.className="btn";hm.textContent="👂 Hear the model";hm.onclick=function(){playLine(idx,false)};r.appendChild(hm);
+  if(recs[idx]){
+    const mn=document.createElement("button");mn.className="btn";mn.textContent="▶ Mine";mn.onclick=function(){playMine(idx)};r.appendChild(mn);
+    const c=document.createElement("button");c.className="btn pri";c.textContent="▶ Model, then mine";
+    c.onclick=function(){playLine(idx,false,function(){playMine(idx)})};r.appendChild(c);
+  }
+  $("got").textContent=done[idx]?"✓ Done":"✓ Got it";
+  $("got").className="btn "+(done[idx]?"ok":"");
+  $("got").style.background=done[idx]?"var(--sage)":"";$("got").style.color=done[idx]?"#fff":"";
+  // dots
+  const d=$("dots");d.innerHTML="";
+  L.forEach(function(_,i){const b=document.createElement("button");b.className="dot"+(done[i]?" done":"")+(i===idx?" cur":"");b.textContent=i+1;b.onclick=function(){go(i)};d.appendChild(b);});
+  // phrase cards for this line
+  deck($("cards"),l[5]);showCheck();
+  say.querySelectorAll(".w.ph").forEach(function(w){w.onclick=function(e){e.stopPropagation();$("cards")._set(+w.dataset.p);};});
+  $("fin").classList.toggle("on",done.every(Boolean));
+}
+function card(p){
+  const b=document.createElement("button");b.className="pc";
+  b.innerHTML='<div class="in"><div class="f">'+esc(p[0])+'<small>tap to see the meaning</small></div><div class="b">'+esc(p[1])+'</div></div>';
+  b.onclick=function(){b.classList.toggle("flip")};return b;
+}
+function deck(host,list){
+  host.innerHTML="";if(!list.length)return;
+  let k=0;const d=document.createElement("div");d.className="deck";
+  const slot=document.createElement("div"),nav=document.createElement("div");nav.className="nav";
+  const pv=document.createElement("button");pv.className="btn";pv.textContent="‹ Previous";
+  const nx=document.createElement("button");nx.className="btn pri";nx.textContent="Next ›";
+  const ct=document.createElement("b");
+  function show(){slot.innerHTML="";slot.appendChild(card(list[k]));ct.textContent=(k+1)+" / "+list.length;pv.disabled=k===0;nx.disabled=k===list.length-1;}
+  pv.onclick=function(){k--;show()};nx.onclick=function(){k++;show()};host._set=function(n){if(n>=0&&n<list.length){k=n;show();}};
+  nav.appendChild(pv);nav.appendChild(ct);nav.appendChild(nx);d.appendChild(slot);d.appendChild(nav);host.appendChild(d);show();
+}
+function go(i){stopAll();stopRec();idx=Math.max(0,Math.min(L.length-1,i));round=0;peek=false;render();}
+function bank(){const all=[];L.forEach(function(l){l[5].forEach(function(p){all.push(p);});});deck($("bank"),all);}
+
+/* ---- recording + pronunciation check ---- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let sr=null,heard="",srDone=null,recT0=0,recTick=null,recAuto=null;
+function norm(w){return w.toLowerCase().replace(/[’]/g,"'").replace(/[^a-z0-9']/g,"");}
+function targetWords(i){
+  let txt=L[i][0].split("\n").map(function(u){return split(u)[1];}).join(" ").replace(/\([^)]*\)/g," ");
+  return txt.split(/\s+/).filter(Boolean);
+}
+function lev(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i];}for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];}
+function compareWords(i,said){
+  const tw=targetWords(i),T=tw.map(norm),H=said.split(/\s+/).map(norm).filter(Boolean);
+  const m=T.length,n=H.length,d=[];for(let a=0;a<=m;a++){d[a]=new Array(n+1).fill(0);}
+  for(let a=1;a<=m;a++)for(let b=1;b<=n;b++)d[a][b]=T[a-1]===H[b-1]?d[a-1][b-1]+1:Math.max(d[a-1][b],d[a][b-1]);
+  const st=new Array(m).fill("no"),usedH=new Array(n).fill(false);
+  let a=m,b=n;while(a>0&&b>0){if(T[a-1]===H[b-1]){st[a-1]="ok";usedH[b-1]=true;a--;b--;}else if(d[a-1][b]>=d[a][b-1])a--;else b--;}
+  for(let k=0;k<m;k++){if(st[k]==="no"&&T[k].length>=4){for(let q=0;q<n;q++){if(!usedH[q]&&lev(T[k],H[q])<=2){st[k]="cl";usedH[q]=true;break;}}}}
+  const ok=st.filter(function(x){return x==="ok"}).length,cl=st.filter(function(x){return x==="cl"}).length;
+  return {words:tw,st:st,score:Math.round(100*(ok+cl*0.5)/Math.max(1,m))};
+}
+function checkHTML(i){
+  const r=recs[i];if(!r)return"";
+  let h='<div class="lno">Pronunciation check</div>';
+  if(!r.supported){return h+'<p class="hd">Your voice is saved. Automatic word check needs Chrome or Edge. Press “Model, then mine” and compare the two by ear.</p>';}
+  if(!r.heard){return h+'<p class="hd">We could not hear any words. Check your microphone and speak a little louder, then record again.</p>';}
+  const c=compareWords(i,r.heard);r.score=c.score;
+  const col=c.score>=85?"#13807c":c.score>=60?"#c27a10":"#b23a48";
+  h+=' <span class="sc" style="background:'+col+'">'+c.score+'%</span><div class="tw">';
+  c.words.forEach(function(w,k){h+='<span class="'+c.st[k]+'">'+esc(w)+'</span> ';});
+  h+='</div><div class="leg"><span class="chk"><span class="ok">green</span> clear · <span class="cl">yellow</span> close, but not exact · <span class="no">red</span> missing or unclear</span></div>';
+  h+='<p class="hd"><b>We heard:</b> “'+esc(r.heard)+'”</p>';
+  const bad=c.words.filter(function(w,k){return c.st[k]==="no"}).map(function(w){return w.replace(/[^A-Za-z0-9']/g,"")}).filter(Boolean);
+  if(bad.length)h+='<p class="hd"><b>Practise these words:</b> '+bad.map(function(w){return '<span class="no">'+esc(w)+'</span>'}).join(" ")+'</p>';
+  else h+='<p class="hd"><b>Every word was clear. Well done!</b></p>';
+  h+='<div class="row"><button class="btn ok" data-act="done">✓ Mark this line as done</button><button class="btn" data-act="again">↻ Record again</button></div>';
+  return h;
+}
+function renderMine(){
+  const keys=Object.keys(recs).map(Number).sort(function(a,b){return a-b});
+  $("minecard").style.display=keys.length?"block":"none";
+  const m=$("mine");m.innerHTML="";
+  keys.forEach(function(i){
+    const r=recs[i],it=document.createElement("div");it.className="it";
+    it.innerHTML='<div class="n">Line '+(i+1)+'</div><div class="tx">'+(r.supported?(r.heard?'<b>'+(r.score!=null?r.score+'% · ':'')+'</b>“'+esc(r.heard)+'”':'nothing heard'):'saved (no automatic check in this browser)')+'</div>';
+    const p=document.createElement("button");p.className="btn";p.textContent="▶ Mine";p.onclick=function(){playMine(i)};
+    const g=document.createElement("button");g.className="btn";g.textContent="Open";g.onclick=function(){go(i)};
+    it.appendChild(p);it.appendChild(g);m.appendChild(it);
+  });
+}
+function showCheck(){
+  const c=$("chk");
+  if(recs[idx]){c.style.display="block";c.innerHTML=checkHTML(idx);
+    c.querySelectorAll("button").forEach(function(b){b.onclick=function(){
+      if(b.dataset.act==="done"){done[idx]=true;save();render();}
+      else{startRec(idx);}
+    };});
+  }else{c.style.display="none";c.innerHTML="";}
+}
+async function startRec(i){
+  if(mr){stopRec();return;}
+  stopAll();
+  const w=$("warn");w.style.display="none";
+  try{
+    if(!navigator.mediaDevices||!window.MediaRecorder)throw new Error("Recording is not supported in this browser.");
+    if(!stream||!stream.getAudioTracks().some(function(k){return k.readyState==="live"}))
+      stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});  /* asked once, then reused */
+  }catch(e){w.style.display="block";w.textContent="Microphone is not available: "+(e.message||e.name)+". Allow microphone access in your browser.";return;}
+  chunks=[];recI=i;heard="";
+  var mt="";try{["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"].some(function(x){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(x)){mt=x;return true}})}catch(e){}
+  mr=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);
+  mr.ondataavailable=function(e){if(e.data.size)chunks.push(e.data)};
+  let srEnded=!SR;
+  function finish(){
+    const i2=recI;if(i2<0)return;
+    const blob=new Blob(chunks,{type:mr.mimeType||"audio/webm"});
+    if(recs[i2])URL.revokeObjectURL(recs[i2].url);
+    recs[i2]={url:URL.createObjectURL(blob),heard:heard.trim(),supported:!!SR};
+    mr=null;recI=-1;
+    render();renderMine();
+  }
+  mr.onstop=function(){ if(srEnded)finish(); else {srDone=finish;setTimeout(function(){if(srDone){const f=srDone;srDone=null;f();}},1800);} };
+  if(SR){
+    try{
+      sr=new SR();sr.lang="en-US";sr.continuous=true;sr.interimResults=true;
+      let finals="";
+      sr.onresult=function(e){let interim="";for(let k=e.resultIndex;k<e.results.length;k++){const r=e.results[k];if(r.isFinal)finals+=r[0].transcript+" ";else interim+=r[0].transcript;}heard=finals+interim;};
+      sr.onerror=function(){};
+      sr.onend=function(){srEnded=true;sr=null;if(srDone){const f=srDone;srDone=null;f();}};
+      sr.start();
+    }catch(e){srEnded=true;sr=null;}
+  }
+  mr.start();
+  recT0=Date.now();clearInterval(recTick);
+  recTick=setInterval(function(){const s=Math.floor((Date.now()-recT0)/1000);$("recstat").textContent="● recording "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");},250);
+  clearTimeout(recAuto);recAuto=setTimeout(stopRec,Math.max(12,(L[i][4]-L[i][3])+8)*1000);
+  render();
+}
+function stopRec(){
+  clearInterval(recTick);clearTimeout(recAuto);$("recstat").textContent="";
+  if(mr&&mr.state!=="inactive")mr.stop();
+  if(sr){try{sr.stop();}catch(e){}}
+}
+
+/* ---- events ---- */
+document.querySelectorAll(".rd").forEach(function(b){b.onclick=function(){stopAll();stopRec();round=+b.dataset.r;peek=false;render();}});
+$("say").onclick=function(){if(round===1){peek=!peek;render();}};
+$("prev").onclick=function(){go(idx-1)};
+$("next").onclick=function(){go(idx+1)};
+$("got").onclick=function(){done[idx]=!done[idx];save();render();if(done[idx]&&idx<L.length-1)setTimeout(function(){go(idx+1)},350);};
+document.querySelectorAll(".speed button").forEach(function(b){b.onclick=function(){speed=+b.dataset.s;V.playbackRate=speed;document.querySelectorAll(".speed button").forEach(function(x){x.classList.toggle("on",x===b)});}});
+function runAll(){stopAll();V.currentTime=Math.max(0,L[0][3]-0.2);V.playbackRate=speed;V.play().catch(function(){});}
+$("runall").onclick=runAll;$("runall2").onclick=runAll;
+(function follow(){
+  if(!V.paused&&!lineOn&&!V.seeking){
+    const t=V.currentTime;let f=-1;
+    for(let i=0;i<L.length;i++){
+      if((t>=L[i][1]&&t<L[i][2])||(t>=L[i][3]-0.25&&t<=L[i][4]+0.3)){f=i;break;}
+    }
+    if(f>=0&&f!==idx&&!mr){idx=f;peek=false;render();}
+  }
+  requestAnimationFrame(follow);
+})();
+V.addEventListener("pause",function(){if(lineOn&&!V.ended){token++;lineOn=false;curR=null;}});
+V.addEventListener("seeking",function(){if(lineOn&&curR&&(V.currentTime<curR[0]-0.6||V.currentTime>curR[1]+0.6)){token++;lineOn=false;curR=null;}});
+bank();render();
+})();
+</script></body></html>

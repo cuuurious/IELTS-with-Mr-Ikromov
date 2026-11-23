@@ -22,6 +22,9 @@ import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from 
  * "Hand in". If no score is found, it is handed in as done.
  */
 
+// Homework with a score is accepted from this percentage (2026-11-23).
+export const PASS_PERCENT = 70
+
 export const HELPER = `<script>(function(){
 try{window.localStorage.getItem('x')}catch(e){var mk=function(){var d={};return{getItem:function(k){return k in d?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}},key:function(i){return Object.keys(d)[i]||null},get length(){return Object.keys(d).length}}};try{Object.defineProperty(window,'localStorage',{value:mk()});Object.defineProperty(window,'sessionStorage',{value:mk()})}catch(_){}}
 function qsNow(){var out=[];try{document.querySelectorAll('#answerReviewList .answer-item').forEach(function(el){var b=el.querySelector('b');var n=parseInt(((b&&b.textContent)||'').replace(/[^0-9]/g,''),10);if(n)out.push({n:n,ok:!el.classList.contains('wrong')})});if(!out.length&&Array.isArray(window._det))window._det.forEach(function(d){if(d&&d[3]!==null&&d[3]!==undefined)out.push({n:+d[0],ok:!!d[3]})})}catch(_){}return out.slice(0,80)}
@@ -43,8 +46,9 @@ var tt;function texts(){clearTimeout(tt);tt=setTimeout(function(){var out=[];doc
 function ovOpen(){var cf=document.getElementById('confirm');if(t1()&&cf&&cf.classList.contains('show'))return true;if(t1Res())return true;var wv=document.getElementById('workshopView');if(wv&&!wv.classList.contains('hidden')&&document.getElementById('essay'))return true;var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none')return true;var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none')return true}return false}
 var mk=[];function marks(){if(!mk.length)return;if(!document.getElementById('ielts-mk-st')){var st=document.createElement('style');st.id='ielts-mk-st';st.textContent='.ielts-mk{box-shadow:0 0 0 3px #dc2626!important;border-radius:6px}'+mk.map(function(n){return '[data-q="'+n+'"]'}).join(',')+'{box-shadow:0 0 0 3px #dc2626!important;border-radius:6px}';document.head.appendChild(st)}document.querySelectorAll('.q-num,.footer__navbtn,.navbtn,.nb').forEach(function(el){var n=parseInt((el.textContent||'').replace(/[^0-9]/g,''),10);if(n&&mk.indexOf(n)>=0)el.classList.add('ielts-mk')})}
 window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-mark-questions'&&Array.isArray(e.data.nums)){mk=e.data.nums.map(Number).filter(function(n){return n>0&&n<200});var o=document.getElementById('ielts-mk-st');if(o)o.remove();marks()}});
+var ws2Last='';function wsProg2(){if(!document.getElementById('wsOverlay'))return;var bs=document.querySelectorAll('.mtab.wk');if(!bs.length)return;var d=[];bs.forEach(function(b,i){var sm=b.querySelector('small');if(sm&&(sm.textContent||'').trim()==='100%')d.push('P'+(i+1))});var k=bs.length+'|'+d.join(',');if(k===ws2Last)return;ws2Last=k;parent.postMessage({type:'ielts-workshop-progress',total:bs.length,done:d},'*')}
 var wsLast='';function wsProg(){if(!document.getElementById('ws-overlay'))return;var bs=document.querySelectorAll('#ws-tabs .ws-tab');var d=[];bs.forEach(function(b){if(b.querySelector('.ws-done'))d.push((b.textContent||'').replace(/\u2713/g,'').trim())});var k=bs.length+'|'+d.join(',');if(k===wsLast)return;wsLast=k;parent.postMessage({type:'ielts-workshop-progress',total:bs.length||0,done:d},'*')}
-window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-open-workshop'&&window.openWorkshop){try{window.openWorkshop()}catch(_){}}});
+window.addEventListener('message',function(e){if(e.data&&e.data.type==='ielts-open-workshop'){try{if(window.openWorkshop){window.openWorkshop()}else{var wb=document.querySelectorAll('.mtab.wk'),wt=null;wb.forEach(function(b){var sm=b.querySelector('small');if(!wt&&!(sm&&(sm.textContent||'').trim()==='100%'))wt=b});if(wt)wt.click()}}catch(_){}}});
 var ovLast=null;function ovTell(){var v=ovOpen();if(v!==ovLast){ovLast=v;parent.postMessage({type:'ielts-overlay',open:v},'*')}}
 window.addEventListener('message',function(e){if(!e.data||e.data.type!=='ielts-close-overlay')return;if(t1()){var cf=document.getElementById('confirm');if(cf&&cf.classList.contains('show'))cf.classList.remove('show');else if(t1Res()&&window.backToEdit)window.backToEdit();setTimeout(ovTell,50);return}var hb=document.getElementById('hdrBack');var wv=document.getElementById('workshopView');if(hb&&wv&&!wv.classList.contains('hidden')){hb.click();setTimeout(ovTell,50);return}var x=document.getElementById('ws-x');var o=document.getElementById('ws-overlay');if(o&&getComputedStyle(o).display!=='none'){if(x)x.click();else o.style.display='none'}else{var ms=document.querySelectorAll('.modal-overlay');for(var i=0;i<ms.length;i++){if(getComputedStyle(ms[i]).display!=='none'){var c=ms[i].querySelector('.modal-close-btn');if(c)c.click();else ms[i].style.display='none'}}}setTimeout(ovTell,50)});
 // Russian under the Uzbek on the Workshop word cards (2026-11-07; the site sends the words).
@@ -145,7 +149,7 @@ document.addEventListener('input',asLater,true);document.addEventListener('chang
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')asSave()});window.addEventListener('pagehide',asSave);
 document.addEventListener('input',texts,true);
 document.addEventListener('click',function(){setTimeout(scan,500);setTimeout(scan,1500);texts();setTimeout(ovTell,80);setTimeout(wsProg,120)},true);
-document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{wsPhone()}catch(_){}try{hlSetup()}catch(_){}try{preSubmit()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
+document.addEventListener('DOMContentLoaded',function(){try{parent.postMessage({type:'ielts-ready'},'*')}catch(_){}try{mobile()}catch(_){}try{wsPhone()}catch(_){}try{hlSetup()}catch(_){}try{preSubmit()}catch(_){}try{fitTables()}catch(_){}try{new MutationObserver(function(){clearTimeout(window.__ielts_t);window.__ielts_t=setTimeout(function(){scan();try{fitTables()}catch(_){}try{wsProg()}catch(_){}try{wsProg2()}catch(_){}try{marks()}catch(_){}},400)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(_){}});
 document.addEventListener('drop',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!el.classList.contains('gap'))return;var d='';try{d=e.dataTransfer.getData('text/plain')||''}catch(_){}var p=d.split('|');if(p.length!==2||p[0].charAt(0)!=='g'||!p[1])return;e.preventDefault();e.stopPropagation();el.value=p[1];el.dispatchEvent(new Event('input',{bubbles:true}));try{el.focus()}catch(_){}},true);
 var chipSel=null;document.addEventListener('click',function(e){var t=e.target;var c=t&&t.closest&&t.closest('.chip');if(c&&c.dataset&&c.dataset.id){chipSel=c.dataset.id;return}if(chipSel&&t&&t.tagName==='INPUT'&&t.classList.contains('gap')&&!t.value){t.value=chipSel;t.dispatchEvent(new Event('input',{bubbles:true}))}chipSel=null},true);
 /* AUDIO SAFETY NET (2026-11-09): some phones and in-app browsers (Telegram, Instagram) refuse to start audio inside the page, or lose it on a weak connection, and the student just hears nothing. Now a refused start shows a big "Tap to play the audio" button (a fresh tap is what those browsers need), a file that will not load says so with a Try again button, and both are reported to the site. */
@@ -189,6 +193,9 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   const [hasSubmit, setHasSubmit] = useState(false) // the page has its own Submit
   const [ask, setAsk] = useState(false) // 'Hand in without Submit?' sheet
   const [receipt, setReceipt] = useState(null) // { at, score, max, attempt_no, pending }
+  // Shadowing Studio pages: the student records their voice, so the frame
+  // is given the microphone (these pages are our own files).
+  const isShadow = /\/practice\/shadowing\//.test(task.html_url || '')
   const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
   useEffect(() => {
     if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
@@ -202,13 +209,14 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       .then((text) => {
         if (cancelled) return
         rawRef.current = text
-        setHtml(withHelper(text))
+        // Shadowing pages keep their progress per student on shared devices.
+        setHtml(withHelper(isShadow ? text.replace('const KEY="', `const KEY="u${studentId || 'me'}_`) : text))
       })
       .catch((err) => !cancelled && setError(err.message))
     return () => {
       cancelled = true
     }
-  }, [task.html_url])
+  }, [task.html_url, isShadow, studentId])
 
   useEffect(() => {
     const onMessage = (e) => {
@@ -305,6 +313,11 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       openWorkshop()
       return
     }
+    // A score under the pass mark is not accepted: try again (2026-11-23).
+    if (!isWriting && score && score.max > 0 && Math.round((score.score / score.max) * 100) < PASS_PERCENT) {
+      setError(`You scored ${Math.round((score.score / score.max) * 100)}%. Homework is accepted from ${PASS_PERCENT}%. Look at your mistakes, try the page again and hand in when you reach ${PASS_PERCENT}%.`)
+      return
+    }
     setSaving(true)
     setError('')
     const args = {
@@ -359,6 +372,8 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
         : 'Write your essay in the page, then press Hand in.'
       : gate.on && !gate.complete
         ? `${gate.label} — finish every Workshop part, then hand in.${score ? ' Your score is waiting.' : ''}`
+        : score && score.max > 0 && Math.round((score.score / score.max) * 100) < PASS_PERCENT
+        ? `Score ${Math.round((score.score / score.max) * 100)}% — homework is accepted from ${PASS_PERCENT}%. Try the page again.`
         : score
         ? 'Score found. Hand it in when you are happy.'
         : texts.length
@@ -378,6 +393,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       title={task.title || 'Practice page'}
       kicker="Homework"
       html={html}
+      mic={isShadow}
       error={error}
       onClose={leave}
       score={isWriting ? null : score}
