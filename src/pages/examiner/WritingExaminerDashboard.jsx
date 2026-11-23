@@ -369,7 +369,13 @@ export default function WritingExaminerDashboard() {
 // the work left is obvious at a glance.
 const QUEUE_MIN_WORDS = { task1_text: 150, task2_text: 250 }
 
-function QueueSection({ blurb, entries, taskKey, now, onOpen, onMessage }) {
+function QueueSection({ blurb, entries: allEntries, taskKey, now, onOpen, onMessage }) {
+  // Search by student name (2026-11-23: examiners asked for it, like the Students list).
+  const [search, setSearch] = useState('')
+  const q = search.trim().toLowerCase()
+  const entries = q
+    ? allEntries.filter((e) => `${studentLabel(e.student)} ${e.student?.username || ''}`.toLowerCase().includes(q))
+    : allEntries
   const toMark = entries.filter((e) => !e.attempt.examiner_reviewed_at)
   const marked = entries.filter((e) => e.attempt.examiner_reviewed_at)
 
@@ -377,6 +383,22 @@ function QueueSection({ blurb, entries, taskKey, now, onOpen, onMessage }) {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto text-sm text-mist max-w-2xl">{blurb}</p>
+        {allEntries.length > 0 && (
+          <label className="relative w-full sm:w-72">
+            <span className="sr-only">Search students</span>
+            <svg className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mist" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search students by name…"
+              className="focus-ring w-full rounded-xl border border-line bg-panel py-2 pl-10 pr-4 text-sm text-paper placeholder:text-mist"
+            />
+          </label>
+        )}
         <span className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-writing-tint px-3 text-[13px] font-medium text-writing">
           <span className="font-semibold tabular-nums">{toMark.length}</span> to mark
         </span>
@@ -390,7 +412,7 @@ function QueueSection({ blurb, entries, taskKey, now, onOpen, onMessage }) {
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-writing-tint text-writing">
             <SkillIcon skill="writing" className="h-6 w-6" />
           </span>
-          <p className="text-[15px] text-paper-dim">Nothing to review here right now.</p>
+          <p className="text-[15px] text-paper-dim">{q ? `No student matches “${search.trim()}”.` : 'Nothing to review here right now.'}</p>
         </Card>
       ) : (
         <>

@@ -410,7 +410,7 @@ export default function SpeakingExaminerDashboard() {
               Open the hours you are free as small slots. Students see which are free and which are taken, and ask for one;
               you accept or decline here. An accepted request goes straight onto your timetable.
             </p>
-            <ExaminerAvailability examinerId={profile.id} onChanged={loadAll} />
+            <ExaminerAvailability examinerId={profile.id} onChanged={loadAll} onMessage={handleMessageStudent} />
           </section>
         )}
 
