@@ -4608,7 +4608,7 @@ export default function TeacherMockCenter({ onExit, initialSection }) {
                               </button>
                             )}
                           </span>
-                          <span className="col-span-2 col-start-3 flex justify-end gap-2 lg:col-span-1 lg:col-start-auto">
+                          <span className="col-span-1 col-start-3 flex min-w-0 flex-wrap justify-end gap-2 lg:col-span-1 lg:col-start-auto">
                             {it.table !== 'mock_speaking_slots' && (
                               <button
                                 type="button"

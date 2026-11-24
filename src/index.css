@@ -210,6 +210,8 @@ html {
 
 body {
   min-height: 100vh;
+  overflow-x: clip;
+  touch-action: manipulation;
 
   background: var(--color-ink);
 
