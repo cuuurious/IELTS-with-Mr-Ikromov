@@ -14,6 +14,9 @@ if (window.origin !== 'null') installErrorReporter()
 const inSandbox = window.origin === 'null'
 
 if (!inSandbox) {
+  // No page zoom from the mouse wheel or a touchpad pinch (Ctrl + wheel). Students
+  // and teachers kept zooming by accident while scrolling (2026-11-24).
+  window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault() }, { passive: false })
   // Hand-ins saved offline are sent when the internet is back (2026-11-07).
   startHandInSync()
   createRoot(document.getElementById('root')).render(
