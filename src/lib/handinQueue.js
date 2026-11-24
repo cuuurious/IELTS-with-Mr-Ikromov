@@ -12,6 +12,11 @@ export const isNetworkError = (err) =>
   (typeof navigator !== 'undefined' && navigator.onLine === false) ||
   /failed to fetch|networkerror|load failed|network request failed|fetch failed|timeout|timed out|err_|connection|\b5\d\d\b/i.test(String(err?.message || err || ''))
 
+// The sign-in ran out while the student was away (2026-11-24): keep the
+// hand-in on this device too, and send it after the next sign-in.
+export const isAuthError = (err) =>
+  /jwt|token.*(expired|invalid)|not authenticated|invalid claim|refresh token|\b401\b/i.test(String(err?.message || err || ''))
+
 function read() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || '[]')

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { markWriting, writingContext } from '../../lib/writingAi'
-import PageFrame, { forgetAutosave } from './PageFrame'
+import PageFrame, { deleteDraft, forgetAutosave } from './PageFrame'
 import { createPortal } from 'react-dom'
-import { dropQueued, flushHandIns, isNetworkError, queueHandIn } from '../../lib/handinQueue'
+import { dropQueued, flushHandIns, isAuthError, isNetworkError, queueHandIn } from '../../lib/handinQueue'
 import { fetchPage } from '../../lib/fetchPage'
 import WritingFeedback from './WritingFeedback'
 import { needsWorkshop, openWorkshop, saveWorkshopWords, useWorkshopGate } from '../../lib/workshopGate'
@@ -196,6 +196,10 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   // Shadowing Studio pages: the student records their voice, so the frame
   // is given the microphone (these pages are our own files).
   const isShadow = /\/practice\/shadowing\//.test(task.html_url || '')
+  // Full Reading tests keep their own progress (answers, timer, flagged questions, the
+  // part you are on) in the page's storage. In the sealed frame that storage was lost on
+  // leaving, so these site-made pages get real storage, one copy per student (2026-11-24).
+  const isFullReading = /\/practice\/reading-full\//.test(task.html_url || '')
   const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
   useEffect(() => {
     if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
@@ -210,13 +214,13 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
         if (cancelled) return
         rawRef.current = text
         // Shadowing pages keep their progress per student on shared devices.
-        setHtml(withHelper(isShadow ? text.replace('const KEY="', `const KEY="u${studentId || 'me'}_`) : text))
+        setHtml(withHelper(isShadow ? text.replace('const KEY="', `const KEY="u${studentId || 'me'}_`) : isFullReading ? text.replace("const STORE = 'ikromov-reading-test-'", `const STORE = 'u${studentId || 'me'}_ikromov-reading-test-'`) : text))
       })
       .catch((err) => !cancelled && setError(err.message))
     return () => {
       cancelled = true
     }
-  }, [task.html_url, isShadow, studentId])
+  }, [task.html_url, isShadow, isFullReading, studentId])
 
   useEffect(() => {
     const onMessage = (e) => {
@@ -336,7 +340,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     setSaving(false)
     if (rpcError) {
       // No internet: keep it on this device and send it later (2026-11-07).
-      if (isNetworkError(rpcError) && !isWriting) {
+      if ((isNetworkError(rpcError) || isAuthError(rpcError)) && !isWriting) {
         queueHandIn(args)
         setDone({ attempt_no: 1, pending: true })
         setReceipt({ at: new Date(), score: score?.score ?? null, max: score?.max ?? null, pending: true })
@@ -347,6 +351,13 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
     }
     dropQueued(task.id)
     forgetAutosave(studentId, html) // handed in: the next try starts clean
+    deleteDraft(task.id)
+    if (isFullReading) {
+      try {
+        const pre = `u${studentId || 'me'}_ikromov-reading-test-`
+        Object.keys(localStorage).filter((k) => k.startsWith(pre)).forEach((k) => localStorage.removeItem(k))
+      } catch { /* storage blocked */ }
+    }
     const row = Array.isArray(data) ? data[0] : data
     setDone(row || { attempt_no: 1 })
     if (!isWriting) setReceipt({ at: new Date(), score: score?.score ?? null, max: score?.max ?? null, attempt_no: row?.attempt_no || 1 })
@@ -393,7 +404,8 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       title={task.title || 'Practice page'}
       kicker="Homework"
       html={html}
-      mic={isShadow}
+      mic={isShadow || isFullReading}
+      draftId={task.id}
       error={error}
       onClose={leave}
       score={isWriting ? null : score}

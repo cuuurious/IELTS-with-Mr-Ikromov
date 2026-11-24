@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { workshopWords } from '../../lib/workshopGate'
 import { fetchRuMap, ruKey } from '../../lib/russian'
 import { reportError } from '../../lib/errorReporter'
+import { supabase } from '../../lib/supabaseClient'
 
 /*
  * Full-screen frame for an interactive practice page (2026-11-05).
@@ -22,7 +23,7 @@ import { reportError } from '../../lib/errorReporter'
  * kept on this device for this student for 3 days and handed back when the
  * same page opens again. Handing in clears them (forgetAutosave).
  */
-const AUTOSAVE_DAYS = 3
+const AUTOSAVE_DAYS = 14
 function pageHash(html) {
   let h = 5381
   const s = String(html || '')
@@ -38,7 +39,32 @@ export function forgetAutosave(userId, html) {
   }
 }
 
-export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null, mic = false }) {
+/*
+ * Server copy of the autosave (2026-11-24, migration 145): the same answers are
+ * also saved in homework_drafts, so a break, a closed tab, cleared browser data
+ * or another phone no longer loses them. Best-effort: the device copy still works
+ * when the connection is down.
+ */
+export async function deleteDraft(taskId) {
+  if (!taskId) return
+  try {
+    await supabase.from('homework_drafts').delete().eq('task_id', taskId)
+  } catch {
+    /* ignore */
+  }
+}
+const fetchDraft = (taskId) =>
+  Promise.race([
+    supabase
+      .from('homework_drafts')
+      .select('data, updated_at')
+      .eq('task_id', taskId)
+      .maybeSingle()
+      .then(({ data }) => (data ? { at: Date.parse(data.updated_at) || 0, data: data.data } : null), () => null),
+    new Promise((res) => setTimeout(() => res(null), 3000)),
+  ])
+
+export default function PageFrame({ title, kicker, html, error, onClose, score, status, action, badge = null, cover = null, onCloseCover = null, mic = false, draftId = null }) {
   // `cover`: a panel shown over the page (e.g. AI feedback); Back closes it first.
   const frameRef = useRef(null)
   const { profile } = useAuth()
@@ -68,6 +94,10 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
       on = false
     }
   }, [html])
+  const draftRef = useRef(draftId)
+  draftRef.current = draftId
+  const draftTimer = useRef(0)
+  const draftData = useRef('')
   const htmlRef = useRef(html)
   htmlRef.current = html
   const overlayOpen = useRef(false)
@@ -94,14 +124,24 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
         const key = autosaveKey(userRef.current, htmlRef.current)
         if (e.data.type === 'ielts-ready') {
           let data = ''
+          let at = 0
           try {
             const saved = JSON.parse(localStorage.getItem(key) || 'null')
-            if (saved && Date.now() - saved.at < AUTOSAVE_DAYS * 864e5) data = saved.data
-            else if (saved) localStorage.removeItem(key)
+            if (saved && Date.now() - saved.at < AUTOSAVE_DAYS * 864e5) {
+              data = saved.data
+              at = saved.at
+            } else if (saved) localStorage.removeItem(key)
           } catch {
             /* ignore */
           }
-          e.source.postMessage({ type: 'ielts-autosave-state', data }, '*')
+          const target = e.source
+          const send = (d) => target.postMessage({ type: 'ielts-autosave-state', data: d }, '*')
+          if (draftRef.current) {
+            // The newer of the device copy and the server copy wins.
+            fetchDraft(draftRef.current).then((remote) => {
+              send(remote && remote.at > at && remote.data ? remote.data : data)
+            })
+          } else send(data)
         } else {
           try {
             const data = typeof e.data.data === 'string' ? e.data.data : ''
@@ -109,6 +149,20 @@ export default function PageFrame({ title, kicker, html, error, onClose, score, 
             else if (data.length < 400000) localStorage.setItem(key, JSON.stringify({ at: Date.now(), data }))
           } catch {
             /* storage full or blocked */
+          }
+          // Also keep a copy on the server (at most one save every 5 seconds).
+          if (draftRef.current && typeof e.data.data === 'string' && e.data.data && e.data.data.length < 400000) {
+            draftData.current = e.data.data
+            if (!draftTimer.current) {
+              draftTimer.current = window.setTimeout(() => {
+                draftTimer.current = 0
+                if (!draftRef.current || !draftData.current) return
+                supabase
+                  .from('homework_drafts')
+                  .upsert({ task_id: draftRef.current, data: draftData.current, updated_at: new Date().toISOString() }, { onConflict: 'student_id,task_id' })
+                  .then(() => {}, () => {})
+              }, 5000)
+            }
           }
         }
       }
