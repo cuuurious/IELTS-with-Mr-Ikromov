@@ -200,6 +200,10 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
   // part you are on) in the page's storage. In the sealed frame that storage was lost on
   // leaving, so these site-made pages get real storage, one copy per student (2026-11-24).
   const isFullReading = /\/practice\/reading-full\//.test(task.html_url || '')
+  // Any of our own pages that records the voice (vocabulary speaking tasks...) also gets the
+  // microphone; without it the sealed frame blocked the microphone even when the phone
+  // had allowed it (2026-11-25).
+  const [pageMic, setPageMic] = useState(false)
   const gate = useWorkshopGate(task.html_url, studentId, needsWorkshop(task.html_url, html))
   useEffect(() => {
     if (gate.on && gate.complete) setError((e) => (/Workshop/.test(e) ? '' : e))
@@ -213,6 +217,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       .then((text) => {
         if (cancelled) return
         rawRef.current = text
+        setPageMic(/^\/practice\//.test(task.html_url || '') && /getUserMedia|SpeechRecognition/.test(text))
         // Shadowing pages keep their progress per student on shared devices.
         setHtml(withHelper(isShadow ? text.replace('const KEY="', `const KEY="u${studentId || 'me'}_`) : isFullReading ? text.replace("const STORE = 'ikromov-reading-test-'", `const STORE = 'u${studentId || 'me'}_ikromov-reading-test-'`) : text))
       })
@@ -404,7 +409,7 @@ export default function HtmlTask({ task, studentId, onClose, onChanged }) {
       title={task.title || 'Practice page'}
       kicker="Homework"
       html={html}
-      mic={isShadow || isFullReading}
+      mic={isShadow || isFullReading || pageMic}
       draftId={task.id}
       error={error}
       onClose={leave}
